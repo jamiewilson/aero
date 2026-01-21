@@ -1,0 +1,16 @@
+{
+	"apps": [
+		{
+			"name": "vite",
+			"script": "vite",
+			"args": "dev",
+			"watch": false
+		},
+		{
+			"name": "nitro",
+			"script": "npx",
+			"args": "nitro dev",
+			"watch": false
+		}
+	]
+}

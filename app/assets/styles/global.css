@@ -1,0 +1,105 @@
+@layer reset, root, theme, base, layout, components, utils;
+
+@import './reset.css';
+@import './colors.css';
+@import './animation.css';
+@import './theme.css';
+@import './utils.css';
+
+@layer base {
+	html,
+	body {
+		height: 100%;
+	}
+
+	body {
+		color: var(--fg);
+		background: var(--bg);
+		font-family: system-ui, sans-serif;
+		font-size: 16px;
+		text-align: center;
+		line-height: 1.5;
+
+		display: grid;
+		place-content: center;
+		overflow-x: hidden;
+	}
+
+	html,
+	body {
+		&::before,
+		&::after {
+			content: '';
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: -1;
+			opacity: 0.3;
+			transform: translateZ(0);
+		}
+	}
+
+	html::before {
+		background: var(--gradient-red);
+	}
+
+	body::before {
+		background: var(--gradient-blue);
+	}
+
+	body::after {
+		background: var(--gradient-purple);
+	}
+
+	header,
+	section {
+		margin-bottom: 2rem;
+	}
+
+	h1 {
+		font-weight: 900;
+	}
+
+	section,
+	form {
+		display: grid;
+		gap: 0.5rem;
+	}
+
+	input,
+	button {
+		border: none;
+		cursor: pointer;
+		font-family: monospace;
+		text-align: center;
+		background: oklch(from var(--fg) l c h / 0.1);
+		padding: 1rem 1rem;
+		border-radius: 2rem;
+		corner-shape: squircle;
+
+		&:focus,
+		&:focus-visible {
+			outline: 2px solid var(--color-red);
+		}
+	}
+
+	button {
+		padding: 1rem 2rem;
+		background: var(--color-red);
+		transition-property: background, opacity;
+		transition-duration: var(--duration-fast);
+		outline-offset: 2px;
+
+		&[disabled] {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
+	.response {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 10%;
+	}
+}

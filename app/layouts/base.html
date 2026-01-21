@@ -1,0 +1,22 @@
+<script on:build>
+	import meta from '@/components/meta'
+	import nav from '@/components/nav'
+	import footer from '@/components/footer'
+
+	const props = tbd.props
+</script>
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- FIXME: Meta compontent is getting injected into body as well -->
+		<meta-component data-props />
+		<link rel="stylesheet" href="@/assets/styles/global.css" />
+		<script type="module" src="@/index.ts"></script>
+	</head>
+	<body id="app" x-bind:data-theme="$store.theme.current">
+		<nav-component />
+		<slot></slot>
+		<footer-component />
+	</body>
+</html>

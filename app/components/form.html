@@ -1,0 +1,17 @@
+<!-- Alpine data & htmx swap example -->
+<section x-data="{ message: '' }">
+	<form hx-post="/api/submit" hx-target="[hx-response]" hx-swap="innerHTML">
+		<input x-model="message" type="text" name="message" placeholder="Enter a message" />
+		<button type="submit" :disabled="!message.length">{ site.home.cta }</button>
+	</form>
+
+	<p class="response" hx-response></p>
+
+	<style>
+		@scope {
+			form {
+				margin-bottom: 1rem;
+			}
+		}
+	</style>
+</section>

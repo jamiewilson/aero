@@ -1,0 +1,10 @@
+{
+	"extends": ["nitro/tsconfig"],
+	"compilerOptions": {
+		"types": ["vite/client"],
+		"paths": {
+			"~/*": ["./*"],
+			"@/*": ["./app/*"]
+		}
+	}
+}

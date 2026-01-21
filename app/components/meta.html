@@ -1,0 +1,26 @@
+<script on:build>
+	const { title, description, imageURL } = tbd.props
+	const defaultImageURL = site.meta.url + site.meta.ogImage
+</script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<!-- Basic metadata -->
+<title>{ title || site.meta.title }</title>
+<meta name="title" content="{ title || site.meta.title }" />
+<meta name="description" content="{ description || site.meta.description }" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link href="{ site.meta.url }" rel="canonical" />
+
+<!-- Open Graph metadata -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="{ title || site.meta.title }" />
+<meta property="og:description" content="{ description || site.meta.description }" />
+<meta property="og:image" content="{ imageURL || defaultImageURL }" />
+
+<!-- Twitter Card metadata -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="{ title || site.meta.title }" />
+<meta property="twitter:description" content="{ description || site.meta.description }" />
+<meta property="twitter:image" content="{ imageURL || defaultImageURL }" />

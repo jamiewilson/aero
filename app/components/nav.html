@@ -1,0 +1,24 @@
+<script on:build>
+	import themeToggle from '@/components/theme-toggle'
+</script>
+
+<nav>
+	<!-- TODO: Add ability to pass additional navigation content via slot -->
+	<!--<slot name="nav"></slot>-->
+	<theme-toggle-component />
+
+	<style>
+		@scope {
+			:scope {
+				position: fixed;
+				inset-inline: 0;
+				display: flex;
+				justify-content: flex-end;
+				align-items: center;
+				gap: 1rem;
+				padding: 1rem;
+				animation: fade-in 0.5s ease-in-out;
+			}
+		}
+	</style>
+</nav>

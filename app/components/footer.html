@@ -1,0 +1,28 @@
+<script on:build>
+	const { links } = site.footer
+</script>
+
+<footer>
+	<ul>
+		<li data-for="link in links">
+			<a href="{ link.url }">{ link.label }</a>
+		</li>
+	</ul>
+
+	<style>
+		@scope {
+			:scope {
+				position: absolute;
+				inset-inline: 0;
+				bottom: 2rem;
+			}
+
+			ul {
+				display: flex;
+				gap: 1rem;
+				justify-content: center;
+				list-style-type: none;
+			}
+		}
+	</style>
+</footer>
