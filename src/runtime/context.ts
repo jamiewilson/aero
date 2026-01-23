@@ -25,10 +25,10 @@ const notify = () => {
 	listeners.forEach((cb: () => void) => cb())
 }
 
-// Auto-register pages, components, and layouts using Vite's glob
-const components = import.meta.glob('@/components/*.html', { eager: true })
-const layouts = import.meta.glob('@/layouts/*.html', { eager: true })
-const pages = import.meta.glob('@/pages/*.html', { eager: true })
+// Auto-register pages, components, and layouts using root-relative globs
+const components = import.meta.glob('/app/components/*.html', { eager: true })
+const layouts = import.meta.glob('/app/layouts/*.html', { eager: true })
+const pages = import.meta.glob('/app/pages/*.html', { eager: true })
 
 tbd.registerPages(components)
 tbd.registerPages(layouts)

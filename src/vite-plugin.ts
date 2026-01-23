@@ -3,7 +3,22 @@ import { parse } from './compiler/parser'
 import { compile } from './compiler/codegen'
 import path from 'path'
 
-export function tbd(): Plugin {
+export interface TBDOptions {
+	resolvePath?: (specifier: string) => string
+}
+
+function resolvePageNameFromUrl(url: string): string {
+	const [pathPart] = url.split('?')
+	let clean = pathPart || '/'
+	if (clean === '/' || clean === '') return 'index'
+	// If it ends with a slash, treat as /foo/ -> foo/index
+	if (clean.endsWith('/')) clean = clean + 'index'
+	clean = clean.replace(/^\//, '')
+	clean = clean.replace(/\.html$/, '')
+	return clean || 'index'
+}
+
+export function tbd(options: TBDOptions = {}): Plugin {
 	const clientScripts = new Map<string, string>()
 	let config: ResolvedConfig
 	let appDir: string
@@ -14,6 +29,41 @@ export function tbd(): Plugin {
 		configResolved(resolvedConfig) {
 			config = resolvedConfig
 			appDir = path.resolve(config.root, 'app')
+		},
+
+		configureServer(server) {
+			server.middlewares.use(async (req, res, next) => {
+				if (!req.url) return next()
+				if (req.method && req.method.toUpperCase() !== 'GET') return next()
+
+				const acceptsHtml = req.headers.accept?.includes('text/html')
+				if (!acceptsHtml) return next()
+
+				const pathname = req.url.split('?')[0] || '/'
+				// Bypass API and Vite internals
+				if (
+					pathname.startsWith('/api') ||
+					pathname.startsWith('/@fs') ||
+					pathname.startsWith('/@id')
+				) {
+					return next()
+				}
+
+				const ext = path.extname(pathname)
+				// Skip asset requests
+				if (ext && ext !== '.html') return next()
+
+				try {
+					const pageName = resolvePageNameFromUrl(req.url)
+					const mod = await server.ssrLoadModule('/src/runtime/context.ts')
+					const rendered = await mod.tbd.render(pageName)
+					const transformed = await server.transformIndexHtml(req.url, rendered)
+					res.setHeader('Content-Type', 'text/html; charset=utf-8')
+					res.end(transformed)
+				} catch (err) {
+					next(err as any)
+				}
+			})
 		},
 
 		async resolveId(id, importer) {
@@ -61,7 +111,12 @@ export function tbd(): Plugin {
 					clientScripts.set(clientScriptUrl, parsed.clientScript.content)
 				}
 
-				const generated = compile(parsed, { appDir, clientScriptUrl })
+				const generated = compile(parsed, {
+					appDir,
+					root: config.root,
+					clientScriptUrl,
+					resolvePath: options.resolvePath,
+				})
 
 				return {
 					code: generated,

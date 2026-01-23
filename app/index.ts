@@ -6,9 +6,11 @@ import Alpine from '@/assets/scripts/alpine'
 
 const appEl = document.getElementById('app') as HTMLElement | null
 
-const PERSISTENT_HEAD_SELECTOR = ['script[src*="/@vite/client"]', '[data-vite-dev-id]'].join(
-	', ',
-)
+// prettier-ignore
+const PERSISTENT_HEAD_SELECTOR = [
+	'script[src*="/@vite/client"]',
+	'[data-vite-dev-id]'
+].join(', ')
 
 // Helper: get current page name from location
 function getPageName() {
@@ -39,7 +41,10 @@ async function renderPage() {
 		htmx.process(appEl)
 		console.log(`[tbd] Rendered: ${pageName}`)
 	} catch (err) {
-		appEl.innerHTML = `<h1>Error rendering page: ${pageName}</h1><pre>${String(err)}</pre>`
+		appEl.innerHTML = `
+			<h1>Error rendering page: ${pageName}</h1>
+			<pre>${String(err)}</pre>
+		`
 		console.error('[tbd] Render Error:', err)
 	}
 }
@@ -70,21 +75,36 @@ function extractDocumentParts(html: string): { head: string; body: string } {
 function updateHead(nextHeadHtml: string) {
 	const headEl = document.head
 
-	const persistent = Array.from(headEl.querySelectorAll(PERSISTENT_HEAD_SELECTOR)).map(
-		node => node.cloneNode(true) as HTMLElement,
-	)
+	// Keep Vite-injected HMR nodes in place to preserve their references
+	const persistentSet = new Set(Array.from(headEl.querySelectorAll(PERSISTENT_HEAD_SELECTOR)))
 
-	headEl.innerHTML = nextHeadHtml
+	// Remove only non-persistent nodes
+	for (const node of Array.from(headEl.children)) {
+		if (persistentSet.has(node)) continue
+		headEl.removeChild(node)
+	}
 
-	for (const node of persistent) {
-		if (node instanceof HTMLScriptElement && node.src) {
-			if (!headEl.querySelector(`script[src="${node.src}"]`)) headEl.appendChild(node)
-			continue
+	// Parse incoming head HTML
+	const parser = new DOMParser()
+	const frag = parser.parseFromString(`<head>${nextHeadHtml}</head>`, 'text/html')
+	const nodes = Array.from(frag.head?.childNodes || [])
+
+	for (const node of nodes) {
+		if (node.nodeType === Node.ELEMENT_NODE) {
+			const el = node as Element
+			if (el.matches(PERSISTENT_HEAD_SELECTOR)) {
+				// Skip duplicates of persistent nodes
+				const devId = el.getAttribute('data-vite-dev-id')
+				if (devId && headEl.querySelector(`[data-vite-dev-id="${devId}"]`)) continue
+				if (
+					el instanceof HTMLScriptElement &&
+					el.src &&
+					headEl.querySelector(`script[src="${el.src}"]`)
+				) {
+					continue
+				}
+			}
 		}
-
-		const devId = node.getAttribute('data-vite-dev-id')
-		if (devId && !headEl.querySelector(`[data-vite-dev-id="${devId}"]`)) {
-			headEl.appendChild(node)
-		}
+		headEl.appendChild(document.importNode(node, true))
 	}
 }

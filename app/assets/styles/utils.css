@@ -1,5 +1,6 @@
 @layer utils {
 	.border {
+		border-radius: 1rem;
 		outline: 1px solid oklch(from var(--fg) l c h / 0.2);
 	}
 }
