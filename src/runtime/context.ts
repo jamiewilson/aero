@@ -26,17 +26,18 @@ const notify = () => {
 }
 
 // Auto-register pages, components, and layouts using Vite's glob
-const pages = import.meta.glob('@/pages/*.html', { eager: true })
 const components = import.meta.glob('@/components/*.html', { eager: true })
 const layouts = import.meta.glob('@/layouts/*.html', { eager: true })
+const pages = import.meta.glob('@/pages/*.html', { eager: true })
 
 tbd.registerPages(components)
 tbd.registerPages(layouts)
-tbd.registerPages(pages) // Pages win short-name collisions (e.g. 'about')
+tbd.registerPages(pages) // Pages win short-name collisions
+
 notify()
 
 if (import.meta.hot) {
-	import.meta.hot.accept('~/data/site.ts', newSite => {
+	import.meta.hot.accept('~/data/site', newSite => {
 		if (newSite) {
 			tbd.global('site', newSite.site)
 			notify()

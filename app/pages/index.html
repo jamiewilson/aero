@@ -4,9 +4,14 @@
 	import nav from '@/components/nav'
 	import header from '@/components/header'
 	import form from '@/components/form'
+
+	const props = {
+		title: site.home.title,
+		subtitle: site.home.subtitle,
+	}
 </script>
 
 <base-layout>
-	<header-component class="border" />
+	<header-component data-props />
 	<form-component />
 </base-layout>

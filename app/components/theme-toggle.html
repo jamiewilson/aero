@@ -1,74 +1,38 @@
-<div class="theme-toggle">
-	<button @click="$store.theme.set()">
-		<svg class="theme-icon light">
-			<circle cx="12" cy="12" r="4" />
-			<path d="M12 2v2" />
-			<path d="M12 20v2" />
-			<path d="m4.93 4.93 1.41 1.41" />
-			<path d="m17.66 17.66 1.41 1.41" />
-			<path d="M2 12h2" />
-			<path d="M20 12h2" />
-			<path d="m6.34 17.66-1.41 1.41" />
-			<path d="m19.07 4.93-1.41 1.41" />
-		</svg>
+<button class="theme-toggle" @click="$store.theme.set()" tabindex="0">
+	<svg class="theme-icon" :class="{ current: $store.theme.current === 'light' }">
+		<circle cx="12" cy="12" r="4" />
+		<path d="M12 2v2" />
+		<path d="M12 20v2" />
+		<path d="m4.93 4.93 1.41 1.41" />
+		<path d="m17.66 17.66 1.41 1.41" />
+		<path d="M2 12h2" />
+		<path d="M20 12h2" />
+		<path d="m6.34 17.66-1.41 1.41" />
+		<path d="m19.07 4.93-1.41 1.41" />
+	</svg>
 
-		<svg class="theme-icon dark">
-			<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-		</svg>
+	<svg class="theme-icon" :class="{ current: $store.theme.current === 'dark' }">
+		<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+	</svg>
 
-		<svg class="theme-icon system">
-			<path
-				d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" />
-		</svg>
-	</button>
-
+	<svg class="theme-icon" :class="{ current: $store.theme.current === 'system' }">
+		<path
+			d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" />
+	</svg>
 	<style>
 		@layer components {
-			[data-theme='system'] {
-				.system {
-					opacity: initial;
-					scale: initial;
-					translate: initial;
-				}
-			}
-
-			[data-theme='light'] {
-				.light {
-					opacity: initial;
-					scale: initial;
-					translate: initial;
-				}
-			}
-
-			[data-theme='dark'] {
-				.dark {
-					opacity: initial;
-					scale: initial;
-					translate: initial;
-				}
+			.theme-icon.current {
+				opacity: initial;
+				scale: initial;
+				translate: initial;
 			}
 
 			@scope {
-				button {
-					appearance: none;
-					background: transparent;
-					border: none;
-					color: inherit;
-					cursor: pointer;
-					overflow: hidden;
-
+				:scope {
 					display: grid;
 					gap: 0;
 					padding: 1.5rem;
-
 					color: var(--fg);
-					background: var(--bg);
-
-					&:hover,
-					&:focus,
-					&:focus-visible {
-						outline: none;
-					}
 				}
 
 				svg {
@@ -82,15 +46,15 @@
 
 					position: absolute;
 					place-self: center;
-
 					opacity: 0;
 					scale: 0.5;
+					translate: 0 1em;
+
 					transition-duration: 500ms;
 					transition-property: opacity, scale, translate;
 					transition-timing-function: cubic-bezier(0.6, -0.1, 0, 1.1);
-					translate: 0 1em;
 				}
 			}
 		}
 	</style>
-</div>
+</button>

@@ -1,10 +1,14 @@
 @layer reset, root, theme, base, layout, components, utils;
 
-@import './reset.css';
-@import './colors.css';
-@import './animation.css';
-@import './theme.css';
-@import './utils.css';
+@import 'reset.css';
+@import 'colors.css';
+@import 'animation.css';
+@import 'theme.css';
+@import 'toast.css';
+@import 'utils.css';
+
+/* prettier-ignore */
+/** { outline: 0.1px solid red; } */
 
 @layer base {
 	html,
@@ -13,10 +17,12 @@
 	}
 
 	body {
+		--font-family-classical-humanist:
+			optima, candara, 'Noto Sans', source-sans-pro, sans-serif;
 		color: var(--fg);
 		background: var(--bg);
-		font-family: system-ui, sans-serif;
-		font-size: 16px;
+		font-family: var(--font-family-classical-humanist);
+		font-size: 18px;
 		text-align: center;
 		line-height: 1.5;
 
@@ -25,40 +31,13 @@
 		overflow-x: hidden;
 	}
 
-	html,
-	body {
-		&::before,
-		&::after {
-			content: '';
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			pointer-events: none;
-			z-index: -1;
-			opacity: 0.3;
-			transform: translateZ(0);
-		}
-	}
-
-	html::before {
-		background: var(--gradient-red);
-	}
-
-	body::before {
-		background: var(--gradient-blue);
-	}
-
-	body::after {
-		background: var(--gradient-purple);
-	}
-
 	header,
 	section {
 		margin-bottom: 2rem;
 	}
 
 	h1 {
-		font-weight: 900;
+		font-weight: 600;
 	}
 
 	section,
@@ -74,19 +53,20 @@
 		font-family: monospace;
 		text-align: center;
 		background: oklch(from var(--fg) l c h / 0.1);
-		padding: 1rem 1rem;
+		padding: 1rem 2rem;
 		border-radius: 2rem;
 		corner-shape: squircle;
+		justify-self: center;
 
 		&:focus,
 		&:focus-visible {
-			outline: 2px solid var(--color-red);
+			outline: 2px solid var(--color-accent);
 		}
 	}
 
 	button {
-		padding: 1rem 2rem;
-		background: var(--color-red);
+		appearance: none;
+		color: var(--color-dark);
 		transition-property: background, opacity;
 		transition-duration: var(--duration-fast);
 		outline-offset: 2px;
@@ -97,9 +77,16 @@
 		}
 	}
 
-	.response {
-		position: absolute;
-		inset-inline: 0;
-		bottom: 10%;
+	form button {
+		background: var(--color-accent);
+	}
+
+	a {
+		color: var(--color-accent);
+		text-decoration: none;
+		transition: color var(--duration-fast);
+		&:hover {
+			color: var(--fg);
+		}
 	}
 }

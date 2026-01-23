@@ -9,14 +9,18 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<!-- FIXME: Meta compontent is getting injected into body as well -->
 		<meta-component data-props />
-		<link rel="stylesheet" href="@/assets/styles/global.css" />
 		<script type="module" src="@/index.ts"></script>
 	</head>
-	<body id="app" x-bind:data-theme="$store.theme.current">
+	<body id="app" :data-theme="$store.theme.current" x-cloak>
 		<nav-component />
 		<slot></slot>
 		<footer-component />
 	</body>
 </html>
+
+<style>
+	[x-cloak] {
+		display: none;
+	}
+</style>

@@ -1,3 +1,5 @@
+import { Theme } from '~/data/theme'
+
 export const site = {
 	meta: {
 		title: 'TBD',
@@ -5,9 +7,13 @@ export const site = {
 		url: 'https://tbd.dev',
 		ogImage: '/og-image.png',
 	},
+	theme: {
+		modes: Object.values(Theme),
+		default: Theme.System,
+	},
 	home: {
 		title: 'Welcome to TBD',
-		subtitle: 'A web framework that feels like native HTML',
+		subtitle: `A framework that feels like native HTML. Because it is native HTML.`,
 		cta: 'Send POST Request',
 	},
 	about: {

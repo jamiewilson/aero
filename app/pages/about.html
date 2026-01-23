@@ -1,5 +1,5 @@
 <script on:build>
-	import about from '@/layouts/about'
+	import sub from '@/layouts/sub'
 	import header from '@/components/header'
 	import aboutImage from '@/assets/images/og-image-2.png'
 
@@ -13,13 +13,13 @@
 	}
 </script>
 
-<about-layout title="Custom Meta Title" data-props="ogImage">
-	<!--<a slot="nav" href="#">Addition Nav Link</a>-->
+<sub-layout title="Custom Meta Title" data-props="ogImage">
+	<a slot="nav" href="#">Addition Nav Link</a>
 	<header-component data-props />
-</about-layout>
+</sub-layout>
 
 <!-- FIXME: adding new client scripts does not register correctly with HMR -->
 <script on:client>
 	// TODO: Should we wrap all on:client code in DOMContentLoaded?
-	console.debug('[tbd] on:client script executed')
+	console.log('[tbd] on:client script executed')
 </script>

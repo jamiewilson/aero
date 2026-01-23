@@ -3,7 +3,7 @@ import { parse } from './compiler/parser'
 import { compile } from './compiler/codegen'
 import path from 'path'
 
-export function tbdPlugin(): Plugin {
+export function tbd(): Plugin {
 	const clientScripts = new Map<string, string>()
 	let config: ResolvedConfig
 	let appDir: string
@@ -72,28 +72,6 @@ export function tbdPlugin(): Plugin {
 				this.error(`[tbd] Error compiling ${relativePath}: ${err.message}`)
 				return null
 			}
-		},
-
-		handleHotUpdate({ file, server, modules }) {
-			// Handle .html and site.ts file changes
-			const isHtml = file.endsWith('.html')
-			const isSiteData = file.endsWith('data/site.ts')
-
-			if (isHtml || isSiteData) {
-				console.log(`[tbd] HMR handleHotUpdate: ${file}`)
-
-				// Send the custom event as a backup/trigger for cache-busting
-				const relativePath = '/' + path.relative(config.root, file)
-				server.ws.send('tbd:template-update', { id: relativePath })
-
-				// For templates, we MUST NOT return [] if we want standard dependency
-				// tracking (like our context.ts glob) to work.
-				// Returning the modules but NOT invalidating them here allows Vite
-				// to follow the graph.
-				return modules
-			}
-
-			return modules
 		},
 	}
 }

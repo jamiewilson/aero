@@ -1,20 +1,11 @@
+import { defineConfig } from 'vite'
 import { Features } from 'lightningcss'
 import { nitro } from 'nitro/vite'
-import { defineConfig } from 'vite'
-import { tbdPlugin } from './src/vite-plugin'
-import path from 'path'
+import { tbd } from './src/vite-plugin'
 
 export default defineConfig({
-	plugins: [tbdPlugin(), process.env.VITEST ? undefined : nitro()],
-
-	resolve: {
-		alias: {
-			'#layouts': path.resolve(__dirname, './app/layouts'),
-		},
-	},
-	nitro: {
-		serverDir: './server',
-	},
+	plugins: [tbd(), process.env.VITEST ? undefined : nitro()],
+	nitro: { serverDir: './server' },
 	css: {
 		transformer: 'lightningcss',
 		lightningcss: {

@@ -1,8 +1,14 @@
+import '@/assets/styles/global.css'
+
 import { tbd, onUpdate } from '~/src/runtime/context'
 import htmx from '@/assets/scripts/htmx'
 import Alpine from '@/assets/scripts/alpine'
 
 const appEl = document.getElementById('app') as HTMLElement | null
+
+const PERSISTENT_HEAD_SELECTOR = ['script[src*="/@vite/client"]', '[data-vite-dev-id]'].join(
+	', ',
+)
 
 // Helper: get current page name from location
 function getPageName() {
@@ -19,11 +25,15 @@ async function renderPage() {
 	}
 
 	const pageName = getPageName()
+	console.log('Resolved page name:', pageName)
 
 	try {
 		// Use the singleton tbd instance to render
 		const html = await tbd.render(pageName)
-		appEl.innerHTML = html
+		const { head, body } = extractDocumentParts(html)
+
+		if (head) updateHead(head)
+		appEl.innerHTML = body
 
 		// Re-initialize Alpine/HTMX on the new content
 		htmx.process(appEl)
@@ -42,25 +52,39 @@ onUpdate(() => {
 	renderPage()
 })
 
-// HMR: listen for custom template updates from the plugin
-if (import.meta.hot) {
-	import.meta.hot.on('tbd:template-update', async (data: { id: string }) => {
-		try {
-			// If it's a template, update the registry
-			if (data.id.endsWith('.html')) {
-				const mod = await import(/* @vite-ignore */ data.id + `?t=${Date.now()}`)
-				tbd.registerPages({ [data.id]: mod })
-			}
-
-			// Force a re-render
-			await renderPage()
-		} catch (err) {
-			console.error('[tbd] HMR Error:', err)
-		}
-	})
-}
-
 // Initialize Alpine.js for HTMX-loaded content
 htmx.onLoad(node => {
 	Alpine.initTree(node as HTMLElement)
 })
+
+function extractDocumentParts(html: string): { head: string; body: string } {
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(html, 'text/html')
+
+	const head = doc.head?.innerHTML?.trim() || ''
+	const body = doc.body?.innerHTML ?? html
+
+	return { head, body }
+}
+
+function updateHead(nextHeadHtml: string) {
+	const headEl = document.head
+
+	const persistent = Array.from(headEl.querySelectorAll(PERSISTENT_HEAD_SELECTOR)).map(
+		node => node.cloneNode(true) as HTMLElement,
+	)
+
+	headEl.innerHTML = nextHeadHtml
+
+	for (const node of persistent) {
+		if (node instanceof HTMLScriptElement && node.src) {
+			if (!headEl.querySelector(`script[src="${node.src}"]`)) headEl.appendChild(node)
+			continue
+		}
+
+		const devId = node.getAttribute('data-vite-dev-id')
+		if (devId && !headEl.querySelector(`[data-vite-dev-id="${devId}"]`)) {
+			headEl.appendChild(node)
+		}
+	}
+}
