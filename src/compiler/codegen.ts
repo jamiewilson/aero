@@ -268,10 +268,10 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	}
 
 	return `
-export default async function(tbd) {
-    const { site, slots = {}, renderComponent } = tbd;
-    ${script}
-    return \`${templateCode}\`;
-}
-    `.trim()
+		export default async function(tbd) {
+			const { site, slots = {}, renderComponent } = tbd;
+			${script}
+			return \`${templateCode}\`;
+		}
+	`.trim()
 }

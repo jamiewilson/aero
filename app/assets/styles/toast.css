@@ -1,0 +1,30 @@
+@layer components {
+	.toast {
+		top: 1rem;
+		position: absolute;
+		inset-inline: 0;
+		margin: 0 auto;
+		width: fit-content;
+	}
+
+	.toast-content {
+		font-size: smaller;
+		font-family: sans-serif;
+		color: var(--bg);
+		background: var(--fg);
+		border-radius: 0.5rem;
+		padding: 0.5rem 1rem;
+	}
+
+	.toast-content {
+		code {
+			font-size: smaller;
+			font-family: monospace;
+			padding: 0.25rem 0.5rem;
+			background: oklch(from var(--bg) l c h / 0.2);
+			border: 1px solid oklch(from var(--bg) l c h / 0.2);
+			border-radius: 0.25rem;
+			text-box: trim-both ex alphabetic;
+		}
+	}
+}

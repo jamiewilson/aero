@@ -1,18 +1,27 @@
 <script on:build>
 	// TODO: Detect if props.class exists and automatically add to outer element?
-	const { class: className } = tbd.props
+	const { class: className, ...props } = tbd.props
 </script>
 
 <header class="{ className }">
-	<h1>{ site.home.title }</h1>
-	<p>{ site.home.subtitle }</p>
+	<img src="/favicon.svg" />
+	<h1>{ props.title }</h1>
+	<p class="subtitle">{ props.subtitle }</p>
 </header>
 
 <style>
+	img {
+		margin-bottom: 1rem;
+	}
+
 	header {
-		/*color: red;*/
 		padding: 2rem;
 		border-radius: 1rem;
 		text-box: trim-both cap alphabetic;
+	}
+
+	.subtitle {
+		max-width: 35ch;
+		text-wrap-style: pretty;
 	}
 </style>

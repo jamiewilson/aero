@@ -1,32 +1,10 @@
 @layer root {
 	:root {
-		--color-light: #ffffff;
-		--color-dark: #101012;
-		--color-red: #ff6467;
-		--color-blue: #61d9ff;
-		--color-purple: #715ebd;
+		--color-light: #faf9fb;
+		--color-dark: #0f041b;
+		--color-accent: #ff6467;
 
 		--fg: light-dark(var(--color-dark), var(--color-light));
 		--bg: light-dark(var(--color-light), var(--color-dark));
-
-		/* prettier-ignore */
-		--gradient-blue: radial-gradient(
-			farthest-side at bottom left,
-			var(--color-blue),
-			transparent
-		);
-
-		--gradient-purple: radial-gradient(
-			farthest-side at bottom right,
-			var(--color-purple),
-			transparent
-		);
-
-		/* prettier-ignore */
-		--gradient-red: radial-gradient(
-			circle at top, 
-			var(--color-red), 
-			transparent
-		);
 	}
 }
