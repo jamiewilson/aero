@@ -1,19 +1,54 @@
 import type { Plugin, ResolvedConfig } from 'vite'
-import { parse } from './compiler/parser'
-import { compile } from './compiler/codegen'
+import { parse } from '@src/compiler/parser'
+import { compile } from '@src/compiler/codegen'
+import { resolvePageName } from '@src/utils/routing'
 import path from 'path'
+import type { TBDOptions } from '@src/types'
 
-export function tbd(): Plugin {
+export function tbd(options: TBDOptions = {}): Plugin {
 	const clientScripts = new Map<string, string>()
 	let config: ResolvedConfig
-	let appDir: string
 
 	return {
 		name: 'vite-plugin-tbd',
 
 		configResolved(resolvedConfig) {
 			config = resolvedConfig
-			appDir = path.resolve(config.root, 'app')
+		},
+
+		configureServer(server) {
+			server.middlewares.use(async (req, res, next) => {
+				if (!req.url) return next()
+				if (req.method && req.method.toUpperCase() !== 'GET') return next()
+
+				const acceptsHtml = req.headers.accept?.includes('text/html')
+				if (!acceptsHtml) return next()
+
+				const pathname = req.url.split('?')[0] || '/'
+				// Bypass API and Vite internals
+				if (
+					pathname.startsWith('/api') ||
+					pathname.startsWith('/@fs') ||
+					pathname.startsWith('/@id')
+				) {
+					return next()
+				}
+
+				const ext = path.extname(pathname)
+				// Skip asset requests
+				if (ext && ext !== '.html') return next()
+
+				try {
+					const pageName = resolvePageName(req.url)
+					const mod = await server.ssrLoadModule('/src/runtime/instance.ts')
+					const rendered = await mod.tbd.render(pageName)
+					const transformed = await server.transformIndexHtml(req.url, rendered)
+					res.setHeader('Content-Type', 'text/html; charset=utf-8')
+					res.end(transformed)
+				} catch (err) {
+					next(err as any)
+				}
+			})
 		},
 
 		async resolveId(id, importer) {
@@ -61,7 +96,12 @@ export function tbd(): Plugin {
 					clientScripts.set(clientScriptUrl, parsed.clientScript.content)
 				}
 
-				const generated = compile(parsed, { appDir, clientScriptUrl })
+				const generated = compile(parsed, {
+					// appDir removed
+					root: config.root,
+					clientScriptUrl,
+					resolvePath: options.resolvePath,
+				})
 
 				return {
 					code: generated,

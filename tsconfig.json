@@ -4,7 +4,14 @@
 		"types": ["vite/client"],
 		"paths": {
 			"~/*": ["./*"],
-			"@/*": ["./app/*"]
+			"@src/*": ["./src/*"],
+			"@app/*": ["./app/*"],
+			"@styles/*": ["./app/assets/styles/*"],
+			"@scripts/*": ["./app/assets/scripts/*"],
+			"@images/*": ["./app/assets/images/*"],
+			"@components/*": ["./app/components/*"],
+			"@layouts/*": ["./app/layouts/*"],
+			"@pages/*": ["./app/pages/*"]
 		}
 	}
 }

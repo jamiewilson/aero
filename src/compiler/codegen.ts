@@ -1,48 +1,40 @@
-import type { ParseResult } from './parser'
+import type { ParseResult, CompileOptions } from '../types'
 import { parseHTML } from 'linkedom'
-import path from 'path'
+import { Resolver } from './resolver'
+import { compileInterpolation } from './helpers'
 
-export interface CompileOptions {
-	appDir: string
-	clientScriptUrl?: string
-}
+const VOID_TAGS = new Set([
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr',
+])
 
 class Compiler {
-	private appDir: string
+	private resolver: Resolver
 
 	constructor(options: CompileOptions) {
-		this.appDir = options.appDir
-	}
-
-	resolveAlias(p: string): string {
-		if (p.startsWith('@/')) {
-			const relativePath = p.slice(2)
-			let resolved = path.join(this.appDir, relativePath)
-
-			// Special case for templates: add .html if no extension
-			if (!resolved.includes('.') && !resolved.includes('/assets/')) {
-				resolved += '.html'
-			}
-
-			// Ensure we use root-relative paths for the browser/Vite resolver
-			// This works better than absolute filesystem paths in the browser
-			const rootRelative = '/' + path.relative(path.join(this.appDir, '..'), resolved)
-
-			// For assets in the browser, Vite likes /@fs/ absolute paths for some reason
-			// but root-relative /app/assets/... usually works too.
-			if (rootRelative.includes('/assets/')) {
-				return rootRelative
-			}
-			return rootRelative
-		}
-		return p
+		this.resolver = new Resolver({
+			root: options.root,
+			resolvePath: options.resolvePath,
+		})
 	}
 
 	compileNode(node: any, skipInterpolation = false): string {
 		switch (node.nodeType) {
-			case 3: // Text node
+			case 3:
 				return this.compileText(node, skipInterpolation)
-			case 1: // Element node
+			case 1:
 				return this.compileElement(node, skipInterpolation)
 			default:
 				return ''
@@ -50,29 +42,25 @@ class Compiler {
 	}
 
 	private compileText(node: any, skipInterpolation: boolean): string {
-		let text = node.textContent || ''
-		text = text.replace(/`/g, '\\`')
-		if (!skipInterpolation) {
-			// Simple interpolation: { val } -> ${val}
-			text = text.replace(/{([\s\S]+?)}/g, '${$1}')
+		const text = node.textContent || ''
+		if (skipInterpolation) {
+			// Just escape backticks if we're not interpolating
+			return text.replace(/`/g, '\\`')
 		}
-		return text
+		return compileInterpolation(text)
 	}
 
 	private compileElement(node: any, skipInterpolation: boolean): string {
 		const tagName = node.tagName.toLowerCase()
 
-		// Handle Slots
 		if (tagName === 'slot') {
 			return this.compileSlot(node, skipInterpolation)
 		}
 
-		// Handle Components and Layouts
 		if (tagName.endsWith('-component') || tagName.endsWith('-layout')) {
 			return this.compileComponent(node, tagName, skipInterpolation)
 		}
 
-		// Handle regular HTML elements
 		const attributes: string[] = []
 		let loopData = null
 
@@ -82,18 +70,18 @@ class Compiler {
 				if (attr.name === 'data-for') {
 					const content = attr.value.replace(/^{|}$/g, '').trim()
 					const match = content.match(/^(\w+)\s+in\s+(.+)$/)
-					if (match) {
-						loopData = { item: match[1], items: match[2] }
-					}
+					if (match) loopData = { item: match[1], items: match[2] }
 					continue
 				}
 
 				let val = attr.value.replace(/`/g, '\\`')
-				val = this.resolveAlias(val)
+				val = this.resolver.resolveAttrValue(val)
 
-				// Skip TBD interpolation for Alpine.js attributes (x-, @, :, .)
 				const isAlpine = /^(x-|[@:.]).*/.test(attr.name)
 				if (!isAlpine) {
+					// Use the helper logic (conceptually), but compileInterpolation handles the whole string,
+					// whereas here we just want to replace the curlies within the attr value.
+					// We can reuse the same regex logic.
 					val = val.replace(/{([\s\S]+?)}/g, '${$1}')
 				}
 				attributes.push(`${attr.name}="${val}"`)
@@ -102,7 +90,14 @@ class Compiler {
 
 		const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
 
-		// Recursively compile children
+		if (VOID_TAGS.has(tagName)) {
+			const elementCode = `<${tagName}${attrString}>`
+			if (loopData) {
+				return `\${ ${loopData.items}.map(${loopData.item} => \ \`${elementCode}\ \`).join('') }`
+			}
+			return elementCode
+		}
+
 		let children = ''
 		if (node.childNodes) {
 			const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
@@ -135,7 +130,6 @@ class Compiler {
 		const kebabBase = tagName.replace(/-(component|layout)$/, '')
 		const baseName = kebabBase.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 
-		// Collect props
 		const propsEntries: string[] = []
 		let dataPropsExpression: string | null = null
 
@@ -146,32 +140,21 @@ class Compiler {
 
 				if (attr.name === 'data-props') {
 					const value = attr.value?.trim() || ''
-
 					if (!value) {
-						// Shorthand: data-props (no value) → spread 'props' variable
-						// Like JavaScript object shorthand: { props } means { props: props }
-						// Here: data-props means data-props="{ ...props }"
 						dataPropsExpression = '...props'
 					} else if (value.startsWith('{') && value.endsWith('}')) {
-						// Has braces: could be inline object or spread
 						const inner = value.slice(1, -1).trim()
-
 						if (inner.startsWith('...')) {
-							// Spread syntax: data-props="{ ...myProps }"
 							dataPropsExpression = inner
 						} else {
-							// Inline object literal: data-props="{ title: 'Hello', count: 42 }"
-							// or expression: data-props="{ title: site.meta.title.toUpperCase() }"
 							dataPropsExpression = inner
 						}
 					} else {
-						// Plain variable name: data-props="myProps" → spread it
 						dataPropsExpression = `...${value}`
 					}
 					continue
 				}
 
-				// Regular prop attributes
 				let val = attr.value.replace(/`/g, '\\`')
 				if (val.startsWith('{') && val.endsWith('}')) {
 					val = val.substring(1, val.length - 1)
@@ -182,23 +165,16 @@ class Compiler {
 			}
 		}
 
-		// Build the props object
 		let propsString: string
 		if (dataPropsExpression) {
-			// Has data-props
-			if (propsEntries.length > 0) {
-				// Merge: data-props + individual attributes
-				propsString = `{ ${dataPropsExpression}, ${propsEntries.join(', ')} }`
-			} else {
-				// Just data-props
-				propsString = `{ ${dataPropsExpression} }`
-			}
+			propsString =
+				propsEntries.length > 0
+					? `{ ${dataPropsExpression}, ${propsEntries.join(', ')} }`
+					: `{ ${dataPropsExpression} }`
 		} else {
-			// No data-props, just individual attributes
 			propsString = `{ ${propsEntries.join(', ')} }`
 		}
 
-		// Collect slots
 		const slotsMap: Record<string, string> = { default: '' }
 		if (node.childNodes) {
 			for (let i = 0; i < node.childNodes.length; i++) {
@@ -222,14 +198,19 @@ class Compiler {
 }
 
 export function compile(parsed: ParseResult, options: CompileOptions): string {
+	// Initialize the resolver separately so we can use it for import resolution before creating the compiler instance
+	const resolver = new Resolver({
+		root: options.root,
+		resolvePath: options.resolvePath,
+	})
+	
 	const compiler = new Compiler(options)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
-	// Transform static imports to dynamic imports
 	const importRegex = /import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\4/g
 	script = script.replace(importRegex, (m, name, names, starName, q, p) => {
-		const resolved = compiler.resolveAlias(p)
+		const resolved = resolver.resolveImport(p)
 		if (name) {
 			return `const ${name} = (await import(${q}${resolved}${q})).default`
 		} else if (names) {
@@ -240,10 +221,21 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		return m
 	})
 
-	const expandedTemplate = parsed.template.replace(/<([a-z0-9-]+)([^>]*?)\/>/gi, '<$1$2></$1>')
-	const { document } = parseHTML(
-		`<!DOCTYPE html><html><body>${expandedTemplate}</body></html>`,
+	const expandedTemplate = parsed.template.replace(
+		/<([a-z0-9-]+)([^>]*?)\/>/gi,
+		(match, tagName, attrs) => {
+			const tag = String(tagName).toLowerCase()
+			if (VOID_TAGS.has(tag)) {
+				return match.replace(/\/>$/, '>')
+			}
+			return `<${tagName}${attrs}></${tagName}>`
+		},
 	)
+
+	const { document } = parseHTML(`<!DOCTYPE html>
+<html lang="en">
+<body>${expandedTemplate}</body>
+</html>`)
 
 	const scripts = document.querySelectorAll('script')
 	for (const s of scripts) {

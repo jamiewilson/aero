@@ -1,6 +1,6 @@
-import { Theme } from '~/data/theme'
+import { ThemeMode } from '~/data/theme'
 
-export const site = {
+export default {
 	meta: {
 		title: 'TBD',
 		description: 'Site Description TBD',
@@ -8,8 +8,8 @@ export const site = {
 		ogImage: '/og-image.png',
 	},
 	theme: {
-		modes: Object.values(Theme),
-		default: Theme.System,
+		options: Object.values(ThemeMode),
+		default: ThemeMode.System,
 	},
 	home: {
 		title: 'Welcome to TBD',
