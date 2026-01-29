@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { tbdPlugin } from '../../vite-plugin'
-import { TBD } from '../../runtime'
+import { tbd } from '@src/vite'
+import { TBD } from '@src/runtime'
 
 describe('Vite Plugin Integration', () => {
-	const plugin: any = tbdPlugin()
+	const plugin: any = tbd()
 
 	it('should transform html into a js module', async () => {
 		const html = `

@@ -1,34 +1,19 @@
 import type { Plugin, ResolvedConfig } from 'vite'
-import { parse } from './compiler/parser'
-import { compile } from './compiler/codegen'
+import { parse } from '@src/compiler/parser'
+import { compile } from '@src/compiler/codegen'
+import { resolvePageName } from '@src/utils/routing'
 import path from 'path'
-
-export interface TBDOptions {
-	resolvePath?: (specifier: string) => string
-}
-
-function resolvePageNameFromUrl(url: string): string {
-	const [pathPart] = url.split('?')
-	let clean = pathPart || '/'
-	if (clean === '/' || clean === '') return 'index'
-	// If it ends with a slash, treat as /foo/ -> foo/index
-	if (clean.endsWith('/')) clean = clean + 'index'
-	clean = clean.replace(/^\//, '')
-	clean = clean.replace(/\.html$/, '')
-	return clean || 'index'
-}
+import type { TBDOptions } from '@src/types'
 
 export function tbd(options: TBDOptions = {}): Plugin {
 	const clientScripts = new Map<string, string>()
 	let config: ResolvedConfig
-	let appDir: string
 
 	return {
 		name: 'vite-plugin-tbd',
 
 		configResolved(resolvedConfig) {
 			config = resolvedConfig
-			appDir = path.resolve(config.root, 'app')
 		},
 
 		configureServer(server) {
@@ -54,8 +39,8 @@ export function tbd(options: TBDOptions = {}): Plugin {
 				if (ext && ext !== '.html') return next()
 
 				try {
-					const pageName = resolvePageNameFromUrl(req.url)
-					const mod = await server.ssrLoadModule('/src/runtime/context.ts')
+					const pageName = resolvePageName(req.url)
+					const mod = await server.ssrLoadModule('/src/runtime/instance.ts')
 					const rendered = await mod.tbd.render(pageName)
 					const transformed = await server.transformIndexHtml(req.url, rendered)
 					res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -112,7 +97,7 @@ export function tbd(options: TBDOptions = {}): Plugin {
 				}
 
 				const generated = compile(parsed, {
-					appDir,
+					// appDir removed
 					root: config.root,
 					clientScriptUrl,
 					resolvePath: options.resolvePath,

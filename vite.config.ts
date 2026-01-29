@@ -1,9 +1,9 @@
-import { defineConfig, type PluginOption } from 'vite'
-import { Features } from 'lightningcss'
+import { tbd } from './src/vite'
 import { nitro } from 'nitro/vite'
-import { tbd } from './src/vite-plugin'
-import { loadTsconfigAliases } from './src/utils/tsconfig-aliases'
+import { defineConfig, type PluginOption } from 'vite'
 
+// TODO: Can we move this to into tbd and call tbd.loadAliases() or similar?
+import { loadTsconfigAliases } from './src/utils/aliases'
 const { aliases, resolvePath } = loadTsconfigAliases(process.cwd())
 const plugins: PluginOption[] = [tbd({ resolvePath })]
 
@@ -13,13 +13,8 @@ if (process.env.WITH_NITRO === 'true') {
 
 export default defineConfig({
 	plugins,
+	// TODO: Consider Node.js Subpath Imports instead of Tsconfig paths?
 	resolve: { alias: aliases },
-	css: {
-		transformer: 'lightningcss',
-		lightningcss: {
-			exclude: Features.LightDark,
-		},
-	},
 	// Enable a dev proxy to an API server (e.g., Nitro) when TBD_API_PROXY is set.
 	server: process.env.TBD_API_PROXY
 		? {

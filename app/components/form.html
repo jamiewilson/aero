@@ -1,12 +1,20 @@
+<script on:build>
+	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
+</script>
+
 <!-- Alpine x-data & @htmx:after-swap example -->
-<section x-data="{ input: '', dismiss(el) { setTimeout(() => (el.innerHTML = ''), 3000) }}">
+<section x-data="{ input: '', dismiss: ${dismiss} }">
 	<p>Test the server:</p>
-	<form hx-post="/api/submit" hx-target="[hx-toast]" hx-swap="innerHTML">
+	<form
+		hx-post="/api/submit"
+		hx-on::after-request="if(event.detail.successful) this.reset()"
+		hx-target="[hx-toast]"
+		hx-swap="innerHTML">
 		<input x-model="input" type="text" name="message" placeholder="Enter a message" />
 		<button type="submit" :disabled="!input.length">{ site.home.cta }</button>
 	</form>
 
-	<span hx-toast @htmx:after-swap.camel="dismiss($el)" class="toast"></span>
+	<span class="toast" hx-toast @htmx:after-swap="dismiss($el)"></span>
 
 	<style>
 		@scope {
@@ -19,9 +27,3 @@
 		}
 	</style>
 </section>
-
-<script on:client>
-	function dismissToast(el) {
-		setTimeout(() => (el.innerHTML = ''), 3000)
-	}
-</script>

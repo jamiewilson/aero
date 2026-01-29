@@ -1,7 +1,7 @@
 import { defineHandler, readBody } from 'nitro/h3'
 
 export default defineHandler(async event => {
-	const body = (await readBody(event)) as { message: string }
+	const body = (await readBody(event)) as SubmitPost
 	return `
 		<div class="toast-content">
 			<span>Server received POST:</span>

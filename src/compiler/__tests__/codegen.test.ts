@@ -21,7 +21,6 @@ async function execute(code: string, context = {}) {
 }
 
 const mockOptions = {
-	appDir: '/Users/jamie/dev/tbd/app',
 	root: '/Users/jamie/dev/tbd',
 	resolvePath: (v: string) => v,
 }

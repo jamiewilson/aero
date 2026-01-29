@@ -1,6 +1,7 @@
-import type { ParseResult } from './parser'
+import type { ParseResult, CompileOptions } from '../types'
 import { parseHTML } from 'linkedom'
-import path from 'path'
+import { Resolver } from './resolver'
+import { compileInterpolation } from './helpers'
 
 const VOID_TAGS = new Set([
 	'area',
@@ -19,52 +20,14 @@ const VOID_TAGS = new Set([
 	'wbr',
 ])
 
-export interface CompileOptions {
-	appDir: string
-	root: string
-	clientScriptUrl?: string
-	resolvePath?: (specifier: string) => string
-}
-
 class Compiler {
-	private appDir: string
-	private root: string
-	private resolvePathFn: (specifier: string) => string
+	private resolver: Resolver
 
 	constructor(options: CompileOptions) {
-		this.appDir = options.appDir
-		this.root = options.root
-		this.resolvePathFn = options.resolvePath || ((v: string) => v)
-	}
-
-	private normalizeResolved(next: string): string {
-		if (path.isAbsolute(next)) {
-			next = '/' + path.relative(this.root, next)
-		}
-		return next.replace(/\\/g, '/')
-	}
-
-	resolveImport(specifier: string): string {
-		let next = this.resolvePathFn(specifier)
-		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
-		if (!looksPath) return specifier
-
-		next = this.normalizeResolved(next)
-
-		const hasExt = path.extname(next) !== ''
-		const canAutoHtml = !hasExt && !next.endsWith('/') && !next.includes('?')
-		if (canAutoHtml) {
-			next = `${next}.html`
-		}
-		return next
-	}
-
-	private resolveAttrValue(value: string): string {
-		let next = this.resolvePathFn(value)
-		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
-		if (!looksPath) return value
-		next = this.normalizeResolved(next)
-		return next
+		this.resolver = new Resolver({
+			root: options.root,
+			resolvePath: options.resolvePath,
+		})
 	}
 
 	compileNode(node: any, skipInterpolation = false): string {
@@ -79,12 +42,12 @@ class Compiler {
 	}
 
 	private compileText(node: any, skipInterpolation: boolean): string {
-		let text = node.textContent || ''
-		text = text.replace(/`/g, '\\`')
-		if (!skipInterpolation) {
-			text = text.replace(/{([\s\S]+?)}/g, '${$1}')
+		const text = node.textContent || ''
+		if (skipInterpolation) {
+			// Just escape backticks if we're not interpolating
+			return text.replace(/`/g, '\\`')
 		}
-		return text
+		return compileInterpolation(text)
 	}
 
 	private compileElement(node: any, skipInterpolation: boolean): string {
@@ -112,10 +75,13 @@ class Compiler {
 				}
 
 				let val = attr.value.replace(/`/g, '\\`')
-				val = this.resolveAttrValue(val)
+				val = this.resolver.resolveAttrValue(val)
 
 				const isAlpine = /^(x-|[@:.]).*/.test(attr.name)
 				if (!isAlpine) {
+					// Use the helper logic (conceptually), but compileInterpolation handles the whole string,
+					// whereas here we just want to replace the curlies within the attr value.
+					// We can reuse the same regex logic.
 					val = val.replace(/{([\s\S]+?)}/g, '${$1}')
 				}
 				attributes.push(`${attr.name}="${val}"`)
@@ -127,9 +93,7 @@ class Compiler {
 		if (VOID_TAGS.has(tagName)) {
 			const elementCode = `<${tagName}${attrString}>`
 			if (loopData) {
-				return `\${ ${loopData.items}.map(${loopData.item} => \
-\`${elementCode}\
-\`).join('') }`
+				return `\${ ${loopData.items}.map(${loopData.item} => \ \`${elementCode}\ \`).join('') }`
 			}
 			return elementCode
 		}
@@ -234,13 +198,19 @@ class Compiler {
 }
 
 export function compile(parsed: ParseResult, options: CompileOptions): string {
+	// Initialize the resolver separately so we can use it for import resolution before creating the compiler instance
+	const resolver = new Resolver({
+		root: options.root,
+		resolvePath: options.resolvePath,
+	})
+	
 	const compiler = new Compiler(options)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
 	const importRegex = /import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\4/g
 	script = script.replace(importRegex, (m, name, names, starName, q, p) => {
-		const resolved = compiler.resolveImport(p)
+		const resolved = resolver.resolveImport(p)
 		if (name) {
 			return `const ${name} = (await import(${q}${resolved}${q})).default`
 		} else if (names) {
@@ -262,9 +232,10 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		},
 	)
 
-	const { document } = parseHTML(
-		`<!DOCTYPE html><html><body>${expandedTemplate}</body></html>`,
-	)
+	const { document } = parseHTML(`<!DOCTYPE html>
+<html lang="en">
+<body>${expandedTemplate}</body>
+</html>`)
 
 	const scripts = document.querySelectorAll('script')
 	for (const s of scripts) {
