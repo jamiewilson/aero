@@ -1,4 +1,5 @@
 import { defineHandler, readBody } from 'nitro/h3'
+import type { SubmitPost } from '@src/types'
 
 export default defineHandler(async event => {
 	const body = (await readBody(event)) as SubmitPost

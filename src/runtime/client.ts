@@ -1,9 +1,5 @@
 import { resolvePageName } from '@src/utils/routing'
-
-type PageFragments = {
-	head: string
-	body: string
-}
+import type { PageFragments } from '@src/types'
 
 function extractDocumentParts(html: string): PageFragments {
 	const parser = new DOMParser()

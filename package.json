@@ -1,13 +1,14 @@
 {
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "WITH_NITRO=true vite dev",
 		"dev:nitro": "WITH_NITRO=true vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"dev:api": "nitro dev",
 		"build:api": "nitro build",
-		"preview:api": "nitro preview"
+		"preview:api": "nitro preview",
+		"test": "vitest run src/compiler/"
 	},
 	"packageManager": "pnpm@10.28.0",
 	"dependencies": {
@@ -19,6 +20,7 @@
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"@types/node": "^25.0.7",
+		"esbuild": "^0.27.2",
 		"get-tsconfig": "^4.13.0",
 		"lightningcss": "^1.30.2",
 		"linkedom": "^0.18.12",

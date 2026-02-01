@@ -14,12 +14,12 @@ export function parse(html: string): ParseResult {
 	let clientContent: string[] = []
 
 	// Match <script ...>...</script>
-	const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
+	const SCRIPT_REGEX = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
 
 	const scriptsToRemove: { fullTag: string; type: 'build' | 'client'; content: string }[] = []
 
 	let match
-	while ((match = scriptRegex.exec(html)) !== null) {
+	while ((match = SCRIPT_REGEX.exec(html)) !== null) {
 		const fullTag = match[0]
 		const content = match[1] || ''
 

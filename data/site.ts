@@ -2,8 +2,8 @@ import { ThemeMode } from '~/data/theme'
 
 export default {
 	meta: {
-		title: 'TBD',
-		description: 'Site Description TBD',
+		title: 'Site Meta Title',
+		description: 'Site Meta Description',
 		url: 'https://tbd.dev',
 		ogImage: '/og-image.png',
 	},
@@ -12,8 +12,8 @@ export default {
 		default: ThemeMode.System,
 	},
 	home: {
-		title: 'Welcome to TBD',
-		subtitle: `A framework that feels like native HTML. Because it is native HTML.`,
+		title: 'TBD',
+		subtitle: `A mostly-native web framework.`,
 		cta: 'Send POST Request',
 	},
 	about: {

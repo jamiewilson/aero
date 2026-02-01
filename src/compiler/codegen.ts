@@ -20,6 +20,56 @@ const VOID_TAGS = new Set([
 	'wbr',
 ])
 
+const ATTR_DATA_EACH = 'data-each'
+const ATTR_DATA_PROPS = 'data-props'
+const ATTR_NAME = 'name'
+const ATTR_SLOT = 'slot'
+const ATTR_ON_CLIENT = 'on:client'
+const ATTR_ON_BUILD = 'on:build'
+const SLOT_DEFAULT = 'default'
+const TAG_SLOT = 'slot'
+
+const DATA_EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
+const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
+const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
+const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
+const DATA_EACH_BRACES_REGEX = /^{|}$/g
+const IMPORT_REGEX = /import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\4/g
+const SELF_CLOSING_TAG_REGEX = /<([a-z0-9-]+)([^>]*?)\/>/gi
+const SELF_CLOSING_TAIL_REGEX = /\/>$/
+
+/** Emits code for ${ items.map(item => `body`).join('') } without nested template literal escaping. */
+function emitMapJoin(items: string, item: string, body: string): string {
+	return '${ ' + items + '.map(' + item + ' => `' + body + "`).join('') }"
+}
+
+/** Escapes backticks in a string for safe embedding inside generated template literals. */
+function escapeBackticks(s: string): string {
+	return s.replace(/`/g, '\\`')
+}
+
+/** Emits code for slots['name'] || `defaultContent` without nested template literal escaping. */
+function emitSlotFallback(slotName: string, defaultContent: string): string {
+	return "${ slots['" + slotName + "'] || `" + defaultContent + '` }'
+}
+
+/** Emits code for a slots object { "name": `content` } without nested template literal escaping. */
+function emitSlotsObject(slotsMap: Record<string, string>): string {
+	const entries = Object.entries(slotsMap)
+		.map(([k, v]) => '"' + k + '": `' + v + '`')
+		.join(', ')
+	return '{ ' + entries + ' }'
+}
+
+/** Emits the top-level render function wrapper (script + template return). */
+function emitRenderFunction(script: string, templateCode: string): string {
+	return `export default async function(tbd) {
+		const { site, slots = {}, renderComponent } = tbd;
+		${script}
+		return \`${templateCode}\`;
+	}`.trim()
+}
+
 class Compiler {
 	private resolver: Resolver
 
@@ -41,11 +91,24 @@ class Compiler {
 		}
 	}
 
+	/** Compiles a list of nodes (e.g. body children) with interpolation enabled. */
+	compileFragment(nodes: NodeList | undefined): string {
+		return this.compileChildNodes(nodes, false)
+	}
+
+	private compileChildNodes(nodes: NodeList | undefined, skipInterpolation: boolean): string {
+		if (!nodes) return ''
+		let out = ''
+		for (let i = 0; i < nodes.length; i++) {
+			out += this.compileNode(nodes[i], skipInterpolation)
+		}
+		return out
+	}
+
 	private compileText(node: any, skipInterpolation: boolean): string {
 		const text = node.textContent || ''
 		if (skipInterpolation) {
-			// Just escape backticks if we're not interpolating
-			return text.replace(/`/g, '\\`')
+			return escapeBackticks(text)
 		}
 		return compileInterpolation(text)
 	}
@@ -53,11 +116,11 @@ class Compiler {
 	private compileElement(node: any, skipInterpolation: boolean): string {
 		const tagName = node.tagName.toLowerCase()
 
-		if (tagName === 'slot') {
+		if (tagName === TAG_SLOT) {
 			return this.compileSlot(node, skipInterpolation)
 		}
 
-		if (tagName.endsWith('-component') || tagName.endsWith('-layout')) {
+		if (COMPONENT_SUFFIX_REGEX.test(tagName)) {
 			return this.compileComponent(node, tagName, skipInterpolation)
 		}
 
@@ -67,22 +130,19 @@ class Compiler {
 		if (node.attributes) {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
-				if (attr.name === 'data-for') {
-					const content = attr.value.replace(/^{|}$/g, '').trim()
-					const match = content.match(/^(\w+)\s+in\s+(.+)$/)
+				if (attr.name === ATTR_DATA_EACH) {
+					const content = attr.value.replace(DATA_EACH_BRACES_REGEX, '').trim()
+					const match = content.match(DATA_EACH_REGEX)
 					if (match) loopData = { item: match[1], items: match[2] }
 					continue
 				}
 
-				let val = attr.value.replace(/`/g, '\\`')
+				let val = escapeBackticks(attr.value)
 				val = this.resolver.resolveAttrValue(val)
 
-				const isAlpine = /^(x-|[@:.]).*/.test(attr.name)
+				const isAlpine = ALPINE_ATTR_REGEX.test(attr.name)
 				if (!isAlpine) {
-					// Use the helper logic (conceptually), but compileInterpolation handles the whole string,
-					// whereas here we just want to replace the curlies within the attr value.
-					// We can reuse the same regex logic.
-					val = val.replace(/{([\s\S]+?)}/g, '${$1}')
+					val = val.replace(CURLY_INTERPOLATION_REGEX, '${$1}')
 				}
 				attributes.push(`${attr.name}="${val}"`)
 			}
@@ -93,41 +153,30 @@ class Compiler {
 		if (VOID_TAGS.has(tagName)) {
 			const elementCode = `<${tagName}${attrString}>`
 			if (loopData) {
-				return `\${ ${loopData.items}.map(${loopData.item} => \ \`${elementCode}\ \`).join('') }`
+				return emitMapJoin(loopData.items, loopData.item, elementCode)
 			}
 			return elementCode
 		}
 
-		let children = ''
-		if (node.childNodes) {
-			const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
-			for (let i = 0; i < node.childNodes.length; i++) {
-				children += this.compileNode(node.childNodes[i], childSkip)
-			}
-		}
-
+		const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
+		const children = this.compileChildNodes(node.childNodes, childSkip)
 		const elementCode = `<${tagName}${attrString}>${children}</${tagName}>`
 
 		if (loopData) {
-			return `\${ ${loopData.items}.map(${loopData.item} => \`${elementCode}\`).join('') }`
+			return emitMapJoin(loopData.items, loopData.item, elementCode)
 		}
 
 		return elementCode
 	}
 
 	private compileSlot(node: any, skipInterpolation: boolean): string {
-		const slotName = node.getAttribute('name') || 'default'
-		let defaultContent = ''
-		if (node.childNodes) {
-			for (let i = 0; i < node.childNodes.length; i++) {
-				defaultContent += this.compileNode(node.childNodes[i], skipInterpolation)
-			}
-		}
-		return `\${slots['${slotName}'] || \`${defaultContent}\`}`
+		const slotName = node.getAttribute(ATTR_NAME) || SLOT_DEFAULT
+		const defaultContent = this.compileChildNodes(node.childNodes, skipInterpolation)
+		return emitSlotFallback(slotName, defaultContent)
 	}
 
 	private compileComponent(node: any, tagName: string, skipInterpolation: boolean): string {
-		const kebabBase = tagName.replace(/-(component|layout)$/, '')
+		const kebabBase = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
 		const baseName = kebabBase.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 
 		const propsEntries: string[] = []
@@ -136,26 +185,19 @@ class Compiler {
 		if (node.attributes) {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
-				if (attr.name === 'data-for') continue
+				if (attr.name === ATTR_DATA_EACH) continue
 
-				if (attr.name === 'data-props') {
+				if (attr.name === ATTR_DATA_PROPS) {
 					const value = attr.value?.trim() || ''
-					if (!value) {
-						dataPropsExpression = '...props'
-					} else if (value.startsWith('{') && value.endsWith('}')) {
-						const inner = value.slice(1, -1).trim()
-						if (inner.startsWith('...')) {
-							dataPropsExpression = inner
-						} else {
-							dataPropsExpression = inner
-						}
-					} else {
-						dataPropsExpression = `...${value}`
-					}
+					dataPropsExpression = !value
+						? '...props'
+						: value.startsWith('{') && value.endsWith('}')
+							? value.slice(1, -1).trim()
+							: `...${value}`
 					continue
 				}
 
-				let val = attr.value.replace(/`/g, '\\`')
+				let val = escapeBackticks(attr.value)
 				if (val.startsWith('{') && val.endsWith('}')) {
 					val = val.substring(1, val.length - 1)
 				} else {
@@ -175,23 +217,40 @@ class Compiler {
 			propsString = `{ ${propsEntries.join(', ')} }`
 		}
 
-		const slotsMap: Record<string, string> = { default: '' }
+		const slotsMap: Record<string, string> = { [SLOT_DEFAULT]: '' }
 		if (node.childNodes) {
 			for (let i = 0; i < node.childNodes.length; i++) {
 				const child = node.childNodes[i]
-				let slotName = 'default'
+				let slotName = SLOT_DEFAULT
+
+				// Check if this is a slot passthrough element
+				// A slot with both 'name' and 'slot' attributes passes through from parent to child
 				if (child.nodeType === 1) {
-					const attr = child.getAttribute('slot')
-					if (attr) slotName = attr
+					const childTagName = child.tagName?.toLowerCase()
+					const slotAttr = child.getAttribute(ATTR_SLOT)
+
+					// If it's a <slot> element with both 'name' and 'slot' attributes, it's a passthrough
+					if (childTagName === TAG_SLOT && child.hasAttribute(ATTR_NAME) && slotAttr) {
+						const passthroughName = child.getAttribute(ATTR_NAME)
+						slotName = slotAttr
+						const defaultContent = this.compileChildNodes(child.childNodes, skipInterpolation)
+						const passthroughContent = emitSlotFallback(passthroughName, defaultContent)
+
+						if (!slotsMap[slotName]) slotsMap[slotName] = ''
+						slotsMap[slotName] += passthroughContent
+						continue
+					}
+
+					// Normal slot attribute handling
+					if (slotAttr) slotName = slotAttr
 				}
+
 				if (!slotsMap[slotName]) slotsMap[slotName] = ''
 				slotsMap[slotName] += this.compileNode(child, skipInterpolation)
 			}
 		}
 
-		const slotsString = `{ ${Object.entries(slotsMap)
-			.map(([k, v]) => `${k}: \`${v}\``)
-			.join(', ')} }`
+		const slotsString = emitSlotsObject(slotsMap)
 
 		return `\${ await tbd.renderComponent(${baseName}, ${propsString}, ${slotsString}) }`
 	}
@@ -203,13 +262,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		root: options.root,
 		resolvePath: options.resolvePath,
 	})
-	
+
 	const compiler = new Compiler(options)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
-	const importRegex = /import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\4/g
-	script = script.replace(importRegex, (m, name, names, starName, q, p) => {
+	script = script.replace(IMPORT_REGEX, (m, name, names, starName, q, p) => {
 		const resolved = resolver.resolveImport(p)
 		if (name) {
 			return `const ${name} = (await import(${q}${resolved}${q})).default`
@@ -222,48 +280,37 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	})
 
 	const expandedTemplate = parsed.template.replace(
-		/<([a-z0-9-]+)([^>]*?)\/>/gi,
+		SELF_CLOSING_TAG_REGEX,
 		(match, tagName, attrs) => {
 			const tag = String(tagName).toLowerCase()
 			if (VOID_TAGS.has(tag)) {
-				return match.replace(/\/>$/, '>')
+				return match.replace(SELF_CLOSING_TAIL_REGEX, '>')
 			}
 			return `<${tagName}${attrs}></${tagName}>`
 		},
 	)
 
-	const { document } = parseHTML(`<!DOCTYPE html>
-<html lang="en">
-<body>${expandedTemplate}</body>
-</html>`)
+	const { document } = parseHTML(`
+		<html lang="en">
+			<body>${expandedTemplate}</body>
+		</html>
+	`)
 
 	const scripts = document.querySelectorAll('script')
 	for (const s of scripts) {
+		// Require on:client or on:build for all script tags (except external scripts with src)
 		if (
-			!s.hasAttribute('type') &&
-			!s.hasAttribute('on:client') &&
-			!s.hasAttribute('on:build')
+			!s.hasAttribute(ATTR_ON_CLIENT) &&
+			!s.hasAttribute(ATTR_ON_BUILD) &&
+			!s.hasAttribute('src')
 		) {
-			s.setAttribute('type', 'module')
+			throw new Error('Script tags must have on:client or on:build attribute.')
 		}
 	}
 
-	let templateCode = ''
-	if (document.body) {
-		for (let i = 0; i < document.body.childNodes.length; i++) {
-			templateCode += compiler.compileNode(document.body.childNodes[i])
-		}
-	}
-
+	let templateCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
 	if (options.clientScriptUrl) {
 		templateCode += `<script type="module" src="${options.clientScriptUrl}"></script>`
 	}
-
-	return `
-		export default async function(tbd) {
-			const { site, slots = {}, renderComponent } = tbd;
-			${script}
-			return \`${templateCode}\`;
-		}
-	`.trim()
+	return emitRenderFunction(script, templateCode)
 }

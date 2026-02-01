@@ -6,14 +6,15 @@
 	const props = tbd.props
 </script>
 
-<!doctype html>
-<html lang="en">
+<html dir="ltr" lang="en">
 	<head>
 		<meta-component data-props />
 		<script type="module" src="@app/index.ts"></script>
 	</head>
 	<body id="app" :data-theme="$store.theme.current" x-cloak>
-		<nav-component />
+		<nav-component>
+			<slot name="into-nav"></slot>
+		</nav-component>
 		<slot></slot>
 		<footer-component />
 	</body>

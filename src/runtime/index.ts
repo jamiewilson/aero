@@ -1,6 +1,9 @@
+import type { MountOptions } from '../types'
+
 export class TBD {
 	private globals: Record<string, any> = {}
 	private pagesMap: Record<string, any> = {}
+	mount?: (options?: MountOptions) => Promise<void>
 
 	global(name: string, value: any) {
 		this.globals[name] = value
@@ -25,6 +28,11 @@ export class TBD {
 		let target = component
 		if (typeof component === 'string') {
 			target = this.pagesMap[component]
+
+			// Fallback: If index is not found, try home
+			if (!target && component === 'index') {
+				target = this.pagesMap['home']
+			}
 		}
 
 		if (!target) {
