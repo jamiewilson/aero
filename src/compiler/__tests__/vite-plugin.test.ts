@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
+import path from 'path'
 import { tbd } from '@src/vite'
 import { TBD } from '@src/runtime'
 
 describe('Vite Plugin Integration', () => {
 	const plugin: any = tbd()
+
+	plugin.configResolved({ root: process.cwd() })
 
 	it('should transform html into a js module', async () => {
 		const html = `
@@ -26,15 +29,21 @@ describe('Vite Plugin Integration', () => {
             </script>
             <div>Client</div>
         `
-		const id = '/src/pages/client.html'
+		const id = path.join(process.cwd(), 'src/pages/client.html')
 
-		// 1. Transform the HTML
+		// 1. Transform the HTML – client script URL is root-relative and .js (no user path, no .html)
 		const result: any = plugin.transform(html, id)
-		expect(result.code).toContain('client.html?on-client')
+		expect(result.code).toContain('/@tbd/client/')
+		expect(result.code).toContain('src/pages/client.js')
+		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
 
-		// 2. Load the virtual module
-		const virtualId = `${id}?on-client`
-		const resolvedId = plugin.resolveId(virtualId)
+		// 2. Resolve and load the virtual module
+		const relativePath = path
+			.relative(process.cwd(), id)
+			.replace(/\\/g, '/')
+			.replace(/\.html$/i, '.js')
+		const virtualId = '/@tbd/client/' + relativePath
+		const resolvedId = await plugin.resolveId(virtualId)
 		expect(resolvedId).toBe(virtualId)
 
 		const loadedContent = plugin.load(virtualId)
@@ -44,13 +53,8 @@ describe('Vite Plugin Integration', () => {
 	it('should render a transformed module using the runtime', async () => {
 		const html = '<h1>{ tbd.props.title }</h1>'
 		const id = '/src/pages/props.html'
-
 		const result: any = plugin.transform(html, id)
-
 		const tbd = new TBD()
-
-		// Actually, the test was manually executing the code.
-		// Let's just fix the execution logic.
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)

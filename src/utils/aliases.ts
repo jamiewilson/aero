@@ -1,14 +1,8 @@
-import { getTsconfig } from 'get-tsconfig'
 import path from 'node:path'
+import { getTsconfig } from 'get-tsconfig'
+import type { UserAlias, AliasResult } from '@src/types'
 
-type UserAliases = Array<{ find: string; replacement: string }>
-
-export interface TsconfigAliasResult {
-	aliases: UserAliases
-	resolvePath?: (specifier: string) => string
-}
-
-export function loadTsconfigAliases(root: string): TsconfigAliasResult {
+export function loadTsconfigAliases(root: string): AliasResult {
 	const result = getTsconfig(root)
 	if (!result) return { aliases: [], resolvePath: undefined }
 
@@ -17,7 +11,7 @@ export function loadTsconfigAliases(root: string): TsconfigAliasResult {
 	const paths = options?.paths || {}
 	const baseUrl = options?.baseUrl || '.'
 	const baseDir = path.resolve(path.dirname(result.path || root), baseUrl)
-	const aliases: UserAliases = []
+	const aliases: UserAlias[] = []
 
 	for (const [key, values] of Object.entries(paths)) {
 		const valueArr = Array.from(values)

@@ -1,8 +1,13 @@
 import { TBD } from '@src/runtime'
 import site from '~/data/site'
 
-const instance = (globalThis as any).__TBD_INSTANCE__ || new TBD()
-const listeners = (globalThis as any).__TBD_LISTENERS__ || new Set<() => void>()
+declare global {
+	var __TBD_INSTANCE__: TBD | undefined
+	var __TBD_LISTENERS__: Set<() => void> | undefined
+}
+
+const instance = globalThis.__TBD_INSTANCE__ || new TBD()
+const listeners = globalThis.__TBD_LISTENERS__ || new Set<() => void>()
 const tbd = instance
 
 const onUpdate = (cb: () => void) => {
@@ -14,12 +19,12 @@ const notify = () => {
 	listeners.forEach((cb: () => void) => cb())
 }
 
-if (!(globalThis as any).__TBD_INSTANCE__) {
-	;(globalThis as any).__TBD_INSTANCE__ = instance
+if (!globalThis.__TBD_INSTANCE__) {
+	globalThis.__TBD_INSTANCE__ = instance
 }
 
-if (!(globalThis as any).__TBD_LISTENERS__) {
-	;(globalThis as any).__TBD_LISTENERS__ = listeners
+if (!globalThis.__TBD_LISTENERS__) {
+	globalThis.__TBD_LISTENERS__ = listeners
 }
 
 // Auto-register pages, components, and layouts using root-relative globs
@@ -35,13 +40,6 @@ tbd.global('site', site)
 notify()
 
 if (import.meta.hot) {
-	import.meta.hot.accept('~/data/site', updated => {
-		if (updated) {
-			tbd.global('site', updated.site)
-			notify()
-		}
-	})
-
 	import.meta.hot.accept()
 }
 

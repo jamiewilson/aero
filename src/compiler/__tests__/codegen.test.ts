@@ -21,7 +21,7 @@ async function execute(code: string, context = {}) {
 }
 
 const mockOptions = {
-	root: '/Users/jamie/dev/tbd',
+	root: '/' /* What is this?? */,
 	resolvePath: (v: string) => v,
 }
 
@@ -63,13 +63,13 @@ describe('Codegen', () => {
 		expect(output).toBe('<div>Static</div>')
 	})
 
-	it('should compile data-for loops', async () => {
+	it('should compile data-each loops', async () => {
 		const html = `
             <script on:build>
                 const items = ['a', 'b'];
             </script>
             <ul>
-                <li data-for="{ item in items }">{ item }</li>
+                <li data-each="{ item in items }">{ item }</li>
             </ul>
         `
 		const parsed = parse(html)
@@ -79,7 +79,7 @@ describe('Codegen', () => {
 		// Normalize whitespace for easier comparison if needed, but contain should work
 		expect(output).toContain('<li>a</li>')
 		expect(output).toContain('<li>b</li>')
-		expect(output).not.toContain('data-for')
+		expect(output).not.toContain('data-each')
 	})
 
 	it('should resolve component tags', async () => {
@@ -177,16 +177,28 @@ describe('Codegen', () => {
 		expect(code).not.toContain('import { foo } from')
 	})
 
-	it('should preserve plain script tags and mark them as type="module"', async () => {
+	it('should throw error for script tags without on:client or on:build', async () => {
 		const html = `
             <script>console.log('regular');</script>
+            <div>Content</div>
+        `
+		const parsed = parse(html)
+
+		expect(() => compile(parsed, mockOptions)).toThrow(
+			'Script tags must have on:client or on:build attribute',
+		)
+	})
+
+	it('should allow external scripts with src attribute', async () => {
+		const html = `
+            <script src="https://example.com/script.js"></script>
             <div>Content</div>
         `
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
 		const output = await execute(code)
-		expect(output).toContain('<script type="module">console.log(\'regular\');</script>')
+		expect(output).toContain('<script src="https://example.com/script.js"></script>')
 	})
 
 	it('should inject clientScriptUrl if provided', async () => {
@@ -317,5 +329,99 @@ describe('Codegen', () => {
 
 		await execute(code, tbd)
 		expect(renderedProps[0]).toEqual({ base: 'value', extra: 'additional' })
+	})
+
+	it('should support slot passthrough (receiving and forwarding named slots)', async () => {
+		// This tests the scenario: grandparent -> parent -> child
+		// where parent receives a slot and passes it through to child
+		const html = `
+            <script on:build>
+                const parent = { name: 'parent' };
+                const child = { name: 'child' };
+            </script>
+            <parent-component>
+                <div slot="nav">Custom Navigation</div>
+            </parent-component>
+        `
+
+		const parentTemplate = `
+            <script on:build>
+                const child = { name: 'child' };
+            </script>
+            <child-component>
+                <slot name="nav" slot="nav"></slot>
+            </child-component>
+        `
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		// Parse parent template to see what it will pass to child
+		const parsedParent = parse(parentTemplate)
+		const parentCode = compile(parsedParent, mockOptions)
+
+		const calls: any[] = []
+		const tbd = {
+			renderComponent: async (comp: any, props: any, slots: any) => {
+				calls.push({ comp, props, slots })
+
+				// If this is the parent component, execute its template with the received slots
+				if (comp.name === 'parent') {
+					const bodyStart = parentCode.indexOf('{')
+					const bodyEnd = parentCode.lastIndexOf('}')
+					const body = parentCode.substring(bodyStart + 1, bodyEnd)
+					const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+					const renderFn = new AsyncFunction('tbd', body)
+					return await renderFn({ ...tbd, slots })
+				}
+
+				// For child, just return slots to verify
+				if (comp.name === 'child') {
+					return slots.nav || ''
+				}
+
+				return ''
+			},
+		}
+
+		const output = await execute(code, tbd)
+
+		// Verify that parent received the nav slot
+		const parentCall = calls.find(c => c.comp.name === 'parent')
+		expect(parentCall).toBeDefined()
+		expect(parentCall.slots.nav).toContain('Custom Navigation')
+
+		// Verify that child also received the nav slot (passed through from parent)
+		const childCall = calls.find(c => c.comp.name === 'child')
+		expect(childCall).toBeDefined()
+		expect(childCall.slots.nav).toContain('Custom Navigation')
+
+		// Final output should contain the navigation content
+		expect(output).toContain('Custom Navigation')
+	})
+
+	it('should support hyphenated slot names', async () => {
+		const html = `
+            <script on:build>
+                const myComp = { name: 'comp' };
+            </script>
+            <my-comp-component>
+                <div slot="side-bar">Side Content</div>
+            </my-comp-component>
+        `
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const calls: any[] = []
+		const tbd = {
+			renderComponent: async (comp: any, props: any, slots: any) => {
+				calls.push({ comp, slots })
+				return ''
+			},
+		}
+
+		await execute(code, tbd)
+
+		expect(calls[0].slots['side-bar']).toContain('Side Content')
 	})
 })

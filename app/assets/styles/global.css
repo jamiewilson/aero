@@ -8,7 +8,11 @@
 @import 'utils.css';
 
 /* prettier-ignore */
-/** { outline: 0.1px solid red; } */
+/** { outline: 0.1px solid red; }*/
+
+/*@view-transition {
+	navigation: auto;
+}*/
 
 @layer base {
 	html,
@@ -17,11 +21,9 @@
 	}
 
 	body {
-		--font-family-classical-humanist:
-			optima, candara, 'Noto Sans', source-sans-pro, sans-serif;
 		color: var(--fg);
 		background: var(--bg);
-		font-family: var(--font-family-classical-humanist);
+		font-family: system-ui, sans-serif;
 		font-size: 18px;
 		text-align: center;
 		line-height: 1.5;
@@ -37,7 +39,7 @@
 	}
 
 	h1 {
-		font-weight: 600;
+		font-weight: 900;
 	}
 
 	section,

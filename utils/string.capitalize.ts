@@ -1,12 +1,9 @@
-// Example Usage:
-// const anotherSentence = 'this is a test string'
-// console.log(anotherSentence.capitalize())
-// Output: "This Is A Test String"
-
-if (!String.prototype.capitalize) {
-	String.prototype.capitalize = function (): string {
-		return this.toLowerCase().replace(/(?:^|\s)\w/g, match => {
-			return match.toUpperCase()
-		})
-	}
+/**
+ * Capitalizes the first letter of each word in a string.
+ * Example: "this is a test" -> "This Is A Test"
+ */
+export function capitalize(str: string): string {
+	return str.toLowerCase().replace(/(?:^|\s)\w/g, match => {
+		return match.toUpperCase()
+	})
 }

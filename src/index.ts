@@ -1,17 +1,12 @@
-import { tbd, onUpdate } from '@src/runtime/instance'
 import { TBD } from '@src/runtime'
+import { tbd, onUpdate } from '@src/runtime/instance'
 import { renderPage } from '@src/runtime/client'
-
+import type { MountOptions } from '@src/types'
 
 const coreRender = tbd.render.bind(tbd)
 
 let lastEl: HTMLElement
 let unsubscribe: () => void
-
-interface MountOptions {
-	target?: string | HTMLElement
-	onRender?: (root: HTMLElement) => void
-}
 
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
@@ -22,9 +17,11 @@ function mount(options: MountOptions = {}): Promise<void> {
 	if (!el) throw new Error(`Target element not found: ${target}`)
 
 	lastEl = el
-	const done = renderPage(el, coreRender).then(() => {
-		if (onRender) onRender(el)
-	})
+
+	// Skip initial render as we assume SSR provided the correct HTML.
+	// We just need to initialize any client-side logic (listeners, hydration, etc.)
+	if (onRender) onRender(el)
+	const done = Promise.resolve()
 
 	if (import.meta.hot && !unsubscribe) {
 		unsubscribe = onUpdate(() => {
@@ -39,6 +36,6 @@ function mount(options: MountOptions = {}): Promise<void> {
 	return done
 }
 
-(tbd as any).mount = mount
+tbd.mount = mount
 
 export default tbd as TBD & { mount: typeof mount }

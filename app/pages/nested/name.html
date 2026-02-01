@@ -1,9 +1,10 @@
 <!-- TODO: Support nested pages with name rendering to /nested/name -->
 <script on:build>
 	import base from '@layouts/base'
+	const props = tbd.props
 </script>
 
-<base-layout>
+<base-layout data-props>
 	<h1>Nested named page</h1>
 	<p>This page should be accessible at /nested/name</p>
 </base-layout>

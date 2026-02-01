@@ -11,7 +11,8 @@
 			"@images/*": ["./app/assets/images/*"],
 			"@components/*": ["./app/components/*"],
 			"@layouts/*": ["./app/layouts/*"],
-			"@pages/*": ["./app/pages/*"]
+			"@pages/*": ["./app/pages/*"],
+			"@utils/*": ["./src/utils/*"]
 		}
 	}
 }
