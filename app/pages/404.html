@@ -1,11 +1,13 @@
 <script on:build>
 	import base from '@layouts/base'
-	// FIXME: Cannot redeclare 'title' here
 
-	const props = { title: '404', description: 'Page not found' }
+	const props = {
+		title: '404',
+		description: 'Page not found',
+	}
 </script>
 
-<base-layout data-props>
+<base-layout props>
 	<main>
 		<h1>{ props.title } - { props.description }</h1>
 		<p>Sorry, the page you are looking for does not exist.</p>
