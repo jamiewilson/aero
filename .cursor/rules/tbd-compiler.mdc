@@ -1,0 +1,29 @@
+---
+description: TBD compiler, runtime, and Vite plugin conventions
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# TBD Compiler & Runtime
+
+## Modules
+
+- **parser.ts** - Extract script blocks, parse imports; use constants from `constants.ts` (ATTR_ON_BUILD, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
+- **codegen.ts** - Emit async render functions, handle `{ }` interpolation, `data-each`, `data-if`
+- **resolver.ts** - Resolve component/layout paths against path aliases
+- **vite/index.ts** - Virtual modules for client scripts; use `\0` prefix for Vite virtual module IDs (not `/@tbd/client/` in emitted IDs)
+- **runtime/** - `TBD` class, instance context, client entry
+
+## Constants (src/compiler/constants.ts)
+
+Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_ON_CLIENT`, `ATTR_ON_BUILD`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
+
+## Tests
+
+- Vitest in `src/compiler/__tests__/` (parser.test.ts, codegen.test.ts, vite-plugin.test.ts)
+- Run with `pnpm test` or `npx vitest`
+
+## Gotchas
+
+- Virtual client script IDs should use `\0` prefix for proper Vite handling
+- Slot passthrough: both `name` and `slot` on `<slot>` elements

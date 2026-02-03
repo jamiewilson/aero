@@ -1,0 +1,42 @@
+---
+description: TBD framework architecture and conventions
+alwaysApply: true
+---
+
+# TBD Framework - Architecture
+
+TBD is a static site generator with an HTML-first template engine.
+
+## Pipeline
+
+1. **Parser** (src/compiler/parser.ts) - Extracts `<script on:build>` and `<script on:client>` from HTML
+2. **Codegen** (src/compiler/codegen.ts) - Compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (src/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
+4. **Runtime** (src/runtime/index.ts) - `TBD` class renders pages and components with context
+
+## File Structure
+
+- `app/pages/` - Route pages (home.html → `/`, about.html → `/about`)
+- `app/components/` - Reusable components
+- `app/layouts/` - Layout wrappers with `<slot>` support
+- `data/` - Global data (site.ts exposed as `site` in templates)
+- `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
+- `src/compiler/` - Parser, codegen, resolver; tests in `__tests__/`
+
+## Commands
+
+- `pnpm run dev` - Vite dev server with HMR (WITH_NITRO=true)
+- `pnpm run build` - Static build to dist/
+- `pnpm run dev:api` - Nitro API only (port 3000)
+- `pnpm test` / `npx vitest` - Tests (Vitest)
+
+## Path Aliases (tsconfig)
+
+- `@components/*` → app/components/*
+- `@layouts/*` → app/layouts/*
+- `@pages/*` → app/pages/*
+- `@styles/*` → app/assets/styles/*
+- `@scripts/*` → app/assets/scripts/*
+- `@images/*` → app/assets/images/*
+- `@utils/*` → src/utils/*
+- `~/*` → project root

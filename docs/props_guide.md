@@ -26,38 +26,40 @@ Use `{ }` to evaluate JavaScript expressions:
 
 ### 3. Spread Syntax
 
-Spread an existing object using `data-props`:
+Spread an existing object using `data-props` or `props`:
 
 ```html
 <script on:build>
-  const myProps = { title: 'Hello', count: 42 }
+	const myProps = { title: 'Hello', count: 42 }
 </script>
 <my-component data-props="{ ...myProps }" />
+<my-component props="{ ...myProps }" />
 ```
 
 ### 4. Inline Object Literals
 
-Define props inline with `data-props`:
+Define props inline with `data-props` or `props`:
 
 ```html
 <my-component data-props="{ title: 'Hello', count: 42 }" />
+<my-component props="{ title: 'Hello', count: 42 }" />
 ```
 
 You can also use expressions:
 
 ```html
-<my-component data-props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
+<my-component props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
 ```
 
 ### 5. Shorthand (JavaScript-style)
 
-Like JavaScript's object shorthand (`{ props }` means `{ props: props }`), you can use `data-props` with no value to spread a `props` variable:
+Like JavaScript's object shorthand (`{ props }` means `{ props: props }`), you can use `data-props` or `props` with no value to spread a `props` variable:
 
 ```html
 <script on:build>
-  const props = { title: 'Hello', count: 42 }
+	const props = { title: 'Hello', count: 42 }
 </script>
-<my-component data-props />
+<my-component props />
 <!-- Equivalent to: data-props="{ ...props }" -->
 ```
 
@@ -77,13 +79,13 @@ Components access props by destructuring `tbd.props`:
 
 ```html
 <script on:build>
-  // Destructure the props you need
-  const { title, subtitle } = tbd.props
+	// Destructure the props you need
+	const { title, subtitle } = tbd.props
 </script>
 
 <header>
-  <h1>{ title }</h1>
-  <p>{ subtitle }</p>
+	<h1>{ title }</h1>
+	<p>{ subtitle }</p>
 </header>
 ```
 
@@ -91,7 +93,7 @@ Components access props by destructuring `tbd.props`:
 
 ```html
 <script on:build>
-  const { title = 'Default Title', subtitle } = tbd.props
+	const { title = 'Default Title', subtitle } = tbd.props
 </script>
 ```
 
@@ -99,7 +101,7 @@ Components access props by destructuring `tbd.props`:
 
 ```html
 <script on:build>
-  const { title, description } = tbd.props
+	const { title, description } = tbd.props
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
@@ -122,13 +124,14 @@ Inside `on:build` scripts, you have access to:
 ```html
 <!-- components/greeting.html -->
 <script on:build>
-  const { name } = tbd.props
+	const { name } = tbd.props
 </script>
 
 <h1>Hello, { name }!</h1>
 ```
 
 Usage:
+
 ```html
 <greeting-component name="World" />
 ```
@@ -138,12 +141,12 @@ Usage:
 ```html
 <!-- pages/index.html -->
 <script on:build>
-  import header from '@/components/header'
-  
-  const headerProps = {
-    title: site.home.title,
-    subtitle: site.home.subtitle.toUpperCase()
-  }
+	import header from '@/components/header'
+
+	const headerProps = {
+		title: site.home.title,
+		subtitle: site.home.subtitle.toUpperCase(),
+	}
 </script>
 
 <header-component data-props="{ ...headerProps }" />
@@ -152,9 +155,8 @@ Usage:
 ### Component with Mixed Props
 
 ```html
-<my-component 
-  data-props="{ title: site.meta.title, count: 42 }" 
-  extra="static value"
-  computed="{ someExpression }" 
-/>
+<my-component
+	data-props="{ title: site.meta.title, count: 42 }"
+	extra="static value"
+	computed="{ someExpression }" />
 ```
