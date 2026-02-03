@@ -13,7 +13,7 @@ export default {
 	},
 	home: {
 		title: 'TBD',
-		subtitle: `A mostly-native web framework.`,
+		subtitle: 'A mostly-native web framework.',
 		cta: 'Send POST Request',
 	},
 	about: {
@@ -22,8 +22,9 @@ export default {
 	},
 	footer: {
 		links: [
-			{ label: 'Home', url: '/' },
-			{ label: 'About', url: '/about' },
+			{ label: 'Home', path: '/' },
+			{ label: 'About', path: '/about' },
+			{ label: 'Docs', path: '/docs', new: true },
 		],
 	},
 }

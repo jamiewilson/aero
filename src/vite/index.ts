@@ -118,7 +118,6 @@ export function tbd(options: TbdOptions = {}): Plugin {
 				}
 
 				const generated = compile(parsed, {
-					// appDir removed
 					root: config.root,
 					clientScriptUrl,
 					resolvePath: options.resolvePath,

@@ -1,0 +1,25 @@
+---
+description: Nitro API and server conventions
+globs: server/**/*.ts
+alwaysApply: false
+---
+
+# TBD Server (Nitro)
+
+## API Handlers
+
+- Use Nitro/H3: `defineHandler`, `readBody`, etc. from `nitro/h3`
+- File naming: `_.get.ts`, `_.post.ts` etc. for routes (e.g. `submit.post.ts` → POST `/api/submit`)
+- Types: use `@src/types` or project types for request/response bodies
+
+## Example
+
+```ts
+import { defineHandler, readBody } from 'nitro/h3'
+import type { SubmitPost } from '@src/types'
+
+export default defineHandler(async event => {
+	const body = (await readBody(event)) as SubmitPost
+	return { ok: true, data: body }
+})
+```

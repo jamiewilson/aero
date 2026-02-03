@@ -7,15 +7,17 @@
 		imageURL: site.meta.url + aboutImage,
 	}
 
+	const title = 'Custom Meta Title'
+
 	const props = {
 		title: 'Custom Header Title',
 		subtitle: site.about.subtitle,
 	}
 </script>
 
-<sub-layout title="Custom Meta Title" data-props="ogImage">
-	<a href="#" slot="through-sub">Slot: About → Nav</a>
-	<header-component data-props />
+<sub-layout title="{ title }" props="ogImage">
+	<a href="#" slot="thru-sub">Slot</a>
+	<header-component props />
 </sub-layout>
 
 <script on:client>

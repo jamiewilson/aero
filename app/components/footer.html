@@ -1,11 +1,12 @@
 <script on:build>
-	const { links } = site.footer
+	const links = site.footer.links
 </script>
 
 <footer>
 	<ul>
-		<li data-each="link in links">
-			<a href="{ link.url }">{ link.label }</a>
+		<li each="link in links">
+			<a href="{ link.path }">{ link.label }</a>
+			<sup if="link.new">New</sup>
 		</li>
 	</ul>
 
@@ -22,6 +23,16 @@
 				gap: 1rem;
 				justify-content: center;
 				list-style-type: none;
+			}
+
+			sup {
+				color: white;
+				opacity: 0.5;
+				display: inline-block;
+				font-size: 0.5rem;
+				padding: 0.1rem 0.3rem;
+				border: 1px solid currentColor;
+				border-radius: 20px;
 			}
 		}
 	</style>

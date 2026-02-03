@@ -1,0 +1,49 @@
+---
+description: TBD template conventions for app HTML (components, pages, layouts)
+globs: app/**/*.html
+alwaysApply: false
+---
+
+# TBD Templates
+
+## Component Naming
+
+Use `-component` or `-layout` suffix in markup; import without suffix (resolves to .html):
+
+```html
+<script on:build>
+	import header from '@components/header'
+</script>
+<header-component title="Hello" />
+```
+
+## Script Types
+
+- `<script on:build>` - Build time; has `tbd.props`, `site`, imports
+- `<script on:client>` - Bundled as virtual module, runs in browser
+- `<script src="...">` - External scripts allowed without attributes
+- **Required**: Inline scripts must have `on:client` or `on:build`
+
+## Props
+
+- Pass: attributes, `data-props="{ ...obj }"`, or `data-props` / `props` to spread a `props` variable
+- Receive: destructure `tbd.props` in `<script on:build>`
+
+```html
+<my-component title="{ site.title }" />
+<my-component data-props />
+<script on:build>
+	const { title } = tbd.props
+</script>
+```
+
+## Loops and Slots
+
+- Loops: `data-each="item in items"` then `{ item.name }` etc.
+- Slots: use both `name` and `slot` attributes on `<slot>` elements
+
+## Client Stack
+
+- Alpine.js: `x-data`, `x-model`, `:disabled` etc. are preserved (not interpolated)
+- HTMX: `hx-post`, `hx-target` etc. passed through
+- Alpine attrs match `^(x-|[@:.]).*` and skip `{ }` interpolation
