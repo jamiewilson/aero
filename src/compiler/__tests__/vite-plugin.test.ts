@@ -37,16 +37,16 @@ describe('Vite Plugin Integration', () => {
 		expect(result.code).toContain('src/pages/client.js')
 		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
 
-		// 2. Resolve and load the virtual module
+		// 2. Resolve and load the virtual module (Vite uses \0 prefix for virtual module IDs)
 		const relativePath = path
 			.relative(process.cwd(), id)
 			.replace(/\\/g, '/')
 			.replace(/\.html$/i, '.js')
 		const virtualId = '/@tbd/client/' + relativePath
 		const resolvedId = await plugin.resolveId(virtualId)
-		expect(resolvedId).toBe(virtualId)
+		expect(resolvedId).toBe('\0' + virtualId)
 
-		const loadedContent = plugin.load(virtualId)
+		const loadedContent = plugin.load(resolvedId)
 		expect(loadedContent).toContain("console.log('client side')")
 	})
 

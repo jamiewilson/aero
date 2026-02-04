@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
-import type { ThemeStore } from '@src/types'
-import site from '~/data/site'
+import type { ThemeStore } from '@data/theme'
+import site from '@data/site'
 
 Alpine.start()
 Alpine.plugin(persist)

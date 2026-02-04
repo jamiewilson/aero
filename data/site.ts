@@ -1,4 +1,4 @@
-import { ThemeMode } from '~/data/theme'
+import { ThemeMode } from '@data/theme'
 
 export default {
 	meta: {
@@ -12,8 +12,9 @@ export default {
 		default: ThemeMode.System,
 	},
 	home: {
-		title: 'TBD',
-		subtitle: 'A mostly-native web framework.',
+		title: 'Welcome to Aero',
+		subtitle:
+			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
 		cta: 'Send POST Request',
 	},
 	about: {

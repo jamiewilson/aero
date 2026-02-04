@@ -5,13 +5,15 @@
 		"paths": {
 			"~/*": ["./*"],
 			"@src/*": ["./src/*"],
-			"@app/*": ["./app/*"],
-			"@styles/*": ["./app/assets/styles/*"],
-			"@scripts/*": ["./app/assets/scripts/*"],
-			"@images/*": ["./app/assets/images/*"],
-			"@components/*": ["./app/components/*"],
-			"@layouts/*": ["./app/layouts/*"],
-			"@pages/*": ["./app/pages/*"],
+			"@client/*": ["./client/*"],
+			"@server/*": ["./server/*"],
+			"@data/*": ["./data/*"],
+			"@styles/*": ["./client/assets/styles/*"],
+			"@scripts/*": ["./client/assets/scripts/*"],
+			"@images/*": ["./client/assets/images/*"],
+			"@components/*": ["./client/components/*"],
+			"@layouts/*": ["./client/layouts/*"],
+			"@pages/*": ["./client/pages/*"],
 			"@utils/*": ["./src/utils/*"]
 		}
 	}

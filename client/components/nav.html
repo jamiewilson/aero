@@ -1,0 +1,22 @@
+<script on:build>
+	import themeToggle from '@components/theme-toggle'
+</script>
+
+<nav>
+	<slot></slot>
+	<theme-toggle-component />
+</nav>
+
+<style>
+	@scope (nav) {
+		:scope {
+			position: fixed;
+			inset-inline: 0;
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: 1rem;
+			padding: 1rem;
+		}
+	}
+</style>

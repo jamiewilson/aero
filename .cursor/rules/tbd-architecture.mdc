@@ -16,9 +16,9 @@ TBD is a static site generator with an HTML-first template engine.
 
 ## File Structure
 
-- `app/pages/` - Route pages (home.html → `/`, about.html → `/about`)
-- `app/components/` - Reusable components
-- `app/layouts/` - Layout wrappers with `<slot>` support
+- `client/pages/` - Route pages (home.html → `/`, about.html → `/about`)
+- `client/components/` - Reusable components
+- `client/layouts/` - Layout wrappers with `<slot>` support
 - `data/` - Global data (site.ts exposed as `site` in templates)
 - `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
 - `src/compiler/` - Parser, codegen, resolver; tests in `__tests__/`
@@ -32,11 +32,11 @@ TBD is a static site generator with an HTML-first template engine.
 
 ## Path Aliases (tsconfig)
 
-- `@components/*` → app/components/*
-- `@layouts/*` → app/layouts/*
-- `@pages/*` → app/pages/*
-- `@styles/*` → app/assets/styles/*
-- `@scripts/*` → app/assets/scripts/*
-- `@images/*` → app/assets/images/*
+- `@components/*` → client/components/*
+- `@layouts/*` → client/layouts/*
+- `@pages/*` → client/pages/*
+- `@styles/*` → client/assets/styles/*
+- `@scripts/*` → client/assets/scripts/*
+- `@images/*` → client/assets/images/*
 - `@utils/*` → src/utils/*
 - `~/*` → project root
