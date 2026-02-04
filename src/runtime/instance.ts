@@ -1,5 +1,5 @@
 import { TBD } from '@src/runtime'
-import site from '~/data/site'
+import site from '@data/site'
 
 declare global {
 	var __TBD_INSTANCE__: TBD | undefined
@@ -28,9 +28,9 @@ if (!globalThis.__TBD_LISTENERS__) {
 }
 
 // Auto-register pages, components, and layouts using root-relative globs
-const components = import.meta.glob('@components/*.html', { eager: true })
 const layouts = import.meta.glob('@layouts/*.html', { eager: true })
-const pages = import.meta.glob('@pages/*.html', { eager: true })
+const components = import.meta.glob('@components/**/*.html', { eager: true })
+const pages = import.meta.glob('@pages/**/*.html', { eager: true })
 
 tbd.registerPages(components)
 tbd.registerPages(layouts)

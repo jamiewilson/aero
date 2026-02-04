@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parse } from '../parser'
-import { compile } from '../codegen'
+import { parse } from '@src/compiler/parser'
+import { compile } from '@src/compiler/codegen'
 
 // Helper to execute the generated code
 async function execute(code: string, context = {}) {
@@ -185,7 +185,7 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Script tags must have on:client or on:build attribute',
+			'Script tags must have on:client or on:build attribute'
 		)
 	})
 

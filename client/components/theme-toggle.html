@@ -19,42 +19,43 @@
 		<path
 			d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" />
 	</svg>
-	<style>
-		@layer components {
-			.theme-icon.current {
-				opacity: initial;
-				scale: initial;
-				translate: initial;
+</button>
+
+<style>
+	@layer components {
+		.theme-icon.current {
+			opacity: initial;
+			scale: initial;
+			translate: initial;
+		}
+
+		@scope (.theme-toggle) {
+			:scope {
+				display: grid;
+				gap: 0;
+				padding: 1.5rem;
+				color: var(--fg);
 			}
 
-			@scope {
-				:scope {
-					display: grid;
-					gap: 0;
-					padding: 1.5rem;
-					color: var(--fg);
-				}
+			svg {
+				width: 24px;
+				aspect-ratio: 1 / 1;
+				fill: none;
+				stroke: currentColor;
+				stroke-width: 2;
+				stroke-linecap: round;
+				stroke-linejoin: round;
 
-				svg {
-					width: 24px;
-					aspect-ratio: 1 / 1;
-					fill: none;
-					stroke: currentColor;
-					stroke-width: 2;
-					stroke-linecap: round;
-					stroke-linejoin: round;
+				position: absolute;
+				place-self: center;
+				opacity: 0;
+				scale: 0.5;
+				translate: 0 1em;
 
-					position: absolute;
-					place-self: center;
-					opacity: 0;
-					scale: 0.5;
-					translate: 0 1em;
-
-					transition-duration: 500ms;
-					transition-property: opacity, scale, translate;
-					transition-timing-function: cubic-bezier(0.6, -0.1, 0, 1.1);
-				}
+				transition-duration: 500ms;
+				transition-property: opacity, scale, translate;
+				transition-timing-function: cubic-bezier(0.6, -0.1, 0, 1.1);
 			}
 		}
-	</style>
-</button>
+	}
+</style>

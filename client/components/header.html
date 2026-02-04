@@ -1,0 +1,28 @@
+<script on:build>
+	import logo from '@components/logo'
+	const props = tbd.props
+</script>
+
+<header>
+	<logo-component class="logo" alt="{ props.title }" />
+	<p class="subtitle">{ props.subtitle }</p>
+
+	<style>
+		@scope {
+			.logo {
+				width: 300px;
+				margin-bottom: 1rem;
+			}
+
+			.subtitle {
+				max-width: 45ch;
+				text-wrap: pretty;
+				opacity: 0.5;
+			}
+		}
+	</style>
+</header>
+
+<script on:client>
+	console.log('[tbd] <header-component> script executed')
+</script>

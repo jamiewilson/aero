@@ -1,4 +1,4 @@
-import type { MountOptions } from '../types'
+import type { MountOptions } from '@src/types'
 
 export class TBD {
 	private globals: Record<string, any> = {}
@@ -11,7 +11,12 @@ export class TBD {
 
 	registerPages(pages: Record<string, any>) {
 		for (const [path, mod] of Object.entries(pages)) {
-			const key = path.split('/').pop()?.replace('.html', '') || path
+			const withoutExt = path.replace(/\.html$/, '').replace(/\\/g, '/')
+			const key = withoutExt.includes('pages/')
+				? withoutExt.split('pages/').pop()!
+				: withoutExt.split('/').filter(Boolean).length > 1
+				? withoutExt.split('/').filter(Boolean).join('/')
+				: withoutExt.split('/').pop() || path
 			this.pagesMap[key] = mod
 			this.pagesMap[path] = mod
 		}
@@ -29,6 +34,10 @@ export class TBD {
 		if (typeof component === 'string') {
 			target = this.pagesMap[component]
 
+			// Fallback: If not found, try as directory index (e.g. /docs -> docs/index)
+			if (!target) {
+				target = this.pagesMap[`${component}/index`]
+			}
 			// Fallback: If index is not found, try home
 			if (!target && component === 'index') {
 				target = this.pagesMap['home']

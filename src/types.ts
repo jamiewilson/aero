@@ -1,12 +1,3 @@
-import { ThemeMode } from '~/data/theme'
-
-export type ThemeOptions = ThemeMode
-
-export interface ThemeStore {
-	current: ThemeOptions
-	set(): void
-}
-
 export interface SubmitPost {
 	message: string
 }
