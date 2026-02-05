@@ -28,8 +28,8 @@ if (!globalThis.__TBD_LISTENERS__) {
 }
 
 // Auto-register pages, components, and layouts using root-relative globs
-const layouts = import.meta.glob('@layouts/*.html', { eager: true })
 const components = import.meta.glob('@components/**/*.html', { eager: true })
+const layouts = import.meta.glob('@layouts/*.html', { eager: true })
 const pages = import.meta.glob('@pages/**/*.html', { eager: true })
 
 tbd.registerPages(components)
