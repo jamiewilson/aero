@@ -16,12 +16,36 @@ export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
 }
 
-/** Emits code for ${ items.map(item => `body`).join('') } without nested template literal escaping. */
+/** Strips surrounding braces from a string: "{expr}" → "expr" */
+export function stripBraces(s: string): string {
+	const trimmed = s.trim()
+	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+		return trimmed.slice(1, -1).trim()
+	}
+	return trimmed
+}
+
+/** Converts kebab-case to camelCase: "my-component" → "myComponent" */
+export function kebabToCamelCase(s: string): string {
+	return s.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
+}
+
+/** Builds a props object string from entries and optional spread expression */
+export function buildPropsString(entries: string[], spreadExpr: string | null): string {
+	if (spreadExpr) {
+		return entries.length > 0
+			? `{ ${spreadExpr}, ${entries.join(', ')} }`
+			: `{ ${spreadExpr} }`
+	}
+	return `{ ${entries.join(', ')} }`
+}
+
+/** Emits code for ${ items.map(item => `body`).join('') } */
 export function emitMapJoin(items: string, item: string, body: string): string {
 	return '${ ' + items + '.map(' + item + ' => `' + body + "`).join('') }"
 }
 
-/** Emits code for ${ condition ? `body` : '' } without nested template literal escaping. */
+/** Emits code for ${ condition ? `body` : '' } */
 export function emitConditional(condition: string, body: string): string {
 	return '${ ' + condition + ' ? `' + body + "` : '' }"
 }
@@ -31,12 +55,7 @@ export function escapeBackticks(s: string): string {
 	return s.replace(/`/g, '\\`')
 }
 
-/** Emits code for slots['name'] || `defaultContent` without nested template literal escaping. */
-export function emitSlotFallback(slotName: string, defaultContent: string): string {
-	return "${ slots['" + slotName + "'] || `" + defaultContent + '` }'
-}
-
-/** Emits code for a slots object { "name": `content` } without nested template literal escaping. */
+/** Emits code for a slots object { "name": `content` } */
 export function emitSlotsObject(slotsMap: Record<string, string>): string {
 	const entries = Object.entries(slotsMap)
 		.map(([k, v]) => '"' + k + '": `' + v + '`')
@@ -44,11 +63,56 @@ export function emitSlotsObject(slotsMap: Record<string, string>): string {
 	return '{ ' + entries + ' }'
 }
 
-/** Emits the top-level render function wrapper (script + template return). */
-export function emitRenderFunction(script: string, templateCode: string): string {
+/** Emits code for slots['name'] || `defaultContent` */
+export function emitSlotFallback(slotName: string, defaultContent: string): string {
+	return "${ slots['" + slotName + "'] || `" + defaultContent + '` }'
+}
+
+/** Emits the top-level render function wrapper (script + body statements). */
+export function emitRenderFunction(script: string, body: string): string {
 	return `export default async function(tbd) {
 		const { site, slots = {}, renderComponent } = tbd;
 		${script}
-		return \`${templateCode}\`;
+		let __out = '';
+		${body}return __out;
 	}`.trim()
+}
+
+// ============================================================================
+// Statement-emitting helpers
+// ============================================================================
+
+/** Emits: __out += `content`; */
+export function emitAppend(content: string): string {
+	return `__out += \`${content}\`;\n`
+}
+
+/** Emits: if (condition) { */
+export function emitIf(condition: string): string {
+	return `if (${condition}) {\n`
+}
+
+/** Emits: } else if (condition) { */
+export function emitElseIf(condition: string): string {
+	return `} else if (${condition}) {\n`
+}
+
+/** Emits: } else { */
+export function emitElse(): string {
+	return `} else {\n`
+}
+
+/** Emits: } */
+export function emitEnd(): string {
+	return `}\n`
+}
+
+/** Emits: for (const item of items) { */
+export function emitForOf(item: string, items: string): string {
+	return `for (const ${item} of ${items}) {\n`
+}
+
+/** Emits: __out += slots['name'] ?? `defaultContent`; */
+export function emitSlotOutput(name: string, defaultContent: string): string {
+	return `__out += slots['${name}'] ?? \`${defaultContent}\`;\n`
 }

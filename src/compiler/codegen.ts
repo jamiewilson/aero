@@ -4,6 +4,17 @@ import type { ParseResult, CompileOptions } from '@src/types'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 
+interface ParsedElementAttrs {
+	attrString: string
+	loopData: { item: string; items: string } | null
+	ifCondition: string | null
+}
+
+interface ParsedComponentAttrs {
+	propsString: string
+	ifCondition: string | null
+}
+
 class Compiler {
 	private resolver: Resolver
 
@@ -12,6 +23,79 @@ class Compiler {
 			root: options.root,
 			resolvePath: options.resolvePath,
 		})
+	}
+
+	/** Parses component attributes, extracting props, data-props, and data-if */
+	private parseComponentAttributes(node: any): ParsedComponentAttrs {
+		const propsEntries: string[] = []
+		let dataPropsExpression: string | null = null
+		let ifCondition: string | null = null
+
+		if (node.attributes) {
+			for (let i = 0; i < node.attributes.length; i++) {
+				const attr = node.attributes[i]
+				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) continue
+
+				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) {
+					ifCondition = Helper.stripBraces(attr.value)
+					continue
+				}
+
+				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+					const value = attr.value?.trim() || ''
+					dataPropsExpression = !value
+						? '...props'
+						: value.startsWith('{') && value.endsWith('}')
+							? Helper.stripBraces(value)
+							: `...${value}`
+					continue
+				}
+
+				const val = Helper.escapeBackticks(attr.value)
+				const propVal =
+					val.startsWith('{') && val.endsWith('}') ? Helper.stripBraces(val) : `"${val}"`
+				propsEntries.push(`${attr.name}: ${propVal}`)
+			}
+		}
+
+		const propsString = Helper.buildPropsString(propsEntries, dataPropsExpression)
+		return { propsString, ifCondition }
+	}
+
+	/** Parses element attributes, extracting data-each, data-if, and building the attribute string */
+	private parseElementAttributes(node: any): ParsedElementAttrs {
+		const attributes: string[] = []
+		let loopData: { item: string; items: string } | null = null
+		let ifCondition: string | null = null
+
+		if (node.attributes) {
+			for (let i = 0; i < node.attributes.length; i++) {
+				const attr = node.attributes[i]
+				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
+					const content = attr.value.replace(CONST.EACH_BRACES_REGEX, '').trim()
+					const match = content.match(CONST.EACH_REGEX)
+					if (match) loopData = { item: match[1], items: match[2] }
+					continue
+				}
+
+				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) {
+					ifCondition = Helper.stripBraces(attr.value)
+					continue
+				}
+
+				let val = Helper.escapeBackticks(attr.value)
+				val = this.resolver.resolveAttrValue(val)
+
+				const isAlpine = CONST.ALPINE_ATTR_REGEX.test(attr.name)
+				if (!isAlpine) {
+					val = val.replace(CONST.CURLY_INTERPOLATION_REGEX, '${$1}')
+				}
+				attributes.push(`${attr.name}="${val}"`)
+			}
+		}
+
+		const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
+		return { attrString, loopData, ifCondition }
 	}
 
 	compileNode(node: any, skipInterpolation = false): string {
@@ -41,10 +125,11 @@ class Compiler {
 
 	private compileText(node: any, skipInterpolation: boolean): string {
 		const text = node.textContent || ''
-		if (skipInterpolation) {
-			return Helper.escapeBackticks(text)
-		}
-		return Helper.compileInterpolation(text)
+		if (!text) return ''
+		const content = skipInterpolation
+			? Helper.escapeBackticks(text)
+			: Helper.compileInterpolation(text)
+		return Helper.emitAppend(content)
 	}
 
 	private compileElement(node: any, skipInterpolation: boolean): string {
@@ -58,126 +143,159 @@ class Compiler {
 			return this.compileComponent(node, tagName, skipInterpolation)
 		}
 
-		const attributes: string[] = []
-		let loopData = null
-		let ifCondition: string | null = null
+		let out = ''
+		const { attrString, loopData, ifCondition } = this.parseElementAttributes(node)
 
-		if (node.attributes) {
-			for (let i = 0; i < node.attributes.length; i++) {
-				const attr = node.attributes[i]
-				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
-					const content = attr.value.replace(CONST.EACH_BRACES_REGEX, '').trim()
-					const match = content.match(CONST.EACH_REGEX)
-					if (match) loopData = { item: match[1], items: match[2] }
-					continue
-				}
-
-				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) {
-					let condition = attr.value.trim()
-					// Strip surrounding braces if present
-					if (condition.startsWith('{') && condition.endsWith('}')) {
-						condition = condition.slice(1, -1).trim()
-					}
-					ifCondition = condition
-					continue
-				}
-
-				let val = Helper.escapeBackticks(attr.value)
-				val = this.resolver.resolveAttrValue(val)
-
-				const isAlpine = CONST.ALPINE_ATTR_REGEX.test(attr.name)
-				if (!isAlpine) {
-					val = val.replace(CONST.CURLY_INTERPOLATION_REGEX, '${$1}')
-				}
-				attributes.push(`${attr.name}="${val}"`)
-			}
+		// Emit if statement opening
+		if (ifCondition) {
+			out += Helper.emitIf(ifCondition)
 		}
 
-		const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
+		// Emit for loop opening
+		if (loopData) {
+			out += Helper.emitForOf(loopData.item, loopData.items)
+		}
 
 		if (CONST.VOID_TAGS.has(tagName)) {
-			let elementCode = `<${tagName}${attrString}>`
-			if (loopData) {
-				elementCode = Helper.emitMapJoin(loopData.items, loopData.item, elementCode)
-			}
-			if (ifCondition) {
-				elementCode = Helper.emitConditional(ifCondition, elementCode)
-			}
-			return elementCode
+			out += Helper.emitAppend(`<${tagName}${attrString}>`)
+		} else {
+			const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
+			out += Helper.emitAppend(`<${tagName}${attrString}>`)
+			out += this.compileChildNodes(node.childNodes, childSkip)
+			out += Helper.emitAppend(`</${tagName}>`)
 		}
 
-		const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
-		const children = this.compileChildNodes(node.childNodes, childSkip)
-		let elementCode = `<${tagName}${attrString}>${children}</${tagName}>`
-
+		// Close for loop
 		if (loopData) {
-			elementCode = Helper.emitMapJoin(loopData.items, loopData.item, elementCode)
-		}
-		if (ifCondition) {
-			elementCode = Helper.emitConditional(ifCondition, elementCode)
+			out += Helper.emitEnd()
 		}
 
-		return elementCode
+		// Close if statement
+		if (ifCondition) {
+			out += Helper.emitEnd()
+		}
+
+		return out
 	}
 
 	private compileSlot(node: any, skipInterpolation: boolean): string {
 		const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-		const defaultContent = this.compileChildNodes(node.childNodes, skipInterpolation)
-		return Helper.emitSlotFallback(slotName, defaultContent)
+		// Compile default content as template literal content (not statements)
+		const defaultContent = this.compileSlotContent(node.childNodes, skipInterpolation)
+		return Helper.emitSlotOutput(slotName, defaultContent)
 	}
 
-	private compileComponent(node: any, tagName: string, skipInterpolation: boolean): string {
+	/** Compiles nodes into template literal content (for slot defaults and component slot content). */
+	private compileSlotContent(nodes: NodeList | undefined, skipInterpolation: boolean): string {
+		if (!nodes) return ''
+		let out = ''
+		for (let i = 0; i < nodes.length; i++) {
+			out += this.compileNodeAsContent(nodes[i], skipInterpolation)
+		}
+		return out
+	}
+
+	/** Compiles a single node into template literal content (not statements). */
+	private compileNodeAsContent(node: any, skipInterpolation: boolean): string {
+		if (node.nodeType === 3) {
+			// Text node
+			const text = node.textContent || ''
+			if (!text) return ''
+			return skipInterpolation
+				? Helper.escapeBackticks(text)
+				: Helper.compileInterpolation(text)
+		}
+		if (node.nodeType === 1) {
+			// Element node
+			return this.compileElementAsContent(node, skipInterpolation)
+		}
+		return ''
+	}
+
+	/** Compiles an element into template literal content (for slot content). */
+	private compileElementAsContent(node: any, skipInterpolation: boolean): string {
+		const tagName = node.tagName.toLowerCase()
+
+		// Handle nested slots within slot content
+		if (tagName === CONST.TAG_SLOT) {
+			const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
+			const defaultContent = this.compileSlotContent(node.childNodes, skipInterpolation)
+			return Helper.emitSlotFallback(slotName, defaultContent)
+		}
+
+		// Handle component tags within slot content
+		if (CONST.COMPONENT_SUFFIX_REGEX.test(tagName)) {
+			return this.compileComponentAsContent(node, tagName, skipInterpolation)
+		}
+
+		const { attrString, loopData, ifCondition } = this.parseElementAttributes(node)
+
+		let elementContent: string
+		if (CONST.VOID_TAGS.has(tagName)) {
+			elementContent = `<${tagName}${attrString}>`
+		} else {
+			const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
+			const children = this.compileSlotContent(node.childNodes, childSkip)
+			elementContent = `<${tagName}${attrString}>${children}</${tagName}>`
+		}
+
+		// Wrap with loop if needed
+		if (loopData) {
+			elementContent = Helper.emitMapJoin(loopData.items, loopData.item, elementContent)
+		}
+
+		// Wrap with conditional if needed
+		if (ifCondition) {
+			elementContent = Helper.emitConditional(ifCondition, elementContent)
+		}
+
+		return elementContent
+	}
+
+	/** Compiles a component into template literal content (for slot content). */
+	private compileComponentAsContent(
+		node: any,
+		tagName: string,
+		skipInterpolation: boolean,
+	): string {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
-		const baseName = kebabBase.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
+		const baseName = Helper.kebabToCamelCase(kebabBase)
+		const { propsString, ifCondition } = this.parseComponentAttributes(node)
 
-		const propsEntries: string[] = []
-		let dataPropsExpression: string | null = null
-		let ifCondition: string | null = null
-
-		if (node.attributes) {
-			for (let i = 0; i < node.attributes.length; i++) {
-				const attr = node.attributes[i]
-				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) continue
-
-				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) {
-					let condition = attr.value.trim()
-					if (condition.startsWith('{') && condition.endsWith('}')) {
-						condition = condition.slice(1, -1).trim()
-					}
-					ifCondition = condition
-					continue
+		// Compile slot content as template literal content
+		const slotsMap: Record<string, string> = { [CONST.SLOT_NAME_DEFAULT]: '' }
+		if (node.childNodes) {
+			for (let i = 0; i < node.childNodes.length; i++) {
+				const child = node.childNodes[i]
+				let slotName = CONST.SLOT_NAME_DEFAULT
+				if (child.nodeType === 1) {
+					const slotAttr = child.getAttribute(CONST.ATTR_SLOT)
+					if (slotAttr) slotName = slotAttr
 				}
-
-				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
-					const value = attr.value?.trim() || ''
-					dataPropsExpression = !value
-						? '...props'
-						: value.startsWith('{') && value.endsWith('}')
-							? value.slice(1, -1).trim()
-							: `...${value}`
-					continue
-				}
-
-				let val = Helper.escapeBackticks(attr.value)
-				if (val.startsWith('{') && val.endsWith('}')) {
-					val = val.substring(1, val.length - 1)
-				} else {
-					val = `"${val}"`
-				}
-				propsEntries.push(`${attr.name}: ${val}`)
+				if (!slotsMap[slotName]) slotsMap[slotName] = ''
+				slotsMap[slotName] += this.compileNodeAsContent(child, skipInterpolation)
 			}
 		}
 
-		let propsString: string
-		if (dataPropsExpression) {
-			propsString =
-				propsEntries.length > 0
-					? `{ ${dataPropsExpression}, ${propsEntries.join(', ')} }`
-					: `{ ${dataPropsExpression} }`
-		} else {
-			propsString = `{ ${propsEntries.join(', ')} }`
+		const slotsString = Helper.emitSlotsObject(slotsMap)
+
+		// Emit as template interpolation
+		let componentContent = `\${ await tbd.renderComponent(${baseName}, ${propsString}, ${slotsString}) }`
+
+		if (ifCondition) {
+			componentContent = Helper.emitConditional(ifCondition, componentContent)
 		}
 
+		return componentContent
+	}
+
+	private compileComponent(node: any, tagName: string, skipInterpolation: boolean): string {
+		let out = ''
+		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
+		const baseName = Helper.kebabToCamelCase(kebabBase)
+		const { propsString, ifCondition } = this.parseComponentAttributes(node)
+
+		// Compile slot content as template literal content (not statements)
 		const slotsMap: Record<string, string> = { [CONST.SLOT_NAME_DEFAULT]: '' }
 		if (node.childNodes) {
 			for (let i = 0; i < node.childNodes.length; i++) {
@@ -197,7 +315,7 @@ class Compiler {
 					) {
 						const passthroughName = child.getAttribute(CONST.ATTR_NAME)
 						slotName = slotAttr
-						const defaultContent = this.compileChildNodes(child.childNodes, skipInterpolation)
+						const defaultContent = this.compileSlotContent(child.childNodes, skipInterpolation)
 						const passthroughContent = Helper.emitSlotFallback(passthroughName, defaultContent)
 
 						if (!slotsMap[slotName]) slotsMap[slotName] = ''
@@ -210,17 +328,26 @@ class Compiler {
 				}
 
 				if (!slotsMap[slotName]) slotsMap[slotName] = ''
-				slotsMap[slotName] += this.compileNode(child, skipInterpolation)
+				slotsMap[slotName] += this.compileNodeAsContent(child, skipInterpolation)
 			}
 		}
 
 		const slotsString = Helper.emitSlotsObject(slotsMap)
 
-		let componentCode = `\${ await tbd.renderComponent(${baseName}, ${propsString}, ${slotsString}) }`
+		// Emit if statement opening
 		if (ifCondition) {
-			componentCode = Helper.emitConditional(ifCondition, componentCode)
+			out += Helper.emitIf(ifCondition)
 		}
-		return componentCode
+
+		// Emit component render call
+		out += `__out += await tbd.renderComponent(${baseName}, ${propsString}, ${slotsString});\n`
+
+		// Close if statement
+		if (ifCondition) {
+			out += Helper.emitEnd()
+		}
+
+		return out
 	}
 }
 
@@ -276,9 +403,11 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	let templateCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
+	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
 	if (options.clientScriptUrl) {
-		templateCode += `<script type="module" src="${options.clientScriptUrl}"></script>`
+		bodyCode += Helper.emitAppend(
+			`<script type="module" src="${options.clientScriptUrl}"></script>`,
+		)
 	}
-	return Helper.emitRenderFunction(script, templateCode)
+	return Helper.emitRenderFunction(script, bodyCode)
 }
