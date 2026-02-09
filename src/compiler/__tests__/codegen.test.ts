@@ -27,12 +27,11 @@ const mockOptions = {
 
 describe('Codegen', () => {
 	it('should compile simple interpolation', async () => {
-		const html = `
-            <script on:build>
-                title = 'Hello World';
-            </script>
-            <h1>{ title }</h1>
-        `
+		const html = `<script on:build>
+										title = 'Hello World';
+									</script>
+									<h1>{ title }</h1>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -41,12 +40,11 @@ describe('Codegen', () => {
 	})
 
 	it('should compile attribute interpolation', async () => {
-		const html = `
-            <script on:build>
-                const cls = 'active';
-            </script>
-            <div class="{ cls }"></div>
-        `
+		const html = `<script on:build>
+										const cls = 'active';
+									</script>
+									<div class="{ cls }"></div>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -56,6 +54,7 @@ describe('Codegen', () => {
 
 	it('should handle missing script', async () => {
 		const html = '<div>Static</div>'
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -64,14 +63,13 @@ describe('Codegen', () => {
 	})
 
 	it('should compile data-each loops', async () => {
-		const html = `
-            <script on:build>
-                const items = ['a', 'b'];
-            </script>
-            <ul>
-                <li data-each="{ item in items }">{ item }</li>
-            </ul>
-        `
+		const html = `<script on:build>
+										const items = ['a', 'b'];
+									</script>
+									<ul>
+										<li data-each="{ item in items }">{ item }</li>
+									</ul>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -83,12 +81,11 @@ describe('Codegen', () => {
 	})
 
 	it('should resolve component tags', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'my-comp' };
-            </script>
-            <my-comp-component />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'my-comp' };
+									</script>
+									<my-comp-component />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -105,15 +102,16 @@ describe('Codegen', () => {
 	})
 
 	it('should pass props and support shorthand', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-                const someProps = { title: 'External' };
-                const props = { theme: 'dark' };
-            </script>
-            <my-comp-component title="Local" item="{ 'a' }" data-props="{ ...someProps }" />
-            <my-comp-component data-props />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+										const someProps = { title: 'External' };
+										const props = { theme: 'dark' };
+									</script>
+									<my-comp-component
+										title="Local" item="{ 'a' }"
+										data-props="{ ...someProps }" />
+									<my-comp-component data-props />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -134,16 +132,15 @@ describe('Codegen', () => {
 	})
 
 	it('should support default and named slots', async () => {
-		const html = `
-            <script on:build>
-                const base = { name: 'base' };
-                const nav = { name: 'nav' };
-            </script>
-            <base-layout>
-                <nav-component slot="nav" />
-                <h1>Main Content</h1>
-            </base-layout>
-        `
+		const html = `<script on:build>
+										const base = { name: 'base' };
+										const nav = { name: 'nav' };
+									</script>
+									<base-layout>
+										<nav-component slot="nav" />
+										<h1>Main Content</h1>
+									</base-layout>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -163,13 +160,12 @@ describe('Codegen', () => {
 	})
 
 	it('should transform static imports to dynamic imports', async () => {
-		const html = `
-            <script on:build>
-                import { foo } from './fake-module'
-                const res = foo;
-            </script>
-            <div>{ res }</div>
-        `
+		const html = `<script on:build>
+										import { foo } from './fake-module'
+										const res = foo;
+									</script>
+									<div>{ res }</div>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -178,22 +174,20 @@ describe('Codegen', () => {
 	})
 
 	it('should throw error for script tags without on:client or on:build', async () => {
-		const html = `
-            <script>console.log('regular');</script>
-            <div>Content</div>
-        `
+		const html = `<script>console.log('regular');</script>
+									<div>Content</div>`
+
 		const parsed = parse(html)
 
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Script tags must have on:client or on:build attribute'
+			'Script tags must have on:client or on:build attribute',
 		)
 	})
 
 	it('should allow external scripts with src attribute', async () => {
-		const html = `
-            <script src="https://example.com/script.js"></script>
-            <div>Content</div>
-        `
+		const html = `<script src="https://example.com/script.js"></script>
+									<div>Content</div>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -203,6 +197,7 @@ describe('Codegen', () => {
 
 	it('should inject clientScriptUrl if provided', async () => {
 		const html = '<div>Content</div>'
+
 		const parsed = parse(html)
 		const code = compile(parsed, { ...mockOptions, clientScriptUrl: '/test.js' })
 
@@ -212,6 +207,7 @@ describe('Codegen', () => {
 
 	it('should handle attributes with colons (Alpine.js style)', async () => {
 		const html = '<button :disabled="!message.length">{ tbd.label }</button>'
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -221,14 +217,13 @@ describe('Codegen', () => {
 	})
 
 	it('should support default content in slots', async () => {
-		const html = `
-            <script on:build>
-                const nav = { name: 'nav' };
-            </script>
-            <slot name="nav">
-                <nav-component />
-            </slot>
-        `
+		const html = `<script on:build>
+										const nav = { name: 'nav' };
+									</script>
+									<slot name="nav">
+										<nav-component />
+									</slot>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -242,12 +237,11 @@ describe('Codegen', () => {
 	})
 
 	it('should support inline object literals in data-props', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-            </script>
-            <my-comp-component data-props="{ title: 'Inline Title', count: 42 }" />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component data-props="{ title: 'Inline Title', count: 42 }" />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -264,12 +258,11 @@ describe('Codegen', () => {
 	})
 
 	it('should support expressions in data-props', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-            </script>
-            <my-comp-component data-props="{ title: site.meta.title, doubled: 2 * 21 }" />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component data-props="{ title: site.meta.title, doubled: 2 * 21 }" />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -287,13 +280,12 @@ describe('Codegen', () => {
 	})
 
 	it('should support plain variable name in data-props (auto-spread)', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-                const myProps = { a: 1, b: 2 };
-            </script>
-            <my-comp-component data-props="myProps" />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+										const myProps = { a: 1, b: 2 };
+									</script>
+									<my-comp-component data-props="myProps" />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -310,12 +302,13 @@ describe('Codegen', () => {
 	})
 
 	it('should merge data-props with individual attributes', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-            </script>
-            <my-comp-component data-props="{ base: 'value' }" extra="{ 'additional' }" />
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component 
+										data-props="{ base: 'value' }" 
+										extra="{ 'additional' }" />`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -334,24 +327,20 @@ describe('Codegen', () => {
 	it('should support slot passthrough (receiving and forwarding named slots)', async () => {
 		// This tests the scenario: grandparent -> parent -> child
 		// where parent receives a slot and passes it through to child
-		const html = `
-            <script on:build>
-                const parent = { name: 'parent' };
-                const child = { name: 'child' };
-            </script>
-            <parent-component>
-                <div slot="nav">Custom Navigation</div>
-            </parent-component>
-        `
+		const html = `<script on:build>
+										const parent = { name: 'parent' };
+										const child = { name: 'child' };
+									</script>
+									<parent-component>
+										<div slot="nav">Custom Navigation</div>
+									</parent-component>`
 
-		const parentTemplate = `
-            <script on:build>
-                const child = { name: 'child' };
-            </script>
-            <child-component>
-                <slot name="nav" slot="nav"></slot>
-            </child-component>
-        `
+		const parentTemplate = `<script on:build>
+														const child = { name: 'child' };
+													</script>
+													<child-component>
+														<slot name="nav" slot="nav"></slot>
+													</child-component>`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -401,14 +390,13 @@ describe('Codegen', () => {
 	})
 
 	it('should support hyphenated slot names', async () => {
-		const html = `
-            <script on:build>
-                const myComp = { name: 'comp' };
-            </script>
-            <my-comp-component>
-                <div slot="side-bar">Side Content</div>
-            </my-comp-component>
-        `
+		const html = `<script on:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component>
+										<div slot="side-bar">Side Content</div>
+									</my-comp-component>`
+
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
@@ -423,5 +411,144 @@ describe('Codegen', () => {
 		await execute(code, tbd)
 
 		expect(calls[0].slots['side-bar']).toContain('Side Content')
+	})
+
+	// =========================================================================
+	// if/else-if/else conditional chains
+	// =========================================================================
+
+	it('should compile simple if/else chain', async () => {
+		const html = `<script on:build>
+										const showFirst = false;
+									</script>
+									<div>
+										<p if="showFirst">First</p>
+										<p else>Fallback</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Fallback')
+		expect(output).not.toContain('First')
+	})
+
+	it('should compile if/else-if/else chain (else-if matches)', async () => {
+		const html = `<script on:build>
+										const value = 'B';
+									</script>
+									<div>
+										<p if="value === 'A'">Option A</p>
+										<p else-if="value === 'B'">Option B</p>
+										<p else>Default</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Option B')
+		expect(output).not.toContain('Option A')
+		expect(output).not.toContain('Default')
+	})
+
+	it('should compile if/else-if/else chain (else matches)', async () => {
+		const html = `<script on:build>
+										const value = 'C';
+									</script>
+									<div>
+										<p if="value === 'A'">Option A</p>
+										<p else-if="value === 'B'">Option B</p>
+										<p else>Default</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		// console.log('GENERATED CODE:', code)
+
+		const output = await execute(code)
+		expect(output).toContain('Default')
+		expect(output).not.toContain('Option A')
+		expect(output).not.toContain('Option B')
+	})
+
+	it('should compile multiple else-if branches', async () => {
+		const html = `<script on:build>
+										const num = 3;
+									</script>
+									<div>
+										<span if="num === 1">One</span>
+										<span else-if="num === 2">Two</span>
+										<span else-if="num === 3">Three</span>
+										<span else>Other</span>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Three')
+		expect(output).not.toContain('One')
+		expect(output).not.toContain('Two')
+		expect(output).not.toContain('Other')
+	})
+
+	it('should compile if/else with components', async () => {
+		const html = `<script on:build>
+										const showLogo = false;
+										const logo = { name: 'logo' };
+									</script>
+									<div>
+										<logo-component if="showLogo" />
+										<p else>No logo</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const tbd = {
+			renderComponent: async (comp: any) => `<img src="${comp.name}.svg" />`,
+		}
+
+		const output = await execute(code, tbd)
+		expect(output).toContain('No logo')
+		expect(output).not.toContain('<img')
+	})
+
+	it('should handle if without else (standalone)', async () => {
+		const html = `<script on:build>
+										const show = true;
+									</script>
+									<div>
+										<p if="show">Shown</p>
+										<p>Always visible</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Shown')
+		expect(output).toContain('Always visible')
+	})
+
+	it('should support data- prefix for conditionals', async () => {
+		const html = `<script on:build>
+										const choice = 2;
+									</script>
+									<div>
+										<p data-if="choice === 1">One</p>
+										<p data-else-if="choice === 2">Two</p>
+										<p data-else>Other</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Two')
+		expect(output).not.toContain('One')
+		expect(output).not.toContain('Other')
 	})
 })

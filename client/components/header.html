@@ -4,7 +4,10 @@
 </script>
 
 <header>
-	<logo-component class="logo" alt="{ props.title }" />
+	<logo-component if="props.showLogo" class="logo" />
+	<h1 else-if="props.custom?.title">{ props.custom.title }</h1>
+	<h2 else>Fallback Title</h2>
+
 	<p class="subtitle">{ props.subtitle }</p>
 
 	<style>

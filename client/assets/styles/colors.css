@@ -2,7 +2,7 @@
 	:root {
 		--color-light: #faf9fb;
 		--color-dark: #0f041b;
-		--color-accent: #ff6467;
+		--color-accent: lightcoral;
 
 		--fg: light-dark(var(--color-dark), var(--color-light));
 		--bg: light-dark(var(--color-light), var(--color-dark));

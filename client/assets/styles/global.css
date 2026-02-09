@@ -6,13 +6,7 @@
 @import 'theme.css';
 @import 'toast.css';
 @import 'utils.css';
-
-/* prettier-ignore */
-/** { outline: 0.1px solid red; }*/
-
-/*@view-transition {
-	navigation: auto;
-}*/
+/*@import 'debug.css';*/
 
 @layer base {
 	html,
@@ -30,7 +24,6 @@
 
 		display: grid;
 		place-content: center;
-		overflow-x: hidden;
 	}
 
 	header,

@@ -1,0 +1,29 @@
+{
+	"name": "tbd",
+	"displayName": "TBD",
+	"description": "Language support for TBD templates",
+	"version": "0.0.1",
+	"publisher": "tbd",
+	"engines": {
+		"vscode": "^1.74.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"contributes": {
+		"grammars": [
+			{
+				"path": "./syntaxes/tbd-expressions.json",
+				"scopeName": "tbd.expressions.injection",
+				"injectTo": [
+					"text.html.basic",
+					"text.html.derivative",
+					"html"
+				],
+				"embeddedLanguages": {
+					"source.js.embedded.html": "javascript"
+				}
+			}
+		]
+	}
+}

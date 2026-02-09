@@ -25,7 +25,7 @@ export default {
 		links: [
 			{ label: 'Home', path: '/' },
 			{ label: 'About', path: '/about' },
-			{ label: 'Docs', path: '/docs', new: true },
+			{ label: 'Docs', path: '/docs' },
 		],
 	},
 }

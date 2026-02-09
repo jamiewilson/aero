@@ -1,4 +1,8 @@
 @layer root {
+	@view-transition {
+		navigation: auto;
+	}
+
 	:root {
 		--duration-fast: 150ms;
 		--duration-medium: 300ms;
@@ -13,8 +17,11 @@
 		from {
 			opacity: 0;
 		}
-		to {
-			opacity: 1;
+	}
+
+	@keyframes slide-up {
+		from {
+			transform: translateY(1rem);
 		}
 	}
 }

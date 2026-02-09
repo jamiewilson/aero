@@ -1,3 +1,7 @@
+<script on:build>
+	import siteDSarta from '@data/site'
+</script>
+
 <button class="theme-toggle" @click="$store.theme.set()" tabindex="0">
 	<svg class="theme-icon" :class="{ current: $store.theme.current === 'light' }">
 		<circle cx="12" cy="12" r="4" />

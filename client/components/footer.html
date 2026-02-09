@@ -6,32 +6,22 @@
 	<ul>
 		<li each="link in links">
 			<a href="{ link.path }">{ link.label }</a>
-			<sup if="link.new">New</sup>
 		</li>
 	</ul>
 
 	<style>
-		/* You don't need :scope because <style> is inside <footer> */
 		@scope {
-			position: absolute;
-			inset-inline: 0;
-			bottom: 2rem;
+			:scope {
+				position: absolute;
+				inset-inline: 0;
+				bottom: 2rem;
+			}
 
 			ul {
 				display: flex;
 				gap: 1rem;
 				justify-content: center;
 				list-style-type: none;
-			}
-
-			sup {
-				color: white;
-				opacity: 0.5;
-				display: inline-block;
-				font-size: 0.5rem;
-				padding: 0.1rem 0.3rem;
-				border: 1px solid currentColor;
-				border-radius: 20px;
 			}
 		}
 	</style>

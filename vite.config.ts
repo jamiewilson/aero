@@ -11,14 +11,8 @@ if (process.env.WITH_NITRO === 'true') {
 
 export default defineConfig({
 	plugins,
-	// TODO: Consider Node.js Subpath Imports instead of Tsconfig paths?
 	resolve: { alias: aliases },
-	server:
-		process.env.TBD_API_PROXY ?
-			{
-				proxy: {
-					'/api': process.env.TBD_API_PROXY,
-				},
-			}
-		:	undefined,
+	server: process.env.TBD_API_PROXY
+		? { proxy: { '/api': process.env.TBD_API_PROXY } }
+		: undefined,
 })

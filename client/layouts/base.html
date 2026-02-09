@@ -2,26 +2,22 @@
 	import meta from '@components/meta'
 	import nav from '@components/nav'
 	import footer from '@components/footer'
-
-	const props = tbd.props
 </script>
 
-<html dir="ltr" lang="en">
+<html lang="en">
 	<head>
-		<meta-component props />
+		<meta-component props="tbd.props" />
+		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@client/index.ts"></script>
+		<script src="@scripts/theme.ts"></script>
 	</head>
-	<body id="app" :data-theme="$store.theme.current" x-cloak>
+	<body id="app" :data-theme="$store.theme.current">
 		<nav-component>
 			<slot name="into-nav"></slot>
 		</nav-component>
+
 		<slot></slot>
+
 		<footer-component />
 	</body>
 </html>
-
-<style>
-	[x-cloak] {
-		display: none;
-	}
-</style>
