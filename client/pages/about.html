@@ -1,19 +1,23 @@
 <script on:build>
 	import sub from '@layouts/sub'
 	import header from '@components/header'
-	import aboutImage from '@images/og-image-2.png'
+	import aboutImage from '@images/og-image-about.png'
 
-	const ogImage = {
-		imageURL: site.meta.url + aboutImage,
+	const meta = {
+		title: 'Custom Meta Title',
+		image: site.meta.url + aboutImage,
 	}
 
-	const customMetaTitle = 'Custom Meta Title'
+	const props = {
+		custom: { title: 'Custom Props Title' },
+		subtitle: site.about.subtitle,
+		showLogo: false,
+	}
 </script>
 
-<sub-layout title="{ customMetaTitle }" props="ogImage">
+<sub-layout title="{ meta.title }" image="{ meta.image }">
 	<a href="#" slot="thru-sub">Slot</a>
-	<h1>{ site.about.title }</h1>
-	<p>{ site.about.subtitle }</p>
+	<header-component props />
 </sub-layout>
 
 <script on:client>

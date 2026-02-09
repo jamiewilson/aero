@@ -40,32 +40,17 @@ export function buildPropsString(entries: string[], spreadExpr: string | null): 
 	return `{ ${entries.join(', ')} }`
 }
 
-/** Emits code for ${ items.map(item => `body`).join('') } */
-export function emitMapJoin(items: string, item: string, body: string): string {
-	return '${ ' + items + '.map(' + item + ' => `' + body + "`).join('') }"
-}
-
-/** Emits code for ${ condition ? `body` : '' } */
-export function emitConditional(condition: string, body: string): string {
-	return '${ ' + condition + ' ? `' + body + "` : '' }"
-}
-
 /** Escapes backticks in a string for safe embedding inside generated template literals. */
 export function escapeBackticks(s: string): string {
 	return s.replace(/`/g, '\\`')
 }
 
-/** Emits code for a slots object { "name": `content` } */
-export function emitSlotsObject(slotsMap: Record<string, string>): string {
+/** Emits code for a slots object { "name": varName } using variable references */
+export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 	const entries = Object.entries(slotsMap)
-		.map(([k, v]) => '"' + k + '": `' + v + '`')
+		.map(([k, varName]) => `"${k}": ${varName}`)
 		.join(', ')
 	return '{ ' + entries + ' }'
-}
-
-/** Emits code for slots['name'] || `defaultContent` */
-export function emitSlotFallback(slotName: string, defaultContent: string): string {
-	return "${ slots['" + slotName + "'] || `" + defaultContent + '` }'
 }
 
 /** Emits the top-level render function wrapper (script + body statements). */
@@ -82,9 +67,14 @@ export function emitRenderFunction(script: string, body: string): string {
 // Statement-emitting helpers
 // ============================================================================
 
-/** Emits: __out += `content`; */
-export function emitAppend(content: string): string {
-	return `__out += \`${content}\`;\n`
+/** Emits: let varName = ''; */
+export function emitSlotVar(varName: string): string {
+	return `let ${varName} = '';\n`
+}
+
+/** Emits: outVar += `content`; */
+export function emitAppend(content: string, outVar = '__out'): string {
+	return `${outVar} += \`${content}\`;\n`
 }
 
 /** Emits: if (condition) { */
@@ -112,7 +102,11 @@ export function emitForOf(item: string, items: string): string {
 	return `for (const ${item} of ${items}) {\n`
 }
 
-/** Emits: __out += slots['name'] ?? `defaultContent`; */
-export function emitSlotOutput(name: string, defaultContent: string): string {
-	return `__out += slots['${name}'] ?? \`${defaultContent}\`;\n`
+/** Emits: outVar += slots['name'] ?? `defaultContent`; */
+export function emitSlotOutput(
+	name: string,
+	defaultContent: string,
+	outVar = '__out',
+): string {
+	return `${outVar} += slots['${name}'] ?? \`${defaultContent}\`;\n`
 }
