@@ -1,17 +1,16 @@
 {
 	"type": "module",
 	"scripts": {
-		"dev": "WITH_NITRO=true vite dev",
-		"dev:static": "vite dev",
-		"dev:nitro": "WITH_NITRO=true vite dev",
+		"dev": "vite dev",
+		"dev:static": "TBD_NITRO=false vite dev",
 		"build": "vite build",
-		"build:full": "pnpm run build && pnpm run build:api",
 		"preview": "vite preview",
 		"dev:api": "nitro dev",
 		"build:api": "nitro build",
+		"build:full": "pnpm run build && pnpm run build:api",
 		"preview:api": "pnpm run build:api && node .output/server/index.mjs",
 		"preview:full": "pnpm run build:full && node .output/server/index.mjs",
-		"test": "vitest run src/compiler/"
+		"test": "vitest run tbd/compiler/ tbd/vite/"
 	},
 	"postcss": {
 		"plugins": {

@@ -1,4 +1,4 @@
-import { TBD } from '@src/runtime'
+import { TBD } from '@tbd/runtime'
 import site from '@data/site'
 
 declare global {

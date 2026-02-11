@@ -61,7 +61,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 
 				try {
 					const pageName = resolvePageName(req.url)
-					const mod = await server.ssrLoadModule('/src/runtime/instance.ts')
+					const mod = await server.ssrLoadModule('/tbd/runtime/instance.ts')
 
 					let rendered = await mod.tbd.render(pageName)
 					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
@@ -147,7 +147,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 			const dataDir = path.join(config.root, dirs.data)
 			if (file.startsWith(dataDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
-					path.join(config.root, 'src/runtime/instance.ts'),
+					path.join(config.root, 'tbd/runtime/instance.ts'),
 				)
 				if (instanceModule) {
 					server.moduleGraph.invalidateModule(instanceModule)
@@ -173,8 +173,8 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 
 	const plugins: PluginOption[] = [mainPlugin, staticBuildPlugin]
 
-	// Nitro integration (option or env var)
-	const enableNitro = options.nitro ?? process.env.WITH_NITRO === 'true'
+	// Nitro integration (explicit opt-in; TBD_NITRO=false overrides for dev:static)
+	const enableNitro = options.nitro === true && process.env.TBD_NITRO !== 'false'
 	if (enableNitro) {
 		plugins.push(nitroPlugin({ serverDir: dirs.server }))
 	}

@@ -1,16 +1,16 @@
 export interface TbdDirs {
-	/** Template root directory (default: 'client') */
-	templates?: string
-	/** Pages directory (default: 'client/pages') */
-	pages?: string
+	/** Site source directory; pages live at `<src>/pages` (default: 'client') */
+	src?: string
 	/** Data directory watched for HMR (default: 'data') */
 	data?: string
-	/** Nitro server directory (default: './server') */
+	/** Nitro server directory (default: 'server') */
 	server?: string
+	/** Build output directory (default: 'dist') */
+	dist?: string
 }
 
 export interface TbdOptions {
-	/** Enable Nitro server integration (default: reads WITH_NITRO env var) */
+	/** Enable Nitro server integration (default: false) */
 	nitro?: boolean
 	/** API route prefix (default: '/api') */
 	apiPrefix?: string

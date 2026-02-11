@@ -52,10 +52,10 @@ Components receive via `tbd.props`:
 
 ### Path Aliases (from tsconfig.json)
 
-- `@components/*` → `app/components/*`
-- `@layouts/*` → `app/layouts/*`
-- `@pages/*` → `app/pages/*`
-- `@styles/*` → `app/assets/styles/*`
+- `@components/*` → `client/components/*`
+- `@layouts/*` → `client/layouts/*`
+- `@pages/*` → `client/pages/*`
+- `@styles/*` → `client/assets/styles/*`
 - `~/*` → project root
 
 ## Development Commands
@@ -79,9 +79,9 @@ Key test files in [src/compiler/**tests**/](../src/compiler/__tests__/).
 
 ## File Structure
 
-- `app/pages/` - Route pages (home.html → `/`, about.html → `/about`)
-- `app/components/` - Reusable components
-- `app/layouts/` - Layout wrappers with `<slot>` support
+- `client/pages/` - Route pages (home.html → `/`, about.html → `/about`)
+- `client/components/` - Reusable components
+- `client/layouts/` - Layout wrappers with `<slot>` support
 - `data/` - Global data (site.ts exposed as `site` in templates)
 - `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
 

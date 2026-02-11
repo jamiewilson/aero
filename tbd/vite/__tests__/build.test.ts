@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { __internal } from '@src/vite/build'
+import { __internal, createBuildConfig } from '@tbd/vite/build'
+import { resolveDirs } from '@tbd/vite/defaults'
 import type { Manifest } from 'vite'
 
 describe('vite build helpers', () => {
@@ -15,12 +16,12 @@ describe('vite build helpers', () => {
 		const manifest: Manifest = {}
 
 		expect(__internal.rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)).toBe(
-			'../about/',
+			'../about',
 		)
 		expect(__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe(
-			'./name/',
+			'./name',
 		)
-		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('../')
+		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
 	})
 
 	it('rewrites asset URLs from manifest entries', () => {
@@ -57,5 +58,34 @@ describe('vite build helpers', () => {
 		expect(__internal.rewriteAbsoluteUrl('/api/submit', '', manifest, routeSet)).toBe(
 			'/api/submit',
 		)
+	})
+
+	it('resolves directory overrides; pages always derived from src', () => {
+		expect(resolveDirs()).toEqual({
+			src: 'client',
+			pages: 'client/pages',
+			data: 'data',
+			server: 'server',
+			dist: 'dist',
+		})
+		expect(resolveDirs({ src: 'site' })).toEqual({
+			src: 'site',
+			pages: 'site/pages',
+			data: 'data',
+			server: 'server',
+			dist: 'dist',
+		})
+		expect(resolveDirs({ src: 'site', dist: 'build' })).toEqual({
+			src: 'site',
+			pages: 'site/pages',
+			data: 'data',
+			server: 'server',
+			dist: 'build',
+		})
+	})
+
+	it('sets build outDir from dirs.dist', () => {
+		const build = createBuildConfig({ dirs: { dist: 'build' } }, process.cwd())
+		expect(build?.outDir).toBe('build')
 	})
 })

@@ -78,3 +78,52 @@ The apparent triplication exists because each copy serves a different deployment
 - **Standalone server** → use `.output/server/` only, ignore everything else
 
 The `dist/` output also doubles as the local preview source — the Nitro catch-all route in [server/routes/[...].ts](server/routes/[...].ts) reads from `dist/` at runtime during `pnpm preview:full`.
+
+## TBD plugin options
+
+`tbd()` supports a small set of user-facing options in `vite.config.ts`:
+
+- `nitro` (boolean): enable Nitro integration in Vite (default: false; set `nitro: true` explicitly to enable).
+- `apiPrefix` (string): URL prefix treated as API routes (default: `/api`). Used to: (a) bypass TBD HTML handling in dev so Nitro serves those paths; (b) skip relative-URL rewriting in static builds so `/api/*` links remain absolute for server use; (c) drive the Nitro catch-all (via `TBD_API_PREFIX` env) so requests under this prefix are not served as static files.
+- `dirs`:
+  - `src` (default `client`) — pages are always at `<src>/pages`, not configurable
+  - `data` (default `data`)
+  - `server` (default `server`) — must match `nitro.config.ts` `scanDirs` when using Nitro
+  - `dist` (default `dist`, mapped to Vite `build.outDir`)
+
+Example (default layout):
+
+```ts
+import { tbd } from './tbd/vite'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+	plugins: tbd({ nitro: true }),
+})
+```
+
+Custom structure override example:
+
+```ts
+import { tbd } from './tbd/vite'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+	plugins: tbd({
+		nitro: true,
+		dirs: {
+			src: 'web',
+			data: 'content',
+			server: 'api',
+			dist: 'build',
+		},
+		apiPrefix: '/backend',
+	}),
+})
+```
+
+When using `preview:full` with non-default `dist` or `apiPrefix`, set env vars so the Nitro catch-all matches your overrides: `TBD_DIST`, `TBD_API_PREFIX`.
+
+### `dirs.server` and `nitro.config.ts`
+
+`dirs.server` is passed to the Nitro Vite plugin as `serverDir`, telling it where your API/routes live. `nitro.config.ts` has its own `scanDirs`, which tells Nitro which directories to scan for handlers. These must point to the same place: if you set `dirs.server: 'api'`, also set `scanDirs: ['api']` in `nitro.config.ts`. TBD does not auto-sync them.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import path from 'path'
-import { tbd } from '@src/vite'
-import { TBD } from '@src/runtime'
+import { tbd } from '@tbd/vite'
+import { TBD } from '@tbd/runtime'
 
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = tbd()
@@ -26,7 +26,7 @@ describe('Vite Plugin Integration', () => {
             </script>
             <h1>{ title }</h1>
         `
-		const id = '/src/pages/test.html'
+		const id = '/tbd/pages/test.html'
 
 		const result: any = plugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('export default async function(tbd)')
@@ -40,12 +40,12 @@ describe('Vite Plugin Integration', () => {
             </script>
             <div>Client</div>
         `
-		const id = path.join(process.cwd(), 'src/pages/client.html')
+		const id = path.join(process.cwd(), 'tbd/pages/client.html')
 
 		// 1. Transform the HTML – client script URL is root-relative and .js (no user path, no .html)
 		const result: any = plugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('/@tbd/client/')
-		expect(result.code).toContain('src/pages/client.js')
+		expect(result.code).toContain('tbd/pages/client.js')
 		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
 
 		// 2. Resolve and load the virtual module (Vite uses \0 prefix for virtual module IDs)
@@ -63,7 +63,7 @@ describe('Vite Plugin Integration', () => {
 
 	it('should render a transformed module using the runtime', async () => {
 		const html = '<h1>{ tbd.props.title }</h1>'
-		const id = '/src/pages/props.html'
+		const id = '/tbd/pages/props.html'
 		const result: any = plugin.transform.call(pluginCtx, html, id)
 		const tbd = new TBD()
 		const bodyStart = result.code.indexOf('{')
