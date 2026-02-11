@@ -6,6 +6,11 @@ export default {
 		description: 'Site Meta Description',
 		url: 'https://tbd.dev',
 		ogImage: '/og-image.png',
+		icon: {
+			ico: '/favicon.ico',
+			svg: '/favicon.svg',
+			apple: '/apple-touch-icon.png',
+		},
 	},
 	theme: {
 		options: Object.values(ThemeMode),

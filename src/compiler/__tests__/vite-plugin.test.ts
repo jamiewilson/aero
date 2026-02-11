@@ -4,9 +4,20 @@ import { tbd } from '@src/vite'
 import { TBD } from '@src/runtime'
 
 describe('Vite Plugin Integration', () => {
-	const plugin: any = tbd()
+	const plugins: any[] = tbd()
+	const plugin: any = plugins[0]
 
+	// Simulate the real Vite lifecycle: config() → configResolved()
+	plugin.config({ root: process.cwd() })
 	plugin.configResolved({ root: process.cwd() })
+
+	// Mock the Vite plugin context methods used by the plugin
+	const pluginCtx = {
+		error(msg: string) {
+			throw new Error(msg)
+		},
+		resolve: async () => null,
+	}
 
 	it('should transform html into a js module', async () => {
 		const html = `
@@ -17,7 +28,7 @@ describe('Vite Plugin Integration', () => {
         `
 		const id = '/src/pages/test.html'
 
-		const result: any = plugin.transform(html, id)
+		const result: any = plugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('export default async function(tbd)')
 		expect(result.code).toContain('Vite Test')
 	})
@@ -32,7 +43,7 @@ describe('Vite Plugin Integration', () => {
 		const id = path.join(process.cwd(), 'src/pages/client.html')
 
 		// 1. Transform the HTML – client script URL is root-relative and .js (no user path, no .html)
-		const result: any = plugin.transform(html, id)
+		const result: any = plugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('/@tbd/client/')
 		expect(result.code).toContain('src/pages/client.js')
 		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
@@ -43,7 +54,7 @@ describe('Vite Plugin Integration', () => {
 			.replace(/\\/g, '/')
 			.replace(/\.html$/i, '.js')
 		const virtualId = '/@tbd/client/' + relativePath
-		const resolvedId = await plugin.resolveId(virtualId)
+		const resolvedId = await plugin.resolveId.call(pluginCtx, virtualId)
 		expect(resolvedId).toBe('\0' + virtualId)
 
 		const loadedContent = plugin.load(resolvedId)
@@ -53,7 +64,7 @@ describe('Vite Plugin Integration', () => {
 	it('should render a transformed module using the runtime', async () => {
 		const html = '<h1>{ tbd.props.title }</h1>'
 		const id = '/src/pages/props.html'
-		const result: any = plugin.transform(html, id)
+		const result: any = plugin.transform.call(pluginCtx, html, id)
 		const tbd = new TBD()
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')

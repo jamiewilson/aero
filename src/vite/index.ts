@@ -1,29 +1,37 @@
 import type { TbdOptions, AliasResult } from '../types'
-import type { Plugin, ResolvedConfig } from 'vite'
+import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
+import { createBuildConfig, renderStaticPages } from './build'
+import { CLIENT_SCRIPT_PREFIX, DEFAULT_API_PREFIX, resolveDirs } from './defaults'
+import { nitro as nitroPlugin } from 'nitro/vite'
 import path from 'path'
 
-/** Virtual URL prefix for on:client scripts. Root-relative, .js extension, no filesystem path. */
-const CLIENT_SCRIPT_PREFIX = '/@tbd/client/'
-
-/**
- * Load TypeScript path aliases from tsconfig.json
- * @param root - Project root directory (defaults to process.cwd())
- * @returns Alias configuration for Vite and path resolver function
- */
-export function loadAliases(root?: string): AliasResult {
-	return loadTsconfigAliases(root || process.cwd())
-}
-
-export function tbd(options: TbdOptions = {}): Plugin {
+export function tbd(options: TbdOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, string>()
 	let config: ResolvedConfig
+	let aliasResult: AliasResult
+	const dirs = resolveDirs(options.dirs)
+	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 
-	return {
+	const mainPlugin: Plugin = {
 		name: 'vite-plugin-tbd',
+
+		config(userConfig) {
+			const root = userConfig.root || process.cwd()
+			aliasResult = loadTsconfigAliases(root)
+
+			return {
+				base: './',
+				resolve: { alias: aliasResult.aliases },
+				build: createBuildConfig(
+					{ resolvePath: aliasResult.resolvePath, dirs: options.dirs },
+					root,
+				),
+			}
+		},
 
 		configResolved(resolvedConfig) {
 			config = resolvedConfig
@@ -40,7 +48,7 @@ export function tbd(options: TbdOptions = {}): Plugin {
 				const pathname = req.url.split('?')[0] || '/'
 				// Bypass API and Vite internals
 				if (
-					pathname.startsWith('/api') ||
+					pathname.startsWith(apiPrefix) ||
 					pathname.startsWith('/@fs') ||
 					pathname.startsWith('/@id')
 				) {
@@ -120,7 +128,7 @@ export function tbd(options: TbdOptions = {}): Plugin {
 				const generated = compile(parsed, {
 					root: config.root,
 					clientScriptUrl,
-					resolvePath: options.resolvePath,
+					resolvePath: aliasResult.resolvePath,
 				})
 
 				return {
@@ -136,7 +144,7 @@ export function tbd(options: TbdOptions = {}): Plugin {
 
 		handleHotUpdate({ file, server, modules }) {
 			// Handle HMR for data files - invalidate instance.ts to trigger re-import
-			const dataDir = path.join(config.root, 'data')
+			const dataDir = path.join(config.root, dirs.data)
 			if (file.startsWith(dataDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
 					path.join(config.root, 'src/runtime/instance.ts'),
@@ -149,4 +157,27 @@ export function tbd(options: TbdOptions = {}): Plugin {
 			return modules
 		},
 	}
+
+	const staticBuildPlugin: Plugin = {
+		name: 'vite-plugin-tbd-static',
+		apply: 'build',
+		async closeBundle() {
+			const root = config.root
+			const outDir = config.build.outDir
+			await renderStaticPages(
+				{ root, resolvePath: aliasResult.resolvePath, dirs: options.dirs, apiPrefix },
+				outDir,
+			)
+		},
+	}
+
+	const plugins: PluginOption[] = [mainPlugin, staticBuildPlugin]
+
+	// Nitro integration (option or env var)
+	const enableNitro = options.nitro ?? process.env.WITH_NITRO === 'true'
+	if (enableNitro) {
+		plugins.push(nitroPlugin({ serverDir: dirs.server }))
+	}
+
+	return plugins
 }

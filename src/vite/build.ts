@@ -1,0 +1,347 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { parseHTML } from 'linkedom'
+import { parse } from '../compiler/parser'
+import type { TbdDirs } from '../types'
+import type { Manifest, UserConfig } from 'vite'
+import { createServer } from 'vite'
+import {
+	CLIENT_SCRIPT_PREFIX,
+	DEFAULT_API_PREFIX,
+	LINK_ATTRS,
+	SKIP_PROTOCOL_REGEX,
+	resolveDirs,
+} from './defaults'
+
+interface StaticBuildOptions {
+	root: string
+	dirs?: TbdDirs
+	apiPrefix?: string
+	resolvePath?: (specifier: string) => string
+}
+
+interface StaticPage {
+	pageName: string
+	routePath: string
+	sourceFile: string
+	outputFile: string
+}
+
+function toPosix(value: string): string {
+	return value.replace(/\\/g, '/')
+}
+
+function walkHtmlFiles(dir: string): string[] {
+	if (!fs.existsSync(dir)) return []
+	const files: string[] = []
+	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+		const fullPath = path.join(dir, item.name)
+		if (item.isDirectory()) {
+			files.push(...walkHtmlFiles(fullPath))
+			continue
+		}
+		if (item.isFile() && item.name.endsWith('.html')) {
+			files.push(fullPath)
+		}
+	}
+	return files
+}
+
+function toRouteFromPageName(pageName: string): string {
+	if (pageName === 'index') return ''
+	if (pageName.endsWith('/index')) return pageName.slice(0, -'/index'.length)
+	return pageName
+}
+
+function toOutputFile(routePath: string): string {
+	if (routePath === '') return 'index.html'
+	if (routePath === '404') return '404.html'
+	return toPosix(path.join(routePath, 'index.html'))
+}
+
+function normalizeRelativeLink(fromDir: string, targetPath: string): string {
+	const rel = path.posix.relative(fromDir, targetPath)
+	if (!rel) return './'
+	if (rel.startsWith('.')) return rel
+	return `./${rel}`
+}
+
+function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
+	const targetDir = routePath === '' ? '' : routePath
+	const rel = path.posix.relative(fromDir, targetDir)
+	if (!rel) return './'
+	const base = rel.startsWith('.') ? rel : `./${rel}`
+	return base.endsWith('/') ? base : `${base}/`
+}
+
+function normalizeRoutePathFromHref(value: string): string {
+	if (value === '/') return ''
+	return value.replace(/^\/+/, '').replace(/\/+$/, '')
+}
+
+function isSkippableUrl(value: string): boolean {
+	if (!value) return true
+	return SKIP_PROTOCOL_REGEX.test(value)
+}
+
+function toManifestKey(root: string, filePath: string): string {
+	return toPosix(path.relative(root, filePath))
+}
+
+function resolveTemplateAssetPath(
+	rawValue: string,
+	templateFile: string,
+	root: string,
+	resolvePath?: (specifier: string) => string,
+): string | null {
+	if (!rawValue || isSkippableUrl(rawValue)) return null
+	if (rawValue.startsWith('/')) return path.resolve(root, rawValue.slice(1))
+	if (rawValue.startsWith('@') || rawValue.startsWith('~')) {
+		const resolved = resolvePath ? resolvePath(rawValue) : rawValue
+		return path.isAbsolute(resolved) ? resolved : path.resolve(root, resolved)
+	}
+	if (rawValue.startsWith('./') || rawValue.startsWith('../')) {
+		return path.resolve(path.dirname(templateFile), rawValue)
+	}
+	return null
+}
+
+function discoverTemplates(root: string, templateRoot: string): string[] {
+	return walkHtmlFiles(path.resolve(root, templateRoot))
+}
+
+function discoverPages(root: string, pagesRoot: string): StaticPage[] {
+	const pagesDir = path.resolve(root, pagesRoot)
+	const pageFiles = walkHtmlFiles(pagesDir)
+	return pageFiles.map(file => {
+		const rel = toPosix(path.relative(pagesDir, file))
+		const pageName = rel.replace(/\.html$/i, '')
+		const routePath = toRouteFromPageName(pageName)
+		return {
+			pageName,
+			routePath,
+			sourceFile: file,
+			outputFile: toOutputFile(routePath),
+		}
+	})
+}
+
+function discoverClientScriptMap(root: string, templateRoot: string): Map<string, string> {
+	const map = new Map<string, string>()
+	for (const file of discoverTemplates(root, templateRoot)) {
+		const source = fs.readFileSync(file, 'utf-8')
+		const parsed = parse(source)
+		if (!parsed.clientScript) continue
+		const rel = toPosix(path.relative(root, file))
+		const virtualPath = `${CLIENT_SCRIPT_PREFIX}${rel.replace(/\.html$/i, '.js')}`
+		map.set(virtualPath, parsed.clientScript.content)
+	}
+	return map
+}
+
+function discoverAssetInputs(
+	root: string,
+	resolvePath?: (specifier: string) => string,
+	templateRoot?: string,
+): Record<string, string> {
+	const templates = templateRoot || resolveDirs().templates
+	const entries = new Map<string, string>()
+	for (const templateFile of discoverTemplates(root, templates)) {
+		const source = fs.readFileSync(templateFile, 'utf-8')
+		const { document } = parseHTML(source)
+		const scripts = Array.from(document.querySelectorAll('script[src]'))
+		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
+		const refs = [...scripts, ...styles]
+
+		for (const el of refs) {
+			const attr = el.hasAttribute('src') ? 'src' : 'href'
+			const raw = el.getAttribute(attr) || ''
+			const resolved = resolveTemplateAssetPath(raw, templateFile, root, resolvePath)
+			if (!resolved || !fs.existsSync(resolved)) continue
+			const ext = path.extname(resolved).toLowerCase()
+			if (!['.js', '.mjs', '.ts', '.tsx', '.css'].includes(ext)) continue
+			entries.set(toManifestKey(root, resolved), resolved)
+		}
+	}
+
+	// Keep build resilient when templates do not declare script/style entries.
+	const defaultClientEntry = path.resolve(root, `${templates}/index.ts`)
+	if (fs.existsSync(defaultClientEntry)) {
+		entries.set(toManifestKey(root, defaultClientEntry), defaultClientEntry)
+	}
+
+	return Object.fromEntries(entries)
+}
+
+function addDoctype(html: string): string {
+	return /^\s*<!doctype\s+html/i.test(html) ? html : `<!doctype html>\n${html}`
+}
+
+function rewriteAbsoluteUrl(
+	value: string,
+	fromDir: string,
+	manifest: Manifest,
+	routeSet: Set<string>,
+	apiPrefix = DEFAULT_API_PREFIX,
+): string {
+	if (value.startsWith(apiPrefix)) return value
+
+	const noQuery = value.split(/[?#]/)[0] || value
+	const suffix = value.slice(noQuery.length)
+	const manifestKey = noQuery.replace(/^\//, '')
+	const manifestEntry = manifest[manifestKey]
+
+	if (manifestEntry?.file) {
+		const rel = normalizeRelativeLink(fromDir, manifestEntry.file)
+		return rel + suffix
+	}
+
+	if (noQuery.startsWith('/assets/')) {
+		const rel = normalizeRelativeLink(fromDir, noQuery.replace(/^\//, ''))
+		return rel + suffix
+	}
+
+	const route = normalizeRoutePathFromHref(noQuery)
+	if (routeSet.has(route) || route === '') {
+		const rel =
+			route === '404'
+				? normalizeRelativeLink(fromDir, toOutputFile(route))
+				: normalizeRelativeRouteLink(fromDir, route)
+		return rel + suffix
+	}
+
+	// Treat remaining absolute URLs as dist-root files (e.g. /favicon.svg).
+	const rel = normalizeRelativeLink(fromDir, noQuery.replace(/^\//, ''))
+	return rel + suffix
+}
+
+function rewriteRenderedHtml(
+	html: string,
+	outputFile: string,
+	manifest: Manifest,
+	routeSet: Set<string>,
+	clientScriptMap: Map<string, string>,
+	apiPrefix = DEFAULT_API_PREFIX,
+): string {
+	const fromDir = path.posix.dirname(outputFile)
+	const { document } = parseHTML(html)
+
+	for (const script of Array.from(document.querySelectorAll('script[src]'))) {
+		const src = script.getAttribute('src') || ''
+		if (src.startsWith(CLIENT_SCRIPT_PREFIX)) {
+			const scriptContent = clientScriptMap.get(src)
+			if (!scriptContent) continue
+			script.removeAttribute('src')
+			script.setAttribute('type', 'module')
+			script.textContent = scriptContent
+			continue
+		}
+	}
+
+	for (const el of Array.from(document.querySelectorAll('*'))) {
+		for (const attrName of LINK_ATTRS) {
+			if (!el.hasAttribute(attrName)) continue
+			const current = (el.getAttribute(attrName) || '').trim()
+			if (!current || isSkippableUrl(current)) continue
+			if (!current.startsWith('/')) continue
+			el.setAttribute(
+				attrName,
+				rewriteAbsoluteUrl(current, fromDir, manifest, routeSet, apiPrefix),
+			)
+		}
+	}
+
+	const htmlTag = document.documentElement
+	if (htmlTag) return addDoctype(htmlTag.outerHTML)
+	return addDoctype(document.toString())
+}
+
+function readManifest(distDir: string): Manifest {
+	const manifestPath = path.join(distDir, '.vite', 'manifest.json')
+	if (!fs.existsSync(manifestPath)) return {}
+	return JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as Manifest
+}
+
+export async function renderStaticPages(
+	options: StaticBuildOptions,
+	outDir: string,
+): Promise<void> {
+	const root = options.root
+	const dirs = resolveDirs(options.dirs)
+	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
+	const pages = discoverPages(root, dirs.pages)
+	const routeSet = new Set(pages.map(page => page.routePath))
+	const distDir = path.resolve(root, outDir)
+	const manifest = readManifest(distDir)
+	const clientScriptMap = discoverClientScriptMap(root, dirs.templates)
+
+	const server = await createServer({
+		root,
+		appType: 'custom',
+		logLevel: 'error',
+		server: { middlewareMode: true, hmr: false },
+	})
+
+	try {
+		const runtime = await server.ssrLoadModule('/src/runtime/instance.ts')
+		for (const page of pages) {
+			let rendered = await runtime.tbd.render(page.pageName)
+			rendered = rewriteRenderedHtml(
+				addDoctype(rendered),
+				page.outputFile,
+				manifest,
+				routeSet,
+				clientScriptMap,
+				apiPrefix,
+			)
+
+			const outPath = path.join(distDir, page.outputFile)
+			fs.mkdirSync(path.dirname(outPath), { recursive: true })
+			fs.writeFileSync(outPath, rendered, 'utf-8')
+		}
+	} finally {
+		await server.close()
+	}
+}
+
+interface BuildConfigOptions {
+	dirs?: TbdDirs
+	resolvePath?: (specifier: string) => string
+}
+
+export function createBuildConfig(
+	options: BuildConfigOptions = {},
+	root = process.cwd(),
+): UserConfig['build'] {
+	const dirs = resolveDirs(options.dirs)
+	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.templates)
+	return {
+		manifest: true,
+		emptyOutDir: true,
+		rollupOptions: {
+			input: inputs,
+			output: {
+				entryFileNames(chunkInfo) {
+					const baseName = chunkInfo.facadeModuleId
+						? path.basename(chunkInfo.facadeModuleId)
+						: chunkInfo.name
+					return `assets/scripts/${baseName}-[hash].js`
+				},
+				chunkFileNames: 'assets/scripts/[name]-[hash].js',
+				assetFileNames(assetInfo) {
+					const ext = path.extname(assetInfo.name || '').toLowerCase()
+					if (ext === '.css') return 'assets/styles/[name]-[hash][extname]'
+					return 'assets/[name]-[hash][extname]'
+				},
+			},
+		},
+	}
+}
+
+export const __internal = {
+	toOutputFile,
+	normalizeRelativeLink,
+	normalizeRelativeRouteLink,
+	rewriteAbsoluteUrl,
+	rewriteRenderedHtml,
+}

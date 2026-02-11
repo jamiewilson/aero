@@ -216,6 +216,19 @@ describe('Codegen', () => {
 		expect(output).toContain('Click')
 	})
 
+	it('should normalize absolute attr paths that include parent segments', async () => {
+		const html = '<form hx-post="/api/submit"></form>'
+		const parsed = parse(html)
+		const code = compile(parsed, {
+			root: '/Users/jamie/dev/tbd',
+			resolvePath: () => '/../../../../api/submit',
+		})
+
+		const output = await execute(code)
+		expect(output).toContain('hx-post="/api/submit"')
+		expect(output).not.toContain('/../../../../api/submit')
+	})
+
 	it('should support default content in slots', async () => {
 		const html = `<script on:build>
 										const nav = { name: 'nav' };

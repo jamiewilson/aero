@@ -6,4 +6,15 @@
 		padding: 0;
 		box-sizing: border-box;
 	}
+
+	input,
+	button {
+		appearance: none;
+		border: none;
+		color: inherit;
+	}
+
+	button {
+		cursor: pointer;
+	}
 }
