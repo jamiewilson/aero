@@ -218,6 +218,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 				...nitro,
 				apply(pluginConfig, env) {
 					if (env.command !== 'serve') return false
+					if ((env as { isPreview?: boolean }).isPreview) return false
 					if (typeof originalApply === 'function') {
 						return originalApply(pluginConfig, env)
 					}

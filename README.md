@@ -8,7 +8,7 @@
 - `pnpm build` always emits root-style pages in `dist/` (examples: `dist/index.html`, `dist/about/index.html`, `dist/docs/index.html`) plus bundled assets in `dist/assets/`.
 - With `tbd({ nitro: true })`, `pnpm build` also emits Nitro output in `.output/`.
 - Generated links/assets are relative so pages can be opened directly with `file://` as a static bundle.
-- Preview static output: `pnpm preview` (`vite build && vite preview`).
+- Preview static output: `pnpm preview` or `pnpm preview:static` (`TBD_NITRO=false vite build && vite preview`).
 - Preview full runtime (static + API): `pnpm preview:full` (`vite build && nitro preview`).
 
 ## Unified API + site preview
@@ -22,7 +22,7 @@
 - `pnpm build` runs `vite build`.
 - TBD always generates static output in `dist/` during Vite build.
 - If `tbd({ nitro: true })` is enabled, TBD then runs `nitro build` from its build lifecycle, producing `.output/`.
-- `pnpm preview` is intentionally static (`vite preview`).
+- `pnpm preview` / `pnpm preview:static` force a static-only build (`TBD_NITRO=false`) before `vite preview`.
 - `pnpm preview:full` is intentionally runtime (`nitro preview`).
 
 ## Production deployment modes
