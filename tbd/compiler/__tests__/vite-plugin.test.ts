@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { TBD } from '../../runtime'
+import { tbd } from '../../vite'
 import path from 'path'
-import { tbd } from '@tbd/vite'
-import { TBD } from '@tbd/runtime'
 
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = tbd()

@@ -141,7 +141,7 @@ Usage:
 ```html
 <!-- pages/index.html -->
 <script on:build>
-	import header from '@/components/header'
+	import header from '@src/components/header'
 
 	const headerProps = {
 		title: site.home.title,

@@ -111,7 +111,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 				return resolved
 			}
 
-			// 2. If it's a template import without .html extension (e.g. @/layouts/base)
+			// 2. If it's a template import without .html extension (e.g. @src/layouts/base)
 			// we try to resolve it with the extension appended.
 			if (!id.includes('.') && !id.startsWith('\0')) {
 				const resolvedHtml = await this.resolve(id + '.html', importer, { skipSelf: true })
@@ -161,14 +161,12 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 			} catch (err: any) {
 				const relativePath = path.relative(config.root, id)
 				this.error(`[tbd] Error compiling ${relativePath}: ${err.message}`)
-				return null
 			}
 		},
 
 		handleHotUpdate({ file, server, modules }) {
-			// Handle HMR for data files - invalidate instance.ts to trigger re-import
-			const dataDir = path.join(config.root, dirs.data)
-			if (file.startsWith(dataDir) && file.endsWith('.ts')) {
+			const contentDir = path.resolve(config.root, dirs.src, 'content')
+			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
 					path.join(config.root, 'tbd/runtime/instance.ts'),
 				)

@@ -1,6 +1,6 @@
+import type { UserAlias, AliasResult } from '../types'
 import path from 'node:path'
 import { getTsconfig } from 'get-tsconfig'
-import type { UserAlias, AliasResult } from '@tbd/types'
 
 export function loadTsconfigAliases(root: string): AliasResult {
 	const result = getTsconfig(root)

@@ -1,9 +1,9 @@
+import type { TbdDirs } from '../types'
+import type { Manifest, Plugin, UserConfig } from 'vite'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
-import type { TbdDirs } from '../types'
-import type { Manifest, Plugin, UserConfig } from 'vite'
 import { createServer } from 'vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
@@ -268,7 +268,8 @@ export async function renderStaticPages(
 	const root = options.root
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	const pages = discoverPages(root, dirs.pages)
+	// Pages are always discovered from the src/pages subtree.
+	const pages = discoverPages(root, path.join(dirs.src, 'pages'))
 	const routeSet = new Set(pages.map(page => page.routePath))
 	const distDir = path.resolve(root, outDir)
 	const manifest = readManifest(distDir)

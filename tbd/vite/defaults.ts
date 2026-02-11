@@ -5,8 +5,7 @@ export const CLIENT_SCRIPT_PREFIX = '/@tbd/client/'
 
 /** Default directory conventions */
 export const DEFAULT_DIRS = {
-	src: 'client',
-	data: 'data',
+	src: 'src',
 	server: 'server',
 	dist: 'dist',
 }
@@ -33,18 +32,13 @@ export const SKIP_PROTOCOL_REGEX =
 /** Resolve user-provided dirs with defaults */
 export interface ResolvedTbdDirs {
 	src: string
-	pages: string
-	data: string
 	server: string
 	dist: string
 }
 
 export function resolveDirs(dirs?: Partial<TbdDirs>): ResolvedTbdDirs {
-	const src = dirs?.src ?? DEFAULT_DIRS.src
 	return {
-		src,
-		pages: `${src}/pages`,
-		data: dirs?.data ?? DEFAULT_DIRS.data,
+		src: dirs?.src ?? DEFAULT_DIRS.src,
 		server: dirs?.server ?? DEFAULT_DIRS.server,
 		dist: dirs?.dist ?? DEFAULT_DIRS.dist,
 	}

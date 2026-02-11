@@ -1,6 +1,6 @@
+import type { ParseResult, CompileOptions } from '../types'
 import * as CONST from './constants'
 import * as Helper from './helpers'
-import type { ParseResult, CompileOptions } from '@tbd/types'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 

@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import { __internal, createBuildConfig } from '@tbd/vite/build'
-import { resolveDirs } from '@tbd/vite/defaults'
 import type { Manifest } from 'vite'
+import { describe, expect, it } from 'vitest'
+import { __internal, createBuildConfig } from '../build'
+import { resolveDirs } from '../defaults'
 
 describe('vite build helpers', () => {
 	it('maps routes to root-style output files', () => {

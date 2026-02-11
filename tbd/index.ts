@@ -1,7 +1,7 @@
-import { TBD } from '@tbd/runtime'
-import { tbd, onUpdate } from '@tbd/runtime/instance'
-import { renderPage } from '@tbd/runtime/client'
-import type { MountOptions } from '@tbd/types'
+import type { MountOptions } from './types'
+import { TBD } from './runtime'
+import { tbd, onUpdate } from './runtime/instance'
+import { renderPage } from './runtime/client'
 
 const coreRender = tbd.render.bind(tbd)
 

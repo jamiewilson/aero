@@ -1,5 +1,6 @@
-import { TBD } from '@tbd/runtime'
-import site from '@data/site'
+import { TBD } from '../runtime'
+// TODO needs to be dynamic import for user src directory
+import site from '@content/site'
 
 declare global {
 	var __TBD_INSTANCE__: TBD | undefined
