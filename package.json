@@ -2,14 +2,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"dev:static": "TBD_NITRO=false vite dev",
 		"build": "vite build",
-		"preview": "vite preview",
-		"dev:api": "nitro dev",
-		"build:api": "nitro build",
-		"build:full": "pnpm run build && pnpm run build:api",
-		"preview:api": "pnpm run build:api && node .output/server/index.mjs",
-		"preview:full": "pnpm run build:full && node .output/server/index.mjs",
+		"preview": "vite build && vite preview",
+		"preview:full": "vite build && nitro preview",
 		"test": "vitest run tbd/compiler/ tbd/vite/"
 	},
 	"postcss": {

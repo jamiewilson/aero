@@ -7,7 +7,28 @@ import { loadTsconfigAliases } from '../utils/aliases'
 import { createBuildConfig, renderStaticPages } from './build'
 import { CLIENT_SCRIPT_PREFIX, DEFAULT_API_PREFIX, resolveDirs } from './defaults'
 import { nitro as nitroPlugin } from 'nitro/vite'
+import { spawn } from 'node:child_process'
 import path from 'path'
+
+async function runNitroBuild(root: string): Promise<void> {
+	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+	await new Promise<void>((resolve, reject) => {
+		const child = spawn(nitroBin, ['build'], {
+			cwd: root,
+			stdio: 'inherit',
+			env: process.env,
+		})
+
+		child.on('error', reject)
+		child.on('exit', code => {
+			if (code === 0) {
+				resolve()
+				return
+			}
+			reject(new Error(`[tbd] nitro build failed with exit code ${code ?? 'null'}`))
+		})
+	})
+}
 
 export function tbd(options: TbdOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, string>()
@@ -15,6 +36,8 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 	let aliasResult: AliasResult
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
+	// Allow temporary opt-out (e.g. static-only local checks) without changing config.
+	const enableNitro = options.nitro === true && process.env.TBD_NITRO !== 'false'
 
 	const mainPlugin: Plugin = {
 		name: 'vite-plugin-tbd',
@@ -165,18 +188,44 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 			const root = config.root
 			const outDir = config.build.outDir
 			await renderStaticPages(
-				{ root, resolvePath: aliasResult.resolvePath, dirs: options.dirs, apiPrefix },
+				{
+					root,
+					resolvePath: aliasResult.resolvePath,
+					dirs: options.dirs,
+					apiPrefix,
+					// Keep static rendering isolated from user vite.config.ts while
+					// still providing TBD's HTML transform/runtime resolution support.
+					vitePlugins: [mainPlugin],
+				},
 				outDir,
 			)
+			if (enableNitro) {
+				await runNitroBuild(root)
+			}
 		},
 	}
 
 	const plugins: PluginOption[] = [mainPlugin, staticBuildPlugin]
 
-	// Nitro integration (explicit opt-in; TBD_NITRO=false overrides for dev:static)
-	const enableNitro = options.nitro === true && process.env.TBD_NITRO !== 'false'
+	// Nitro Vite integration is serve-only; build orchestration is handled above.
 	if (enableNitro) {
-		plugins.push(nitroPlugin({ serverDir: dirs.server }))
+		const rawNitroPlugins = nitroPlugin({ serverDir: dirs.server })
+		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
+		for (const nitro of nitroPlugins) {
+			if (!nitro || typeof nitro !== 'object') continue
+			const originalApply = nitro.apply
+			plugins.push({
+				...nitro,
+				apply(pluginConfig, env) {
+					if (env.command !== 'serve') return false
+					if (typeof originalApply === 'function') {
+						return originalApply(pluginConfig, env)
+					}
+					if (originalApply) return originalApply === 'serve'
+					return true
+				},
+			})
+		}
 	}
 
 	return plugins

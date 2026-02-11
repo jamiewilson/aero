@@ -3,7 +3,7 @@ import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import type { TbdDirs } from '../types'
-import type { Manifest, UserConfig } from 'vite'
+import type { Manifest, Plugin, UserConfig } from 'vite'
 import { createServer } from 'vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
@@ -18,6 +18,7 @@ interface StaticBuildOptions {
 	dirs?: TbdDirs
 	apiPrefix?: string
 	resolvePath?: (specifier: string) => string
+	vitePlugins?: Plugin[]
 }
 
 interface StaticPage {
@@ -274,9 +275,11 @@ export async function renderStaticPages(
 	const clientScriptMap = discoverClientScriptMap(root, dirs.src)
 
 	const server = await createServer({
+		configFile: false,
 		root,
 		appType: 'custom',
 		logLevel: 'error',
+		plugins: options.vitePlugins,
 		server: {
 			middlewareMode: true,
 			hmr: false,
