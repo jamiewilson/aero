@@ -4,7 +4,8 @@ import { tbd } from '@src/vite'
 import { TBD } from '@src/runtime'
 
 describe('Vite Plugin Integration', () => {
-	const plugin: any = tbd()
+	const plugins: any[] = tbd()
+	const plugin: any = plugins[0]
 
 	plugin.configResolved({ root: process.cwd() })
 

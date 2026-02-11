@@ -10,8 +10,13 @@
 
 	<p class="subtitle">{ props.subtitle }</p>
 
+	<!-- Overrides global styles -->
 	<style>
 		@scope {
+			:scope {
+				background: none;
+			}
+
 			.logo {
 				width: 300px;
 				margin-bottom: 1rem;
@@ -25,6 +30,13 @@
 		}
 	</style>
 </header>
+
+<!-- Global styles -->
+<style>
+	header {
+		background: red;
+	}
+</style>
 
 <script on:client>
 	console.log('[tbd] <header-component> script executed')
