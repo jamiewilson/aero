@@ -2,6 +2,7 @@ _reference
 
 node_modules
 dist
+build
 .data
 .nitro
 .cache

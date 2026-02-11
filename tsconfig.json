@@ -4,7 +4,7 @@
 		"types": ["vite/client"],
 		"paths": {
 			"~/*": ["./*"],
-			"@src/*": ["./src/*"],
+			"@tbd/*": ["./tbd/*"],
 			"@client/*": ["./client/*"],
 			"@server/*": ["./server/*"],
 			"@data/*": ["./data/*"],
@@ -14,7 +14,7 @@
 			"@components/*": ["./client/components/*"],
 			"@layouts/*": ["./client/layouts/*"],
 			"@pages/*": ["./client/pages/*"],
-			"@utils/*": ["./src/utils/*"]
+			"@utils/*": ["./tbd/utils/*"]
 		}
 	}
 }

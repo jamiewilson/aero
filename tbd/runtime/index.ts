@@ -1,4 +1,4 @@
-import type { MountOptions } from '@src/types'
+import type { MountOptions } from '@tbd/types'
 
 export class TBD {
 	private globals: Record<string, any> = {}
@@ -15,8 +15,8 @@ export class TBD {
 			const key = withoutExt.includes('pages/')
 				? withoutExt.split('pages/').pop()!
 				: withoutExt.split('/').filter(Boolean).length > 1
-				? withoutExt.split('/').filter(Boolean).join('/')
-				: withoutExt.split('/').pop() || path
+					? withoutExt.split('/').filter(Boolean).join('/')
+					: withoutExt.split('/').pop() || path
 			this.pagesMap[key] = mod
 			this.pagesMap[path] = mod
 		}

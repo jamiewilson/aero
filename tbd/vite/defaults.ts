@@ -4,11 +4,11 @@ import type { TbdDirs } from '../types'
 export const CLIENT_SCRIPT_PREFIX = '/@tbd/client/'
 
 /** Default directory conventions */
-export const DEFAULT_DIRS: Required<TbdDirs> = {
-	templates: 'client',
-	pages: 'client/pages',
+export const DEFAULT_DIRS = {
+	src: 'client',
 	data: 'data',
-	server: './server',
+	server: 'server',
+	dist: 'dist',
 }
 
 /** Default API route prefix */
@@ -31,6 +31,21 @@ export const SKIP_PROTOCOL_REGEX =
 	/^(?:https?:\/\/|\/\/|mailto:|tel:|data:|javascript:|#|blob:|file:\/\/)/i
 
 /** Resolve user-provided dirs with defaults */
-export function resolveDirs(dirs?: Partial<TbdDirs>): Required<TbdDirs> {
-	return { ...DEFAULT_DIRS, ...dirs }
+export interface ResolvedTbdDirs {
+	src: string
+	pages: string
+	data: string
+	server: string
+	dist: string
+}
+
+export function resolveDirs(dirs?: Partial<TbdDirs>): ResolvedTbdDirs {
+	const src = dirs?.src ?? DEFAULT_DIRS.src
+	return {
+		src,
+		pages: `${src}/pages`,
+		data: dirs?.data ?? DEFAULT_DIRS.data,
+		server: dirs?.server ?? DEFAULT_DIRS.server,
+		dist: dirs?.dist ?? DEFAULT_DIRS.dist,
+	}
 }

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import type { TbdDirs } from '../types'
-import type { Manifest, UserConfig } from 'vite'
+import type { Manifest, Plugin, UserConfig } from 'vite'
 import { createServer } from 'vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
@@ -18,6 +18,7 @@ interface StaticBuildOptions {
 	dirs?: TbdDirs
 	apiPrefix?: string
 	resolvePath?: (specifier: string) => string
+	vitePlugins?: Plugin[]
 }
 
 interface StaticPage {
@@ -70,8 +71,7 @@ function normalizeRelativeRouteLink(fromDir: string, routePath: string): string 
 	const targetDir = routePath === '' ? '' : routePath
 	const rel = path.posix.relative(fromDir, targetDir)
 	if (!rel) return './'
-	const base = rel.startsWith('.') ? rel : `./${rel}`
-	return base.endsWith('/') ? base : `${base}/`
+	return rel.startsWith('.') ? rel : `./${rel}`
 }
 
 function normalizeRoutePathFromHref(value: string): string {
@@ -142,11 +142,10 @@ function discoverClientScriptMap(root: string, templateRoot: string): Map<string
 function discoverAssetInputs(
 	root: string,
 	resolvePath?: (specifier: string) => string,
-	templateRoot?: string,
+	templateRoot = 'client',
 ): Record<string, string> {
-	const templates = templateRoot || resolveDirs().templates
 	const entries = new Map<string, string>()
-	for (const templateFile of discoverTemplates(root, templates)) {
+	for (const templateFile of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(templateFile, 'utf-8')
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
@@ -165,7 +164,7 @@ function discoverAssetInputs(
 	}
 
 	// Keep build resilient when templates do not declare script/style entries.
-	const defaultClientEntry = path.resolve(root, `${templates}/index.ts`)
+	const defaultClientEntry = path.resolve(root, `${templateRoot}/index.ts`)
 	if (fs.existsSync(defaultClientEntry)) {
 		entries.set(toManifestKey(root, defaultClientEntry), defaultClientEntry)
 	}
@@ -273,17 +272,23 @@ export async function renderStaticPages(
 	const routeSet = new Set(pages.map(page => page.routePath))
 	const distDir = path.resolve(root, outDir)
 	const manifest = readManifest(distDir)
-	const clientScriptMap = discoverClientScriptMap(root, dirs.templates)
+	const clientScriptMap = discoverClientScriptMap(root, dirs.src)
 
 	const server = await createServer({
+		configFile: false,
 		root,
 		appType: 'custom',
 		logLevel: 'error',
-		server: { middlewareMode: true, hmr: false },
+		plugins: options.vitePlugins,
+		server: {
+			middlewareMode: true,
+			hmr: false,
+			watch: { ignored: ['**/*'] },
+		},
 	})
 
 	try {
-		const runtime = await server.ssrLoadModule('/src/runtime/instance.ts')
+		const runtime = await server.ssrLoadModule('/tbd/runtime/instance.ts')
 		for (const page of pages) {
 			let rendered = await runtime.tbd.render(page.pageName)
 			rendered = rewriteRenderedHtml(
@@ -314,8 +319,9 @@ export function createBuildConfig(
 	root = process.cwd(),
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.templates)
+	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.src)
 	return {
+		outDir: dirs.dist,
 		manifest: true,
 		emptyOutDir: true,
 		rollupOptions: {

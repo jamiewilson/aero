@@ -1,5 +1,5 @@
 import path from 'path'
-import type { ResolverOptions } from '@src/types'
+import type { ResolverOptions } from '@tbd/types'
 
 export class Resolver {
 	private root: string

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parse } from '@src/compiler/parser'
-import { compile } from '@src/compiler/codegen'
+import { parse } from '@tbd/compiler/parser'
+import { compile } from '@tbd/compiler/codegen'
 
 // Helper to execute the generated code
 async function execute(code: string, context = {}) {
