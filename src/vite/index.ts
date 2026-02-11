@@ -1,5 +1,5 @@
 import type { TbdOptions, AliasResult } from '../types'
-import type { Plugin, PluginOption, ResolvedConfig, UserConfig } from 'vite'
+import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
@@ -23,7 +23,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 			const root = userConfig.root || process.cwd()
 			aliasResult = loadTsconfigAliases(root)
 
-			const injected: UserConfig = {
+			return {
 				base: './',
 				resolve: { alias: aliasResult.aliases },
 				build: createBuildConfig(
@@ -31,14 +31,6 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 					root,
 				),
 			}
-
-			// API proxy support (option or env var)
-			const apiProxy = options.apiProxy || process.env.TBD_API_PROXY
-			if (apiProxy) {
-				injected.server = { proxy: { [apiPrefix]: apiProxy } }
-			}
-
-			return injected
 		},
 
 		configResolved(resolvedConfig) {
@@ -133,11 +125,10 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 					clientScripts.set(clientScriptUrl, parsed.clientScript.content)
 				}
 
-				const resolvePath = options.resolvePath || aliasResult?.resolvePath
 				const generated = compile(parsed, {
 					root: config.root,
 					clientScriptUrl,
-					resolvePath,
+					resolvePath: aliasResult.resolvePath,
 				})
 
 				return {
@@ -173,10 +164,10 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 		async closeBundle() {
 			const root = config.root
 			const outDir = config.build.outDir
-			// Expose outDir so the Nitro catch-all route can find the built files
-			process.env.TBD_OUT_DIR = outDir
-			const resolvePath = options.resolvePath || aliasResult?.resolvePath
-			await renderStaticPages({ root, resolvePath, dirs: options.dirs, apiPrefix }, outDir)
+			await renderStaticPages(
+				{ root, resolvePath: aliasResult.resolvePath, dirs: options.dirs, apiPrefix },
+				outDir,
+			)
 		},
 	}
 

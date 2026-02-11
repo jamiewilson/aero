@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
-import type { TbdOptions } from '../types'
+import type { TbdDirs } from '../types'
 import type { Manifest, UserConfig } from 'vite'
 import { createServer } from 'vite'
 import {
@@ -13,9 +13,11 @@ import {
 	resolveDirs,
 } from './defaults'
 
-interface StaticBuildOptions extends TbdOptions {
+interface StaticBuildOptions {
 	root: string
+	dirs?: TbdDirs
 	apiPrefix?: string
+	resolvePath?: (specifier: string) => string
 }
 
 interface StaticPage {
@@ -58,7 +60,7 @@ function toOutputFile(routePath: string): string {
 }
 
 function normalizeRelativeLink(fromDir: string, targetPath: string): string {
-	const rel = toPosix(path.posix.relative(fromDir, targetPath))
+	const rel = path.posix.relative(fromDir, targetPath)
 	if (!rel) return './'
 	if (rel.startsWith('.')) return rel
 	return `./${rel}`
@@ -66,7 +68,7 @@ function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 
 function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
 	const targetDir = routePath === '' ? '' : routePath
-	const rel = toPosix(path.posix.relative(fromDir, targetDir))
+	const rel = path.posix.relative(fromDir, targetDir)
 	if (!rel) return './'
 	const base = rel.startsWith('.') ? rel : `./${rel}`
 	return base.endsWith('/') ? base : `${base}/`
@@ -302,8 +304,13 @@ export async function renderStaticPages(
 	}
 }
 
+interface BuildConfigOptions {
+	dirs?: TbdDirs
+	resolvePath?: (specifier: string) => string
+}
+
 export function createBuildConfig(
-	options: TbdOptions = {},
+	options: BuildConfigOptions = {},
 	root = process.cwd(),
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
