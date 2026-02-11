@@ -32,11 +32,10 @@ TBD is a static site generator with an HTML-first template engine.
 
 ## Path Aliases (tsconfig)
 
-- `@components/*` → client/components/*
-- `@layouts/*` → client/layouts/*
-- `@pages/*` → client/pages/*
-- `@styles/*` → client/assets/styles/*
-- `@scripts/*` → client/assets/scripts/*
-- `@images/*` → client/assets/images/*
-- `@utils/*` → src/utils/*
+- `@components/*` → src/components/*
+- `@layouts/*` → src/layouts/*
+- `@pages/*` → src/pages/*
+- `@styles/*` → src/assets/styles/*
+- `@scripts/*` → src/assets/scripts/*
+- `@images/*` → src/assets/images/*
 - `~/*` → project root

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parse } from '@tbd/compiler/parser'
+import { parse } from '../parser'
 
 describe('Parser', () => {
 	it('should separate on:build script, on:client script, and template', () => {

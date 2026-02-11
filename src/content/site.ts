@@ -1,4 +1,4 @@
-import { ThemeMode } from '@data/theme'
+import { ThemeMode } from '@content/theme'
 
 export default {
 	meta: {

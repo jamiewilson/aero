@@ -1,4 +1,4 @@
-import type { MountOptions } from '@tbd/types'
+import type { MountOptions } from '../types'
 
 export class TBD {
 	private globals: Record<string, any> = {}

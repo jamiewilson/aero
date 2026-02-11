@@ -30,15 +30,9 @@ importers:
       '@types/node':
         specifier: ^25.2.3
         version: 25.2.3
-      esbuild:
-        specifier: ^0.27.3
-        version: 0.27.3
       get-tsconfig:
         specifier: ^4.13.6
         version: 4.13.6
-      lightningcss:
-        specifier: ^1.31.1
-        version: 1.31.1
       linkedom:
         specifier: ^0.18.12
         version: 0.18.12
@@ -1619,7 +1613,8 @@ snapshots:
 
   db0@0.3.4: {}
 
-  detect-libc@2.1.2: {}
+  detect-libc@2.1.2:
+    optional: true
 
   dom-serializer@2.0.0:
     dependencies:
@@ -1765,6 +1760,7 @@ snapshots:
       lightningcss-linux-x64-musl: 1.31.1
       lightningcss-win32-arm64-msvc: 1.31.1
       lightningcss-win32-x64-msvc: 1.31.1
+    optional: true
 
   linkedom@0.18.12:
     dependencies:

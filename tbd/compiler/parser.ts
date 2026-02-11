@@ -1,5 +1,5 @@
+import type { ParseResult } from '../types'
 import { parseHTML } from 'linkedom'
-import type { ParseResult } from '@tbd/types'
 
 /**
  * Parses the input HTML and extracts TBD-specific scripts.

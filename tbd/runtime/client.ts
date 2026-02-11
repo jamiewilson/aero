@@ -1,5 +1,5 @@
-import { resolvePageName } from '@tbd/utils/routing'
-import type { PageFragments } from '@tbd/types'
+import type { PageFragments } from '../types'
+import { resolvePageName } from '../utils/routing'
 
 function extractDocumentParts(html: string): PageFragments {
 	const parser = new DOMParser()
