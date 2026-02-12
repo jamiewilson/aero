@@ -7,35 +7,48 @@ alwaysApply: true
 
 TBD is a static site generator with an HTML-first template engine.
 
-## Pipeline
+## Monorepo Layout
 
-1. **Parser** (src/compiler/parser.ts) - Extracts `<script on:build>` and `<script on:client>` from HTML
-2. **Codegen** (src/compiler/codegen.ts) - Compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** (src/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
-4. **Runtime** (src/runtime/index.ts) - `TBD` class renders pages and components with context
+- **Root** (`tbd-start`) - App: pages, components, layouts, assets, and config (Vite, Nitro, tsconfig).
+- **packages/tbd** - Framework package: compiler, runtime, Vite plugin. Built with tsup; consumed as `tbd` and `tbd/vite` from root.
+- **packages/tbd-vscode** - VS Code extension (syntaxes, etc.).
 
-## File Structure
+Build order: `predev` / `prebuild` run `pnpm --dir packages/tbd build` so the app uses the built framework.
 
-- `client/pages/` - Route pages (home.html → `/`, about.html → `/about`)
-- `client/components/` - Reusable components
-- `client/layouts/` - Layout wrappers with `<slot>` support
-- `data/` - Global data (site.ts exposed as `site` in templates)
-- `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
-- `src/compiler/` - Parser, codegen, resolver; tests in `__tests__/`
+## Pipeline (packages/tbd)
+
+1. **Parser** (packages/tbd/compiler/parser.ts) - Extracts `<script on:build>` and `<script on:client>` from HTML
+2. **Codegen** (packages/tbd/compiler/codegen.ts) - Compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/tbd/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
+4. **Runtime** (packages/tbd/runtime/index.ts) - `TBD` class renders pages and components with context
+
+## App File Structure (root)
+
+- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
+- `src/components/` - Reusable components
+- `src/layouts/` - Layout wrappers with `<slot>` support
+- `src/content/` - Global data (e.g. site.ts, theme.ts exposed as `site` in templates)
+- `src/assets/` - Styles, scripts, images
+- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
+- `server/routes/` - Nitro routes (e.g. catch-all for static files)
 
 ## Commands
 
-- `pnpm run dev` - Vite dev server with HMR (WITH_NITRO=true)
-- `pnpm run build` - Static build to dist/
-- `pnpm run dev:api` - Nitro API only (port 3000)
-- `pnpm test` / `npx vitest` - Tests (Vitest)
+- `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `tbd({ nitro: true })`)
+- `pnpm run build` - Static build to dist/; with Nitro also produces .output/
+- `pnpm run preview` - Static preview (no API)
+- `pnpm run preview:api` - Full server preview (static + API)
+- `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/tbd)
 
-## Path Aliases (tsconfig)
+## Path Aliases (root tsconfig.json)
 
 - `@components/*` → src/components/*
 - `@layouts/*` → src/layouts/*
 - `@pages/*` → src/pages/*
+- `@content/*` → src/content/*
 - `@styles/*` → src/assets/styles/*
 - `@scripts/*` → src/assets/scripts/*
 - `@images/*` → src/assets/images/*
+- `@src/*` → src/*
+- `@server/*` → server/*
 - `~/*` → project root

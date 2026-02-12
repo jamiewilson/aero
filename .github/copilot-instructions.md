@@ -4,12 +4,20 @@ Always use Context7 MCP when I need library/API documentation, code generation, 
 
 ## Architecture Overview
 
-TBD is a static site generator with a custom HTML-first template engine. The compilation pipeline:
+TBD is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/tbd**; the **app** lives at the repo root in **src/** and **server/**.
 
-1. **Parser** ([src/compiler/parser.ts](../src/compiler/parser.ts)) extracts `<script on:build>` and `<script on:client>` blocks from HTML
-2. **Codegen** ([src/compiler/codegen.ts](../src/compiler/codegen.ts)) compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** ([src/vite/index.ts](../src/vite/index.ts)) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
-4. **Runtime** ([src/runtime/index.ts](../src/runtime/index.ts)) provides the `TBD` class that renders pages and components with context
+### Monorepo
+
+- **packages/tbd** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `tbd` and `tbd/vite`.
+- **packages/tbd-vscode** - VS Code extension.
+- **Root** - App: src/pages, src/components, src/layouts, src/content, src/assets; server/api, server/routes; vite.config.ts, nitro.config.ts.
+
+### Compilation pipeline (packages/tbd)
+
+1. **Parser** (packages/tbd/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+2. **Codegen** (packages/tbd/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/tbd/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
+4. **Runtime** (packages/tbd/runtime/index.ts) provides the `TBD` class that renders pages and components with context
 
 ## Key Conventions
 
@@ -37,58 +45,53 @@ Props passed via attributes or `data-props`:
 
 ```html
 <my-component title="{ site.title }" />
-<!-- expression -->
 <my-component data-props />
-<!-- spreads local `props` var -->
 <my-component data-props="{ ...baseProps }" />
-<!-- explicit spread -->
 ```
 
-Components receive via `tbd.props`:
+Components receive via `tbd.props` in `<script on:build>`.
 
-```html
-<script on:build>
-	const { title, subtitle } = tbd.props
-</script>
-```
+### Path Aliases (root tsconfig.json)
 
-### Path Aliases (from tsconfig.json)
-
-- `@components/*` → `app/components/*`
-- `@layouts/*` → `app/layouts/*`
-- `@pages/*` → `app/pages/*`
-- `@styles/*` → `app/assets/styles/*`
+- `@components/*` → src/components/*
+- `@layouts/*` → src/layouts/*
+- `@pages/*` → src/pages/*
+- `@content/*` → src/content/*
+- `@styles/*` → src/assets/styles/*
+- `@scripts/*` → src/assets/scripts/*
+- `@images/*` → src/assets/images/*
+- `@src/*` → src/*
+- `@server/*` → server/*
 - `~/*` → project root
 
 ## Development Commands
 
 ```bash
-pnpm run dev          # Vite dev server with HMR (WITH_NITRO=true)
-pnpm run build        # Static build to dist/
-pnpm run dev:api      # Nitro API server only (port 3000)
+pnpm run dev          # Vite dev server with HMR
+pnpm run build        # Static build to dist/; with Nitro also .output/
+pnpm run preview      # Static preview
+pnpm run preview:api  # Full server preview
+pnpm test             # Vitest (packages/tbd)
 ```
 
-## Testing
+## File Structure (root)
 
-Tests use Vitest. Run with `pnpm test` or `npx vitest`.
-Key test files in [src/compiler/**tests**/](../src/compiler/__tests__/).
+- `src/pages/` - Route pages
+- `src/components/` - Reusable components
+- `src/layouts/` - Layout wrappers with `<slot>` support
+- `src/content/` - Global data (site.ts, theme.ts → `site` in templates)
+- `src/assets/` - Styles, scripts, images
+- `server/api/` - Nitro API handlers
+- `server/routes/` - Nitro routes (e.g. catch-all for dist/)
 
-## Client Stack Integration
+## Client Stack
 
-- **Alpine.js** - Attributes like `x-data`, `x-model`, `:disabled` are preserved (not interpolated)
-- **HTMX** - Attributes like `hx-post`, `hx-target` are passed through
-- Alpine attributes use regex `^(x-|[@:.]).*` to skip `{ }` interpolation
-
-## File Structure
-
-- `app/pages/` - Route pages (home.html → `/`, about.html → `/about`)
-- `app/components/` - Reusable components
-- `app/layouts/` - Layout wrappers with `<slot>` support
-- `data/` - Global data (site.ts exposed as `site` in templates)
-- `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
+- **Alpine.js** - x-data, x-model, :disabled etc. preserved (not interpolated)
+- **HTMX** - hx-post, hx-target etc. passed through
+- Alpine attrs match `^(x-|[@:.]).*` and skip `{ }` interpolation
 
 ## Gotchas
 
-- Virtual client scripts use `/@tbd/client/` prefix - should use `\0` prefix for proper Vite virtual module handling
-- Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
+- Virtual client scripts use `/@tbd/client/` prefix; plugin uses `\0` for Vite virtual modules
+- Slot passthrough: both `name` and `slot` on `<slot>` elements
 - `data-each` for loops: `<li data-each="item in items">{ item.name }</li>`

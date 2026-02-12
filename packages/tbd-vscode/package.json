@@ -1,6 +1,6 @@
 {
-	"name": "tbd",
-	"displayName": "TBD",
+	"name": "tbd-vscode",
+	"displayName": "tbd",
 	"description": "Language support for TBD templates",
 	"version": "0.0.1",
 	"publisher": "tbd",
