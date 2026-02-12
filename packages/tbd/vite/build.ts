@@ -9,6 +9,7 @@ import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	LINK_ATTRS,
+	RUNTIME_INSTANCE_MODULE_ID,
 	SKIP_PROTOCOL_REGEX,
 	resolveDirs,
 } from './defaults'
@@ -289,7 +290,7 @@ export async function renderStaticPages(
 	})
 
 	try {
-		const runtime = await server.ssrLoadModule('/tbd/runtime/instance.ts')
+		const runtime = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 		for (const page of pages) {
 			let rendered = await runtime.tbd.render(page.pageName)
 			rendered = rewriteRenderedHtml(

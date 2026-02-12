@@ -1,0 +1,50 @@
+{
+	"name": "tbd",
+	"version": "0.1.0",
+	"type": "module",
+	"private": false,
+	"types": "./types.ts",
+	"files": [
+		"dist",
+		"types.ts",
+		"vite",
+		"runtime"
+	],
+	"scripts": {
+		"build": "tsup index.ts vite/index.ts runtime/index.ts runtime/instance.ts --format esm --clean --out-dir dist --external @content/site",
+		"test": "CHOKIDAR_USEPOLLING=1 vitest run compiler/ vite/ --pool=forks --maxWorkers=1 --no-file-parallelism"
+	},
+	"exports": {
+		".": {
+			"types": "./types.ts",
+			"default": "./dist/index.js"
+		},
+		"./vite": {
+			"types": "./vite/index.ts",
+			"default": "./dist/vite/index.js"
+		},
+		"./runtime": {
+			"types": "./runtime/index.ts",
+			"default": "./dist/runtime/index.js"
+		},
+		"./runtime/instance": {
+			"types": "./runtime/instance.ts",
+			"default": "./dist/runtime/instance.js"
+		},
+		"./types": "./types.ts"
+	},
+	"dependencies": {
+		"get-tsconfig": "^4.13.6",
+		"linkedom": "^0.18.12",
+		"nitro": "latest"
+	},
+	"peerDependencies": {
+		"vite": "^7.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.2.3",
+		"tsup": "^8.5.0",
+		"typescript": "^5.9.2",
+		"vitest": "^4.0.18"
+	}
+}

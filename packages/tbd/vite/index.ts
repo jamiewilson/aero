@@ -5,10 +5,18 @@ import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
 import { createBuildConfig, renderStaticPages } from './build'
-import { CLIENT_SCRIPT_PREFIX, DEFAULT_API_PREFIX, resolveDirs } from './defaults'
+import {
+	CLIENT_SCRIPT_PREFIX,
+	DEFAULT_API_PREFIX,
+	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
+	resolveDirs,
+	RUNTIME_INSTANCE_MODULE_ID,
+} from './defaults'
 import { nitro as nitroPlugin } from 'nitro/vite'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import path from 'path'
+import { fileURLToPath } from 'node:url'
 
 async function runNitroBuild(root: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
@@ -32,6 +40,11 @@ async function runNitroBuild(root: string): Promise<void> {
 
 export function tbd(options: TbdOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, string>()
+	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
+	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
+	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
+		? runtimeInstanceJsPath
+		: runtimeInstanceTsPath
 	let config: ResolvedConfig
 	let aliasResult: AliasResult
 	const dirs = resolveDirs(options.dirs)
@@ -84,7 +97,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 
 				try {
 					const pageName = resolvePageName(req.url)
-					const mod = await server.ssrLoadModule('/tbd/runtime/instance.ts')
+					const mod = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 
 					let rendered = await mod.tbd.render(pageName)
 					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
@@ -101,6 +114,10 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 		},
 
 		async resolveId(id, importer) {
+			if (id === RUNTIME_INSTANCE_MODULE_ID) {
+				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
+			}
+
 			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
 				return '\0' + id
 			}
@@ -125,6 +142,10 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 		},
 
 		load(id) {
+			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
+				return `export { tbd, onUpdate } from ${JSON.stringify(runtimeInstancePath)}`
+			}
+
 			// Handle virtual client scripts (prefixed with \0 from resolveId)
 			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
 				const virtualId = id.slice(1) // Remove \0 prefix to get the map key
@@ -168,7 +189,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 			const contentDir = path.resolve(config.root, dirs.src, 'content')
 			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
-					path.join(config.root, 'tbd/runtime/instance.ts'),
+					RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
 				)
 				if (instanceModule) {
 					server.moduleGraph.invalidateModule(instanceModule)

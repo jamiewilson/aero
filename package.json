@@ -1,32 +1,33 @@
 {
+	"name": "tbd-start",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "TBD_NITRO=false vite build && vite preview",
-		"preview:full": "vite build && node .output/server/index.mjs",
-		"test": "vitest run tbd/compiler/ tbd/vite/"
-	},
-	"postcss": {
-		"plugins": {
-			"autoprefixer": {}
-		}
+		"preview:api": "vite build && node .output/server/index.mjs",
+		"predev": "pnpm --dir packages/tbd build",
+		"prebuild": "pnpm --dir packages/tbd build",
+		"prepreview": "pnpm --dir packages/tbd build",
+		"prepreview:api": "pnpm --dir packages/tbd build"
 	},
 	"packageManager": "pnpm@10.28.0",
 	"dependencies": {
 		"@alpinejs/persist": "^3.15.8",
 		"alpinejs": "^3.15.8",
-		"autoprefixer": "^10.4.24",
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
+		"tbd": "workspace:*",
+		"autoprefixer": "^10.4.24",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
-		"@types/node": "^25.2.3",
-		"get-tsconfig": "^4.13.6",
-		"linkedom": "^0.18.12",
 		"nitro": "latest",
-		"vite": "^7.3.1",
-		"vitest": "^4.0.18"
+		"vite": "^7.3.1"
+	},
+	"postcss": {
+		"plugins": {
+			"autoprefixer": {}
+		}
 	}
 }
