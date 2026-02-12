@@ -27,24 +27,24 @@ describe('vite build helpers', () => {
 	it('rewrites asset URLs from manifest entries', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {
-			'client/index.ts': {
-				file: 'assets/client/index-123.js',
-				src: 'client/index.ts',
+			'src/index.ts': {
+				file: 'assets/src/index-123.js',
+				src: 'src/index.ts',
 				isEntry: true,
 			},
-			'client/assets/styles/global.css': {
+			'src/assets/styles/global.css': {
 				file: 'assets/global-123.css',
-				src: 'client/assets/styles/global.css',
+				src: 'src/assets/styles/global.css',
 				isEntry: true,
 			},
 		}
 
 		expect(
-			__internal.rewriteAbsoluteUrl('/client/index.ts', 'about', manifest, routeSet),
-		).toBe('../assets/client/index-123.js')
+			__internal.rewriteAbsoluteUrl('/src/index.ts', 'about', manifest, routeSet),
+		).toBe('../assets/src/index-123.js')
 		expect(
 			__internal.rewriteAbsoluteUrl(
-				'/client/assets/styles/global.css',
+				'/src/assets/styles/global.css',
 				'docs/name',
 				manifest,
 				routeSet,
@@ -62,23 +62,17 @@ describe('vite build helpers', () => {
 
 	it('resolves directory overrides; pages always derived from src', () => {
 		expect(resolveDirs()).toEqual({
-			src: 'client',
-			pages: 'client/pages',
-			data: 'data',
+			src: 'src',
 			server: 'server',
 			dist: 'dist',
 		})
 		expect(resolveDirs({ src: 'site' })).toEqual({
 			src: 'site',
-			pages: 'site/pages',
-			data: 'data',
 			server: 'server',
 			dist: 'dist',
 		})
 		expect(resolveDirs({ src: 'site', dist: 'build' })).toEqual({
 			src: 'site',
-			pages: 'site/pages',
-			data: 'data',
 			server: 'server',
 			dist: 'build',
 		})

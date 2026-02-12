@@ -9,12 +9,12 @@
 - With `tbd({ nitro: true })`, `pnpm build` also emits Nitro output in `.output/`.
 - Generated links/assets are relative so pages can be opened directly with `file://` as a static bundle.
 - Preview static output: `pnpm preview` or `pnpm preview:static` (`TBD_NITRO=false vite build && vite preview`).
-- Preview full runtime (static + API): `pnpm preview:full` (`vite build && nitro preview`).
+- Preview API runtime (static + API): `pnpm preview:api` (`vite build && node .output/server/index.mjs`).
 
 ## Unified API + site preview
 
 - API handlers live in [server/api](server/api) (example: [server/api/submit.post.ts](server/api/submit.post.ts)).
-- Build + preview with a single origin (static files + `/api/*`): `pnpm preview:full`.
+- Build + preview with a single origin (static files + `/api/*`): `pnpm preview:api`.
 - The catch-all route [server/routes/[...].ts](server/routes/[...].ts) serves `dist/` from the Nitro server so pages and API endpoints run from the same origin.
 
 ## Script behavior follows `vite.config.ts`
@@ -23,7 +23,7 @@
 - TBD always generates static output in `dist/` during Vite build.
 - If `tbd({ nitro: true })` is enabled, TBD then runs `nitro build` from its build lifecycle, producing `.output/`.
 - `pnpm preview` / `pnpm preview:static` force a static-only build (`TBD_NITRO=false`) before `vite preview`.
-- `pnpm preview:full` is intentionally runtime (`nitro preview`).
+- `pnpm preview:api` is intentionally runtime (`node .output/server/index.mjs`).
 
 ## Production deployment modes
 
@@ -70,12 +70,12 @@ dist/                          ← vite build (static-only deployment target)
 
 ### Which output to deploy
 
-| Mode                  | Command             | Deploy            | Serves static files via                                  | API  |
-| --------------------- | ------------------- | ----------------- | -------------------------------------------------------- | ---- |
-| **Static only**       | `pnpm build`        | `dist/`           | CDN, S3, GitHub Pages, or `file://`                      | None |
-| **Server + CDN**      | `pnpm build`        | `.output/`        | CDN serves `.output/public/`, server handles `/api/*`    | Yes  |
-| **Server standalone** | `pnpm build`        | `.output/server/` | Server serves everything (static + API) from one process | Yes  |
-| **Preview (local)**   | `pnpm preview:full` | —                 | Nitro catch-all route serves from `dist/`                | Yes  |
+| Mode                  | Command            | Deploy            | Serves static files via                                  | API  |
+| --------------------- | ------------------ | ----------------- | -------------------------------------------------------- | ---- |
+| **Static only**       | `pnpm build`       | `dist/`           | CDN, S3, GitHub Pages, or `file://`                      | None |
+| **Server + CDN**      | `pnpm build`       | `.output/`        | CDN serves `.output/public/`, server handles `/api/*`    | Yes  |
+| **Server standalone** | `pnpm build`       | `.output/server/` | Server serves everything (static + API) from one process | Yes  |
+| **Preview (local)**   | `pnpm preview:api` | —                 | Nitro catch-all route serves from `dist/`                | Yes  |
 
 ### Why the duplication is intentional
 
@@ -85,7 +85,7 @@ The apparent triplication exists because each copy serves a different deployment
 - **CDN + serverless** → use `.output/public/` (CDN) + `.output/server/` (functions), ignore `dist/`
 - **Standalone server** → use `.output/server/` only, ignore everything else
 
-The `dist/` output also doubles as the local preview source — the Nitro catch-all route in [server/routes/[...].ts](server/routes/[...].ts) reads from `dist/` at runtime during `pnpm preview:full`.
+The `dist/` output also doubles as the local preview source — the Nitro catch-all route in [server/routes/[...].ts](server/routes/[...].ts) reads from `dist/` at runtime during `pnpm preview:api`.
 
 ## TBD plugin options
 
@@ -102,7 +102,7 @@ The `dist/` output also doubles as the local preview source — the Nitro catch-
 Example (default layout):
 
 ```ts
-import { tbd } from './tbd/vite'
+import { tbd } from 'tbd/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -113,7 +113,7 @@ export default defineConfig({
 Custom structure override example:
 
 ```ts
-import { tbd } from './tbd/vite'
+import { tbd } from 'tbd/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -130,7 +130,7 @@ export default defineConfig({
 })
 ```
 
-When using `preview:full` with non-default `dist` or `apiPrefix`, set env vars so the Nitro catch-all matches your overrides: `TBD_DIST`, `TBD_API_PREFIX`.
+When using `preview:api` with non-default `dist` or `apiPrefix`, set env vars so the Nitro catch-all matches your overrides: `TBD_DIST`, `TBD_API_PREFIX`.
 
 ### `dirs.server` and `nitro.config.ts`
 

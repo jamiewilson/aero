@@ -1,4 +1,4 @@
-import { TBD } from '../runtime'
+import { TBD } from '.'
 // TODO needs to be dynamic import for user src directory
 import site from '@content/site'
 

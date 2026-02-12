@@ -2,6 +2,9 @@ import type { TbdDirs } from '../types'
 
 /** Virtual URL prefix for on:client scripts. Root-relative, .js extension, no filesystem path. */
 export const CLIENT_SCRIPT_PREFIX = '/@tbd/client/'
+/** Virtual module used by plugin runtime loading */
+export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:tbd/runtime-instance'
+export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:tbd/runtime-instance'
 
 /** Default directory conventions */
 export const DEFAULT_DIRS = {

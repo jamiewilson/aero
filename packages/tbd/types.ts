@@ -1,5 +1,5 @@
 export interface TbdDirs {
-	/** Site source directory; pages live at `<src>/pages` (default: 'client') */
+	/** Site source directory; pages live at `<src>/pages` (default: 'src') */
 	src?: string
 	/** Data directory watched for HMR (default: 'data') */
 	data?: string
