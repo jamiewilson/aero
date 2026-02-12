@@ -25,7 +25,7 @@ Some of the core needs are a templating engine with a way to pass data to the co
 
 At build time:
 - Parse HTML and scripts
-- Run on:server scripts, compile on:client to js
+- Run on:build scripts, compile on:client to js
 - Compose templates and pass data and build static pages
 
 On the client:

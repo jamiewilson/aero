@@ -1,6 +1,6 @@
 ---
 description: TBD template conventions for app HTML (components, pages, layouts)
-globs: app/**/*.html
+globs: src/**/*.html
 alwaysApply: false
 ---
 

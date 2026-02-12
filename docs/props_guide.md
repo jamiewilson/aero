@@ -113,7 +113,7 @@ Components access props by destructuring `tbd.props`:
 Inside `on:build` scripts, you have access to:
 
 - **`tbd.props`** - Props passed to this component
-- **`site`** - Global site configuration (from `data/site.ts`)
+- **`site`** - Global site configuration (from your content module, e.g. `src/content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
 
@@ -141,7 +141,7 @@ Usage:
 ```html
 <!-- pages/index.html -->
 <script on:build>
-	import header from '@src/components/header'
+	import header from '@components/header'
 
 	const headerProps = {
 		title: site.home.title,

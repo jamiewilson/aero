@@ -94,8 +94,7 @@ The `dist/` output also doubles as the local preview source — the Nitro catch-
 - `nitro` (boolean): enable Nitro integration in Vite (default: false; set `nitro: true` explicitly to enable).
 - `apiPrefix` (string): URL prefix treated as API routes (default: `/api`). Used to: (a) bypass TBD HTML handling in dev so Nitro serves those paths; (b) skip relative-URL rewriting in static builds so `/api/*` links remain absolute for server use; (c) drive the Nitro catch-all (via `TBD_API_PREFIX` env) so requests under this prefix are not served as static files.
 - `dirs`:
-  - `src` (default `client`) — pages are always at `<src>/pages`, not configurable
-  - `data` (default `data`)
+  - `src` (default `src`) — pages are always at `<src>/pages`; components/layouts under `<src>/components`, `<src>/layouts`; content under `<src>/content`
   - `server` (default `server`) — must match `nitro.config.ts` `scanDirs` when using Nitro
   - `dist` (default `dist`, mapped to Vite `build.outDir`)
 
@@ -121,7 +120,6 @@ export default defineConfig({
 		nitro: true,
 		dirs: {
 			src: 'web',
-			data: 'content',
 			server: 'api',
 			dist: 'build',
 		},

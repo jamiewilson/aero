@@ -7,7 +7,7 @@ Alpine.js provides reactive and declarative behavior directly in your HTML marku
 Import and initialize Alpine in your main entry file:
 
 ```typescript
-// app/main.ts
+// e.g. src/assets/scripts/index.ts
 import 'htmx.org'
 import Alpine from 'alpinejs'
 
@@ -60,7 +60,7 @@ Alpine.start()
 ### Reusable Components with Alpine.data()
 
 ```typescript
-// app/main.ts
+// e.g. src/assets/scripts/index.ts
 import Alpine from 'alpinejs'
 
 // Register reusable components
@@ -108,7 +108,7 @@ Alpine.start()
 ### Global State with Alpine.store()
 
 ```typescript
-// app/main.ts
+// e.g. src/assets/scripts/index.ts
 import Alpine from 'alpinejs'
 
 Alpine.store('user', {

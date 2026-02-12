@@ -6,6 +6,8 @@ alwaysApply: false
 
 # TBD Server (Nitro)
 
+API and routes live in the **root** `server/` directory (server/api/, server/routes/). Nitro is configured in root `nitro.config.ts` with `scanDirs: ['server']`.
+
 ## API Handlers
 
 - Use Nitro/H3: `defineHandler`, `readBody`, etc. from `nitro/h3`

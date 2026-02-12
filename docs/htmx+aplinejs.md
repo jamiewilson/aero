@@ -7,7 +7,7 @@ htmx and Alpine work beautifully together. Use htmx for server communication and
 When htmx swaps new content into the DOM, Alpine components need to be initialized:
 
 ```typescript
-// app/main.ts
+// e.g. src/assets/scripts/index.ts
 import htmx from 'htmx.org'
 import Alpine from 'alpinejs'
 

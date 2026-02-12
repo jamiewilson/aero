@@ -2,12 +2,20 @@
 
 ## Architecture Overview
 
-TBD is a static site generator with a custom HTML-first template engine. The compilation pipeline:
+TBD is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/tbd**; the **app** (pages, components, config) lives at the repo root.
 
-1. **Parser** ([src/compiler/parser.ts](../src/compiler/parser.ts)) extracts `<script on:build>` and `<script on:client>` blocks from HTML
-2. **Codegen** ([src/compiler/codegen.ts](../src/compiler/codegen.ts)) compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** ([src/vite/index.ts](../src/vite/index.ts)) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
-4. **Runtime** ([src/runtime/index.ts](../src/runtime/index.ts)) provides the `TBD` class that renders pages and components with context
+### Monorepo
+
+- **packages/tbd** - Compiler, runtime, Vite plugin. Built with tsup; used as dependency `tbd` and `tbd/vite`. Run tests from root with `pnpm test` (Vitest in packages/tbd).
+- **packages/tbd-vscode** - VS Code extension (syntaxes for TBD templates).
+- **Root** - App source in `src/`, server in `server/`, config (vite.config.ts, nitro.config.ts, tsconfig.json). Root package.json has `predev`/`prebuild` to build packages/tbd first.
+
+### Compilation pipeline (packages/tbd)
+
+1. **Parser** (packages/tbd/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+2. **Codegen** (packages/tbd/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/tbd/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
+4. **Runtime** (packages/tbd/runtime/index.ts) provides the `TBD` class that renders pages and components with context
 
 ## Key Conventions
 
@@ -50,26 +58,32 @@ Components receive via `tbd.props`:
 </script>
 ```
 
-### Path Aliases (from tsconfig.json)
+### Path Aliases (root tsconfig.json)
 
-- `@components/*` → `client/components/*`
-- `@layouts/*` → `client/layouts/*`
-- `@pages/*` → `client/pages/*`
-- `@styles/*` → `client/assets/styles/*`
+- `@components/*` → src/components/*
+- `@layouts/*` → src/layouts/*
+- `@pages/*` → src/pages/*
+- `@content/*` → src/content/*
+- `@styles/*` → src/assets/styles/*
+- `@scripts/*` → src/assets/scripts/*
+- `@images/*` → src/assets/images/*
+- `@src/*` → src/*
+- `@server/*` → server/*
 - `~/*` → project root
 
 ## Development Commands
 
 ```bash
-pnpm run dev          # Vite dev server with HMR (WITH_NITRO=true)
-pnpm run build        # Static build to dist/
-pnpm run dev:api      # Nitro API server only (port 3000)
+pnpm run dev          # Vite dev server with HMR (Nitro when tbd({ nitro: true }))
+pnpm run build        # Static build to dist/; with Nitro also .output/
+pnpm run preview      # Static preview only
+pnpm run preview:api  # Full server preview (static + API)
+pnpm test             # Run Vitest (packages/tbd compiler + vite tests)
 ```
 
 ## Testing
 
-Tests use Vitest. Run with `pnpm test` or `npx vitest`.
-Key test files in [src/compiler/**tests**/](../src/compiler/__tests__/).
+Tests use Vitest and live in **packages/tbd**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
 
 ## Client Stack Integration
 
@@ -77,16 +91,22 @@ Key test files in [src/compiler/**tests**/](../src/compiler/__tests__/).
 - **HTMX** - Attributes like `hx-post`, `hx-target` are passed through
 - Alpine attributes use regex `^(x-|[@:.]).*` to skip `{ }` interpolation
 
-## File Structure
+## File Structure (root)
 
-- `client/pages/` - Route pages (home.html → `/`, about.html → `/about`)
-- `client/components/` - Reusable components
-- `client/layouts/` - Layout wrappers with `<slot>` support
-- `data/` - Global data (site.ts exposed as `site` in templates)
-- `server/api/` - Nitro API handlers (_.post.ts, _.get.ts)
+- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
+- `src/components/` - Reusable components
+- `src/layouts/` - Layout wrappers with `<slot>` support
+- `src/content/` - Global data (e.g. site.ts, theme.ts; exposed as `site` in templates)
+- `src/assets/` - Styles, scripts, images
+- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
+- `server/routes/` - Nitro routes (e.g. catch-all for dist/)
+- `packages/tbd/` - Framework (compiler, runtime, vite)
+- `packages/tbd-vscode/` - VS Code extension
+
+For a detailed monorepo and packages layout, see [_reference/monorepo-and-packages.md](_reference/monorepo-and-packages.md).
 
 ## Gotchas
 
-- Virtual client scripts use `/@tbd/client/` prefix - should use `\0` prefix for proper Vite virtual module handling
+- Virtual client scripts use `/@tbd/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
 - Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
 - `data-each` for loops: `<li data-each="item in items">{ item.name }</li>`
