@@ -4,7 +4,7 @@ export default {
 	meta: {
 		title: 'Site Meta Title',
 		description: 'Site Meta Description',
-		url: 'https://tbd.dev',
+		url: 'https://aero.dev',
 		ogImage: '/og-image.png',
 		icon: {
 			ico: '/favicon.ico',
@@ -23,7 +23,7 @@ export default {
 		cta: 'Send POST Request',
 	},
 	about: {
-		title: 'About TBD',
+		title: 'About Aero',
 		subtitle: 'Learn more our philosophy and goals.',
 	},
 	footer: {

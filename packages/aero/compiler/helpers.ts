@@ -1,5 +1,5 @@
 /**
- * Compiles a text node, handling TBD's interpolation syntax.
+ * Compiles a text node, handling Aero's interpolation syntax.
  * Replaces `{...}` with `${...}` for JS template literals.
  */
 export function compileInterpolation(text: string): string {
@@ -55,8 +55,8 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 
 /** Emits the top-level render function wrapper (script + body statements). */
 export function emitRenderFunction(script: string, body: string): string {
-	return `export default async function(tbd) {
-		const { site, slots = {}, renderComponent } = tbd;
+	return `export default async function(aero) {
+		const { site, slots = {}, renderComponent } = aero;
 		${script}
 		let __out = '';
 		${body}return __out;

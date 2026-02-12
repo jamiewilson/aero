@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { TBD } from '../../runtime'
-import { tbd } from '../../vite'
+import { Aero } from '../../runtime'
+import { aero } from '../../vite'
 import path from 'path'
 
 describe('Vite Plugin Integration', () => {
-	const plugins: any[] = tbd()
+	const plugins: any[] = aero()
 	const plugin: any = plugins[0]
 
 	// Simulate the real Vite lifecycle: config() → configResolved()
@@ -26,10 +26,10 @@ describe('Vite Plugin Integration', () => {
             </script>
             <h1>{ title }</h1>
         `
-		const id = '/tbd/pages/test.html'
+		const id = '/aero/pages/test.html'
 
 		const result: any = plugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('export default async function(tbd)')
+		expect(result.code).toContain('export default async function(aero)')
 		expect(result.code).toContain('Vite Test')
 	})
 
@@ -40,12 +40,12 @@ describe('Vite Plugin Integration', () => {
             </script>
             <div>Client</div>
         `
-		const id = path.join(process.cwd(), 'tbd/pages/client.html')
+		const id = path.join(process.cwd(), 'aero/pages/client.html')
 
 		// 1. Transform the HTML – client script URL is root-relative and .js (no user path, no .html)
 		const result: any = plugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('/@tbd/client/')
-		expect(result.code).toContain('tbd/pages/client.js')
+		expect(result.code).toContain('/@aero/client/')
+		expect(result.code).toContain('aero/pages/client.js')
 		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
 
 		// 2. Resolve and load the virtual module (Vite uses \0 prefix for virtual module IDs)
@@ -53,7 +53,7 @@ describe('Vite Plugin Integration', () => {
 			.relative(process.cwd(), id)
 			.replace(/\\/g, '/')
 			.replace(/\.html$/i, '.js')
-		const virtualId = '/@tbd/client/' + relativePath
+		const virtualId = '/@aero/client/' + relativePath
 		const resolvedId = await plugin.resolveId.call(pluginCtx, virtualId)
 		expect(resolvedId).toBe('\0' + virtualId)
 
@@ -62,16 +62,16 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('should render a transformed module using the runtime', async () => {
-		const html = '<h1>{ tbd.props.title }</h1>'
-		const id = '/tbd/pages/props.html'
+		const html = '<h1>{ aero.props.title }</h1>'
+		const id = '/aero/pages/props.html'
 		const result: any = plugin.transform.call(pluginCtx, html, id)
-		const tbd = new TBD()
+		const aeroInstance = new Aero()
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)
-		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('tbd', body)
+		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('aero', body)
 
-		const finalOutput = await tbd.render(renderFn, { title: 'Dynamic Title' })
+		const finalOutput = await aeroInstance.render(renderFn, { title: 'Dynamic Title' })
 		expect(finalOutput).toBe('<h1>Dynamic Title</h1>')
 	})
 })

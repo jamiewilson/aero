@@ -1,15 +1,16 @@
 {
-	"name": "tbd-start",
+	"name": "aero-start",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "TBD_NITRO=false vite build && vite preview",
+		"preview": "AERO_NITRO=false vite build && vite preview",
 		"preview:api": "vite build && node .output/server/index.mjs",
-		"predev": "pnpm --dir packages/tbd build",
-		"prebuild": "pnpm --dir packages/tbd build",
-		"prepreview": "pnpm --dir packages/tbd build",
-		"prepreview:api": "pnpm --dir packages/tbd build"
+		"predev": "pnpm --dir packages/aero build",
+		"prebuild": "pnpm --dir packages/aero build",
+		"prepreview": "pnpm --dir packages/aero build",
+		"prepreview:api": "pnpm --dir packages/aero build",
+		"test": "pnpm --dir packages/aero test"
 	},
 	"packageManager": "pnpm@10.28.0",
 	"dependencies": {
@@ -18,7 +19,7 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
-		"tbd": "workspace:*",
+		"aero": "workspace:*",
 		"autoprefixer": "^10.4.24",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",

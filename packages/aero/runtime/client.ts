@@ -61,9 +61,9 @@ export async function renderPage(
 		const { head, body } = extractDocumentParts(html)
 		if (head) updateHead(head)
 		appEl.innerHTML = body
-		console.log(`[tbd] Rendered: ${pageName}`)
+		console.log(`[aero] Rendered: ${pageName}`)
 	} catch (err) {
 		appEl.innerHTML = `<h1>Error rendering page: ${pageName}</h1><pre>${String(err)}</pre>`
-		console.error('[tbd] Render Error:', err)
+		console.error('[aero] Render Error:', err)
 	}
 }

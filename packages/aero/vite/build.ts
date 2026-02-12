@@ -1,4 +1,4 @@
-import type { TbdDirs } from '../types'
+import type { AeroDirs } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -16,7 +16,7 @@ import {
 
 interface StaticBuildOptions {
 	root: string
-	dirs?: TbdDirs
+	dirs?: AeroDirs
 	apiPrefix?: string
 	resolvePath?: (specifier: string) => string
 	vitePlugins?: Plugin[]
@@ -292,7 +292,7 @@ export async function renderStaticPages(
 	try {
 		const runtime = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 		for (const page of pages) {
-			let rendered = await runtime.tbd.render(page.pageName)
+			let rendered = await runtime.aero.render(page.pageName)
 			rendered = rewriteRenderedHtml(
 				addDoctype(rendered),
 				page.outputFile,
@@ -312,7 +312,7 @@ export async function renderStaticPages(
 }
 
 interface BuildConfigOptions {
-	dirs?: TbdDirs
+	dirs?: AeroDirs
 	resolvePath?: (specifier: string) => string
 }
 

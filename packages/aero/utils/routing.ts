@@ -1,5 +1,5 @@
 /**
- * Resolves a URL path to an TBD page name.
+ * Resolves a URL path to an Aero page name.
  *
  * Examples:
  * - / -> index

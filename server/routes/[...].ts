@@ -3,9 +3,9 @@ import { existsSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import { createError, defineHandler, getRequestURL, serveStatic } from 'nitro/h3'
 
-const distDir = path.resolve(process.cwd(), process.env.TBD_DIST || 'dist')
+const distDir = path.resolve(process.cwd(), process.env.AERO_DIST || 'dist')
 const distIndexPath = path.join(distDir, 'index.html')
-const apiPrefix = process.env.TBD_API_PREFIX || '/api'
+const apiPrefix = process.env.AERO_API_PREFIX || '/api'
 
 function resolveDistPath(id: string): string | null {
 	const withLeadingSlash = id.startsWith('/') ? id : `/${id}`

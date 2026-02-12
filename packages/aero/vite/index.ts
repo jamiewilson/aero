@@ -1,4 +1,4 @@
-import type { TbdOptions, AliasResult } from '../types'
+import type { AeroOptions, AliasResult } from '../types'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
@@ -33,12 +33,12 @@ async function runNitroBuild(root: string): Promise<void> {
 				resolve()
 				return
 			}
-			reject(new Error(`[tbd] nitro build failed with exit code ${code ?? 'null'}`))
+			reject(new Error(`[aero] nitro build failed with exit code ${code ?? 'null'}`))
 		})
 	})
 }
 
-export function tbd(options: TbdOptions = {}): PluginOption[] {
+export function aero(options: AeroOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, string>()
 	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
 	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
@@ -50,10 +50,10 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	// Allow temporary opt-out (e.g. static-only local checks) without changing config.
-	const enableNitro = options.nitro === true && process.env.TBD_NITRO !== 'false'
+	const enableNitro = options.nitro === true && process.env.AERO_NITRO !== 'false'
 
 	const mainPlugin: Plugin = {
-		name: 'vite-plugin-tbd',
+		name: 'vite-plugin-aero',
 
 		config(userConfig) {
 			const root = userConfig.root || process.cwd()
@@ -99,7 +99,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 					const pageName = resolvePageName(req.url)
 					const mod = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 
-					let rendered = await mod.tbd.render(pageName)
+					let rendered = await mod.aero.render(pageName)
 					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
 						rendered = `<!doctype html>\n${rendered}`
 					}
@@ -143,7 +143,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 
 		load(id) {
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
-				return `export { tbd, onUpdate } from ${JSON.stringify(runtimeInstancePath)}`
+				return `export { aero, onUpdate } from ${JSON.stringify(runtimeInstancePath)}`
 			}
 
 			// Handle virtual client scripts (prefixed with \0 from resolveId)
@@ -181,7 +181,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 				}
 			} catch (err: any) {
 				const relativePath = path.relative(config.root, id)
-				this.error(`[tbd] Error compiling ${relativePath}: ${err.message}`)
+				this.error(`[aero] Error compiling ${relativePath}: ${err.message}`)
 			}
 		},
 
@@ -201,7 +201,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 	}
 
 	const staticBuildPlugin: Plugin = {
-		name: 'vite-plugin-tbd-static',
+		name: 'vite-plugin-aero-static',
 		apply: 'build',
 		async closeBundle() {
 			const root = config.root
@@ -213,7 +213,7 @@ export function tbd(options: TbdOptions = {}): PluginOption[] {
 					dirs: options.dirs,
 					apiPrefix,
 					// Keep static rendering isolated from user vite.config.ts while
-					// still providing TBD's HTML transform/runtime resolution support.
+					// still providing Aero's HTML transform/runtime resolution support.
 					vitePlugins: [mainPlugin],
 				},
 				outDir,

@@ -24,20 +24,20 @@ importers:
       '@types/alpinejs__persist':
         specifier: ^3.13.4
         version: 3.13.4
+      aero:
+        specifier: workspace:*
+        version: link:packages/aero
       autoprefixer:
         specifier: ^10.4.24
         version: 10.4.24(postcss@8.5.6)
       nitro:
         specifier: latest
         version: 3.0.1-alpha.2(chokidar@4.0.3)(rollup@4.57.1)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1))
-      tbd:
-        specifier: workspace:*
-        version: link:packages/tbd
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)
 
-  packages/tbd:
+  packages/aero:
     dependencies:
       get-tsconfig:
         specifier: ^4.13.6
@@ -65,7 +65,7 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)
 
-  packages/vscode-tbd: {}
+  packages/aero-vscode: {}
 
 packages:
 

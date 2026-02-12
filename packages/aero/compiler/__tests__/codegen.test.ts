@@ -5,7 +5,7 @@ import { compile } from '../codegen'
 // Helper to execute the generated code
 async function execute(code: string, context = {}) {
 	// Generate the wrapper function
-	// We expect the code to be `export default async function(tbd) { ... }`
+	// We expect the code to be `export default async function(aero) { ... }`
 
 	// Robust replacement: find the function body
 	// We can assume the structure we generate in codegen.ts
@@ -15,7 +15,7 @@ async function execute(code: string, context = {}) {
 
 	// Create an actual AsyncFunction
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-	const renderFn = new AsyncFunction('tbd', body)
+	const renderFn = new AsyncFunction('aero', body)
 
 	return await renderFn(context)
 }
@@ -89,14 +89,14 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		// Mock tbd context with renderComponent
-		const tbd = {
+		// Mock aero context with renderComponent
+		const aero = {
 			renderComponent: async (comp: any, props: any) => {
 				return `<div class="mock-rendered">${comp.name}</div>`
 			},
 		}
 
-		const output = await execute(code, tbd)
+		const output = await execute(code, aero)
 		expect(output).toContain('<div class="mock-rendered">my-comp</div>')
 		expect(output).not.toContain('<my-comp-component')
 	})
@@ -116,14 +116,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const renderedProps: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
 				return ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 
 		// First call: { ...someProps, title: "Local", item: 'a' }
 		expect(renderedProps[0]).toEqual({ title: 'Local', item: 'a' })
@@ -145,14 +145,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const calls: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any, slots: any) => {
 				calls.push({ comp, slots })
 				return comp.name || ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 
 		const baseCall = calls.find(c => c.comp.name === 'base')
 		expect(baseCall.slots.nav).toContain('nav')
@@ -206,7 +206,7 @@ describe('Codegen', () => {
 	})
 
 	it('should handle attributes with colons (Alpine.js style)', async () => {
-		const html = '<button :disabled="!message.length">{ tbd.label }</button>'
+		const html = '<button :disabled="!message.length">{ aero.label }</button>'
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -220,7 +220,7 @@ describe('Codegen', () => {
 		const html = '<form hx-post="/api/submit"></form>'
 		const parsed = parse(html)
 		const code = compile(parsed, {
-			root: '/Users/jamie/dev/tbd',
+			root: '/Users/jamie/dev/aero',
 			resolvePath: () => '/../../../../api/submit',
 		})
 
@@ -240,12 +240,12 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const tbd = {
+		const aero = {
 			slots: {}, // Empty slots at runtime
 			renderComponent: async (comp: any) => '<nav-mock />',
 		}
 
-		const output = await execute(code, tbd)
+		const output = await execute(code, aero)
 		expect(output).toContain('<nav-mock />')
 	})
 
@@ -259,14 +259,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const renderedProps: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
 				return ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 		expect(renderedProps[0]).toEqual({ title: 'Inline Title', count: 42 })
 	})
 
@@ -280,7 +280,7 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const renderedProps: any[] = []
-		const tbd = {
+		const aero = {
 			site: { meta: { title: 'Test Site' } },
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
@@ -288,7 +288,7 @@ describe('Codegen', () => {
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 		expect(renderedProps[0]).toEqual({ title: 'Test Site', doubled: 42 })
 	})
 
@@ -303,14 +303,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const renderedProps: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
 				return ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 		expect(renderedProps[0]).toEqual({ a: 1, b: 2 })
 	})
 
@@ -326,14 +326,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const renderedProps: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
 				return ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 		expect(renderedProps[0]).toEqual({ base: 'value', extra: 'additional' })
 	})
 
@@ -363,7 +363,7 @@ describe('Codegen', () => {
 		const parentCode = compile(parsedParent, mockOptions)
 
 		const calls: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any, slots: any) => {
 				calls.push({ comp, props, slots })
 
@@ -373,8 +373,8 @@ describe('Codegen', () => {
 					const bodyEnd = parentCode.lastIndexOf('}')
 					const body = parentCode.substring(bodyStart + 1, bodyEnd)
 					const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-					const renderFn = new AsyncFunction('tbd', body)
-					return await renderFn({ ...tbd, slots })
+					const renderFn = new AsyncFunction('aero', body)
+					return await renderFn({ ...aero, slots })
 				}
 
 				// For child, just return slots to verify
@@ -386,7 +386,7 @@ describe('Codegen', () => {
 			},
 		}
 
-		const output = await execute(code, tbd)
+		const output = await execute(code, aero)
 
 		// Verify that parent received the nav slot
 		const parentCall = calls.find(c => c.comp.name === 'parent')
@@ -414,14 +414,14 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		const calls: any[] = []
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any, props: any, slots: any) => {
 				calls.push({ comp, slots })
 				return ''
 			},
 		}
 
-		await execute(code, tbd)
+		await execute(code, aero)
 
 		expect(calls[0].slots['side-bar']).toContain('Side Content')
 	})
@@ -520,11 +520,11 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const tbd = {
+		const aero = {
 			renderComponent: async (comp: any) => `<img src="${comp.name}.svg" />`,
 		}
 
-		const output = await execute(code, tbd)
+		const output = await execute(code, aero)
 		expect(output).toContain('No logo')
 		expect(output).not.toContain('<img')
 	})
