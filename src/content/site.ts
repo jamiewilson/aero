@@ -4,7 +4,7 @@ export default {
 	meta: {
 		title: 'Site Meta Title',
 		description: 'Site Meta Description',
-		url: 'https://aero.dev',
+		url: 'https://with.aero',
 		ogImage: '/og-image.png',
 		icon: {
 			ico: '/favicon.ico',
