@@ -1,10 +1,7 @@
 import type { AeroOptions, AliasResult } from '../types'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
-import { parse } from '../compiler/parser'
-import { compile } from '../compiler/codegen'
-import { resolvePageName } from '../utils/routing'
-import { loadTsconfigAliases } from '../utils/aliases'
-import { createBuildConfig, renderStaticPages } from './build'
+import { nitro } from 'nitro/vite'
+
 import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
@@ -12,11 +9,16 @@ import {
 	resolveDirs,
 	RUNTIME_INSTANCE_MODULE_ID,
 } from './defaults'
-import { nitro as nitroPlugin } from 'nitro/vite'
+
+import { parse } from '../compiler/parser'
+import { compile } from '../compiler/codegen'
+import { resolvePageName } from '../utils/routing'
+import { loadTsconfigAliases } from '../utils/aliases'
+import { createBuildConfig, renderStaticPages } from './build'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import path from 'path'
 import { fileURLToPath } from 'node:url'
+import path from 'path'
 
 async function runNitroBuild(root: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
@@ -40,8 +42,12 @@ async function runNitroBuild(root: string): Promise<void> {
 
 export function aero(options: AeroOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, string>()
-	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
-	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
+	const runtimeInstanceJsPath = fileURLToPath(
+		new URL('../runtime/instance.js', import.meta.url),
+	)
+	const runtimeInstanceTsPath = fileURLToPath(
+		new URL('../runtime/instance.ts', import.meta.url),
+	)
 	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
 		? runtimeInstanceJsPath
 		: runtimeInstanceTsPath
@@ -228,7 +234,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 	// Nitro Vite integration is serve-only; build orchestration is handled above.
 	if (enableNitro) {
-		const rawNitroPlugins = nitroPlugin({ serverDir: dirs.server })
+		const rawNitroPlugins = nitro({ serverDir: dirs.server })
 		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
 		for (const nitro of nitroPlugins) {
 			if (!nitro || typeof nitro !== 'object') continue
