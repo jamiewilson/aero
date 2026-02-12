@@ -1,6 +1,6 @@
-import { tbd } from 'tbd/vite'
+import { aero } from 'aero/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-	plugins: tbd({ nitro: true }),
+	plugins: aero({ nitro: true }),
 })

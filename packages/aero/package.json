@@ -1,5 +1,5 @@
 {
-	"name": "tbd",
+	"name": "aero",
 	"version": "0.1.0",
 	"type": "module",
 	"private": false,
@@ -12,7 +12,7 @@
 	],
 	"scripts": {
 		"build": "tsup index.ts vite/index.ts runtime/index.ts runtime/instance.ts --format esm --clean --out-dir dist --external @content/site",
-		"test": "CHOKIDAR_USEPOLLING=1 vitest run compiler/ vite/ --pool=forks --maxWorkers=1 --no-file-parallelism"
+		"test": "CHOKIDAR_USEPOLLING=1 vitest run compiler/ vite/ --pool=threads --maxWorkers=1 --no-file-parallelism"
 	},
 	"exports": {
 		".": {

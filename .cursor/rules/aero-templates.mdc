@@ -1,10 +1,10 @@
 ---
-description: TBD template conventions for app HTML (components, pages, layouts)
+description: Aero template conventions for app HTML (components, pages, layouts)
 globs: src/**/*.html
 alwaysApply: false
 ---
 
-# TBD Templates
+# Aero Templates
 
 ## Component Naming
 
@@ -19,7 +19,7 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 
 ## Script Types
 
-- `<script on:build>` - Build time; has `tbd.props`, `site`, imports
+- `<script on:build>` - Build time; has `aero.props`, `site`, imports
 - `<script on:client>` - Bundled as virtual module, runs in browser
 - `<script src="...">` - External scripts allowed without attributes
 - **Required**: Inline scripts must have `on:client` or `on:build`
@@ -27,13 +27,13 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 ## Props
 
 - Pass: attributes, `data-props="{ ...obj }"`, or `data-props` / `props` to spread a `props` variable
-- Receive: destructure `tbd.props` in `<script on:build>`
+- Receive: destructure `aero.props` in `<script on:build>`
 
 ```html
 <my-component title="{ site.title }" />
 <my-component data-props />
 <script on:build>
-	const { title } = tbd.props
+	const { title } = aero.props
 </script>
 ```
 

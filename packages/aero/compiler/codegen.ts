@@ -328,7 +328,7 @@ class Compiler {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await tbd.renderComponent(${baseName}, ${propsString}, {}) }`
+			return `\${ await aero.renderComponent(${baseName}, ${propsString}, {}) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)
@@ -407,7 +407,7 @@ class Compiler {
 		}
 
 		const slotsString = Helper.emitSlotsObjectVars(slotVarMap)
-		out += `${outVar} += await tbd.renderComponent(${baseName}, ${propsString}, ${slotsString});\n`
+		out += `${outVar} += await aero.renderComponent(${baseName}, ${propsString}, ${slotsString});\n`
 
 		return out
 	}

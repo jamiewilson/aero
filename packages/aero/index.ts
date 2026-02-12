@@ -1,9 +1,9 @@
 import type { MountOptions } from './types'
-import { TBD } from './runtime'
-import { tbd, onUpdate } from './runtime/instance'
+import { Aero } from './runtime'
+import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 
-const coreRender = tbd.render.bind(tbd)
+const coreRender = aero.render.bind(aero)
 
 let lastEl: HTMLElement
 let unsubscribe: () => void
@@ -36,6 +36,6 @@ function mount(options: MountOptions = {}): Promise<void> {
 	return done
 }
 
-tbd.mount = mount
+aero.mount = mount
 
-export default tbd as TBD & { mount: typeof mount }
+export default aero as Aero & { mount: typeof mount }

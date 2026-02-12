@@ -4,7 +4,7 @@ The TBD framework provides a flexible, Astro-inspired props system that makes co
 
 ## Core Concept
 
-**All props are accessed via `tbd.props`** - this is the single source of truth. Components explicitly destructure what they need from `tbd.props`.
+**All props are accessed via `aero.props`** - this is the single source of truth. Components explicitly destructure what they need from `aero.props`.
 
 ## Passing Props to Components
 
@@ -75,12 +75,12 @@ Combine `data-props` with individual attributes:
 
 ## Receiving Props in Components
 
-Components access props by destructuring `tbd.props`:
+Components access props by destructuring `aero.props`:
 
 ```html
 <script on:build>
 	// Destructure the props you need
-	const { title, subtitle } = tbd.props
+	const { title, subtitle } = aero.props
 </script>
 
 <header>
@@ -93,7 +93,7 @@ Components access props by destructuring `tbd.props`:
 
 ```html
 <script on:build>
-	const { title = 'Default Title', subtitle } = tbd.props
+	const { title = 'Default Title', subtitle } = aero.props
 </script>
 ```
 
@@ -101,7 +101,7 @@ Components access props by destructuring `tbd.props`:
 
 ```html
 <script on:build>
-	const { title, description } = tbd.props
+	const { title, description } = aero.props
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
@@ -112,7 +112,7 @@ Components access props by destructuring `tbd.props`:
 
 Inside `on:build` scripts, you have access to:
 
-- **`tbd.props`** - Props passed to this component
+- **`aero.props`** - Props passed to this component
 - **`site`** - Global site configuration (from your content module, e.g. `src/content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
@@ -124,7 +124,7 @@ Inside `on:build` scripts, you have access to:
 ```html
 <!-- components/greeting.html -->
 <script on:build>
-	const { name } = tbd.props
+	const { name } = aero.props
 </script>
 
 <h1>Hello, { name }!</h1>

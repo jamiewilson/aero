@@ -1,4 +1,4 @@
-# TBD
+# Aero
 
 ## Static build and dev
 
@@ -6,9 +6,9 @@
 - Develop with a single origin (pages + API): `pnpm dev`.
 - Build output from your current `vite.config.ts`: `pnpm build`.
 - `pnpm build` always emits root-style pages in `dist/` (examples: `dist/index.html`, `dist/about/index.html`, `dist/docs/index.html`) plus bundled assets in `dist/assets/`.
-- With `tbd({ nitro: true })`, `pnpm build` also emits Nitro output in `.output/`.
+- With `aero({ nitro: true })`, `pnpm build` also emits Nitro output in `.output/`.
 - Generated links/assets are relative so pages can be opened directly with `file://` as a static bundle.
-- Preview static output: `pnpm preview` or `pnpm preview:static` (`TBD_NITRO=false vite build && vite preview`).
+- Preview static output: `pnpm preview` or `pnpm preview:static` (`AERO_NITRO=false vite build && vite preview`).
 - Preview API runtime (static + API): `pnpm preview:api` (`vite build && node .output/server/index.mjs`).
 
 ## Unified API + site preview
@@ -20,9 +20,9 @@
 ## Script behavior follows `vite.config.ts`
 
 - `pnpm build` runs `vite build`.
-- TBD always generates static output in `dist/` during Vite build.
-- If `tbd({ nitro: true })` is enabled, TBD then runs `nitro build` from its build lifecycle, producing `.output/`.
-- `pnpm preview` / `pnpm preview:static` force a static-only build (`TBD_NITRO=false`) before `vite preview`.
+- Aero always generates static output in `dist/` during Vite build.
+- If `aero({ nitro: true })` is enabled, Aero then runs `nitro build` from its build lifecycle, producing `.output/`.
+- `pnpm preview` / `pnpm preview:static` force a static-only build (`AERO_NITRO=false`) before `vite preview`.
 - `pnpm preview:api` is intentionally runtime (`node .output/server/index.mjs`).
 
 ## Production deployment modes
@@ -33,7 +33,7 @@
 
 ## Build outputs and static file flow
 
-Running `pnpm build` with `tbd({ nitro: true })` produces **two independent outputs**, each designed for a different deployment mode. The `public/` directory is the single source of truth for static assets like favicons, `robots.txt`, and `og-image.png`.
+Running `pnpm build` with `aero({ nitro: true })` produces **two independent outputs**, each designed for a different deployment mode. The `public/` directory is the single source of truth for static assets like favicons, `robots.txt`, and `og-image.png`.
 
 ### Where `public/` files end up
 
@@ -87,12 +87,12 @@ The apparent triplication exists because each copy serves a different deployment
 
 The `dist/` output also doubles as the local preview source — the Nitro catch-all route in [server/routes/[...].ts](server/routes/[...].ts) reads from `dist/` at runtime during `pnpm preview:api`.
 
-## TBD plugin options
+## Aero plugin options
 
-`tbd()` supports a small set of user-facing options in `vite.config.ts`:
+`aero()` supports a small set of user-facing options in `vite.config.ts`:
 
 - `nitro` (boolean): enable Nitro integration in Vite (default: false; set `nitro: true` explicitly to enable).
-- `apiPrefix` (string): URL prefix treated as API routes (default: `/api`). Used to: (a) bypass TBD HTML handling in dev so Nitro serves those paths; (b) skip relative-URL rewriting in static builds so `/api/*` links remain absolute for server use; (c) drive the Nitro catch-all (via `TBD_API_PREFIX` env) so requests under this prefix are not served as static files.
+- `apiPrefix` (string): URL prefix treated as API routes (default: `/api`). Used to: (a) bypass Aero HTML handling in dev so Nitro serves those paths; (b) skip relative-URL rewriting in static builds so `/api/*` links remain absolute for server use; (c) drive the Nitro catch-all (via `AERO_API_PREFIX` env) so requests under this prefix are not served as static files.
 - `dirs`:
   - `src` (default `src`) — pages are always at `<src>/pages`; components/layouts under `<src>/components`, `<src>/layouts`; content under `<src>/content`
   - `server` (default `server`) — must match `nitro.config.ts` `scanDirs` when using Nitro
@@ -101,22 +101,22 @@ The `dist/` output also doubles as the local preview source — the Nitro catch-
 Example (default layout):
 
 ```ts
-import { tbd } from 'tbd/vite'
+import { aero } from 'aero/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-	plugins: tbd({ nitro: true }),
+	plugins: aero({ nitro: true }),
 })
 ```
 
 Custom structure override example:
 
 ```ts
-import { tbd } from 'tbd/vite'
+import { aero } from 'aero/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-	plugins: tbd({
+	plugins: aero({
 		nitro: true,
 		dirs: {
 			src: 'web',
@@ -128,8 +128,8 @@ export default defineConfig({
 })
 ```
 
-When using `preview:api` with non-default `dist` or `apiPrefix`, set env vars so the Nitro catch-all matches your overrides: `TBD_DIST`, `TBD_API_PREFIX`.
+When using `preview:api` with non-default `dist` or `apiPrefix`, set env vars so the Nitro catch-all matches your overrides: `AERO_DIST`, `AERO_API_PREFIX`.
 
 ### `dirs.server` and `nitro.config.ts`
 
-`dirs.server` is passed to the Nitro Vite plugin as `serverDir`, telling it where your API/routes live. `nitro.config.ts` has its own `scanDirs`, which tells Nitro which directories to scan for handlers. These must point to the same place: if you set `dirs.server: 'api'`, also set `scanDirs: ['api']` in `nitro.config.ts`. TBD does not auto-sync them.
+`dirs.server` is passed to the Nitro Vite plugin as `serverDir`, telling it where your API/routes live. `nitro.config.ts` has its own `scanDirs`, which tells Nitro which directories to scan for handlers. These must point to the same place: if you set `dirs.server: 'api'`, also set `scanDirs: ['api']` in `nitro.config.ts`. Aero does not auto-sync them.

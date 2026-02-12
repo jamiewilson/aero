@@ -1,4 +1,4 @@
-export interface TbdDirs {
+export interface AeroDirs {
 	/** Site source directory; pages live at `<src>/pages` (default: 'src') */
 	src?: string
 	/** Data directory watched for HMR (default: 'data') */
@@ -9,13 +9,13 @@ export interface TbdDirs {
 	dist?: string
 }
 
-export interface TbdOptions {
+export interface AeroOptions {
 	/** Enable Nitro server integration (default: false) */
 	nitro?: boolean
 	/** API route prefix (default: '/api') */
 	apiPrefix?: string
 	/** Directory overrides */
-	dirs?: TbdDirs
+	dirs?: AeroDirs
 }
 
 export interface MountOptions {

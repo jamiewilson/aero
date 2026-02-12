@@ -1,6 +1,6 @@
 import type { MountOptions } from '../types'
 
-export class TBD {
+export class Aero {
 	private globals: Record<string, any> = {}
 	private pagesMap: Record<string, any> = {}
 	mount?: (options?: MountOptions) => Promise<void>
@@ -49,7 +49,7 @@ export class TBD {
 		}
 
 		// Handle lazy-loaded modules (Vite import.meta.glob without eager)
-		// Lazy loaders are () => import(...), while render functions are tbd => ...
+		// Lazy loaders are () => import(...), while render functions are aero => ...
 		if (typeof target === 'function' && target.length === 0) {
 			target = await target()
 		}

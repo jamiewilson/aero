@@ -2,7 +2,7 @@ import type { ParseResult } from '../types'
 import { parseHTML } from 'linkedom'
 
 /**
- * Parses the input HTML and extracts TBD-specific scripts.
+ * Parses the input HTML and extracts Aero-specific scripts.
  *
  * We use a hybrid approach: regex to find script tags and linkedom to validate
  * their attributes. This is 100% non-destructive and preserves the
