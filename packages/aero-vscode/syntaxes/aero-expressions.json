@@ -1,1 +1,14 @@
-{"scopeName":"aero.expressions.injection","injectionSelector":"L:text.html.derivative -source.css -source.js, L:string.quoted.double.html","patterns":[{"begin":"\\{","end":"\\}","beginCaptures":{"0":{"name":"punctuation.definition.template-expression.begin"}},"endCaptures":{"0":{"name":"punctuation.definition.template-expression.end"}},"contentName":"source.html.embedded.js","patterns":[{"include":"source.js"}]}]}
+{
+	"scopeName": "aero.expressions.injection",
+	"injectionSelector": "L:text.html.derivative -source.css -source.js, L:string.quoted.double.html",
+	"patterns": [
+		{
+			"begin": "\\{",
+			"end": "\\}",
+			"beginCaptures": { "0": { "name": "punctuation.definition.template-expression.begin" } },
+			"endCaptures": { "0": { "name": "punctuation.definition.template-expression.end" } },
+			"contentName": "source.html.embedded.js",
+			"patterns": [{ "include": "source.js" }]
+		}
+	]
+}
