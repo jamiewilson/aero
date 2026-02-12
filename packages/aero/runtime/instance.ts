@@ -1,5 +1,4 @@
 import { Aero } from '.'
-// TODO needs to be dynamic import for user src directory
 import site from '@content/site'
 
 declare global {

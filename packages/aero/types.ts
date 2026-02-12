@@ -1,8 +1,6 @@
 export interface AeroDirs {
 	/** Site source directory; pages live at `<src>/pages` (default: 'src') */
 	src?: string
-	/** Data directory watched for HMR (default: 'data') */
-	data?: string
 	/** Nitro server directory (default: 'server') */
 	server?: string
 	/** Build output directory (default: 'dist') */
