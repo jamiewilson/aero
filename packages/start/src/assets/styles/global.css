@@ -18,7 +18,6 @@
 		color: var(--fg);
 		background: var(--bg);
 		font-family: system-ui, sans-serif;
-		font-size: 18px;
 		text-align: center;
 		line-height: 1.5;
 		padding: 1rem;
@@ -32,24 +31,20 @@
 		margin-bottom: 2rem;
 	}
 
-	h1 {
-		font-weight: 900;
-	}
-
 	section,
 	form {
 		display: grid;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 
 	input,
 	button {
-		font-family: monospace;
 		text-align: center;
 		background: oklch(from var(--fg) l c h / 0.1);
 		padding: 1rem 2rem;
 		border-radius: 2rem;
 		corner-shape: squircle;
+
 		justify-self: center;
 
 		&:focus,

@@ -13,7 +13,7 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
-		"@aero-ssg/vite": "workspace:*",
+		"@aero-ssg/core": "workspace:*",
 		"autoprefixer": "^10.4.24",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",

@@ -1,3 +1,5 @@
-* {
-	outline: 1px solid red;
+@layer utils {
+	* {
+		outline: 1px solid red;
+	}
 }
