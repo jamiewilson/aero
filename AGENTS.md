@@ -2,20 +2,21 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/aero**; the **app** (pages, components, config) lives at the repo root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** (pages, components, config) lives in **packages/start**; the repo root is the workspace root.
 
 ### Monorepo
 
-- **packages/aero** - Compiler, runtime, Vite plugin. Built with tsup; used as dependency `aero` and `aero/vite`. Run tests from root with `pnpm test` (Vitest in packages/aero).
-- **packages/aero-vscode** - VS Code extension (syntaxes for Aero templates).
-- **Root** - App source in `src/`, server in `server/`, config (vite.config.ts, nitro.config.ts, tsconfig.json). Root package.json has `predev`/`prebuild` to build packages/aero first.
+- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aero-ssg/core` and `@aero-ssg/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
+- **packages/vscode** - VS Code extension (syntaxes for Aero templates).
+- **packages/start** - Starter app: `src/`, `server/`, vite.config.ts, nitro.config.ts, tsconfig.json. Depends on `@aero-ssg/vite`.
+- **Root** - Workspace root. Scripts delegate: `pnpm dev` builds core then runs start's dev; `pnpm test` runs core tests.
 
-### Compilation pipeline (packages/aero)
+### Compilation pipeline (packages/core)
 
-1. **Parser** (packages/aero/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
-2. **Codegen** (packages/aero/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** (packages/aero/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
-4. **Runtime** (packages/aero/runtime/index.ts) provides the `Aero` class that renders pages and components with context
+1. **Parser** (packages/core/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+2. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
+4. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
 
 ## Key Conventions
 
@@ -58,7 +59,7 @@ Components receive via `aero.props`:
 </script>
 ```
 
-### Path Aliases (root tsconfig.json)
+### Path Aliases (packages/start/tsconfig.json)
 
 - `@components/*` → src/components/*
 - `@layouts/*` → src/layouts/*
@@ -78,12 +79,12 @@ pnpm run dev          # Vite dev server with HMR (Nitro when aero({ nitro: true 
 pnpm run build        # Static build to dist/; with Nitro also .output/
 pnpm run preview      # Static preview only
 pnpm run preview:api  # Full server preview (static + API)
-pnpm test             # Run Vitest (packages/aero compiler + vite tests)
+pnpm test             # Run Vitest (packages/core compiler + vite tests)
 ```
 
 ## Testing
 
-Tests use Vitest and live in **packages/aero**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
+Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
 
 ## Client Stack Integration
 
@@ -91,19 +92,14 @@ Tests use Vitest and live in **packages/aero**: `compiler/__tests__/` (parser, c
 - **HTMX** - Attributes like `hx-post`, `hx-target` are passed through
 - Alpine attributes use regex `^(x-|[@:.]).*` to skip `{ }` interpolation
 
-## File Structure (root)
+## File Structure
 
-- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
-- `src/components/` - Reusable components
-- `src/layouts/` - Layout wrappers with `<slot>` support
-- `src/content/` - Global data (e.g. site.ts, theme.ts; exposed as `site` in templates)
-- `src/assets/` - Styles, scripts, images
-- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
-- `server/routes/` - Nitro routes (e.g. catch-all for dist/)
-- `packages/aero/` - Framework (compiler, runtime, vite)
-- `packages/aero-vscode/` - VS Code extension
+- **packages/start:** `src/pages/`, `src/components/`, `src/layouts/`, `src/content/`, `src/assets/`, `server/api/`, `server/routes/`
+- **packages/core/** - Framework (compiler, runtime, vite)
+- **packages/vite/** - Vite plugin re-export
+- **packages/vscode/** - VS Code extension
 
-For a detailed monorepo and packages layout, see [_reference/monorepo-and-packages.md](_reference/monorepo-and-packages.md).
+For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md).
 
 ## Gotchas
 

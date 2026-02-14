@@ -1,0 +1,28 @@
+{
+	"name": "@aero-ssg/start",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "AERO_NITRO=false vite build && vite preview",
+		"preview:api": "vite build && node .output/server/index.mjs"
+	},
+	"dependencies": {
+		"@alpinejs/persist": "^3.15.8",
+		"alpinejs": "^3.15.8",
+		"htmx.org": "^2.0.8"
+	},
+	"devDependencies": {
+		"@aero-ssg/vite": "workspace:*",
+		"autoprefixer": "^10.4.24",
+		"@types/alpinejs": "^3.13.11",
+		"@types/alpinejs__persist": "^3.13.4",
+		"nitro": "latest",
+		"vite": "^7.3.1"
+	},
+	"postcss": {
+		"plugins": {
+			"autoprefixer": {}
+		}
+	}
+}

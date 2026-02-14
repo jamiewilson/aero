@@ -10,7 +10,7 @@ Expressions inside `<script>` blocks are left unchanged (no double highlighting)
 ## Install from folder
 
 1. In Cursor or VS Code: **Command Palette** → **Developer: Install Extension from Location**
-2. Choose the aero-vscode folder (this directory).
+2. Choose the vscode folder (this directory).
 3. Reload the editor if prompted.
 
 ## Verify

@@ -1,9 +1,11 @@
 # Aero
 
+This repo is a monorepo: **packages/core** (framework), **packages/vite** (plugin), **packages/vscode** (VS Code extension), **packages/start** (starter app). From the repo root, `pnpm dev` builds core then runs the start app. To work only on the starter: `pnpm --dir packages/start dev` (after building core once: `pnpm --dir packages/core build`).
+
 ## Static build and dev
 
 - Install deps: `pnpm install`.
-- Develop with a single origin (pages + API): `pnpm dev`.
+- Develop with a single origin (pages + API): `pnpm dev` (from root; builds core, then runs packages/start).
 - Build output from your current `vite.config.ts`: `pnpm build`.
 - `pnpm build` always emits root-style pages in `dist/` (examples: `dist/index.html`, `dist/about/index.html`, `dist/docs/index.html`) plus bundled assets in `dist/assets/`.
 - With `aero({ nitro: true })`, `pnpm build` also emits Nitro output in `.output/`.
@@ -13,9 +15,9 @@
 
 ## Unified API + site preview
 
-- API handlers live in [server/api](server/api) (example: [server/api/submit.post.ts](server/api/submit.post.ts)).
+- API handlers live in [packages/start/server/api](packages/start/server/api) (example: [submit.post.ts](packages/start/server/api/submit.post.ts)).
 - Build + preview with a single origin (static files + `/api/*`): `pnpm preview:api`.
-- The catch-all route [server/routes/[...].ts](server/routes/[...].ts) serves `dist/` from the Nitro server so pages and API endpoints run from the same origin.
+- The catch-all route [packages/start/server/routes/[...].ts](packages/start/server/routes/[...].ts) serves `dist/` from the Nitro server so pages and API endpoints run from the same origin.
 
 ## Script behavior follows `vite.config.ts`
 
@@ -101,7 +103,7 @@ The `dist/` output also doubles as the local preview source — the Nitro catch-
 Example (default layout):
 
 ```ts
-import { aero } from 'aero/vite'
+import { aero } from '@aero-ssg/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -112,7 +114,7 @@ export default defineConfig({
 Custom structure override example:
 
 ```ts
-import { aero } from 'aero/vite'
+import { aero } from '@aero-ssg/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
