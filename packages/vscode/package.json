@@ -1,9 +1,9 @@
 {
-	"name": "aero-vscode",
+	"name": "@aero-ssg/vscode",
 	"displayName": "Aero",
 	"description": "Language support for Aero templates",
 	"version": "0.0.1",
-	"publisher": "aero",
+	"publisher": "@aero-ssg",
 	"engines": {
 		"vscode": "^1.74.0"
 	},

@@ -6,38 +6,9 @@ settings:
 
 importers:
 
-  .:
-    dependencies:
-      '@alpinejs/persist':
-        specifier: ^3.15.8
-        version: 3.15.8
-      alpinejs:
-        specifier: ^3.15.8
-        version: 3.15.8
-      htmx.org:
-        specifier: ^2.0.8
-        version: 2.0.8
-    devDependencies:
-      '@types/alpinejs':
-        specifier: ^3.13.11
-        version: 3.13.11
-      '@types/alpinejs__persist':
-        specifier: ^3.13.4
-        version: 3.13.4
-      aero:
-        specifier: workspace:*
-        version: link:packages/aero
-      autoprefixer:
-        specifier: ^10.4.24
-        version: 10.4.24(postcss@8.5.6)
-      nitro:
-        specifier: latest
-        version: 3.0.1-alpha.2(chokidar@4.0.3)(rollup@4.57.1)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1))
-      vite:
-        specifier: ^7.3.1
-        version: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)
+  .: {}
 
-  packages/aero:
+  packages/core:
     dependencies:
       get-tsconfig:
         specifier: ^4.13.6
@@ -65,7 +36,47 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)
 
-  packages/aero-vscode: {}
+  packages/start:
+    dependencies:
+      '@alpinejs/persist':
+        specifier: ^3.15.8
+        version: 3.15.8
+      alpinejs:
+        specifier: ^3.15.8
+        version: 3.15.8
+      htmx.org:
+        specifier: ^2.0.8
+        version: 2.0.8
+    devDependencies:
+      '@aero-ssg/vite':
+        specifier: workspace:*
+        version: link:../vite
+      '@types/alpinejs':
+        specifier: ^3.13.11
+        version: 3.13.11
+      '@types/alpinejs__persist':
+        specifier: ^3.13.4
+        version: 3.13.4
+      autoprefixer:
+        specifier: ^10.4.24
+        version: 10.4.24(postcss@8.5.6)
+      nitro:
+        specifier: latest
+        version: 3.0.1-alpha.2(chokidar@4.0.3)(rollup@4.57.1)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1))
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)
+
+  packages/vite:
+    dependencies:
+      '@aero-ssg/core':
+        specifier: workspace:*
+        version: link:../core
+      vite:
+        specifier: ^7.0.0
+        version: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)
+
+  packages/vscode: {}
 
 packages:
 
@@ -1131,8 +1142,8 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici@7.21.0:
-    resolution: {integrity: sha512-Hn2tCQpoDt1wv23a68Ctc8Cr/BHpUSfaPYrkajTXOS9IKpxVRx/X5m1K2YkbK2ipgZgxXSgsUinl3x+2YdSSfg==}
+  undici@7.22.0:
+    resolution: {integrity: sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
@@ -1914,7 +1925,7 @@ snapshots:
       oxc-minify: 0.110.0
       oxc-transform: 0.110.0
       srvx: 0.10.1
-      undici: 7.21.0
+      undici: 7.22.0
       unenv: 2.0.0-rc.24
       unstorage: 2.0.0-alpha.5(chokidar@4.0.3)(db0@0.3.4)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
@@ -2165,7 +2176,7 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici@7.21.0: {}
+  undici@7.22.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:

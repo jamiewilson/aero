@@ -4,20 +4,20 @@ Always use Context7 MCP when I need library/API documentation, code generation, 
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/aero**; the **app** lives at the repo root in **src/** and **server/**.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** (starter) lives in **packages/start** (src/, server/). Root is the workspace.
 
 ### Monorepo
 
-- **packages/aero** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `aero` and `aero/vite`.
-- **packages/aero-vscode** - VS Code extension.
-- **Root** - App: src/pages, src/components, src/layouts, src/content, src/assets; server/api, server/routes; vite.config.ts, nitro.config.ts.
+- **packages/core** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `@aero-ssg/core` and `@aero-ssg/vite`.
+- **packages/vscode** - VS Code extension.
+- **packages/start** - Starter app: src/, server/, vite.config.ts, nitro.config.ts. Root scripts delegate to start and core.
 
-### Compilation pipeline (packages/aero)
+### Compilation pipeline (packages/core)
 
-1. **Parser** (packages/aero/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
-2. **Codegen** (packages/aero/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** (packages/aero/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
-4. **Runtime** (packages/aero/runtime/index.ts) provides the `Aero` class that renders pages and components with context
+1. **Parser** (packages/core/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+2. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
+4. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
 
 ## Key Conventions
 
@@ -71,7 +71,7 @@ pnpm run dev          # Vite dev server with HMR
 pnpm run build        # Static build to dist/; with Nitro also .output/
 pnpm run preview      # Static preview
 pnpm run preview:api  # Full server preview
-pnpm test             # Vitest (packages/aero)
+pnpm test             # Vitest (packages/core)
 ```
 
 ## File Structure (root)

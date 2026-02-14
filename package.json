@@ -1,34 +1,17 @@
 {
-	"name": "aero-start",
+	"name": "aero",
 	"type": "module",
+	"private": true,
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "AERO_NITRO=false vite build && vite preview",
-		"preview:api": "vite build && node .output/server/index.mjs",
-		"predev": "pnpm --dir packages/aero build",
-		"prebuild": "pnpm --dir packages/aero build",
-		"prepreview": "pnpm --dir packages/aero build",
-		"prepreview:api": "pnpm --dir packages/aero build",
-		"test": "pnpm --dir packages/aero test"
+		"predev": "pnpm --dir packages/core build",
+		"dev": "pnpm --dir packages/start dev",
+		"prebuild": "pnpm --dir packages/core build",
+		"build": "pnpm --dir packages/start build",
+		"prepreview": "pnpm --dir packages/core build",
+		"preview": "pnpm --dir packages/start preview",
+		"prepreview:api": "pnpm --dir packages/core build",
+		"preview:api": "pnpm --dir packages/start preview:api",
+		"test": "pnpm --dir packages/core test"
 	},
-	"packageManager": "pnpm@10.28.0",
-	"dependencies": {
-		"@alpinejs/persist": "^3.15.8",
-		"alpinejs": "^3.15.8",
-		"htmx.org": "^2.0.8"
-	},
-	"devDependencies": {
-		"aero": "workspace:*",
-		"autoprefixer": "^10.4.24",
-		"@types/alpinejs": "^3.13.11",
-		"@types/alpinejs__persist": "^3.13.4",
-		"nitro": "latest",
-		"vite": "^7.3.1"
-	},
-	"postcss": {
-		"plugins": {
-			"autoprefixer": {}
-		}
-	}
+	"packageManager": "pnpm@10.28.0"
 }
