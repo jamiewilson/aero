@@ -2,6 +2,7 @@
 	"name": "aero",
 	"type": "module",
 	"private": true,
+	"packageManager": "pnpm@10.28.0",
 	"scripts": {
 		"predev": "pnpm --dir packages/core build",
 		"dev": "pnpm --dir packages/start dev",
@@ -12,6 +13,5 @@
 		"prepreview:api": "pnpm --dir packages/core build",
 		"preview:api": "pnpm --dir packages/start preview:api",
 		"test": "pnpm --dir packages/core test"
-	},
-	"packageManager": "pnpm@10.28.0"
+	}
 }

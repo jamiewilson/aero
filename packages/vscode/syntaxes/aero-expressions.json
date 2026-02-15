@@ -1,14 +1,28 @@
 {
 	"scopeName": "aero.expressions.injection",
-	"injectionSelector": "L:text.html.derivative -source.css -source.js, L:string.quoted.double.html",
+	"injectionSelector": "L:text.html.basic -source.css -source.js -comment.block.html, L:text.html.derivative -source.css -source.js -comment.block.html, L:string.quoted.double.html -source.css -source.js, L:string.quoted.single.html -source.css -source.js",
 	"patterns": [
 		{
 			"begin": "\\{",
 			"end": "\\}",
-			"beginCaptures": { "0": { "name": "punctuation.definition.template-expression.begin" } },
-			"endCaptures": { "0": { "name": "punctuation.definition.template-expression.end" } },
-			"contentName": "source.html.embedded.js",
-			"patterns": [{ "include": "source.js" }]
+			"beginCaptures": {
+				"0": { "name": "punctuation.section.embedded.begin.aero" }
+			},
+			"endCaptures": {
+				"0": { "name": "punctuation.section.embedded.end.aero" }
+			},
+			"contentName": "meta.embedded.expression.aero source.ts",
+			"patterns": [
+				{
+					"comment": "Handle object literals that start with { so nested braces are parsed correctly",
+					"begin": "\\G\\s*(?=\\{)",
+					"end": "(?<=\\})",
+					"patterns": [
+						{ "include": "source.ts#object-literal" }
+					]
+				},
+				{ "include": "source.ts" }
+			]
 		}
 	]
 }

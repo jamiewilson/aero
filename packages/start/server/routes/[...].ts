@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
-import { createError, defineHandler, getRequestURL, serveStatic } from 'nitro/h3'
+import { HTTPError, defineHandler, getRequestURL, serveStatic } from 'nitro/h3'
 
 const distDir = path.resolve(process.cwd(), process.env.AERO_DIST || 'dist')
 const distIndexPath = path.join(distDir, 'index.html')
@@ -20,14 +20,11 @@ export default defineHandler(async event => {
 	const pathname = getRequestURL(event).pathname || '/'
 
 	if (pathname === apiPrefix || pathname.startsWith(`${apiPrefix}/`)) {
-		throw createError({ statusCode: 404, statusMessage: 'API route not found' })
+		throw HTTPError.status(404, 'API route not found')
 	}
 
 	if (!existsSync(distIndexPath)) {
-		throw createError({
-			statusCode: 500,
-			statusMessage: 'Missing static build output. Run `pnpm run build` before previewing.',
-		})
+		throw HTTPError.status(500, 'Run `pnpm run build` before previewing.')
 	}
 
 	return serveStatic(event, {

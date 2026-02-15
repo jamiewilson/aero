@@ -1,7 +1,8 @@
 {
-	"name": "@aero-ssg/vscode",
+	"name": "vscode",
 	"displayName": "Aero",
-	"description": "Language support for Aero templates",
+	"icon": "images/logo.png",
+	"description": "Language support for Aero templates in HTML",
 	"version": "0.0.1",
 	"publisher": "@aero-ssg",
 	"engines": {
@@ -10,6 +11,19 @@
 	"categories": [
 		"Programming Languages"
 	],
+	"main": "./dist/extension.js",
+	"activationEvents": [
+		"onLanguage:html"
+	],
+	"scripts": {
+		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode",
+		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.74.0",
+		"tsup": "^8.0.0",
+		"typescript": "^5.5.0"
+	},
 	"contributes": {
 		"grammars": [
 			{
@@ -17,12 +31,19 @@
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html.derivative",
-					"html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
-					"source.js.embedded.html": "javascript"
+					"meta.embedded.expression.aero source.ts": "typescript"
 				}
+			},
+			{
+				"path": "./syntaxes/aero-attributes.json",
+				"scopeName": "aero.attributes.injection",
+				"injectTo": [
+					"text.html.basic",
+					"text.html.derivative"
+				]
 			}
 		]
 	}
