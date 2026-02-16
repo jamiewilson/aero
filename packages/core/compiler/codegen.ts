@@ -54,8 +54,29 @@ class Compiler {
 
 	/** Gets the condition value from if/else-if attribute */
 	private getCondition(node: any, attr: string): string | null {
-		const value = node.getAttribute(attr) || node.getAttribute(CONST.ATTR_PREFIX + attr)
-		return value ? Helper.stripBraces(value) : null
+		const plainValue = node.getAttribute(attr)
+		if (plainValue !== null) {
+			return this.requireBracedExpression(plainValue, attr, node)
+		}
+
+		const dataAttr = CONST.ATTR_PREFIX + attr
+		const dataValue = node.getAttribute(dataAttr)
+		if (dataValue !== null) {
+			return this.requireBracedExpression(dataValue, dataAttr, node)
+		}
+
+		return null
+	}
+
+	private requireBracedExpression(value: string, directive: string, node: any): string {
+		const trimmed = value.trim()
+		if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
+			const tagName = node?.tagName?.toLowerCase?.() || 'element'
+			throw new Error(
+				`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`,
+			)
+		}
+		return Helper.stripBraces(trimmed)
 	}
 
 	/** Parses component attributes, extracting props and data-props */
@@ -74,11 +95,11 @@ class Compiler {
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
 					const value = attr.value?.trim() || ''
-					dataPropsExpression = !value
-						? '...props'
-						: value.startsWith('{') && value.endsWith('}')
-							? Helper.stripBraces(value)
-							: `...${value}`
+					if (!value) {
+						dataPropsExpression = '...props'
+					} else {
+						dataPropsExpression = this.requireBracedExpression(value, attr.name, node)
+					}
 					continue
 				}
 
@@ -102,9 +123,15 @@ class Compiler {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
 				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
-					const content = attr.value.replace(CONST.EACH_BRACES_REGEX, '').trim()
+					const content = this.requireBracedExpression(attr.value || '', attr.name, node)
 					const match = content.match(CONST.EACH_REGEX)
-					if (match) loopData = { item: match[1], items: match[2] }
+					if (!match) {
+						const tagName = node?.tagName?.toLowerCase?.() || 'element'
+						throw new Error(
+							`Directive \`${attr.name}\` on <${tagName}> must match "{ item in items }".`,
+						)
+					}
+					loopData = { item: match[1], items: match[2] }
 					continue
 				}
 

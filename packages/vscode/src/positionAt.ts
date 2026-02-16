@@ -319,7 +319,7 @@ function getExpressionIdentifierAt(
 /**
  * Returns the active expression context around the cursor:
  * - `{ ... }` interpolation expressions
- * - expression-valued Aero attributes like `if="props.showLogo"`
+ * - expression-valued Aero attributes like `if="{ props.showLogo }"`
  */
 function getExpressionContextRangeAt(
 	document: vscode.TextDocument,
@@ -383,9 +383,21 @@ function getAeroExpressionAttributeValueRangeAt(
 	while ((match = attrValueRegex.exec(lineText)) !== null) {
 		const value = match[2]
 		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
-		const valueEnd = valueStart + value.length
-		if (offset >= valueStart && offset <= valueEnd) {
-			return { start: valueStart, end: valueEnd }
+		const openBraceOffset = value.indexOf('{')
+		const closeBraceOffset = value.lastIndexOf('}')
+
+		if (
+			openBraceOffset === -1 ||
+			closeBraceOffset === -1 ||
+			closeBraceOffset <= openBraceOffset
+		) {
+			continue
+		}
+
+		const exprStart = valueStart + openBraceOffset + 1
+		const exprEnd = valueStart + closeBraceOffset
+		if (offset >= exprStart && offset <= exprEnd) {
+			return { start: exprStart, end: exprEnd }
 		}
 	}
 

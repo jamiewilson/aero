@@ -34,13 +34,13 @@ const AERO_ATTRIBUTES: Array<{
 	{
 		label: 'data-if',
 		detail: 'Conditional rendering (Aero)',
-		snippet: 'data-if="${1:condition}"',
+		snippet: 'data-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
 		label: 'data-else-if',
 		detail: 'Chained conditional (Aero)',
-		snippet: 'data-else-if="${1:condition}"',
+		snippet: 'data-else-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
@@ -62,13 +62,13 @@ const AERO_ATTRIBUTES: Array<{
 	{
 		label: 'if',
 		detail: 'Conditional rendering (Aero shorthand)',
-		snippet: 'if="${1:condition}"',
+		snippet: 'if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
 		label: 'else-if',
 		detail: 'Chained conditional (Aero shorthand)',
-		snippet: 'else-if="${1:condition}"',
+		snippet: 'else-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{

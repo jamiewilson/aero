@@ -36,6 +36,10 @@ Spread an existing object using `data-props` or `props`:
 <my-component props="{ ...myProps }" />
 ```
 
+`data-props`/`props` values must be brace-wrapped expressions. For example,
+`data-props="myProps"` is invalid and should be written as
+`data-props="{ ...myProps }"`.
+
 ### 4. Inline Object Literals
 
 Define props inline with `data-props` or `props`:

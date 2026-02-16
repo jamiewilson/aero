@@ -13,7 +13,6 @@ export const TAG_SLOT = 'slot'
 export const SLOT_NAME_DEFAULT = 'default'
 
 export const EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
-export const EACH_BRACES_REGEX = /^{|}$/g
 export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 export const IMPORT_REGEX =

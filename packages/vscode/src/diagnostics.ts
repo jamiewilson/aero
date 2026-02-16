@@ -27,6 +27,10 @@ const ELSE_ATTR_REGEX = /\b(?:data-)?else\b/
 /** Matches opening tags and captures the attributes part */
 const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
 
+/** Matches directive attributes with explicit values */
+const DIRECTIVE_ATTR_VALUE_REGEX =
+	/\b(data-if|if|data-else-if|else-if|data-each|each|data-props|props)\s*=\s*(['"])(.*?)\2/gi
+
 /** Matches HTML comment blocks */
 const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g
 
@@ -75,9 +79,69 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		this.checkScriptTags(document, text, diagnostics)
 		this.checkConditionalChains(document, text, diagnostics)
+		this.checkDirectiveExpressionBraces(document, text, diagnostics)
 		this.checkComponentReferences(document, text, diagnostics)
 
 		this.collection.set(document.uri, diagnostics)
+	}
+
+	// -----------------------------------------------------------------------
+	// 3. Directive attributes must use brace-wrapped expressions
+	// -----------------------------------------------------------------------
+
+	private checkDirectiveExpressionBraces(
+		document: vscode.TextDocument,
+		text: string,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const commentRanges = getCommentRanges(text)
+
+		OPEN_TAG_REGEX.lastIndex = 0
+		let match: RegExpExecArray | null
+
+		while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
+			const tagStart = match.index
+			if (isInRanges(tagStart, commentRanges)) continue
+
+			const attrs = match[2] || ''
+			if (!attrs) continue
+
+			DIRECTIVE_ATTR_VALUE_REGEX.lastIndex = 0
+			let attrMatch: RegExpExecArray | null
+			while ((attrMatch = DIRECTIVE_ATTR_VALUE_REGEX.exec(attrs)) !== null) {
+				const attrName = attrMatch[1]
+				const attrValue = (attrMatch[3] || '').trim()
+				const needsBraces = this.requiresBracedDirectiveValue(attrName)
+
+				if (!needsBraces) continue
+				if (attrValue.startsWith('{') && attrValue.endsWith('}')) continue
+
+				const attrsStart = tagStart + match[0].indexOf(attrs)
+				const start = attrsStart + attrMatch.index
+				const end = start + attrMatch[0].length
+				const example = `${attrName}="{ expression }"`
+				const diagnostic = new vscode.Diagnostic(
+					new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
+					vscode.DiagnosticSeverity.Error,
+				)
+				diagnostic.source = DIAGNOSTIC_SOURCE
+				diagnostics.push(diagnostic)
+			}
+		}
+	}
+
+	private requiresBracedDirectiveValue(attrName: string): boolean {
+		return [
+			'if',
+			'data-if',
+			'else-if',
+			'data-else-if',
+			'each',
+			'data-each',
+			'props',
+			'data-props',
+		].includes(attrName)
 	}
 
 	// -----------------------------------------------------------------------
@@ -207,7 +271,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 
 	// -----------------------------------------------------------------------
-	// 3. Missing component/layout files
+	// 4. Missing component/layout files
 	// -----------------------------------------------------------------------
 
 	private checkComponentReferences(

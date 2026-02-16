@@ -80,6 +80,20 @@ describe('Codegen', () => {
 		expect(output).not.toContain('data-each')
 	})
 
+	it('should throw when each value is not brace-wrapped', async () => {
+		const html = `<script on:build>
+										const items = ['a', 'b'];
+									</script>
+									<ul>
+										<li each="item in items">{ item }</li>
+									</ul>`
+
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(
+			'Directive `each` on <li> must use a braced expression',
+		)
+	})
+
 	it('should resolve component tags', async () => {
 		const html = `<script on:build>
 										const myComp = { name: 'my-comp' };
@@ -292,7 +306,7 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ title: 'Test Site', doubled: 42 })
 	})
 
-	it('should support plain variable name in data-props (auto-spread)', async () => {
+	it('should throw when data-props value is not brace-wrapped', async () => {
 		const html = `<script on:build>
 										const myComp = { name: 'comp' };
 										const myProps = { a: 1, b: 2 };
@@ -300,18 +314,35 @@ describe('Codegen', () => {
 									<my-comp-component data-props="myProps" />`
 
 		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
+		expect(() => compile(parsed, mockOptions)).toThrow(
+			'Directive `data-props` on <my-comp-component> must use a braced expression',
+		)
+	})
 
-		const renderedProps: any[] = []
-		const aero = {
-			renderComponent: async (comp: any, props: any) => {
-				renderedProps.push(props)
-				return ''
-			},
-		}
+	it('should throw when if value is not brace-wrapped', async () => {
+		const html = `<script on:build>
+										const showLogo = true;
+									</script>
+									<logo-component if="showLogo" />`
 
-		await execute(code, aero)
-		expect(renderedProps[0]).toEqual({ a: 1, b: 2 })
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(
+			'Directive `if` on <logo-component> must use a braced expression',
+		)
+	})
+
+	it('should throw when data-each value is not brace-wrapped', async () => {
+		const html = `<script on:build>
+										const items = ['a', 'b'];
+									</script>
+									<ul>
+										<li data-each="item in items">{ item }</li>
+									</ul>`
+
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(
+			'Directive `data-each` on <li> must use a braced expression',
+		)
 	})
 
 	it('should merge data-props with individual attributes', async () => {
@@ -435,7 +466,7 @@ describe('Codegen', () => {
 										const showFirst = false;
 									</script>
 									<div>
-										<p if="showFirst">First</p>
+										<p if="{ showFirst }">First</p>
 										<p else>Fallback</p>
 									</div>`
 
@@ -452,8 +483,8 @@ describe('Codegen', () => {
 										const value = 'B';
 									</script>
 									<div>
-										<p if="value === 'A'">Option A</p>
-										<p else-if="value === 'B'">Option B</p>
+										<p if="{ value === 'A' }">Option A</p>
+										<p else-if="{ value === 'B' }">Option B</p>
 										<p else>Default</p>
 									</div>`
 
@@ -471,8 +502,8 @@ describe('Codegen', () => {
 										const value = 'C';
 									</script>
 									<div>
-										<p if="value === 'A'">Option A</p>
-										<p else-if="value === 'B'">Option B</p>
+										<p if="{ value === 'A' }">Option A</p>
+										<p else-if="{ value === 'B' }">Option B</p>
 										<p else>Default</p>
 									</div>`
 
@@ -491,9 +522,9 @@ describe('Codegen', () => {
 										const num = 3;
 									</script>
 									<div>
-										<span if="num === 1">One</span>
-										<span else-if="num === 2">Two</span>
-										<span else-if="num === 3">Three</span>
+										<span if="{ num === 1 }">One</span>
+										<span else-if="{ num === 2 }">Two</span>
+										<span else-if="{ num === 3 }">Three</span>
 										<span else>Other</span>
 									</div>`
 
@@ -513,7 +544,7 @@ describe('Codegen', () => {
 										const logo = { name: 'logo' };
 									</script>
 									<div>
-										<logo-component if="showLogo" />
+										<logo-component if="{ showLogo }" />
 										<p else>No logo</p>
 									</div>`
 
@@ -534,7 +565,7 @@ describe('Codegen', () => {
 										const show = true;
 									</script>
 									<div>
-										<p if="show">Shown</p>
+										<p if="{ show }">Shown</p>
 										<p>Always visible</p>
 									</div>`
 
@@ -551,8 +582,8 @@ describe('Codegen', () => {
 										const choice = 2;
 									</script>
 									<div>
-										<p data-if="choice === 1">One</p>
-										<p data-else-if="choice === 2">Two</p>
+										<p data-if="{ choice === 1 }">One</p>
+										<p data-else-if="{ choice === 2 }">Two</p>
 										<p data-else>Other</p>
 									</div>`
 

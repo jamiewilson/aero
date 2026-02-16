@@ -61,15 +61,15 @@ Components receive via `aero.props`:
 
 ### Path Aliases (packages/start/tsconfig.json)
 
-- `@components/*` → src/components/*
-- `@layouts/*` → src/layouts/*
-- `@pages/*` → src/pages/*
-- `@content/*` → src/content/*
-- `@styles/*` → src/assets/styles/*
-- `@scripts/*` → src/assets/scripts/*
-- `@images/*` → src/assets/images/*
-- `@src/*` → src/*
-- `@server/*` → server/*
+- `@components/*` → src/components/\*
+- `@layouts/*` → src/layouts/\*
+- `@pages/*` → src/pages/\*
+- `@content/*` → src/content/\*
+- `@styles/*` → src/assets/styles/\*
+- `@scripts/*` → src/assets/scripts/\*
+- `@images/*` → src/assets/images/\*
+- `@src/*` → src/\*
+- `@server/*` → server/\*
 - `~/*` → project root
 
 ## Development Commands
@@ -105,4 +105,4 @@ For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md]
 
 - Virtual client scripts use `/@aero/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
 - Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
-- `data-each` for loops: `<li data-each="item in items">{ item.name }</li>`
+- `data-each` for loops: `<li data-each="{ item in items }">{ item.name }</li>`

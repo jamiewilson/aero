@@ -53,15 +53,15 @@ Components receive via `aero.props` in `<script on:build>`.
 
 ### Path Aliases (root tsconfig.json)
 
-- `@components/*` → src/components/*
-- `@layouts/*` → src/layouts/*
-- `@pages/*` → src/pages/*
-- `@content/*` → src/content/*
-- `@styles/*` → src/assets/styles/*
-- `@scripts/*` → src/assets/scripts/*
-- `@images/*` → src/assets/images/*
-- `@src/*` → src/*
-- `@server/*` → server/*
+- `@components/*` → src/components/\*
+- `@layouts/*` → src/layouts/\*
+- `@pages/*` → src/pages/\*
+- `@content/*` → src/content/\*
+- `@styles/*` → src/assets/styles/\*
+- `@scripts/*` → src/assets/scripts/\*
+- `@images/*` → src/assets/images/\*
+- `@src/*` → src/\*
+- `@server/*` → server/\*
 - `~/*` → project root
 
 ## Development Commands
@@ -94,4 +94,4 @@ pnpm test             # Vitest (packages/core)
 
 - Virtual client scripts use `/@aero/client/` prefix; plugin uses `\0` for Vite virtual modules
 - Slot passthrough: both `name` and `slot` on `<slot>` elements
-- `data-each` for loops: `<li data-each="item in items">{ item.name }</li>`
+- `data-each` for loops: `<li data-each="{ item in items }">{ item.name }</li>`

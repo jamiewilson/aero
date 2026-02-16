@@ -49,14 +49,24 @@ Some attributes are directives and use directive-specific parsing:
 
 ### `if` and `else-if`
 
-`if`/`else-if` conditions are treated as expressions, so these are equivalent:
+`if`/`else-if` conditions must use brace-wrapped expressions:
 
 ```html
-<logo-component if="props.showLogo" />
 <logo-component if="{ props.showLogo }" />
 ```
 
-Both evaluate the condition expression.
+Unbraced values are invalid and cause a compile error.
+
+### `each` and `data-each`
+
+Loop directives must also use brace-wrapped expressions:
+
+```html
+<li each="{ item in items }">{ item }</li>
+<li data-each="{ item in items }">{ item }</li>
+```
+
+Unbraced values like `each="item in items"` are invalid.
 
 ## `data-props` / `props` Object Semantics
 
@@ -69,8 +79,8 @@ Both evaluate the condition expression.
 	const data = { title: 'Hello', count: 42 }
 </script>
 
-<my-component data-props="data" />
 <my-component data-props="{ ...data }" />
+<my-component props="{ ...data }" />
 ```
 
 Both produce:
@@ -98,8 +108,9 @@ This is valid, but the shape is different. Use this only when the receiving comp
 - Use **no braces** for text literals.
 - Use **`{ ... }`** for dynamic values (booleans, numbers, computed strings, arrays, objects).
 - For `data-props`, choose intentionally:
-  - `data-props="data"` or `data-props="{ ...data }"` to spread keys.
+  - `data-props="{ ...data }"` to spread keys.
   - `data-props="{ data }"` to pass a nested object prop.
+  - `data-props` (no value) to spread a local `props` variable.
 
 ## Why This Matters
 
