@@ -289,8 +289,8 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 			items.push(item)
 		}
 
-		// aero.props
-		const propsItem = new vscode.CompletionItem('aero', vscode.CompletionItemKind.Module)
+		// Aero.props
+		const propsItem = new vscode.CompletionItem('Aero', vscode.CompletionItemKind.Module)
 		propsItem.detail = 'Aero runtime context'
 		items.push(propsItem)
 

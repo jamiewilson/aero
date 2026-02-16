@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
-import { COMPONENT_SUFFIX_REGEX } from './constants'
+import { COMPONENT_SUFFIX_REGEX, IMPORT_REGEX } from './constants'
 import { isAeroDocument } from './scope'
 
 const DIAGNOSTIC_SOURCE = 'aero'
@@ -281,6 +281,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	): void {
 		const resolver = getResolver(document)
 		if (!resolver) return
+		const imports = collectImportedSpecifiers(text)
 
 		COMPONENT_TAG_OPEN_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
@@ -292,7 +293,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 			const suffix = suffixMatch[1] as 'component' | 'layout'
 			const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
-			const alias = suffix === 'component' ? `@components/${baseName}` : `@layouts/${baseName}`
+			const importName = kebabToCamelCase(baseName)
+			const importedSpecifier = imports.get(importName)
+			const alias =
+				importedSpecifier ||
+				(suffix === 'component' ? `@components/${baseName}` : `@layouts/${baseName}`)
 
 			const resolved = resolver.resolve(alias, document.uri.fsPath)
 			if (resolved && !fs.existsSync(resolved)) {
@@ -329,4 +334,35 @@ function isInRanges(offset: number, ranges: Array<{ start: number; end: number }
 
 function stripComments(text: string): string {
 	return text.replace(HTML_COMMENT_REGEX, '')
+}
+
+function collectImportedSpecifiers(text: string): Map<string, string> {
+	const imports = new Map<string, string>()
+	IMPORT_REGEX.lastIndex = 0
+	let match: RegExpExecArray | null
+
+	while ((match = IMPORT_REGEX.exec(text)) !== null) {
+		const defaultImport = match[1]?.trim()
+		const namedImports = match[2]
+		const namespaceImport = match[3]?.trim()
+		const specifier = match[5]
+
+		if (defaultImport) imports.set(defaultImport, specifier)
+		if (namespaceImport) imports.set(namespaceImport, specifier)
+
+		if (!namedImports) continue
+		for (const rawName of namedImports.split(',')) {
+			const name = rawName.trim()
+			if (!name) continue
+			const aliasParts = name.split(/\s+as\s+/i).map(part => part.trim())
+			const localName = aliasParts[1] || aliasParts[0]
+			if (localName) imports.set(localName, specifier)
+		}
+	}
+
+	return imports
+}
+
+function kebabToCamelCase(value: string): string {
+	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }

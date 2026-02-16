@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
-import { CONTENT_GLOBALS } from './constants'
+import { CONTENT_GLOBALS, IMPORT_REGEX } from './constants'
 
 /**
  * Provides Go to Definition for Aero template references in HTML files.
@@ -56,10 +56,14 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'component-tag': {
+				const imports = collectImportedSpecifiers(document.getText())
+				const importName = kebabToCamelCase(classification.baseName)
+				const importedSpecifier = imports.get(importName)
 				const alias =
-					classification.suffix === 'component'
+					importedSpecifier ||
+					(classification.suffix === 'component'
 						? `@components/${classification.baseName}`
-						: `@layouts/${classification.baseName}`
+						: `@layouts/${classification.baseName}`)
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
@@ -103,6 +107,37 @@ type EachScope = {
 	sourceRange: vscode.Range
 	startOffset: number
 	endOffset: number
+}
+
+function collectImportedSpecifiers(text: string): Map<string, string> {
+	const imports = new Map<string, string>()
+	IMPORT_REGEX.lastIndex = 0
+	let match: RegExpExecArray | null
+
+	while ((match = IMPORT_REGEX.exec(text)) !== null) {
+		const defaultImport = match[1]?.trim()
+		const namedImports = match[2]
+		const namespaceImport = match[3]?.trim()
+		const specifier = match[5]
+
+		if (defaultImport) imports.set(defaultImport, specifier)
+		if (namespaceImport) imports.set(namespaceImport, specifier)
+
+		if (!namedImports) continue
+		for (const rawName of namedImports.split(',')) {
+			const name = rawName.trim()
+			if (!name) continue
+			const aliasParts = name.split(/\s+as\s+/i).map(part => part.trim())
+			const localName = aliasParts[1] || aliasParts[0]
+			if (localName) imports.set(localName, specifier)
+		}
+	}
+
+	return imports
+}
+
+function kebabToCamelCase(value: string): string {
+	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }
 
 function resolveExpressionIdentifierDefinition(

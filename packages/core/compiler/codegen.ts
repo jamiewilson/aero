@@ -79,6 +79,27 @@ class Compiler {
 		return Helper.stripBraces(trimmed)
 	}
 
+	private isSingleWrappedExpression(value: string): boolean {
+		const trimmed = value.trim()
+		if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return false
+		if (trimmed.startsWith('{{') || trimmed.endsWith('}}')) return false
+
+		let depth = 0
+		for (let i = 0; i < trimmed.length; i++) {
+			const char = trimmed[i]
+			if (char === '{') depth++
+			if (char === '}') {
+				depth--
+				if (depth < 0) return false
+				if (depth === 0 && i !== trimmed.length - 1) {
+					return false
+				}
+			}
+		}
+
+		return depth === 0
+	}
+
 	/** Parses component attributes, extracting props and data-props */
 	private parseComponentAttributes(node: any): ParsedComponentAttrs {
 		const propsEntries: string[] = []
@@ -103,9 +124,19 @@ class Compiler {
 					continue
 				}
 
-				const val = Helper.escapeBackticks(attr.value)
-				const propVal =
-					val.startsWith('{') && val.endsWith('}') ? Helper.stripBraces(val) : `"${val}"`
+				const rawValue = attr.value ?? ''
+				const escapedLiteral = Helper.escapeBackticks(rawValue)
+				let propVal: string
+
+				if (this.isSingleWrappedExpression(rawValue)) {
+					propVal = Helper.stripBraces(escapedLiteral)
+				} else {
+					const compiled = Helper.compileAttributeInterpolation(rawValue)
+					const hasInterpolation =
+						compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
+					propVal = hasInterpolation ? `\`${compiled}\`` : `"${escapedLiteral}"`
+				}
+
 				propsEntries.push(`${attr.name}: ${propVal}`)
 			}
 		}
@@ -355,7 +386,7 @@ class Compiler {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await aero.renderComponent(${baseName}, ${propsString}, {}) }`
+			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params }) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)
@@ -434,7 +465,7 @@ class Compiler {
 		}
 
 		const slotsString = Helper.emitSlotsObjectVars(slotVarMap)
-		out += `${outVar} += await aero.renderComponent(${baseName}, ${propsString}, ${slotsString});\n`
+		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params });\n`
 
 		return out
 	}

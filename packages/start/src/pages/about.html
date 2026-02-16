@@ -11,11 +11,10 @@
 	const props = {
 		custom: { title: 'Custom Props Title' },
 		subtitle: site.about.subtitle,
-		showLogo: false,
 	}
 </script>
 
-<sub-layout title="{meta.title}" image="{meta.image}">
+<sub-layout title="{ meta.title }" image="{ meta.image }">
 	<a href="#" slot="thru-sub">Slot</a>
 	<header-component props />
 </sub-layout>

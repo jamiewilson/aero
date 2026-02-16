@@ -17,6 +17,7 @@
 	body {
 		color: var(--fg);
 		background: var(--bg);
+		font-size: 1rem;
 		font-family: system-ui, sans-serif;
 		text-align: center;
 		line-height: 1.5;
@@ -44,7 +45,6 @@
 		padding: 1rem 2rem;
 		border-radius: 2rem;
 		corner-shape: squircle;
-
 		justify-self: center;
 
 		&:focus,
@@ -73,8 +73,19 @@
 		color: var(--color-accent);
 		text-decoration: none;
 		transition: color var(--duration-fast);
+
 		&:hover {
 			color: var(--fg);
 		}
+	}
+
+	code {
+		font-size: smaller;
+		font-family: monospace;
+		padding: 0.25rem 0.5rem;
+		background: oklch(from var(--fg) l c h / 0.2);
+		border: 1px solid oklch(from var(--fg) l c h / 0.2);
+		border-radius: 0.25rem;
+		text-box: trim-both ex alphabetic;
 	}
 }

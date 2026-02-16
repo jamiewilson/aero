@@ -292,7 +292,13 @@ export async function renderStaticPages(
 	try {
 		const runtime = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 		for (const page of pages) {
-			let rendered = await runtime.aero.render(page.pageName)
+			const routePath = page.routePath ? `/${page.routePath}` : '/'
+			const pageUrl = new URL(routePath, 'http://localhost')
+			let rendered = await runtime.aero.render(page.pageName, {
+				url: pageUrl,
+				request: new Request(pageUrl.toString(), { method: 'GET' }),
+				routePath,
+			})
 			rendered = rewriteRenderedHtml(
 				addDoctype(rendered),
 				page.outputFile,

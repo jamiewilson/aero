@@ -11,6 +11,26 @@ export function compileInterpolation(text: string): string {
 	return compiled
 }
 
+/**
+ * Compiles an attribute value, supporting {expr} interpolation and escaped
+ * literal braces via double-brace syntax: `{{` and `}}`.
+ */
+export function compileAttributeInterpolation(text: string): string {
+	if (!text) return ''
+
+	const openSentinel = '__AERO_ESC_OPEN__'
+	const closeSentinel = '__AERO_ESC_CLOSE__'
+
+	let compiled = text.replace(/`/g, '\\`')
+	compiled = compiled.replace(/{{/g, openSentinel).replace(/}}/g, closeSentinel)
+	compiled = compiled.replace(/{([\s\S]+?)}/g, '${$1}')
+	compiled = compiled
+		.replace(new RegExp(openSentinel, 'g'), '{')
+		.replace(new RegExp(closeSentinel, 'g'), '}')
+
+	return compiled
+}
+
 /** Checks if an attribute name matches either 'attr' or 'data-attr' */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
@@ -55,8 +75,8 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 
 /** Emits the top-level render function wrapper (script + body statements). */
 export function emitRenderFunction(script: string, body: string): string {
-	return `export default async function(aero) {
-		const { site, slots = {}, renderComponent } = aero;
+	return `export default async function(Aero) {
+		const { site, slots = {}, renderComponent, request, url, params } = Aero;
 		${script}
 		let __out = '';
 		${body}return __out;

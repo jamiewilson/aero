@@ -4,7 +4,7 @@ The TBD framework provides a flexible, Astro-inspired props system that makes co
 
 ## Core Concept
 
-**All props are accessed via `aero.props`** - this is the single source of truth. Components explicitly destructure what they need from `aero.props`.
+**All props are accessed via `Aero.props`** - this is the single source of truth. Components explicitly destructure what they need from `Aero.props`.
 
 ## Passing Props to Components
 
@@ -23,6 +23,22 @@ Use `{ }` to evaluate JavaScript expressions:
 ```html
 <my-component title="{ site.meta.title }" count="{ 2 * 21 }" />
 ```
+
+You can also compose strings with inline expressions:
+
+```html
+<my-component title="Slug: { Aero.params.slug }" />
+```
+
+If `Aero.params.slug === 'intro'`, `title` becomes `Slug: intro`.
+
+To render literal braces in composed strings, use double braces:
+
+```html
+<my-component title="{{ slug }} + { Aero.params.slug }" />
+```
+
+If `Aero.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
 
 ### 3. Spread Syntax
 
@@ -79,12 +95,12 @@ Combine `data-props` with individual attributes:
 
 ## Receiving Props in Components
 
-Components access props by destructuring `aero.props`:
+Components access props by destructuring `Aero.props`:
 
 ```html
 <script on:build>
 	// Destructure the props you need
-	const { title, subtitle } = aero.props
+	const { title, subtitle } = Aero.props
 </script>
 
 <header>
@@ -97,7 +113,7 @@ Components access props by destructuring `aero.props`:
 
 ```html
 <script on:build>
-	const { title = 'Default Title', subtitle } = aero.props
+	const { title = 'Default Title', subtitle } = Aero.props
 </script>
 ```
 
@@ -105,7 +121,7 @@ Components access props by destructuring `aero.props`:
 
 ```html
 <script on:build>
-	const { title, description } = aero.props
+	const { title, description } = Aero.props
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
@@ -116,10 +132,58 @@ Components access props by destructuring `aero.props`:
 
 Inside `on:build` scripts, you have access to:
 
-- **`aero.props`** - Props passed to this component
+- **`Aero.props`** - Props passed to this component
+- **`Aero.request`** - Current request object
+- **`Aero.url`** - Current page URL
+- **`Aero.params`** - Route params for dynamic routes
 - **`site`** - Global site configuration (from your content module, e.g. `src/content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
+
+## Request/URL/Params Examples
+
+### Dev vs Static behavior
+
+| Global         | Dev server / API runtime                               | Static build (`pnpm build` HTML output)                    |
+| -------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
+| `Aero.request` | Real incoming request (method + forwarded headers)     | Synthetic request; request-specific headers may be missing |
+| `Aero.url`     | URL for the current incoming route                     | URL derived from the generated page route                  |
+| `Aero.params`  | Populated for dynamic route files (e.g. `[slug].html`) | Only populated when rendering dynamic route pages          |
+
+### Read request metadata
+
+```html
+<script on:build>
+	const userAgent = Aero.request.headers.get('user-agent') || 'unavailable'
+</script>
+
+<p>User agent: { userAgent }</p>
+```
+
+In local dev/server rendering, request headers are forwarded from the incoming request.
+In static builds, request-specific headers may be unavailable.
+
+### Build canonical links from the current URL
+
+```html
+<script on:build>
+	const canonical = new URL(Aero.url.pathname, site.meta.url).toString()
+</script>
+
+<link rel="canonical" href="{ canonical }" />
+```
+
+### Use dynamic route params
+
+In a dynamic route file such as `src/pages/docs/[slug].html`:
+
+```html
+<script on:build>
+	const slug = Aero.params.slug || 'index'
+</script>
+
+<h1>Docs: { slug }</h1>
+```
 
 ## Examples
 
@@ -128,7 +192,7 @@ Inside `on:build` scripts, you have access to:
 ```html
 <!-- components/greeting.html -->
 <script on:build>
-	const { name } = aero.props
+	const { name } = Aero.props
 </script>
 
 <h1>Hello, { name }!</h1>
