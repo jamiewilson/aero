@@ -11,7 +11,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"declaration": false,
-		"sourceMap": true
+		"sourceMap": true,
+		"types": ["node", "vscode"]
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "dist"]

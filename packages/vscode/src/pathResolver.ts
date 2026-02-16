@@ -61,10 +61,7 @@ function findTsconfig(startDir: string): {
 // Build alias list from tsconfig paths
 // ---------------------------------------------------------------------------
 
-function buildAliases(
-	paths: Record<string, string[]>,
-	baseDir: string,
-): Alias[] {
+function buildAliases(paths: Record<string, string[]>, baseDir: string): Alias[] {
 	const aliases: Alias[] = []
 	for (const [key, values] of Object.entries(paths)) {
 		const first = values[0]

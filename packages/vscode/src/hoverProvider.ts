@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
+import { isAeroDocument } from './scope'
 
 /**
  * Provides hover information for Aero template references in HTML files.
@@ -17,6 +18,8 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.Hover> {
+		if (!isAeroDocument(document)) return null
+
 		const classification = classifyPosition(document, position)
 		if (!classification) return null
 
@@ -28,7 +31,9 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
 				return new vscode.Hover(
-					new vscode.MarkdownString(`**Import**: \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``),
+					new vscode.MarkdownString(
+						`**Import**: \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``,
+					),
 					classification.range,
 				)
 			}
@@ -46,12 +51,15 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 
 			case 'script-src':
 			case 'link-href': {
-				const value = classification.kind === 'script-src' ? classification.value : classification.value
+				const value =
+					classification.kind === 'script-src' ? classification.value : classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
 				const label = classification.kind === 'script-src' ? 'Script source' : 'Link href'
 				return new vscode.Hover(
-					new vscode.MarkdownString(`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``),
+					new vscode.MarkdownString(
+						`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``,
+					),
 					classification.range,
 				)
 			}
@@ -83,9 +91,10 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 				if (!resolved) return null
 
 				const md = new vscode.MarkdownString()
-				const fullPath = classification.propertyPath.length > 0
-					? `${classification.identifier}.${classification.propertyPath.join('.')}`
-					: classification.identifier
+				const fullPath =
+					classification.propertyPath.length > 0
+						? `${classification.identifier}.${classification.propertyPath.join('.')}`
+						: classification.identifier
 				md.appendMarkdown(`**Content global**: \`${fullPath}\`\n\n`)
 				md.appendMarkdown(`Source: \`${resolved}\`\n\n`)
 
