@@ -1,0 +1,11 @@
+<script on:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout title="ID: { Aero.params.id }">
+	<h1>Param ID: { Aero.params.id }</h1>
+	<p class="secondary">
+		This page should be accessible at
+		<code>{ Aero.url.pathname }</code>
+	</p>
+</base-layout>

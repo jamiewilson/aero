@@ -29,7 +29,7 @@ describe('Vite Plugin Integration', () => {
 		const id = '/aero/pages/test.html'
 
 		const result: any = plugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('export default async function(aero)')
+		expect(result.code).toContain('export default async function(Aero)')
 		expect(result.code).toContain('Vite Test')
 	})
 
@@ -62,16 +62,21 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('should render a transformed module using the runtime', async () => {
-		const html = '<h1>{ aero.props.title }</h1>'
+		const html = '<h1>{ Aero.props.title }</h1>'
 		const id = '/aero/pages/props.html'
 		const result: any = plugin.transform.call(pluginCtx, html, id)
 		const aeroInstance = new Aero()
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)
-		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('aero', body)
+		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)(
+			'Aero',
+			body,
+		)
 
-		const finalOutput = await aeroInstance.render(renderFn, { title: 'Dynamic Title' })
+		const finalOutput = await aeroInstance.render(renderFn, {
+			props: { title: 'Dynamic Title' },
+		})
 		expect(finalOutput).toBe('<h1>Dynamic Title</h1>')
 	})
 })

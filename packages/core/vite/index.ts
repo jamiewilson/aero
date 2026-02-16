@@ -105,7 +105,25 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					const pageName = resolvePageName(req.url)
 					const mod = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
 
-					let rendered = await mod.aero.render(pageName)
+					const requestUrl = new URL(req.url, 'http://localhost')
+					const requestHeaders = new Headers()
+					for (const [name, value] of Object.entries(req.headers)) {
+						if (value === undefined) continue
+						if (Array.isArray(value)) {
+							for (const item of value) requestHeaders.append(name, item)
+							continue
+						}
+						requestHeaders.set(name, value)
+					}
+
+					let rendered = await mod.aero.render(pageName, {
+						url: requestUrl,
+						request: new Request(requestUrl.toString(), {
+							method: req.method || 'GET',
+							headers: requestHeaders,
+						}),
+						routePath: pathname,
+					})
 					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
 						rendered = `<!doctype html>\n${rendered}`
 					}

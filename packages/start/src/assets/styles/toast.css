@@ -18,13 +18,8 @@
 
 	.toast-content {
 		code {
-			font-size: smaller;
-			font-family: monospace;
-			padding: 0.25rem 0.5rem;
-			background: oklch(from var(--bg) l c h / 0.2);
-			border: 1px solid oklch(from var(--bg) l c h / 0.2);
-			border-radius: 0.25rem;
-			text-box: trim-both ex alphabetic;
+			background-color: oklch(from var(--bg) l c h / 0.2);
+			border-color: oklch(from var(--bg) l c h / 0.2);
 		}
 	}
 }

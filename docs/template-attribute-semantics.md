@@ -37,6 +37,38 @@ If `props.showLogo === true`, this passes:
 }
 ```
 
+### Composed strings with interpolation
+
+Component props also support mixed text + expression interpolation:
+
+```html
+<logo-component title="Slug: { Aero.params.slug }" />
+```
+
+If `Aero.params.slug === 'intro'`, this passes:
+
+```ts
+{
+	title: 'Slug: intro'
+}
+```
+
+### Literal braces in composed strings
+
+Use double braces to emit literal `{` and `}` in quoted prop strings:
+
+```html
+<logo-component title="{{ slug }} + { Aero.params.slug }" />
+```
+
+If `Aero.params.slug === 'intro'`, this passes:
+
+```ts
+{
+	title: '{ slug } + intro'
+}
+```
+
 ## Directive Attributes
 
 Some attributes are directives and use directive-specific parsing:

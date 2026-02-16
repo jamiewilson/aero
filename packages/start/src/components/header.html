@@ -1,14 +1,15 @@
 <script on:build>
 	import logo from '@components/logo'
-	const props = aero.props
+	const isHomepage = Aero.url.pathname === '/'
+	const props = Aero.props
 </script>
 
 <header>
-	<logo-component if="{ props.showLogo }" class="logo" />
-	<h1 else-if="{ props.custom?.title }">{ props.custom.title }</h1>
+	<logo-component if="{ isHomepage }" class="logo" />
+	<h1 else-if="{ props.custom }">{ props.custom.title }</h1>
 	<h2 else>Fallback Title</h2>
 
-	<p class="subtitle">{ props.subtitle }</p>
+	<p class="subtitle secondary">{ props.subtitle }</p>
 
 	<!-- Overrides global styles -->
 	<style>
@@ -25,7 +26,6 @@
 			.subtitle {
 				max-width: 45ch;
 				text-wrap: pretty;
-				opacity: 0.5;
 			}
 		}
 	</style>

@@ -52,3 +52,30 @@ export interface PageFragments {
 	head: string
 	body: string
 }
+
+export interface AeroRouteParams {
+	[key: string]: string
+}
+
+export interface AeroRenderInput {
+	props?: Record<string, any>
+	request?: Request
+	url?: URL | string
+	params?: AeroRouteParams
+	routePath?: string
+}
+
+export interface AeroTemplateContext {
+	[key: string]: any
+	props: Record<string, any>
+	slots: Record<string, string>
+	renderComponent: (
+		component: any,
+		props?: Record<string, any>,
+		slots?: Record<string, string>,
+		context?: AeroRenderInput,
+	) => Promise<string>
+	request: Request
+	url: URL
+	params: AeroRouteParams
+}
