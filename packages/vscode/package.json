@@ -60,6 +60,14 @@
 					"text.html.basic",
 					"text.html.derivative"
 				]
+			},
+			{
+				"path": "./syntaxes/aero-globals.json",
+				"scopeName": "aero.globals.injection",
+				"injectTo": [
+					"text.html.basic",
+					"text.html.derivative"
+				]
 			}
 		]
 	}
