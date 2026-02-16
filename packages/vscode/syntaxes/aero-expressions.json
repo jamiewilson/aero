@@ -17,9 +17,7 @@
 					"comment": "Handle object literals that start with { so nested braces are parsed correctly",
 					"begin": "\\G\\s*(?=\\{)",
 					"end": "(?<=\\})",
-					"patterns": [
-						{ "include": "source.ts#object-literal" }
-					]
+					"patterns": [{ "include": "source.ts#object-literal" }]
 				},
 				{ "include": "source.ts" }
 			]

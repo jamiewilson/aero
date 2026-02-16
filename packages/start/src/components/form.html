@@ -7,7 +7,7 @@
 	<p>Test the server:</p>
 	<form
 		hx-post="/api/submit"
-		hx-on::after-request="if(event.detail.successful) this.reset()"
+		hx-on::after-request="if (event.detail.successful) this.reset()"
 		hx-target="[hx-toast]"
 		hx-swap="innerHTML">
 		<input x-model="input" type="text" name="message" placeholder="Enter a message" />

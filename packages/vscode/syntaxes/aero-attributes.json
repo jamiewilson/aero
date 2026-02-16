@@ -11,34 +11,34 @@
 			"comment": "Highlight on:build and on:client as special script type attributes",
 			"match": "\\b(on:(build|client))\\b",
 			"captures": {
-				"1": { "name": "entity.other.attribute-name.aero.script-type" }
+				"1": { "name": "entity.other.attribute-name.html" }
 			}
 		},
 		"aero-control-flow-attributes": {
-			"comment": "Highlight data-each/each, data-if/if, data-else-if/else-if, data-else/else as control flow keywords",
+			"comment": "Highlight Aero data-* control flow attributes while leaving shorthand attrs to default HTML tokenization",
 			"patterns": [
 				{
-					"match": "\\b(data-each|(?<=[\\s\"'])each)(?=[\\s=/>])",
+					"match": "\\b(data-each)(?=[\\s=/>])",
 					"captures": {
-						"1": { "name": "keyword.control.loop.aero" }
+						"1": { "name": "entity.other.attribute-name.html" }
 					}
 				},
 				{
-					"match": "\\b(data-if|(?<=[\\s\"'])if)(?=[\\s=/>])",
+					"match": "\\b(data-if)(?=[\\s=/>])",
 					"captures": {
-						"1": { "name": "keyword.control.conditional.aero" }
+						"1": { "name": "entity.other.attribute-name.html" }
 					}
 				},
 				{
-					"match": "\\b(data-else-if|(?<=[\\s\"'])else-if)(?=[\\s=/>])",
+					"match": "\\b(data-else-if)(?=[\\s=/>])",
 					"captures": {
-						"1": { "name": "keyword.control.conditional.aero" }
+						"1": { "name": "entity.other.attribute-name.html" }
 					}
 				},
 				{
-					"match": "\\b(data-else|(?<=[\\s\"'])else)(?=[\\s/>])",
+					"match": "\\b(data-else)(?=[\\s/>])",
 					"captures": {
-						"1": { "name": "keyword.control.conditional.aero" }
+						"1": { "name": "entity.other.attribute-name.html" }
 					}
 				}
 			]
@@ -47,7 +47,7 @@
 			"comment": "Highlight data-props as a special props attribute",
 			"match": "\\b(data-props)\\b",
 			"captures": {
-				"1": { "name": "entity.other.attribute-name.aero.props" }
+				"1": { "name": "entity.other.attribute-name.html" }
 			}
 		}
 	}

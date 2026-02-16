@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
 import { COMPONENT_SUFFIX_REGEX } from './constants'
+import { isAeroDocument } from './scope'
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
@@ -23,8 +24,19 @@ const IF_ATTR_REGEX = /\b(?:data-)?if(?:\s*=)/
 const ELSE_IF_ATTR_REGEX = /\b(?:data-)?else-if(?:\s*=)/
 const ELSE_ATTR_REGEX = /\b(?:data-)?else\b/
 
+/** Matches opening tags and captures the attributes part */
+const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
+
+/** Matches directive attributes with explicit values */
+const DIRECTIVE_ATTR_VALUE_REGEX =
+	/\b(data-if|if|data-else-if|else-if|data-each|each|data-props|props)\s*=\s*(['"])(.*?)\2/gi
+
+/** Matches HTML comment blocks */
+const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g
+
 /** Matches opening tags with component/layout suffix */
-const COMPONENT_TAG_OPEN_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout))\b[^>]*\/?>/gi
+const COMPONENT_TAG_OPEN_REGEX =
+	/<([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout))\b[^>]*\/?>/gi
 
 // ---------------------------------------------------------------------------
 // Diagnostics class
@@ -39,10 +51,10 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		// Run diagnostics on open and save
 		this.disposables.push(
-			vscode.workspace.onDidOpenTextDocument((doc) => this.updateDiagnostics(doc)),
-			vscode.workspace.onDidSaveTextDocument((doc) => this.updateDiagnostics(doc)),
-			vscode.workspace.onDidChangeTextDocument((e) => this.updateDiagnostics(e.document)),
-			vscode.workspace.onDidCloseTextDocument((doc) => this.collection.delete(doc.uri)),
+			vscode.workspace.onDidOpenTextDocument(doc => this.updateDiagnostics(doc)),
+			vscode.workspace.onDidSaveTextDocument(doc => this.updateDiagnostics(doc)),
+			vscode.workspace.onDidChangeTextDocument(e => this.updateDiagnostics(e.document)),
+			vscode.workspace.onDidCloseTextDocument(doc => this.collection.delete(doc.uri)),
 		)
 
 		// Run on all currently open documents
@@ -57,16 +69,79 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 
 	private updateDiagnostics(document: vscode.TextDocument): void {
-		if (document.languageId !== 'html') return
+		if (!isAeroDocument(document)) {
+			this.collection.delete(document.uri)
+			return
+		}
 
 		const diagnostics: vscode.Diagnostic[] = []
 		const text = document.getText()
 
 		this.checkScriptTags(document, text, diagnostics)
 		this.checkConditionalChains(document, text, diagnostics)
+		this.checkDirectiveExpressionBraces(document, text, diagnostics)
 		this.checkComponentReferences(document, text, diagnostics)
 
 		this.collection.set(document.uri, diagnostics)
+	}
+
+	// -----------------------------------------------------------------------
+	// 3. Directive attributes must use brace-wrapped expressions
+	// -----------------------------------------------------------------------
+
+	private checkDirectiveExpressionBraces(
+		document: vscode.TextDocument,
+		text: string,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const commentRanges = getCommentRanges(text)
+
+		OPEN_TAG_REGEX.lastIndex = 0
+		let match: RegExpExecArray | null
+
+		while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
+			const tagStart = match.index
+			if (isInRanges(tagStart, commentRanges)) continue
+
+			const attrs = match[2] || ''
+			if (!attrs) continue
+
+			DIRECTIVE_ATTR_VALUE_REGEX.lastIndex = 0
+			let attrMatch: RegExpExecArray | null
+			while ((attrMatch = DIRECTIVE_ATTR_VALUE_REGEX.exec(attrs)) !== null) {
+				const attrName = attrMatch[1]
+				const attrValue = (attrMatch[3] || '').trim()
+				const needsBraces = this.requiresBracedDirectiveValue(attrName)
+
+				if (!needsBraces) continue
+				if (attrValue.startsWith('{') && attrValue.endsWith('}')) continue
+
+				const attrsStart = tagStart + match[0].indexOf(attrs)
+				const start = attrsStart + attrMatch.index
+				const end = start + attrMatch[0].length
+				const example = `${attrName}="{ expression }"`
+				const diagnostic = new vscode.Diagnostic(
+					new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
+					vscode.DiagnosticSeverity.Error,
+				)
+				diagnostic.source = DIAGNOSTIC_SOURCE
+				diagnostics.push(diagnostic)
+			}
+		}
+	}
+
+	private requiresBracedDirectiveValue(attrName: string): boolean {
+		return [
+			'if',
+			'data-if',
+			'else-if',
+			'data-else-if',
+			'each',
+			'data-each',
+			'props',
+			'data-props',
+		].includes(attrName)
 	}
 
 	// -----------------------------------------------------------------------
@@ -122,27 +197,44 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		const lines = text.split('\n')
-
 		let lastConditionalType: 'if' | 'else-if' | null = null
+		const commentRanges = getCommentRanges(text)
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i]
+		OPEN_TAG_REGEX.lastIndex = 0
+		let match: RegExpExecArray | null
+		let previousTagEnd = 0
 
-			// Check for opening tags with conditional attributes
-			if (IF_ATTR_REGEX.test(line) && !ELSE_IF_ATTR_REGEX.test(line)) {
+		while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
+			const tagStart = match.index
+			if (isInRanges(tagStart, commentRanges)) continue
+
+			const between = stripComments(text.slice(previousTagEnd, tagStart))
+			if (/<[a-z]/i.test(between)) {
+				lastConditionalType = null
+			}
+
+			previousTagEnd = tagStart + match[0].length
+
+			const attrs = match[2] || ''
+			if (!attrs) {
+				lastConditionalType = null
+				continue
+			}
+
+			if (IF_ATTR_REGEX.test(attrs) && !ELSE_IF_ATTR_REGEX.test(attrs)) {
 				lastConditionalType = 'if'
 				continue
 			}
 
-			if (ELSE_IF_ATTR_REGEX.test(line)) {
+			if (ELSE_IF_ATTR_REGEX.test(attrs)) {
 				if (lastConditionalType !== 'if' && lastConditionalType !== 'else-if') {
-					const col = line.search(/(?:data-)?else-if/)
-					if (col >= 0) {
-						const match = line.match(/(?:data-)?else-if/)
-						const len = match ? match[0].length : 7
+					const attrMatch = attrs.match(/(?:data-)?else-if\b/)
+					if (attrMatch && attrMatch.index !== undefined) {
+						const attrBase = tagStart + match[0].indexOf(attrs)
+						const start = attrBase + attrMatch.index
+						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(i, col, i, col + len),
+							new vscode.Range(document.positionAt(start), document.positionAt(end)),
 							'else-if must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error,
 						)
@@ -154,14 +246,15 @@ export class AeroDiagnostics implements vscode.Disposable {
 				continue
 			}
 
-			if (ELSE_ATTR_REGEX.test(line) && !ELSE_IF_ATTR_REGEX.test(line)) {
+			if (ELSE_ATTR_REGEX.test(attrs) && !ELSE_IF_ATTR_REGEX.test(attrs)) {
 				if (lastConditionalType !== 'if' && lastConditionalType !== 'else-if') {
-					const col = line.search(/(?:data-)?else\b/)
-					if (col >= 0) {
-						const match = line.match(/(?:data-)?else\b/)
-						const len = match ? match[0].length : 4
+					const attrMatch = attrs.match(/(?:data-)?else\b/)
+					if (attrMatch && attrMatch.index !== undefined) {
+						const attrBase = tagStart + match[0].indexOf(attrs)
+						const start = attrBase + attrMatch.index
+						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(i, col, i, col + len),
+							new vscode.Range(document.positionAt(start), document.positionAt(end)),
 							'else must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error,
 						)
@@ -169,19 +262,16 @@ export class AeroDiagnostics implements vscode.Disposable {
 						diagnostics.push(diagnostic)
 					}
 				}
-				lastConditionalType = null // else terminates the chain
+				lastConditionalType = null
 				continue
 			}
 
-			// Non-conditional, non-whitespace lines reset the chain
-			if (line.trim().length > 0 && /<[a-z]/i.test(line)) {
-				lastConditionalType = null
-			}
+			lastConditionalType = null
 		}
 	}
 
 	// -----------------------------------------------------------------------
-	// 3. Missing component/layout files
+	// 4. Missing component/layout files
 	// -----------------------------------------------------------------------
 
 	private checkComponentReferences(
@@ -202,10 +292,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 			const suffix = suffixMatch[1] as 'component' | 'layout'
 			const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
-			const alias =
-				suffix === 'component'
-					? `@components/${baseName}`
-					: `@layouts/${baseName}`
+			const alias = suffix === 'component' ? `@components/${baseName}` : `@layouts/${baseName}`
 
 			const resolved = resolver.resolve(alias, document.uri.fsPath)
 			if (resolved && !fs.existsSync(resolved)) {
@@ -221,4 +308,25 @@ export class AeroDiagnostics implements vscode.Disposable {
 			}
 		}
 	}
+}
+
+function getCommentRanges(text: string): Array<{ start: number; end: number }> {
+	const ranges: Array<{ start: number; end: number }> = []
+	HTML_COMMENT_REGEX.lastIndex = 0
+	let match: RegExpExecArray | null
+	while ((match = HTML_COMMENT_REGEX.exec(text)) !== null) {
+		ranges.push({ start: match.index, end: match.index + match[0].length })
+	}
+	return ranges
+}
+
+function isInRanges(offset: number, ranges: Array<{ start: number; end: number }>): boolean {
+	for (const range of ranges) {
+		if (offset >= range.start && offset < range.end) return true
+	}
+	return false
+}
+
+function stripComments(text: string): string {
+	return text.replace(HTML_COMMENT_REGEX, '')
 }

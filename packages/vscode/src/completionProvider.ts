@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
 import { CONTENT_GLOBALS } from './constants'
+import { isAeroDocument } from './scope'
 
 // ---------------------------------------------------------------------------
 // Aero-specific attribute completions
@@ -33,13 +34,13 @@ const AERO_ATTRIBUTES: Array<{
 	{
 		label: 'data-if',
 		detail: 'Conditional rendering (Aero)',
-		snippet: 'data-if="${1:condition}"',
+		snippet: 'data-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
 		label: 'data-else-if',
 		detail: 'Chained conditional (Aero)',
-		snippet: 'data-else-if="${1:condition}"',
+		snippet: 'data-else-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
@@ -61,13 +62,13 @@ const AERO_ATTRIBUTES: Array<{
 	{
 		label: 'if',
 		detail: 'Conditional rendering (Aero shorthand)',
-		snippet: 'if="${1:condition}"',
+		snippet: 'if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
 		label: 'else-if',
 		detail: 'Chained conditional (Aero shorthand)',
-		snippet: 'else-if="${1:condition}"',
+		snippet: 'else-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
@@ -88,6 +89,8 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		_token: vscode.CancellationToken,
 		context: vscode.CompletionContext,
 	): vscode.ProviderResult<vscode.CompletionItem[]> {
+		if (!isAeroDocument(document)) return null
+
 		const lineText = document.lineAt(position.line).text
 		const textBefore = lineText.slice(0, position.character)
 
@@ -167,9 +170,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 						: vscode.CompletionItemKind.Struct,
 				)
 				item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
-				item.insertText = new vscode.SnippetString(
-					`${tagName} $1/>\n`,
-				)
+				item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
 				items.push(item)
 			}
 		} catch {
@@ -191,7 +192,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 			if (attrPrefix === undefined) return []
 		}
 
-		return AERO_ATTRIBUTES.map((attr) => {
+		return AERO_ATTRIBUTES.map(attr => {
 			const item = new vscode.CompletionItem(attr.label, attr.kind)
 			item.detail = attr.detail
 			if (attr.snippet) {
@@ -241,9 +242,10 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		// If partial starts with an alias, list files in that directory
 		const resolved = resolver.resolve(partial)
 		if (resolved) {
-			const dir = fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()
-				? resolved
-				: path.dirname(resolved)
+			const dir =
+				fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()
+					? resolved
+					: path.dirname(resolved)
 
 			if (fs.existsSync(dir)) {
 				try {
@@ -259,10 +261,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 							items.push(item)
 						} else {
 							const baseName = file.replace(/\.(html|ts|js|json)$/, '')
-							const item = new vscode.CompletionItem(
-								baseName,
-								vscode.CompletionItemKind.File,
-							)
+							const item = new vscode.CompletionItem(baseName, vscode.CompletionItemKind.File)
 							item.detail = file
 							items.push(item)
 						}

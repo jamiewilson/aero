@@ -20,11 +20,27 @@
 		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch"
 	},
 	"devDependencies": {
+		"@types/node": "^22.13.10",
 		"@types/vscode": "^1.74.0",
 		"tsup": "^8.0.0",
 		"typescript": "^5.5.0"
 	},
 	"contributes": {
+		"configuration": {
+			"title": "Aero",
+			"properties": {
+				"aero.scopeMode": {
+					"type": "string",
+					"enum": [
+						"auto",
+						"strict",
+						"always"
+					],
+					"default": "auto",
+					"markdownDescription": "Controls where Aero language features run for HTML files. `auto` enables features in Aero projects and files with Aero markers, `strict` only in detected Aero projects, and `always` in all HTML files."
+				}
+			}
+		},
 		"grammars": [
 			{
 				"path": "./syntaxes/aero-expressions.json",

@@ -1,9 +1,5 @@
 import * as vscode from 'vscode'
-import {
-	IMPORT_REGEX,
-	COMPONENT_SUFFIX_REGEX,
-	CONTENT_GLOBALS,
-} from './constants'
+import { IMPORT_REGEX, COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,8 +10,20 @@ export type PositionKind =
 	| { kind: 'import-name'; name: string; specifier: string; range: vscode.Range }
 	| { kind: 'script-src'; value: string; range: vscode.Range }
 	| { kind: 'link-href'; value: string; range: vscode.Range }
-	| { kind: 'component-tag'; tagName: string; baseName: string; suffix: 'component' | 'layout'; range: vscode.Range }
-	| { kind: 'content-global'; identifier: string; alias: string; propertyPath: string[]; range: vscode.Range }
+	| {
+			kind: 'component-tag'
+			tagName: string
+			baseName: string
+			suffix: 'component' | 'layout'
+			range: vscode.Range
+	  }
+	| {
+			kind: 'content-global'
+			identifier: string
+			alias: string
+			propertyPath: string[]
+			range: vscode.Range
+	  }
 	| { kind: 'expression-identifier'; identifier: string; range: vscode.Range }
 	| null
 
@@ -58,11 +66,7 @@ export function classifyPosition(
 // Import path / imported name detection
 // ---------------------------------------------------------------------------
 
-function getImportAt(
-	lineText: string,
-	lineNum: number,
-	offset: number,
-): PositionKind {
+function getImportAt(lineText: string, lineNum: number, offset: number): PositionKind {
 	// Reset regex state
 	IMPORT_REGEX.lastIndex = 0
 
@@ -120,7 +124,7 @@ function getImportAt(
 		}
 
 		if (namedImports) {
-			const names = namedImports.split(',').map((n) => n.trim())
+			const names = namedImports.split(',').map(n => n.trim())
 			for (const name of names) {
 				if (!name) continue
 				// Handle `as` aliases: `import { foo as bar } from '...'`
@@ -149,11 +153,7 @@ function getImportAt(
 const SCRIPT_SRC_REGEX = /<script[^>]*?\bsrc\s*=\s*(['"])(.*?)\1/gi
 const LINK_HREF_REGEX = /<link[^>]*?\bhref\s*=\s*(['"])(.*?)\1/gi
 
-function getAssetRefAt(
-	lineText: string,
-	lineNum: number,
-	offset: number,
-): PositionKind {
+function getAssetRefAt(lineText: string, lineNum: number, offset: number): PositionKind {
 	// Check <script src="...">
 	SCRIPT_SRC_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
@@ -249,8 +249,8 @@ function getExpressionIdentifierAt(
 	const lineText = document.lineAt(position.line).text
 	const offset = position.character
 
-	// First, check if we're inside a { ... } expression.
-	if (!isInsideCurlyExpression(lineText, offset)) {
+	const expressionRange = getExpressionContextRangeAt(document, position, lineText, offset)
+	if (!expressionRange) {
 		return null
 	}
 
@@ -258,6 +258,10 @@ function getExpressionIdentifierAt(
 	// A dot-chain is something like `site.home.title` -- identifiers joined by dots.
 	const chain = getDotChainAtPosition(lineText, offset)
 	if (!chain) return null
+	const chainEnd = chain.start + chain.text.length
+	if (chain.start < expressionRange.start || chainEnd > expressionRange.end) {
+		return null
+	}
 
 	// Parse the chain into segments
 	const segments = chain.text.split('.')
@@ -296,10 +300,7 @@ function getExpressionIdentifierAt(
 			identifier: rootIdentifier,
 			alias: CONTENT_GLOBALS[rootIdentifier],
 			propertyPath,
-			range: new vscode.Range(
-				position.line, chain.start,
-				position.line, rangeEnd,
-			),
+			range: new vscode.Range(position.line, chain.start, position.line, rangeEnd),
 		}
 	}
 
@@ -313,6 +314,94 @@ function getExpressionIdentifierAt(
 		identifier: word,
 		range: wordRange,
 	}
+}
+
+/**
+ * Returns the active expression context around the cursor:
+ * - `{ ... }` interpolation expressions
+ * - expression-valued Aero attributes like `if="{ props.showLogo }"`
+ */
+function getExpressionContextRangeAt(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+	lineText: string,
+	offset: number,
+): { start: number; end: number } | null {
+	if (isInsideInlineScript(document, position)) {
+		return { start: 0, end: lineText.length }
+	}
+
+	if (isInsideCurlyExpression(lineText, offset)) {
+		return { start: 0, end: lineText.length }
+	}
+
+	const attrRange = getAeroExpressionAttributeValueRangeAt(lineText, offset)
+	if (attrRange) return attrRange
+
+	return null
+}
+
+/**
+ * Check whether the cursor is inside the content of an inline <script> block.
+ */
+function isInsideInlineScript(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+): boolean {
+	const text = document.getText()
+	const offset = document.offsetAt(position)
+	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+
+	let match: RegExpExecArray | null
+	while ((match = scriptRegex.exec(text)) !== null) {
+		const attrs = (match[1] || '').toLowerCase()
+		if (/\bsrc\s*=/.test(attrs)) continue
+
+		const content = match[2] || ''
+		const contentStart = match.index + match[0].indexOf(content)
+		const contentEnd = contentStart + content.length
+		if (offset >= contentStart && offset <= contentEnd) {
+			return true
+		}
+	}
+
+	return false
+}
+
+/**
+ * Check whether the cursor is inside an Aero expression attribute value.
+ * Supports: if/else-if/each and data-if/data-else-if/data-each.
+ */
+function getAeroExpressionAttributeValueRangeAt(
+	lineText: string,
+	offset: number,
+): { start: number; end: number } | null {
+	const attrValueRegex =
+		/\b(?:data-if|if|data-else-if|else-if|data-each|each)\s*=\s*(['"])(.*?)\1/gi
+
+	let match: RegExpExecArray | null
+	while ((match = attrValueRegex.exec(lineText)) !== null) {
+		const value = match[2]
+		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
+		const openBraceOffset = value.indexOf('{')
+		const closeBraceOffset = value.lastIndexOf('}')
+
+		if (
+			openBraceOffset === -1 ||
+			closeBraceOffset === -1 ||
+			closeBraceOffset <= openBraceOffset
+		) {
+			continue
+		}
+
+		const exprStart = valueStart + openBraceOffset + 1
+		const exprEnd = valueStart + closeBraceOffset
+		if (offset >= exprStart && offset <= exprEnd) {
+			return { start: exprStart, end: exprEnd }
+		}
+	}
+
+	return null
 }
 
 // ---------------------------------------------------------------------------
@@ -377,10 +466,10 @@ function getDotChainAtPosition(
 
 	// Trim leading/trailing dots (shouldn't happen but be safe)
 	const trimmed = text.replace(/^\.+|\.+$/g, '')
-	if (!trimmed || !trimmed.includes('.') && !isIdentStart(trimmed[0])) {
+	if (!trimmed || (!trimmed.includes('.') && !isIdentStart(trimmed[0]))) {
 		// Single word with no dots -- fall through to simple word matching
 		if (trimmed && isIdentStart(trimmed[0])) {
-			const trimStart = start + (text.indexOf(trimmed))
+			const trimStart = start + text.indexOf(trimmed)
 			return { text: trimmed, start: trimStart }
 		}
 		return null
