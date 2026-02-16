@@ -1,0 +1,18 @@
+{
+	"scopeName": "aero.globals.injection",
+	"injectionSelector": "L:source.js -comment -source.css.embedded.html, L:source.ts -comment -source.css.embedded.html",
+	"patterns": [
+		{
+			"match": "\\bAero\\b",
+			"name": "entity.name.type.aero variable.other.object.ts meta.var.expr.ts meta.definition.variable.ts meta.export.default.ts"
+		},
+		{
+			"match": "\\bsite\\b",
+			"name": "entity.name.type.aero variable.other.object.ts meta.var.expr.ts meta.definition.variable.ts meta.export.default.ts"
+		},
+		{
+			"match": "\\props\\b",
+			"name": "support.variable.aero source.ts"
+		}
+	]
+}

@@ -114,9 +114,28 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
 	const pageFiles = walkHtmlFiles(pagesDir)
+
+	// Build a set of all page names so we can detect when home.html should
+	// act as the root index (i.e. when no sibling index.html exists).
+	const allPageNames = new Set(
+		pageFiles.map(f => toPosix(path.relative(pagesDir, f)).replace(/\.html$/i, '')),
+	)
+
 	return pageFiles.map(file => {
 		const rel = toPosix(path.relative(pagesDir, file))
-		const pageName = rel.replace(/\.html$/i, '')
+		let pageName = rel.replace(/\.html$/i, '')
+
+		// Mirror the runtime fallback: treat home as index when there is no
+		// explicit index.html at the same directory level.
+		if (pageName === 'home' && !allPageNames.has('index')) {
+			pageName = 'index'
+		} else if (pageName.endsWith('/home')) {
+			const siblingIndex = pageName.slice(0, -'/home'.length) + '/index'
+			if (!allPageNames.has(siblingIndex)) {
+				pageName = siblingIndex
+			}
+		}
+
 		const routePath = toRouteFromPageName(pageName)
 		return {
 			pageName,
