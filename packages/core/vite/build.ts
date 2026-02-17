@@ -246,9 +246,9 @@ function rewriteAbsoluteUrl(
 	const route = normalizeRoutePathFromHref(noQuery)
 	if (routeSet.has(route) || route === '') {
 		const rel =
-			route === '404'
-				? normalizeRelativeLink(fromDir, toOutputFile(route))
-				: normalizeRelativeRouteLink(fromDir, route)
+			route === '404' ?
+				normalizeRelativeLink(fromDir, toOutputFile(route))
+			:	normalizeRelativeRouteLink(fromDir, route)
 		return rel + suffix
 	}
 
@@ -311,11 +311,11 @@ export async function renderStaticPages(
 	const root = options.root
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	// Pages are always discovered from the src/pages subtree.
-	const discoveredPages = discoverPages(root, path.join(dirs.src, 'pages'))
+	// Pages are always discovered from the client/pages subtree.
+	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))
 	const distDir = path.resolve(root, outDir)
 	const manifest = readManifest(distDir)
-	const clientScriptMap = discoverClientScriptMap(root, dirs.src)
+	const clientScriptMap = discoverClientScriptMap(root, dirs.client)
 
 	const server = await createServer({
 		configFile: false,
@@ -382,13 +382,14 @@ export async function renderStaticPages(
 			// For expanded dynamic pages we must render via the original
 			// dynamic page name (e.g. "[id]") so the runtime finds the module,
 			// while passing the concrete params so the template has real values.
-			const renderTarget = isDynamicPage(page)
-				? toPosix(
+			const renderTarget =
+				isDynamicPage(page) ?
+					toPosix(
 						path
-							.relative(path.resolve(root, dirs.src, 'pages'), page.sourceFile)
+							.relative(path.resolve(root, dirs.client, 'pages'), page.sourceFile)
 							.replace(/\.html$/i, ''),
 					)
-				: page.pageName
+				:	page.pageName
 
 			let rendered = await runtime.aero.render(renderTarget, {
 				url: pageUrl,
@@ -424,7 +425,7 @@ export function createBuildConfig(
 	root = process.cwd(),
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.src)
+	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
 	return {
 		outDir: dirs.dist,
 		manifest: true,
@@ -433,9 +434,8 @@ export function createBuildConfig(
 			input: inputs,
 			output: {
 				entryFileNames(chunkInfo) {
-					const baseName = chunkInfo.facadeModuleId
-						? path.basename(chunkInfo.facadeModuleId)
-						: chunkInfo.name
+					const baseName =
+						chunkInfo.facadeModuleId ? path.basename(chunkInfo.facadeModuleId) : chunkInfo.name
 					return `assets/scripts/${baseName}-[hash].js`
 				},
 				chunkFileNames: 'assets/scripts/[name]-[hash].js',

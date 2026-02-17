@@ -27,24 +27,24 @@ describe('vite build helpers', () => {
 	it('rewrites asset URLs from manifest entries', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {
-			'src/index.ts': {
-				file: 'assets/src/index-123.js',
-				src: 'src/index.ts',
+			'client/index.ts': {
+				file: 'assets/client/index-123.js',
+				src: 'client/index.ts',
 				isEntry: true,
 			},
-			'src/assets/styles/global.css': {
+			'client/assets/styles/global.css': {
 				file: 'assets/global-123.css',
-				src: 'src/assets/styles/global.css',
+				src: 'client/assets/styles/global.css',
 				isEntry: true,
 			},
 		}
 
-		expect(__internal.rewriteAbsoluteUrl('/src/index.ts', 'about', manifest, routeSet)).toBe(
-			'../assets/src/index-123.js',
-		)
+		expect(
+			__internal.rewriteAbsoluteUrl('/client/index.ts', 'about', manifest, routeSet),
+		).toBe('../assets/client/index-123.js')
 		expect(
 			__internal.rewriteAbsoluteUrl(
-				'/src/assets/styles/global.css',
+				'/client/assets/styles/global.css',
 				'docs/name',
 				manifest,
 				routeSet,
@@ -60,19 +60,19 @@ describe('vite build helpers', () => {
 		)
 	})
 
-	it('resolves directory overrides; pages always derived from src', () => {
+	it('resolves directory overrides; pages always derived from client', () => {
 		expect(resolveDirs()).toEqual({
-			src: 'src',
+			client: 'client',
 			server: 'server',
 			dist: 'dist',
 		})
-		expect(resolveDirs({ src: 'site' })).toEqual({
-			src: 'site',
+		expect(resolveDirs({ client: 'site' })).toEqual({
+			client: 'site',
 			server: 'server',
 			dist: 'dist',
 		})
-		expect(resolveDirs({ src: 'site', dist: 'build' })).toEqual({
-			src: 'site',
+		expect(resolveDirs({ client: 'site', dist: 'build' })).toEqual({
+			client: 'site',
 			server: 'server',
 			dist: 'build',
 		})
@@ -91,19 +91,19 @@ describe('vite build helpers', () => {
 		const staticPage = {
 			pageName: 'about',
 			routePath: 'about',
-			sourceFile: '/src/pages/about.html',
+			sourceFile: '/client/pages/about.html',
 			outputFile: 'about/index.html',
 		}
 		const dynamicPage = {
 			pageName: '[id]',
 			routePath: '[id]',
-			sourceFile: '/src/pages/[id].html',
+			sourceFile: '/client/pages/[id].html',
 			outputFile: '[id]/index.html',
 		}
 		const nestedDynamic = {
 			pageName: 'docs/[slug]',
 			routePath: 'docs/[slug]',
-			sourceFile: '/src/pages/docs/[slug].html',
+			sourceFile: '/client/pages/docs/[slug].html',
 			outputFile: 'docs/[slug]/index.html',
 		}
 

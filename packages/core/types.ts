@@ -1,6 +1,6 @@
 export interface AeroDirs {
-	/** Site source directory; pages live at `<src>/pages` (default: 'src') */
-	src?: string
+	/** Site source directory; pages live at `<client>/pages` (default: 'client') */
+	client?: string
 	/** Nitro server directory (default: 'server') */
 	server?: string
 	/** Build output directory (default: 'dist') */

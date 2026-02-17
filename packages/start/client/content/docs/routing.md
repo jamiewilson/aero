@@ -4,18 +4,18 @@ subtitle: Learn how Aero's file-based routing system works for static and dynami
 date: 2026-03-15
 ---
 
-Aero uses file-based routing. HTML files inside `src/pages/` map directly to URL paths. There is no router configuration — the file system _is_ the router.
+Aero uses file-based routing. HTML files inside `client/pages/` map directly to URL paths. There is no router configuration — the file system _is_ the router.
 
 ## Static Pages
 
-Every `.html` file in `src/pages/` becomes a route:
+Every `.html` file in `client/pages/` becomes a route:
 
-| File                        | URL        | Build output            |
-| --------------------------- | ---------- | ----------------------- |
-| `src/pages/home.html`       | `/`        | `dist/index.html`       |
-| `src/pages/about.html`      | `/about`   | `dist/about/index.html` |
-| `src/pages/404.html`        | (404 page) | `dist/404.html`         |
-| `src/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
+| File                           | URL        | Build output            |
+| ------------------------------ | ---------- | ----------------------- |
+| `client/pages/home.html`       | `/`        | `dist/index.html`       |
+| `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
+| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
+| `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
 
 ### Home page
 
@@ -26,7 +26,7 @@ Every `.html` file in `src/pages/` becomes a route:
 Subdirectories map to URL path segments. An `index.html` inside a directory serves as the directory's root:
 
 ```
-src/pages/
+client/pages/
   docs/
     index.html      → /docs
     getting-started.html → /docs/getting-started
@@ -34,16 +34,16 @@ src/pages/
 
 ### 404 page
 
-`src/pages/404.html` is used as the error page. It is rendered to `dist/404.html` (not nested inside a `404/` directory). In preview mode with Nitro, unmatched URLs receive this page with a `404` status code.
+`client/pages/404.html` is used as the error page. It is rendered to `dist/404.html` (not nested inside a `404/` directory). In preview mode with Nitro, unmatched URLs receive this page with a `404` status code.
 
 ## Dynamic Routes
 
 Pages with bracket-delimited filenames create dynamic routes that match multiple URL paths. The bracket content becomes a named parameter accessible via `Aero.params`.
 
-| File                         | Pattern       | Example URLs                |
-| ---------------------------- | ------------- | --------------------------- |
-| `src/pages/[id].html`        | `/:id`        | `/alpha`, `/beta`           |
-| `src/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`, `/docs/name` |
+| File                            | Pattern       | Example URLs                |
+| ------------------------------- | ------------- | --------------------------- |
+| `client/pages/[id].html`        | `/:id`        | `/alpha`, `/beta`           |
+| `client/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`, `/docs/name` |
 
 ### Dev mode
 
@@ -54,7 +54,7 @@ During development (`pnpm dev`), dynamic routes are resolved at request time. Wh
 For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPaths()` function from their `<script on:build>` block. This tells the build which concrete paths to generate.
 
 ```html
-<!-- src/pages/[id].html -->
+<!-- client/pages/[id].html -->
 <script on:build>
 	import base from '@layouts/base'
 
@@ -85,7 +85,7 @@ dist/gamma/index.html
 Dynamic segments work inside subdirectories:
 
 ```html
-<!-- src/pages/docs/[slug].html -->
+<!-- client/pages/docs/[slug].html -->
 <script on:build>
 	import base from '@layouts/base'
 
@@ -172,7 +172,7 @@ The Nitro catch-all server redirects bare directory paths (e.g. `/docs`) to incl
 ## File Structure Reference
 
 ```
-src/pages/
+client/pages/
   home.html             → /          (root page)
   about.html            → /about
   404.html              → (error page, dist/404.html)
