@@ -39,9 +39,9 @@ describe('vite build helpers', () => {
 			},
 		}
 
-		expect(
-			__internal.rewriteAbsoluteUrl('/src/index.ts', 'about', manifest, routeSet),
-		).toBe('../assets/src/index-123.js')
+		expect(__internal.rewriteAbsoluteUrl('/src/index.ts', 'about', manifest, routeSet)).toBe(
+			'../assets/src/index-123.js',
+		)
 		expect(
 			__internal.rewriteAbsoluteUrl(
 				'/src/assets/styles/global.css',
@@ -81,5 +81,49 @@ describe('vite build helpers', () => {
 	it('sets build outDir from dirs.dist', () => {
 		const build = createBuildConfig({ dirs: { dist: 'build' } }, process.cwd())
 		expect(build?.outDir).toBe('build')
+	})
+
+	// =========================================================================
+	// Dynamic page helpers
+	// =========================================================================
+
+	it('detects dynamic pages by bracket segments', () => {
+		const staticPage = {
+			pageName: 'about',
+			routePath: 'about',
+			sourceFile: '/src/pages/about.html',
+			outputFile: 'about/index.html',
+		}
+		const dynamicPage = {
+			pageName: '[id]',
+			routePath: '[id]',
+			sourceFile: '/src/pages/[id].html',
+			outputFile: '[id]/index.html',
+		}
+		const nestedDynamic = {
+			pageName: 'docs/[slug]',
+			routePath: 'docs/[slug]',
+			sourceFile: '/src/pages/docs/[slug].html',
+			outputFile: 'docs/[slug]/index.html',
+		}
+
+		expect(__internal.isDynamicPage(staticPage)).toBe(false)
+		expect(__internal.isDynamicPage(dynamicPage)).toBe(true)
+		expect(__internal.isDynamicPage(nestedDynamic)).toBe(true)
+	})
+
+	it('expands bracket patterns with concrete params', () => {
+		expect(__internal.expandPattern('[id]', { id: 'alpha' })).toBe('alpha')
+		expect(__internal.expandPattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
+		expect(
+			__internal.expandPattern('[category]/[id]', { category: 'blog', id: 'post-1' }),
+		).toBe('blog/post-1')
+	})
+
+	it('throws when a required param is missing from expandPattern', () => {
+		expect(() => __internal.expandPattern('[id]', {})).toThrow('missing param "id"')
+		expect(() => __internal.expandPattern('docs/[slug]', { id: 'x' })).toThrow(
+			'missing param "slug"',
+		)
 	})
 })

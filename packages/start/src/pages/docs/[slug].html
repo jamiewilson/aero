@@ -1,13 +1,41 @@
-<!-- TODO: Support nested pages with name rendering to /nested/name -->
 <script on:build>
 	import base from '@layouts/base'
-	const props = Aero.props
+	import { allDocs } from 'content-collections'
+
+	const docs = allDocs.map(doc => ({ ...doc, slug: doc.slug })).filter(doc => doc.slug)
+
+	export async function getStaticPaths() {
+		const { allDocs } = await import('content-collections')
+		return allDocs
+			.map(doc => {
+				const slug = doc.slug || ''
+				return slug ? { params: { slug } } : null
+			})
+			.filter(Boolean)
+	}
+
+	const doc = docs.find(item => item.slug === Aero.params.slug)
 </script>
 
-<base-layout title="Slug: {Aero.params.slug}">
-	<h1>Nested named page</h1>
-	<p class="secondary">
-		This page should be accessible at
-		<code>{Aero.url.pathname}</code>
-	</p>
+<base-layout title="{doc ? doc.title : 'Doc Not Found'}">
+	<main>
+		<article if="{ doc }" class="prose">
+			<a href="/docs/">← All docs</a>
+			<header>
+				<h1>{doc.title}</h1>
+				<p class="subtitle secondary">{doc.subtitle}</p>
+				<hr />
+			</header>
+			<section>{doc.html}</section>
+		</article>
+
+		<section else>
+			<h1>Doc not found</h1>
+			<p class="secondary">
+				No document found for
+				<code>{Aero.params.slug}</code>
+			</p>
+			<a href="/docs/">Back to docs</a>
+		</section>
+	</main>
 </base-layout>

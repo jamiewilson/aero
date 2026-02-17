@@ -12,7 +12,8 @@
 			"@components/*": ["./src/components/*"],
 			"@styles/*": ["./src/assets/styles/*"],
 			"@scripts/*": ["./src/assets/scripts/*"],
-			"@images/*": ["./src/assets/images/*"]
+			"@images/*": ["./src/assets/images/*"],
+			"content-collections": ["./.content-collections/generated"]
 		}
 	}
 }

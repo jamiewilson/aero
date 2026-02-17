@@ -1,16 +1,46 @@
 <script on:build>
 	import base from '@layouts/base'
+	import { allDocs } from 'content-collections'
 	const props = Aero.props
+
+	const docs = allDocs
+		.map(doc => {
+			return {
+				title: doc.title,
+				subtitle: doc.subtitle,
+				slug: doc.slug,
+			}
+		})
+		.filter(doc => doc.slug)
+		.sort((a, b) => a.title.localeCompare(b.title))
 </script>
 
 <base-layout props>
 	<header>
-		<h1>Nested page</h1>
+		<h1>Docs</h1>
 		<p class="secondary">
-			This page should be accessible at
-			<code>{Aero.url.pathname}</code>
+			Pages loaded from
+			<code>src/content/docs</code>
 		</p>
 	</header>
 
-	<a href="/docs/name">Named page</a>
+	<ul class="card">
+		<li each="{doc in docs}" key="{doc.slug}">
+			<a href="/docs/{doc.slug}">{doc.title}</a>
+			<p if="{ doc.subtitle }">{doc.subtitle}</p>
+		</li>
+		<style>
+			@scope {
+				:scope {
+					list-style-type: none;
+					max-width: 50ch;
+					text-align: left;
+
+					> *:not(:last-of-type) {
+						margin-block-end: 2rem;
+					}
+				}
+			}
+		</style>
+	</ul>
 </base-layout>

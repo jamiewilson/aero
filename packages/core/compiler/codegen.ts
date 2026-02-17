@@ -494,6 +494,13 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		return m
 	})
 
+	// Extract getStaticPaths before inlining into the render function.
+	// This function is emitted as a separate named module export so the
+	// build system can call it to expand dynamic routes.
+	const { fnText: getStaticPathsFn, remaining: scriptWithoutPaths } =
+		Helper.extractGetStaticPaths(script)
+	script = scriptWithoutPaths
+
 	const expandedTemplate = parsed.template.replace(
 		CONST.SELF_CLOSING_TAG_REGEX,
 		(match, tagName, attrs) => {
@@ -530,5 +537,5 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			`<script type="module" src="${options.clientScriptUrl}"></script>`,
 		)
 	}
-	return Helper.emitRenderFunction(script, bodyCode)
+	return Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn)
 }

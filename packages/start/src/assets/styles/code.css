@@ -1,0 +1,58 @@
+@layer base {
+	code {
+		font-size: smaller;
+		font-family: monospace;
+		font-weight: normal;
+		padding: 0.2rem 0.4rem;
+		background: --currentAlpha(0.05);
+		border: 1px solid --currentAlpha(0.1);
+		border-radius: 0.25rem;
+		text-box: trim-both ex alphabetic;
+	}
+
+	pre code {
+		tab-size: 2ch;
+		white-space: pre-wrap;
+		display: block;
+		padding: 1.5rem;
+		overflow-y: hidden;
+		overflow-x: auto;
+
+		&[class*='language-'] {
+			position: relative;
+			&::before {
+				font-family: sans-serif;
+				position: absolute;
+				top: 0.5rem;
+				right: 0.5rem;
+				opacity: 0.3;
+				font-size: small;
+				text-box: trim-both cap alphabetic;
+			}
+		}
+
+		&[class*='html']::before {
+			content: 'html';
+		}
+
+		&[class*='css']::before {
+			content: 'css';
+		}
+
+		&[class*='ts']::before {
+			content: 'ts';
+		}
+
+		&[class*='js']::before {
+			content: 'js';
+		}
+
+		&[class*='json']::before {
+			content: 'json';
+		}
+
+		&[class*='bash']::before {
+			content: 'bash';
+		}
+	}
+}

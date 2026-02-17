@@ -9,17 +9,10 @@
 
 	.toast-content {
 		font-size: smaller;
-		font-family: sans-serif;
-		color: var(--bg);
-		background: var(--fg);
 		border-radius: 0.5rem;
-		padding: 0.5rem 1rem;
-	}
-
-	.toast-content {
-		code {
-			background-color: oklch(from var(--bg) l c h / 0.2);
-			border-color: oklch(from var(--bg) l c h / 0.2);
-		}
+		padding: 0.75rem;
+		text-box: trim-both cap alphabetic;
+		border: 1px solid --currentAlpha(0.1);
+		background: --currentAlpha(0.05);
 	}
 }

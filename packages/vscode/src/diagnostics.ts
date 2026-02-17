@@ -27,6 +27,27 @@ const ELSE_ATTR_REGEX = /\b(?:data-)?else\b/
 /** Matches opening tags and captures the attributes part */
 const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
 
+/** Matches opening and closing tags and captures attributes for opening tags */
+const ANY_TAG_REGEX = /<\/?([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
+
+/** HTML void elements that do not create a new nesting level */
+const VOID_ELEMENTS = new Set([
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr',
+])
+
 /** Matches directive attributes with explicit values */
 const DIRECTIVE_ATTR_VALUE_REGEX =
 	/\b(data-if|if|data-else-if|else-if|data-each|each|data-props|props)\s*=\s*(['"])(.*?)\2/gi
@@ -197,32 +218,51 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		let lastConditionalType: 'if' | 'else-if' | null = null
+		const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
+		let depth = 0
 		const commentRanges = getCommentRanges(text)
 
-		OPEN_TAG_REGEX.lastIndex = 0
+		ANY_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
-		let previousTagEnd = 0
 
-		while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
+		const getLastConditionalType = (currentDepth: number): 'if' | 'else-if' | null => {
+			return lastConditionalTypeByDepth.get(currentDepth) ?? null
+		}
+
+		const setLastConditionalType = (
+			currentDepth: number,
+			type: 'if' | 'else-if' | null,
+		): void => {
+			lastConditionalTypeByDepth.set(currentDepth, type)
+		}
+
+		while ((match = ANY_TAG_REGEX.exec(text)) !== null) {
 			const tagStart = match.index
 			if (isInRanges(tagStart, commentRanges)) continue
 
-			const between = stripComments(text.slice(previousTagEnd, tagStart))
-			if (/<[a-z]/i.test(between)) {
-				lastConditionalType = null
+			const fullTag = match[0]
+			const tagName = (match[1] || '').toLowerCase()
+			const isClosingTag = fullTag.startsWith('</')
+			const isSelfClosingTag = /\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
+
+			if (isClosingTag) {
+				depth = Math.max(0, depth - 1)
+				continue
 			}
 
-			previousTagEnd = tagStart + match[0].length
+			const currentDepth = depth
+			const lastConditionalType = getLastConditionalType(currentDepth)
 
 			const attrs = match[2] || ''
 			if (!attrs) {
-				lastConditionalType = null
+				setLastConditionalType(currentDepth, null)
+				if (!isSelfClosingTag) depth += 1
 				continue
 			}
 
 			if (IF_ATTR_REGEX.test(attrs) && !ELSE_IF_ATTR_REGEX.test(attrs)) {
-				lastConditionalType = 'if'
+				setLastConditionalType(currentDepth, 'if')
+				if (!isSelfClosingTag) depth += 1
 				continue
 			}
 
@@ -242,7 +282,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 						diagnostics.push(diagnostic)
 					}
 				}
-				lastConditionalType = 'else-if'
+				setLastConditionalType(currentDepth, 'else-if')
+				if (!isSelfClosingTag) depth += 1
 				continue
 			}
 
@@ -262,11 +303,13 @@ export class AeroDiagnostics implements vscode.Disposable {
 						diagnostics.push(diagnostic)
 					}
 				}
-				lastConditionalType = null
+				setLastConditionalType(currentDepth, null)
+				if (!isSelfClosingTag) depth += 1
 				continue
 			}
 
-			lastConditionalType = null
+			setLastConditionalType(currentDepth, null)
+			if (!isSelfClosingTag) depth += 1
 		}
 	}
 
@@ -330,10 +373,6 @@ function isInRanges(offset: number, ranges: Array<{ start: number; end: number }
 		if (offset >= range.start && offset < range.end) return true
 	}
 	return false
-}
-
-function stripComments(text: string): string {
-	return text.replace(HTML_COMMENT_REGEX, '')
 }
 
 function collectImportedSpecifiers(text: string): Map<string, string> {

@@ -73,14 +73,63 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 	return '{ ' + entries + ' }'
 }
 
+/**
+ * Extracts an `export [async] function getStaticPaths(...)` from build script
+ * content so it can be emitted as a top-level named module export.
+ *
+ * Returns the extracted function text (with `export` keyword) and the remaining
+ * script with the function removed.
+ */
+export function extractGetStaticPaths(script: string): {
+	fnText: string | null
+	remaining: string
+} {
+	const regex = /export\s+(async\s+)?function\s+getStaticPaths\s*\([^)]*\)\s*\{/
+	const match = regex.exec(script)
+	if (!match) return { fnText: null, remaining: script }
+
+	const start = match.index
+	// Position of the opening brace
+	const braceStart = start + match[0].length - 1
+
+	// Count braces to find the matching closing brace
+	let depth = 1
+	let i = braceStart + 1
+	while (i < script.length && depth > 0) {
+		if (script[i] === '{') depth++
+		if (script[i] === '}') depth--
+		i++
+	}
+
+	if (depth !== 0) {
+		// Unbalanced braces — return as-is without extracting
+		return { fnText: null, remaining: script }
+	}
+
+	const fnText = script.slice(start, i)
+	const remaining = (script.slice(0, start) + script.slice(i)).trim()
+
+	return { fnText, remaining }
+}
+
 /** Emits the top-level render function wrapper (script + body statements). */
-export function emitRenderFunction(script: string, body: string): string {
-	return `export default async function(Aero) {
+export function emitRenderFunction(
+	script: string,
+	body: string,
+	getStaticPathsFn?: string | null,
+): string {
+	const renderFn = `export default async function(Aero) {
 		const { site, slots = {}, renderComponent, request, url, params } = Aero;
 		${script}
 		let __out = '';
 		${body}return __out;
-	}`.trim()
+	}`
+
+	if (getStaticPathsFn) {
+		return `${getStaticPathsFn}\n\n${renderFn}`.trim()
+	}
+
+	return renderFn.trim()
 }
 
 // ============================================================================

@@ -144,10 +144,30 @@ export class Aero {
 					dynamicParams = dynamicMatch.params
 				}
 			}
+
+			// Fallback: trailing-slash URLs resolve to "foo/index" via
+			// resolvePageName, but the actual page may be "foo" (static) or
+			// matched by a dynamic pattern with fewer segments.  Strip the
+			// "/index" suffix and retry the full lookup chain.
+			if (!target && component.endsWith('/index')) {
+				const stripped = component.slice(0, -'/index'.length)
+				target = this.pagesMap[stripped]
+				if (target) {
+					matchedPageName = stripped
+				}
+				if (!target) {
+					const dynamicMatch = this.resolveDynamicPage(stripped)
+					if (dynamicMatch) {
+						target = dynamicMatch.module
+						matchedPageName = dynamicMatch.pageName
+						dynamicParams = dynamicMatch.params
+					}
+				}
+			}
 		}
 
 		if (!target) {
-			return `Page not found: ${component}`
+			return null
 		}
 
 		const routePath = renderInput.routePath || this.toRoutePath(matchedPageName)
