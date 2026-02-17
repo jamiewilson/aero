@@ -95,7 +95,7 @@ This takes the `nav` slot from the component's received slots and passes it as t
 
 ## Example in Your Codebase
 
-In `src/layouts/sub.html`:
+In `client/layouts/sub.html`:
 
 ```html
 <base-layout data-props>

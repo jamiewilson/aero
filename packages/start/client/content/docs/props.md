@@ -140,7 +140,7 @@ Inside `on:build` scripts, you have access to:
 - **`Aero.request`** - Current request object
 - **`Aero.url`** - Current page URL
 - **`Aero.params`** - Route params for dynamic routes
-- **`site`** - Global site configuration (from your content module, e.g. `src/content/site.ts`, imported via `@content/site`)
+- **`site`** - Global site configuration (from your content module, e.g. `client/content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
 
@@ -179,7 +179,7 @@ In static builds, request-specific headers may be unavailable.
 
 ### Use dynamic route params
 
-In a dynamic route file such as `src/pages/docs/[slug].html`:
+In a dynamic route file such as `client/pages/docs/[slug].html`:
 
 ```html
 <script on:build>

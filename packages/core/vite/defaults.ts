@@ -8,7 +8,7 @@ export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:aero/runtime-insta
 
 /** Default directory conventions */
 export const DEFAULT_DIRS = {
-	src: 'src',
+	client: 'client',
 	server: 'server',
 	dist: 'dist',
 }
@@ -34,14 +34,14 @@ export const SKIP_PROTOCOL_REGEX =
 
 /** Resolve user-provided dirs with defaults */
 export interface ResolvedAeroDirs {
-	src: string
+	client: string
 	server: string
 	dist: string
 }
 
 export function resolveDirs(dirs?: Partial<AeroDirs>): ResolvedAeroDirs {
 	return {
-		src: dirs?.src ?? DEFAULT_DIRS.src,
+		client: dirs?.client ?? DEFAULT_DIRS.client,
 		server: dirs?.server ?? DEFAULT_DIRS.server,
 		dist: dirs?.dist ?? DEFAULT_DIRS.dist,
 	}

@@ -4,15 +4,15 @@
 		"types": ["vite/client"],
 		"paths": {
 			"~/*": ["./*"],
-			"@src/*": ["./src/*"],
+			"@client/*": ["./client/*"],
 			"@server/*": ["./server/*"],
-			"@content/*": ["./src/content/*"],
-			"@pages/*": ["./src/pages/*"],
-			"@layouts/*": ["./src/layouts/*"],
-			"@components/*": ["./src/components/*"],
-			"@styles/*": ["./src/assets/styles/*"],
-			"@scripts/*": ["./src/assets/scripts/*"],
-			"@images/*": ["./src/assets/images/*"],
+			"@content/*": ["./client/content/*"],
+			"@pages/*": ["./client/pages/*"],
+			"@layouts/*": ["./client/layouts/*"],
+			"@components/*": ["./client/components/*"],
+			"@styles/*": ["./client/assets/styles/*"],
+			"@scripts/*": ["./client/assets/scripts/*"],
+			"@images/*": ["./client/assets/images/*"],
 			"content-collections": ["./.content-collections/generated"]
 		}
 	}

@@ -26,7 +26,7 @@ export const ATTR_ON_CLIENT = 'on:client'
 
 // ---------------------------------------------------------------------------
 // Content globals mapping: identifier -> alias path
-// Files in src/content/ are exposed as globals in Aero templates.
+// Files in client/content/ are exposed as globals in Aero templates.
 // ---------------------------------------------------------------------------
 
 export const CONTENT_GLOBALS: Record<string, string> = {

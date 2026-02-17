@@ -25,7 +25,7 @@ Project detection checks nearest folders for Aero signals such as Aero path alia
 
 ## Verify
 
-Open an Aero template (e.g. `src/pages/about.html` or `src/components/meta.html`) and confirm:
+Open an Aero template (e.g. `client/pages/about.html` or `client/components/meta.html`) and confirm:
 
 - Text like `{ props.title }` and `{ meta.title }` show JS highlighting for the expression.
 - Attributes like `title="{ meta.title }"` show JS inside the quotes.

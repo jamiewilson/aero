@@ -132,12 +132,12 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 		const items: vscode.CompletionItem[] = []
 
-		// Scan src/components/ for component files
-		const componentsDir = path.join(resolver.root, 'src', 'components')
+		// Scan client/components/ for component files
+		const componentsDir = path.join(resolver.root, 'client', 'components')
 		items.push(...this.scanDirForTags(componentsDir, 'component', prefix))
 
-		// Scan src/layouts/ for layout files
-		const layoutsDir = path.join(resolver.root, 'src', 'layouts')
+		// Scan client/layouts/ for layout files
+		const layoutsDir = path.join(resolver.root, 'client', 'layouts')
 		items.push(...this.scanDirForTags(layoutsDir, 'layout', prefix))
 
 		return items
@@ -165,9 +165,9 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 				const item = new vscode.CompletionItem(
 					tagName,
-					suffix === 'component'
-						? vscode.CompletionItemKind.Class
-						: vscode.CompletionItemKind.Struct,
+					suffix === 'component' ?
+						vscode.CompletionItemKind.Class
+					:	vscode.CompletionItemKind.Struct,
 				)
 				item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
 				item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
@@ -225,7 +225,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 				'@styles/',
 				'@scripts/',
 				'@images/',
-				'@src/',
+				'@client/',
 				'@server/',
 				'~/',
 			]
@@ -243,9 +243,9 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		const resolved = resolver.resolve(partial)
 		if (resolved) {
 			const dir =
-				fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()
-					? resolved
-					: path.dirname(resolved)
+				fs.existsSync(resolved) && fs.statSync(resolved).isDirectory() ?
+					resolved
+				:	path.dirname(resolved)
 
 			if (fs.existsSync(dir)) {
 				try {

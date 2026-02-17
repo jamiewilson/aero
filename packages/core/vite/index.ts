@@ -48,9 +48,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const runtimeInstanceTsPath = fileURLToPath(
 		new URL('../runtime/instance.ts', import.meta.url),
 	)
-	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
-		? runtimeInstanceJsPath
-		: runtimeInstanceTsPath
+	const runtimeInstancePath =
+		existsSync(runtimeInstanceJsPath) ? runtimeInstanceJsPath : runtimeInstanceTsPath
 	let config: ResolvedConfig
 	let aliasResult: AliasResult
 	const dirs = resolveDirs(options.dirs)
@@ -227,7 +226,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		},
 
 		handleHotUpdate({ file, server, modules }) {
-			const contentDir = path.resolve(config.root, dirs.src, 'content')
+			const contentDir = path.resolve(config.root, dirs.client, 'content')
 			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
 					RESOLVED_RUNTIME_INSTANCE_MODULE_ID,

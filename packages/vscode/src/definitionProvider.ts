@@ -12,12 +12,12 @@ import { CONTENT_GLOBALS, IMPORT_REGEX } from './constants'
  * acts as one clickable link rather than splitting on `/` and `.`.
  *
  * Supports:
- * - Import paths:        `import meta from '@components/meta'` -> src/components/meta.html
+ * - Import paths:        `import meta from '@components/meta'` -> client/components/meta.html
  * - Imported names:      `import meta from '...'` (name "meta") -> same file
  * - Script/link assets:  `src="@scripts/index.ts"` -> resolved asset
- * - Component tags:      `<nav-component>` -> src/components/nav.html
- * - Layout tags:         `<base-layout>` -> src/layouts/base.html
- * - Content globals:     `{ site.home.title }` -> src/content/site.ts (at property)
+ * - Component tags:      `<nav-component>` -> client/components/nav.html
+ * - Layout tags:         `<base-layout>` -> client/layouts/base.html
+ * - Content globals:     `{ site.home.title }` -> client/content/site.ts (at property)
  */
 export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 	provideDefinition(
@@ -61,9 +61,9 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 				const importedSpecifier = imports.get(importName)
 				const alias =
 					importedSpecifier ||
-					(classification.suffix === 'component'
-						? `@components/${classification.baseName}`
-						: `@layouts/${classification.baseName}`)
+					(classification.suffix === 'component' ?
+						`@components/${classification.baseName}`
+					:	`@layouts/${classification.baseName}`)
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
@@ -72,9 +72,10 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			case 'content-global': {
 				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
 				if (!resolved) return null
-				const targetLine = classification.propertyPath
-					? findPropertyLine(resolved, classification.propertyPath)
-					: 0
+				const targetLine =
+					classification.propertyPath ?
+						findPropertyLine(resolved, classification.propertyPath)
+					:	0
 				return [makeLink(classification.range, resolved, targetLine)]
 			}
 
