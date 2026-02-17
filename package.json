@@ -12,6 +12,7 @@
 		"preview": "pnpm --dir packages/start preview",
 		"prepreview:api": "pnpm --dir packages/core build",
 		"preview:api": "pnpm --dir packages/start preview:api",
-		"test": "pnpm --dir packages/core test"
+		"test": "pnpm --dir packages/core test",
+		"cleanAll": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
 	}
 }
