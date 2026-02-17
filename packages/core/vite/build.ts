@@ -1,4 +1,4 @@
-import type { AeroDirs } from '../types'
+import type { AeroDirs, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -27,6 +27,29 @@ interface StaticPage {
 	routePath: string
 	sourceFile: string
 	outputFile: string
+	params?: Record<string, string>
+}
+
+/** The pageName or routePath contains bracket-delimited dynamic segments. */
+function isDynamicPage(page: StaticPage): boolean {
+	return /\[.+?\]/.test(page.pageName)
+}
+
+/**
+ * Replace bracket segments in a pattern with concrete param values.
+ * e.g. expandPattern('[id]', { id: 'alpha' }) → 'alpha'
+ *      expandPattern('docs/[slug]', { slug: 'intro' }) → 'docs/intro'
+ */
+function expandPattern(pattern: string, params: Record<string, string>): string {
+	return pattern.replace(/\[(.+?)\]/g, (_, key) => {
+		if (!(key in params)) {
+			throw new Error(
+				`[aero] getStaticPaths: missing param "${key}" for pattern "${pattern}". ` +
+					`Provided params: ${JSON.stringify(params)}`,
+			)
+		}
+		return params[key]
+	})
 }
 
 function toPosix(value: string): string {
@@ -289,8 +312,7 @@ export async function renderStaticPages(
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	// Pages are always discovered from the src/pages subtree.
-	const pages = discoverPages(root, path.join(dirs.src, 'pages'))
-	const routeSet = new Set(pages.map(page => page.routePath))
+	const discoveredPages = discoverPages(root, path.join(dirs.src, 'pages'))
 	const distDir = path.resolve(root, outDir)
 	const manifest = readManifest(distDir)
 	const clientScriptMap = discoverClientScriptMap(root, dirs.src)
@@ -310,13 +332,69 @@ export async function renderStaticPages(
 
 	try {
 		const runtime = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
+
+		// Expand dynamic pages via getStaticPaths before rendering.
+		const pages: StaticPage[] = []
+		for (const page of discoveredPages) {
+			if (!isDynamicPage(page)) {
+				pages.push(page)
+				continue
+			}
+
+			// Load the compiled module to check for getStaticPaths export
+			const mod = await server.ssrLoadModule(page.sourceFile)
+			if (typeof mod.getStaticPaths !== 'function') {
+				console.warn(
+					`[aero] ⚠ Skipping dynamic page "${path.relative(root, page.sourceFile)}" — ` +
+						`no getStaticPaths() exported. Page will not be pre-rendered.`,
+				)
+				continue
+			}
+
+			const staticPaths: StaticPathEntry[] = await mod.getStaticPaths()
+			if (!Array.isArray(staticPaths) || staticPaths.length === 0) {
+				console.warn(
+					`[aero] ⚠ getStaticPaths() for "${path.relative(root, page.sourceFile)}" ` +
+						`returned no paths. Page will not be pre-rendered.`,
+				)
+				continue
+			}
+
+			for (const entry of staticPaths) {
+				const expandedPageName = expandPattern(page.pageName, entry.params)
+				const expandedRoute = toRouteFromPageName(expandedPageName)
+				pages.push({
+					pageName: expandedPageName,
+					routePath: expandedRoute,
+					sourceFile: page.sourceFile,
+					outputFile: toOutputFile(expandedRoute),
+					params: entry.params,
+				})
+			}
+		}
+
+		const routeSet = new Set(pages.map(p => p.routePath))
+
 		for (const page of pages) {
 			const routePath = page.routePath ? `/${page.routePath}` : '/'
 			const pageUrl = new URL(routePath, 'http://localhost')
-			let rendered = await runtime.aero.render(page.pageName, {
+
+			// For expanded dynamic pages we must render via the original
+			// dynamic page name (e.g. "[id]") so the runtime finds the module,
+			// while passing the concrete params so the template has real values.
+			const renderTarget = isDynamicPage(page)
+				? toPosix(
+						path
+							.relative(path.resolve(root, dirs.src, 'pages'), page.sourceFile)
+							.replace(/\.html$/i, ''),
+					)
+				: page.pageName
+
+			let rendered = await runtime.aero.render(renderTarget, {
 				url: pageUrl,
 				request: new Request(pageUrl.toString(), { method: 'GET' }),
 				routePath,
+				params: page.params || {},
 			})
 			rendered = rewriteRenderedHtml(
 				addDoctype(rendered),
@@ -377,4 +455,6 @@ export const __internal = {
 	normalizeRelativeRouteLink,
 	rewriteAbsoluteUrl,
 	rewriteRenderedHtml,
+	isDynamicPage,
+	expandPattern,
 }

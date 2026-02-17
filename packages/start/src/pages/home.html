@@ -10,6 +10,12 @@
 </script>
 
 <base-layout>
-	<header-component props />
+	<header-component props="{...props}" />
 	<form-component />
 </base-layout>
+
+<script on:client>
+	window.addEventListener('load', () => {
+		console.log('[aero] on:client script executed')
+	})
+</script>

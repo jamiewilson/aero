@@ -12,16 +12,35 @@
 	<style>
 		@scope {
 			:scope {
-				position: absolute;
+				position: fixed;
 				inset-inline: 0;
+				margin-inline: auto;
 				bottom: 2rem;
+
+				padding: 0.5rem 2rem;
+				width: fit-content;
+				border-radius: 10rem;
+
+				border: 1px solid --currentAlpha(0.1);
+				background: --currentAlpha(0.05);
+				backdrop-filter: blur(10px);
 			}
 
 			ul {
 				display: flex;
-				gap: 1rem;
+				gap: 2rem;
 				justify-content: center;
 				list-style-type: none;
+			}
+
+			a {
+				color: var(--color-fg);
+				opacity: 0.5;
+				transition: opacity 0.2s;
+
+				&:hover {
+					opacity: 1;
+				}
 			}
 		}
 	</style>

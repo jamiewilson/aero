@@ -57,6 +57,10 @@ export interface AeroRouteParams {
 	[key: string]: string
 }
 
+export interface StaticPathEntry {
+	params: AeroRouteParams
+}
+
 export interface AeroRenderInput {
 	props?: Record<string, any>
 	request?: Request

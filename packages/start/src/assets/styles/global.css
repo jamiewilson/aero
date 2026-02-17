@@ -4,6 +4,8 @@
 @import 'colors.css';
 @import 'animation.css';
 @import 'theme.css';
+@import 'code.css';
+@import 'prose.css';
 @import 'toast.css';
 @import 'utils.css';
 /*@import 'debug.css';*/
@@ -15,16 +17,15 @@
 	}
 
 	body {
-		color: var(--fg);
-		background: var(--bg);
+		display: grid;
+		place-content: safe center;
+		text-align: center;
+		color: var(--color-fg);
+		background: var(--color-bg);
 		font-size: 1rem;
 		font-family: system-ui, sans-serif;
-		text-align: center;
 		line-height: 1.5;
 		padding: 1rem;
-
-		display: grid;
-		place-content: center;
 	}
 
 	header,
@@ -41,7 +42,8 @@
 	input,
 	button {
 		text-align: center;
-		background: oklch(from var(--fg) l c h / 0.1);
+		background: --currentAlpha(0.05);
+		border: 1px solid --currentAlpha(0.1);
 		padding: 1rem 2rem;
 		border-radius: 2rem;
 		corner-shape: squircle;
@@ -70,22 +72,18 @@
 	}
 
 	a {
-		color: var(--color-accent);
 		text-decoration: none;
+		color: var(--color-accent);
 		transition: color var(--duration-fast);
 
 		&:hover {
-			color: var(--fg);
+			color: var(--color-fg);
 		}
 	}
 
-	code {
-		font-size: smaller;
-		font-family: monospace;
-		padding: 0.25rem 0.5rem;
-		background: oklch(from var(--fg) l c h / 0.2);
-		border: 1px solid oklch(from var(--fg) l c h / 0.2);
-		border-radius: 0.25rem;
-		text-box: trim-both ex alphabetic;
+	hr {
+		border: none;
+		border-top: 1px solid --currentAlpha(0.3);
+		margin: 2rem 0;
 	}
 }

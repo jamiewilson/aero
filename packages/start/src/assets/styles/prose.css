@@ -1,0 +1,31 @@
+@layer utils {
+	.prose {
+		max-width: 65ch;
+		margin-inline: auto;
+		margin-block-start: 10vh;
+		padding-block-end: 25vh;
+		text-align: left;
+		text-wrap: pretty;
+
+		* + * {
+			margin-block-end: 2rem;
+		}
+
+		header {
+			margin-block-start: 10vh;
+		}
+
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			margin-block-end: 1rem;
+		}
+
+		.subtitle {
+			font-size: larger;
+		}
+	}
+}

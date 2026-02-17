@@ -116,14 +116,31 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 						requestHeaders.set(name, value)
 					}
 
-					let rendered = await mod.aero.render(pageName, {
+					const renderInput = {
 						url: requestUrl,
 						request: new Request(requestUrl.toString(), {
 							method: req.method || 'GET',
 							headers: requestHeaders,
 						}),
 						routePath: pathname,
-					})
+					}
+
+					let rendered = await mod.aero.render(pageName, renderInput)
+
+					// If the page was not found, render the 404 page instead.
+					if (rendered === null) {
+						res.statusCode = 404
+						rendered = await mod.aero.render('404', renderInput)
+					}
+
+					// If even the 404 page doesn't exist, send a plain response.
+					if (rendered === null) {
+						res.statusCode = 404
+						res.setHeader('Content-Type', 'text/html; charset=utf-8')
+						res.end('<h1>404 — Not Found</h1>')
+						return
+					}
+
 					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
 						rendered = `<!doctype html>\n${rendered}`
 					}

@@ -1,17 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from '../parser'
 import { compile } from '../codegen'
+import { extractGetStaticPaths } from '../helpers'
 
 // Helper to execute the generated code
 async function execute(code: string, context = {}) {
 	// Generate the wrapper function
-	// We expect the code to be `export default async function(Aero) { ... }`
+	// We expect the code to contain `export default async function(Aero) { ... }`
+	// and optionally a preceding `export ... function getStaticPaths(...) { ... }`
+
+	// Find the render function (export default)
+	const defaultIdx = code.indexOf('export default async function')
+	const renderCode = defaultIdx >= 0 ? code.slice(defaultIdx) : code
 
 	// Robust replacement: find the function body
-	// We can assume the structure we generate in codegen.ts
-	const bodyStart = code.indexOf('{')
-	const bodyEnd = code.lastIndexOf('}')
-	const body = code.substring(bodyStart + 1, bodyEnd)
+	const bodyStart = renderCode.indexOf('{')
+	const bodyEnd = renderCode.lastIndexOf('}')
+	const body = renderCode.substring(bodyStart + 1, bodyEnd)
 
 	// Create an actual AsyncFunction
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
@@ -682,5 +687,124 @@ describe('Codegen', () => {
 		expect(output).toContain('Two')
 		expect(output).not.toContain('One')
 		expect(output).not.toContain('Other')
+	})
+
+	// =========================================================================
+	// getStaticPaths extraction
+	// =========================================================================
+
+	it('should extract getStaticPaths as a named export', async () => {
+		const html = `<script on:build>
+										const title = 'Hello';
+										export function getStaticPaths() {
+											return [
+												{ params: { id: 'alpha' } },
+												{ params: { id: 'beta' } },
+											]
+										}
+									</script>
+									<h1>{ title }</h1>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		// Should contain the named export
+		expect(code).toContain('export function getStaticPaths()')
+		// Should still contain the render function
+		expect(code).toContain('export default async function')
+		// The render function should still work
+		const output = await execute(code)
+		expect(output).toContain('<h1>Hello</h1>')
+	})
+
+	it('should extract async getStaticPaths as a named export', async () => {
+		const html = `<script on:build>
+										export async function getStaticPaths() {
+											return [{ params: { slug: 'intro' } }]
+										}
+									</script>
+									<p>Content</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		expect(code).toContain('export async function getStaticPaths()')
+		expect(code).toContain('export default async function')
+	})
+
+	it('should not break when there is no getStaticPaths', async () => {
+		const html = `<script on:build>
+										const x = 1;
+									</script>
+									<p>{ x }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		expect(code).not.toContain('getStaticPaths')
+		expect(code).toContain('export default async function')
+		const output = await execute(code)
+		expect(output).toContain('<p>1</p>')
+	})
+})
+
+// =========================================================================
+// extractGetStaticPaths helper
+// =========================================================================
+
+describe('extractGetStaticPaths', () => {
+	it('should extract a sync function', () => {
+		const script = `const x = 1;
+export function getStaticPaths() {
+	return [{ params: { id: 'a' } }]
+}
+const y = 2;`
+
+		const { fnText, remaining } = extractGetStaticPaths(script)
+
+		expect(fnText).toContain('export function getStaticPaths()')
+		expect(fnText).toContain("return [{ params: { id: 'a' } }]")
+		expect(remaining).toContain('const x = 1;')
+		expect(remaining).toContain('const y = 2;')
+		expect(remaining).not.toContain('getStaticPaths')
+	})
+
+	it('should extract an async function', () => {
+		const script = `export async function getStaticPaths() {
+	const data = await fetch('/api')
+	return data
+}`
+
+		const { fnText, remaining } = extractGetStaticPaths(script)
+
+		expect(fnText).toContain('export async function getStaticPaths()')
+		expect(fnText).toContain('await fetch')
+		expect(remaining).toBe('')
+	})
+
+	it('should handle nested braces', () => {
+		const script = `export function getStaticPaths() {
+	const items = [{ a: 1 }, { b: 2 }]
+	if (items.length > 0) {
+		return items.map(i => ({ params: i }))
+	}
+	return []
+}`
+
+		const { fnText, remaining } = extractGetStaticPaths(script)
+
+		expect(fnText).not.toBeNull()
+		expect(fnText).toContain('return []')
+		expect(remaining).toBe('')
+	})
+
+	it('should return null when no getStaticPaths exists', () => {
+		const script = `const x = 1;
+const y = 2;`
+
+		const { fnText, remaining } = extractGetStaticPaths(script)
+
+		expect(fnText).toBeNull()
+		expect(remaining).toBe(script)
 	})
 })

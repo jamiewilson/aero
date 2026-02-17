@@ -1,5 +1,13 @@
 <script on:build>
 	import base from '@layouts/base'
+
+	export function getStaticPaths() {
+		return [
+			{ params: { id: 'alpha' } },
+			{ params: { id: 'beta' } },
+			{ params: { id: 'gamma' } },
+		]
+	}
 </script>
 
 <base-layout title="Param ID: {Aero.params.id}">
