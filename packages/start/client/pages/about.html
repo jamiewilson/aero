@@ -1,7 +1,7 @@
 <script on:build>
 	import sub from '@layouts/sub'
 	import header from '@components/header'
-	import aboutImage from '@images/og-image-about.png'
+	import aboutImage from '@images/about.jpg'
 
 	const meta = {
 		title: 'About Meta Title',
@@ -15,6 +15,18 @@
 </script>
 
 <sub-layout title="{meta.title}" image="{meta.image}">
+	<img src="{aboutImage}" class="about" alt="About" />
 	<a href="#" slot="thru-sub">Slot</a>
 	<header-component props />
 </sub-layout>
+
+<style>
+	img.about {
+		position: fixed;
+		inset: 0;
+		margin: auto;
+		z-index: -1;
+		opacity: 0.2;
+		max-width: 100%;
+	}
+</style>

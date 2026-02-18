@@ -1,5 +1,6 @@
 import type { AeroOptions, AliasResult } from '../types'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
 
 import {
@@ -271,7 +272,42 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		},
 	}
 
-	const plugins: PluginOption[] = [mainPlugin, staticBuildPlugin]
+	const plugins: PluginOption[] = [
+		mainPlugin,
+		staticBuildPlugin,
+		ViteImageOptimizer({
+			exclude: undefined,
+			include: undefined,
+			includePublic: true,
+			logStats: true,
+			ansiColors: true,
+			svg: {
+				multipass: true,
+				plugins: [
+					{
+						name: 'preset-default',
+						params: {
+							overrides: {
+								cleanupNumericValues: false,
+							},
+							cleanupIDs: {
+								minify: false,
+								remove: false,
+							},
+							convertPathData: false,
+						},
+					},
+				],
+			},
+			png: { quality: 80 },
+			jpeg: { quality: 80 },
+			jpg: { quality: 80 },
+			tiff: { quality: 80 },
+			gif: {},
+			webp: { lossless: true },
+			avif: { lossless: true },
+		}),
+	]
 
 	// Nitro Vite integration is serve-only; build orchestration is handled above.
 	if (enableNitro) {
