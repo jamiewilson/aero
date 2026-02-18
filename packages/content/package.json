@@ -3,33 +3,32 @@
 	"version": "0.1.0",
 	"type": "module",
 	"private": false,
-	"types": "./types.ts",
+	"types": "./dist/types.d.ts",
 	"files": [
-		"dist",
-		"types.ts"
+		"dist"
 	],
 	"scripts": {
-		"build": "tsup index.ts vite.ts markdown.ts render.ts --format esm --clean --out-dir dist",
+		"build": "tsup src/index.ts src/vite.ts src/markdown.ts src/render.ts --format esm --dts --clean --out-dir dist",
 		"test": "vitest run"
 	},
 	"exports": {
 		".": {
-			"types": "./types.ts",
+			"types": "./dist/types.d.ts",
 			"default": "./dist/index.js"
 		},
 		"./vite": {
-			"types": "./vite.ts",
+			"types": "./dist/vite.d.ts",
 			"default": "./dist/vite.js"
 		},
 		"./markdown": {
-			"types": "./markdown.ts",
+			"types": "./dist/markdown.d.ts",
 			"default": "./dist/markdown.js"
 		},
 		"./render": {
-			"types": "./render.ts",
+			"types": "./dist/render.d.ts",
 			"default": "./dist/render.js"
 		},
-		"./types": "./types.ts"
+		"./types": "./dist/types.d.ts"
 	},
 	"dependencies": {
 		"gray-matter": "^4.0.3",
