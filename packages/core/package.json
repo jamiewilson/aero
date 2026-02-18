@@ -33,7 +33,10 @@
 	"dependencies": {
 		"get-tsconfig": "^4.13.6",
 		"linkedom": "^0.18.12",
-		"nitro": "latest"
+		"nitro": "latest",
+		"sharp": "^0.34.5",
+		"svgo": "^4.0.0",
+		"vite-plugin-image-optimizer": "^2.0.3"
 	},
 	"peerDependencies": {
 		"vite": "^7.0.0"

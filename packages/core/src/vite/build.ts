@@ -220,7 +220,40 @@ function discoverAssetInputs(
 		entries.set(toManifestKey(root, defaultClientEntry), defaultClientEntry)
 	}
 
+	// Add all assets from the images directory to ensure they are processed
+	// and added to the manifest, even if only referenced in SSR.
+	const imagesDir = path.resolve(root, templateRoot, 'assets/images')
+	if (fs.existsSync(imagesDir)) {
+		const imageFiles = walkFiles(imagesDir)
+		for (const file of imageFiles) {
+			// Skip files that are already added (e.g. via HTML scan)
+			const key = toManifestKey(root, file)
+			if (entries.has(key)) continue
+
+			// Start with basic image/font extensions, or just include everything not hidden
+			if (path.basename(file).startsWith('.')) continue
+
+			entries.set(key, file)
+		}
+	}
+
 	return Object.fromEntries(entries)
+}
+
+function walkFiles(dir: string): string[] {
+	if (!fs.existsSync(dir)) return []
+	const files: string[] = []
+	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+		const fullPath = path.join(dir, item.name)
+		if (item.isDirectory()) {
+			files.push(...walkFiles(fullPath))
+			continue
+		}
+		if (item.isFile()) {
+			files.push(fullPath)
+		}
+	}
+	return files
 }
 
 function addDoctype(html: string): string {

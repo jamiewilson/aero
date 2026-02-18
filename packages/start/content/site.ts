@@ -5,7 +5,7 @@ export default {
 		title: 'Site Meta Title',
 		description: 'Site Meta Description',
 		url: 'https://with.aero',
-		ogImage: '/og-image.png',
+		ogImage: '/aero.png',
 		icon: {
 			ico: '/favicon.ico',
 			svg: '/favicon.svg',
@@ -24,7 +24,7 @@ export default {
 	},
 	about: {
 		title: 'About Aero',
-		subtitle: 'Learn more our philosophy and goals.',
+		subtitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
 	},
 	footer: {
 		links: [
