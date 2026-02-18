@@ -294,9 +294,8 @@ class Compiler {
 	private compileText(node: any, skipInterpolation: boolean, outVar: string): string {
 		const text = node.textContent || ''
 		if (!text) return ''
-		const content = skipInterpolation
-			? Helper.escapeBackticks(text)
-			: Helper.compileInterpolation(text)
+		const content =
+			skipInterpolation ? Helper.escapeBackticks(text) : Helper.compileInterpolation(text)
 		return Helper.emitAppend(content, outVar)
 	}
 
@@ -357,9 +356,10 @@ class Compiler {
 				// Text node
 				const text = node.textContent || ''
 				if (text) {
-					out += skipInterpolation
-						? Helper.escapeBackticks(text)
-						: Helper.compileInterpolation(text)
+					out +=
+						skipInterpolation ?
+							Helper.escapeBackticks(text)
+						:	Helper.compileInterpolation(text)
 				}
 			} else if (node.nodeType === 1) {
 				// Element node - compile as simple content
@@ -482,17 +482,20 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
+	const imports: string[] = []
 	script = script.replace(CONST.IMPORT_REGEX, (m, name, names, starName, q, p) => {
 		const resolved = resolver.resolveImport(p)
 		if (name) {
-			return `const ${name} = (await import(${q}${resolved}${q})).default`
+			imports.push(`const ${name} = (await import(${q}${resolved}${q})).default`)
 		} else if (names) {
-			return `const {${names}} = await import(${q}${resolved}${q})`
+			imports.push(`const {${names}} = await import(${q}${resolved}${q})`)
 		} else if (starName) {
-			return `const ${starName} = await import(${q}${resolved}${q})`
+			imports.push(`const ${starName} = await import(${q}${resolved}${q})`)
 		}
-		return m
+		return ''
 	})
+
+	const importsCode = imports.join('\n')
 
 	// Extract getStaticPaths before inlining into the render function.
 	// This function is emitted as a separate named module export so the
@@ -537,5 +540,5 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			`<script type="module" src="${options.clientScriptUrl}"></script>`,
 		)
 	}
-	return Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn)
+	return importsCode + '\n' + Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn)
 }

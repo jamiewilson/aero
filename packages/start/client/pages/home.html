@@ -3,19 +3,17 @@
 	import header from '@components/header'
 	import form from '@components/form'
 
-	const props = {
+	const headerProps = {
 		title: site.home.title,
 		subtitle: site.home.subtitle,
 	}
 </script>
 
 <base-layout>
-	<header-component props="{...props}" />
+	<header-component props="{...headerProps}" />
 	<form-component />
 </base-layout>
 
 <script on:client>
-	window.addEventListener('load', () => {
-		console.log('[aero] on:client script executed')
-	})
+	console.log('[aero] on:client script executed')
 </script>

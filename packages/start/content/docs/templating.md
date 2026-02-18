@@ -1,4 +1,5 @@
 ---
+published: true
 title: Template Attribute Semantics
 subtitle: Understand how Aero evaluates attribute values in templates, including component props and directives.
 date: 2026-04-15

@@ -6,14 +6,13 @@
 			"~/*": ["./*"],
 			"@client/*": ["./client/*"],
 			"@server/*": ["./server/*"],
-			"@content/*": ["./client/content/*"],
+			"@content/*": ["./content/*"],
 			"@pages/*": ["./client/pages/*"],
 			"@layouts/*": ["./client/layouts/*"],
 			"@components/*": ["./client/components/*"],
 			"@styles/*": ["./client/assets/styles/*"],
 			"@scripts/*": ["./client/assets/scripts/*"],
-			"@images/*": ["./client/assets/images/*"],
-			"content-collections": ["./.content-collections/generated"]
+			"@images/*": ["./client/assets/images/*"]
 		}
 	}
 }

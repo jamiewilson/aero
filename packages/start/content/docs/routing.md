@@ -1,4 +1,5 @@
 ---
+published: true
 title: Routing
 subtitle: Learn how Aero's file-based routing system works for static and dynamic pages.
 date: 2026-03-15

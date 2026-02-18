@@ -1,4 +1,5 @@
 ---
+published: true
 title: Slot Passthrough Feature
 subtitle: Learn about the new slot passthrough feature in Aero, which allows you to forward named slots through a component hierarchy.
 date: 2026-02-15
