@@ -12,8 +12,7 @@
 			"@components/*": ["./client/components/*"],
 			"@styles/*": ["./client/assets/styles/*"],
 			"@scripts/*": ["./client/assets/scripts/*"],
-			"@images/*": ["./client/assets/images/*"],
-			"content-collections": ["./.content-collections/generated"]
+			"@images/*": ["./client/assets/images/*"]
 		}
 	}
 }

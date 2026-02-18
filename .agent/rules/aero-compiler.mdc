@@ -1,0 +1,34 @@
+---
+description: Aero compiler, runtime, and Vite plugin conventions
+globs: packages/core/**/*.ts
+alwaysApply: false
+---
+
+# Aero Compiler & Runtime
+
+All of the following live in **packages/core** (the framework package).
+
+## Modules
+
+- **compiler/parser.ts** - Extract script blocks, parse imports; use constants from **compiler/constants.ts** (ATTR_ON_BUILD, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
+- **compiler/codegen.ts** - Emit async render functions, handle `{ }` interpolation, `data-each`, `data-if` / `data-else-if` / `data-else`
+- **compiler/resolver.ts** - Resolve component/layout paths against path aliases (from project tsconfig)
+- **compiler/helpers.ts** - Attribute helpers (e.g. data-attr vs attr)
+- **vite/index.ts** - Vite plugin: virtual modules for client scripts; use `\0` prefix for Vite virtual module IDs (not `/@aero/client/` in emitted IDs)
+- **vite/build.ts** - Build orchestration, page discovery, Nitro integration
+- **runtime/** - `Aero` class, instance context, client entry (client.ts, index.ts, instance.ts)
+- **utils/aliases.ts** - Load tsconfig path aliases; **utils/routing.ts** - routing helpers
+
+## Constants (packages/core/compiler/constants.ts)
+
+Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_ON_CLIENT`, `ATTR_ON_BUILD`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
+
+## Tests
+
+- Vitest in **packages/core**: `compiler/__tests__/` (parser.test.ts, codegen.test.ts, vite-plugin.test.ts), `vite/__tests__/` (build.test.ts)
+- Run from repo root: `pnpm test` or from packages/core: `pnpm test`
+
+## Gotchas
+
+- Virtual client script IDs should use `\0` prefix for proper Vite handling
+- Slot passthrough: both `name` and `slot` on `<slot>` elements

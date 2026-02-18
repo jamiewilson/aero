@@ -1,0 +1,27 @@
+---
+description: Nitro API and server conventions
+globs: packages/start/server/**/*.ts
+alwaysApply: false
+---
+
+# Aero Server (Nitro)
+
+API and routes live in **packages/start/server/** (server/api/, server/routes/). Nitro is configured in `packages/start/nitro.config.ts` with `scanDirs: ['server']`.
+
+## API Handlers
+
+- Use Nitro/H3: `defineHandler`, `readBody`, etc. from `nitro/h3`
+- File naming: `_.get.ts`, `_.post.ts` etc. for routes (e.g. `submit.post.ts` → POST `/api/submit`)
+- Types: use `@aero-ssg/core` or `@aero-ssg/core/types` or project types for request/response bodies
+
+## Example
+
+```ts
+import { defineHandler, readBody } from 'nitro/h3'
+import type { SubmitPost } from '@aero-ssg/core'
+
+export default defineHandler(async event => {
+	const body = (await readBody(event)) as SubmitPost
+	return { ok: true, data: body }
+})
+```

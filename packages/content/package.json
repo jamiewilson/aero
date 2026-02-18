@@ -1,0 +1,57 @@
+{
+	"name": "@aero-ssg/content",
+	"version": "0.1.0",
+	"type": "module",
+	"private": false,
+	"types": "./types.ts",
+	"files": [
+		"dist",
+		"types.ts"
+	],
+	"scripts": {
+		"build": "tsup index.ts vite.ts markdown.ts render.ts --format esm --clean --out-dir dist",
+		"test": "vitest run"
+	},
+	"exports": {
+		".": {
+			"types": "./types.ts",
+			"default": "./dist/index.js"
+		},
+		"./vite": {
+			"types": "./vite.ts",
+			"default": "./dist/vite.js"
+		},
+		"./markdown": {
+			"types": "./markdown.ts",
+			"default": "./dist/markdown.js"
+		},
+		"./render": {
+			"types": "./render.ts",
+			"default": "./dist/render.js"
+		},
+		"./types": "./types.ts"
+	},
+	"dependencies": {
+		"gray-matter": "^4.0.3",
+		"fast-glob": "^3.3.3",
+		"remark": "^15.0.1",
+		"remark-html": "^16.0.1"
+	},
+	"peerDependencies": {
+		"vite": "^7.0.0",
+		"zod": "^4.0.0"
+	},
+	"peerDependenciesMeta": {
+		"zod": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@types/node": "^25.2.3",
+		"tsup": "^8.5.0",
+		"typescript": "^5.9.2",
+		"vitest": "^4.0.18",
+		"vite": "^7.3.1",
+		"zod": "^4.3.6"
+	}
+}

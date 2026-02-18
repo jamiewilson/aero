@@ -1,21 +1,12 @@
 <script on:build>
 	import base from '@layouts/base'
-	import { allDocs } from 'content-collections'
+	import { getCollection } from 'aero:content'
 	const props = Aero.props
 
-	const docs = allDocs
-		.map(doc => {
-			return {
-				title: doc.title,
-				subtitle: doc.subtitle,
-				slug: doc.slug,
-			}
-		})
-		.filter(doc => doc.slug)
-		.sort((a, b) => a.title.localeCompare(b.title))
+	const docs = (await getCollection('docs')).sort((a, b) => a.data.title.localeCompare(b.data.title))
 </script>
 
-<base-layout props>
+<base-layout title="Docs">
 	<header>
 		<h1>Docs</h1>
 		<p class="secondary">
@@ -25,9 +16,9 @@
 	</header>
 
 	<ul class="card">
-		<li each="{doc in docs}" key="{doc.slug}">
-			<a href="/docs/{doc.slug}">{doc.title}</a>
-			<p if="{ doc.subtitle }">{doc.subtitle}</p>
+		<li each="{doc in docs}">
+			<a href="/docs/{doc.id}">{doc.data.title}</a>
+			<p if="{ doc.data.subtitle }">{doc.data.subtitle}</p>
 		</li>
 		<style>
 			@scope {

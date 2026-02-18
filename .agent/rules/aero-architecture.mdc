@@ -1,0 +1,56 @@
+---
+description: Aero framework architecture and conventions
+alwaysApply: true
+---
+
+# Aero Framework - Architecture
+
+Aero is a static site generator with an HTML-first template engine.
+
+## Monorepo Layout
+
+- **Root** - Workspace root. Scripts delegate to packages/core and packages/start.
+- **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsup; consumed as `@aero-ssg/core` and `@aero-ssg/vite`.
+- **packages/vite** - Vite plugin re-export (@aero-ssg/vite).
+- **packages/vscode** - VS Code extension (syntaxes, etc.).
+- **packages/start** - Starter/scaffold app (src/, server/, vite.config, nitro.config).
+
+Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the app uses the built framework.
+
+## Pipeline (packages/core)
+
+1. **Parser** (packages/core/compiler/parser.ts) - Extracts `<script on:build>` and `<script on:client>` from HTML
+2. **Codegen** (packages/core/compiler/codegen.ts) - Compiles templates into async render functions with `{ }` interpolation
+3. **Vite Plugin** (packages/core/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
+4. **Runtime** (packages/core/runtime/index.ts) - `Aero` class renders pages and components with context
+
+## App File Structure (root)
+
+- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
+- `src/components/` - Reusable components
+- `src/layouts/` - Layout wrappers with `<slot>` support
+- `src/content/` - Global data (e.g. site.ts, theme.ts exposed as `site` in templates)
+- `src/assets/` - Styles, scripts, images
+- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
+- `server/routes/` - Nitro routes (e.g. catch-all for static files)
+
+## Commands
+
+- `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `aero({ nitro: true })`)
+- `pnpm run build` - Static build to dist/; with Nitro also produces .output/
+- `pnpm run preview` - Static preview (no API)
+- `pnpm run preview:api` - Full server preview (static + API)
+- `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
+
+## Path Aliases (root tsconfig.json)
+
+- `@components/*` → src/components/*
+- `@layouts/*` → src/layouts/*
+- `@pages/*` → src/pages/*
+- `@content/*` → src/content/*
+- `@styles/*` → src/assets/styles/*
+- `@scripts/*` → src/assets/scripts/*
+- `@images/*` → src/assets/images/*
+- `@src/*` → src/*
+- `@server/*` → server/*
+- `~/*` → project root

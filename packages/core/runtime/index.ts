@@ -23,11 +23,11 @@ export class Aero {
 	registerPages(pages: Record<string, any>) {
 		for (const [path, mod] of Object.entries(pages)) {
 			const withoutExt = path.replace(/\.html$/, '').replace(/\\/g, '/')
-			const key = withoutExt.includes('pages/')
-				? withoutExt.split('pages/').pop()!
-				: withoutExt.split('/').filter(Boolean).length > 1
-					? withoutExt.split('/').filter(Boolean).join('/')
-					: withoutExt.split('/').pop() || path
+			const key =
+				withoutExt.includes('pages/') ? withoutExt.split('pages/').pop()!
+				: withoutExt.split('/').filter(Boolean).length > 1 ?
+					withoutExt.split('/').filter(Boolean).join('/')
+				:	withoutExt.split('/').pop() || path
 			this.pagesMap[key] = mod
 			this.pagesMap[path] = mod
 		}

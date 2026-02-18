@@ -162,6 +162,11 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				return '\0' + id
 			}
 
+			// Let the content plugin handle its own virtual modules
+			if (id.startsWith('aero:content')) {
+				return null
+			}
+
 			// 1. Try resolving the ID as-is (handles standard aliases and relative paths)
 			const resolved = await this.resolve(id, importer, { skipSelf: true })
 			if (resolved && resolved.id.endsWith('.html')) {
@@ -252,9 +257,10 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					resolvePath: aliasResult.resolvePath,
 					dirs: options.dirs,
 					apiPrefix,
+					configFile: config.configFile,
 					// Keep static rendering isolated from user vite.config.ts while
 					// still providing Aero's HTML transform/runtime resolution support.
-					vitePlugins: [mainPlugin],
+					vitePlugins: config.configFile ? [] : [mainPlugin],
 				},
 				outDir,
 			)

@@ -20,6 +20,7 @@ interface StaticBuildOptions {
 	apiPrefix?: string
 	resolvePath?: (specifier: string) => string
 	vitePlugins?: Plugin[]
+	configFile?: string | false
 }
 
 interface StaticPage {
@@ -28,6 +29,7 @@ interface StaticPage {
 	sourceFile: string
 	outputFile: string
 	params?: Record<string, string>
+	props?: Record<string, any>
 }
 
 /** The pageName or routePath contains bracket-delimited dynamic segments. */
@@ -317,8 +319,13 @@ export async function renderStaticPages(
 	const manifest = readManifest(distDir)
 	const clientScriptMap = discoverClientScriptMap(root, dirs.client)
 
+	// Disable Nitro plugin during static page rendering to prevent it from handling
+	// requests or starting watchers that might hang the build.
+	const previousAeroNitro = process.env.AERO_NITRO
+	process.env.AERO_NITRO = 'false'
+
 	const server = await createServer({
-		configFile: false,
+		configFile: options.configFile ?? false,
 		root,
 		appType: 'custom',
 		logLevel: 'error',
@@ -369,6 +376,7 @@ export async function renderStaticPages(
 					sourceFile: page.sourceFile,
 					outputFile: toOutputFile(expandedRoute),
 					params: entry.params,
+					props: entry.props,
 				})
 			}
 		}
@@ -396,6 +404,7 @@ export async function renderStaticPages(
 				request: new Request(pageUrl.toString(), { method: 'GET' }),
 				routePath,
 				params: page.params || {},
+				props: page.props || {},
 			})
 			rendered = rewriteRenderedHtml(
 				addDoctype(rendered),
@@ -412,6 +421,11 @@ export async function renderStaticPages(
 		}
 	} finally {
 		await server.close()
+		if (previousAeroNitro === undefined) {
+			delete process.env.AERO_NITRO
+		} else {
+			process.env.AERO_NITRO = previousAeroNitro
+		}
 	}
 }
 

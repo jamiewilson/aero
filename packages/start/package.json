@@ -2,12 +2,10 @@
 	"name": "@aero-ssg/start",
 	"type": "module",
 	"scripts": {
-		"cc:build": "content-collections build --config content-collections.ts",
-		"cc:watch": "content-collections watch --config content-collections.ts",
-		"dev": "pnpm cc:build && vite dev",
-		"build": "pnpm cc:build && vite build",
-		"preview": "pnpm cc:build && AERO_NITRO=false vite build && vite preview",
-		"preview:api": "pnpm cc:build && vite build && node .output/server/index.mjs"
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "AERO_NITRO=false vite build && vite preview",
+		"preview:api": "vite build && node .output/server/index.mjs"
 	},
 	"dependencies": {
 		"@alpinejs/persist": "^3.15.8",
@@ -15,11 +13,8 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
+		"@aero-ssg/content": "workspace:*",
 		"@aero-ssg/core": "workspace:*",
-		"@content-collections/cli": "^0.1.9",
-		"@content-collections/core": "^0.14.0",
-		"@content-collections/markdown": "^0.1.4",
-		"@content-collections/vite": "^0.2.9",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.24",

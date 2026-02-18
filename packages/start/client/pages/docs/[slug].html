@@ -1,32 +1,30 @@
 <script on:build>
 	import base from '@layouts/base'
-	import { allDocs } from 'content-collections'
-
-	const docs = allDocs.map(doc => ({ ...doc, slug: doc.slug })).filter(doc => doc.slug)
+	import { getCollection, render } from 'aero:content'
 
 	export async function getStaticPaths() {
-		const { allDocs } = await import('content-collections')
-		return allDocs
-			.map(doc => {
-				const slug = doc.slug || ''
-				return slug ? { params: { slug } } : null
-			})
-			.filter(Boolean)
+		const docs = await getCollection('docs')
+		return docs.map(doc => ({ params: { slug: doc.id }, props: doc }))
 	}
 
-	const doc = docs.find(item => item.slug === Aero.params.slug)
+	// During build, Aero.props is the matched doc from getStaticPaths.
+	// During dev, fall back to finding by slug.
+	const doc = Aero.props?.id
+		? Aero.props
+		: (await getCollection('docs')).find(d => d.id === Aero.params.slug)
+	const { html } = doc ? await render(doc) : { html: '' }
 </script>
 
-<base-layout title="{doc ? doc.title : 'Doc Not Found'}">
+<base-layout title="{doc ? doc.data.title : 'Doc Not Found'}">
 	<main>
 		<article if="{ doc }" class="prose">
 			<a href="/docs/">← All docs</a>
 			<header>
-				<h1>{doc.title}</h1>
-				<p class="subtitle secondary">{doc.subtitle}</p>
+				<h1>{doc.data.title}</h1>
+				<p class="subtitle secondary">{doc.data.subtitle}</p>
 				<hr />
 			</header>
-			<section>{doc.html}</section>
+			<section>{html}</section>
 		</article>
 
 		<section else>
