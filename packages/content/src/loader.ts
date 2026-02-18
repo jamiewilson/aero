@@ -43,9 +43,9 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			const result = config.schema.safeParse(frontmatter)
 			if (!result.success) {
 				const errors =
-					'error' in result ?
-						(result as any).error?.issues?.map((i: any) => i.message).join(', ')
-					:	'Validation failed'
+					'error' in result
+						? (result as any).error?.issues?.map((i: any) => i.message).join(', ')
+						: 'Validation failed'
 				console.warn(
 					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`,
 				)
@@ -119,28 +119,30 @@ export function toExportName(collectionName: string): string {
  * ```
  */
 export function serializeContentModule(loaded: LoadedContent): string {
-	const lines: string[] = []
+	const collectionsContent = Array.from(loaded.entries())
+		.map(([name, docs]) => `  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`)
+		.join(',\n')
 
-	// Build the collections map
-	lines.push('const __collections = {')
-	for (const [name, docs] of loaded) {
-		lines.push(`  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)},`)
-	}
-	lines.push('};')
-	lines.push('')
+	return `
+const __collections = {
+${collectionsContent}
+};
 
-	// getCollection function
-	lines.push('export function getCollection(name) {')
-	lines.push('  const data = __collections[name];')
-	lines.push(
-		'  if (!data) throw new Error(`[aero:content] Collection "${name}" not found. Available: ${Object.keys(__collections).join(", ")}`);',
-	)
-	lines.push('  return data;')
-	lines.push('}')
-	lines.push('')
+export function getCollection(name, filterFn) {
+  let data = __collections[name];
+  if (!data) throw new Error(\`[aero:content] Collection "\${name}" not found. Available: \${Object.keys(__collections).join(", ")}\`);
 
-	// Re-export render
-	lines.push("export { render } from '@aero-ssg/content/render';")
+  if (import.meta.env.PROD) {
+    data = data.filter(item => item.data.published === true);
+  }
 
-	return lines.join('\n')
+  if (typeof filterFn === "function") {
+    return data.filter(filterFn);
+  }
+
+  return data;
+}
+
+export { render } from '@aero-ssg/content/render';
+`
 }
