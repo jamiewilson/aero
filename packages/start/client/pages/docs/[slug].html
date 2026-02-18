@@ -11,8 +11,8 @@
 	const { html } = await render(doc)
 </script>
 
-<base-layout title="{doc ? doc.data.title : 'Doc Not Found'}">
-	<article if="{ doc }" class="prose">
+<base-layout title="{doc.data.title}">
+	<article class="prose">
 		<a href="/docs">← All docs</a>
 		<header>
 			<h1>{doc.data.title}</h1>

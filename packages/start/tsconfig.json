@@ -6,7 +6,7 @@
 			"~/*": ["./*"],
 			"@client/*": ["./client/*"],
 			"@server/*": ["./server/*"],
-			"@content/*": ["./client/content/*"],
+			"@content/*": ["./content/*"],
 			"@pages/*": ["./client/pages/*"],
 			"@layouts/*": ["./client/layouts/*"],
 			"@components/*": ["./client/components/*"],

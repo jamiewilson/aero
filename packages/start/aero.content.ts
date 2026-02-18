@@ -3,9 +3,10 @@ import { z } from 'zod'
 
 const docs = defineCollection({
 	name: 'docs',
-	directory: 'client/content/docs',
+	directory: 'content/docs',
 	include: '**/*.md',
 	schema: z.object({
+		published: z.boolean().default(false),
 		title: z.string(),
 		subtitle: z.string().optional(),
 		date: z.date(),
