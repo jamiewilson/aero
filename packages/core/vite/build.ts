@@ -96,8 +96,17 @@ function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
 	const targetDir = routePath === '' ? '' : routePath
 	const rel = path.posix.relative(fromDir, targetDir)
-	if (!rel) return './'
-	return rel.startsWith('.') ? rel : `./${rel}`
+	let res =
+		!rel ? './'
+		: rel.startsWith('.') ? rel
+		: `./${rel}`
+
+	// If it's a directory link (not empty/root or 404), append slash
+	// We assume 'routePath' corresponds to a directory index unless it's 404
+	if (routePath !== '' && routePath !== '404' && !res.endsWith('/')) {
+		res += '/'
+	}
+	return res
 }
 
 function normalizeRoutePathFromHref(value: string): string {

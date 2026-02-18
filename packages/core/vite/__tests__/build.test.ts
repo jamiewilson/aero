@@ -16,12 +16,30 @@ describe('vite build helpers', () => {
 		const manifest: Manifest = {}
 
 		expect(__internal.rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)).toBe(
-			'../about',
+			'../about/',
 		)
 		expect(__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe(
-			'./name',
+			'./name/',
 		)
+		// Ensure root still works
 		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
+	})
+
+	it('normalizes relative route links with trailing slashes for directories', () => {
+		// Siblings
+		expect(__internal.normalizeRelativeRouteLink('', 'docs')).toBe('./docs/')
+		expect(__internal.normalizeRelativeRouteLink('about', 'docs')).toBe('../docs/')
+
+		// Nested
+		expect(__internal.normalizeRelativeRouteLink('', 'about/team')).toBe('./about/team/')
+
+		// Root should not have trailing slash (it's ./)
+		expect(__internal.normalizeRelativeRouteLink('about', '')).toBe('..')
+		expect(__internal.normalizeRelativeRouteLink('', '')).toBe('./')
+
+		// 404 is special case, no trailing slash as it's a file
+		// Note: The function logic explicitly excludes '404' from trailing slash addition
+		expect(__internal.normalizeRelativeRouteLink('', '404')).toBe('./404')
 	})
 
 	it('rewrites asset URLs from manifest entries', () => {
