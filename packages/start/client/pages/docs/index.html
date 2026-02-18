@@ -2,7 +2,10 @@
 	import base from '@layouts/base'
 	import { getCollection } from 'aero:content'
 	const props = Aero.props
-	const docs = (await getCollection('docs')).filter(doc => doc.data.published)
+
+	// TODO: Build published filtering into packages/content?
+	const docs = (await getCollection('docs'))
+		.filter(doc => doc.data.published)
 </script>
 
 <base-layout title="Docs">

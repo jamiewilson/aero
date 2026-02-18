@@ -48,8 +48,9 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const runtimeInstanceTsPath = fileURLToPath(
 		new URL('../runtime/instance.ts', import.meta.url),
 	)
-	const runtimeInstancePath =
-		existsSync(runtimeInstanceJsPath) ? runtimeInstanceJsPath : runtimeInstanceTsPath
+	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
+		? runtimeInstanceJsPath
+		: runtimeInstanceTsPath
 	let config: ResolvedConfig
 	let aliasResult: AliasResult
 	const dirs = resolveDirs(options.dirs)

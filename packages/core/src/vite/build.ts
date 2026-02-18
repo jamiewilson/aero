@@ -96,10 +96,7 @@ function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
 	const targetDir = routePath === '' ? '' : routePath
 	const rel = path.posix.relative(fromDir, targetDir)
-	let res =
-		!rel ? './'
-		: rel.startsWith('.') ? rel
-		: `./${rel}`
+	let res = !rel ? './' : rel.startsWith('.') ? rel : `./${rel}`
 
 	// If it's a directory link (not empty/root or 404), append slash
 	// We assume 'routePath' corresponds to a directory index unless it's 404
@@ -257,9 +254,9 @@ function rewriteAbsoluteUrl(
 	const route = normalizeRoutePathFromHref(noQuery)
 	if (routeSet.has(route) || route === '') {
 		const rel =
-			route === '404' ?
-				normalizeRelativeLink(fromDir, toOutputFile(route))
-			:	normalizeRelativeRouteLink(fromDir, route)
+			route === '404'
+				? normalizeRelativeLink(fromDir, toOutputFile(route))
+				: normalizeRelativeRouteLink(fromDir, route)
 		return rel + suffix
 	}
 
@@ -399,14 +396,13 @@ export async function renderStaticPages(
 			// For expanded dynamic pages we must render via the original
 			// dynamic page name (e.g. "[id]") so the runtime finds the module,
 			// while passing the concrete params so the template has real values.
-			const renderTarget =
-				isDynamicPage(page) ?
-					toPosix(
+			const renderTarget = isDynamicPage(page)
+				? toPosix(
 						path
 							.relative(path.resolve(root, dirs.client, 'pages'), page.sourceFile)
 							.replace(/\.html$/i, ''),
 					)
-				:	page.pageName
+				: page.pageName
 
 			let rendered = await runtime.aero.render(renderTarget, {
 				url: pageUrl,
@@ -457,15 +453,16 @@ export function createBuildConfig(
 			input: inputs,
 			output: {
 				entryFileNames(chunkInfo) {
-					const baseName =
-						chunkInfo.facadeModuleId ? path.basename(chunkInfo.facadeModuleId) : chunkInfo.name
-					return `assets/scripts/${baseName}-[hash].js`
+					const name = path.basename(chunkInfo.name)
+					return `assets/${name}-[hash].js`
 				},
-				chunkFileNames: 'assets/scripts/[name]-[hash].js',
+				chunkFileNames(chunkInfo) {
+					const name = path.basename(chunkInfo.name)
+					return `assets/${name}-[hash].js`
+				},
 				assetFileNames(assetInfo) {
-					const ext = path.extname(assetInfo.name || '').toLowerCase()
-					if (ext === '.css') return 'assets/styles/[name]-[hash][extname]'
-					return 'assets/[name]-[hash][extname]'
+					const name = path.basename(assetInfo.name || '')
+					return `assets/${name}-[hash][extname]`
 				},
 			},
 		},
