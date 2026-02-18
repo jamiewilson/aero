@@ -89,15 +89,49 @@ export function extractGetStaticPaths(script: string): {
 	if (!match) return { fnText: null, remaining: script }
 
 	const start = match.index
-	// Position of the opening brace
 	const braceStart = start + match[0].length - 1
 
-	// Count braces to find the matching closing brace
 	let depth = 1
 	let i = braceStart + 1
+	let inString: null | '"' | "'" | '`' = null
+	let inComment: null | '//' | '/*' = null
+
 	while (i < script.length && depth > 0) {
-		if (script[i] === '{') depth++
-		if (script[i] === '}') depth--
+		const char = script[i]
+		const next = script[i + 1]
+
+		// Handle comments
+		if (inComment) {
+			if (inComment === '//' && char === '\n') inComment = null
+			else if (inComment === '/*' && char === '*' && next === '/') {
+				inComment = null
+				i++ // skip /
+			}
+		}
+		// Handle strings
+		else if (inString) {
+			if (char === '\\') {
+				i++ // skip escaped char
+			} else if (char === inString) {
+				inString = null
+			}
+		}
+		// Handle start of comment/string or brace
+		else {
+			if (char === '/' && next === '/') {
+				inComment = '//'
+				i++
+			} else if (char === '/' && next === '*') {
+				inComment = '/*'
+				i++
+			} else if (char === '"' || char === "'" || char === '`') {
+				inString = char
+			} else if (char === '{') {
+				depth++
+			} else if (char === '}') {
+				depth--
+			}
+		}
 		i++
 	}
 

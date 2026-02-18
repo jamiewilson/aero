@@ -7,11 +7,9 @@
 		return docs.map(doc => ({ params: { slug: doc.id }, props: doc }))
 	}
 
-	// During build, Aero.props is the matched doc from getStaticPaths.
-	// During dev, fall back to finding by slug.
-	const doc = Aero.props?.id
-		? Aero.props
-		: (await getCollection('docs')).find(d => d.id === Aero.params.slug)
+	// Aero.props is now guaranteed to be populated (in both build and dev)
+	// if getStaticPaths is present.
+	const doc = Aero.props
 	const { html } = doc ? await render(doc) : { html: '' }
 </script>
 

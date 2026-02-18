@@ -117,6 +117,15 @@ export class Aero {
 		return context
 	}
 
+	private paramsMatch(entryParams: AeroRouteParams, requestParams: AeroRouteParams): boolean {
+		const entryKeys = Object.keys(entryParams)
+		if (entryKeys.length !== Object.keys(requestParams).length) return false
+		for (const key of entryKeys) {
+			if (String(entryParams[key]) !== String(requestParams[key])) return false
+		}
+		return true
+	}
+
 	async render(component: any, input: any = {}) {
 		const renderInput = this.normalizeRenderInput(input)
 
@@ -170,6 +179,36 @@ export class Aero {
 			return null
 		}
 
+		// Handle lazy-loaded modules (Vite import.meta.glob without eager)
+		// Lazy loaders are () => import(...), while render functions are aero => ...
+		if (typeof target === 'function' && target.length === 0) {
+			target = await target()
+		}
+
+		// Unified Data Fetching: if the module exports getStaticPaths and we don't
+		// have props (Dev mode), execute it to find the matching entry and props.
+		if (
+			typeof target.getStaticPaths === 'function' &&
+			Object.keys(renderInput.props || {}).length === 0
+		) {
+			const staticPaths: any[] = await target.getStaticPaths()
+			const combinedParams = { ...dynamicParams, ...(renderInput.params || {}) }
+
+			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
+
+			if (!match) {
+				console.warn(
+					`[aero] 404: Route params ${JSON.stringify(combinedParams)} ` +
+						`not found in getStaticPaths for ${matchedPageName}`,
+				)
+				return null
+			}
+
+			if (match.props) {
+				renderInput.props = match.props
+			}
+		}
+
 		const routePath = renderInput.routePath || this.toRoutePath(matchedPageName)
 		const context = this.createContext({
 			props: renderInput.props || {},
@@ -180,17 +219,12 @@ export class Aero {
 			routePath,
 		})
 
-		// Handle lazy-loaded modules (Vite import.meta.glob without eager)
-		// Lazy loaders are () => import(...), while render functions are aero => ...
-		if (typeof target === 'function' && target.length === 0) {
-			target = await target()
-		}
-
 		// Handle module objects
-		if (target.default) target = target.default
+		let renderFn = target
+		if (target.default) renderFn = target.default
 
-		if (typeof target === 'function') {
-			return await target(context)
+		if (typeof renderFn === 'function') {
+			return await renderFn(context)
 		}
 
 		return ''
