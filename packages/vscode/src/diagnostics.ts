@@ -112,6 +112,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		this.checkComponentReferences(document, text, diagnostics)
 		this.checkUndefinedVariables(document, text, diagnostics)
 		this.checkUnusedVariables(document, text, diagnostics)
+		this.checkDuplicateDeclarations(document, text, diagnostics)
 
 		this.collection.set(document.uri, diagnostics)
 	}
@@ -385,7 +386,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		const definedVars = collectDefinedVariables(document, text)
+		const [definedVars] = collectDefinedVariables(document, text)
 		const templateScopes = collectTemplateScopes(document, text)
 		const references = collectTemplateReferences(document, text)
 
@@ -512,7 +513,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		const definedVars = collectDefinedVariables(document, text)
+		const [definedVars] = collectDefinedVariables(document, text)
 		const references = collectTemplateReferences(document, text)
 
 		// Map of vars that are used in template
@@ -560,6 +561,24 @@ export class AeroDiagnostics implements vscode.Disposable {
 				diagnostic.source = DIAGNOSTIC_SOURCE
 				diagnostics.push(diagnostic)
 			}
+		}
+	}
+
+	private checkDuplicateDeclarations(
+		document: vscode.TextDocument,
+		text: string,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const [, duplicates] = collectDefinedVariables(document, text)
+
+		for (const dup of duplicates) {
+			const diagnostic = new vscode.Diagnostic(
+				dup.range,
+				`'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`,
+				vscode.DiagnosticSeverity.Error,
+			)
+			diagnostic.source = DIAGNOSTIC_SOURCE
+			diagnostics.push(diagnostic)
 		}
 	}
 }

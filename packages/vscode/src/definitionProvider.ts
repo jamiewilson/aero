@@ -114,7 +114,7 @@ function resolveExpressionIdentifierDefinition(
 	const lineText = document.lineAt(position.line).text
 	const chainAtCursor = getDotChainAt(lineText, position.character)
 
-	const buildVars = collectDefinedVariables(document, text)
+	const [buildVars] = collectDefinedVariables(document, text)
 	const scopes = collectTemplateScopes(document, text)
 
 	const currentScope = findInnermostScope(scopes, offset)

@@ -61,7 +61,7 @@ describe('collectDefinedVariables', () => {
 
 	it('should correctly parse named imports', () => {
 		const text = `import { foo, bar } from 'pkg'`
-		const vars = collectDefinedVariables(mockDoc, text)
+		const [vars] = collectDefinedVariables(mockDoc, text)
 
 		expect(vars.has('foo')).toBe(true)
 		expect(vars.get('foo')?.kind).toBe('import')
