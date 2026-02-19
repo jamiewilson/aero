@@ -8,9 +8,9 @@
 		"preview:api": "vite build && node .output/server/index.mjs"
 	},
 	"dependencies": {
-		"@alpinejs/persist": "^3.15.8",
 		"@aero-ssg/content": "workspace:*",
 		"@aero-ssg/core": "workspace:*",
+		"@alpinejs/persist": "^3.15.8",
 		"alpinejs": "^3.15.8",
 		"htmx.org": "^2.0.8"
 	},
@@ -18,8 +18,8 @@
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.24",
-		"nitro": "latest",
-		"vite": "^7.3.1",
+		"nitro": "^3.0.1-alpha.2",
+		"vite": "8.0.0-beta.15",
 		"zod": "^4.3.6"
 	},
 	"postcss": {
