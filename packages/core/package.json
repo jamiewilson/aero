@@ -35,18 +35,18 @@
 		"get-tsconfig": "^4.13.6",
 		"html-minifier-next": "^5.1.1",
 		"linkedom": "^0.18.12",
-		"nitro": "latest",
+		"nitro": "^3.0.1-alpha.2",
 		"sharp": "^0.34.5",
 		"svgo": "^4.0.0",
 		"vite-plugin-image-optimizer": "^2.0.3"
 	},
 	"peerDependencies": {
-		"vite": "^7.0.0"
+		"vite": "8.0.0-beta.15"
 	},
 	"devDependencies": {
-		"@types/node": "^25.2.3",
-		"tsup": "^8.5.0",
-		"typescript": "^5.9.2",
+		"@types/node": "^25.3.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3",
 		"vitest": "^4.0.18"
 	}
 }
