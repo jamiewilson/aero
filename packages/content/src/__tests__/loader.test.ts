@@ -208,7 +208,7 @@ describe('serializeContentModule', () => {
 
 		const output = serializeContentModule(loaded)
 
-		expect(output).toContain('function getCollection(name)')
+		expect(output).toContain('function getCollection(name, filterFn)')
 		expect(output).toContain('__collections[name]')
 		expect(output).toContain('"title": "Hello"')
 		expect(output).toContain('"title": "Post 1"')
@@ -238,5 +238,15 @@ describe('serializeContentModule', () => {
 
 		const output = serializeContentModule(loaded)
 		expect(output).toContain('"empty": []')
+	})
+
+	it('should include PROD filter for published documents', () => {
+		const loaded = new Map<string, any[]>()
+		loaded.set('docs', [{ title: 'Published', data: { published: true } }])
+
+		const output = serializeContentModule(loaded)
+
+		expect(output).toContain('import.meta.env.PROD')
+		expect(output).toContain("item.data.published === true")
 	})
 })
