@@ -498,58 +498,44 @@ export class AeroDiagnostics implements vscode.Disposable {
 			usedInTemplate.add(ref.content)
 		}
 
-		// Check usages in script content itself
-		// Use a simple regex check for now to avoid re-parsing everything
-		// We only care if it appearances *outside* of its own definition
-		// This is tricky without a real parser, but we can try a heuristic:
-		// If the name appears more times than in its definition, it's likely used.
-		// BETTER: Use analyzer's reference collection but apply it to script content too?
-		// Analyzer's `collectDefinedVariables` parses declarations.
-		// We can scan script content for identifiers.
-
+		// Combine only on:build script block contents for usage checking.
+		// on:client blocks are browser-only and must not satisfy build-time variable usage.
 		const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 		let scriptMatch: RegExpExecArray | null
-		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
-			const content = scriptMatch[2]
-			let maskedContent = maskJsComments(content)
+		let combinedScriptContent = ''
 
+		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+			const scriptAttrs = (scriptMatch[1] || '').toLowerCase()
+			if (/\bsrc\s*=/.test(scriptAttrs)) continue
+			// Exclude on:client — isolated from build-time scope
+			if (/\bon:client\b/.test(scriptAttrs)) continue
+			let blockContent = maskJsComments(scriptMatch[2])
 			// Mask strings to avoid matching inside them (e.g. import path)
-			maskedContent = maskedContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
+			blockContent = blockContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
 				' '.repeat(match.length),
 			)
+			combinedScriptContent += ' ' + blockContent
+		}
 
-			for (const [name, def] of definedVars) {
-				if (def.kind === 'import' || def.kind === 'declaration') {
-					if (usedInTemplate.has(name)) continue
+		for (const [name, def] of definedVars) {
+			if (def.kind === 'import' || def.kind === 'declaration') {
+				if (usedInTemplate.has(name)) continue
 
-					// Check for usage in script
-					// We need to count occurrences of the identifier in the script content
-					// Excluding the definition itself is hard without precise ranges relative to script start
-					// But we have `def.range`. We can check if there are other occurrences.
+				// Check if the variable name appears more than once across all script blocks.
+				// Once = only its own definition; more = actually used somewhere.
+				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+				const matches = combinedScriptContent.match(usageRegex)
+				if (matches && matches.length > 1) continue
 
-					// Simple heuristic:
-					// Regex match count of `\bname\b` in entire text.
-					// - 1 for definition
-					// - N for usages
-					// If count > 1, it's used (roughly).
-					// False positives: comments, strings.
-					// False negatives: shadowing.
-					// This is "good enough" for V1.
-
-					const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-					const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
-					const matches = maskedContent.match(usageRegex)
-					if (matches && matches.length > 1) continue
-
-					const diagnostic = new vscode.Diagnostic(
-						def.range,
-						`'${name}' is declared but its value is never read.`,
-						vscode.DiagnosticSeverity.Hint,
-					)
-					diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
-					diagnostic.source = DIAGNOSTIC_SOURCE
-					diagnostics.push(diagnostic)
-				}
+				const diagnostic = new vscode.Diagnostic(
+					def.range,
+					`'${name}' is declared but its value is never read.`,
+					vscode.DiagnosticSeverity.Hint,
+				)
+				diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
+				diagnostic.source = DIAGNOSTIC_SOURCE
+				diagnostics.push(diagnostic)
 			}
 		}
 	}

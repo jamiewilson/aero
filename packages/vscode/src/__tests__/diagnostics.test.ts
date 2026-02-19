@@ -119,4 +119,77 @@ describe('AeroDiagnostics Unused Variables', () => {
 		)
 		expect(unusedHeaderDiag).toBeUndefined()
 	})
+
+	it('should NOT flag imports from on:build as unused when an on:client block is also present', () => {
+		// The real issue: with two script blocks, each block was checked independently.
+		// Imports in on:build would appear 0 times in on:client content → false unused.
+		const text = `
+<script on:build>
+  import base from '@layouts/base'
+  import { render } from 'aero:content'
+  const doc = Aero.props
+  const { html } = await render(doc)
+</script>
+<base-layout title="{doc.data.title}">
+  <section>{html}</section>
+</base-layout>
+<script on:client>
+  console.log('client side')
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedDiags = reportedDiagnostics.filter((d: any) =>
+			d.message.includes('is declared but its value is never read'),
+		)
+		// render is used inside on:build (render(doc)) — should NOT be flagged
+		// base is used as <base-layout> in template — should NOT be flagged
+		// doc/html are used in template expressions
+		expect(unusedDiags).toHaveLength(0)
+	})
+
+	it('should flag on:build import as unused even if the same name is declared in on:client', () => {
+		// on:client is browser-only — a `const base = ...` there must NOT count as usage
+		// of the `import base` in on:build.
+		const text = `
+<script on:build>
+  import base from '@layouts/base'
+</script>
+<div>no template usage of base</div>
+<script on:client>
+  const base = 'test' // same name, different scope — must not satisfy on:build import
+  console.log(base)
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedBaseDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'base' is declared but its value is never read"),
+		)
+		expect(unusedBaseDiag).toBeDefined()
+	})
 })
