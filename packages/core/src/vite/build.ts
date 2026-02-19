@@ -1,5 +1,6 @@
 import type { AeroDirs, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
+import { minify } from 'html-minifier-next'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
@@ -21,6 +22,7 @@ interface StaticBuildOptions {
 	resolvePath?: (specifier: string) => string
 	vitePlugins?: Plugin[]
 	configFile?: string | false
+	minify?: boolean
 }
 
 interface StaticPage {
@@ -452,6 +454,16 @@ export async function renderStaticPages(
 				clientScriptMap,
 				apiPrefix,
 			)
+
+			// Minify HTML in production
+			if (options.minify && process.env.NODE_ENV === 'production') {
+				rendered = await minify(rendered, {
+					collapseWhitespace: true,
+					removeComments: true,
+					minifyCSS: true,
+					minifyJS: true,
+				})
+			}
 
 			const outPath = path.join(distDir, page.outputFile)
 			fs.mkdirSync(path.dirname(outPath), { recursive: true })

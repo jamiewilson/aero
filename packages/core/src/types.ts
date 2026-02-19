@@ -14,6 +14,8 @@ export interface AeroOptions {
 	apiPrefix?: string
 	/** Directory overrides */
 	dirs?: AeroDirs
+	/** Minify HTML output in production (default: true) */
+	minify?: boolean
 }
 
 export interface MountOptions {

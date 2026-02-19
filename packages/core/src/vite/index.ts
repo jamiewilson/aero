@@ -253,6 +253,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		async closeBundle() {
 			const root = config.root
 			const outDir = config.build.outDir
+			const minify = options.minify !== false // Default to true
 			await renderStaticPages(
 				{
 					root,
@@ -263,6 +264,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					// Keep static rendering isolated from user vite.config.ts while
 					// still providing Aero's HTML transform/runtime resolution support.
 					vitePlugins: config.configFile ? [] : [mainPlugin],
+					minify,
 				},
 				outDir,
 			)
