@@ -16,9 +16,10 @@
 		"onLanguage:html"
 	],
 	"scripts": {
-		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode",
 		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch",
-		"test": "CHOKIDAR_USEPOLLING=1 vitest run"
+		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",

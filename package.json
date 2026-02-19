@@ -4,17 +4,22 @@
 	"private": true,
 	"packageManager": "pnpm@10.28.0",
 	"scripts": {
-		"predev": "pnpm --dir packages/core build && pnpm --dir packages/content build",
-		"dev": "pnpm --dir packages/start dev",
-		"prebuild": "pnpm --dir packages/core build && pnpm --dir packages/content build",
-		"build": "pnpm --dir packages/start build",
-		"build:all": "pnpm --dir packages/core build && pnpm --dir packages/content build && pnpm --dir packages/start build && pnpm --dir packages/vscode build",
-		"prepreview": "pnpm --dir packages/core build && pnpm --dir packages/content build",
-		"preview": "pnpm --dir packages/start preview",
-		"prepreview:api": "pnpm --dir packages/core build && pnpm --dir packages/content build",
-		"preview:api": "pnpm --dir packages/start preview:api",
-		"test": "pnpm --dir packages/core test",
-		"test:all": "pnpm --dir packages/core test && pnpm --dir packages/content test && pnpm --dir packages/vscode test",
-		"cleanAll": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
+		"build:core": "pnpm --dir packages/core build",
+		"build:content": "pnpm --dir packages/content build",
+		"build:start": "pnpm --dir packages/start build",
+		"build:vscode": "pnpm --dir packages/vscode build",
+		"build:all": "pnpm build:core && pnpm build:content && pnpm build:start",
+		"test": "vitest run",
+		"typecheck": "pnpm -r typecheck",
+		"clean:all": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
+	},
+	"devDependencies": {
+		"vitest": "^4.0.18"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@aero-ssg/core",
+			"@aero-ssg/content"
+		]
 	}
 }

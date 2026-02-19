@@ -9,6 +9,7 @@
 	],
 	"scripts": {
 		"build": "tsup src/index.ts src/vite.ts src/markdown.ts src/render.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
 		"test": "vitest run"
 	},
 	"exports": {
