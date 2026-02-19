@@ -248,4 +248,406 @@ describe('AeroDiagnostics Unused Variables', () => {
 		)
 		expect(unusedDismissDiag).toBeUndefined()
 	})
+
+	it('should NOT flag getCollection when used in getStaticPaths', () => {
+		const text = `
+<script on:build>
+    import { getCollection } from 'aero:content'
+    
+    export async function getStaticPaths() {
+        const posts = await getCollection('posts')
+        return posts.map(post => ({ params: { slug: post.slug } }))
+    }
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'getCollection' is declared but its value is never read"),
+		)
+		expect(unusedDiag).toBeUndefined()
+	})
+
+	it('should NOT flag render when used in getStaticPaths', () => {
+		const text = `
+<script on:build>
+    import { getCollection, render } from 'aero:content'
+    
+    export async function getStaticPaths() {
+        const posts = await getCollection('posts')
+        return posts.map(post => {
+            const content = render(post)
+            return { params: { slug: post.slug }, props: { content } }
+        })
+    }
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedRenderDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'render' is declared but its value is never read"),
+		)
+		const unusedCollectionDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'getCollection' is declared but its value is never read"),
+		)
+
+		expect(unusedRenderDiag).toBeUndefined()
+		expect(unusedCollectionDiag).toBeUndefined()
+	})
+})
+
+describe('AeroDiagnostics Undefined Variables', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should flag undefined variable in template expression', () => {
+		const text = `
+<div>{undefinedVar}</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'undefinedVar' is not defined"),
+		)
+		expect(undefinedDiag).toBeDefined()
+	})
+
+	it('should NOT flag defined variable in template expression', () => {
+		const text = `
+<script on:build>
+	const myVar = 'hello'
+</script>
+<div>{myVar}</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'myVar' is not defined"),
+		)
+		expect(undefinedDiag).toBeUndefined()
+	})
+
+	it('should NOT flag content globals as undefined', () => {
+		const text = `
+<div>{site.title}</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'site' is not defined"),
+		)
+		expect(undefinedDiag).toBeUndefined()
+	})
+
+	it('should NOT flag undefined variable in Alpine x-data', () => {
+		const text = `
+<section x-data="{ input: '' }">
+	<input x-model="input" />
+</section>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'input' is not defined"),
+		)
+		expect(undefinedDiag).toBeUndefined()
+	})
+})
+
+describe('AeroDiagnostics Script Tags', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should warn when script tag lacks on:build or on:client', () => {
+		const text = `
+<script>
+	const foo = 'bar'
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const scriptDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+		)
+		expect(scriptDiag).toBeDefined()
+	})
+
+	it('should NOT warn when script has on:build', () => {
+		const text = `
+<script on:build>
+	const foo = 'bar'
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const scriptDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+		)
+		expect(scriptDiag).toBeUndefined()
+	})
+
+	it('should NOT warn when script has on:client', () => {
+		const text = `
+<script on:client>
+	console.log('hello')
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const scriptDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+		)
+		expect(scriptDiag).toBeUndefined()
+	})
+})
+
+describe('AeroDiagnostics Conditional Chains', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should flag orphaned else-if without preceding if', () => {
+		const text = `
+<div>Before</div>
+<div data-else-if="{condition}">Else If</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const elseIfDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('else-if must follow an element with if or else-if'),
+		)
+		expect(elseIfDiag).toBeDefined()
+	})
+
+	it('should flag orphaned else without preceding if', () => {
+		const text = `
+<div>Before</div>
+<div data-else>Else</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const elseDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('else must follow an element with if or else-if'),
+		)
+		expect(elseDiag).toBeDefined()
+	})
+
+	it('should NOT flag valid if-else-if-else chain', () => {
+		const text = `
+<div data-if="{a}">A</div>
+<div data-else-if="{b}">B</div>
+<div data-else>C</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const conditionalDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('must follow an element with if or else-if'),
+		)
+		expect(conditionalDiag).toBeUndefined()
+	})
+})
+
+describe('AeroDiagnostics Directive Expression Braces', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should flag directive without braced expression', () => {
+		const text = `
+<div data-if="condition">Content</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const directiveDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('must use a braced expression'),
+		)
+		expect(directiveDiag).toBeDefined()
+	})
+
+	it('should NOT flag directive with braced expression', () => {
+		const text = `
+<div data-if="{condition}">Content</div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const directiveDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('must use a braced expression'),
+		)
+		expect(directiveDiag).toBeUndefined()
+	})
 })

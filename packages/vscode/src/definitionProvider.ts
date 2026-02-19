@@ -2,13 +2,14 @@ import * as vscode from 'vscode'
 import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
-import { CONTENT_GLOBALS, IMPORT_REGEX } from './constants'
+import { CONTENT_GLOBALS } from './constants'
 import {
 	collectDefinedVariables,
 	collectTemplateScopes,
 	VariableDefinition,
 	TemplateScope,
 } from './analyzer'
+import { kebabToCamelCase, collectImportedSpecifiers, findInnermostScope } from './utils'
 
 /**
  * Provides Go to Definition for Aero template references in HTML files.
@@ -100,37 +101,6 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 type ContentRef = { alias: string; propertyPath: string[] }
 
 // Redundant types removed
-
-function collectImportedSpecifiers(text: string): Map<string, string> {
-	const imports = new Map<string, string>()
-	IMPORT_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-
-	while ((match = IMPORT_REGEX.exec(text)) !== null) {
-		const defaultImport = match[1]?.trim()
-		const namedImports = match[2]
-		const namespaceImport = match[3]?.trim()
-		const specifier = match[5]
-
-		if (defaultImport) imports.set(defaultImport, specifier)
-		if (namespaceImport) imports.set(namespaceImport, specifier)
-
-		if (!namedImports) continue
-		for (const rawName of namedImports.split(',')) {
-			const name = rawName.trim()
-			if (!name) continue
-			const aliasParts = name.split(/\s+as\s+/i).map(part => part.trim())
-			const localName = aliasParts[1] || aliasParts[0]
-			if (localName) imports.set(localName, specifier)
-		}
-	}
-
-	return imports
-}
-
-function kebabToCamelCase(value: string): string {
-	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
-}
 
 function resolveExpressionIdentifierDefinition(
 	document: vscode.TextDocument,
@@ -234,23 +204,6 @@ function resolveGenericChainDefinition(
 // collectBuildVariables and collectEachScopes removed (moved to analyzer)
 
 // parseEachAttribute moved to analyzer
-
-function findInnermostScope(scopes: TemplateScope[], offset: number): TemplateScope | null {
-	let best: TemplateScope | null = null
-	for (const scope of scopes) {
-		if (offset < scope.startOffset || offset > scope.endOffset) continue
-		if (!best) {
-			best = scope
-			continue
-		}
-		const bestSize = best.endOffset - best.startOffset
-		const thisSize = scope.endOffset - scope.startOffset
-		if (thisSize <= bestSize) {
-			best = scope
-		}
-	}
-	return best
-}
 
 function resolveContentRefFromExpression(
 	expression: string,
