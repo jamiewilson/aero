@@ -1,5 +1,6 @@
 <script on:build>
 	import base from '@layouts/base'
+	import badge from '@components/badge'
 	import { getCollection, render } from 'aero:content'
 
 	export async function getStaticPaths() {
@@ -15,8 +16,9 @@
 	<article class="prose">
 		<a href="/docs">← All docs</a>
 		<header>
+			<badge-component if="{!doc.data.published}" text="Draft" />
 			<h1>{doc.data.title}</h1>
-			<p class="subtitle secondary">{doc.data.subtitle}</p>
+			<p class="secondary">{doc.data.subtitle}</p>
 			<hr />
 		</header>
 		<section>{html}</section>

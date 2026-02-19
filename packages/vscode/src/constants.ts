@@ -9,7 +9,7 @@ export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 
 /** Matches import statements: `import X from 'path'` */
 export const IMPORT_REGEX =
-	/import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\4/g
+	/((?:^|[\r\n;])\s*)import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\5/g
 
 /** Matches `{ ... }` expressions in template text */
 export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g

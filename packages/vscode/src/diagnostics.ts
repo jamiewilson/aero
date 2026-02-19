@@ -1,8 +1,15 @@
 import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
-import { COMPONENT_SUFFIX_REGEX, IMPORT_REGEX } from './constants'
+import { COMPONENT_SUFFIX_REGEX, IMPORT_REGEX, CONTENT_GLOBALS } from './constants'
 import { isAeroDocument } from './scope'
+import {
+	collectDefinedVariables,
+	collectTemplateScopes,
+	collectTemplateReferences,
+	TemplateScope,
+	maskJsComments,
+} from './analyzer'
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
@@ -102,6 +109,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 		this.checkConditionalChains(document, text, diagnostics)
 		this.checkDirectiveExpressionBraces(document, text, diagnostics)
 		this.checkComponentReferences(document, text, diagnostics)
+		this.checkUndefinedVariables(document, text, diagnostics)
+		this.checkUnusedVariables(document, text, diagnostics)
 
 		this.collection.set(document.uri, diagnostics)
 	}
@@ -338,11 +347,21 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
 			const importName = kebabToCamelCase(baseName)
 			const importedSpecifier = imports.get(importName)
-			const alias =
-				importedSpecifier ||
-				(suffix === 'component' ? `@components/${baseName}` : `@layouts/${baseName}`)
 
-			const resolved = resolver.resolve(alias, document.uri.fsPath)
+			if (!importedSpecifier) {
+				const startPos = document.positionAt(match.index)
+				const endPos = document.positionAt(match.index + match[0].length)
+				const diagnostic = new vscode.Diagnostic(
+					new vscode.Range(startPos, endPos),
+					`Component '${baseName}' is not imported. Explicit imports are required.`,
+					vscode.DiagnosticSeverity.Error,
+				)
+				diagnostic.source = DIAGNOSTIC_SOURCE
+				diagnostics.push(diagnostic)
+				continue
+			}
+
+			const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
 			if (resolved && !fs.existsSync(resolved)) {
 				const startPos = document.positionAt(match.index)
 				const endPos = document.positionAt(match.index + match[0].length)
@@ -356,8 +375,230 @@ export class AeroDiagnostics implements vscode.Disposable {
 			}
 		}
 	}
+	// -----------------------------------------------------------------------
+	// 5. Undefined variables in template
+	// -----------------------------------------------------------------------
+
+	private checkUndefinedVariables(
+		document: vscode.TextDocument,
+		text: string,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const definedVars = collectDefinedVariables(document, text)
+		const templateScopes = collectTemplateScopes(document, text)
+		const references = collectTemplateReferences(document, text)
+
+		// Allowed globals that are always available
+		const ALLOWED_GLOBALS = new Set([
+			...Object.keys(CONTENT_GLOBALS),
+			'Aero',
+			'props',
+			'console',
+			'Math',
+			'JSON',
+			'Object',
+			'Array',
+			'String',
+			'Number',
+			'Boolean',
+			'Date',
+			'RegExp',
+			'Map',
+			'Set',
+			'WeakMap',
+			'WeakSet',
+			'Promise',
+			'Error',
+			'NaN',
+			'Infinity',
+			'undefined',
+			'null',
+			'true',
+			false,
+			'window',
+			'document',
+			'globalThis',
+			// Alpine.js built-ins
+			'$el',
+			'$event',
+			'$data',
+			'$dispatch',
+			'$refs',
+			'$watch',
+			'$root',
+			'$nextTick',
+			'$tick',
+			'$store',
+			'$persist',
+			'$restore',
+			'$abi',
+			// HTMX built-ins
+			'$target',
+			'$trigger',
+			'$triggerElement',
+			'$response',
+		])
+
+		for (const ref of references) {
+			// 1. Check if it's a global
+			if (ALLOWED_GLOBALS.has(ref.content)) continue
+
+			// 1.5. Skip undefined check for Alpine-defined variables
+			// Variables in x-data, @click, etc. are defined in Alpine's runtime scope
+			if (ref.isAlpine) continue
+
+			// 2. Check if it's defined in <script>
+			const def = definedVars.get(ref.content)
+			if (def) {
+				if (def.properties && ref.propertyPath && ref.propertyPath.length > 0) {
+					const firstProp = ref.propertyPath[0]
+					if (!def.properties.has(firstProp)) {
+						const range =
+							ref.propertyRanges && ref.propertyRanges.length > 0
+								? ref.propertyRanges[0]
+								: ref.range
+						const diagnostic = new vscode.Diagnostic(
+							range,
+							`Property '${firstProp}' does not exist on type '${ref.content}'`,
+							vscode.DiagnosticSeverity.Error,
+						)
+						diagnostic.source = DIAGNOSTIC_SOURCE
+						diagnostics.push(diagnostic)
+					}
+				}
+				continue
+			}
+
+			// 3. Check if it's in a template scope (data-each)
+			// We need to find if the reference is within a scope that defines it
+			const scope = findInnermostScope(templateScopes, ref.offset)
+			if (scope && scope.itemName === ref.content) continue
+
+			// Also check parent scopes!
+			let parentScope = scope
+			let foundInScope = false
+			while (parentScope) {
+				if (parentScope.itemName === ref.content) {
+					foundInScope = true
+					break
+				}
+				// find parent... naive approach: re-search in scopes considering endOffset
+				// Optimization: TemplateScope could have parent ref, but list is flat
+				// For now, simpler: iterating all scopes is okay for typical file size
+				parentScope = findParentScope(templateScopes, parentScope)
+			}
+			if (foundInScope) continue
+
+			const message = ref.isComponent
+				? `Component '${ref.content}' is not defined`
+				: `Variable '${ref.content}' is not defined`
+
+			const diagnostic = new vscode.Diagnostic(
+				ref.range,
+				message,
+				vscode.DiagnosticSeverity.Error,
+			)
+			diagnostic.source = DIAGNOSTIC_SOURCE
+			diagnostics.push(diagnostic)
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// 6. Unused variables in script
+	// -----------------------------------------------------------------------
+
+	private checkUnusedVariables(
+		document: vscode.TextDocument,
+		text: string,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const definedVars = collectDefinedVariables(document, text)
+		const references = collectTemplateReferences(document, text)
+
+		// Map of vars that are used in template
+		const usedInTemplate = new Set<string>()
+		for (const ref of references) {
+			usedInTemplate.add(ref.content)
+		}
+
+		// Combine only on:build script block contents for usage checking.
+		// on:client blocks are browser-only and must not satisfy build-time variable usage.
+		const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+		let scriptMatch: RegExpExecArray | null
+		let combinedScriptContent = ''
+
+		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+			const scriptAttrs = (scriptMatch[1] || '').toLowerCase()
+			if (/\bsrc\s*=/.test(scriptAttrs)) continue
+			// Exclude on:client — isolated from build-time scope
+			if (/\bon:client\b/.test(scriptAttrs)) continue
+			let blockContent = maskJsComments(scriptMatch[2])
+			// Mask strings to avoid matching inside them (e.g. import path)
+			blockContent = blockContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
+				' '.repeat(match.length),
+			)
+			combinedScriptContent += ' ' + blockContent
+		}
+
+		for (const [name, def] of definedVars) {
+			if (def.kind === 'import' || def.kind === 'declaration') {
+				if (usedInTemplate.has(name)) continue
+
+				// Check if the variable name appears more than once across all script blocks.
+				// Once = only its own definition; more = actually used somewhere.
+				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+				const matches = combinedScriptContent.match(usageRegex)
+				if (matches && matches.length > 1) continue
+
+				const diagnostic = new vscode.Diagnostic(
+					def.range,
+					`'${name}' is declared but its value is never read.`,
+					vscode.DiagnosticSeverity.Hint,
+				)
+				diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
+				diagnostic.source = DIAGNOSTIC_SOURCE
+				diagnostics.push(diagnostic)
+			}
+		}
+	}
 }
 
+function findInnermostScope(scopes: TemplateScope[], offset: number): TemplateScope | null {
+	let best: TemplateScope | null = null
+	for (const scope of scopes) {
+		if (offset < scope.startOffset || offset > scope.endOffset) continue
+		if (!best) {
+			best = scope
+			continue
+		}
+		const bestSize = best.endOffset - best.startOffset
+		const thisSize = scope.endOffset - scope.startOffset
+		if (thisSize <= bestSize) {
+			best = scope
+		}
+	}
+	return best
+}
+
+function findParentScope(scopes: TemplateScope[], child: TemplateScope): TemplateScope | null {
+	let best: TemplateScope | null = null
+	for (const scope of scopes) {
+		if (scope === child) continue
+		if (child.startOffset >= scope.startOffset && child.endOffset <= scope.endOffset) {
+			if (!best) {
+				best = scope
+				continue
+			}
+			const bestSize = best.endOffset - best.startOffset
+			const thisSize = scope.endOffset - scope.startOffset
+			if (thisSize <= bestSize) {
+				best = scope
+			}
+		}
+	}
+	return best
+}
 function getCommentRanges(text: string): Array<{ start: number; end: number }> {
 	const ranges: Array<{ start: number; end: number }> = []
 	HTML_COMMENT_REGEX.lastIndex = 0
@@ -381,10 +622,10 @@ function collectImportedSpecifiers(text: string): Map<string, string> {
 	let match: RegExpExecArray | null
 
 	while ((match = IMPORT_REGEX.exec(text)) !== null) {
-		const defaultImport = match[1]?.trim()
-		const namedImports = match[2]
-		const namespaceImport = match[3]?.trim()
-		const specifier = match[5]
+		const defaultImport = match[2]?.trim()
+		const namedImports = match[3]
+		const namespaceImport = match[4]?.trim()
+		const specifier = match[6]
 
 		if (defaultImport) imports.set(defaultImport, specifier)
 		if (namespaceImport) imports.set(namespaceImport, specifier)

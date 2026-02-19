@@ -1,8 +1,11 @@
 <script on:build>
 	import base from '@layouts/base'
+	import badge from '@components/badge'
 	import { getCollection } from 'aero:content'
+
 	const props = Aero.props
 	const docs = await getCollection('docs')
+		.sort((a, b) => b.data.published - a.data.published)
 </script>
 
 <base-layout title="Docs">
@@ -17,7 +20,8 @@
 	<ul class="card">
 		<li each="{doc in docs}">
 			<a href="/docs/{doc.id}">{doc.data.title}</a>
-			<p if="{ doc.data.subtitle }">{doc.data.subtitle}</p>
+			<badge-component if="{!doc.data.published}" text="Draft" />
+			<p>{doc.data.subtitle}</p>
 		</li>
 		<style>
 			@scope {

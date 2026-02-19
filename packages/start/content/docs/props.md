@@ -1,11 +1,11 @@
 ---
 published: true
-title: Props System Guide
+title: Props Guide
 subtitle: Learn how to use the flexible, Astro-inspired props system in TBD framework for intuitive component composition.
 date: 2026-04-15
 ---
 
-The TBD framework provides a flexible, Astro-inspired props system that makes component composition intuitive and powerful.
+The Aero framework provides a flexible, Astro-inspired props system that makes component composition intuitive and powerful.
 
 ## Core Concept
 

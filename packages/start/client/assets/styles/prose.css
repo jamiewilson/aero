@@ -7,16 +7,14 @@
 		text-align: left;
 		text-wrap: pretty;
 
-		* + * {
-			margin-block-start: 2rem;
-		}
-
 		header {
 			margin-block-start: 10vh;
+			font-size: x-large;
+			text-wrap: balance;
 		}
 
-		.subtitle {
-			font-size: larger;
+		:not(header) * + * {
+			margin-block-start: 2rem;
 		}
 	}
 }

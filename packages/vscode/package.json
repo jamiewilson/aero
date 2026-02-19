@@ -17,13 +17,15 @@
 	],
 	"scripts": {
 		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode",
-		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch"
+		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch",
+		"test": "CHOKIDAR_USEPOLLING=1 vitest run"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",
 		"@types/vscode": "^1.74.0",
 		"tsup": "^8.0.0",
-		"typescript": "^5.5.0"
+		"typescript": "^5.5.0",
+		"vitest": "^4.0.18"
 	},
 	"contributes": {
 		"configuration": {
