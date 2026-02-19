@@ -5,7 +5,7 @@ subtitle: Learn how to use the flexible, Astro-inspired props system in TBD fram
 date: 2026-04-15
 ---
 
-The TBD framework provides a flexible, Astro-inspired props system that makes component composition intuitive and powerful.
+The Aero framework provides a flexible, Astro-inspired props system that makes component composition intuitive and powerful.
 
 ## Core Concept
 

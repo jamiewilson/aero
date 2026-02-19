@@ -3,6 +3,12 @@ import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 import { CONTENT_GLOBALS, IMPORT_REGEX } from './constants'
+import {
+	collectDefinedVariables,
+	collectTemplateScopes,
+	VariableDefinition,
+	TemplateScope,
+} from './analyzer'
 
 /**
  * Provides Go to Definition for Aero template references in HTML files.
@@ -61,9 +67,9 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 				const importedSpecifier = imports.get(importName)
 				const alias =
 					importedSpecifier ||
-					(classification.suffix === 'component' ?
-						`@components/${classification.baseName}`
-					:	`@layouts/${classification.baseName}`)
+					(classification.suffix === 'component'
+						? `@components/${classification.baseName}`
+						: `@layouts/${classification.baseName}`)
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
@@ -72,10 +78,9 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			case 'content-global': {
 				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
 				if (!resolved) return null
-				const targetLine =
-					classification.propertyPath ?
-						findPropertyLine(resolved, classification.propertyPath)
-					:	0
+				const targetLine = classification.propertyPath
+					? findPropertyLine(resolved, classification.propertyPath)
+					: 0
 				return [makeLink(classification.range, resolved, targetLine)]
 			}
 
@@ -94,21 +99,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 
 type ContentRef = { alias: string; propertyPath: string[] }
 
-type BuildVarDef = {
-	name: string
-	range: vscode.Range
-	contentRef?: ContentRef
-}
-
-type EachScope = {
-	itemName: string
-	itemRange: vscode.Range
-	sourceExpr: string
-	sourceRoot: string
-	sourceRange: vscode.Range
-	startOffset: number
-	endOffset: number
-}
+// Redundant types removed
 
 function collectImportedSpecifiers(text: string): Map<string, string> {
 	const imports = new Map<string, string>()
@@ -153,8 +144,8 @@ function resolveExpressionIdentifierDefinition(
 	const lineText = document.lineAt(position.line).text
 	const chainAtCursor = getDotChainAt(lineText, position.character)
 
-	const buildVars = collectBuildVariables(document, text)
-	const scopes = collectEachScopes(document, text)
+	const buildVars = collectDefinedVariables(document, text)
+	const scopes = collectTemplateScopes(document, text)
 
 	const currentScope = findInnermostScope(scopes, offset)
 	if (currentScope) {
@@ -207,7 +198,7 @@ function resolveGenericChainDefinition(
 	position: vscode.Position,
 	originRange: vscode.Range,
 	resolver: ReturnType<typeof getResolver>,
-	buildVars: Map<string, BuildVarDef>,
+	buildVars: Map<string, VariableDefinition>,
 	chainAtCursor: { segments: string[]; start: number; end: number } | null,
 ): vscode.LocationLink[] | null {
 	if (!chainAtCursor || chainAtCursor.segments.length < 2) return null
@@ -240,147 +231,12 @@ function resolveGenericChainDefinition(
 	return [makeLink(originRange, resolved, line)]
 }
 
-function collectBuildVariables(
-	document: vscode.TextDocument,
-	text: string,
-): Map<string, BuildVarDef> {
-	const vars = new Map<string, BuildVarDef>()
-	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+// collectBuildVariables and collectEachScopes removed (moved to analyzer)
 
-	let scriptMatch: RegExpExecArray | null
-	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
-		const attrs = (scriptMatch[1] || '').toLowerCase()
-		if (/\bsrc\s*=/.test(attrs)) continue
+// parseEachAttribute moved to analyzer
 
-		const content = scriptMatch[2]
-		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
-
-		const declRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g
-		let declMatch: RegExpExecArray | null
-		while ((declMatch = declRegex.exec(content)) !== null) {
-			const name = declMatch[1]
-			const initializer = (declMatch[2] || '').trim()
-			const nameInDecl = declMatch[0].indexOf(name)
-			const start = contentStart + declMatch.index + nameInDecl
-			const end = start + name.length
-
-			const def: BuildVarDef = {
-				name,
-				range: new vscode.Range(document.positionAt(start), document.positionAt(end)),
-			}
-
-			const ref = resolveContentRefFromExpression(initializer, vars)
-			if (ref) {
-				def.contentRef = ref
-			}
-
-			vars.set(name, def)
-		}
-	}
-
-	return vars
-}
-
-function collectEachScopes(document: vscode.TextDocument, text: string): EachScope[] {
-	type StackItem = {
-		tagName: string
-		startOffset: number
-		each?: Omit<EachScope, 'endOffset'>
-	}
-
-	const scopes: EachScope[] = []
-	const stack: StackItem[] = []
-	const tagRegex = /<\/?([a-z][a-z0-9-]*)\b([^>]*?)>/gi
-
-	let match: RegExpExecArray | null
-	while ((match = tagRegex.exec(text)) !== null) {
-		const fullTag = match[0]
-		const isClosing = fullTag.startsWith('</')
-		const tagName = match[1]
-		const attrs = match[2] || ''
-		const tagStart = match.index
-		const tagEnd = tagStart + fullTag.length
-
-		if (isClosing) {
-			for (let i = stack.length - 1; i >= 0; i--) {
-				if (stack[i].tagName === tagName) {
-					const open = stack.splice(i, 1)[0]
-					if (open.each) {
-						scopes.push({ ...open.each, endOffset: tagEnd })
-					}
-					break
-				}
-			}
-			continue
-		}
-
-		const each = parseEachAttribute(document, attrs, tagStart, fullTag)
-		const selfClosing = /\/\s*>$/.test(fullTag)
-		if (selfClosing) {
-			if (each) {
-				scopes.push({ ...each, startOffset: tagStart, endOffset: tagEnd })
-			}
-			continue
-		}
-
-		stack.push({
-			tagName,
-			startOffset: tagStart,
-			each: each ? { ...each, startOffset: tagStart } : undefined,
-		})
-	}
-
-	for (const open of stack) {
-		if (open.each) {
-			scopes.push({ ...open.each, endOffset: text.length })
-		}
-	}
-
-	return scopes
-}
-
-function parseEachAttribute(
-	document: vscode.TextDocument,
-	attrs: string,
-	tagStart: number,
-	fullTag: string,
-): Omit<EachScope, 'startOffset' | 'endOffset'> | null {
-	const eachAttr = /\b(?:data-)?each\s*=\s*(['"])(.*?)\1/i.exec(attrs)
-	if (!eachAttr) return null
-
-	const expr = (eachAttr[2] || '').trim()
-	const exprMatch =
-		/^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(expr)
-	if (!exprMatch) return null
-
-	const itemName = exprMatch[1]
-	const sourceExpr = exprMatch[2]
-	const sourceRoot = sourceExpr.split('.')[0]
-
-	const attrsOffsetInTag = fullTag.indexOf(attrs)
-	const attrBase = tagStart + (attrsOffsetInTag >= 0 ? attrsOffsetInTag : 0)
-	const exprOffsetInAttr = eachAttr[0].indexOf(eachAttr[2])
-	const exprStart = attrBase + eachAttr.index + exprOffsetInAttr
-
-	const itemStart = exprStart + expr.indexOf(itemName)
-	const itemEnd = itemStart + itemName.length
-	const sourceStart = exprStart + expr.lastIndexOf(sourceExpr)
-	const sourceEnd = sourceStart + sourceExpr.length
-
-	return {
-		itemName,
-		itemRange: new vscode.Range(document.positionAt(itemStart), document.positionAt(itemEnd)),
-		sourceExpr,
-		sourceRoot,
-		sourceRange: new vscode.Range(
-			document.positionAt(sourceStart),
-			document.positionAt(sourceEnd),
-		),
-	}
-}
-
-function findInnermostScope(scopes: EachScope[], offset: number): EachScope | null {
-	let best: EachScope | null = null
+function findInnermostScope(scopes: TemplateScope[], offset: number): TemplateScope | null {
+	let best: TemplateScope | null = null
 	for (const scope of scopes) {
 		if (offset < scope.startOffset || offset > scope.endOffset) continue
 		if (!best) {
@@ -398,7 +254,7 @@ function findInnermostScope(scopes: EachScope[], offset: number): EachScope | nu
 
 function resolveContentRefFromExpression(
 	expression: string,
-	buildVars: Map<string, BuildVarDef>,
+	buildVars: Map<string, VariableDefinition>,
 ): ContentRef | null {
 	const chainMatch =
 		/^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
