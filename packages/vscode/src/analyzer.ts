@@ -39,12 +39,27 @@ export function maskJsComments(text: string): string {
 
 /**
  * Collects all defined variables in <script> blocks (imports, declarations).
+ * Returns tuple: [variables map, duplicates array]
  */
 export function collectDefinedVariables(
 	document: vscode.TextDocument,
 	text: string,
-): Map<string, VariableDefinition> {
+): [Map<string, VariableDefinition>, Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }>] {
 	const vars = new Map<string, VariableDefinition>()
+	const duplicates: Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }> = []
+
+	const setVar = (name: string, def: VariableDefinition) => {
+		const existing = vars.get(name)
+		if (existing) {
+			duplicates.push({
+				name,
+				kind1: existing.kind,
+				kind2: def.kind,
+				range: def.range,
+			})
+		}
+		vars.set(name, def)
+	}
 
 	// 1. Imports
 	// Imports are usually at the top, but we should strip comments just in case?
@@ -65,7 +80,7 @@ export function collectDefinedVariables(
 
 		if (defaultImport) {
 			const nameStart = start + match[0].indexOf(defaultImport)
-			vars.set(defaultImport, {
+			setVar(defaultImport, {
 				name: defaultImport,
 				range: new vscode.Range(
 					document.positionAt(nameStart),
@@ -77,7 +92,7 @@ export function collectDefinedVariables(
 
 		if (namespaceImport) {
 			const nameStart = start + match[0].indexOf(namespaceImport)
-			vars.set(namespaceImport, {
+			setVar(namespaceImport, {
 				name: namespaceImport,
 				range: new vscode.Range(
 					document.positionAt(nameStart),
@@ -122,14 +137,13 @@ export function collectDefinedVariables(
 				const finalStart = namedPartStart + partIndexInNamed + localNameIndexInPart
 
 				if (localName) {
-					vars.set(localName, {
+					setVar(localName, {
 						name: localName,
 						range: new vscode.Range(
 							document.positionAt(finalStart),
 							document.positionAt(finalStart + localName.length),
 						),
 						kind: 'import',
-						// We could detect unused imports here if we want to be strict
 					})
 				}
 
@@ -197,7 +211,7 @@ export function collectDefinedVariables(
 				}
 			}
 
-			vars.set(name, def)
+			setVar(name, def)
 		}
 
 		// Destructuring: const { x, y: z } = ...
@@ -228,7 +242,7 @@ export function collectDefinedVariables(
 				const absStart = bodyStart + partIndex + localIndex
 
 				if (localName) {
-					vars.set(localName, {
+					setVar(localName, {
 						name: localName,
 						range: new vscode.Range(
 							document.positionAt(absStart),
@@ -242,7 +256,7 @@ export function collectDefinedVariables(
 		}
 	}
 
-	return vars
+	return [vars, duplicates]
 }
 
 /**

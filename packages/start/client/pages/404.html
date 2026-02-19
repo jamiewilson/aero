@@ -1,16 +1,15 @@
 <script on:build>
 	import base from '@layouts/base'
 
-	const props = {
-		title: '404',
-		description: 'Page not found',
-	}
+	const code = '404'
+	const message = 'Page not found'
+	const title = `${code} | ${message}`
 </script>
 
-<base-layout title="{props.title + ' | ' + props.description}">
+<base-layout title="{title}">
 	<main>
 		<header>
-			<h1>{props.title} – {props.description}</h1>
+			<h1>{title}</h1>
 			<p>Sorry, the page you are looking for does not exist.</p>
 		</header>
 		<a href="/">Go back to the homepage</a>

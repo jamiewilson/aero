@@ -651,3 +651,65 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		expect(directiveDiag).toBeUndefined()
 	})
 })
+
+describe('AeroDiagnostics Duplicate Declarations', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should flag import conflicting with local declaration', () => {
+		const text = `
+<script on:build>
+	import header from '@components/header'
+	const header = { title: 'Test' }
+</script>
+<header-component />
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const dupDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("declared multiple times"),
+		)
+		expect(dupDiag).toBeDefined()
+	})
+
+	it('should NOT flag when no duplicate', () => {
+		const text = `
+<script on:build>
+	import header from '@components/header'
+	const props = { title: 'Test' }
+</script>
+<header-component />
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const dupDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("declared multiple times"),
+		)
+		expect(dupDiag).toBeUndefined()
+	})
+})
