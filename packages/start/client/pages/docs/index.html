@@ -21,7 +21,7 @@
 		<li each="{doc in docs}">
 			<a href="/docs/{doc.id}">{doc.data.title}</a>
 			<badge-component if="{!doc.data.published}" text="Draft" />
-			<p if="{ doc.data.subtitle }">{doc.data.subtitle}</p>
+			<p>{doc.data.subtitle}</p>
 		</li>
 		<style>
 			@scope {

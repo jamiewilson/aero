@@ -8,7 +8,7 @@ const docs = defineCollection({
 	schema: z.object({
 		published: z.boolean().default(false),
 		title: z.string(),
-		subtitle: z.string().optional(),
+		subtitle: z.string(),
 		date: z.date(),
 	}),
 })

@@ -1,34 +1,63 @@
-# Aero Template Support
+# Aero VS Code Extension
 
-Adds Aero template language support inside HTML files.
+Language support for Aero templates in HTML files. Provides syntax highlighting, completions, hovers, definitions, and diagnostics for Aero expressions and components.
 
-- **In text:** `<h1>{ props.title } - { props.description }</h1>`
-- **In attributes:** `<sub-layout title="{ meta.title }" image="{ meta.image }">`
+## Features
 
-Expressions inside `<script>` blocks are left unchanged (no double highlighting).
+- **Syntax Highlighting:**
+  - Highlights Aero expressions in text (`{ props.title }`) and attributes (`title="{ meta.title }"`).
+  - Leaves code inside `<script on:build>` and `<script on:client>` blocks unchanged.
 
-## Scope Modes
+- **Completions:**
+  - Suggests Aero component names, path aliases, and props in HTML files.
+  - Triggered on `<`, `/`, `@`, `"`, and `'`.
 
-The extension exposes `aero.scopeMode` to control where language features run:
+- **Hover:**
+  - Shows info for Aero expressions, props, and component usage.
 
-- `auto` (default): runs features in detected Aero projects, and in HTML files with strong Aero markers.
-- `strict`: runs features only when the current file is inside a detected Aero project.
-- `always`: runs features in all HTML files.
+- **Definitions:**
+  - Jump to component/layout/page definitions via path aliases and imports.
 
-Project detection checks nearest folders for Aero signals such as Aero path aliases in `tsconfig.json`, Aero dependencies in `package.json`, and Aero-related `vite.config.*` usage.
+- **Diagnostics:**
+  - Warns about invalid Aero expressions, missing props, and template errors.
 
-## Install from folder
+- **Scope Modes:**
+  - `aero.scopeMode` setting controls where features are enabled:
+    - `auto` (default): Features run in detected Aero projects and HTML files with Aero markers.
+    - `strict`: Features run only in detected Aero projects.
+    - `always`: Features run in all HTML files.
+  - Project detection checks for Aero path aliases in `tsconfig.json`, Aero dependencies in `package.json`, and Aero-related `vite.config.*` usage.
 
-1. In Cursor or VS Code: **Command Palette** → **Developer: Install Extension from Location**
-2. Choose the vscode folder (this directory).
-3. Reload the editor if prompted.
+- **Cache Invalidation:**
+  - Automatically clears caches when `tsconfig.json` changes or when `aero.scopeMode` is updated.
 
-## Verify
+## Installation
 
-Open an Aero template (e.g. `client/pages/about.html` or `client/components/meta.html`) and confirm:
+1. Open VS Code or Cursor.
+2. Use **Command Palette** → **Developer: Install Extension from Location**.
+3. Select the `vscode` folder.
+4. Reload the editor if prompted.
 
-- Text like `{ props.title }` and `{ meta.title }` show JS highlighting for the expression.
-- Attributes like `title="{ meta.title }"` show JS inside the quotes.
-- Code in `<script on:build>` (e.g. `const { class: className } = aero.props`) is unchanged.
+## Usage
 
-Also confirm that a plain non-Aero HTML file does not show Aero-specific diagnostics, hovers, definitions, or completions when using `auto` or `strict` mode.
+Open an Aero template (e.g. `client/pages/about.html`, `client/components/meta.html`).
+
+- Expressions like `{ props.title }` and `{ meta.title }` are highlighted.
+- Attributes like `title="{ meta.title }"` show JS highlighting inside quotes.
+- Code in `<script on:build>` and `<script on:client>` is left unchanged.
+- Completions, hovers, and definitions are available for Aero components and props.
+- Diagnostics appear for invalid expressions or missing props.
+
+Plain HTML files without Aero markers do not show Aero-specific features unless `aero.scopeMode` is set to `always`.
+
+## Configuration
+
+In VS Code settings, search for `Aero`:
+
+- `aero.scopeMode`: Controls where Aero features are enabled (`auto`, `strict`, `always`).
+
+## Development
+
+- Main entry: `src/extension.ts`
+- Build: `pnpm run build` (uses tsup)
+- Test: `pnpm test` (uses Vitest)
