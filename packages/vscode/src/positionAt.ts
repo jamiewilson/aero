@@ -76,8 +76,8 @@ function getImportAt(lineText: string, lineNum: number, offset: number): Positio
 		const fullMatchEnd = fullMatchStart + match[0].length
 		if (offset < fullMatchStart || offset > fullMatchEnd) continue
 
-		const specifier = match[5]
-		const quote = match[4]
+		const specifier = match[6]
+		const quote = match[5]
 		// Find the specifier string position within the match
 		const specStart = match[0].lastIndexOf(quote + specifier + quote)
 		const specifierStart = fullMatchStart + specStart + 1 // +1 for opening quote
@@ -93,9 +93,9 @@ function getImportAt(lineText: string, lineNum: number, offset: number): Positio
 		}
 
 		// Is cursor on the imported name?
-		const defaultImport = match[1]
-		const namedImports = match[2]
-		const namespaceImport = match[3]
+		const defaultImport = match[2]
+		const namedImports = match[3]
+		const namespaceImport = match[4]
 
 		if (defaultImport) {
 			const nameStart = lineText.indexOf(defaultImport, fullMatchStart)
