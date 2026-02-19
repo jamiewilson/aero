@@ -393,7 +393,6 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const ALLOWED_GLOBALS = new Set([
 			...Object.keys(CONTENT_GLOBALS),
 			'Aero',
-			'props',
 			'console',
 			'Math',
 			'JSON',
