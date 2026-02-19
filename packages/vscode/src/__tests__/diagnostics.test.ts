@@ -192,4 +192,60 @@ describe('AeroDiagnostics Unused Variables', () => {
 		)
 		expect(unusedBaseDiag).toBeDefined()
 	})
+
+	it('should NOT flag variable as unused when used in Alpine x-data attribute', () => {
+		const text = `
+<script on:build>
+	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
+</script>
+<section x-data="{input: '', dismiss: dismiss}">
+	<span @click="dismiss($el)">Click me</span>
+</section>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'dismiss' is declared but its value is never read"),
+		)
+		expect(unusedDismissDiag).toBeUndefined()
+	})
+
+	it('should NOT flag variable as unused when used in HTMX event handler', () => {
+		const text = `
+<script on:build>
+	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
+</script>
+<span @htmx:after-swap="dismiss($el)"></span>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'dismiss' is declared but its value is never read"),
+		)
+		expect(unusedDismissDiag).toBeUndefined()
+	})
 })

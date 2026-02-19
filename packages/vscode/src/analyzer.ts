@@ -27,6 +27,7 @@ export type TemplateReference = {
 	propertyPath?: string[]
 	propertyRanges?: vscode.Range[]
 	isComponent?: boolean
+	isAlpine?: boolean
 }
 
 /**
@@ -458,7 +459,10 @@ export function collectTemplateReferences(
 				const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
 
 				if (isAlpine) {
-					// Ignore Alpine but MASK value
+					// Extract references from Alpine/HTMX attributes (x-data, @htmx:*, etc.)
+					// These can contain object literals or event handlers with variable references
+					extractIdentifiers(value, absValueStart, document, refs, true, true)
+					// MASK value so global scan skips it
 					maskRange(absValueStart, value.length)
 				} else {
 					// Standard attribute, check for interpolations { ... }
@@ -512,6 +516,7 @@ function extractIdentifiers(
 	document: vscode.TextDocument,
 	refs: TemplateReference[],
 	isAttribute: boolean,
+	isAlpine?: boolean,
 ) {
 	// Mask string literals to avoid matching inside them
 	// We replace content with spaces to preserve indices
@@ -594,6 +599,7 @@ function extractIdentifiers(
 			),
 			offset: absStart,
 			isAttribute,
+			isAlpine,
 		}
 
 		if (propertyPath.length > 0) {

@@ -414,15 +414,38 @@ export class AeroDiagnostics implements vscode.Disposable {
 			'undefined',
 			'null',
 			'true',
-			'false',
+			false,
 			'window',
 			'document',
 			'globalThis',
+			// Alpine.js built-ins
+			'$el',
+			'$event',
+			'$data',
+			'$dispatch',
+			'$refs',
+			'$watch',
+			'$root',
+			'$nextTick',
+			'$tick',
+			'$store',
+			'$persist',
+			'$restore',
+			'$abi',
+			// HTMX built-ins
+			'$target',
+			'$trigger',
+			'$triggerElement',
+			'$response',
 		])
 
 		for (const ref of references) {
 			// 1. Check if it's a global
 			if (ALLOWED_GLOBALS.has(ref.content)) continue
+
+			// 1.5. Skip undefined check for Alpine-defined variables
+			// Variables in x-data, @click, etc. are defined in Alpine's runtime scope
+			if (ref.isAlpine) continue
 
 			// 2. Check if it's defined in <script>
 			const def = definedVars.get(ref.content)
