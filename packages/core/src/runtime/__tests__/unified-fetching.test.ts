@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Aero } from '../index'
 
 describe('Aero Runtime - Unified Data Fetching', () => {
+	beforeEach(() => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+	})
 	it('should execute getStaticPaths and inject props when props are missing', async () => {
 		const aero = new Aero()
 
