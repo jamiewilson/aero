@@ -8,11 +8,13 @@
 		"dev": "pnpm --dir packages/start dev",
 		"prebuild": "pnpm --dir packages/core build && pnpm --dir packages/content build",
 		"build": "pnpm --dir packages/start build",
+		"build:all": "pnpm --dir packages/core build && pnpm --dir packages/content build && pnpm --dir packages/start build && pnpm --dir packages/vscode build",
 		"prepreview": "pnpm --dir packages/core build && pnpm --dir packages/content build",
 		"preview": "pnpm --dir packages/start preview",
 		"prepreview:api": "pnpm --dir packages/core build && pnpm --dir packages/content build",
 		"preview:api": "pnpm --dir packages/start preview:api",
 		"test": "pnpm --dir packages/core test",
+		"test:all": "pnpm --dir packages/core test && pnpm --dir packages/content test && pnpm --dir packages/vscode test",
 		"cleanAll": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
 	}
 }
