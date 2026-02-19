@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { collectTemplateReferences, collectDefinedVariables } from '../analyzer'
+import { collectTemplateReferences, collectDefinedVariables, collectTemplateScopes } from '../analyzer'
 
 // Mock vscode.Range and Position since they are classes
 vi.mock('vscode', () => {
@@ -69,5 +69,60 @@ describe('collectDefinedVariables', () => {
 		expect(vars.get('bar')?.kind).toBe('import')
 
 		expect(vars.has('foo, bar')).toBe(false)
+	})
+})
+
+describe('collectTemplateScopes', () => {
+	const mockDoc = {
+		positionAt: (offset: number) => ({ line: 0, character: offset }),
+	} as any
+
+	it('should parse data-each attribute', () => {
+		const text = `
+<ul>
+	<li data-each="{ item in items }">{item.name}</li>
+</ul>
+`
+		const scopes = collectTemplateScopes(mockDoc, text)
+
+		expect(scopes).toHaveLength(1)
+		expect(scopes[0].itemName).toBe('item')
+		expect(scopes[0].sourceExpr).toBe('items')
+	})
+
+	it('should parse shorthand each attribute', () => {
+		const text = `
+<ul>
+	<li each="{ user in users }">{user.name}</li>
+</ul>
+`
+		const scopes = collectTemplateScopes(mockDoc, text)
+
+		expect(scopes).toHaveLength(1)
+		expect(scopes[0].itemName).toBe('user')
+		expect(scopes[0].sourceExpr).toBe('users')
+	})
+
+	it('should handle nested data-each scopes', () => {
+		const text = `
+<div data-each="{ category in categories }">
+	<span data-each="{ item in category.items }">{item.name}</span>
+</div>
+`
+		const scopes = collectTemplateScopes(mockDoc, text)
+
+		expect(scopes).toHaveLength(2)
+		// Scopes are returned in closing order (inner first, then outer)
+		expect(scopes[0].itemName).toBe('item')
+		expect(scopes[1].itemName).toBe('category')
+	})
+
+	it('should return empty array for no data-each', () => {
+		const text = `
+<div>No loop here</div>
+`
+		const scopes = collectTemplateScopes(mockDoc, text)
+
+		expect(scopes).toHaveLength(0)
 	})
 })
