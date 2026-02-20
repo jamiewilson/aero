@@ -160,14 +160,14 @@ export function collectDefinedVariables(
 		}
 	}
 
-	// 2. Script declarations — only on:build scripts are visible to the template
+	// 2. Script declarations — only is:build scripts are visible to the template
 	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 	let scriptMatch: RegExpExecArray | null
 	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
 		const attrs = (scriptMatch[1] || '').toLowerCase()
 		if (/\bsrc\s*=/.test(attrs)) continue
-		// Skip on:client blocks — they are browser-only and isolated from the template
-		if (/\bon:client\b/.test(attrs)) continue
+		// Skip is:bundled blocks — they are browser-only and isolated from the template
+		if (/\bis:bundled\b/.test(attrs)) continue
 
 		const content = scriptMatch[2]
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)

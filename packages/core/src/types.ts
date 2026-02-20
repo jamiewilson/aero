@@ -34,7 +34,7 @@ export interface ResolverOptions {
 
 export interface ParseResult {
 	buildScript: { content: string } | null
-	clientScript: { content: string } | null
+	clientScript: { content: string; passDataExpr?: string } | null
 	template: string
 }
 

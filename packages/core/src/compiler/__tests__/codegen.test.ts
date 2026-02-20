@@ -32,7 +32,7 @@ const mockOptions = {
 
 describe('Codegen', () => {
 	it('should compile simple interpolation', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										title = 'Hello World';
 									</script>
 									<h1>{ title }</h1>`
@@ -45,7 +45,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile attribute interpolation', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const cls = 'active';
 									</script>
 									<div class="{ cls }"></div>`
@@ -68,7 +68,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile data-each loops', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
@@ -86,7 +86,7 @@ describe('Codegen', () => {
 	})
 
 	it('should throw when each value is not brace-wrapped', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
@@ -100,7 +100,7 @@ describe('Codegen', () => {
 	})
 
 	it('should resolve component tags', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'my-comp' };
 									</script>
 									<my-comp-component />`
@@ -121,7 +121,7 @@ describe('Codegen', () => {
 	})
 
 	it('should pass props and support shorthand', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const someProps = { title: 'External' };
 										const props = { theme: 'dark' };
@@ -151,7 +151,7 @@ describe('Codegen', () => {
 	})
 
 	it('should interpolate mixed component prop strings', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const slug = 'docs-1';
 									</script>
@@ -173,7 +173,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support multiple interpolations in a component prop string', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const section = 'docs';
 										const slug = 'intro';
@@ -196,7 +196,7 @@ describe('Codegen', () => {
 	})
 
 	it('should keep full braced component prop expressions as typed values', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
 									<my-comp-component count="{ 2 * 21 }" enabled="{ true }" />`
@@ -217,7 +217,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support escaped literal braces in component prop strings via double braces', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const slug = 'intro';
 									</script>
@@ -239,7 +239,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support default and named slots', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const base = { name: 'base' };
 										const nav = { name: 'nav' };
 									</script>
@@ -267,7 +267,7 @@ describe('Codegen', () => {
 	})
 
 	it('should transform static imports to dynamic imports', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										import { foo } from './fake-module'
 										const res = foo;
 									</script>
@@ -280,15 +280,49 @@ describe('Codegen', () => {
 		expect(code).not.toContain('import { foo } from')
 	})
 
-	it('should throw error for script tags without on:client or on:build', async () => {
+	it('should throw error for script tags without is:build, is:bundled, is:inline, or src', async () => {
 		const html = `<script>console.log('regular');</script>
 									<div>Content</div>`
 
 		const parsed = parse(html)
 
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Script tags must have on:client or on:build attribute',
+			'Script tags must have is:build, is:bundled, is:inline, or src attribute',
 		)
+	})
+
+	it('should allow is:inline scripts and strip the attribute', async () => {
+		const html = `<script is:inline>console.log('inline');</script>
+									<div>Content</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<script>')
+		expect(output).toContain("console.log('inline');")
+		expect(output).toContain('</script>')
+		expect(output).not.toContain('is:inline')
+	})
+
+	it('should support pass:data on is:inline scripts', async () => {
+		const html = `<script is:build>
+									const config = { theme: 'dark', id: 42 };
+								</script>
+								<head>
+									<script is:inline pass:data="{ { config } }">
+										console.log(config.theme);
+									</script>
+								</head>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('const config = {"theme":"dark","id":42};')
+		expect(output).toContain('console.log(config.theme);')
+		expect(output).not.toContain('is:inline')
+		expect(output).not.toContain('pass:data')
 	})
 
 	it('should allow external scripts with src attribute', async () => {
@@ -338,7 +372,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support default content in slots', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const nav = { name: 'nav' };
 									</script>
 									<slot name="nav">
@@ -358,7 +392,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support inline object literals in data-props', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
 									<my-comp-component data-props="{ title: 'Inline Title', count: 42 }" />`
@@ -379,7 +413,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support expressions in data-props', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const site = { meta: { title: 'Test Site' } };
 									</script>
@@ -401,7 +435,7 @@ describe('Codegen', () => {
 	})
 
 	it('should throw when data-props value is not brace-wrapped', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const myProps = { a: 1, b: 2 };
 									</script>
@@ -414,7 +448,7 @@ describe('Codegen', () => {
 	})
 
 	it('should throw when if value is not brace-wrapped', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const showLogo = true;
 									</script>
 									<logo-component if="showLogo" />`
@@ -426,7 +460,7 @@ describe('Codegen', () => {
 	})
 
 	it('should throw when data-each value is not brace-wrapped', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
@@ -440,7 +474,7 @@ describe('Codegen', () => {
 	})
 
 	it('should merge data-props with individual attributes', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
 									<my-comp-component 
@@ -465,7 +499,7 @@ describe('Codegen', () => {
 	it('should support slot passthrough (receiving and forwarding named slots)', async () => {
 		// This tests the scenario: grandparent -> parent -> child
 		// where parent receives a slot and passes it through to child
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const parent = { name: 'parent' };
 										const child = { name: 'child' };
 									</script>
@@ -473,7 +507,7 @@ describe('Codegen', () => {
 										<div slot="nav">Custom Navigation</div>
 									</parent-component>`
 
-		const parentTemplate = `<script on:build>
+		const parentTemplate = `<script is:build>
 														const child = { name: 'child' };
 													</script>
 													<child-component>
@@ -528,7 +562,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support hyphenated slot names', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
 									<my-comp-component>
@@ -556,7 +590,7 @@ describe('Codegen', () => {
 	// =========================================================================
 
 	it('should compile simple if/else chain', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const showFirst = false;
 									</script>
 									<div>
@@ -573,7 +607,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile if/else-if/else chain (else-if matches)', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const value = 'B';
 									</script>
 									<div>
@@ -592,7 +626,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile if/else-if/else chain (else matches)', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const value = 'C';
 									</script>
 									<div>
@@ -612,7 +646,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile multiple else-if branches', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const num = 3;
 									</script>
 									<div>
@@ -633,7 +667,7 @@ describe('Codegen', () => {
 	})
 
 	it('should compile if/else with components', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const showLogo = false;
 										const logo = { name: 'logo' };
 									</script>
@@ -655,7 +689,7 @@ describe('Codegen', () => {
 	})
 
 	it('should handle if without else (standalone)', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const show = true;
 									</script>
 									<div>
@@ -672,7 +706,7 @@ describe('Codegen', () => {
 	})
 
 	it('should support data- prefix for conditionals', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const choice = 2;
 									</script>
 									<div>
@@ -695,7 +729,7 @@ describe('Codegen', () => {
 	// =========================================================================
 
 	it('should extract getStaticPaths as a named export', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const title = 'Hello';
 										export function getStaticPaths() {
 											return [
@@ -719,7 +753,7 @@ describe('Codegen', () => {
 	})
 
 	it('should extract async getStaticPaths as a named export', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										export async function getStaticPaths() {
 											return [{ params: { slug: 'intro' } }]
 										}
@@ -734,7 +768,7 @@ describe('Codegen', () => {
 	})
 
 	it('should not break when there is no getStaticPaths', async () => {
-		const html = `<script on:build>
+		const html = `<script is:build>
 										const x = 1;
 									</script>
 									<p>{ x }</p>`
@@ -753,7 +787,7 @@ describe('Codegen', () => {
 
 	describe('pass:data', () => {
 		it('should pass data to scripts and block scope them if not module', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const config = { theme: 'dark', id: 42 };
 										</script>
 										<head>
@@ -775,7 +809,7 @@ describe('Codegen', () => {
 		})
 
 		it('should pass data to module scripts without block scoping them', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
 										<head>
@@ -800,7 +834,7 @@ describe('Codegen', () => {
 			// and the value is the whole object. String(object) = "[object Object]".
 			// This documents the intentional behavior — for useful CSS vars,
 			// pass the flat object directly: `pass:data="{ theme }"`.
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
 										<style pass:data="{ { theme } }">
@@ -820,7 +854,7 @@ describe('Codegen', () => {
 		})
 
 		it('should pass data object properties to style tags as CSS variables', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
 										<style pass:data="{ theme }">
@@ -841,7 +875,7 @@ describe('Codegen', () => {
 		})
 
 		it('should pass multiple data keys to scripts', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const apiUrl = '/api/v1';
 											const debug = true;
 											const version = 3;
@@ -862,7 +896,7 @@ describe('Codegen', () => {
 		})
 
 		it('should handle various JSON-serializable value types', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const str = 'hello';
 											const num = 99;
 											const flag = false;
@@ -887,7 +921,7 @@ describe('Codegen', () => {
 		})
 
 		it('should strip pass:data attribute from rendered output', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const val = 'test';
 										</script>
 										<head>
@@ -905,7 +939,7 @@ describe('Codegen', () => {
 		})
 
 		it('should throw when pass:data value is not brace-wrapped', async () => {
-			const html = `<script on:build>
+			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
 										<head>

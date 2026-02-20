@@ -1,6 +1,6 @@
 import type { AeroDirs } from '../types'
 
-/** Virtual URL prefix for on:client scripts. Root-relative, .js extension, no filesystem path. */
+/** Virtual URL prefix for is:bundled scripts. Root-relative, .js extension, no filesystem path. */
 export const CLIENT_SCRIPT_PREFIX = '/@aero/client/'
 /** Virtual module used by plugin runtime loading */
 export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance'

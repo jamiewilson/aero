@@ -1,4 +1,4 @@
-<script on:build>
+<script is:build>
 	import meta from '@components/meta'
 	import nav from '@components/nav'
 	import footer from '@components/footer'
@@ -12,7 +12,7 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@scripts/index.ts"></script>
 
-		<script pass:data="{{storageKey, attribute}}">
+		<script is:inline pass:data="{{storageKey, attribute}}">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
 		</script>

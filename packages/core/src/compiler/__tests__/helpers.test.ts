@@ -63,7 +63,7 @@ describe('compileAttributeInterpolation', () => {
 describe('isAttr', () => {
 	it('should match exact attribute name', () => {
 		expect(isAttr('if', 'if', 'data-')).toBe(true)
-		expect(isAttr('on:build', 'on:build', '')).toBe(true)
+		expect(isAttr('is:build', 'is:build', '')).toBe(true)
 	})
 
 	it('should match prefixed attribute name', () => {
@@ -135,11 +135,15 @@ describe('escapeBackticks', () => {
 
 describe('emitSlotsObjectVars', () => {
 	it('should emit slots object', () => {
-		expect(emitSlotsObjectVars({ default: '__slot_default' })).toBe('{ "default": __slot_default }')
+		expect(emitSlotsObjectVars({ default: '__slot_default' })).toBe(
+			'{ "default": __slot_default }',
+		)
 	})
 
 	it('should handle multiple slots', () => {
-		expect(emitSlotsObjectVars({ default: '__s1', header: '__s2' })).toBe('{ "default": __s1, "header": __s2 }')
+		expect(emitSlotsObjectVars({ default: '__s1', header: '__s2' })).toBe(
+			'{ "default": __s1, "header": __s2 }',
+		)
 	})
 
 	it('should handle empty object', () => {
@@ -185,7 +189,7 @@ describe('emitRenderFunction', () => {
 
 describe('emitSlotVar', () => {
 	it('should emit slot variable declaration', () => {
-		expect(emitSlotVar('header')).toBe('let header = \'\';\n')
+		expect(emitSlotVar('header')).toBe("let header = '';\n")
 	})
 })
 
@@ -231,7 +235,9 @@ describe('emitForOf', () => {
 
 describe('emitSlotOutput', () => {
 	it('should emit slot output', () => {
-		expect(emitSlotOutput('default', 'content')).toBe("__out += slots['default'] ?? `content`;\n")
+		expect(emitSlotOutput('default', 'content')).toBe(
+			"__out += slots['default'] ?? `content`;\n",
+		)
 	})
 
 	it('should use custom output variable', () => {

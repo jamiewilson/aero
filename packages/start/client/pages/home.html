@@ -1,4 +1,4 @@
-<script on:build>
+<script is:build>
 	import base from '@layouts/base'
 	import header from '@components/header'
 	import form from '@components/form'
@@ -15,6 +15,7 @@
 	<form-component />
 </base-layout>
 
-<script on:client>
-	console.log('[aero] on:client script executed')
+<script is:bundled pass:data="{{ title: headerProps.title }}">
+	console.log('[aero] is:bundled script executed')
+	console.log(title)
 </script>

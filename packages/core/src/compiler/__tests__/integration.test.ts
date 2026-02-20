@@ -5,7 +5,7 @@ import { parse } from '../parser'
 describe('Compiler Integration', () => {
 	it('should correctly extract getStaticPaths as a named export', async () => {
 		const src = `
-<script on:build>
+<script is:build>
     import { something } from 'somewhere'
     
     export async function getStaticPaths() {
@@ -40,7 +40,7 @@ describe('Compiler Integration', () => {
 
 	it('should handle getStaticPaths with complex braces in strings/comments', () => {
 		const src = `
-<script on:build>
+<script is:build>
     export async function getStaticPaths() {
         // { brace in comment }
         const a = "{ brace in string }"

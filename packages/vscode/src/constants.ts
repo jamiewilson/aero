@@ -21,8 +21,9 @@ export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 // Aero attribute names
 // ---------------------------------------------------------------------------
 
-export const ATTR_ON_BUILD = 'on:build'
-export const ATTR_ON_CLIENT = 'on:client'
+export const ATTR_IS_BUILD = 'is:build'
+export const ATTR_IS_BUNDLED = 'is:bundled'
+export const ATTR_IS_INLINE = 'is:inline'
 
 // ---------------------------------------------------------------------------
 // Content globals mapping: identifier -> alias path

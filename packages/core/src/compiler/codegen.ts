@@ -178,6 +178,11 @@ class Compiler {
 					continue
 				}
 
+				// Strip is:inline from output (it's a compiler directive, not an HTML attribute)
+				if (attr.name === CONST.ATTR_IS_INLINE) {
+					continue
+				}
+
 				let val = Helper.escapeBackticks(attr.value)
 				val = this.resolver.resolveAttrValue(val)
 
@@ -582,15 +587,19 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	`)
 
 	const scripts = document.querySelectorAll('script')
-	// Require on:client or on:build for all script tags (except external scripts with src and script tags inside <head>)
+	// Require is:build, is:bundled, is:inline, or src for all script tags
+	// (except scripts inside <head> which are pass-through)
 	for (const s of scripts) {
 		if (s.parentElement?.tagName === 'HEAD') continue
 		if (
-			!s.hasAttribute(CONST.ATTR_ON_CLIENT) &&
-			!s.hasAttribute(CONST.ATTR_ON_BUILD) &&
+			!s.hasAttribute(CONST.ATTR_IS_BUILD) &&
+			!s.hasAttribute(CONST.ATTR_IS_BUNDLED) &&
+			!s.hasAttribute(CONST.ATTR_IS_INLINE) &&
 			!s.hasAttribute('src')
 		) {
-			throw new Error('Script tags must have on:client or on:build attribute.')
+			throw new Error(
+				'Script tags must have is:build, is:bundled, is:inline, or src attribute.',
+			)
 		}
 	}
 
