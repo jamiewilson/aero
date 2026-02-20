@@ -152,16 +152,23 @@ export function emitRenderFunction(
 	body: string,
 	getStaticPathsFn?: string | null,
 	rootStyles?: string[],
+	rootScripts?: string[],
 ): string {
 	const stylesCode =
 		rootStyles && rootStyles.length > 0
 			? rootStyles.map(s => `styles?.add(${JSON.stringify(s)});`).join('\n\t\t')
 			: ''
 
+	const scriptsCode =
+		rootScripts && rootScripts.length > 0
+			? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t')
+			: ''
+
 	const renderFn = `export default async function(Aero) {
-		const { site, slots = {}, renderComponent, request, url, params, styles } = Aero;
+		const { site, slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
 		${script}
 		${stylesCode}
+		${scriptsCode}
 		let __out = '';
 		${body}return __out;
 	}`

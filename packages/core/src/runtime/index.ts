@@ -101,6 +101,7 @@ export class Aero {
 		params?: AeroRouteParams
 		routePath?: string
 		styles?: Set<string>
+		scripts?: Set<string>
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
 		const url = this.toURL(routePath, input.url)
@@ -113,6 +114,7 @@ export class Aero {
 			url,
 			params: input.params || {},
 			styles: input.styles,
+			scripts: input.scripts,
 			renderComponent: this.renderComponent.bind(this),
 		} as AeroTemplateContext
 
@@ -133,6 +135,7 @@ export class Aero {
 		const isRootRender = !renderInput.styles
 		if (isRootRender) {
 			renderInput.styles = new Set<string>()
+			renderInput.scripts = new Set<string>()
 		}
 
 		let target = component
@@ -224,6 +227,7 @@ export class Aero {
 			params: { ...dynamicParams, ...(renderInput.params || {}) },
 			routePath,
 			styles: renderInput.styles,
+			scripts: renderInput.scripts,
 		})
 
 		// Handle module objects
@@ -232,14 +236,24 @@ export class Aero {
 
 		if (typeof renderFn === 'function') {
 			let html = await renderFn(context)
-			if (isRootRender && context.styles && context.styles.size > 0) {
-				const stylesHtml = Array.from(context.styles).join('\n')
-				if (html.includes('</head>')) {
-					html = html.replace('</head>', `\n${stylesHtml}\n</head>`)
-				} else if (html.includes('<body')) {
-					html = html.replace(/(<body[^>]*>)/i, `<head>\n${stylesHtml}\n</head>\n$1`)
-				} else {
-					html = `${stylesHtml}\n${html}`
+			if (isRootRender) {
+				if (context.styles && context.styles.size > 0) {
+					const stylesHtml = Array.from(context.styles).join('\n')
+					if (html.includes('</head>')) {
+						html = html.replace('</head>', `\n${stylesHtml}\n</head>`)
+					} else if (html.includes('<body')) {
+						html = html.replace(/(<body[^>]*>)/i, `<head>\n${stylesHtml}\n</head>\n$1`)
+					} else {
+						html = `${stylesHtml}\n${html}`
+					}
+				}
+				if (context.scripts && context.scripts.size > 0) {
+					const scriptsHtml = Array.from(context.scripts).join('\n')
+					if (html.includes('</body>')) {
+						html = html.replace('</body>', `\n${scriptsHtml}\n</body>`)
+					} else {
+						html = `${html}\n${scriptsHtml}`
+					}
 				}
 			}
 			return html
@@ -262,6 +276,7 @@ export class Aero {
 			params: input.params,
 			routePath: input.routePath || '/',
 			styles: input.styles,
+			scripts: input.scripts,
 		})
 
 		if (typeof component === 'function') {

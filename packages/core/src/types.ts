@@ -69,6 +69,7 @@ export interface AeroRenderInput {
 	params?: AeroRouteParams
 	routePath?: string
 	styles?: Set<string>
+	scripts?: Set<string>
 }
 
 export interface AeroTemplateContext {
@@ -85,4 +86,5 @@ export interface AeroTemplateContext {
 	url: URL
 	params: AeroRouteParams
 	styles?: Set<string>
+	scripts?: Set<string>
 }
