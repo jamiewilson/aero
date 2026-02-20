@@ -126,14 +126,14 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		const commentRanges = getCommentRanges(text)
+		const ignoredRanges = getIgnoredRanges(text)
 
 		OPEN_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
 
 		while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
 			const tagStart = match.index
-			if (isInRanges(tagStart, commentRanges)) continue
+			if (isInRanges(tagStart, ignoredRanges)) continue
 
 			const attrs = match[2] || ''
 			if (!attrs) continue
@@ -231,7 +231,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	): void {
 		const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
 		let depth = 0
-		const commentRanges = getCommentRanges(text)
+		const ignoredRanges = getIgnoredRanges(text)
 
 		ANY_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
@@ -249,7 +249,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		while ((match = ANY_TAG_REGEX.exec(text)) !== null) {
 			const tagStart = match.index
-			if (isInRanges(tagStart, commentRanges)) continue
+			if (isInRanges(tagStart, ignoredRanges)) continue
 
 			const fullTag = match[0]
 			const tagName = (match[1] || '').toLowerCase()
@@ -336,11 +336,15 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const resolver = getResolver(document)
 		if (!resolver) return
 		const imports = collectImportedSpecifiers(text)
+		const ignoredRanges = getIgnoredRanges(text)
 
 		COMPONENT_TAG_OPEN_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
 
 		while ((match = COMPONENT_TAG_OPEN_REGEX.exec(text)) !== null) {
+			const tagStart = match.index
+			if (isInRanges(tagStart, ignoredRanges)) continue
+
 			const tagName = match[1]
 			const suffixMatch = COMPONENT_SUFFIX_REGEX.exec(tagName)
 			if (!suffixMatch) continue
@@ -601,13 +605,25 @@ function findParentScope(scopes: TemplateScope[], child: TemplateScope): Templat
 	}
 	return best
 }
-function getCommentRanges(text: string): Array<{ start: number; end: number }> {
+function getIgnoredRanges(text: string): Array<{ start: number; end: number }> {
 	const ranges: Array<{ start: number; end: number }> = []
 	HTML_COMMENT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
 	while ((match = HTML_COMMENT_REGEX.exec(text)) !== null) {
 		ranges.push({ start: match.index, end: match.index + match[0].length })
 	}
+
+	const scriptStyleRegex = /<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi
+	let scriptMatch: RegExpExecArray | null
+	while ((scriptMatch = scriptStyleRegex.exec(text)) !== null) {
+		const tagName = scriptMatch[1]
+		const closeTagLen = `</${tagName}>`.length
+		const contentLen = scriptMatch[2].length
+		const start = scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
+		const end = start + contentLen
+		ranges.push({ start, end })
+	}
+
 	return ranges
 }
 

@@ -44,9 +44,17 @@ export function maskJsComments(text: string): string {
 export function collectDefinedVariables(
 	document: vscode.TextDocument,
 	text: string,
-): [Map<string, VariableDefinition>, Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }>] {
+): [
+	Map<string, VariableDefinition>,
+	Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }>,
+] {
 	const vars = new Map<string, VariableDefinition>()
-	const duplicates: Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }> = []
+	const duplicates: Array<{
+		name: string
+		kind1: string
+		kind2: string
+		range: vscode.Range
+	}> = []
 
 	const setVar = (name: string, def: VariableDefinition) => {
 		const existing = vars.get(name)
@@ -496,7 +504,12 @@ export function collectTemplateReferences(
 				// e.g. <comp props /> or <input disabled />
 				// If it's a valid identifier, treat as reference (shorthand)
 				// Also ignore Alpine shorthands if they exist and are not caught by isAlpine (unlikely for pure identifiers)
-				if (/^[a-zA-Z_$][\w$]*$/.test(name)) {
+				if (
+					/^[a-zA-Z_$][\w$]*$/.test(name) &&
+					!/^(if|else|return|function|var|let|const|import|from|as|in|true|false|null|undefined)$/.test(
+						name,
+					)
+				) {
 					refs.push({
 						content: name,
 						range: new vscode.Range(
