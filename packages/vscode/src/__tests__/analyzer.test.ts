@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { collectTemplateReferences, collectDefinedVariables, collectTemplateScopes } from '../analyzer'
+import {
+	collectTemplateReferences,
+	collectDefinedVariables,
+	collectTemplateScopes,
+} from '../analyzer'
 
 // Mock vscode.Range and Position since they are classes
 vi.mock('vscode', () => {
@@ -51,6 +55,19 @@ describe('collectTemplateReferences', () => {
 		const components = refs.filter(r => r.isComponent)
 		expect(components).toHaveLength(1)
 		expect(components[0].content).toBe('header')
+	})
+
+	it('should ignore structural directives as standalone attributes', () => {
+		const text = `
+    <div data-if="true"></div>
+    <div data-else></div>
+    <div else></div>
+    <div if="false"></div>
+    `
+		const refs = collectTemplateReferences(mockDoc, text)
+
+		const attrs = refs.filter(r => r.isAttribute)
+		expect(attrs).toHaveLength(0)
 	})
 })
 
