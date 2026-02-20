@@ -2,6 +2,7 @@
 	import meta from '@components/meta'
 	import nav from '@components/nav'
 	import footer from '@components/footer'
+	const { storageKey, attribute } = site.theme
 </script>
 
 <html lang="en">
@@ -10,11 +11,9 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@scripts/index.ts"></script>
 
-		<script>
-			try {
-				const theme = JSON.parse(localStorage.getItem('theme'))
-				document.documentElement.setAttribute('data-theme', theme)
-			} catch {}
+		<script pass:data="{{storageKey, attribute}}">
+			const theme = JSON.parse(localStorage.getItem(storageKey))
+			document.documentElement.setAttribute(attribute, theme)
 		</script>
 	</head>
 

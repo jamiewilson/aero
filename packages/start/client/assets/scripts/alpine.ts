@@ -7,12 +7,12 @@ import site from '@content/site'
 Alpine.start()
 Alpine.plugin(persist)
 
-Alpine.store('theme', {
-	current: Alpine.$persist(site.theme.default).as('theme'),
+Alpine.store(site.theme.storageKey, {
+	current: Alpine.$persist(site.theme.default).as(site.theme.storageKey),
 
 	init(this: ThemeStore) {
 		Alpine.effect(() => {
-			document.documentElement.setAttribute('data-theme', this.current)
+			document.documentElement.setAttribute(site.theme.attribute, this.current)
 		})
 	},
 

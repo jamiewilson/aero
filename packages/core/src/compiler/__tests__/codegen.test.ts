@@ -747,6 +747,92 @@ describe('Codegen', () => {
 		const output = await execute(code)
 		expect(output).toContain('<p>1</p>')
 	})
+	it('should pass data to scripts and block scope them if not module', async () => {
+		const html = `<script on:build>
+										const config = { theme: 'dark', id: 42 };
+									</script>
+									<head>
+										<script pass:data="{ { config } }">
+											console.log(config.theme);
+										</script>
+									</head>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('{')
+		expect(output).toContain('const config = {"theme":"dark","id":42};')
+		expect(output).toContain('console.log(config.theme);')
+		expect(output).toContain('}')
+		expect(output).toContain('<script>')
+		expect(output).toContain('</script>')
+	})
+
+	it('should pass data to module scripts without block scoping them', async () => {
+		const html = `<script on:build>
+										const config = { theme: 'dark' };
+									</script>
+									<head>
+										<script type="module" pass:data="{ { config } }">
+											import { xyz } from 'abc';
+											console.log(config.theme);
+										</script>
+									</head>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('const config = {"theme":"dark"};')
+		expect(output).toContain('console.log(config.theme);')
+		// When it's a module, it shouldn't add the standalone block { ... }
+		// We can check the exact generated script content
+		expect(output).not.toContain('<script type="module">\\n{\\n')
+	})
+
+	it('should pass data to style tags as CSS variables', async () => {
+		const html = `<script on:build>
+										const theme = { fg: 'white', bg: 'black' };
+									</script>
+									<style pass:data="{ { theme } }">
+										body { color: var(--theme); }
+									</style>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const styles = new Set<string>()
+		await execute(code, { styles })
+		const stylesOutput = Array.from(styles).join('\\n')
+
+		expect(stylesOutput).toContain(':root {')
+		expect(stylesOutput).toContain('--theme: [object Object];')
+		expect(stylesOutput).toContain('}')
+		// Note: The structure "{ theme: { fg: 'white' } }" means \`theme\` is the key,
+		// and its value is an object, which stringified is "[object Object]".
+	})
+
+	it('should pass data object properties to style tags as CSS variables', async () => {
+		const html = `<script on:build>
+										const theme = { fg: 'white', bg: 'black' };
+									</script>
+									<style pass:data="{ theme }">
+										body { color: var(--fg); background: var(--bg); }
+									</style>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const styles = new Set<string>()
+		await execute(code, { styles })
+		const stylesOutput = Array.from(styles).join('\\n')
+
+		expect(stylesOutput).toContain(':root {')
+		expect(stylesOutput).toContain('--fg: white;')
+		expect(stylesOutput).toContain('--bg: black;')
+		expect(stylesOutput).toContain('}')
+	})
 })
 
 // =========================================================================
