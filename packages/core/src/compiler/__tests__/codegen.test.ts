@@ -747,91 +747,178 @@ describe('Codegen', () => {
 		const output = await execute(code)
 		expect(output).toContain('<p>1</p>')
 	})
-	it('should pass data to scripts and block scope them if not module', async () => {
-		const html = `<script on:build>
-										const config = { theme: 'dark', id: 42 };
-									</script>
-									<head>
-										<script pass:data="{ { config } }">
-											console.log(config.theme);
+	// =========================================================================
+	// pass:data
+	// =========================================================================
+
+	describe('pass:data', () => {
+		it('should pass data to scripts and block scope them if not module', async () => {
+			const html = `<script on:build>
+											const config = { theme: 'dark', id: 42 };
 										</script>
-									</head>`
+										<head>
+											<script pass:data="{ { config } }">
+												console.log(config.theme);
+											</script>
+										</head>`
 
-		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
 
-		const output = await execute(code)
-		expect(output).toContain('{')
-		expect(output).toContain('const config = {"theme":"dark","id":42};')
-		expect(output).toContain('console.log(config.theme);')
-		expect(output).toContain('}')
-		expect(output).toContain('<script>')
-		expect(output).toContain('</script>')
-	})
+			const output = await execute(code)
+			expect(output).toContain('{')
+			expect(output).toContain('const config = {"theme":"dark","id":42};')
+			expect(output).toContain('console.log(config.theme);')
+			expect(output).toContain('}')
+			expect(output).toContain('<script>')
+			expect(output).toContain('</script>')
+		})
 
-	it('should pass data to module scripts without block scoping them', async () => {
-		const html = `<script on:build>
-										const config = { theme: 'dark' };
-									</script>
-									<head>
-										<script type="module" pass:data="{ { config } }">
-											import { xyz } from 'abc';
-											console.log(config.theme);
+		it('should pass data to module scripts without block scoping them', async () => {
+			const html = `<script on:build>
+											const config = { theme: 'dark' };
 										</script>
-									</head>`
+										<head>
+											<script type="module" pass:data="{ { config } }">
+												import { xyz } from 'abc';
+												console.log(config.theme);
+											</script>
+										</head>`
 
-		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
 
-		const output = await execute(code)
-		expect(output).toContain('const config = {"theme":"dark"};')
-		expect(output).toContain('console.log(config.theme);')
-		// When it's a module, it shouldn't add the standalone block { ... }
-		// We can check the exact generated script content
-		expect(output).not.toContain('<script type="module">\\n{\\n')
-	})
+			const output = await execute(code)
+			expect(output).toContain('const config = {"theme":"dark"};')
+			expect(output).toContain('console.log(config.theme);')
+			// When it's a module, it shouldn't add the standalone block { ... }
+			expect(output).not.toContain('<script type="module">\\n{\\n')
+		})
 
-	it('should pass data to style tags as CSS variables', async () => {
-		const html = `<script on:build>
-										const theme = { fg: 'white', bg: 'black' };
-									</script>
-									<style pass:data="{ { theme } }">
-										body { color: var(--theme); }
-									</style>`
+		it('should pass data to style tags as CSS variables', async () => {
+			// When using double-brace shorthand `{ { theme } }`, the key is "theme"
+			// and the value is the whole object. String(object) = "[object Object]".
+			// This documents the intentional behavior — for useful CSS vars,
+			// pass the flat object directly: `pass:data="{ theme }"`.
+			const html = `<script on:build>
+											const theme = { fg: 'white', bg: 'black' };
+										</script>
+										<style pass:data="{ { theme } }">
+											body { color: var(--theme); }
+										</style>`
 
-		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
 
-		const styles = new Set<string>()
-		await execute(code, { styles })
-		const stylesOutput = Array.from(styles).join('\\n')
+			const styles = new Set<string>()
+			await execute(code, { styles })
+			const stylesOutput = Array.from(styles).join('\\n')
 
-		expect(stylesOutput).toContain(':root {')
-		expect(stylesOutput).toContain('--theme: [object Object];')
-		expect(stylesOutput).toContain('}')
-		// Note: The structure "{ theme: { fg: 'white' } }" means \`theme\` is the key,
-		// and its value is an object, which stringified is "[object Object]".
-	})
+			expect(stylesOutput).toContain(':root {')
+			expect(stylesOutput).toContain('--theme: [object Object];')
+			expect(stylesOutput).toContain('}')
+		})
 
-	it('should pass data object properties to style tags as CSS variables', async () => {
-		const html = `<script on:build>
-										const theme = { fg: 'white', bg: 'black' };
-									</script>
-									<style pass:data="{ theme }">
-										body { color: var(--fg); background: var(--bg); }
-									</style>`
+		it('should pass data object properties to style tags as CSS variables', async () => {
+			const html = `<script on:build>
+											const theme = { fg: 'white', bg: 'black' };
+										</script>
+										<style pass:data="{ theme }">
+											body { color: var(--fg); background: var(--bg); }
+										</style>`
 
-		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
 
-		const styles = new Set<string>()
-		await execute(code, { styles })
-		const stylesOutput = Array.from(styles).join('\\n')
+			const styles = new Set<string>()
+			await execute(code, { styles })
+			const stylesOutput = Array.from(styles).join('\\n')
 
-		expect(stylesOutput).toContain(':root {')
-		expect(stylesOutput).toContain('--fg: white;')
-		expect(stylesOutput).toContain('--bg: black;')
-		expect(stylesOutput).toContain('}')
+			expect(stylesOutput).toContain(':root {')
+			expect(stylesOutput).toContain('--fg: white;')
+			expect(stylesOutput).toContain('--bg: black;')
+			expect(stylesOutput).toContain('}')
+		})
+
+		it('should pass multiple data keys to scripts', async () => {
+			const html = `<script on:build>
+											const apiUrl = '/api/v1';
+											const debug = true;
+											const version = 3;
+										</script>
+										<head>
+											<script pass:data="{ { apiUrl, debug, version } }">
+												console.log(apiUrl, debug, version);
+											</script>
+										</head>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
+
+			const output = await execute(code)
+			expect(output).toContain('const apiUrl = "/api/v1";')
+			expect(output).toContain('const debug = true;')
+			expect(output).toContain('const version = 3;')
+		})
+
+		it('should handle various JSON-serializable value types', async () => {
+			const html = `<script on:build>
+											const str = 'hello';
+											const num = 99;
+											const flag = false;
+											const list = [1, 2, 3];
+											const nothing = null;
+										</script>
+										<head>
+											<script pass:data="{ { str, num, flag, list, nothing } }">
+												console.log(str, num, flag, list, nothing);
+											</script>
+										</head>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
+
+			const output = await execute(code)
+			expect(output).toContain('const str = "hello";')
+			expect(output).toContain('const num = 99;')
+			expect(output).toContain('const flag = false;')
+			expect(output).toContain('const list = [1,2,3];')
+			expect(output).toContain('const nothing = null;')
+		})
+
+		it('should strip pass:data attribute from rendered output', async () => {
+			const html = `<script on:build>
+											const val = 'test';
+										</script>
+										<head>
+											<script pass:data="{ { val } }">
+												console.log(val);
+											</script>
+										</head>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
+
+			const output = await execute(code)
+			expect(output).not.toContain('pass:data')
+			expect(output).toContain('<script>')
+		})
+
+		it('should throw when pass:data value is not brace-wrapped', async () => {
+			const html = `<script on:build>
+											const config = { theme: 'dark' };
+										</script>
+										<head>
+											<script pass:data="config">
+												console.log(config);
+											</script>
+										</head>`
+
+			const parsed = parse(html)
+			expect(() => compile(parsed, mockOptions)).toThrow(
+				'Directive `pass:data` on <script> must use a braced expression',
+			)
+		})
 	})
 })
 

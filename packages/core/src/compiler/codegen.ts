@@ -337,16 +337,11 @@ class Compiler {
 			let closeBlock = false
 
 			if (isScript && passDataExpr) {
-				const isModule = node.getAttribute('type') === 'module'
-				if (!isModule) {
-					out += Helper.emitAppend('\\n{\\n', outVar)
-					closeBlock = true
-				}
-				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
-				out += Helper.emitAppend(`\${${jsMapExpr}}\\n`, outVar)
+				const result = this.emitScriptPassData(passDataExpr, node, outVar)
+				out += result.code
+				closeBlock = result.closeBlock
 			} else if (isStyle && passDataExpr) {
-				const cssMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
-				out += Helper.emitAppend(`\n:root {\${${cssMapExpr}}\n}\n`, outVar)
+				out += this.emitStylePassData(passDataExpr, outVar)
 			}
 
 			out += this.compileChildNodes(node.childNodes, childSkip, outVar)
@@ -364,6 +359,41 @@ class Compiler {
 		}
 
 		return out
+	}
+
+	/**
+	 * Emits code that injects `pass:data` variables into a `<script>` tag.
+	 * For non-module scripts, wraps the injected constants in a block scope `{ }`.
+	 * Each key from the data object becomes a `const k = JSON.stringify(v);` declaration.
+	 */
+	private emitScriptPassData(
+		passDataExpr: string,
+		node: any,
+		outVar: string,
+	): { code: string; closeBlock: boolean } {
+		let code = ''
+		const isModule = node.getAttribute('type') === 'module'
+		let closeBlock = false
+
+		if (!isModule) {
+			code += Helper.emitAppend('\\n{\\n', outVar)
+			closeBlock = true
+		}
+
+		const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+		code += Helper.emitAppend(`\${${jsMapExpr}}\\n`, outVar)
+
+		return { code, closeBlock }
+	}
+
+	/**
+	 * Emits code that injects `pass:data` variables into a `<style>` tag
+	 * as CSS custom properties within a `:root` block.
+	 * Each key becomes `--key: String(value);`.
+	 */
+	private emitStylePassData(passDataExpr: string, outVar: string): string {
+		const cssMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
+		return Helper.emitAppend(`\n:root {\${${cssMapExpr}}\n}\n`, outVar)
 	}
 
 	private compileSlot(node: any, skipInterpolation: boolean, outVar: string): string {
