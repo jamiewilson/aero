@@ -386,7 +386,7 @@ class Compiler {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params }) }`
+			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, styles }) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)
@@ -465,7 +465,7 @@ class Compiler {
 		}
 
 		const slotsString = Helper.emitSlotsObjectVars(slotVarMap)
-		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params });\n`
+		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params, styles });\n`
 
 		return out
 	}
@@ -534,11 +534,26 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
+	const rootStyles: string[] = []
+	if (document.body) {
+		const children = Array.from(document.body.childNodes)
+		for (const node of children) {
+			if (node.nodeType === 1 && (node as any).tagName === 'STYLE') {
+				rootStyles.push((node as any).outerHTML)
+				;(node as any).remove()
+			}
+		}
+	}
+
 	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
 	if (options.clientScriptUrl) {
 		bodyCode += Helper.emitAppend(
 			`<script type="module" src="${options.clientScriptUrl}"></script>`,
 		)
 	}
-	return importsCode + '\n' + Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn)
+	return (
+		importsCode +
+		'\n' +
+		Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn, rootStyles)
+	)
 }

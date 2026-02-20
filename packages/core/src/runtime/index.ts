@@ -23,11 +23,11 @@ export class Aero {
 	registerPages(pages: Record<string, any>) {
 		for (const [path, mod] of Object.entries(pages)) {
 			const withoutExt = path.replace(/\.html$/, '').replace(/\\/g, '/')
-			const key =
-				withoutExt.includes('pages/') ? withoutExt.split('pages/').pop()!
-				: withoutExt.split('/').filter(Boolean).length > 1 ?
-					withoutExt.split('/').filter(Boolean).join('/')
-				:	withoutExt.split('/').pop() || path
+			const key = withoutExt.includes('pages/')
+				? withoutExt.split('pages/').pop()!
+				: withoutExt.split('/').filter(Boolean).length > 1
+					? withoutExt.split('/').filter(Boolean).join('/')
+					: withoutExt.split('/').pop() || path
 			this.pagesMap[key] = mod
 			this.pagesMap[path] = mod
 		}
@@ -100,6 +100,7 @@ export class Aero {
 		url?: URL | string
 		params?: AeroRouteParams
 		routePath?: string
+		styles?: Set<string>
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
 		const url = this.toURL(routePath, input.url)
@@ -111,6 +112,7 @@ export class Aero {
 			request,
 			url,
 			params: input.params || {},
+			styles: input.styles,
 			renderComponent: this.renderComponent.bind(this),
 		} as AeroTemplateContext
 
@@ -128,6 +130,10 @@ export class Aero {
 
 	async render(component: any, input: any = {}) {
 		const renderInput = this.normalizeRenderInput(input)
+		const isRootRender = !renderInput.styles
+		if (isRootRender) {
+			renderInput.styles = new Set<string>()
+		}
 
 		let target = component
 		let matchedPageName = typeof component === 'string' ? component : 'index'
@@ -217,6 +223,7 @@ export class Aero {
 			url: renderInput.url,
 			params: { ...dynamicParams, ...(renderInput.params || {}) },
 			routePath,
+			styles: renderInput.styles,
 		})
 
 		// Handle module objects
@@ -224,7 +231,18 @@ export class Aero {
 		if (target.default) renderFn = target.default
 
 		if (typeof renderFn === 'function') {
-			return await renderFn(context)
+			let html = await renderFn(context)
+			if (isRootRender && context.styles && context.styles.size > 0) {
+				const stylesHtml = Array.from(context.styles).join('\n')
+				if (html.includes('</head>')) {
+					html = html.replace('</head>', `\n${stylesHtml}\n</head>`)
+				} else if (html.includes('<body')) {
+					html = html.replace(/(<body[^>]*>)/i, `<head>\n${stylesHtml}\n</head>\n$1`)
+				} else {
+					html = `${stylesHtml}\n${html}`
+				}
+			}
+			return html
 		}
 
 		return ''
@@ -243,6 +261,7 @@ export class Aero {
 			url: input.url,
 			params: input.params,
 			routePath: input.routePath || '/',
+			styles: input.styles,
 		})
 
 		if (typeof component === 'function') {
