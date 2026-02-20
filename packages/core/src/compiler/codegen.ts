@@ -620,14 +620,22 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
 	const rootScripts: string[] = []
 	if (options.clientScriptUrl) {
-		rootScripts.push(`<script type="module" src="${options.clientScriptUrl}"></script>`)
+		if (options.clientPassDataExpr) {
+			const jsonExpr = `JSON.stringify(${Helper.stripBraces(options.clientPassDataExpr)})`
+			// This string becomes part of the generated JS file.
+			// e.g. scripts?.add(`<script type="application/json" id="__aero_data">${JSON.stringify({ config })}</script>`);
+			rootScripts.push(
+				`\`<script type="application/json" id="__aero_data">\${${jsonExpr}}</script>\``,
+			)
+		}
+		rootScripts.push(`'<script type="module" src="${options.clientScriptUrl}"></script>'`)
 	}
 
 	const renderFn = `export default async function(Aero) {
 		const { slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
 		${script}
 		${styleCode}
-		${rootScripts.length > 0 ? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t') : ''}
+		${rootScripts.length > 0 ? rootScripts.map(s => `scripts?.add(${s});`).join('\n\t\t') : ''}
 		let __out = '';
 		${bodyCode}return __out;
 	}`

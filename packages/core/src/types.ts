@@ -24,6 +24,7 @@ export interface MountOptions {
 export interface CompileOptions {
 	root: string
 	clientScriptUrl?: string
+	clientPassDataExpr?: string
 	resolvePath?: (specifier: string) => string
 }
 

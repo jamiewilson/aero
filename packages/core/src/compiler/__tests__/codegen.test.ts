@@ -943,7 +943,7 @@ describe('Codegen', () => {
 											const config = { theme: 'dark' };
 										</script>
 										<head>
-											<script pass:data="config">
+											<script is:inline pass:data="config">
 												console.log(config);
 											</script>
 										</head>`
@@ -952,6 +952,30 @@ describe('Codegen', () => {
 			expect(() => compile(parsed, mockOptions)).toThrow(
 				'Directive `pass:data` on <script> must use a braced expression',
 			)
+		})
+
+		it('should emit JSON data tag before bundled module script', async () => {
+			const html = `<script is:build>
+				const themeSettings = { colors: { primary: 'blue' } };
+			</script>
+			<div>App</div>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, {
+				...mockOptions,
+				clientScriptUrl: '/test.js',
+				clientPassDataExpr: '{ theme: themeSettings }',
+			})
+
+			const scripts = new Set<string>()
+			const themeSettings = { colors: { primary: 'blue' } }
+			await execute(code, { scripts, themeSettings })
+
+			const scriptArr = Array.from(scripts)
+			expect(scriptArr.length).toBe(2)
+			expect(scriptArr[0]).toContain('<script type="application/json" id="__aero_data">')
+			expect(scriptArr[0]).toContain('{"theme":{"colors":{"primary":"blue"}}}')
+			expect(scriptArr[1]).toBe('<script type="module" src="/test.js"></script>')
 		})
 	})
 })
