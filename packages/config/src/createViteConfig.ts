@@ -42,5 +42,20 @@ export function createViteConfig(
 		return baseConfig
 	}
 
-	return mergeConfig(baseConfig, userViteConfig)
+	const merged = mergeConfig(baseConfig, userViteConfig)
+
+	if (merged.build) {
+		if (merged.build.minify === true || merged.build.minify === null) {
+			if (baseConfig.build?.minify !== undefined) {
+				merged.build.minify = baseConfig.build.minify
+			}
+		}
+		if (merged.build.cssMinify === true || merged.build.cssMinify === null) {
+			if (baseConfig.build?.cssMinify !== undefined) {
+				merged.build.cssMinify = baseConfig.build.cssMinify
+			}
+		}
+	}
+
+	return merged
 }
