@@ -9,10 +9,16 @@
 		<meta-component props="{...Aero.props}" />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@scripts/index.ts"></script>
-		<script src="@scripts/theme.ts"></script>
+
+		<script>
+			try {
+				const theme = JSON.parse(localStorage.getItem('theme'))
+				document.documentElement.setAttribute('data-theme', theme)
+			} catch {}
+		</script>
 	</head>
 
-	<body id="app" :data-theme="$store.theme.current">
+	<body id="app">
 		<nav-component>
 			<slot name="into-nav"></slot>
 		</nav-component>
