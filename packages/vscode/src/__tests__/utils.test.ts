@@ -89,11 +89,11 @@ describe('pathResolver', () => {
 				uri: { fsPath: '/workspace/test.html' },
 			} as any
 
-			const resolver = getResolver(doc)
-			
-			expect(resolver).toBeDefined()
-			expect(resolver.root).toBe('/workspace')
-			expect(typeof resolver.resolve).toBe('function')
+		const resolver = getResolver(doc)
+		
+		expect(resolver).toBeDefined()
+		expect(resolver!.root).toBe('/workspace')
+		expect(typeof resolver!.resolve).toBe('function')
 		})
 	})
 

@@ -7,7 +7,7 @@ const processor = remark().use(remarkHtml)
 /**
  * Eagerly compile a document's markdown body into HTML.
  *
- * This is available as a convenience for transforms in `aero.content.ts`.
+ * This is available as a convenience for transforms in `content.config.ts`.
  * For lazy rendering in pages, use `render()` from `aero:content` instead.
  *
  * ```ts

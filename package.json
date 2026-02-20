@@ -4,13 +4,14 @@
 	"private": true,
 	"packageManager": "pnpm@10.28.0",
 	"scripts": {
+		"test": "vitest run",
+		"build": "pnpm build:core && pnpm build:config && pnpm build:content && pnpm build:start",
+		"typecheck": "pnpm -r typecheck",
 		"build:core": "pnpm --dir packages/core build",
+		"build:config": "pnpm --dir packages/config build",
 		"build:content": "pnpm --dir packages/content build",
 		"build:start": "pnpm --dir packages/start build",
 		"build:vscode": "pnpm --dir packages/vscode build",
-		"build:all": "pnpm build:core && pnpm build:content && pnpm build:start",
-		"test": "vitest run",
-		"typecheck": "pnpm -r typecheck",
 		"clean:all": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
 	},
 	"devDependencies": {

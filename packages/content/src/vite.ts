@@ -14,10 +14,10 @@ const CONTENT_MODULE_ID = 'aero:content'
 const RESOLVED_CONTENT_MODULE_ID = '\0aero:content'
 
 /** Default config file name. */
-const CONFIG_FILE = 'aero.content.ts'
+const CONFIG_FILE = 'content.config.ts'
 
 export interface AeroContentOptions {
-	/** Path to the content config file, relative to project root. Default: `aero.content.ts` */
+	/** Path to the content config file, relative to project root. Default: `content.config.ts` */
 	config?: string
 }
 

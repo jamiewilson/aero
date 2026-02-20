@@ -1,15 +1,7 @@
-import { aero } from '@aero-ssg/core/vite'
-import { aeroContent } from '@aero-ssg/content/vite'
-import { defineConfig } from 'vite'
+import { createViteConfig } from '@aero-ssg/config'
+import aeroConfig from './aero.config'
 
-export default defineConfig({
-	plugins: [aero({ nitro: true }), aeroContent()],
-	build: {
-		cssMinify: 'esbuild',
-		rolldownOptions: {
-			checks: {
-				eval: false,
-			},
-		},
-	},
+export default createViteConfig(aeroConfig, {
+	command: process.argv.includes('build') ? 'build' : 'dev',
+	mode: (process.env.NODE_ENV as 'development' | 'production') || 'development',
 })

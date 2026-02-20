@@ -59,6 +59,8 @@ vi.mock('vscode', () => {
 			file: (s: string) => ({ fsPath: s, scheme: 'file' }),
 		},
 		CompletionItem: class {
+			label: string
+			kind: number
 			constructor(label: string, kind: number) {
 				this.label = label
 				this.kind = kind
@@ -75,11 +77,13 @@ vi.mock('vscode', () => {
 			Variable: 5,
 		},
 		SnippetString: class {
+			value: string
 			constructor(value: string) {
 				this.value = value
 			}
 		},
 		MarkdownString: class {
+			value: string
 			constructor(value?: string) {
 				this.value = value || ''
 			}
