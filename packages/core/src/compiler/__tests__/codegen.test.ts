@@ -381,6 +381,7 @@ describe('Codegen', () => {
 	it('should support expressions in data-props', async () => {
 		const html = `<script on:build>
 										const myComp = { name: 'comp' };
+										const site = { meta: { title: 'Test Site' } };
 									</script>
 									<my-comp-component data-props="{ title: site.meta.title, doubled: 2 * 21 }" />`
 
@@ -389,7 +390,6 @@ describe('Codegen', () => {
 
 		const renderedProps: any[] = []
 		const Aero = {
-			site: { meta: { title: 'Test Site' } },
 			renderComponent: async (comp: any, props: any) => {
 				renderedProps.push(props)
 				return ''
