@@ -9,6 +9,7 @@ import {
 	escapeBackticks,
 	emitSlotsObjectVars,
 	extractGetStaticPaths,
+	extractObjectKeys,
 	emitRenderFunction,
 	emitSlotVar,
 	emitAppend,
@@ -242,5 +243,43 @@ describe('emitSlotOutput', () => {
 
 	it('should use custom output variable', () => {
 		expect(emitSlotOutput('header', 'h', '__html')).toBe("__html += slots['header'] ?? `h`;\n")
+	})
+})
+
+describe('extractObjectKeys', () => {
+	it('should extract simple keys', () => {
+		expect(extractObjectKeys('{ a: 1, b: 2 }')).toEqual(['a', 'b'])
+	})
+
+	it('should extract shorthand keys', () => {
+		expect(extractObjectKeys('{ config, theme }')).toEqual(['config', 'theme'])
+	})
+
+	it('should handle mixed shorthand and full properties', () => {
+		expect(extractObjectKeys('{ debug, title: header.title }')).toEqual(['debug', 'title'])
+	})
+
+	it('should ignore spread syntax', () => {
+		expect(extractObjectKeys('{ ...spread, a: 1 }')).toEqual(['a'])
+	})
+
+	it('should handle nested objects and arrays', () => {
+		expect(extractObjectKeys('{ nested: { a: 1, b: 2 }, arr: [1, 2, 3] }')).toEqual([
+			'nested',
+			'arr',
+		])
+	})
+
+	it('should handle expressions with parentheses', () => {
+		expect(extractObjectKeys('{ computed: (1 + 2) }')).toEqual(['computed'])
+	})
+
+	it('should handle no outer braces', () => {
+		expect(extractObjectKeys('a: 1, b: 2')).toEqual(['a', 'b'])
+	})
+
+	it('should handle empty input', () => {
+		expect(extractObjectKeys('{}')).toEqual([])
+		expect(extractObjectKeys('  ')).toEqual([])
 	})
 })

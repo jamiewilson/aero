@@ -1,4 +1,5 @@
 import type { AeroOptions, AliasResult } from '../types'
+import { extractObjectKeys } from '../compiler/helpers'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
@@ -42,7 +43,7 @@ async function runNitroBuild(root: string): Promise<void> {
 }
 
 export function aero(options: AeroOptions = {}): PluginOption[] {
-	const clientScripts = new Map<string, string>()
+	const clientScripts = new Map<string, { content: string; passDataExpr?: string }>()
 	const runtimeInstanceJsPath = fileURLToPath(
 		new URL('../runtime/instance.js', import.meta.url),
 	)
@@ -196,8 +197,20 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			// Handle virtual client scripts (prefixed with \0 from resolveId)
 			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
 				const virtualId = id.slice(1) // Remove \0 prefix to get the map key
-				const content = clientScripts.get(virtualId)
-				return content ?? ''
+				const entry = clientScripts.get(virtualId)
+				if (!entry) return ''
+
+				// If pass:data was used, prepend a destructuring preamble that
+				// reads the serialized JSON from the DOM at runtime.
+				if (entry.passDataExpr) {
+					const keys = extractObjectKeys(entry.passDataExpr)
+					if (keys.length > 0) {
+						const preamble = `const { ${keys.join(', ')} } = JSON.parse(document.getElementById('__aero_data')?.textContent || '{}');\n`
+						return preamble + entry.content
+					}
+				}
+
+				return entry.content
 			}
 			return null
 		},
@@ -210,15 +223,21 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				const parsed = parse(code)
 
 				let clientScriptUrl: string | undefined
+				let clientPassDataExpr: string | undefined
 				if (parsed.clientScript) {
 					const relativePath = path.relative(config.root, id).replace(/\\/g, '/')
 					clientScriptUrl = CLIENT_SCRIPT_PREFIX + relativePath.replace(/\.html$/i, '.js')
-					clientScripts.set(clientScriptUrl, parsed.clientScript.content)
+					clientPassDataExpr = parsed.clientScript.passDataExpr
+					clientScripts.set(clientScriptUrl, {
+						content: parsed.clientScript.content,
+						passDataExpr: clientPassDataExpr,
+					})
 				}
 
 				const generated = compile(parsed, {
 					root: config.root,
 					clientScriptUrl,
+					clientPassDataExpr,
 					resolvePath: aliasResult.resolvePath,
 				})
 
@@ -255,7 +274,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const outDir = config.build.outDir
 			// Read minify from Vite's build.minify config
 			// If user sets vite.build.minify = false, disable both Vite minification AND HTML minification
-			const shouldMinifyHtml = config.build.minify !== false && process.env.NODE_ENV === 'production'
+			const shouldMinifyHtml =
+				config.build.minify !== false && process.env.NODE_ENV === 'production'
 			await renderStaticPages(
 				{
 					root,
