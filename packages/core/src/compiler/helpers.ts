@@ -165,7 +165,7 @@ export function emitRenderFunction(
 			: ''
 
 	const renderFn = `export default async function(Aero) {
-		const { site, slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
+		const { slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
 		${script}
 		${stylesCode}
 		${scriptsCode}

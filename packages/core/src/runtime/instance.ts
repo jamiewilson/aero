@@ -1,5 +1,4 @@
 import { Aero } from '.'
-import site from '@content/site'
 
 declare global {
 	var __AERO_INSTANCE__: Aero | undefined
@@ -36,7 +35,6 @@ aero.registerPages(components)
 aero.registerPages(layouts)
 aero.registerPages(pages)
 
-aero.global('site', site)
 notify()
 
 if (import.meta.hot) {
