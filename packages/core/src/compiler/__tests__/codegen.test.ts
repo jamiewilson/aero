@@ -308,8 +308,9 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, { ...mockOptions, clientScriptUrl: '/test.js' })
 
-		const output = await execute(code)
-		expect(output).toContain('<script type="module" src="/test.js"></script>')
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		expect(scripts.has('<script type="module" src="/test.js"></script>')).toBe(true)
 	})
 
 	it('should handle attributes with colons (Alpine.js style)', async () => {

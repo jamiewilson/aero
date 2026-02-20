@@ -680,7 +680,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("declared multiple times"),
+			d.message.includes('declared multiple times'),
 		)
 		expect(dupDiag).toBeDefined()
 	})
@@ -708,8 +708,40 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("declared multiple times"),
+			d.message.includes('declared multiple times'),
 		)
 		expect(dupDiag).toBeUndefined()
+	})
+})
+
+describe('AeroDiagnostics Component References', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should ignore components inside on:client scripts', () => {
+		const text = `
+<script on:client>
+	const tag = "<header-component>"
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1] || []
+		const componentDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('is not imported'),
+		)
+		expect(componentDiag).toBeUndefined()
 	})
 })
