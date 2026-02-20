@@ -21,8 +21,8 @@ const DIAGNOSTIC_SOURCE = 'aero'
 /** Matches <script ...> tags with their attributes */
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>/gi
 
-/** Matches on:build or on:client in attributes */
-const ON_ATTR_REGEX = /\bon:(build|client)\b/
+/** Matches is:build, is:bundled, or is:inline in attributes */
+const IS_ATTR_REGEX = /\bis:(build|bundled|inline)\b/
 
 /** Matches src= in script attributes (external scripts are exempt) */
 const SRC_ATTR_REGEX = /\bsrc\s*=/
@@ -177,7 +177,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 
 	// -----------------------------------------------------------------------
-	// 1. Script tags without on:build or on:client
+	// 1. Script tags without is:build or is:bundled
 	// -----------------------------------------------------------------------
 
 	private checkScriptTags(
@@ -205,13 +205,13 @@ export class AeroDiagnostics implements vscode.Disposable {
 				continue
 			}
 
-			// Check for on:build or on:client
-			if (!ON_ATTR_REGEX.test(attrs)) {
+			// Check for is:build, is:bundled, or is:inline
+			if (!IS_ATTR_REGEX.test(attrs)) {
 				const startPos = document.positionAt(match.index)
 				const endPos = document.positionAt(match.index + match[0].length)
 				const diagnostic = new vscode.Diagnostic(
 					new vscode.Range(startPos, endPos),
-					'Inline <script> should have on:build or on:client attribute',
+					'Inline <script> should have is:build, is:bundled, or is:inline attribute',
 					vscode.DiagnosticSeverity.Warning,
 				)
 				diagnostic.source = DIAGNOSTIC_SOURCE
@@ -526,8 +526,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 			usedInTemplate.add(ref.content)
 		}
 
-		// Combine only on:build script block contents for usage checking.
-		// on:client blocks are browser-only and must not satisfy build-time variable usage.
+		// Combine only is:build script block contents for usage checking.
+		// is:bundled blocks are browser-only and must not satisfy build-time variable usage.
 		const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 		let scriptMatch: RegExpExecArray | null
 		let combinedScriptContent = ''
@@ -535,8 +535,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
 			const scriptAttrs = (scriptMatch[1] || '').toLowerCase()
 			if (/\bsrc\s*=/.test(scriptAttrs)) continue
-			// Exclude on:client — isolated from build-time scope
-			if (/\bon:client\b/.test(scriptAttrs)) continue
+			// Exclude is:bundled — isolated from build-time scope
+			if (/\bis:bundled\b/.test(scriptAttrs)) continue
 			let blockContent = maskJsComments(scriptMatch[2])
 			// Mask strings to avoid matching inside them (e.g. import path)
 			blockContent = blockContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>

@@ -16,13 +16,18 @@ const AERO_ATTRIBUTES: Array<{
 	kind: vscode.CompletionItemKind
 }> = [
 	{
-		label: 'on:build',
+		label: 'is:build',
 		detail: 'Build-time script block (Aero)',
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
-		label: 'on:client',
+		label: 'is:bundled',
 		detail: 'Client-side script block (Aero)',
+		kind: vscode.CompletionItemKind.Property,
+	},
+	{
+		label: 'is:inline',
+		detail: 'Inline client script, no bundling (Aero)',
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
@@ -165,9 +170,9 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 				const item = new vscode.CompletionItem(
 					tagName,
-					suffix === 'component' ?
-						vscode.CompletionItemKind.Class
-					:	vscode.CompletionItemKind.Struct,
+					suffix === 'component'
+						? vscode.CompletionItemKind.Class
+						: vscode.CompletionItemKind.Struct,
 				)
 				item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
 				item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
@@ -243,9 +248,9 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		const resolved = resolver.resolve(partial)
 		if (resolved) {
 			const dir =
-				fs.existsSync(resolved) && fs.statSync(resolved).isDirectory() ?
-					resolved
-				:	path.dirname(resolved)
+				fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()
+					? resolved
+					: path.dirname(resolved)
 
 			if (fs.existsSync(dir)) {
 				try {

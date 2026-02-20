@@ -1,4 +1,4 @@
-<script on:build>
+<script is:build>
 	import logo from '@components/logo'
 	const isHomepage = Aero.url.pathname === '/'
 	const props = Aero.props
@@ -38,6 +38,6 @@
 	}
 </style>
 
-<script on:client>
+<script is:bundled>
 	console.log('[aero] <header-component> script executed')
 </script>

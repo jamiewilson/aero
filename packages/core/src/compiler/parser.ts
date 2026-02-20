@@ -7,11 +7,20 @@ import { parseHTML } from 'linkedom'
  * We use a hybrid approach: regex to find script tags and linkedom to validate
  * their attributes. This is 100% non-destructive and preserves the
  * original template structure (including doctypes and head/body tags) exactly.
+ *
+ * Script types:
+ * - `is:build`   — extracted, becomes the render function body (build-time)
+ * - `is:bundled`  — extracted, served as virtual ES module (client-side)
+ * - `is:inline`  — left in template, rendered inline (client-side)
  */
 export function parse(html: string): ParseResult {
 	let template = html
 	let buildContent: string[] = []
 	let clientContent: string[] = []
+	let clientPassData: string | undefined
+
+	// Strip HTML comments so we don't accidentally match scripts inside them
+	const cleaned = html.replace(/<!--[\s\S]*?-->/g, '')
 
 	// Match <script ...>...</script>
 	const SCRIPT_REGEX = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
@@ -19,7 +28,7 @@ export function parse(html: string): ParseResult {
 	const scriptsToRemove: { fullTag: string; type: 'build' | 'client'; content: string }[] = []
 
 	let match
-	while ((match = SCRIPT_REGEX.exec(html)) !== null) {
+	while ((match = SCRIPT_REGEX.exec(cleaned)) !== null) {
 		const fullTag = match[0]
 		const content = match[1] || ''
 
@@ -28,11 +37,14 @@ export function parse(html: string): ParseResult {
 		const scriptEl = document.querySelector('script')
 
 		if (scriptEl) {
-			if (scriptEl.hasAttribute('on:build')) {
+			if (scriptEl.hasAttribute('is:build')) {
 				scriptsToRemove.push({ fullTag, type: 'build', content: content.trim() })
-			} else if (scriptEl.hasAttribute('on:client')) {
+			} else if (scriptEl.hasAttribute('is:bundled')) {
+				const passData = scriptEl.getAttribute('pass:data') || undefined
+				if (passData) clientPassData = passData
 				scriptsToRemove.push({ fullTag, type: 'client', content: content.trim() })
 			}
+			// is:inline scripts are NOT extracted — they stay in the template
 		}
 	}
 
@@ -44,7 +56,10 @@ export function parse(html: string): ParseResult {
 	}
 
 	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
-	const clientScript = clientContent.length > 0 ? { content: clientContent.join('\n') } : null
+	const clientScript =
+		clientContent.length > 0
+			? { content: clientContent.join('\n'), passDataExpr: clientPassData }
+			: null
 
 	return {
 		buildScript,

@@ -65,7 +65,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should flag unused component import even if name exists in import path', () => {
 		const text = `
-<script on:build>
+<script is:build>
     import header from './header'
     // header is NOT used in template
 </script>
@@ -96,7 +96,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag used component import', () => {
 		const text = `
-<script on:build>
+<script is:build>
     import header from './header'
 </script>
 <header-component />
@@ -120,11 +120,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedHeaderDiag).toBeUndefined()
 	})
 
-	it('should NOT flag imports from on:build as unused when an on:client block is also present', () => {
+	it('should NOT flag imports from is:build as unused when an is:bundled block is also present', () => {
 		// The real issue: with two script blocks, each block was checked independently.
-		// Imports in on:build would appear 0 times in on:client content → false unused.
+		// Imports in is:build would appear 0 times in is:bundled content → false unused.
 		const text = `
-<script on:build>
+<script is:build>
   import base from '@layouts/base'
   import { render } from 'aero:content'
   const doc = Aero.props
@@ -133,7 +133,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 <base-layout title="{doc.data.title}">
   <section>{html}</section>
 </base-layout>
-<script on:client>
+<script is:bundled>
   console.log('client side')
 </script>
 `
@@ -154,22 +154,22 @@ describe('AeroDiagnostics Unused Variables', () => {
 		const unusedDiags = reportedDiagnostics.filter((d: any) =>
 			d.message.includes('is declared but its value is never read'),
 		)
-		// render is used inside on:build (render(doc)) — should NOT be flagged
+		// render is used inside is:build (render(doc)) — should NOT be flagged
 		// base is used as <base-layout> in template — should NOT be flagged
 		// doc/html are used in template expressions
 		expect(unusedDiags).toHaveLength(0)
 	})
 
-	it('should flag on:build import as unused even if the same name is declared in on:client', () => {
-		// on:client is browser-only — a `const base = ...` there must NOT count as usage
-		// of the `import base` in on:build.
+	it('should flag is:build import as unused even if the same name is declared in is:bundled', () => {
+		// is:bundled is browser-only — a `const base = ...` there must NOT count as usage
+		// of the `import base` in is:build.
 		const text = `
-<script on:build>
+<script is:build>
   import base from '@layouts/base'
 </script>
 <div>no template usage of base</div>
-<script on:client>
-  const base = 'test' // same name, different scope — must not satisfy on:build import
+<script is:bundled>
+  const base = 'test' // same name, different scope — must not satisfy is:build import
   console.log(base)
 </script>
 `
@@ -195,7 +195,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag variable as unused when used in Alpine x-data attribute', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 <section x-data="{input: '', dismiss: dismiss}">
@@ -224,7 +224,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag variable as unused when used in HTMX event handler', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 <span @htmx:after-swap="dismiss($el)"></span>
@@ -251,7 +251,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag getCollection when used in getStaticPaths', () => {
 		const text = `
-<script on:build>
+<script is:build>
     import { getCollection } from 'aero:content'
     
     export async function getStaticPaths() {
@@ -283,7 +283,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag render when used in getStaticPaths', () => {
 		const text = `
-<script on:build>
+<script is:build>
     import { getCollection, render } from 'aero:content'
     
     export async function getStaticPaths() {
@@ -353,7 +353,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 	it('should NOT flag defined variable in template expression', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	const myVar = 'hello'
 </script>
 <div>{myVar}</div>
@@ -434,7 +434,7 @@ describe('AeroDiagnostics Script Tags', () => {
 		mockSet.mockClear()
 	})
 
-	it('should warn when script tag lacks on:build or on:client', () => {
+	it('should warn when script tag lacks is:build or is:bundled', () => {
 		const text = `
 <script>
 	const foo = 'bar'
@@ -456,14 +456,16 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+			d.message.includes(
+				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
+			),
 		)
 		expect(scriptDiag).toBeDefined()
 	})
 
-	it('should NOT warn when script has on:build', () => {
+	it('should NOT warn when script has is:build', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	const foo = 'bar'
 </script>
 <div></div>
@@ -483,14 +485,16 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+			d.message.includes(
+				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
+			),
 		)
 		expect(scriptDiag).toBeUndefined()
 	})
 
-	it('should NOT warn when script has on:client', () => {
+	it('should NOT warn when script has is:bundled', () => {
 		const text = `
-<script on:client>
+<script is:bundled>
 	console.log('hello')
 </script>
 <div></div>
@@ -510,7 +514,9 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Inline <script> should have on:build or on:client attribute'),
+			d.message.includes(
+				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
+			),
 		)
 		expect(scriptDiag).toBeUndefined()
 	})
@@ -659,7 +665,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 	it('should flag import conflicting with local declaration', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	import header from '@components/header'
 	const header = { title: 'Test' }
 </script>
@@ -687,7 +693,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 	it('should NOT flag when no duplicate', () => {
 		const text = `
-<script on:build>
+<script is:build>
 	import header from '@components/header'
 	const props = { title: 'Test' }
 </script>
@@ -719,9 +725,9 @@ describe('AeroDiagnostics Component References', () => {
 		mockSet.mockClear()
 	})
 
-	it('should ignore components inside on:client scripts', () => {
+	it('should ignore components inside is:bundled scripts', () => {
 		const text = `
-<script on:client>
+<script is:bundled>
 	const tag = "<header-component>"
 </script>
 `

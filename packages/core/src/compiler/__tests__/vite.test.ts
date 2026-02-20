@@ -21,7 +21,7 @@ describe('Vite Plugin Integration', () => {
 
 	it('should transform html into a js module', async () => {
 		const html = `
-            <script on:build>
+            <script is:build>
                 const title = 'Vite Test';
             </script>
             <h1>{ title }</h1>
@@ -33,9 +33,9 @@ describe('Vite Plugin Integration', () => {
 		expect(result.code).toContain('Vite Test')
 	})
 
-	it('should handle on:client via virtual modules', async () => {
+	it('should handle is:bundled via virtual modules', async () => {
 		const html = `
-            <script on:client>
+            <script is:bundled>
                 console.log('client side');
             </script>
             <div>Client</div>
