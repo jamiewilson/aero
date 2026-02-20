@@ -18,10 +18,6 @@
 		"vitest": "^4.0.18"
 	},
 	"pnpm": {
-		"onlyBuiltDependencies": [
-			"@aero-ssg/core",
-			"@aero-ssg/content"
-		],
 		"overrides": {
 			"vite": "8.0.0-beta.15"
 		}
