@@ -262,6 +262,19 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					return [...modules, instanceModule]
 				}
 			}
+
+			// Invalidate virtual client scripts when their parent HTML file changes
+			if (file.endsWith('.html')) {
+				const relativePath = path.relative(config.root, file).replace(/\\/g, '/')
+				const clientScriptUrl =
+					'\0' + CLIENT_SCRIPT_PREFIX + relativePath.replace(/\.html$/i, '.js')
+				const virtualModule = server.moduleGraph.getModuleById(clientScriptUrl)
+
+				if (virtualModule) {
+					server.moduleGraph.invalidateModule(virtualModule)
+				}
+			}
+
 			return modules
 		},
 	}
