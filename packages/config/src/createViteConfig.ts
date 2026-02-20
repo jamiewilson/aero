@@ -25,7 +25,6 @@ export function createViteConfig(
 		aero({
 			nitro: server ?? false,
 			dirs,
-			minify: true,
 		}),
 	]
 

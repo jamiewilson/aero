@@ -1,6 +1,6 @@
 import type { AeroDirs, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
-import { minify } from 'html-minifier-next'
+import { minify as minifyHTML } from 'html-minifier-next'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
@@ -457,7 +457,7 @@ export async function renderStaticPages(
 
 			// Minify HTML in production
 			if (options.minify && process.env.NODE_ENV === 'production') {
-				rendered = await minify(rendered, {
+				rendered = await minifyHTML(rendered, {
 					collapseWhitespace: true,
 					removeComments: true,
 					minifyCSS: true,
