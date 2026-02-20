@@ -53,9 +53,9 @@ export function kebabToCamelCase(s: string): string {
 /** Builds a props object string from entries and optional spread expression */
 export function buildPropsString(entries: string[], spreadExpr: string | null): string {
 	if (spreadExpr) {
-		return entries.length > 0 ?
-				`{ ${spreadExpr}, ${entries.join(', ')} }`
-			:	`{ ${spreadExpr} }`
+		return entries.length > 0
+			? `{ ${spreadExpr}, ${entries.join(', ')} }`
+			: `{ ${spreadExpr} }`
 	}
 	return `{ ${entries.join(', ')} }`
 }
@@ -151,10 +151,17 @@ export function emitRenderFunction(
 	script: string,
 	body: string,
 	getStaticPathsFn?: string | null,
+	rootStyles?: string[],
 ): string {
+	const stylesCode =
+		rootStyles && rootStyles.length > 0
+			? rootStyles.map(s => `styles?.add(${JSON.stringify(s)});`).join('\n\t\t')
+			: ''
+
 	const renderFn = `export default async function(Aero) {
-		const { site, slots = {}, renderComponent, request, url, params } = Aero;
+		const { site, slots = {}, renderComponent, request, url, params, styles } = Aero;
 		${script}
+		${stylesCode}
 		let __out = '';
 		${body}return __out;
 	}`
