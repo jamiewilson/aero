@@ -8,6 +8,7 @@
 		"preview:api": "vite build && node .output/server/index.mjs"
 	},
 	"dependencies": {
+		"@aero-ssg/config": "workspace:*",
 		"@aero-ssg/content": "workspace:*",
 		"@aero-ssg/core": "workspace:*",
 		"@alpinejs/persist": "^3.15.8",
@@ -21,10 +22,5 @@
 		"nitro": "^3.0.1-alpha.2",
 		"vite": "8.0.0-beta.15",
 		"zod": "^4.3.6"
-	},
-	"postcss": {
-		"plugins": {
-			"autoprefixer": {}
-		}
 	}
 }

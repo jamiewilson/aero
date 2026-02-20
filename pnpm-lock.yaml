@@ -15,6 +15,31 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
+  packages/config:
+    dependencies:
+      '@aero-ssg/content':
+        specifier: workspace:*
+        version: link:../content
+      '@aero-ssg/core':
+        specifier: workspace:*
+        version: link:../core
+      autoprefixer:
+        specifier: ^10.4.24
+        version: 10.4.24(postcss@8.5.6)
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.3.0
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/content:
     dependencies:
       fast-glob:
@@ -91,6 +116,9 @@ importers:
 
   packages/start:
     dependencies:
+      '@aero-ssg/config':
+        specifier: workspace:*
+        version: link:../config
       '@aero-ssg/content':
         specifier: workspace:*
         version: link:../content
