@@ -386,7 +386,7 @@ class Compiler {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, styles }) }`
+			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, styles, scripts }) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)
@@ -465,7 +465,7 @@ class Compiler {
 		}
 
 		const slotsString = Helper.emitSlotsObjectVars(slotVarMap)
-		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params, styles });\n`
+		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params, styles, scripts });\n`
 
 		return out
 	}
@@ -546,14 +546,13 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	}
 
 	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
+	const rootScripts: string[] = []
 	if (options.clientScriptUrl) {
-		bodyCode += Helper.emitAppend(
-			`<script type="module" src="${options.clientScriptUrl}"></script>`,
-		)
+		rootScripts.push(`<script type="module" src="${options.clientScriptUrl}"></script>`)
 	}
 	return (
 		importsCode +
 		'\n' +
-		Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn, rootStyles)
+		Helper.emitRenderFunction(script, bodyCode, getStaticPathsFn, rootStyles, rootScripts)
 	)
 }
