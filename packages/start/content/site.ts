@@ -15,6 +15,8 @@ export default {
 	theme: {
 		options: Object.values(ThemeMode),
 		default: ThemeMode.System,
+		storageKey: 'theme',
+		attribute: 'data-theme',
 	},
 	home: {
 		title: 'Welcome to Aero',

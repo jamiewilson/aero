@@ -8,6 +8,7 @@ export const ATTR_NAME = 'name'
 export const ATTR_SLOT = 'slot'
 export const ATTR_ON_CLIENT = 'on:client'
 export const ATTR_ON_BUILD = 'on:build'
+export const ATTR_PASS_DATA = 'pass:data'
 
 export const TAG_SLOT = 'slot'
 export const SLOT_NAME_DEFAULT = 'default'

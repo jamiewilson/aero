@@ -2,6 +2,7 @@
 	import meta from '@components/meta'
 	import nav from '@components/nav'
 	import footer from '@components/footer'
+	const { storageKey, attribute } = site.theme
 </script>
 
 <html lang="en">
@@ -9,10 +10,14 @@
 		<meta-component props="{...Aero.props}" />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@scripts/index.ts"></script>
-		<script src="@scripts/theme.ts"></script>
+
+		<script pass:data="{{storageKey, attribute}}">
+			const theme = JSON.parse(localStorage.getItem(storageKey))
+			document.documentElement.setAttribute(attribute, theme)
+		</script>
 	</head>
 
-	<body id="app" :data-theme="$store.theme.current">
+	<body id="app">
 		<nav-component>
 			<slot name="into-nav"></slot>
 		</nav-component>
