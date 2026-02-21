@@ -11,10 +11,10 @@
 </script>
 
 <base-layout>
-	<header-component props="{ ...headerProps }" />
+	<header-component props="{...headerProps}" />
 	<form-component />
 </base-layout>
 
-<script is:bundled pass:data="{{ title: site.meta.title }}">
-	console.log('[aero] pass:data', title)
+<script is:inline>
+	console.log('[aero] is:inline')
 </script>

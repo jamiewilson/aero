@@ -38,6 +38,7 @@
 	}
 </style>
 
-<script is:inline>
-	console.log('[aero] is:inline')
+<script pass:data="{{ isHomepage }}" is:bundled>
+	import { debug } from '@scripts/utils/debug'
+	debug('isHomepage', isHomepage)
 </script>
