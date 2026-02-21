@@ -1,2 +1,2 @@
-import { allCaps } from '~/client/assets/scripts/utils/transform'
+import { allCaps } from '@scripts/utils/transform'
 console.debug(allCaps('[aero]'), '<script type="module">')

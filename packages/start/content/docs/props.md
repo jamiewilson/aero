@@ -50,7 +50,7 @@ If `Aero.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
 Spread an existing object using `data-props` or `props`:
 
 ```html
-<script on:build>
+<script is:build>
 	const myProps = { title: 'Hello', count: 42 }
 </script>
 <my-component data-props="{ ...myProps }" />
@@ -81,7 +81,7 @@ You can also use expressions:
 Like JavaScript's object shorthand (`{ props }` means `{ props: props }`), you can use `data-props` or `props` with no value to spread a `props` variable:
 
 ```html
-<script on:build>
+<script is:build>
 	const props = { title: 'Hello', count: 42 }
 </script>
 <my-component props />
@@ -103,7 +103,7 @@ Combine `data-props` with individual attributes:
 Components access props by destructuring `Aero.props`:
 
 ```html
-<script on:build>
+<script is:build>
 	// Destructure the props you need
 	const { title, subtitle } = Aero.props
 </script>
@@ -117,7 +117,7 @@ Components access props by destructuring `Aero.props`:
 ### With Defaults
 
 ```html
-<script on:build>
+<script is:build>
 	const { title = 'Default Title', subtitle } = Aero.props
 </script>
 ```
@@ -125,7 +125,7 @@ Components access props by destructuring `Aero.props`:
 ### With Fallbacks to Site Data
 
 ```html
-<script on:build>
+<script is:build>
 	const { title, description } = Aero.props
 </script>
 
@@ -158,7 +158,7 @@ Inside `on:build` scripts, you have access to:
 ### Read request metadata
 
 ```html
-<script on:build>
+<script is:build>
 	const userAgent = Aero.request.headers.get('user-agent') || 'unavailable'
 </script>
 
@@ -171,7 +171,7 @@ In static builds, request-specific headers may be unavailable.
 ### Build canonical links from the current URL
 
 ```html
-<script on:build>
+<script is:build>
 	const canonical = new URL(Aero.url.pathname, site.meta.url).toString()
 </script>
 
@@ -183,7 +183,7 @@ In static builds, request-specific headers may be unavailable.
 In a dynamic route file such as `client/pages/docs/[slug].html`:
 
 ```html
-<script on:build>
+<script is:build>
 	const slug = Aero.params.slug || 'index'
 </script>
 
@@ -196,7 +196,7 @@ In a dynamic route file such as `client/pages/docs/[slug].html`:
 
 ```html
 <!-- components/greeting.html -->
-<script on:build>
+<script is:build>
 	const { name } = Aero.props
 </script>
 
@@ -213,7 +213,7 @@ Usage:
 
 ```html
 <!-- pages/index.html -->
-<script on:build>
+<script is:build>
 	import header from '@components/header'
 
 	const headerProps = {

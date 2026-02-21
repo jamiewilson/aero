@@ -31,7 +31,7 @@ This allows a component to receive a named slot from its parent and forward it t
 **Parent Component (parent.html)**
 
 ```html
-<script on:build>
+<script is:build>
 	import child from '@layouts/child'
 </script>
 

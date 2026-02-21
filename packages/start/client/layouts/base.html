@@ -12,7 +12,7 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module" src="@scripts/index.ts"></script>
 
-		<script pass:data="{{storageKey, attribute}}">
+		<script is:inline pass:data="{{storageKey, attribute}}">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
 		</script>

@@ -23,9 +23,9 @@ export interface MountOptions {
 
 export interface CompileOptions {
 	root: string
-	clientScriptUrl?: string
-	clientPassDataExpr?: string
-	inlineScripts?: { content: string; passDataExpr?: string }[]
+	clientScripts?: { attrs: string; content: string; passDataExpr?: string }[]
+	inlineScripts?: { attrs: string; content: string; passDataExpr?: string }[]
+	blockingScripts?: { attrs: string; content: string; passDataExpr?: string }[]
 	resolvePath?: (specifier: string) => string
 }
 
@@ -36,8 +36,9 @@ export interface ResolverOptions {
 
 export interface ParseResult {
 	buildScript: { content: string } | null
-	clientScript: { content: string; passDataExpr?: string } | null
-	inlineScripts: { content: string; passDataExpr?: string }[]
+	clientScripts: { attrs: string; content: string; passDataExpr?: string }[]
+	inlineScripts: { attrs: string; content: string; passDataExpr?: string }[]
+	blockingScripts: { attrs: string; content: string; passDataExpr?: string }[]
 	template: string
 }
 
@@ -73,6 +74,7 @@ export interface AeroRenderInput {
 	routePath?: string
 	styles?: Set<string>
 	scripts?: Set<string>
+	headScripts?: Set<string>
 }
 
 export interface AeroTemplateContext {
@@ -90,4 +92,5 @@ export interface AeroTemplateContext {
 	params: AeroRouteParams
 	styles?: Set<string>
 	scripts?: Set<string>
+	headScripts?: Set<string>
 }

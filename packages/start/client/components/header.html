@@ -38,8 +38,14 @@
 	}
 </style>
 
-<!-- TODO: Make is:bundled the default? -->
-<script is:bundled pass:data="{{ isHomepage }}">
+<!-- TODO: Fix vscode diagnostics for new src taxonomy 
+ no longer requires is:* attr, type=module should satisfy import warning on is:inline -->
+<script pass:data="{{ isHomepage }}" type="module">
 	import { allCaps } from '@scripts/utils/transform'
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
+
+<!-- TODO: Need to ignore comments for diagnostics. Didn't we do this already!? -->
+<!--<script>
+	import { allCaps } from '@scripts/utils/transform'
+</script>-->

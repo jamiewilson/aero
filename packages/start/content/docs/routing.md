@@ -52,11 +52,11 @@ During development (`pnpm dev`), dynamic routes are resolved at request time. Wh
 
 ### Build mode
 
-For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPaths()` function from their `<script on:build>` block. This tells the build which concrete paths to generate.
+For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPaths()` function from their `<script is:build>` block. This tells the build which concrete paths to generate.
 
 ```html
 <!-- client/pages/[id].html -->
-<script on:build>
+<script is:build>
 	import base from '@layouts/base'
 
 	export function getStaticPaths() {
@@ -87,7 +87,7 @@ Dynamic segments work inside subdirectories:
 
 ```html
 <!-- client/pages/docs/[slug].html -->
-<script on:build>
+<script is:build>
 	import base from '@layouts/base'
 
 	export function getStaticPaths() {
@@ -112,7 +112,7 @@ dist/docs/name/index.html
 `getStaticPaths` can be `async`, so you can fetch paths from an API, CMS, or filesystem at build time:
 
 ```html
-<script on:build>
+<script is:build>
 	import base from '@layouts/base'
 
 	export async function getStaticPaths() {
@@ -135,7 +135,7 @@ The page will still work in dev mode but will not produce output files in the st
 
 ## Template Context
 
-Every page has access to these routing-related values inside `<script on:build>` and template expressions:
+Every page has access to these routing-related values inside `<script is:build>` and template expressions:
 
 | Value               | Description                                 | Example                      |
 | ------------------- | ------------------------------------------- | ---------------------------- |

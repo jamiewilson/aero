@@ -20,12 +20,18 @@
 	console.debug('[AERO] <script is:inline>')
 </script>
 
-<!-- But if it has source, it's bundled by default -->
-<script type="module" src="@scripts/module.ts"></script>
+<!-- TODO: Add warning about needing type=module on is:inline with import -->
+<script is:inline>
+	import { allCaps } from '@scripts/utils/transform'
+	console.debug(allCaps('[aero]'), '<script is:inline type="module">')
+</script>
 
-<!-- TODO: But these are rendered in-place, which is confusing -->
+<!-- Shouldn't this be typed module by default -->
+<script src="@scripts/module.ts"></script>
+<script async src="@scripts/async.ts"></script>
+
+<!-- These are also rendered in-place -->
 <script defer src="@scripts/defer.ts"></script>
-<script type="module" async src="@scripts/async.ts"></script>
 
 <!-- Linking a script that you don't want bundled -->
 <script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>

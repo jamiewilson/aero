@@ -8,45 +8,118 @@ import { parseHTML } from 'linkedom'
  * their attributes. This is 100% non-destructive and preserves the
  * original template structure (including doctypes and head/body tags) exactly.
  *
- * Script types:
- * - `is:build`   — extracted, becomes the render function body (build-time)
- * - `is:bundled`  — extracted, served as virtual ES module (client-side)
- * - `is:inline`  — left in template, rendered inline (client-side)
+ * Script types (v2 taxonomy):
+ * - `is:build`    — extracted, becomes the render function body (build-time)
+ * - `is:inline`   — left in template exactly where it is (not extracted)
+ * - `is:blocking` — extracted, hoisted to the <head> of the document
+ * - Default       — extracted, served as virtual ES module (bundled client-side)
  */
 export function parse(html: string): ParseResult {
 	let template = html
 	let buildContent: string[] = []
-	let clientContent: string[] = []
-	let clientPassData: string | undefined
-	let inlineScripts: { content: string; passDataExpr?: string }[] = []
+	let clientScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
+	let inlineScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
+	let blockingScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
 
 	// Strip HTML comments so we don't accidentally match scripts inside them
 	const cleaned = html.replace(/<!--[\s\S]*?-->/g, '')
 
 	// Match <script ...>...</script>
-	const SCRIPT_REGEX = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
+	const SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
-	const scriptsToRemove: { fullTag: string; type: 'build' | 'client' | 'inline'; content: string; passDataExpr?: string }[] = []
+	const scriptsToRemove: {
+		fullTag: string
+		type: 'build' | 'client' | 'blocking'
+		content: string
+		attrs: string
+		passDataExpr?: string
+	}[] = []
 
 	let match: RegExpExecArray | null = SCRIPT_REGEX.exec(cleaned)
 	while (match !== null) {
 		const fullTag = match[0]
-		const content = match[1] || ''
+		const attrsMatch = match[1] || ''
+		const content = match[2] || ''
 
 		// Parse only this script tag to check attributes with a real DOM
 		const { document } = parseHTML(fullTag)
 		const scriptEl = document.querySelector('script')
 
 		if (scriptEl) {
+			const passData = scriptEl.getAttribute('pass:data') || undefined
+
+			// For is:inline scripts, we need to preserve pass:data so codegen can
+			// enable interpolation. For other script types, we remove it.
+			let cleanedAttrs = attrsMatch
+				.replace(/\bis:build\b/g, '')
+				.replace(/\bis:inline\b/g, '')
+				.replace(/\bis:blocking\b/g, '')
+
+			// Only remove pass:data from non-inline scripts (build, blocking, client)
+			// Inline scripts need it preserved for codegen to process
+			if (!scriptEl.hasAttribute('is:inline')) {
+				cleanedAttrs = cleanedAttrs
+					.replace(/pass:data="[^"]*"/g, '')
+					.replace(/pass:data='[^']*'/g, '')
+					.replace(/pass:data=\{[^}]*\}/g, '')
+			}
+
+			cleanedAttrs = cleanedAttrs.replace(/\s+/g, ' ').trim()
+
 			if (scriptEl.hasAttribute('is:build')) {
-				scriptsToRemove.push({ fullTag, type: 'build', content: content.trim() })
-			} else if (scriptEl.hasAttribute('is:bundled')) {
-				const passData = scriptEl.getAttribute('pass:data') || undefined
-				if (passData) clientPassData = passData
-				scriptsToRemove.push({ fullTag, type: 'client', content: content.trim() })
+				scriptsToRemove.push({
+					fullTag,
+					type: 'build',
+					content: content.trim(),
+					attrs: cleanedAttrs,
+				})
 			} else if (scriptEl.hasAttribute('is:inline')) {
-				const passData = scriptEl.getAttribute('pass:data') || undefined
-				scriptsToRemove.push({ fullTag, type: 'inline', content: content.trim(), passDataExpr: passData })
+				// is:inline stays in the DOM where it was written.
+				// We don't remove it from `template`, but we track it so codegen can process passData.
+				inlineScripts.push({
+					attrs: cleanedAttrs,
+					content: content.trim(),
+					passDataExpr: passData,
+				})
+
+				// Rewrite the tag to remove the directives like `is:inline`
+				template = template.replace(
+					fullTag,
+					`<script${cleanedAttrs ? ' ' + cleanedAttrs : ''}>${content.trim()}</script>`,
+				)
+			} else if (scriptEl.hasAttribute('is:blocking')) {
+				scriptsToRemove.push({
+					fullTag,
+					type: 'blocking',
+					content: content.trim(),
+					attrs: cleanedAttrs,
+					passDataExpr: passData,
+				})
+			} else if (scriptEl.hasAttribute('src')) {
+				// External scripts with src stay in place - don't extract
+				// For local scripts (not absolute URLs), add type="module" if not specified
+				// This ensures Vite can properly bundle/transform the import statements
+				const src = scriptEl.getAttribute('src') || ''
+				const isLocalScript = !src.startsWith('http://') && !src.startsWith('https://')
+				const hasType = cleanedAttrs.includes('type=')
+
+				if (isLocalScript && !hasType) {
+					// Add type="module" for local scripts without explicit type
+					const newAttrs = cleanedAttrs ? cleanedAttrs + ' type="module"' : 'type="module"'
+					template = template.replace(
+						fullTag,
+						`<script ${newAttrs} src="${src}"></script>`,
+					)
+				}
+			} else {
+				// Default is bundled client script
+				scriptsToRemove.push({
+					fullTag,
+					type: 'client',
+					content: content.trim(),
+					attrs: cleanedAttrs,
+					passDataExpr: passData,
+				})
 			}
 		}
 		match = SCRIPT_REGEX.exec(cleaned)
@@ -56,20 +129,23 @@ export function parse(html: string): ParseResult {
 	for (const s of scriptsToRemove) {
 		template = template.replace(s.fullTag, '')
 		if (s.type === 'build') buildContent.push(s.content)
-		if (s.type === 'client') clientContent.push(s.content)
-		if (s.type === 'inline') inlineScripts.push({ content: s.content, passDataExpr: s.passDataExpr })
+		if (s.type === 'client')
+			clientScripts.push({ attrs: s.attrs, content: s.content, passDataExpr: s.passDataExpr })
+		if (s.type === 'blocking')
+			blockingScripts.push({
+				attrs: s.attrs,
+				content: s.content,
+				passDataExpr: s.passDataExpr,
+			})
 	}
 
 	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
-	const clientScript =
-		clientContent.length > 0
-			? { content: clientContent.join('\n'), passDataExpr: clientPassData }
-			: null
 
 	return {
 		buildScript,
-		clientScript,
+		clientScripts,
 		inlineScripts,
+		blockingScripts,
 		template: template.trim(),
 	}
 }

@@ -280,47 +280,32 @@ describe('Codegen', () => {
 		expect(code).not.toContain('import { foo } from')
 	})
 
-	it('should throw error for script tags without is:build, is:bundled, is:inline, or src', async () => {
-		const html = `<script>console.log('regular');</script>
-									<div>Content</div>`
-
-		const parsed = parse(html)
-
-		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Script tags must have is:build, is:bundled, is:inline, or src attribute',
-		)
-	})
-
-	it('should allow is:inline scripts and consolidate at end of document', async () => {
+	it('should allow is:inline scripts and leave them in place', async () => {
 		const html = `<script is:inline>console.log('inline');</script>
 									<div>Content</div>`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const scripts = new Set<string>()
-		await execute(code, { scripts })
-		expect(scripts.has('<script>console.log(\'inline\');</script>')).toBe(true)
+		const output = await execute(code)
+		expect(output).toContain("<script>console.log('inline');</script>")
+		expect(output).toContain('<div>Content</div>')
 	})
 
 	it('should support pass:data on is:inline scripts', async () => {
 		const html = `<script is:build>
 									const config = { theme: 'dark', id: 42 };
 								</script>
-								<head>
-									<script is:inline pass:data="{ { config } }">
-										console.log(config.theme);
-									</script>
-								</head>`
+								<script is:inline pass:data="{ { config } }">
+									console.log(config.theme);
+								</script>`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const scripts = new Set<string>()
-		await execute(code, { scripts })
-		const scriptHtml = Array.from(scripts).find(s => s.includes('console.log'))
-		expect(scriptHtml).toContain('const config = {"theme":"dark","id":42};')
-		expect(scriptHtml).toContain('console.log(config.theme);')
+		const output = await execute(code)
+		expect(output).toContain('const config = {"theme":"dark","id":42};')
+		expect(output).toContain('console.log(config.theme);')
 	})
 
 	it('should allow external scripts with src attribute', async () => {
@@ -330,15 +315,29 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const output = await execute(code)
-		expect(output).toContain('<script src="https://example.com/script.js"></script>')
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+
+		// Un-annotated src tags get extracted as client scripts and dumped to the rootScripts Set
+		const code2 = compile(parsed, {
+			...mockOptions,
+			clientScripts: [
+				{ attrs: 'src="https://example.com/script.js"', content: '/virtual.js' },
+			],
+		})
+		const scripts2 = new Set<string>()
+		await execute(code2, { scripts: scripts2 })
+		expect(Array.from(scripts2).some(s => s.includes('src="/virtual.js"'))).toBe(true)
 	})
 
-	it('should inject clientScriptUrl if provided', async () => {
+	it('should inject clientScripts if provided', async () => {
 		const html = '<div>Content</div>'
 
 		const parsed = parse(html)
-		const code = compile(parsed, { ...mockOptions, clientScriptUrl: '/test.js' })
+		const code = compile(parsed, {
+			...mockOptions,
+			clientScripts: [{ attrs: '', content: '/test.js' }],
+		})
 
 		const scripts = new Set<string>()
 		await execute(code, { scripts })
@@ -784,47 +783,70 @@ describe('Codegen', () => {
 	// =========================================================================
 
 	describe('pass:data', () => {
-		it('should pass data to scripts and block scope them if not module', async () => {
+		it('should pass data to client default scripts as global properties without block scoping them', async () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark', id: 42 };
 										</script>
-										<head>
-											<script pass:data="{ { config } }">
-												console.log(config.theme);
-											</script>
-										</head>`
+										<script pass:data="{ { config } }">
+											console.log(config.theme);
+										</script>`
 
 			const parsed = parse(html)
-			const code = compile(parsed, mockOptions)
+			const code = compile(parsed, {
+				...mockOptions,
+				clientScripts: [{ attrs: '', content: '/auto.js', passDataExpr: '{ { config } }' }],
+			})
 
-			const output = await execute(code)
-			expect(output).toContain('{')
-			expect(output).toContain('const config = {"theme":"dark","id":42};')
-			expect(output).toContain('console.log(config.theme);')
-			expect(output).toContain('}')
-			expect(output).toContain('<script>')
-			expect(output).toContain('</script>')
+			const scripts = new Set<string>()
+			await execute(code, { scripts })
+			const out = Array.from(scripts).join('\n')
+
+			// Should generate a JSON bridge since it's a bundled script
+			expect(out).toContain(
+				'<script type="application/json" class="__aero_data">{"config":{"theme":"dark","id":42}}</script>',
+			)
+			// Should load the virtual module
+			expect(out).toContain('<script type="module" src="/auto.js"></script>')
 		})
 
-		it('should pass data to module scripts without block scoping them', async () => {
+		it('should pass data to inline scripts with variable injection', async () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
-										<head>
-											<script type="module" pass:data="{ { config } }">
-												import { xyz } from 'abc';
-												console.log(config.theme);
-											</script>
-										</head>`
+										<script is:inline pass:data="{ { config } }">
+											console.log(config.theme);
+										</script>`
 
 			const parsed = parse(html)
 			const code = compile(parsed, mockOptions)
 
 			const output = await execute(code)
+
+			// Should create a literal mapping expression inline
 			expect(output).toContain('const config = {"theme":"dark"};')
 			expect(output).toContain('console.log(config.theme);')
-			// When it's a module, it shouldn't add the standalone block { ... }
-			expect(output).not.toContain('<script type="module">\\n{\\n')
+			// Because it is inline, there's no module or json bridge.
+		})
+
+		it('should pass data to blocking scripts in head', async () => {
+			const html = `<script is:build>
+											const config = { theme: 'dark' };
+										</script>
+										<script is:blocking pass:data="{ { config } }">
+											console.log(config.theme);
+										</script>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, { ...mockOptions, blockingScripts: parsed.blockingScripts })
+
+			const headScripts = new Set<string>()
+			await execute(code, { headScripts })
+			const out = Array.from(headScripts).join('\n')
+
+			// Blocking scripts are placed in headScripts
+			expect(out).toContain('const config = {"theme":"dark"};')
+			expect(out).toContain('console.log(config.theme);')
+			expect(out).toContain('<script>')
 		})
 
 		it('should pass data to style tags as CSS variables', async () => {
@@ -844,7 +866,7 @@ describe('Codegen', () => {
 
 			const styles = new Set<string>()
 			await execute(code, { styles })
-			const stylesOutput = Array.from(styles).join('\\n')
+			const stylesOutput = Array.from(styles).join('\n')
 
 			expect(stylesOutput).toContain(':root {')
 			expect(stylesOutput).toContain('--theme: [object Object];')
@@ -864,7 +886,7 @@ describe('Codegen', () => {
 
 			const styles = new Set<string>()
 			await execute(code, { styles })
-			const stylesOutput = Array.from(styles).join('\\n')
+			const stylesOutput = Array.from(styles).join('\n')
 
 			expect(stylesOutput).toContain(':root {')
 			expect(stylesOutput).toContain('--fg: white;')
@@ -872,22 +894,21 @@ describe('Codegen', () => {
 			expect(stylesOutput).toContain('}')
 		})
 
-		it('should pass multiple data keys to scripts', async () => {
+		it('should pass multiple data keys to inline scripts', async () => {
 			const html = `<script is:build>
 											const apiUrl = '/api/v1';
 											const debug = true;
 											const version = 3;
 										</script>
-										<head>
-											<script pass:data="{ { apiUrl, debug, version } }">
-												console.log(apiUrl, debug, version);
-											</script>
-										</head>`
+										<script is:inline pass:data="{ { apiUrl, debug, version } }">
+											console.log(apiUrl, debug, version);
+										</script>`
 
 			const parsed = parse(html)
 			const code = compile(parsed, mockOptions)
 
 			const output = await execute(code)
+
 			expect(output).toContain('const apiUrl = "/api/v1";')
 			expect(output).toContain('const debug = true;')
 			expect(output).toContain('const version = 3;')
@@ -901,16 +922,15 @@ describe('Codegen', () => {
 											const list = [1, 2, 3];
 											const nothing = null;
 										</script>
-										<head>
-											<script pass:data="{ { str, num, flag, list, nothing } }">
-												console.log(str, num, flag, list, nothing);
-											</script>
-										</head>`
+										<script is:inline pass:data="{ { str, num, flag, list, nothing } }">
+											console.log(str, num, flag, list, nothing);
+										</script>`
 
 			const parsed = parse(html)
 			const code = compile(parsed, mockOptions)
 
 			const output = await execute(code)
+
 			expect(output).toContain('const str = "hello";')
 			expect(output).toContain('const num = 99;')
 			expect(output).toContain('const flag = false;')
@@ -918,22 +938,26 @@ describe('Codegen', () => {
 			expect(output).toContain('const nothing = null;')
 		})
 
-		it('should strip pass:data attribute from rendered output', async () => {
+		it('should strip pass:data attribute from rendered output when using default client bundling', async () => {
 			const html = `<script is:build>
 											const val = 'test';
 										</script>
-										<head>
-											<script pass:data="{ { val } }">
-												console.log(val);
-											</script>
-										</head>`
+										<script pass:data="{ { val } }">
+											console.log(val);
+										</script>`
 
 			const parsed = parse(html)
-			const code = compile(parsed, mockOptions)
+			const code = compile(parsed, {
+				...mockOptions,
+				clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ { val } }' }],
+			})
 
-			const output = await execute(code)
-			expect(output).not.toContain('pass:data')
-			expect(output).toContain('<script>')
+			const scripts = new Set<string>()
+			await execute(code, { scripts })
+			const out = Array.from(scripts).join('\n')
+
+			expect(out).not.toContain('pass:data')
+			expect(out).toContain('<script type="module" src="/virtual.js"></script>')
 		})
 
 		it('should throw when pass:data value is not brace-wrapped', async () => {
@@ -941,15 +965,15 @@ describe('Codegen', () => {
 											const config = { theme: 'dark' };
 										</script>
 										<head>
-											<script is:inline pass:data="config">
+											<script is:blocking pass:data="config">
 												console.log(config);
 											</script>
 										</head>`
 
 			const parsed = parse(html)
-			expect(() => compile(parsed, mockOptions)).toThrow(
-				'Directive `pass:data` on <script> must use a braced expression',
-			)
+			expect(() =>
+				compile(parsed, { ...mockOptions, blockingScripts: parsed.blockingScripts }),
+			).toThrow('Directive `pass:data` on <script> must use a braced expression')
 		})
 
 		it('should emit JSON data tag before bundled module script', async () => {
@@ -961,8 +985,9 @@ describe('Codegen', () => {
 			const parsed = parse(html)
 			const code = compile(parsed, {
 				...mockOptions,
-				clientScriptUrl: '/test.js',
-				clientPassDataExpr: '{ { theme: themeSettings } }',
+				clientScripts: [
+					{ attrs: '', content: '/test.js', passDataExpr: '{ { theme: themeSettings } }' },
+				],
 			})
 
 			const scripts = new Set<string>()
@@ -971,7 +996,7 @@ describe('Codegen', () => {
 
 			const scriptArr = Array.from(scripts)
 			expect(scriptArr.length).toBe(2)
-			expect(scriptArr[0]).toContain('<script type="application/json" id="__aero_data">')
+			expect(scriptArr[0]).toContain('<script type="application/json" class="__aero_data">')
 			expect(scriptArr[0]).toContain('{"theme":{"colors":{"primary":"blue"}}}')
 			expect(scriptArr[1]).toBe('<script type="module" src="/test.js"></script>')
 		})
