@@ -18,6 +18,7 @@ export function parse(html: string): ParseResult {
 	let buildContent: string[] = []
 	let clientContent: string[] = []
 	let clientPassData: string | undefined
+	let inlineScripts: { content: string; passDataExpr?: string }[] = []
 
 	// Strip HTML comments so we don't accidentally match scripts inside them
 	const cleaned = html.replace(/<!--[\s\S]*?-->/g, '')
@@ -25,10 +26,10 @@ export function parse(html: string): ParseResult {
 	// Match <script ...>...</script>
 	const SCRIPT_REGEX = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
 
-	const scriptsToRemove: { fullTag: string; type: 'build' | 'client'; content: string }[] = []
+	const scriptsToRemove: { fullTag: string; type: 'build' | 'client' | 'inline'; content: string; passDataExpr?: string }[] = []
 
-	let match
-	while ((match = SCRIPT_REGEX.exec(cleaned)) !== null) {
+	let match: RegExpExecArray | null = SCRIPT_REGEX.exec(cleaned)
+	while (match !== null) {
 		const fullTag = match[0]
 		const content = match[1] || ''
 
@@ -43,9 +44,12 @@ export function parse(html: string): ParseResult {
 				const passData = scriptEl.getAttribute('pass:data') || undefined
 				if (passData) clientPassData = passData
 				scriptsToRemove.push({ fullTag, type: 'client', content: content.trim() })
+			} else if (scriptEl.hasAttribute('is:inline')) {
+				const passData = scriptEl.getAttribute('pass:data') || undefined
+				scriptsToRemove.push({ fullTag, type: 'inline', content: content.trim(), passDataExpr: passData })
 			}
-			// is:inline scripts are NOT extracted — they stay in the template
 		}
+		match = SCRIPT_REGEX.exec(cleaned)
 	}
 
 	// Remove identified scripts from the template string
@@ -53,6 +57,7 @@ export function parse(html: string): ParseResult {
 		template = template.replace(s.fullTag, '')
 		if (s.type === 'build') buildContent.push(s.content)
 		if (s.type === 'client') clientContent.push(s.content)
+		if (s.type === 'inline') inlineScripts.push({ content: s.content, passDataExpr: s.passDataExpr })
 	}
 
 	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
@@ -64,6 +69,7 @@ export function parse(html: string): ParseResult {
 	return {
 		buildScript,
 		clientScript,
+		inlineScripts,
 		template: template.trim(),
 	}
 }
