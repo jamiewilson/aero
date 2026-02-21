@@ -15,6 +15,17 @@
 	<form-component />
 </base-layout>
 
+<!-- inline scripts are moved to end of document -->
 <script is:inline>
-	console.log('[aero] is:inline')
+	console.debug('[AERO] <script is:inline>')
 </script>
+
+<!-- But if it has source, it's bundled by default -->
+<script type="module" src="@scripts/module.ts"></script>
+
+<!-- TODO: But these are rendered in-place, which is confusing -->
+<script defer src="@scripts/defer.ts"></script>
+<script type="module" async src="@scripts/async.ts"></script>
+
+<!-- Linking a script that you don't want bundled -->
+<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>

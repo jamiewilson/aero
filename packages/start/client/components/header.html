@@ -38,10 +38,8 @@
 	}
 </style>
 
-<script pass:data="{{ isHomepage }}" is:bundled>
-	import { debug } from '@scripts/utils/debug'
-	debug('isHomepage', isHomepage)
+<!-- TODO: Make is:bundled the default? -->
+<script is:bundled pass:data="{{ isHomepage }}">
+	import { allCaps } from '@scripts/utils/transform'
+	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
-
-<!-- TODO: Move these to end of body as well, and default to module? -->
-<script src="@scripts/theme.ts" type="module"></script>
