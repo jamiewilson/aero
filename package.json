@@ -6,6 +6,7 @@
 	"scripts": {
 		"test": "vitest run",
 		"dev": "pnpm --dir packages/start dev",
+		"preview": "pnpm --dir packages/start preview",
 		"build": "pnpm build:core && pnpm build:config && pnpm build:content && pnpm build:start",
 		"typecheck": "pnpm -r typecheck",
 		"build:core": "pnpm --dir packages/core build",

@@ -128,4 +128,51 @@ describe('Parser (V2 Taxonomy)', () => {
 		// The retained tag should preserve pass:data for codegen to process interpolation
 		expect(result.template).toContain('pass:data')
 	})
+
+	it('should leave scripts in head in place and not extract them', () => {
+		const input = `
+<html>
+<head>
+	<script src="external.js"></script>
+	<script pass:data="{ { theme } }">
+		console.log(theme);
+	</script>
+</head>
+<body>
+	<h1>Title</h1>
+</body>
+</html>
+        `
+		const result = parse(input)
+
+		// Script with src should stay in place
+		expect(result.template).toContain('src="external.js"')
+		// Script with pass:data in head should also stay in place (not extracted to clientScripts)
+		expect(result.template).toContain('pass:data')
+		expect(result.template).toContain('console.log(theme);')
+		// Should NOT be extracted to clientScripts
+		expect(result.clientScripts).toHaveLength(0)
+	})
+
+	it('should extract body scripts without is:* attributes as client scripts', () => {
+		const input = `
+<html>
+<head>
+	<script src="external.js"></script>
+</head>
+<body>
+	<script pass:data="{ { theme } }">
+		console.log(theme);
+	</script>
+</body>
+</html>
+        `
+		const result = parse(input)
+
+		// Script in body should be extracted to clientScripts
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].content).toContain('console.log(theme);')
+		// Should NOT be in template
+		expect(result.template).not.toContain('console.log(theme);')
+	})
 })
