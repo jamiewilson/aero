@@ -4,7 +4,7 @@ import { IMPORT_REGEX, CURLY_INTERPOLATION_REGEX, CONTENT_GLOBALS } from './cons
 export type VariableDefinition = {
 	name: string
 	range: vscode.Range
-	kind: 'import' | 'declaration' | 'parameter'
+	kind: 'import' | 'declaration' | 'parameter' | 'reference'
 	contentRef?: { alias: string; propertyPath: string[] }
 	properties?: Set<string>
 }
@@ -267,9 +267,238 @@ export function collectDefinedVariables(
 	return [vars, duplicates]
 }
 
+export type ScriptScope = 'build' | 'inline' | 'bundled'
+
 /**
- * Collects scopes created by `data-each` attributes.
+ * Collects variables from script blocks filtered by scope type.
+ * - build: is:build scripts (visible to template)
+ * - bundled: is:bundled scripts (browser-only, with pass:data)
+ * - inline: is:inline scripts (browser-only, no imports allowed)
  */
+export function collectVariablesByScope(
+	document: vscode.TextDocument,
+	text: string,
+	scope: ScriptScope,
+): Map<string, VariableDefinition> {
+	const vars = new Map<string, VariableDefinition>()
+
+	const setVar = (name: string, def: VariableDefinition) => {
+		vars.set(name, def)
+	}
+
+	const scopeToAttr: Record<ScriptScope, RegExp> = {
+		build: /\bis:build\b/,
+		bundled: /\bis:bundled\b/,
+		inline: /\bis:inline\b/,
+	}
+
+	const attrRegex = scopeToAttr[scope]
+
+	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+	let scriptMatch: RegExpExecArray | null
+
+	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+		const rawAttrs = scriptMatch[1] || ''
+		const attrs = rawAttrs.toLowerCase()
+		if (/\bsrc\s*=/.test(attrs)) continue
+		if (!attrRegex.test(attrs)) continue
+
+		const content = scriptMatch[2]
+		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
+		const maskedContent = maskJsComments(content)
+
+		// For bundled scope, track pass:data variables as references
+		// Extract pass:data BEFORE lowercasing to preserve variable name case
+		if (scope === 'bundled') {
+			// Match pass:data="{{ ... }}" or pass:data='{{ ... }}'
+			const passDataRegex = /pass:data\s*=\s*(['"])\{\{[\s\S]*?\}\}\1/gi
+			let pdMatch: RegExpExecArray | null
+			while ((pdMatch = passDataRegex.exec(rawAttrs)) !== null) {
+				const passDataValue = pdMatch[0]
+				const passDataAttrStart = pdMatch.index
+
+				// Extract variable names from { { foo, bar } }
+				const varMatch = /\{\{\s*([\s\S]*?)\s*\}\}/.exec(passDataValue)
+				if (varMatch) {
+					const varNames = varMatch[1].split(',').map(v => v.trim())
+
+					for (const varName of varNames) {
+						if (/^[a-zA-Z_$][\w$]*$/.test(varName)) {
+							// Find position of variable in the full text
+							// rawAttrs starts at scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
+							// varMatch is relative to pdMatch[0], pdMatch is relative to rawAttrs
+							const rawAttrsStart = scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
+							const varAbsStart = rawAttrsStart + passDataAttrStart + varMatch.index + varMatch[0].indexOf(varName)
+							const varAbsEnd = varAbsStart + varName.length
+
+							setVar(varName, {
+								name: varName,
+								range: new vscode.Range(
+									document.positionAt(varAbsStart),
+									document.positionAt(varAbsEnd),
+								),
+								kind: 'reference',
+							})
+						}
+					}
+				}
+			}
+		}
+
+		// Collect imports for build and bundled scopes (inline doesn't support imports)
+		if (scope !== 'inline') {
+			const maskedForImports = maskJsComments(content)
+			IMPORT_REGEX.lastIndex = 0
+			let importMatch: RegExpExecArray | null
+			while ((importMatch = IMPORT_REGEX.exec(maskedForImports)) !== null) {
+				const defaultImport = importMatch[2]?.trim()
+				const namedImports = importMatch[3]
+				const namespaceImport = importMatch[4]?.trim()
+				const start = contentStart + importMatch.index
+
+				if (defaultImport) {
+					const nameStart = start + importMatch[0].indexOf(defaultImport)
+					setVar(defaultImport, {
+						name: defaultImport,
+						range: new vscode.Range(
+							document.positionAt(nameStart),
+							document.positionAt(nameStart + defaultImport.length),
+						),
+						kind: 'import',
+					})
+				}
+
+				if (namespaceImport) {
+					const nameStart = start + importMatch[0].indexOf(namespaceImport)
+					setVar(namespaceImport, {
+						name: namespaceImport,
+						range: new vscode.Range(
+							document.positionAt(nameStart),
+							document.positionAt(nameStart + namespaceImport.length),
+						),
+						kind: 'import',
+					})
+				}
+
+				if (namedImports) {
+					const namedPartStart = start + importMatch[0].indexOf(namedImports)
+					const parts = namedImports.split(',')
+					let currentOffset = 0
+
+					for (const part of parts) {
+						const trimmed = part.trim()
+						if (!trimmed) {
+							currentOffset += part.length + 1
+							continue
+						}
+
+						const asIndex = trimmed.indexOf(' as ')
+						let localName = trimmed
+						if (asIndex > -1) {
+							localName = trimmed.slice(asIndex + 4).trim()
+						}
+
+						const partIndexInNamed = namedImports.indexOf(part, currentOffset)
+						const localNameIndexInPart = part.lastIndexOf(localName)
+						const finalStart = namedPartStart + partIndexInNamed + localNameIndexInPart
+
+						if (localName) {
+							setVar(localName, {
+								name: localName,
+								range: new vscode.Range(
+									document.positionAt(finalStart),
+									document.positionAt(finalStart + localName.length),
+								),
+								kind: 'import',
+							})
+						}
+
+						currentOffset = partIndexInNamed + part.length
+					}
+				}
+			}
+		}
+
+		// Collect declarations for all scopes
+		// Simple identifier: const x = ...
+		const simpleDeclRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
+		let declMatch: RegExpExecArray | null
+		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
+			const name = declMatch[1]
+			const initializer = declMatch[2]
+			const start = contentStart + declMatch.index + declMatch[0].indexOf(name)
+
+			const def: VariableDefinition = {
+				name,
+				range: new vscode.Range(
+					document.positionAt(start),
+					document.positionAt(start + name.length),
+				),
+				kind: 'declaration',
+			}
+
+			if (initializer) {
+				const properties = new Set<string>()
+				const keyRegex = /([A-Za-z_$][\w$]*)\s*:/g
+				let keyMatch: RegExpExecArray | null
+				while ((keyMatch = keyRegex.exec(initializer)) !== null) {
+					properties.add(keyMatch[1])
+				}
+				const shorthandRegex = /(?:\{|,)\s*([A-Za-z_$][\w$]*)\s*(?:,|\})/g
+				while ((keyMatch = shorthandRegex.exec(initializer)) !== null) {
+					properties.add(keyMatch[1])
+				}
+				if (properties.size > 0) {
+					def.properties = properties
+				}
+			}
+
+			setVar(name, def)
+		}
+
+		// Destructuring: const { x, y: z } = ...
+		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
+		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
+			const body = declMatch[1]
+			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
+
+			const parts = body.split(',')
+			let currentOffset = 0
+			for (const part of parts) {
+				const trimmed = part.trim()
+				if (!trimmed) {
+					currentOffset += part.length + 1
+					continue
+				}
+
+				const colonIndex = trimmed.indexOf(':')
+				let localName = trimmed
+				if (colonIndex > -1) {
+					localName = trimmed.slice(colonIndex + 1).trim()
+				}
+
+				const partIndex = body.indexOf(part, currentOffset)
+				const localIndex = part.lastIndexOf(localName)
+				const absStart = bodyStart + partIndex + localIndex
+
+				if (localName) {
+					setVar(localName, {
+						name: localName,
+						range: new vscode.Range(
+							document.positionAt(absStart),
+							document.positionAt(absStart + localName.length),
+						),
+						kind: 'declaration',
+					})
+				}
+				currentOffset = partIndex + part.length
+			}
+		}
+	}
+
+	return vars
+}
+
 export function collectTemplateScopes(
 	document: vscode.TextDocument,
 	text: string,

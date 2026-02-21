@@ -3,6 +3,7 @@ import {
 	collectTemplateReferences,
 	collectDefinedVariables,
 	collectTemplateScopes,
+	collectVariablesByScope,
 } from '../analyzer'
 
 // Mock vscode.Range and Position since they are classes
@@ -86,6 +87,39 @@ describe('collectDefinedVariables', () => {
 		expect(vars.get('bar')?.kind).toBe('import')
 
 		expect(vars.has('foo, bar')).toBe(false)
+	})
+
+	it('should calculate correct position for pass:data variables', () => {
+		const text = `<script pass:data="{{ isHomepage }}" is:bundled>
+	import { debug } from '@scripts/utils/debug'
+</script>`
+		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
+
+		expect(vars.has('isHomepage')).toBe(true)
+		const varInfo = vars.get('isHomepage')
+		expect(varInfo?.kind).toBe('reference')
+		expect(varInfo?.range.start.character).toBe(22) // position of 'i' in "isHomepage"
+		expect(varInfo?.range.end.character).toBe(32) // end of "isHomepage" (22 + 10)
+	})
+
+	it('should calculate correct position for pass:data with no spaces', () => {
+		const text = `<script pass:data="{{isHomepage}}" is:bundled></script>`
+		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
+
+		expect(vars.has('isHomepage')).toBe(true)
+		const varInfo = vars.get('isHomepage')
+		expect(varInfo?.range.start.character).toBe(21) // position of 'i' in "isHomepage" (no spaces)
+		expect(varInfo?.range.end.character).toBe(31)
+	})
+
+	it('should calculate correct position for multiple pass:data variables', () => {
+		const text = `<script pass:data="{{ foo, bar }}" is:bundled></script>`
+		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
+
+		expect(vars.has('foo')).toBe(true)
+		expect(vars.has('bar')).toBe(true)
+		expect(vars.get('foo')?.range.start.character).toBe(22) // position of 'f' in "foo"
+		expect(vars.get('bar')?.range.start.character).toBe(27) // position of 'b' in "bar"
 	})
 })
 

@@ -5,6 +5,7 @@ import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 import { isAeroDocument } from './scope'
 import {
 	collectDefinedVariables,
+	collectVariablesByScope,
 	collectTemplateScopes,
 	collectTemplateReferences,
 	TemplateScope,
@@ -18,8 +19,8 @@ const DIAGNOSTIC_SOURCE = 'aero'
 // Regex patterns for diagnostics
 // ---------------------------------------------------------------------------
 
-/** Matches <script ...> tags with their attributes */
-const SCRIPT_TAG_REGEX = /<script\b([^>]*)>/gi
+/** Matches <script ...>...</script> tags with attributes and content */
+const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
 /** Matches is:build, is:bundled, or is:inline in attributes */
 const IS_ATTR_REGEX = /\bis:(build|bundled|inline)\b/
@@ -216,6 +217,29 @@ export class AeroDiagnostics implements vscode.Disposable {
 				)
 				diagnostic.source = DIAGNOSTIC_SOURCE
 				diagnostics.push(diagnostic)
+			}
+
+			// Check for imports in is:inline scripts (not allowed)
+			if (/\bis:inline\b/.test(attrs)) {
+				const content = match[2]
+				const importMatch = /\bimport\b/.exec(content)
+				if (importMatch) {
+					// Calculate position of the import keyword within the script content
+					const contentStart = match.index + match[0].indexOf(content)
+					const importStart = contentStart + importMatch.index
+					const importEnd = importStart + 6 // 'import'.length
+
+					const diagnostic = new vscode.Diagnostic(
+						new vscode.Range(
+							document.positionAt(importStart),
+							document.positionAt(importEnd),
+						),
+						"Imports are not allowed in <script is:inline>. Use <script is:bundled> instead.",
+						vscode.DiagnosticSeverity.Error,
+					)
+					diagnostic.source = DIAGNOSTIC_SOURCE
+					diagnostics.push(diagnostic)
+				}
 			}
 		}
 	}
@@ -517,55 +541,101 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
-		const [definedVars] = collectDefinedVariables(document, text)
 		const references = collectTemplateReferences(document, text)
-
-		// Map of vars that are used in template
 		const usedInTemplate = new Set<string>()
 		for (const ref of references) {
 			usedInTemplate.add(ref.content)
 		}
 
-		// Combine only is:build script block contents for usage checking.
-		// is:bundled blocks are browser-only and must not satisfy build-time variable usage.
-		const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
-		let scriptMatch: RegExpExecArray | null
-		let combinedScriptContent = ''
+		// Check unused in is:build scope (template + build scripts)
+		this.checkUnusedInScope(document, text, 'build', usedInTemplate, diagnostics)
 
-		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
-			const scriptAttrs = (scriptMatch[1] || '').toLowerCase()
-			if (/\bsrc\s*=/.test(scriptAttrs)) continue
-			// Exclude is:bundled — isolated from build-time scope
-			if (/\bis:bundled\b/.test(scriptAttrs)) continue
-			let blockContent = maskJsComments(scriptMatch[2])
-			// Mask strings to avoid matching inside them (e.g. import path)
-			blockContent = blockContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
-				' '.repeat(match.length),
-			)
-			combinedScriptContent += ' ' + blockContent
-		}
+		// Check unused in is:bundled scope (bundled scripts only)
+		this.checkUnusedInScope(document, text, 'bundled', usedInTemplate, diagnostics)
+
+		// Check unused in is:inline scope (inline scripts only)
+		this.checkUnusedInScope(document, text, 'inline', usedInTemplate, diagnostics)
+	}
+
+	private checkUnusedInScope(
+		document: vscode.TextDocument,
+		text: string,
+		scope: 'build' | 'bundled' | 'inline',
+		usedInTemplate: Set<string>,
+		diagnostics: vscode.Diagnostic[],
+	): void {
+		const definedVars = collectVariablesByScope(document, text, scope)
+
+		// Get script content for this scope only
+		const scopeContent = this.getScriptContentByScope(text, scope)
+		const maskedContent = maskJsComments(scopeContent).replace(
+			/(['"])(?:(?=(\\?))\2.)*?\1/g,
+			() => ' '.repeat(20),
+		)
 
 		for (const [name, def] of definedVars) {
-			if (def.kind === 'import' || def.kind === 'declaration') {
+			// For build scope: check if used in template or in build scripts
+			if (scope === 'build') {
 				if (usedInTemplate.has(name)) continue
 
-				// Check if the variable name appears more than once across all script blocks.
-				// Once = only its own definition; more = actually used somewhere.
+				// Check usage in build scripts
 				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
-				const matches = combinedScriptContent.match(usageRegex)
+				const matches = maskedContent.match(usageRegex)
 				if (matches && matches.length > 1) continue
-
-				const diagnostic = new vscode.Diagnostic(
-					def.range,
-					`'${name}' is declared but its value is never read.`,
-					vscode.DiagnosticSeverity.Hint,
-				)
-				diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
-				diagnostic.source = DIAGNOSTIC_SOURCE
-				diagnostics.push(diagnostic)
 			}
+			// For bundled: check usage in bundled scripts (including pass:data references)
+			else if (scope === 'bundled') {
+				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+				const matches = maskedContent.match(usageRegex)
+				// For pass:data references, require at least one usage in the script
+				// For declarations/imports, require more than just the definition
+				if (def.kind === 'reference') {
+					if (matches && matches.length >= 1) continue
+				} else {
+					if (matches && matches.length > 1) continue
+				}
+			}
+			// For inline: check usage only within inline scripts
+			else {
+				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+				const matches = maskedContent.match(usageRegex)
+				if (matches && matches.length > 1) continue
+			}
+
+			const diagnostic = new vscode.Diagnostic(
+				def.range,
+				`'${name}' is declared but its value is never read.`,
+				vscode.DiagnosticSeverity.Hint,
+			)
+			diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
+			diagnostic.source = DIAGNOSTIC_SOURCE
+			diagnostics.push(diagnostic)
 		}
+	}
+
+	private getScriptContentByScope(text: string, scope: 'build' | 'bundled' | 'inline'): string {
+		const scopeAttr: Record<'build' | 'bundled' | 'inline', RegExp> = {
+			build: /\bis:build\b/,
+			bundled: /\bis:bundled\b/,
+			inline: /\bis:inline\b/,
+		}
+
+		let content = ''
+		const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+		let scriptMatch: RegExpExecArray | null
+
+		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+			const attrs = (scriptMatch[1] || '').toLowerCase()
+			if (/\bsrc\s*=/.test(attrs)) continue
+			if (!scopeAttr[scope].test(attrs)) continue
+
+			content += ' ' + scriptMatch[2]
+		}
+
+		return content
 	}
 
 	private checkDuplicateDeclarations(
