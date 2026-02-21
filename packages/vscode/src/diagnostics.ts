@@ -22,8 +22,8 @@ const DIAGNOSTIC_SOURCE = 'aero'
 /** Matches <script ...>...</script> tags with attributes and content */
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
-/** Matches is:build, is:bundled, or is:inline in attributes */
-const IS_ATTR_REGEX = /\bis:(build|bundled|inline)\b/
+/** Matches is:build, is:bundled, is:inline, or is:blocking in attributes */
+const IS_ATTR_REGEX = /\bis:(build|bundled|inline|blocking)\b/
 
 /** Matches src= in script attributes (external scripts are exempt) */
 const SRC_ATTR_REGEX = /\bsrc\s*=/
@@ -178,69 +178,120 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 
 	// -----------------------------------------------------------------------
-	// 1. Script tags without is:build or is:bundled
+	// 1. Script tags validation
 	// -----------------------------------------------------------------------
+
+	private isInHead(text: string, position: number): boolean {
+		const beforeText = text.slice(0, position)
+		const headOpenMatch = beforeText.match(/<head(?:\s|>)/)
+		const headCloseMatch = beforeText.match(/<\/head\s*>/)
+		const headOpen = headOpenMatch ? headOpenMatch.index! : -1
+		const headClose = headCloseMatch ? headCloseMatch.index! : -1
+		return headOpen > headClose
+	}
 
 	private checkScriptTags(
 		document: vscode.TextDocument,
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	): void {
+		const ignoredRanges = getIgnoredRanges(text)
+
 		SCRIPT_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
 
 		while ((match = SCRIPT_TAG_REGEX.exec(text)) !== null) {
-			const attrs = match[1]
+			const tagStart = match.index
+			if (isInRanges(tagStart, ignoredRanges)) continue
 
-			// Skip external scripts (have src attribute)
+			const attrs = match[1]
+			const content = match[2]
+
+			// Skip external scripts (have src attribute) - they stay in place
 			if (SRC_ATTR_REGEX.test(attrs)) continue
 
 			// Skip scripts in <head> that might be third-party
-			// Simple heuristic: check if position is within <head>...</head>
-			const pos = match.index
-			const beforeText = text.slice(0, pos)
-			const headOpen = beforeText.lastIndexOf('<head')
-			const headClose = beforeText.lastIndexOf('</head')
+			// Use regex to match <head> or <head > tag, not substrings like <header> or <base-layout>
+			const beforeText = text.slice(0, tagStart)
+			const headOpenMatch = beforeText.match(/<head(?:\s|>)/)
+			const headCloseMatch = beforeText.match(/<\/head\s*>/)
+			const headOpen = headOpenMatch ? headOpenMatch.index! : -1
+			const headClose = headCloseMatch ? headCloseMatch.index! : -1
 			if (headOpen > headClose) {
-				// Inside <head> -- allow scripts without on: attribute
 				continue
 			}
 
-			// Check for is:build, is:bundled, or is:inline
-			if (!IS_ATTR_REGEX.test(attrs)) {
-				const startPos = document.positionAt(match.index)
-				const endPos = document.positionAt(match.index + match[0].length)
-				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(startPos, endPos),
-					'Inline <script> should have is:build, is:bundled, or is:inline attribute',
-					vscode.DiagnosticSeverity.Warning,
-				)
-				diagnostic.source = DIAGNOSTIC_SOURCE
-				diagnostics.push(diagnostic)
-			}
+			// Check for imports in is:inline scripts (in body) without type="module"
+			const hasImport = /\bimport\b/.test(content)
+			const hasModuleType = /\btype\s*=\s*["']?module["']?\b/.test(attrs)
 
-			// Check for imports in is:inline scripts (not allowed)
-			if (/\bis:inline\b/.test(attrs)) {
-				const content = match[2]
-				const importMatch = /\bimport\b/.exec(content)
-				if (importMatch) {
-					// Calculate position of the import keyword within the script content
-					const contentStart = match.index + match[0].indexOf(content)
-					const importStart = contentStart + importMatch.index
-					const importEnd = importStart + 6 // 'import'.length
-
-					const diagnostic = new vscode.Diagnostic(
-						new vscode.Range(
-							document.positionAt(importStart),
-							document.positionAt(importEnd),
-						),
-						"Imports are not allowed in <script is:inline>. Use <script is:bundled> instead.",
-						vscode.DiagnosticSeverity.Error,
-					)
-					diagnostic.source = DIAGNOSTIC_SOURCE
-					diagnostics.push(diagnostic)
+			if (hasImport && !hasModuleType) {
+				// Check if it's is:inline (and not in head)
+				if (/\bis:inline\b/.test(attrs) && !this.isInHead(text, tagStart)) {
+					const contentStart = tagStart + match[0].indexOf(content)
+					const importMatch = /\bimport\b/.exec(content)
+					if (importMatch) {
+						const importStart = contentStart + importMatch.index
+						const importEnd = importStart + 6
+						const diagnostic = new vscode.Diagnostic(
+							new vscode.Range(
+								document.positionAt(importStart),
+								document.positionAt(importEnd),
+							),
+							"Imports in <script is:inline> require type=\"module\" attribute.",
+							vscode.DiagnosticSeverity.Error,
+						)
+						diagnostic.source = DIAGNOSTIC_SOURCE
+						diagnostics.push(diagnostic)
+					}
+				}
+				// Check if it's a default bundled script (no is:*, no pass:data, not in head)
+				// Note: pass:data is handled by Vite, so no warning needed
+				else if (!/\bis:build\b/.test(attrs) && !/\bis:blocking\b/.test(attrs) && 
+						 !/\bis:inline\b/.test(attrs) && !/\bpass:data\b/.test(attrs) && !hasModuleType) {
+					if (!this.isInHead(text, tagStart)) {
+						const contentStart = tagStart + match[0].indexOf(content)
+						const importMatch = /\bimport\b/.exec(content)
+						if (importMatch) {
+							const importStart = contentStart + importMatch.index
+							const importEnd = importStart + 6
+							const diagnostic = new vscode.Diagnostic(
+								new vscode.Range(
+									document.positionAt(importStart),
+									document.positionAt(importEnd),
+								),
+								"Imports in bundled scripts require type=\"module\" attribute.",
+								vscode.DiagnosticSeverity.Error,
+							)
+							diagnostic.source = DIAGNOSTIC_SOURCE
+							diagnostics.push(diagnostic)
+						}
+					}
 				}
 			}
+
+			// Valid if has any is:* attribute (build, bundled, inline, blocking)
+			// or pass:data (handled by Vite, no warning needed)
+			if (IS_ATTR_REGEX.test(attrs) || /\bpass:data\b/.test(attrs)) {
+				continue
+			}
+
+			// Valid if has type="module" (default bundled behavior)
+			if (hasModuleType) {
+				continue
+			}
+
+			// Warn for inline scripts without any attribute
+			// (default=bundled, but without type="module" the browser won't process imports)
+			const startPos = document.positionAt(tagStart)
+			const endPos = document.positionAt(tagStart + match[0].length)
+			const diagnostic = new vscode.Diagnostic(
+				new vscode.Range(startPos, endPos),
+				'<script> without attribute should have type="module" for bundled scripts, or is:build/is:inline/is:blocking',
+				vscode.DiagnosticSeverity.Warning,
+			)
+			diagnostic.source = DIAGNOSTIC_SOURCE
+			diagnostics.push(diagnostic)
 		}
 	}
 
@@ -550,17 +601,20 @@ export class AeroDiagnostics implements vscode.Disposable {
 		// Check unused in is:build scope (template + build scripts)
 		this.checkUnusedInScope(document, text, 'build', usedInTemplate, diagnostics)
 
-		// Check unused in is:bundled scope (bundled scripts only)
+		// Check unused in bundled scope (is:bundled or type="module" scripts)
 		this.checkUnusedInScope(document, text, 'bundled', usedInTemplate, diagnostics)
 
 		// Check unused in is:inline scope (inline scripts only)
 		this.checkUnusedInScope(document, text, 'inline', usedInTemplate, diagnostics)
+
+		// Check unused in is:blocking scope (blocking scripts only)
+		this.checkUnusedInScope(document, text, 'blocking', usedInTemplate, diagnostics)
 	}
 
 	private checkUnusedInScope(
 		document: vscode.TextDocument,
 		text: string,
-		scope: 'build' | 'bundled' | 'inline',
+		scope: 'build' | 'bundled' | 'inline' | 'blocking',
 		usedInTemplate: Set<string>,
 		diagnostics: vscode.Diagnostic[],
 	): void {
@@ -584,8 +638,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 				const matches = maskedContent.match(usageRegex)
 				if (matches && matches.length > 1) continue
 			}
-			// For bundled: check usage in bundled scripts (including pass:data references)
-			else if (scope === 'bundled') {
+			// For bundled or blocking: check usage in client scripts (including pass:data references)
+			else if (scope === 'bundled' || scope === 'blocking') {
 				const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 				const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
 				const matches = maskedContent.match(usageRegex)
@@ -616,11 +670,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 		}
 	}
 
-	private getScriptContentByScope(text: string, scope: 'build' | 'bundled' | 'inline'): string {
-		const scopeAttr: Record<'build' | 'bundled' | 'inline', RegExp> = {
+	private getScriptContentByScope(text: string, scope: 'build' | 'bundled' | 'inline' | 'blocking'): string {
+		const scopeAttr: Record<'build' | 'bundled' | 'inline' | 'blocking', RegExp> = {
 			build: /\bis:build\b/,
 			bundled: /\bis:bundled\b/,
 			inline: /\bis:inline\b/,
+			blocking: /\bis:blocking\b/,
 		}
 
 		let content = ''
@@ -628,9 +683,21 @@ export class AeroDiagnostics implements vscode.Disposable {
 		let scriptMatch: RegExpExecArray | null
 
 		while ((scriptMatch = scriptRegex.exec(text)) !== null) {
-			const attrs = (scriptMatch[1] || '').toLowerCase()
+			const rawAttrs = scriptMatch[1] || ''
+			const attrs = rawAttrs.toLowerCase()
 			if (/\bsrc\s*=/.test(attrs)) continue
-			if (!scopeAttr[scope].test(attrs)) continue
+
+			// Check if script matches the requested scope
+			let isMatch = scopeAttr[scope].test(attrs)
+
+			// For bundled scope: also include scripts without is:* but with type="module"
+			if (scope === 'bundled' && !isMatch) {
+				if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) {
+					isMatch = true
+				}
+			}
+
+			if (!isMatch) continue
 
 			content += ' ' + scriptMatch[2]
 		}

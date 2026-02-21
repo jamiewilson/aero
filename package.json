@@ -5,6 +5,7 @@
 	"packageManager": "pnpm@10.28.0",
 	"scripts": {
 		"test": "vitest run",
+		"dev": "pnpm --dir packages/start dev",
 		"build": "pnpm build:core && pnpm build:config && pnpm build:content && pnpm build:start",
 		"typecheck": "pnpm -r typecheck",
 		"build:core": "pnpm --dir packages/core build",

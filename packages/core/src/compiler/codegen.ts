@@ -334,7 +334,7 @@ class Compiler {
 		if (CONST.VOID_TAGS.has(tagName)) {
 			out += Helper.emitAppend(`<${tagName}${attrString}>`, outVar)
 		} else {
-			const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
+		const childSkip = skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
 			out += Helper.emitAppend(`<${tagName}${attrString}>`, outVar)
 
 			const isScript = tagName === 'script'
@@ -588,22 +588,10 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		</html>
 	`)
 
-	const scripts = document.querySelectorAll('script')
-	// Require is:build, is:bundled, is:inline, or src for all script tags
-	// (except scripts inside <head> which are pass-through)
-	for (const s of scripts) {
-		if (s.parentElement?.tagName === 'HEAD') continue
-		if (
-			!s.hasAttribute(CONST.ATTR_IS_BUILD) &&
-			!s.hasAttribute(CONST.ATTR_IS_BUNDLED) &&
-			!s.hasAttribute(CONST.ATTR_IS_INLINE) &&
-			!s.hasAttribute('src')
-		) {
-			throw new Error(
-				'Script tags must have is:build, is:bundled, is:inline, or src attribute.',
-			)
-		}
-	}
+	// Note: We no longer validate `is:*` attributes here because `parser.ts`
+	// already completely removed/categorized them before we hit this step.
+	// Any remaining `<script>` tags in the AST are guaranteed to be `is:inline`
+	// or unhandled `<head>` scripts, which is perfectly fine.
 
 	let styleCode = ''
 	if (document.body) {
@@ -620,42 +608,59 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	}
 
 	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
+
 	const rootScripts: string[] = []
-	if (options.clientScriptUrl) {
-		if (options.clientPassDataExpr) {
-			const jsonExpr = `JSON.stringify(${Helper.stripBraces(options.clientPassDataExpr)})`
-			rootScripts.push(
-				`\`<script type="application/json" id="__aero_data">\${${jsonExpr}}</script>\``,
-			)
+	const headScripts: string[] = []
+
+	// Process Bundled Client Scripts
+	if (options.clientScripts && options.clientScripts.length > 0) {
+		for (const clientScript of options.clientScripts) {
+			if (clientScript.passDataExpr) {
+				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
+				rootScripts.push(
+					`\`<script type="application/json" class="__aero_data">\${${jsonExpr}}</script>\``,
+				)
+			}
+
+			// We force type="module" on extracted client scripts so the browser executes the Vite bundle properly
+			// We append any original attributes that were on the tag (like src="...").
+			const hasType = clientScript.attrs.includes('type=')
+			const baseAttrs = hasType
+				? clientScript.attrs
+				: `type="module"${clientScript.attrs ? ' ' + clientScript.attrs : ''}`
+			rootScripts.push(`'<script ${baseAttrs} src="${clientScript.content}"></script>'`)
 		}
-		rootScripts.push(`'<script type="module" src="${options.clientScriptUrl}"></script>'`)
 	}
 
-	if (inlineScripts) {
-		for (const inline of inlineScripts) {
-			if (inline.passDataExpr) {
-				const trimmed = inline.passDataExpr.trim()
+	// Process Blocking Scripts (Hoisted to Head)
+	if (options.blockingScripts) {
+		for (const blockingScript of options.blockingScripts) {
+			if (blockingScript.passDataExpr) {
+				const trimmed = blockingScript.passDataExpr.trim()
 				if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
 					throw new Error(
 						`Directive \`pass:data\` on <script> must use a braced expression, e.g. pass:data="{ { expression } }".`,
 					)
 				}
-				const jsMapExpr = `Object.entries(${Helper.stripBraces(inline.passDataExpr)}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
-				rootScripts.push(
-					`\`<script>\${${jsMapExpr}}${inline.content.replace(/`/g, '\\`')}</script>\``,
+				const jsMapExpr = `Object.entries(${Helper.stripBraces(blockingScript.passDataExpr)}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+				headScripts.push(
+					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${blockingScript.content.replace(/`/g, '\\`')}</script>\``,
 				)
 			} else {
-				const escapedContent = inline.content.replace(/'/g, "\\'")
-				rootScripts.push(`'<script>${escapedContent}</script>'`)
+				const escapedContent = blockingScript.content.replace(/'/g, "\\'")
+				headScripts.push(
+					`'<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>'`,
+				)
 			}
 		}
 	}
 
 	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
+		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
 		${script}
 		${styleCode}
 		${rootScripts.length > 0 ? rootScripts.map(s => `scripts?.add(${s});`).join('\n\t\t') : ''}
+		${headScripts.length > 0 ? headScripts.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t') : ''}
 		let __out = '';
 		${bodyCode}return __out;
 	}`

@@ -15,17 +15,22 @@
 	<form-component />
 </base-layout>
 
-<!-- inline scripts are moved to end of document -->
 <script is:inline>
 	console.debug('[AERO] <script is:inline>')
 </script>
 
-<!-- But if it has source, it's bundled by default -->
-<script type="module" src="@scripts/module.ts"></script>
-
-<!-- TODO: But these are rendered in-place, which is confusing -->
-<script defer src="@scripts/defer.ts"></script>
-<script type="module" async src="@scripts/async.ts"></script>
-
-<!-- Linking a script that you don't want bundled -->
 <script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
+
+<script is:inline type="module">
+	import { allCaps } from '@scripts/utils/transform'
+	console.debug(allCaps('[aero]'), '<script is:inline type="module">')
+</script>
+
+<!-- FIXME [CORE]: Not getting moved to <head> -->
+<script is:blocking>
+	console.debug('[AERO] <script is:blocking> should be moved to <head>')
+</script>
+
+<script src="@scripts/module.ts"></script>
+<script async src="@scripts/async.ts"></script>
+<script defer src="@scripts/defer.ts"></script>

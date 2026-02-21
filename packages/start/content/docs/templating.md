@@ -112,7 +112,7 @@ Unbraced values like `each="item in items"` are invalid.
 ### Spread an existing object
 
 ```html
-<script on:build>
+<script is:build>
 	const data = { title: 'Hello', count: 42 }
 </script>
 

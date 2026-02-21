@@ -38,8 +38,13 @@
 	}
 </style>
 
-<!-- TODO: Make is:bundled the default? -->
-<script is:bundled pass:data="{{ isHomepage }}">
+<!-- FIXME [VSCODE]: Does not need type=module anymore? Should not be flagged -->
+<script pass:data="{{ isHomepage }}">
 	import { allCaps } from '@scripts/utils/transform'
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
+
+<!-- FIXME [VSCODE]: Comments STILL getting flagged "'allCaps' is declared multiple times (as 'import' and 'import').aero" -->
+<!--<script>
+	import { allCaps } from '@scripts/utils/transform'
+</script>-->

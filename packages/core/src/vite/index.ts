@@ -222,22 +222,31 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			try {
 				const parsed = parse(code)
 
-				let clientScriptUrl: string | undefined
-				let clientPassDataExpr: string | undefined
-				if (parsed.clientScript) {
+				if (parsed.clientScripts) {
 					const relativePath = path.relative(config.root, id).replace(/\\/g, '/')
-					clientScriptUrl = CLIENT_SCRIPT_PREFIX + relativePath.replace(/\.html$/i, '.js')
-					clientPassDataExpr = parsed.clientScript.passDataExpr
-					clientScripts.set(clientScriptUrl, {
-						content: parsed.clientScript.content,
-						passDataExpr: clientPassDataExpr,
-					})
+					const baseName = relativePath.replace(/\.html$/i, '')
+
+					for (let i = 0; i < parsed.clientScripts.length; i++) {
+						const clientScript = parsed.clientScripts[i]
+						// If there's only 1 script, keep the ".js" suffix. Otherwise use ".0.js", ".1.js"
+						const suffix = parsed.clientScripts.length === 1 ? '.js' : `.${i}.js`
+						const clientScriptUrl = CLIENT_SCRIPT_PREFIX + baseName + suffix
+
+						clientScripts.set(clientScriptUrl, {
+							content: clientScript.content,
+							passDataExpr: clientScript.passDataExpr,
+						})
+
+						// Replace the literal script content with the virtual URL so codegen can inject it as a src attr.
+						// We don't overwrite the original attrs or passDataExpr so they can be preserved on the injected tag.
+						clientScript.content = clientScriptUrl
+					}
 				}
 
 				const generated = compile(parsed, {
 					root: config.root,
-					clientScriptUrl,
-					clientPassDataExpr,
+					clientScripts: parsed.clientScripts,
+					blockingScripts: parsed.blockingScripts,
 					inlineScripts: parsed.inlineScripts,
 					resolvePath: aliasResult.resolvePath,
 				})

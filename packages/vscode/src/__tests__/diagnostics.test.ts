@@ -457,7 +457,7 @@ describe('AeroDiagnostics Script Tags', () => {
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
 			d.message.includes(
-				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
+				'<script> without attribute should have type="module"',
 			),
 		)
 		expect(scriptDiag).toBeDefined()
@@ -519,6 +519,241 @@ describe('AeroDiagnostics Script Tags', () => {
 			),
 		)
 		expect(scriptDiag).toBeUndefined()
+	})
+
+	it('should warn when is:inline script has import without type="module"', () => {
+		const text = `
+<script is:inline>
+	import { foo } from 'bar'
+	console.log(foo)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in <script is:inline> require type="module"'),
+		)
+		expect(importDiag).toBeDefined()
+	})
+
+	it('should NOT warn when is:inline script has import WITH type="module"', () => {
+		const text = `
+<script is:inline type="module">
+	import { foo } from 'bar'
+	console.log(foo)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in <script is:inline>'),
+		)
+		expect(importDiag).toBeUndefined()
+	})
+
+	it('should warn when bundled script (default) has import without type="module"', () => {
+		const text = `
+<script>
+	import { foo } from 'bar'
+	console.log(foo)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in bundled scripts require type="module"'),
+		)
+		expect(importDiag).toBeDefined()
+	})
+
+	it('should NOT warn when pass:data script has import (Vite handles bundling)', () => {
+		const text = `
+<script pass:data="{ foo }">
+	import { bar } from 'baz'
+	console.log(bar)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in bundled scripts'),
+		)
+		expect(importDiag).toBeUndefined()
+	})
+
+	it('should NOT warn when bundled script has import WITH type="module"', () => {
+		const text = `
+<script type="module">
+	import { foo } from 'bar'
+	console.log(foo)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in bundled scripts'),
+		)
+		expect(importDiag).toBeUndefined()
+	})
+
+	it('should NOT flag scripts inside HTML comments', () => {
+		const text = `
+<!--<script>
+	import { foo } from 'bar'
+</script>-->
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		// Should not flag duplicate imports from commented script
+		const dupDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('declared multiple times'),
+		)
+		expect(dupDiag).toBeUndefined()
+	})
+
+	it('should NOT flag duplicate when commented script has same import as real script', () => {
+		const text = `
+<script is:build>
+	import { allCaps } from '@scripts/utils'
+</script>
+<!--<script>
+	import { allCaps } from '@scripts/utils'
+</script>-->
+<div></div>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const dupDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('declared multiple times'),
+		)
+		expect(dupDiag).toBeUndefined()
+	})
+
+	it('should warn when is:inline has import in multi-script file structure', () => {
+		const text = `
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+</script>
+<base-layout>
+	<header-component />
+</base-layout>
+<script is:inline>
+	console.log('first inline')
+</script>
+<script is:inline>
+	import { allCaps } from '@scripts/utils'
+	console.log(allCaps('test'))
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const importDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Imports in <script is:inline>'),
+		)
+		expect(importDiag).toBeDefined()
 	})
 })
 

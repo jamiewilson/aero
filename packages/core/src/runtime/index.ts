@@ -136,6 +136,7 @@ export class Aero {
 		if (isRootRender) {
 			renderInput.styles = new Set<string>()
 			renderInput.scripts = new Set<string>()
+			renderInput.headScripts = new Set<string>()
 		}
 
 		let target = component
@@ -237,16 +238,24 @@ export class Aero {
 		if (typeof renderFn === 'function') {
 			let html = await renderFn(context)
 			if (isRootRender) {
+				let headInjections = ''
 				if (context.styles && context.styles.size > 0) {
-					const stylesHtml = Array.from(context.styles).join('\n')
+					headInjections += Array.from(context.styles).join('\n') + '\n'
+				}
+				if (context.headScripts && context.headScripts.size > 0) {
+					headInjections += Array.from(context.headScripts).join('\n') + '\n'
+				}
+
+				if (headInjections) {
 					if (html.includes('</head>')) {
-						html = html.replace('</head>', `\n${stylesHtml}\n</head>`)
+						html = html.replace('</head>', `\n${headInjections}</head>`)
 					} else if (html.includes('<body')) {
-						html = html.replace(/(<body[^>]*>)/i, `<head>\n${stylesHtml}\n</head>\n$1`)
+						html = html.replace(/(<body[^>]*>)/i, `<head>\n${headInjections}</head>\n$1`)
 					} else {
-						html = `${stylesHtml}\n${html}`
+						html = `${headInjections}${html}`
 					}
 				}
+
 				if (context.scripts && context.scripts.size > 0) {
 					const scriptsHtml = Array.from(context.scripts).join('\n')
 					if (html.includes('</body>')) {
