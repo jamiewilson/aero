@@ -38,14 +38,13 @@
 	}
 </style>
 
-<!-- TODO: Fix vscode diagnostics for new src taxonomy 
- no longer requires is:* attr, type=module should satisfy import warning on is:inline -->
-<script pass:data="{{ isHomepage }}" type="module">
+<!-- FIXME [VSCODE]: Does not need type=module anymore? Should not be flagged -->
+<script pass:data="{{ isHomepage }}">
 	import { allCaps } from '@scripts/utils/transform'
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
 
-<!-- TODO: Need to ignore comments for diagnostics. Didn't we do this already!? -->
+<!-- FIXME [VSCODE]: Comments STILL getting flagged "'allCaps' is declared multiple times (as 'import' and 'import').aero" -->
 <!--<script>
 	import { allCaps } from '@scripts/utils/transform'
 </script>-->

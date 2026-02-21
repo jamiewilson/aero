@@ -38,6 +38,21 @@ export function maskJsComments(text: string): string {
 }
 
 /**
+ * Checks if a position is inside an HTML comment.
+ */
+function isInsideHtmlComment(text: string, position: number): boolean {
+	const commentRegex = /<!--[\s\S]*?-->/g
+	let match: RegExpExecArray | null
+	commentRegex.lastIndex = 0
+	while ((match = commentRegex.exec(text)) !== null) {
+		if (position >= match.index && position < match.index + match[0].length) {
+			return true
+		}
+	}
+	return false
+}
+
+/**
  * Collects all defined variables in <script> blocks (imports, declarations).
  * Returns tuple: [variables map, duplicates array]
  */
@@ -80,6 +95,9 @@ export function collectDefinedVariables(
 	IMPORT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
 	while ((match = IMPORT_REGEX.exec(text)) !== null) {
+		// Skip imports inside HTML comments
+		if (isInsideHtmlComment(text, match.index)) continue
+
 		const defaultImport = match[2]?.trim() // Group 2, not 1
 		const namedImports = match[3] // Group 3, not 2
 		const namespaceImport = match[4]?.trim() // Group 4, not 3
@@ -164,10 +182,17 @@ export function collectDefinedVariables(
 	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 	let scriptMatch: RegExpExecArray | null
 	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+		// Skip scripts inside HTML comments
+		if (isInsideHtmlComment(text, scriptMatch.index)) continue
+
 		const attrs = (scriptMatch[1] || '').toLowerCase()
 		if (/\bsrc\s*=/.test(attrs)) continue
-		// Skip is:bundled blocks — they are browser-only and isolated from the template
+		// Skip client-side scripts (bundled, inline, blocking) — they are browser-only and isolated from the template
 		if (/\bis:bundled\b/.test(attrs)) continue
+		if (/\bis:inline\b/.test(attrs)) continue
+		if (/\bis:blocking\b/.test(attrs)) continue
+		// Skip scripts without is:* that have type="module" (default bundled behavior)
+		if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) continue
 
 		const content = scriptMatch[2]
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
@@ -267,13 +292,14 @@ export function collectDefinedVariables(
 	return [vars, duplicates]
 }
 
-export type ScriptScope = 'build' | 'inline' | 'bundled'
+export type ScriptScope = 'build' | 'inline' | 'bundled' | 'blocking'
 
 /**
  * Collects variables from script blocks filtered by scope type.
  * - build: is:build scripts (visible to template)
- * - bundled: is:bundled scripts (browser-only, with pass:data)
- * - inline: is:inline scripts (browser-only, no imports allowed)
+ * - bundled: is:bundled scripts or scripts with type="module" (browser-only, with pass:data)
+ * - inline: is:inline scripts (browser-only, with pass:data)
+ * - blocking: is:blocking scripts (browser-only, in head)
  */
 export function collectVariablesByScope(
 	document: vscode.TextDocument,
@@ -290,6 +316,7 @@ export function collectVariablesByScope(
 		build: /\bis:build\b/,
 		bundled: /\bis:bundled\b/,
 		inline: /\bis:inline\b/,
+		blocking: /\bis:blocking\b/,
 	}
 
 	const attrRegex = scopeToAttr[scope]
@@ -298,10 +325,24 @@ export function collectVariablesByScope(
 	let scriptMatch: RegExpExecArray | null
 
 	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+		// Skip scripts inside HTML comments
+		if (isInsideHtmlComment(text, scriptMatch.index)) continue
+
 		const rawAttrs = scriptMatch[1] || ''
 		const attrs = rawAttrs.toLowerCase()
 		if (/\bsrc\s*=/.test(attrs)) continue
-		if (!attrRegex.test(attrs)) continue
+
+		// Check if script matches the requested scope
+		let isMatch = attrRegex.test(attrs)
+
+		// For bundled scope: also include scripts without is:* but with type="module" (default bundled)
+		if (scope === 'bundled' && !isMatch) {
+			if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) {
+				isMatch = true
+			}
+		}
+
+		if (!isMatch) continue
 
 		const content = scriptMatch[2]
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)

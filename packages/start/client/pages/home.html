@@ -15,23 +15,22 @@
 	<form-component />
 </base-layout>
 
-<!-- inline scripts are moved to end of document -->
 <script is:inline>
 	console.debug('[AERO] <script is:inline>')
 </script>
 
-<!-- TODO: Add warning about needing type=module on is:inline with import -->
-<script is:inline>
+<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
+
+<script is:inline type="module">
 	import { allCaps } from '@scripts/utils/transform'
 	console.debug(allCaps('[aero]'), '<script is:inline type="module">')
 </script>
 
-<!-- Shouldn't this be typed module by default -->
+<!-- FIXME [CORE]: Not getting moved to <head> -->
+<script is:blocking>
+	console.debug('[AERO] <script is:blocking> should be moved to <head>')
+</script>
+
 <script src="@scripts/module.ts"></script>
 <script async src="@scripts/async.ts"></script>
-
-<!-- These are also rendered in-place -->
 <script defer src="@scripts/defer.ts"></script>
-
-<!-- Linking a script that you don't want bundled -->
-<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
