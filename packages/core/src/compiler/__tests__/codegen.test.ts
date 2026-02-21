@@ -291,18 +291,16 @@ describe('Codegen', () => {
 		)
 	})
 
-	it('should allow is:inline scripts and strip the attribute', async () => {
+	it('should allow is:inline scripts and consolidate at end of document', async () => {
 		const html = `<script is:inline>console.log('inline');</script>
 									<div>Content</div>`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const output = await execute(code)
-		expect(output).toContain('<script>')
-		expect(output).toContain("console.log('inline');")
-		expect(output).toContain('</script>')
-		expect(output).not.toContain('is:inline')
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		expect(scripts.has('<script>console.log(\'inline\');</script>')).toBe(true)
 	})
 
 	it('should support pass:data on is:inline scripts', async () => {
@@ -318,11 +316,11 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		const output = await execute(code)
-		expect(output).toContain('const config = {"theme":"dark","id":42};')
-		expect(output).toContain('console.log(config.theme);')
-		expect(output).not.toContain('is:inline')
-		expect(output).not.toContain('pass:data')
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		const scriptHtml = Array.from(scripts).find(s => s.includes('console.log'))
+		expect(scriptHtml).toContain('const config = {"theme":"dark","id":42};')
+		expect(scriptHtml).toContain('console.log(config.theme);')
 	})
 
 	it('should allow external scripts with src attribute', async () => {
@@ -964,7 +962,7 @@ describe('Codegen', () => {
 			const code = compile(parsed, {
 				...mockOptions,
 				clientScriptUrl: '/test.js',
-				clientPassDataExpr: '{ theme: themeSettings }',
+				clientPassDataExpr: '{ { theme: themeSettings } }',
 			})
 
 			const scripts = new Set<string>()

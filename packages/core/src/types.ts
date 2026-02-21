@@ -25,6 +25,7 @@ export interface CompileOptions {
 	root: string
 	clientScriptUrl?: string
 	clientPassDataExpr?: string
+	inlineScripts?: { content: string; passDataExpr?: string }[]
 	resolvePath?: (specifier: string) => string
 }
 
@@ -36,6 +37,7 @@ export interface ResolverOptions {
 export interface ParseResult {
 	buildScript: { content: string } | null
 	clientScript: { content: string; passDataExpr?: string } | null
+	inlineScripts: { content: string; passDataExpr?: string }[]
 	template: string
 }
 

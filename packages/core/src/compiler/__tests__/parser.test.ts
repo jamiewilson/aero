@@ -65,7 +65,7 @@ describe('Parser', () => {
 		expect(result.template).toContain('<div>Content</div>')
 	})
 
-	it('should leave is:inline scripts in the template', () => {
+	it('should extract is:inline scripts from the template', () => {
 		const input = `
             <script is:build>const x = 1;</script>
             <script is:inline>console.log('inline');</script>
@@ -75,9 +75,11 @@ describe('Parser', () => {
 
 		expect(result.buildScript?.content).toContain('const x = 1;')
 		expect(result.clientScript).toBeNull()
-		// is:inline script should remain in the template
-		expect(result.template).toContain('<script is:inline>')
-		expect(result.template).toContain("console.log('inline');")
+		// is:inline script should be extracted, not in template
+		expect(result.template).not.toContain('<script is:inline>')
+		expect(result.inlineScripts).toBeDefined()
+		expect(result.inlineScripts).toHaveLength(1)
+		expect(result.inlineScripts[0].content).toContain("console.log('inline');")
 	})
 
 	it('should extract pass:data expression from is:bundled scripts', () => {
@@ -91,5 +93,19 @@ describe('Parser', () => {
 		expect(result.clientScript).toBeDefined()
 		expect(result.clientScript?.content).toContain('console.log(config);')
 		expect(result.clientScript?.passDataExpr).toBe('{ { config } }')
+	})
+
+	it('should extract pass:data expression from is:inline scripts', () => {
+		const input = `
+            <script is:inline pass:data="{ { config } }">
+                console.log(config);
+            </script>
+        `
+		const result = parse(input)
+
+		expect(result.inlineScripts).toBeDefined()
+		expect(result.inlineScripts).toHaveLength(1)
+		expect(result.inlineScripts[0].content).toContain('console.log(config);')
+		expect(result.inlineScripts[0].passDataExpr).toBe('{ { config } }')
 	})
 })

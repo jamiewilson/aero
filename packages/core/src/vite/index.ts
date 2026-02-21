@@ -238,6 +238,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					root: config.root,
 					clientScriptUrl,
 					clientPassDataExpr,
+					inlineScripts: parsed.inlineScripts,
 					resolvePath: aliasResult.resolvePath,
 				})
 

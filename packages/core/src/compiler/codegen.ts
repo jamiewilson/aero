@@ -537,6 +537,8 @@ class Compiler {
 }
 
 export function compile(parsed: ParseResult, options: CompileOptions): string {
+	const inlineScripts = options.inlineScripts ?? parsed.inlineScripts
+
 	// Create resolver once and share with compiler
 	const resolver = new Resolver({
 		root: options.root,
@@ -622,13 +624,31 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (options.clientScriptUrl) {
 		if (options.clientPassDataExpr) {
 			const jsonExpr = `JSON.stringify(${Helper.stripBraces(options.clientPassDataExpr)})`
-			// This string becomes part of the generated JS file.
-			// e.g. scripts?.add(`<script type="application/json" id="__aero_data">${JSON.stringify({ config })}</script>`);
 			rootScripts.push(
 				`\`<script type="application/json" id="__aero_data">\${${jsonExpr}}</script>\``,
 			)
 		}
 		rootScripts.push(`'<script type="module" src="${options.clientScriptUrl}"></script>'`)
+	}
+
+	if (inlineScripts) {
+		for (const inline of inlineScripts) {
+			if (inline.passDataExpr) {
+				const trimmed = inline.passDataExpr.trim()
+				if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
+					throw new Error(
+						`Directive \`pass:data\` on <script> must use a braced expression, e.g. pass:data="{ { expression } }".`,
+					)
+				}
+				const jsMapExpr = `Object.entries(${Helper.stripBraces(inline.passDataExpr)}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+				rootScripts.push(
+					`\`<script>\${${jsMapExpr}}${inline.content.replace(/`/g, '\\`')}</script>\``,
+				)
+			} else {
+				const escapedContent = inline.content.replace(/'/g, "\\'")
+				rootScripts.push(`'<script>${escapedContent}</script>'`)
+			}
+		}
 	}
 
 	const renderFn = `export default async function(Aero) {
