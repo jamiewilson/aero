@@ -70,6 +70,40 @@ describe('vite build helpers', () => {
 		).toBe('../../assets/global-123.css')
 	})
 
+	it('rewrites local script src (root-relative path) to manifest asset path', () => {
+		// Option A: script[src] stays in template; build discovers and bundles; rewrite uses manifest
+		const routeSet = new Set<string>()
+		expect(
+			__internal.rewriteAbsoluteUrl(
+				'/client/assets/scripts/module.ts',
+				'',
+				{
+					'client/assets/scripts/module.ts': {
+						file: 'assets/module.ts-abc123.js',
+						src: 'client/assets/scripts/module.ts',
+						isEntry: true,
+					},
+				},
+				routeSet,
+			),
+		).toBe('./assets/module.ts-abc123.js')
+	})
+
+	it('rewrites virtual client script src to manifest asset path in rewriteRenderedHtml', () => {
+		const html = `<html><body><script type="module" src="/@aero/client/client/pages/home.js"></script></body></html>`
+		const manifest: Manifest = {
+			'/@aero/client/client/pages/home.js': {
+				file: 'assets/home.js-abc123.js',
+				src: '/@aero/client/client/pages/home.js',
+				isEntry: true,
+			},
+		}
+		const result = __internal.rewriteRenderedHtml(html, 'index.html', manifest, new Set())
+		expect(result).toContain('src="./assets/home.js-abc123.js"')
+		expect(result).toContain('type="module"')
+		expect(result).not.toContain('@aero/client')
+	})
+
 	it('keeps api routes absolute for preview/server mode', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}

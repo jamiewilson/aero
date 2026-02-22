@@ -61,6 +61,24 @@ describe('Vite Plugin Integration', () => {
 		expect(loadedContent).toContain("console.log('client side')")
 	})
 
+	it('injects pass:data preamble that reads from window.__aero_data_next (set by inline bridge before module runs)', async () => {
+		const html = `
+            <script pass:data="{ { isHomepage } }">
+                console.log(isHomepage);
+            </script>
+            <div>Content</div>
+        `
+		const id = path.join(process.cwd(), 'client/pages/home.html')
+		plugin.transform.call(pluginCtx, html, id)
+
+		const virtualId = '\0/@aero/client/client/pages/home.js'
+		const loadedContent = plugin.load(virtualId)
+		expect(loadedContent).toContain('window.__aero_data_next')
+		expect(loadedContent).toContain('delete window.__aero_data_next')
+		expect(loadedContent).toContain('const { isHomepage } = __aero_data')
+		expect(loadedContent).toContain('console.log(isHomepage)')
+	})
+
 	it('should render a transformed module using the runtime', async () => {
 		const html = '<h1>{ Aero.props.title }</h1>'
 		const id = '/aero/pages/props.html'

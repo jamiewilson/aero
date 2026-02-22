@@ -16,7 +16,7 @@ import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
-import { createBuildConfig, renderStaticPages } from './build'
+import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages } from './build'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -79,6 +79,13 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 		configResolved(resolvedConfig) {
 			config = resolvedConfig
+		},
+
+		buildStart() {
+			// Pre-populate clientScripts so virtual modules resolve during build (HTML is not
+			// in the dependency graph, so transform() would not run for them).
+			const contentMap = discoverClientScriptContentMap(config.root, dirs.client)
+			contentMap.forEach((entry, url) => clientScripts.set(url, entry))
 		},
 
 		configureServer(server) {
@@ -200,12 +207,14 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				const entry = clientScripts.get(virtualId)
 				if (!entry) return ''
 
-				// If pass:data was used, prepend a destructuring preamble that
-				// reads the serialized JSON from the DOM at runtime.
+				// If pass:data was used, prepend a destructuring preamble. Module scripts run
+				// deferred so document.currentScript is null; the codegen emits an inline
+				// bridge that sets window.__aero_data_next before this module runs.
 				if (entry.passDataExpr) {
 					const keys = extractObjectKeys(entry.passDataExpr)
 					if (keys.length > 0) {
-						const preamble = `const { ${keys.join(', ')} } = JSON.parse((document.getElementById('__aero_data') || document.querySelector('.__aero_data'))?.textContent || '{}');\n`
+						const preamble =
+							`var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
 						return preamble + entry.content
 					}
 				}

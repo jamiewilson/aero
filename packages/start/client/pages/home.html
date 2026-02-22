@@ -17,12 +17,12 @@
 		console.debug('[AERO] <script is:inline>')
 	</script>
 </base-layout>
-<!-- FIXME [CORE]: should be bundled/module by defualt And HOISTED to bottom of body -->
 
+<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by defualt -->
 <!-- FIXME [VSCODE]: Should not require type="module" -->
 <script>
 	import { allCaps } from '@scripts/utils/transform'
-	const message = allCaps('[aero] <script is:inline type="module">')
+	const message = allCaps('[aero] PLAIN <script type="module">')
 	console.debug(message)
 </script>
 

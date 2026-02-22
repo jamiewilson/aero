@@ -107,6 +107,7 @@ export class Aero {
 		const routePath = input.routePath || '/'
 		const url = this.toURL(routePath, input.url)
 		const request = input.request || new Request(url.toString(), { method: 'GET' })
+		let _passDataId = 0
 		const context = {
 			...this.globals,
 			props: input.props || {},
@@ -117,6 +118,7 @@ export class Aero {
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
+			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
 		} as AeroTemplateContext
 
