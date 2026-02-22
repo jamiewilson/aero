@@ -205,7 +205,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				if (entry.passDataExpr) {
 					const keys = extractObjectKeys(entry.passDataExpr)
 					if (keys.length > 0) {
-						const preamble = `const { ${keys.join(', ')} } = JSON.parse(document.getElementById('__aero_data')?.textContent || '{}');\n`
+						const preamble = `const { ${keys.join(', ')} } = JSON.parse((document.getElementById('__aero_data') || document.querySelector('.__aero_data'))?.textContent || '{}');\n`
 						return preamble + entry.content
 					}
 				}

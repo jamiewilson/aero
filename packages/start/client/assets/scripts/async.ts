@@ -1,6 +1,5 @@
 import { allCaps } from '~/client/assets/scripts/utils/transform'
-const code = crypto.randomUUID().slice(0, 6)
-const message = allCaps('[aero] ') + '<script async> ' + code
+const message = allCaps('[aero]') + ' <script async>...'
 
 function simulateAsync() {
 	return new Promise(resolve => {

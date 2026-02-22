@@ -102,6 +102,7 @@ export class Aero {
 		routePath?: string
 		styles?: Set<string>
 		scripts?: Set<string>
+		headScripts?: Set<string>
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
 		const url = this.toURL(routePath, input.url)
@@ -115,6 +116,7 @@ export class Aero {
 			params: input.params || {},
 			styles: input.styles,
 			scripts: input.scripts,
+			headScripts: input.headScripts,
 			renderComponent: this.renderComponent.bind(this),
 		} as AeroTemplateContext
 
@@ -229,6 +231,7 @@ export class Aero {
 			routePath,
 			styles: renderInput.styles,
 			scripts: renderInput.scripts,
+			headScripts: renderInput.headScripts,
 		})
 
 		// Handle module objects
@@ -238,6 +241,17 @@ export class Aero {
 		if (typeof renderFn === 'function') {
 			let html = await renderFn(context)
 			if (isRootRender) {
+				// When the page uses a layout, the layout returns the full document and the page's
+				// remaining body nodes (e.g. is:inline and <script src>) are appended after it,
+				// ending up after </html>. Move that trailing content into the body so it isn't lost.
+				if (html.includes('</html>')) {
+					const afterHtml = html.split('</html>')[1]?.trim()
+					if (afterHtml && html.includes('</body>')) {
+						html = html.split('</html>')[0] + '</html>'
+						html = html.replace('</body>', `\n${afterHtml}\n</body>`)
+					}
+				}
+
 				let headInjections = ''
 				if (context.styles && context.styles.size > 0) {
 					headInjections += Array.from(context.styles).join('\n') + '\n'

@@ -618,7 +618,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			if (clientScript.passDataExpr) {
 				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
 				rootScripts.push(
-					`\`<script type="application/json" class="__aero_data">\${${jsonExpr}}</script>\``,
+					`\`<script type="application/json" id="__aero_data" class="__aero_data">\${${jsonExpr}}</script>\``,
 				)
 			}
 
