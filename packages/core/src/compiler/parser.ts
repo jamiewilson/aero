@@ -30,6 +30,9 @@ function isInsideComment(pos: number, commentRanges: [number, number][]): boolea
  * - Default       — extracted, served as virtual ES module (bundled client-side)
  */
 export function parse(html: string): ParseResult {
+	// Strip BOM so comment/script positions are consistent and scripts immediately
+	// after comments are not wrongly treated as inside the comment.
+	html = html.replace(/^\uFEFF/, '')
 	const commentRanges = getCommentRanges(html)
 	let buildContent: string[] = []
 	let clientScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
@@ -53,8 +56,13 @@ export function parse(html: string): ParseResult {
 
 	const isInHead = (html: string, scriptStart: number): boolean => {
 		const beforeScript = html.slice(0, scriptStart)
-		const headOpen = beforeScript.lastIndexOf('<head')
-		const headClose = beforeScript.lastIndexOf('</head')
+		// Match <head> tag start only (avoid matching "<head" in e.g. "<header-component")
+		let headOpen = -1
+		const headOpenRe = /<head(?=[\s>])/gi
+		let m: RegExpExecArray | null
+		while ((m = headOpenRe.exec(beforeScript)) !== null) headOpen = m.index
+		// Match </head> tag
+		const headClose = beforeScript.lastIndexOf('</head>')
 		return headOpen > headClose
 	}
 
@@ -99,7 +107,24 @@ export function parse(html: string): ParseResult {
 
 			cleanedAttrs = cleanedAttrs.replace(/\s+/g, ' ').trim()
 
-			if (scriptEl.hasAttribute('is:build')) {
+			// Default (plain) script: opening tag in source is literally <script> or <script >,
+			// so we don't rely on linkedom (script content containing "<script ...>" can
+			// produce multiple elements or wrong attributes).
+			const openingTag = fullTag.slice(0, fullTag.indexOf('>') + 1)
+			const isPlainDefault =
+				/^<script\s*>$/i.test(openingTag) && !inHead
+
+			if (isPlainDefault) {
+				scriptsToRemove.push({
+					start,
+					end,
+					type: 'client',
+					content: content.trim(),
+					attrs: cleanedAttrs,
+					passDataExpr: passData,
+				})
+				edits.push({ start, end })
+			} else if (scriptEl.hasAttribute('is:build')) {
 				scriptsToRemove.push({
 					start,
 					end,

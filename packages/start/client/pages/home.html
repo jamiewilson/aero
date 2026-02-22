@@ -14,15 +14,14 @@
 	<header-component props="{...headerProps}" />
 	<form-component />
 	<script is:inline>
-		console.debug('[AERO] <script is:inline>')
+		console.debug('[AERO] <script is:inline> nested in <base-layout>')
 	</script>
 </base-layout>
 
-<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by defualt -->
 <!-- FIXME [VSCODE]: Should not require type="module" -->
 <script>
 	import { allCaps } from '@scripts/utils/transform'
-	const message = allCaps('[aero] PLAIN <script type="module">')
+	const message = allCaps('[aero] PLAIN <script>')
 	console.debug(message)
 </script>
 
