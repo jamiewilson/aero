@@ -175,4 +175,31 @@ describe('Parser (V2 Taxonomy)', () => {
 		// Should NOT be in template
 		expect(result.template).not.toContain('console.log(theme);')
 	})
+
+	// Baseline for home.html-style page: is:build, is:inline, external src, is:blocking, script src= (no default client scripts)
+	it('should produce no clientScripts when all scripts are is:build, is:inline, is:blocking, or have src', () => {
+		const input = `
+<script is:build>
+	const x = 1;
+</script>
+<base-layout>
+	<header-component />
+</base-layout>
+<script is:inline>console.debug('inline');</script>
+<script src="https://unpkg.com/something.js"></script>
+<script is:inline type="module">import { y } from '@scripts/utils'; console.debug(y);</script>
+<script is:blocking>console.debug('blocking');</script>
+<script src="@scripts/module.ts"></script>
+`
+		const result = parse(input)
+
+		expect(result.buildScript?.content).toContain('const x = 1;')
+		expect(result.clientScripts).toHaveLength(0)
+		expect(result.blockingScripts).toHaveLength(1)
+		expect(result.blockingScripts[0].content).toContain("console.debug('blocking');")
+		// is:inline and script src= remain in template
+		expect(result.template).toContain("console.debug('inline');")
+		expect(result.template).toContain('https://unpkg.com/something.js')
+		expect(result.template).toContain('@scripts/module.ts')
+	})
 })

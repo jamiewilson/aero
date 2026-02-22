@@ -13,22 +13,23 @@
 <base-layout>
 	<header-component props="{...headerProps}" />
 	<form-component />
+	<script is:inline>
+		console.debug('[AERO] <script is:inline>')
+	</script>
 </base-layout>
+<!-- FIXME [CORE]: should be bundled/module by defualt And HOISTED to bottom of body -->
 
-<script is:inline>
-	console.debug('[AERO] <script is:inline>')
+<!-- FIXME [VSCODE]: Should not require type="module" -->
+<script>
+	import { allCaps } from '@scripts/utils/transform'
+	const message = allCaps('[aero] <script is:inline type="module">')
+	console.debug(message)
 </script>
 
 <script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
 
-<script is:inline type="module">
-	import { allCaps } from '@scripts/utils/transform'
-	console.debug(allCaps('[aero]'), '<script is:inline type="module">')
-</script>
-
-<!-- FIXME [CORE]: Not getting moved to <head> -->
 <script is:blocking>
-	console.debug('[AERO] <script is:blocking> should be moved to <head>')
+	console.debug('[AERO] <script is:blocking> moved to <head>')
 </script>
 
 <script src="@scripts/module.ts"></script>

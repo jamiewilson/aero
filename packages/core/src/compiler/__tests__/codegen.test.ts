@@ -803,7 +803,7 @@ describe('Codegen', () => {
 
 			// Should generate a JSON bridge since it's a bundled script
 			expect(out).toContain(
-				'<script type="application/json" class="__aero_data">{"config":{"theme":"dark","id":42}}</script>',
+				'<script type="application/json" id="__aero_data" class="__aero_data">{"config":{"theme":"dark","id":42}}</script>',
 			)
 			// Should load the virtual module
 			expect(out).toContain('<script type="module" src="/auto.js"></script>')
@@ -996,7 +996,9 @@ describe('Codegen', () => {
 
 			const scriptArr = Array.from(scripts)
 			expect(scriptArr.length).toBe(2)
-			expect(scriptArr[0]).toContain('<script type="application/json" class="__aero_data">')
+			expect(scriptArr[0]).toContain('type="application/json"')
+			expect(scriptArr[0]).toContain('id="__aero_data"')
+			expect(scriptArr[0]).toContain('class="__aero_data"')
 			expect(scriptArr[0]).toContain('{"theme":{"colors":{"primary":"blue"}}}')
 			expect(scriptArr[1]).toBe('<script type="module" src="/test.js"></script>')
 		})

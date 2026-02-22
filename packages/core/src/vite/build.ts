@@ -184,10 +184,15 @@ function discoverClientScriptMap(root: string, templateRoot: string): Map<string
 	for (const file of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
-		if (!parsed.clientScript) continue
+		if (!parsed.clientScripts || parsed.clientScripts.length === 0) continue
 		const rel = toPosix(path.relative(root, file))
-		const virtualPath = `${CLIENT_SCRIPT_PREFIX}${rel.replace(/\.html$/i, '.js')}`
-		map.set(virtualPath, parsed.clientScript.content)
+		const baseName = rel.replace(/\.html$/i, '')
+		const { clientScripts } = parsed
+		for (let i = 0; i < clientScripts.length; i++) {
+			const suffix = clientScripts.length === 1 ? '.js' : `.${i}.js`
+			const virtualPath = `${CLIENT_SCRIPT_PREFIX}${baseName}${suffix}`
+			map.set(virtualPath, clientScripts[i].content)
+		}
 	}
 	return map
 }
