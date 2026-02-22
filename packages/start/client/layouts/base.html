@@ -12,6 +12,8 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
 
+		<!-- Should data in inline scripts resolve to raw values? -->
+		<!-- Instead of current `const a, b = ... ? -->
 		<script pass:data="{{storageKey, attribute}}">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)

@@ -15,6 +15,8 @@
 		<button type="submit" :disabled="!input.length">{site.home.cta}</button>
 	</form>
 
+	<!-- Needs to be hoisted to bottom of body if not inline -->
+	<!-- Or should all nested scripts default to inline? -->
 	<script is:inline src="/scripts/static.js"></script>
 
 	<span class="toast" hx-toast @htmx:after-swap="dismiss($el)"></span>

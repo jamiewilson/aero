@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { parse } from '../parser'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 describe('Parser (V2 Taxonomy)', () => {
 	it('should categorize script correctly based on taxonomy', () => {
@@ -191,6 +196,85 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.buildScript?.content).toContain('const x = 1;')
 		expect(result.template).not.toContain('<script')
 		expect(result.template).toContain('<div>Content</div>')
+	})
+
+	it('should treat plain <script> (no is:inline) as default bundled client script', () => {
+		// Repro for home.html: plain script with import must be extracted as client, not left as inline
+		const input = `
+<script is:build>const x = 1;</script>
+<base-layout>
+	<script is:inline>console.debug('inline');</script>
+</base-layout>
+<!-- comment -->
+<script>
+	import { allCaps } from '@scripts/utils/transform'
+	const message = allCaps('[aero] PLAIN <script type="module">')
+	console.debug(message)
+</script>
+<script src="https://unpkg.com/something.js"></script>
+`
+		const result = parse(input)
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].content).toContain('allCaps')
+		expect(result.clientScripts[0].content).toContain('PLAIN')
+		expect(result.template).not.toContain('import { allCaps }')
+	})
+
+	it('should extract plain script as client when parsing exact home.html file content', () => {
+		// Use exact home.html content (inline) so we don't depend on file path/encoding
+		const html = `<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import form from '@components/form'
+	import site from '@content/site'
+
+	const headerProps = {
+		title: site.home.title,
+		subtitle: site.home.subtitle,
+	}
+</script>
+
+<base-layout>
+	<header-component props="{...headerProps}" />
+	<form-component />
+	<script is:inline>
+		console.debug('[AERO] <script is:inline> nested in <base-layout>')
+	</script>
+</base-layout>
+
+<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by defualt -->
+<!-- FIXME [VSCODE]: Should not require type="module" -->
+<script>
+	import { allCaps } from '@scripts/utils/transform'
+	const message = allCaps('[aero] PLAIN <script type="module">')
+	console.debug(message)
+</script>
+
+<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
+
+<script is:blocking>
+	console.debug('[AERO] <script is:blocking> moved to <head>')
+</script>
+
+<script src="@scripts/module.ts"></script>
+<script async src="@scripts/async.ts"></script>
+<script defer src="@scripts/defer.ts"></script>
+`
+		const result = parse(html)
+		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
+		const plainScript = result.clientScripts.find((s) => s.content.includes('allCaps'))
+		expect(plainScript).toBeDefined()
+		expect(plainScript!.content).toContain('PLAIN')
+		expect(result.template).not.toContain('import { allCaps }')
+	})
+
+	it('should extract plain script when parsing home.html from file (if present)', () => {
+		const homePath = path.resolve(__dirname, '../../../../start/client/pages/home.html')
+		if (!fs.existsSync(homePath)) return
+		const html = fs.readFileSync(homePath, 'utf-8')
+		const result = parse(html)
+		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
+		expect(result.clientScripts.some((s) => s.content.includes('allCaps'))).toBe(true)
 	})
 
 	// Baseline for home.html-style page: is:build, is:inline, external src, is:blocking, script src= (no default client scripts)

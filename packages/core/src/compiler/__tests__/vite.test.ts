@@ -61,6 +61,26 @@ describe('Vite Plugin Integration', () => {
 		expect(loadedContent).toContain("console.log('client side')")
 	})
 
+	it('should treat plain <script> (no is:inline) as default client and emit virtual script URL', async () => {
+		const html = `
+<script is:build>const x = 1;</script>
+<div>Content</div>
+<script>
+	import { allCaps } from '@scripts/utils/transform'
+	console.log(allCaps('plain'))
+</script>
+`
+		const id = path.join(process.cwd(), 'client/pages/plain.html')
+		const result: any = plugin.transform.call(pluginCtx, html, id)
+		expect(result.code).toContain('/@aero/client/')
+		expect(result.code).toContain('client/pages/plain.js')
+		expect(result.code).not.toContain('import { allCaps }')
+		const virtualId = '\0/@aero/client/client/pages/plain.js'
+		const loadedContent = plugin.load(virtualId)
+		expect(loadedContent).toContain('allCaps')
+		expect(loadedContent).toContain("console.log(allCaps('plain'))")
+	})
+
 	it('injects pass:data preamble that reads from window.__aero_data_next (set by inline bridge before module runs)', async () => {
 		const html = `
             <script pass:data="{ { isHomepage } }">
