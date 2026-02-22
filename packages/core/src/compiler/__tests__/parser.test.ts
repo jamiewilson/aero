@@ -176,6 +176,23 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('console.log(theme);')
 	})
 
+	it('should remove extracted scripts by index even when HTML comment inside script (cleaned vs original would differ)', () => {
+		// Previously we matched on cleaned HTML but removed from original: fullTag from cleaned
+		// would not appear in original, so template.replace(fullTag, '') did nothing.
+		const input = `
+<script is:build>
+<!-- inline html comment -->
+	const x = 1;
+</script>
+<div>Content</div>
+`
+		const result = parse(input)
+
+		expect(result.buildScript?.content).toContain('const x = 1;')
+		expect(result.template).not.toContain('<script')
+		expect(result.template).toContain('<div>Content</div>')
+	})
+
 	// Baseline for home.html-style page: is:build, is:inline, external src, is:blocking, script src= (no default client scripts)
 	it('should produce no clientScripts when all scripts are is:build, is:inline, is:blocking, or have src', () => {
 		const input = `

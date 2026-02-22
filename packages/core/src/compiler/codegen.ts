@@ -615,20 +615,22 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Process Bundled Client Scripts
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
-			if (clientScript.passDataExpr) {
-				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
-				rootScripts.push(
-					`\`<script type="application/json" id="__aero_data" class="__aero_data">\${${jsonExpr}}</script>\``,
-				)
-			}
-
-			// We force type="module" on extracted client scripts so the browser executes the Vite bundle properly
-			// We append any original attributes that were on the tag (like src="...").
 			const hasType = clientScript.attrs.includes('type=')
 			const baseAttrs = hasType
 				? clientScript.attrs
 				: `type="module"${clientScript.attrs ? ' ' + clientScript.attrs : ''}`
-			rootScripts.push(`'<script ${baseAttrs} src="${clientScript.content}"></script>'`)
+			const moduleTag = `<script ${baseAttrs} src="${clientScript.content}"></script>`
+
+			if (clientScript.passDataExpr) {
+				// Module scripts run deferred so document.currentScript is null; use an inline
+				// bridge script that runs immediately and sets window.__aero_data_next for the module to read.
+				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
+				rootScripts.push(
+					`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${JSON.stringify(moduleTag)});})();`,
+				)
+			} else {
+				rootScripts.push(`scripts?.add(${JSON.stringify(moduleTag)});`)
+			}
 		}
 	}
 
@@ -659,7 +661,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
 		${script}
 		${styleCode}
-		${rootScripts.length > 0 ? rootScripts.map(s => `scripts?.add(${s});`).join('\n\t\t') : ''}
+		${rootScripts.length > 0 ? rootScripts.join('\n\t\t') : ''}
 		${headScripts.length > 0 ? headScripts.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t') : ''}
 		let __out = '';
 		${bodyCode}return __out;

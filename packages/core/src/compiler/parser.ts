@@ -1,12 +1,27 @@
 import type { ParseResult } from '../types'
 import { parseHTML } from 'linkedom'
 
+/** Ranges [start, end] of HTML comments in order. */
+function getCommentRanges(html: string): [number, number][] {
+	const ranges: [number, number][] = []
+	const commentRegex = /<!--[\s\S]*?-->/g
+	let match: RegExpExecArray | null
+	while ((match = commentRegex.exec(html)) !== null) {
+		ranges.push([match.index, match.index + match[0].length])
+	}
+	return ranges
+}
+
+function isInsideComment(pos: number, commentRanges: [number, number][]): boolean {
+	return commentRanges.some(([start, end]) => pos >= start && pos < end)
+}
+
 /**
  * Parses the input HTML and extracts Aero-specific scripts.
  *
- * We use a hybrid approach: regex to find script tags and linkedom to validate
- * their attributes. This is 100% non-destructive and preserves the
- * original template structure (including doctypes and head/body tags) exactly.
+ * We use a hybrid approach: regex to find script tags in the **original** HTML
+ * and linkedom to validate attributes. All removal/replacement is done by
+ * character range so that comments and whitespace do not break removal.
  *
  * Script types (v2 taxonomy):
  * - `is:build`    — extracted, becomes the render function body (build-time)
@@ -15,20 +30,21 @@ import { parseHTML } from 'linkedom'
  * - Default       — extracted, served as virtual ES module (bundled client-side)
  */
 export function parse(html: string): ParseResult {
-	let template = html
+	const commentRanges = getCommentRanges(html)
 	let buildContent: string[] = []
 	let clientScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
 	let inlineScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
 	let blockingScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
 
-	// Strip HTML comments so we don't accidentally match scripts inside them
-	const cleaned = html.replace(/<!--[\s\S]*?-->/g, '')
-
-	// Match <script ...>...</script>
+	// Match <script ...>...</script> in the original HTML
 	const SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
+	type Edit = { start: number; end: number; newContent?: string }
+	const edits: Edit[] = []
+
 	const scriptsToRemove: {
-		fullTag: string
+		start: number
+		end: number
 		type: 'build' | 'client' | 'blocking'
 		content: string
 		attrs: string
@@ -39,16 +55,22 @@ export function parse(html: string): ParseResult {
 		const beforeScript = html.slice(0, scriptStart)
 		const headOpen = beforeScript.lastIndexOf('<head')
 		const headClose = beforeScript.lastIndexOf('</head')
-		//console.log('[PARSER isInHead] headOpen:', headOpen, 'headClose:', headClose, 'result:', headOpen > headClose, 'beforeScript snippet:', beforeScript.slice(-50))
 		return headOpen > headClose
 	}
 
-	let match: RegExpExecArray | null = SCRIPT_REGEX.exec(cleaned)
+	let match: RegExpExecArray | null = SCRIPT_REGEX.exec(html)
 	while (match !== null) {
+		const start = match.index
+		const end = match.index + match[0].length
 		const fullTag = match[0]
 		const attrsMatch = match[1] || ''
 		const content = match[2] || ''
-		const scriptStart = match.index
+
+		// Skip scripts that are inside HTML comments
+		if (isInsideComment(start, commentRanges)) {
+			match = SCRIPT_REGEX.exec(html)
+			continue
+		}
 
 		// Parse only this script tag to check attributes with a real DOM
 		const { document } = parseHTML(fullTag)
@@ -67,7 +89,7 @@ export function parse(html: string): ParseResult {
 			// Only remove pass:data from non-inline scripts (build, blocking, client)
 			// Inline scripts need it preserved for codegen to process
 			// Head scripts also need it preserved since they stay in place
-			const inHead = isInHead(html, match.index)
+			const inHead = isInHead(html, start)
 			if (!scriptEl.hasAttribute('is:inline') && !inHead) {
 				cleanedAttrs = cleanedAttrs
 					.replace(/pass:data="[^"]*"/g, '')
@@ -79,69 +101,77 @@ export function parse(html: string): ParseResult {
 
 			if (scriptEl.hasAttribute('is:build')) {
 				scriptsToRemove.push({
-					fullTag,
+					start,
+					end,
 					type: 'build',
 					content: content.trim(),
 					attrs: cleanedAttrs,
 				})
+				edits.push({ start, end })
 			} else if (scriptEl.hasAttribute('is:inline')) {
-				// is:inline stays in the DOM where it was written.
-				// We don't remove it from `template`, but we track it so codegen can process passData.
 				inlineScripts.push({
 					attrs: cleanedAttrs,
 					content: content.trim(),
 					passDataExpr: passData,
 				})
-
-				// Rewrite the tag to remove the directives like `is:inline`
-				template = template.replace(
-					fullTag,
-					`<script${cleanedAttrs ? ' ' + cleanedAttrs : ''}>${content.trim()}</script>`,
-				)
+				edits.push({
+					start,
+					end,
+					newContent: `<script${cleanedAttrs ? ' ' + cleanedAttrs : ''}>${content.trim()}</script>`,
+				})
 			} else if (scriptEl.hasAttribute('is:blocking')) {
 				scriptsToRemove.push({
-					fullTag,
+					start,
+					end,
 					type: 'blocking',
 					content: content.trim(),
 					attrs: cleanedAttrs,
 					passDataExpr: passData,
 				})
+				edits.push({ start, end })
 			} else if (scriptEl.hasAttribute('src')) {
-				// External scripts with src stay in place - don't extract
-				// For local scripts (not absolute URLs), add type="module" if not specified
-				// This ensures Vite can properly bundle/transform the import statements
 				const src = scriptEl.getAttribute('src') || ''
 				const isLocalScript = !src.startsWith('http://') && !src.startsWith('https://')
 				const hasType = cleanedAttrs.includes('type=')
 
 				if (isLocalScript && !hasType) {
-					// Add type="module" for local scripts without explicit type
 					const newAttrs = cleanedAttrs ? cleanedAttrs + ' type="module"' : 'type="module"'
-					template = template.replace(fullTag, `<script ${newAttrs} src="${src}"></script>`)
+					edits.push({
+						start,
+						end,
+						newContent: `<script ${newAttrs} src="${src}"></script>`,
+					})
 				}
-			} else if (!scriptEl.hasAttribute('is:inline') && isInHead(html, scriptStart)) {
-				// Scripts in <head> without is:inline stay in place (same as external src scripts)
-				// They are not extracted or hoisted - they're left where they are in the template
-				//console.log('[PARSER] Head script stays in place, template should contain pass:data')
+			} else if (!scriptEl.hasAttribute('is:inline') && inHead) {
+				// Scripts in <head> without is:inline stay in place
 			} else {
-				// Default is bundled client script
 				scriptsToRemove.push({
-					fullTag,
+					start,
+					end,
 					type: 'client',
 					content: content.trim(),
 					attrs: cleanedAttrs,
 					passDataExpr: passData,
 				})
+				edits.push({ start, end })
 			}
 		}
-		match = SCRIPT_REGEX.exec(cleaned)
+		match = SCRIPT_REGEX.exec(html)
 	}
 
-	// Remove identified scripts from the template string
-	//console.log('[PARSER] scriptsToRemove length:', scriptsToRemove.length)
+	// Apply all edits in one pass by character range (sorted by start)
+	edits.sort((a, b) => a.start - b.start)
+	let template = ''
+	let last = 0
+	for (const e of edits) {
+		template += html.slice(last, e.start)
+		if (e.newContent !== undefined) template += e.newContent
+		last = e.end
+	}
+	template += html.slice(last)
+
+	// Populate extracted script arrays from scriptsToRemove
 	for (const s of scriptsToRemove) {
-		//console.log('[PARSER] Removing script, type:', s.type, 'has passDataExpr:', !!s.passDataExpr, 'content preview:', s.content.substring(0, 30))
-		template = template.replace(s.fullTag, '')
 		if (s.type === 'build') buildContent.push(s.content)
 		if (s.type === 'client')
 			clientScripts.push({ attrs: s.attrs, content: s.content, passDataExpr: s.passDataExpr })

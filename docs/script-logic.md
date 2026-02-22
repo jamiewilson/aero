@@ -49,6 +49,23 @@ Syntax overview:
 - not bundled
 - not hoisted
 
+## Scripts with `src` (local vs external)
+
+**External URLs** (`src="https://..."`) are never bundled; the tag stays in the template as-is.
+
+**Local scripts** (`src="@scripts/..."`, `src="./..."`, etc.):
+
+- Stay in the template (not extracted into the virtual client pipeline).
+- Parser adds `type="module"` when missing so Vite can transform them.
+- At build time, local `script[src]` and `link[href]` are discovered from source HTML, resolved via your path aliases, and added as Rollup entry points. They are bundled and get hashed filenames.
+- The compiled HTML emits a root-relative `src` (e.g. `/client/assets/scripts/foo.ts`). During static build, that URL is rewritten to the hashed asset path (e.g. `./assets/foo.ts-abc123.js`) using the manifest.
+
+So local `script[src]` uses the **asset pipeline** (discover → bundle → rewrite), not the **virtual client script** pipeline (extract → virtual module → one script tag per template). Deduping and ordering are per file, not merged with inline client scripts.
+
+## pass:data and multiple instances
+
+When the same component is used multiple times with different `pass:data`, each instance gets its own `<script type="application/json" class="__aero_data">` block immediately followed by its script tag. The script’s preamble reads from `document.currentScript.previousElementSibling` (and checks `type="application/json"` and `class="__aero_data"`), so each script uses the JSON block that directly precedes it. No single global `id` is used, so multiple instances do not clash.
+
 ---
 
 ## Next Steps for Implementation

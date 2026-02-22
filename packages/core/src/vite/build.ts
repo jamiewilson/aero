@@ -179,8 +179,19 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	})
 }
 
-function discoverClientScriptMap(root: string, templateRoot: string): Map<string, string> {
-	const map = new Map<string, string>()
+/** Virtual URL as in HTML (with leading slash). Used by plugin load() and rewrite lookup. */
+export type ClientScriptEntry = { content: string; passDataExpr?: string }
+
+/**
+ * Discovers all extracted client scripts from templates and returns a map from
+ * virtual URL (e.g. "/@aero/client/client/pages/home.js") to { content, passDataExpr }.
+ * Used by the Vite plugin to serve and bundle these scripts (including pass:data preamble).
+ */
+export function discoverClientScriptContentMap(
+	root: string,
+	templateRoot: string,
+): Map<string, ClientScriptEntry> {
+	const map = new Map<string, ClientScriptEntry>()
 	for (const file of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
@@ -191,10 +202,39 @@ function discoverClientScriptMap(root: string, templateRoot: string): Map<string
 		for (let i = 0; i < clientScripts.length; i++) {
 			const suffix = clientScripts.length === 1 ? '.js' : `.${i}.js`
 			const virtualPath = `${CLIENT_SCRIPT_PREFIX}${baseName}${suffix}`
-			map.set(virtualPath, clientScripts[i].content)
+			map.set(virtualPath, {
+				content: clientScripts[i].content,
+				passDataExpr: clientScripts[i].passDataExpr,
+			})
 		}
 	}
 	return map
+}
+
+/**
+ * Returns Rollup input entries for virtual client scripts so they are bundled and
+ * appear in the manifest. Keys are manifest keys (no leading slash) for rewriteAbsoluteUrl.
+ */
+function discoverClientScriptVirtualInputs(
+	root: string,
+	templateRoot: string,
+): Record<string, string> {
+	const entries: Record<string, string> = {}
+	for (const file of discoverTemplates(root, templateRoot)) {
+		const source = fs.readFileSync(file, 'utf-8')
+		const parsed = parse(source)
+		if (!parsed.clientScripts || parsed.clientScripts.length === 0) continue
+		const rel = toPosix(path.relative(root, file))
+		const baseName = rel.replace(/\.html$/i, '')
+		const { clientScripts } = parsed
+		for (let i = 0; i < clientScripts.length; i++) {
+			const suffix = clientScripts.length === 1 ? '.js' : `.${i}.js`
+			const virtualPath = `${CLIENT_SCRIPT_PREFIX}${baseName}${suffix}`
+			const manifestKey = virtualPath.replace(/^\//, '')
+			entries[manifestKey] = virtualPath
+		}
+	}
+	return entries
 }
 
 function discoverAssetInputs(
@@ -279,7 +319,8 @@ function rewriteAbsoluteUrl(
 	const noQuery = value.split(/[?#]/)[0] || value
 	const suffix = value.slice(noQuery.length)
 	const manifestKey = noQuery.replace(/^\//, '')
-	const manifestEntry = manifest[manifestKey]
+	// Vite manifest may key entries with or without leading slash
+	const manifestEntry = manifest[noQuery] ?? manifest[manifestKey]
 
 	if (manifestEntry?.file) {
 		const rel = normalizeRelativeLink(fromDir, manifestEntry.file)
@@ -310,20 +351,18 @@ function rewriteRenderedHtml(
 	outputFile: string,
 	manifest: Manifest,
 	routeSet: Set<string>,
-	clientScriptMap: Map<string, string>,
 	apiPrefix = DEFAULT_API_PREFIX,
 ): string {
 	const fromDir = path.posix.dirname(outputFile)
 	const { document } = parseHTML(html)
 
+	// Rewrite virtual client script src to hashed asset path (they are bundled as Rollup entries)
 	for (const script of Array.from(document.querySelectorAll('script[src]'))) {
 		const src = script.getAttribute('src') || ''
 		if (src.startsWith(CLIENT_SCRIPT_PREFIX)) {
-			const scriptContent = clientScriptMap.get(src)
-			if (!scriptContent) continue
-			script.removeAttribute('src')
+			const newSrc = rewriteAbsoluteUrl(src, fromDir, manifest, routeSet, apiPrefix)
+			script.setAttribute('src', newSrc)
 			script.setAttribute('type', 'module')
-			script.textContent = scriptContent
 			continue
 		}
 	}
@@ -363,7 +402,6 @@ export async function renderStaticPages(
 	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))
 	const distDir = path.resolve(root, outDir)
 	const manifest = readManifest(distDir)
-	const clientScriptMap = discoverClientScriptMap(root, dirs.client)
 
 	// Disable Nitro plugin during static page rendering to prevent it from handling
 	// requests or starting watchers that might hang the build.
@@ -456,7 +494,6 @@ export async function renderStaticPages(
 				page.outputFile,
 				manifest,
 				routeSet,
-				clientScriptMap,
 				apiPrefix,
 			)
 
@@ -494,7 +531,9 @@ export function createBuildConfig(
 	root = process.cwd(),
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const inputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
+	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
+	const virtualClientInputs = discoverClientScriptVirtualInputs(root, dirs.client)
+	const inputs = { ...assetInputs, ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,
 		manifest: true,

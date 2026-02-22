@@ -4,7 +4,7 @@ import { compile } from '../codegen'
 import { extractGetStaticPaths } from '../helpers'
 
 // Helper to execute the generated code
-async function execute(code: string, context = {}) {
+async function execute(code: string, context: Record<string, any> = {}) {
 	// Generate the wrapper function
 	// We expect the code to contain `export default async function(Aero) { ... }`
 	// and optionally a preceding `export ... function getStaticPaths(...) { ... }`
@@ -22,7 +22,20 @@ async function execute(code: string, context = {}) {
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 	const renderFn = new AsyncFunction('Aero', body)
 
-	return await renderFn(context)
+	let _passDataId = 0
+	const aeroContext = {
+		scripts: new Set<string>(),
+		headScripts: new Set<string>(),
+		nextPassDataId: () => `__aero_${_passDataId++}`,
+		renderComponent: async () => '',
+		request: new Request('http://localhost'),
+		url: new URL('http://localhost'),
+		params: {},
+		slots: {},
+		props: {},
+		...context,
+	}
+	return await renderFn(aeroContext)
 }
 
 const mockOptions = {
@@ -801,11 +814,11 @@ describe('Codegen', () => {
 			await execute(code, { scripts })
 			const out = Array.from(scripts).join('\n')
 
-			// Should generate a JSON bridge since it's a bundled script
-			expect(out).toContain(
-				'<script type="application/json" id="__aero_data" class="__aero_data">{"config":{"theme":"dark","id":42}}</script>',
-			)
-			// Should load the virtual module
+			// Should generate JSON bridge + inline bridge + module (module runs deferred so needs window.__aero_data_next)
+			expect(out).toContain('type="application/json"')
+			expect(out).toContain('class="__aero_data"')
+			expect(out).toContain('{"config":{"theme":"dark","id":42}}')
+			expect(out).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
 			expect(out).toContain('<script type="module" src="/auto.js"></script>')
 		})
 
@@ -957,6 +970,7 @@ describe('Codegen', () => {
 			const out = Array.from(scripts).join('\n')
 
 			expect(out).not.toContain('pass:data')
+			expect(out).toContain('window.__aero_data_next')
 			expect(out).toContain('<script type="module" src="/virtual.js"></script>')
 		})
 
@@ -995,12 +1009,12 @@ describe('Codegen', () => {
 			await execute(code, { scripts, themeSettings })
 
 			const scriptArr = Array.from(scripts)
-			expect(scriptArr.length).toBe(2)
+			expect(scriptArr.length).toBe(3) // json + inline bridge + module
 			expect(scriptArr[0]).toContain('type="application/json"')
-			expect(scriptArr[0]).toContain('id="__aero_data"')
 			expect(scriptArr[0]).toContain('class="__aero_data"')
 			expect(scriptArr[0]).toContain('{"theme":{"colors":{"primary":"blue"}}}')
-			expect(scriptArr[1]).toBe('<script type="module" src="/test.js"></script>')
+			expect(scriptArr[1]).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
+			expect(scriptArr[2]).toBe('<script type="module" src="/test.js"></script>')
 		})
 	})
 })
