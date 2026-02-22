@@ -226,7 +226,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const hasModuleType = /\btype\s*=\s*["']?module["']?\b/.test(attrs)
 
 			if (hasImport && !hasModuleType) {
-				// Check if it's is:inline (and not in head)
+				// Check if it's is:inline (and not in head) — only is:inline needs type="module" for imports
+				// Plain <script> are bundled as module by default; no warning for them.
 				if (/\bis:inline\b/.test(attrs) && !this.isInHead(text, tagStart)) {
 					const contentStart = tagStart + match[0].indexOf(content)
 					const importMatch = /\bimport\b/.exec(content)
@@ -245,53 +246,15 @@ export class AeroDiagnostics implements vscode.Disposable {
 						diagnostics.push(diagnostic)
 					}
 				}
-				// Check if it's a default bundled script (no is:*, no pass:data, not in head)
-				// Note: pass:data is handled by Vite, so no warning needed
-				else if (!/\bis:build\b/.test(attrs) && !/\bis:blocking\b/.test(attrs) && 
-						 !/\bis:inline\b/.test(attrs) && !/\bpass:data\b/.test(attrs) && !hasModuleType) {
-					if (!this.isInHead(text, tagStart)) {
-						const contentStart = tagStart + match[0].indexOf(content)
-						const importMatch = /\bimport\b/.exec(content)
-						if (importMatch) {
-							const importStart = contentStart + importMatch.index
-							const importEnd = importStart + 6
-							const diagnostic = new vscode.Diagnostic(
-								new vscode.Range(
-									document.positionAt(importStart),
-									document.positionAt(importEnd),
-								),
-								"Imports in bundled scripts require type=\"module\" attribute.",
-								vscode.DiagnosticSeverity.Error,
-							)
-							diagnostic.source = DIAGNOSTIC_SOURCE
-							diagnostics.push(diagnostic)
-						}
-					}
-				}
 			}
 
 			// Valid if has any is:* attribute (build, bundled, inline, blocking)
-			// or pass:data (handled by Vite, no warning needed)
+			// or pass:data (handled by Vite). Plain <script> are bundled as module by default — no warning.
 			if (IS_ATTR_REGEX.test(attrs) || /\bpass:data\b/.test(attrs)) {
 				continue
 			}
 
-			// Valid if has type="module" (default bundled behavior)
-			if (hasModuleType) {
-				continue
-			}
-
-			// Warn for inline scripts without any attribute
-			// (default=bundled, but without type="module" the browser won't process imports)
-			const startPos = document.positionAt(tagStart)
-			const endPos = document.positionAt(tagStart + match[0].length)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
-				'<script> without attribute should have type="module" for bundled scripts, or is:build/is:inline/is:blocking',
-				vscode.DiagnosticSeverity.Warning,
-			)
-			diagnostic.source = DIAGNOSTIC_SOURCE
-			diagnostics.push(diagnostic)
+			// Plain <script> without attributes are valid (bundled as module by default)
 		}
 	}
 
@@ -690,9 +653,9 @@ export class AeroDiagnostics implements vscode.Disposable {
 			// Check if script matches the requested scope
 			let isMatch = scopeAttr[scope].test(attrs)
 
-			// For bundled scope: also include scripts without is:* but with type="module"
+			// For bundled scope: include plain <script> (no is:*) — they are bundled as module by default
 			if (scope === 'bundled' && !isMatch) {
-				if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) {
+				if (!/\bis:build\b/.test(attrs) && !/\bis:inline\b/.test(attrs) && !/\bis:blocking\b/.test(attrs)) {
 					isMatch = true
 				}
 			}

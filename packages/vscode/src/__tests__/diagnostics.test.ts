@@ -434,7 +434,7 @@ describe('AeroDiagnostics Script Tags', () => {
 		mockSet.mockClear()
 	})
 
-	it('should warn when script tag lacks is:build or is:bundled', () => {
+	it('should NOT warn when plain script tag (no attribute) — bundled as module by default', () => {
 		const text = `
 <script>
 	const foo = 'bar'
@@ -456,11 +456,9 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes(
-				'<script> without attribute should have type="module"',
-			),
+			d.message.includes('<script> without attribute'),
 		)
-		expect(scriptDiag).toBeDefined()
+		expect(scriptDiag).toBeUndefined()
 	})
 
 	it('should NOT warn when script has is:build', () => {
@@ -577,7 +575,7 @@ describe('AeroDiagnostics Script Tags', () => {
 		expect(importDiag).toBeUndefined()
 	})
 
-	it('should warn when bundled script (default) has import without type="module"', () => {
+	it('should NOT warn when plain script has import — bundled as module by default', () => {
 		const text = `
 <script>
 	import { foo } from 'bar'
@@ -600,9 +598,9 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts require type="module"'),
+			d.message.includes('Imports in bundled scripts'),
 		)
-		expect(importDiag).toBeDefined()
+		expect(importDiag).toBeUndefined()
 	})
 
 	it('should NOT warn when pass:data script has import (Vite handles bundling)', () => {
