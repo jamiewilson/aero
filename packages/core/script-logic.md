@@ -64,15 +64,11 @@ So local `script[src]` uses the **asset pipeline** (discover → bundle → rewr
 
 ## pass:data and multiple instances
 
-When the same component is used multiple times with different `pass:data`, each instance gets its own `<script type="application/json" class="__aero_data">` block immediately followed by its script tag. The script’s preamble reads from `document.currentScript.previousElementSibling` (and checks `type="application/json"` and `class="__aero_data"`), so each script uses the JSON block that directly precedes it. No single global `id` is used, so multiple instances do not clash.
+When the same component is used multiple times with different `pass:data`, each instance gets a unique id and three consecutive elements: (1) `<script type="application/json" id="__aero_0" class="__aero_data">…</script>`, (2) an inline script that sets `window.__aero_data_next` from that JSON and then runs immediately, (3) the module script tag. Bundled module scripts run deferred, so `document.currentScript` is null when they execute. The preamble in the bundled script therefore reads from `window.__aero_data_next` (set by the inline bridge) and then deletes it, so each instance’s module sees the correct data and multiple instances do not clash.
 
 ---
 
-## Next Steps for Implementation
+## Implementation notes
 
-1. **How `deduping` works with dynamic `pass:data`**
-   - We must update the `pass:data` JSON bridge to handle multiple instances of the same component cleanly.
-2. **Implicit `type="module"`**
-   - When Aero extracts scripts to Vite (the default), it MUST inject `type="module"` when it writes the script tag to the final HTML document.
-3. **Parse Everything**
-   - Update `parser.ts` to capture _all_ `<script>` tags so they can enter the default bundling pipeline unless explicitly opted out (`is:inline`).
+- **Implicit `type="module"`**: Default (bundled) client scripts and local `script[src]` get `type="module"` when missing. `defer` is stripped when adding `type="module"` (modules are deferred by default) to avoid redundant `defer="defer"` in output.
+- **Parser**: Script removal and attribute edits are done by character range so comments and whitespace are preserved; scripts inside HTML comments are skipped.

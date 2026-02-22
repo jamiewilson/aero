@@ -219,4 +219,15 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).toContain('https://unpkg.com/something.js')
 		expect(result.template).toContain('@scripts/module.ts')
 	})
+
+	it('should add type="module" and strip defer for local script[src] without type', () => {
+		const input = `<script defer src="@scripts/defer.ts"></script>`
+		const result = parse(input)
+
+		expect(result.template).toContain('type="module"')
+		expect(result.template).toContain('@scripts/defer.ts')
+		// defer attribute must be stripped (redundant with type=module); "defer" in filename is ok
+		expect(result.template).not.toMatch(/\bdefer\s*=\s*["']?/)
+		expect(result.template).not.toMatch(/\sdefer\s+/)
+	})
 })

@@ -363,7 +363,12 @@ function rewriteRenderedHtml(
 			const newSrc = rewriteAbsoluteUrl(src, fromDir, manifest, routeSet, apiPrefix)
 			script.setAttribute('src', newSrc)
 			script.setAttribute('type', 'module')
+			script.removeAttribute('defer') // redundant with type=module
 			continue
+		}
+		// Asset pipeline scripts: strip redundant defer when type=module (modules are deferred by default)
+		if (script.getAttribute('type') === 'module') {
+			script.removeAttribute('defer')
 		}
 	}
 

@@ -135,7 +135,15 @@ export function parse(html: string): ParseResult {
 				const hasType = cleanedAttrs.includes('type=')
 
 				if (isLocalScript && !hasType) {
-					const newAttrs = cleanedAttrs ? cleanedAttrs + ' type="module"' : 'type="module"'
+					// defer is redundant with type=module (modules are deferred by default); strip to avoid defer="defer" in output
+					// strip src from attrs since we emit it explicitly below
+					const attrsForModule = cleanedAttrs
+						.replace(/\bdefer\s*=\s*["'][^"']*["']/gi, '')
+						.replace(/\bdefer\b/gi, '')
+						.replace(/\bsrc\s*=\s*["'][^"']*["']/gi, '')
+						.replace(/\s+/g, ' ')
+						.trim()
+					const newAttrs = attrsForModule ? attrsForModule + ' type="module"' : 'type="module"'
 					edits.push({
 						start,
 						end,
