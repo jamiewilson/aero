@@ -35,11 +35,20 @@ export function parse(html: string): ParseResult {
 		passDataExpr?: string
 	}[] = []
 
+	const isInHead = (html: string, scriptStart: number): boolean => {
+		const beforeScript = html.slice(0, scriptStart)
+		const headOpen = beforeScript.lastIndexOf('<head')
+		const headClose = beforeScript.lastIndexOf('</head')
+		//console.log('[PARSER isInHead] headOpen:', headOpen, 'headClose:', headClose, 'result:', headOpen > headClose, 'beforeScript snippet:', beforeScript.slice(-50))
+		return headOpen > headClose
+	}
+
 	let match: RegExpExecArray | null = SCRIPT_REGEX.exec(cleaned)
 	while (match !== null) {
 		const fullTag = match[0]
 		const attrsMatch = match[1] || ''
 		const content = match[2] || ''
+		const scriptStart = match.index
 
 		// Parse only this script tag to check attributes with a real DOM
 		const { document } = parseHTML(fullTag)
@@ -57,7 +66,9 @@ export function parse(html: string): ParseResult {
 
 			// Only remove pass:data from non-inline scripts (build, blocking, client)
 			// Inline scripts need it preserved for codegen to process
-			if (!scriptEl.hasAttribute('is:inline')) {
+			// Head scripts also need it preserved since they stay in place
+			const inHead = isInHead(html, match.index)
+			if (!scriptEl.hasAttribute('is:inline') && !inHead) {
 				cleanedAttrs = cleanedAttrs
 					.replace(/pass:data="[^"]*"/g, '')
 					.replace(/pass:data='[^']*'/g, '')
@@ -106,11 +117,12 @@ export function parse(html: string): ParseResult {
 				if (isLocalScript && !hasType) {
 					// Add type="module" for local scripts without explicit type
 					const newAttrs = cleanedAttrs ? cleanedAttrs + ' type="module"' : 'type="module"'
-					template = template.replace(
-						fullTag,
-						`<script ${newAttrs} src="${src}"></script>`,
-					)
+					template = template.replace(fullTag, `<script ${newAttrs} src="${src}"></script>`)
 				}
+			} else if (!scriptEl.hasAttribute('is:inline') && isInHead(html, scriptStart)) {
+				// Scripts in <head> without is:inline stay in place (same as external src scripts)
+				// They are not extracted or hoisted - they're left where they are in the template
+				//console.log('[PARSER] Head script stays in place, template should contain pass:data')
 			} else {
 				// Default is bundled client script
 				scriptsToRemove.push({
@@ -126,7 +138,9 @@ export function parse(html: string): ParseResult {
 	}
 
 	// Remove identified scripts from the template string
+	//console.log('[PARSER] scriptsToRemove length:', scriptsToRemove.length)
 	for (const s of scriptsToRemove) {
+		//console.log('[PARSER] Removing script, type:', s.type, 'has passDataExpr:', !!s.passDataExpr, 'content preview:', s.content.substring(0, 30))
 		template = template.replace(s.fullTag, '')
 		if (s.type === 'build') buildContent.push(s.content)
 		if (s.type === 'client')

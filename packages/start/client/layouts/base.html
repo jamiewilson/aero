@@ -12,7 +12,6 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
 
-		<!-- FIXME [CORE]: Scripts in <head> without is:inline stay in place by default -->
 		<script pass:data="{{storageKey, attribute}}">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
