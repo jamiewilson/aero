@@ -38,8 +38,12 @@
 	}
 </style>
 
-<!-- FIXME [VSCODE]: Does not need type=module anymore? Should not be flagged -->
 <script pass:data="{{ isHomepage }}">
 	import { allCaps } from '@scripts/utils/transform'
+	// This comment will get stripped from build output
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
+</script>
+
+<script is:inline pass:data="{{ isHomepage }}">
+	console.debug('[aero] isHomepage', isHomepage)
 </script>
