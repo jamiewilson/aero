@@ -123,6 +123,46 @@ importers:
         specifier: workspace:*
         version: link:../templates/minimal
 
+  packages/start/dist/test:
+    dependencies:
+      '@aero-ssg/config':
+        specifier: workspace:*
+        version: link:../../../config
+      '@aero-ssg/content':
+        specifier: workspace:*
+        version: link:../../../content
+      '@aero-ssg/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@alpinejs/persist':
+        specifier: ^3.15.8
+        version: 3.15.8
+      alpinejs:
+        specifier: ^3.15.8
+        version: 3.15.8
+      htmx.org:
+        specifier: ^2.0.8
+        version: 2.0.8
+    devDependencies:
+      '@types/alpinejs':
+        specifier: ^3.13.11
+        version: 3.13.11
+      '@types/alpinejs__persist':
+        specifier: ^3.13.4
+        version: 3.13.4
+      autoprefixer:
+        specifier: ^10.4.24
+        version: 10.4.24(postcss@8.5.6)
+      nitro:
+        specifier: ^3.0.1-alpha.2
+        version: 3.0.1-alpha.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.57.1)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+
   packages/templates/kitchen-sink:
     dependencies:
       '@aero-ssg/config':
