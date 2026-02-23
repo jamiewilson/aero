@@ -103,6 +103,36 @@ function toOutputFile(routePath: string): string {
 	return toPosix(path.join(routePath, 'index.html'))
 }
 
+/**
+ * Generate sitemap.xml from route paths. Only called when site URL is set.
+ * Excludes 404. Writes to distDir/sitemap.xml.
+ */
+function writeSitemap(routePaths: string[], site: string, distDir: string): void {
+	const base = site.replace(/\/$/, '')
+	const urls = routePaths
+		.filter(r => r !== '404')
+		.map(routePath => {
+			const pathSegment = routePath === '' ? '' : `/${routePath}/`
+			const loc = `${base}${pathSegment || '/'}`
+			return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n  </url>`
+		})
+	const xml =
+		'<?xml version="1.0" encoding="UTF-8"?>\n' +
+		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+		urls.join('\n') +
+		'\n</urlset>\n'
+	fs.writeFileSync(path.join(distDir, 'sitemap.xml'), xml, 'utf-8')
+}
+
+function escapeXml(s: string): string {
+	return s
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;')
+}
+
 /** Relative path from fromDir to targetPath, always starting with ./ when non-empty. */
 function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 	const rel = path.posix.relative(fromDir, targetPath)
@@ -545,6 +575,11 @@ export async function renderStaticPages(
 			fs.mkdirSync(path.dirname(outPath), { recursive: true })
 			fs.writeFileSync(outPath, rendered, 'utf-8')
 		}
+
+		if (options.site && options.site.trim() !== '') {
+			const routePaths = [...new Set(pages.map(p => p.routePath))]
+			writeSitemap(routePaths, options.site.trim(), distDir)
+		}
 	} finally {
 		await server.close()
 		if (previousAeroNitro === undefined) {
@@ -608,4 +643,5 @@ export const __internal = {
 	isDynamicPage,
 	expandPattern,
 	discoverPages,
+	writeSitemap,
 }

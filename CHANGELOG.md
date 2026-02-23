@@ -9,6 +9,7 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 ### Added
 
 - Add `site` option for canonical site URL: set in `aero.config.ts` or `aero({ site: 'https://example.com' })`. Exposed as `import.meta.env.SITE` and `Aero.site` in templates for sitemap, RSS, and canonical links.
+- Add automatic **sitemap.xml** generation when `site` is set: written to `dist/sitemap.xml` after the static build, listing all pre-rendered routes as absolute URLs (404 excluded).
 - Add TSDocs to core and packages ([`87f3486`](https://github.com/jamiewilson/aero/commit/87f3486))
 - Add documentation for VS Code extension ([`bbed627`](https://github.com/jamiewilson/aero/commit/bbed627))
 - Add documentation updates across repo ([`54389c1`](https://github.com/jamiewilson/aero/commit/54389c1))
