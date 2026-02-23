@@ -1,7 +1,7 @@
 /**
  * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
  * virtual client scripts, pass:data preamble injection, and rendering via Aero runtime.
- * Uses the real plugin and a minimal mock plugin context (no full Vite server).
+ * Uses the split plugins (config, virtuals, transform) with a minimal mock context.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -11,13 +11,14 @@ import path from 'path'
 
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = aero()
-	const plugin: any = plugins[0]
+	const configPlugin = plugins.find((p: any) => p.config)
+	const transformPlugin = plugins.find((p: any) => p.transform)
+	const virtualsPlugin = plugins.find((p: any) => p.load)
 
 	// Simulate the real Vite lifecycle: config() → configResolved()
-	plugin.config({ root: process.cwd() })
-	plugin.configResolved({ root: process.cwd() })
+	configPlugin.config({ root: process.cwd() })
+	configPlugin.configResolved({ root: process.cwd() })
 
-	// Mock the Vite plugin context methods used by the plugin
 	const pluginCtx = {
 		error(msg: string) {
 			throw new Error(msg)
@@ -34,7 +35,7 @@ describe('Vite Plugin Integration', () => {
         `
 		const id = '/aero/pages/test.html'
 
-		const result: any = plugin.transform.call(pluginCtx, html, id)
+		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('export default async function(Aero)')
 		expect(result.code).toContain('Vite Test')
 	})
@@ -49,12 +50,12 @@ describe('Vite Plugin Integration', () => {
 </script>
 `
 		const id = path.join(process.cwd(), 'client/pages/plain.html')
-		const result: any = plugin.transform.call(pluginCtx, html, id)
+		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('/@aero/client/')
 		expect(result.code).toContain('client/pages/plain.js')
 		expect(result.code).not.toContain('import { allCaps }')
 		const virtualId = '\0/@aero/client/client/pages/plain.js'
-		const loadedContent = plugin.load(virtualId)
+		const loadedContent = virtualsPlugin.load(virtualId)
 		expect(loadedContent).toContain('allCaps')
 		expect(loadedContent).toContain("console.log(allCaps('plain'))")
 	})
@@ -67,10 +68,10 @@ describe('Vite Plugin Integration', () => {
             <div>Content</div>
         `
 		const id = path.join(process.cwd(), 'client/pages/home.html')
-		plugin.transform.call(pluginCtx, html, id)
+		transformPlugin.transform.call(pluginCtx, html, id)
 
 		const virtualId = '\0/@aero/client/client/pages/home.js'
-		const loadedContent = plugin.load(virtualId)
+		const loadedContent = virtualsPlugin.load(virtualId)
 		expect(loadedContent).toContain('window.__aero_data_next')
 		expect(loadedContent).toContain('delete window.__aero_data_next')
 		expect(loadedContent).toContain('const { isHomepage } = __aero_data')
@@ -80,7 +81,7 @@ describe('Vite Plugin Integration', () => {
 	it('should render a transformed module using the runtime', async () => {
 		const html = '<h1>{ Aero.props.title }</h1>'
 		const id = '/aero/pages/props.html'
-		const result: any = plugin.transform.call(pluginCtx, html, id)
+		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		const aeroInstance = new Aero()
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')

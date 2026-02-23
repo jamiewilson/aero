@@ -2,10 +2,8 @@
  * Aero Vite plugin: HTML transform, virtual modules, dev server middleware, and static build.
  *
  * @remarks
- * Main plugin: resolve/load virtual runtime instance and client scripts, transform .html to JS render
- * functions, configureServer for SSR on GET requests, resolveId for .html imports. Static build plugin
- * runs after closeBundle: renderStaticPages then optionally runNitroBuild. Nitro plugin is applied for
- * serve only (not build/preview). Image optimizer is always included.
+ * Split into focused sub-plugins: config, virtuals (resolve/load), transform, SSR middleware, HMR.
+ * Static build plugin runs after closeBundle; Nitro and image optimizer are composed in the factory.
  */
 
 import type { AeroOptions, AliasResult, ScriptEntry } from '../types'
@@ -33,6 +31,17 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 
+/** Shared state used by the Aero sub-plugins (config, virtuals, transform, ssr, hmr). */
+interface AeroPluginState {
+	config: ResolvedConfig | null
+	aliasResult: AliasResult | null
+	clientScripts: Map<string, ScriptEntry>
+	runtimeInstancePath: string
+	dirs: ReturnType<typeof resolveDirs>
+	apiPrefix: string
+	options: AeroOptions
+}
+
 /** Run `nitro build` in root; used after static pages are written when options.nitro is true. */
 async function runNitroBuild(root: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
@@ -54,58 +63,150 @@ async function runNitroBuild(root: string): Promise<void> {
 	})
 }
 
-/**
- * Aero Vite plugin factory. Returns an array of plugins: main Aero plugin, static-build plugin, image optimizer, and optionally Nitro (serve only).
- *
- * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
- * @returns PluginOption[] to pass to Vite's plugins array.
- */
-export function aero(options: AeroOptions = {}): PluginOption[] {
-	const clientScripts = new Map<string, ScriptEntry>()
-	const runtimeInstanceJsPath = fileURLToPath(
-		new URL('../runtime/instance.js', import.meta.url),
-	)
-	const runtimeInstanceTsPath = fileURLToPath(
-		new URL('../runtime/instance.ts', import.meta.url),
-	)
-	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
-		? runtimeInstanceJsPath
-		: runtimeInstanceTsPath
-	let config: ResolvedConfig
-	let aliasResult: AliasResult
-	const dirs = resolveDirs(options.dirs)
-	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	// Allow temporary opt-out (e.g. static-only local checks) without changing config.
-	const enableNitro = options.nitro === true && process.env.AERO_NITRO !== 'false'
-
-	const mainPlugin: Plugin = {
-		name: 'vite-plugin-aero',
-		/** Set base, resolve.alias from tsconfig, and build config (createBuildConfig). */
+function createAeroConfigPlugin(state: AeroPluginState): Plugin {
+	return {
+		name: 'vite-plugin-aero-config',
+		enforce: 'pre',
 		config(userConfig) {
 			const root = userConfig.root || process.cwd()
-			aliasResult = loadTsconfigAliases(root)
+			state.aliasResult = loadTsconfigAliases(root)
 
 			return {
 				base: './',
-				resolve: { alias: aliasResult.aliases },
+				resolve: { alias: state.aliasResult.aliases },
 				build: createBuildConfig(
-					{ resolvePath: aliasResult.resolvePath, dirs: options.dirs },
+					{ resolvePath: state.aliasResult.resolvePath, dirs: state.options.dirs },
 					root,
 				),
 			}
 		},
-
 		configResolved(resolvedConfig) {
-			config = resolvedConfig
+			state.config = resolvedConfig
 		},
+	}
+}
 
-		/** Pre-populate clientScripts from discovered templates so virtual client script IDs resolve during build. */
+function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
+	return {
+		name: 'vite-plugin-aero-virtuals',
+		enforce: 'pre',
 		buildStart() {
-			const contentMap = discoverClientScriptContentMap(config.root, dirs.client)
-			contentMap.forEach((entry, url) => clientScripts.set(url, entry))
+			if (!state.config) return
+			const contentMap = discoverClientScriptContentMap(state.config.root, state.dirs.client)
+			contentMap.forEach((entry, url) => state.clientScripts.set(url, entry))
 		},
+		async resolveId(id, importer) {
+			if (id === RUNTIME_INSTANCE_MODULE_ID) {
+				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
+			}
 
-		/** SSR middleware: for GET with Accept HTML, render page (or 404), transform index HTML, send response. */
+			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
+				return '\0' + id
+			}
+
+			if (id.startsWith('aero:content')) {
+				return null
+			}
+
+			const resolved = await this.resolve(id, importer, { skipSelf: true })
+			if (resolved && resolved.id.endsWith('.html')) {
+				return resolved
+			}
+
+			// Only try id + '.html' for path-like specifiers (relative, absolute, or path aliases like @components/foo).
+			// Skip bare packages (nitro, nitro/app) and scoped packages (@aero-ssg/content/render).
+			const isPathLike =
+				id.startsWith('./') ||
+				id.startsWith('../') ||
+				id.startsWith('/') ||
+				(id.startsWith('@') && !id.slice(1).split('/')[0].includes('-'))
+			if (isPathLike && !id.includes('.') && !id.startsWith('\0')) {
+				const resolvedHtml = await this.resolve(id + '.html', importer, { skipSelf: true })
+				if (resolvedHtml) {
+					return resolvedHtml
+				}
+			}
+
+			return null
+		},
+		load(id) {
+			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
+				return `export { aero, onUpdate } from ${JSON.stringify(state.runtimeInstancePath)}`
+			}
+
+			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
+				const virtualId = id.slice(1)
+				const entry = state.clientScripts.get(virtualId)
+				if (!entry) return ''
+
+				if (entry.passDataExpr) {
+					const keys = extractObjectKeys(entry.passDataExpr)
+					if (keys.length > 0) {
+						const preamble =
+							`var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
+						return preamble + entry.content
+					}
+				}
+
+				return entry.content
+			}
+			return null
+		},
+	}
+}
+
+function createAeroTransformPlugin(state: AeroPluginState): Plugin {
+	return {
+		name: 'vite-plugin-aero-transform',
+		enforce: 'pre',
+		transform(code, id) {
+			if (!id.endsWith('.html')) return null
+			if (!state.config || !state.aliasResult) return null
+
+			try {
+				const parsed = parse(code)
+
+				if (parsed.clientScripts.length > 0) {
+					const relativePath = path.relative(state.config.root, id).replace(/\\/g, '/')
+					const baseName = relativePath.replace(/\.html$/i, '')
+					const total = parsed.clientScripts.length
+
+					for (let i = 0; i < total; i++) {
+						const clientScript = parsed.clientScripts[i]
+						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
+
+						state.clientScripts.set(clientScriptUrl, {
+							content: clientScript.content,
+							passDataExpr: clientScript.passDataExpr,
+						})
+
+						clientScript.content = clientScriptUrl
+					}
+				}
+
+				const generated = compile(parsed, {
+					root: state.config.root,
+					clientScripts: parsed.clientScripts,
+					blockingScripts: parsed.blockingScripts,
+					inlineScripts: parsed.inlineScripts,
+					resolvePath: state.aliasResult.resolvePath,
+				})
+
+				return {
+					code: generated,
+					map: null,
+				}
+			} catch (err: any) {
+				const relativePath = path.relative(state.config.root, id)
+				this.error(`[aero] Error compiling ${relativePath}: ${err.message}`)
+			}
+		},
+	}
+}
+
+function createAeroSsrPlugin(state: AeroPluginState): Plugin {
+	return {
+		name: 'vite-plugin-aero-ssr',
 		configureServer(server) {
 			server.middlewares.use(async (req, res, next) => {
 				if (!req.url) return next()
@@ -115,9 +216,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				if (!acceptsHtml) return next()
 
 				const pathname = req.url.split('?')[0] || '/'
-				// Bypass API and Vite internals
 				if (
-					pathname.startsWith(apiPrefix) ||
+					pathname.startsWith(state.apiPrefix) ||
 					pathname.startsWith('/@fs') ||
 					pathname.startsWith('/@id')
 				) {
@@ -125,7 +225,6 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				}
 
 				const ext = path.extname(pathname)
-				// Skip asset requests
 				if (ext && ext !== '.html') return next()
 
 				try {
@@ -154,13 +253,11 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 					let rendered = await mod.aero.render(pageName, renderInput)
 
-					// If the page was not found, render the 404 page instead.
 					if (rendered === null) {
 						res.statusCode = 404
 						rendered = await mod.aero.render('404', renderInput)
 					}
 
-					// If even the 404 page doesn't exist, send a plain response.
 					if (rendered === null) {
 						res.statusCode = 404
 						res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -180,118 +277,16 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				}
 			})
 		},
+	}
+}
 
-		/** Resolve virtual runtime instance to resolved ID; client script prefix to \0-prefixed ID; .html with or without extension. */
-		async resolveId(id, importer) {
-			if (id === RUNTIME_INSTANCE_MODULE_ID) {
-				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
-			}
-
-			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
-				return '\0' + id
-			}
-
-			// Let the content plugin handle its own virtual modules
-			if (id.startsWith('aero:content')) {
-				return null
-			}
-
-			// 1. Try resolving the ID as-is (handles standard aliases and relative paths)
-			const resolved = await this.resolve(id, importer, { skipSelf: true })
-			if (resolved && resolved.id.endsWith('.html')) {
-				return resolved
-			}
-
-			// 2. If it's a template import without .html extension (e.g. @src/layouts/base)
-			// we try to resolve it with the extension appended.
-			if (!id.includes('.') && !id.startsWith('\0')) {
-				const resolvedHtml = await this.resolve(id + '.html', importer, { skipSelf: true })
-
-				if (resolvedHtml) {
-					return resolvedHtml
-				}
-			}
-
-			return null
-		},
-
-		/** Load: runtime instance → re-export from real path; virtual client ID → script content (with optional pass:data preamble). */
-		load(id) {
-			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
-				return `export { aero, onUpdate } from ${JSON.stringify(runtimeInstancePath)}`
-			}
-
-			// Handle virtual client scripts (prefixed with \0 from resolveId)
-			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
-				const virtualId = id.slice(1) // Remove \0 prefix to get the map key
-				const entry = clientScripts.get(virtualId)
-				if (!entry) return ''
-
-				// If pass:data was used, prepend a destructuring preamble. Module scripts run
-				// deferred so document.currentScript is null; the codegen emits an inline
-				// bridge that sets window.__aero_data_next before this module runs.
-				if (entry.passDataExpr) {
-					const keys = extractObjectKeys(entry.passDataExpr)
-					if (keys.length > 0) {
-						const preamble =
-							`var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
-						return preamble + entry.content
-					}
-				}
-
-				return entry.content
-			}
-			return null
-		},
-
-		/** Transform .html: parse, register client script URLs in clientScripts, compile to JS module. */
-		transform(code, id) {
-			if (!id.endsWith('.html')) return null
-
-			try {
-				const parsed = parse(code)
-
-				if (parsed.clientScripts.length > 0) {
-					const relativePath = path.relative(config.root, id).replace(/\\/g, '/')
-					const baseName = relativePath.replace(/\.html$/i, '')
-					const total = parsed.clientScripts.length
-
-					for (let i = 0; i < total; i++) {
-						const clientScript = parsed.clientScripts[i]
-						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
-
-						clientScripts.set(clientScriptUrl, {
-							content: clientScript.content,
-							passDataExpr: clientScript.passDataExpr,
-						})
-
-						// Replace the literal script content with the virtual URL so codegen can inject it as a src attr.
-						// We don't overwrite the original attrs or passDataExpr so they can be preserved on the injected tag.
-						clientScript.content = clientScriptUrl
-					}
-				}
-
-				const generated = compile(parsed, {
-					root: config.root,
-					clientScripts: parsed.clientScripts,
-					blockingScripts: parsed.blockingScripts,
-					inlineScripts: parsed.inlineScripts,
-					resolvePath: aliasResult.resolvePath,
-				})
-
-				return {
-					code: generated,
-					map: null,
-				}
-			} catch (err: any) {
-				const relativePath = path.relative(config.root, id)
-				this.error(`[aero] Error compiling ${relativePath}: ${err.message}`)
-			}
-		},
-
-		/** HMR: invalidate runtime instance when content/*.ts changes; invalidate virtual client when parent .html changes. */
+function createAeroHmrPlugin(state: AeroPluginState): Plugin {
+	return {
+		name: 'vite-plugin-aero-hmr',
 		handleHotUpdate({ file, server, modules }) {
-			const contentDir = path.resolve(config.root, dirs.client, 'content')
+			if (!state.config) return modules
+
+			const contentDir = path.resolve(state.config.root, state.dirs.client, 'content')
 			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
 				const instanceModule = server.moduleGraph.getModuleById(
 					RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
@@ -302,9 +297,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				}
 			}
 
-			// Invalidate virtual client scripts when their parent HTML file changes
 			if (file.endsWith('.html')) {
-				const relativePath = path.relative(config.root, file).replace(/\\/g, '/')
+				const relativePath = path.relative(state.config.root, file).replace(/\\/g, '/')
 				const clientScriptUrl =
 					'\0' + CLIENT_SCRIPT_PREFIX + relativePath.replace(/\.html$/i, '.js')
 				const virtualModule = server.moduleGraph.getModuleById(clientScriptUrl)
@@ -317,28 +311,69 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			return modules
 		},
 	}
+}
 
-	/** Runs after Vite's bundle: renderStaticPages into outDir, then optionally runNitroBuild. */
+/**
+ * Aero Vite plugin factory. Returns an array of plugins: config, virtuals, transform, SSR, HMR,
+ * static-build, image optimizer, and optionally Nitro (serve only).
+ *
+ * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
+ * @returns PluginOption[] to pass to Vite's plugins array.
+ */
+export function aero(options: AeroOptions = {}): PluginOption[] {
+	const dirs = resolveDirs(options.dirs)
+	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
+	const enableNitro = options.nitro === true && process.env.AERO_NITRO !== 'false'
+
+	const runtimeInstanceJsPath = fileURLToPath(
+		new URL('../runtime/instance.js', import.meta.url),
+	)
+	const runtimeInstanceTsPath = fileURLToPath(
+		new URL('../runtime/instance.ts', import.meta.url),
+	)
+	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
+		? runtimeInstanceJsPath
+		: runtimeInstanceTsPath
+
+	const state: AeroPluginState = {
+		config: null,
+		aliasResult: null,
+		clientScripts: new Map<string, ScriptEntry>(),
+		runtimeInstancePath,
+		dirs,
+		apiPrefix,
+		options,
+	}
+
+	const aeroConfigPlugin = createAeroConfigPlugin(state)
+	const aeroVirtualsPlugin = createAeroVirtualsPlugin(state)
+	const aeroTransformPlugin = createAeroTransformPlugin(state)
+	const aeroSsrPlugin = createAeroSsrPlugin(state)
+	const aeroHmrPlugin = createAeroHmrPlugin(state)
+
+	/** Plugins needed for static build (resolve, load, transform); no SSR/HMR. */
+	const aeroCorePlugins: Plugin[] = [
+		aeroConfigPlugin,
+		aeroVirtualsPlugin,
+		aeroTransformPlugin,
+	]
+
 	const staticBuildPlugin: Plugin = {
 		name: 'vite-plugin-aero-static',
 		apply: 'build',
 		async closeBundle() {
-			const root = config.root
-			const outDir = config.build.outDir
-			// Read minify from Vite's build.minify config
-			// If user sets vite.build.minify = false, disable both Vite minification AND HTML minification
+			const root = state.config!.root
+			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =
-				config.build.minify !== false && process.env.NODE_ENV === 'production'
+				state.config!.build.minify !== false && process.env.NODE_ENV === 'production'
 			await renderStaticPages(
 				{
 					root,
-					resolvePath: aliasResult.resolvePath,
+					resolvePath: state.aliasResult!.resolvePath,
 					dirs: options.dirs,
 					apiPrefix,
-					configFile: config.configFile,
-					// Keep static rendering isolated from user vite.config.ts while
-					// still providing Aero's HTML transform/runtime resolution support.
-					vitePlugins: config.configFile ? [] : [mainPlugin],
+					configFile: state.config!.configFile,
+					vitePlugins: state.config!.configFile ? [] : aeroCorePlugins,
 					minify: shouldMinifyHtml,
 				},
 				outDir,
@@ -350,7 +385,11 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	}
 
 	const plugins: PluginOption[] = [
-		mainPlugin,
+		aeroConfigPlugin,
+		aeroVirtualsPlugin,
+		aeroTransformPlugin,
+		aeroSsrPlugin,
+		aeroHmrPlugin,
 		staticBuildPlugin,
 		ViteImageOptimizer({
 			exclude: undefined,
@@ -386,15 +425,14 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		}),
 	]
 
-	// Nitro Vite integration is serve-only; build orchestration is handled above.
 	if (enableNitro) {
 		const rawNitroPlugins = nitro({ serverDir: dirs.server })
 		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
-		for (const nitro of nitroPlugins) {
-			if (!nitro || typeof nitro !== 'object') continue
-			const originalApply = nitro.apply
+		for (const nitroPlugin of nitroPlugins) {
+			if (!nitroPlugin || typeof nitroPlugin !== 'object') continue
+			const originalApply = nitroPlugin.apply
 			plugins.push({
-				...nitro,
+				...nitroPlugin,
 				apply(pluginConfig, env) {
 					if (env.command !== 'serve') return false
 					if ((env as { isPreview?: boolean }).isPreview) return false
