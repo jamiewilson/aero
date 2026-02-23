@@ -6,7 +6,7 @@ Aero simplifies context passing completely using the intuitive `pass:data` attri
 
 ## Core Concepts
 
-The `pass:data` syntax accepts Javascript object-literal interpolations evaluated inside the template compiler.
+The `pass:data` syntax accepts JavaScript object-literal interpolations evaluated inside the template compiler.
 
 By utilizing double braces `pass:data="{ { variable } }"`, you instruct the compiler to extract the object literal `{ variable: variable }`, execute it in the server scope (`is:build`), serialize the result, and transparently make the destructured properties available as fully-typed constants in the browser.
 

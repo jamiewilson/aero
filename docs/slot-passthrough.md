@@ -26,7 +26,7 @@ This allows a component to receive a named slot from its parent and forward it t
 **Parent Component (parent.html)**
 
 ```html
-<script on:build>
+<script is:build>
 	import child from '@layouts/child'
 </script>
 
@@ -91,7 +91,7 @@ This takes the `nav` slot from the component's received slots and passes it as t
 
 ## Example in Your Codebase
 
-In `src/layouts/sub.html`:
+In `client/layouts/sub.html`:
 
 ```html
 <base-layout data-props>

@@ -65,3 +65,27 @@ Migrating to the v2 taxonomy is primarily just renaming your script tags:
 - Replace `<script on:client>` with plain `<script>` (client module by default)
 
 If you had any `on:client` scripts that you intended to be completely externalized from Vite's bundling pipeline (e.g., inline analytics init), use `<script is:inline>` instead.
+
+## Other script types
+
+- **`is:blocking`** — The script is moved into `<head>` and runs before the rest of the page (e.g. critical init). Contradictory attributes like `type="module"` or `defer` are ignored or warned on.
+- **`<script src="...">`** — External URLs (`https://...`) are left as-is. Local paths (e.g. `@scripts/foo.ts`) are resolved, bundled by Vite, and rewritten to hashed asset URLs at build time.
+
+### Behavior summary
+
+| Type | Bundled | Hoisted | Deduped | Notes |
+|------|---------|---------|---------|-------|
+| Plain `<script>` | Yes | End of `<body>` | Yes | `type="module"` when missing |
+| `is:inline` | No | No | No | Runs in place; Vite ignores it |
+| `is:blocking` | No | `<head>` | — | Contradictory attributes (e.g. `defer`) ignored or warned |
+| `src="https://..."` | No | — | — | Tag left as-is |
+
+### Scripts with `src`
+
+**External URLs** (`src="https://..."`) are never bundled; the tag stays in the template.
+
+**Local scripts** (`src="@scripts/..."`, `src="./..."`) stay in the template (not in the virtual client pipeline). The parser adds `type="module"` when missing. At build time they are discovered, resolved via path aliases, added as Rollup entry points, bundled, and get hashed filenames. The compiled HTML’s `src` is rewritten to the hashed asset path. So local `script[src]` uses the **asset pipeline**, not the virtual client script pipeline; deduping and ordering are per file.
+
+### pass:data and multiple instances
+
+When the same component is used multiple times with different `pass:data`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [pass-data-directive.md](pass-data-directive.md) for how to use `pass:data`.

@@ -1,10 +1,16 @@
 # Props System Guide
 
-The TBD framework provides a flexible, Astro-inspired props system that makes component composition intuitive and powerful.
+Aero provides a flexible, Astro-inspired props system for component composition.
 
 ## Core Concept
 
-**All props are accessed via `Aero.props`** - this is the single source of truth. Components explicitly destructure what they need from `Aero.props`.
+**All props are accessed via `aero.props`** (or `Aero.props`) — the single source of truth in build scripts. Components destructure what they need from `aero.props`.
+
+## How attribute values work
+
+- **Normal attributes** are **string literals** unless you wrap the value in `{ ... }`. Use `{ expression }` to pass booleans, numbers, or computed values.
+- **Directives** (`if`, `else-if`, `else`, `data-each`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `data-each="{ item in items }"`. Unbraced values are invalid.
+- **`data-props`** — `data-props="{ ...data }"` spreads the object’s keys as props. `data-props="{ data }"` passes the object as a single prop named `data`. `data-props` with no value spreads a local variable named `props`. Without braces, non-string values become strings and can cause type bugs.
 
 ## Passing Props to Components
 
@@ -42,48 +48,42 @@ If `Aero.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
 
 ### 3. Spread Syntax
 
-Spread an existing object using `data-props` or `props`:
+Spread an existing object using `data-props`:
 
 ```html
-<script on:build>
+<script is:build>
 	const myProps = { title: 'Hello', count: 42 }
 </script>
 <my-component data-props="{ ...myProps }" />
-<my-component props="{ ...myProps }" />
 ```
 
-`data-props`/`props` values must be brace-wrapped expressions. For example,
-`data-props="myProps"` is invalid and should be written as
-`data-props="{ ...myProps }"`.
+The value must be a brace-wrapped expression. For example, `data-props="myProps"` is invalid; use `data-props="{ ...myProps }"`.
 
 ### 4. Inline Object Literals
 
-Define props inline with `data-props` or `props`:
+Define props inline with `data-props`:
 
 ```html
 <my-component data-props="{ title: 'Hello', count: 42 }" />
-<my-component props="{ title: 'Hello', count: 42 }" />
 ```
 
-You can also use expressions:
+You can use expressions:
 
 ```html
-<my-component props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
+<my-component data-props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
 ```
 
-### 5. Shorthand (JavaScript-style)
+### 5. Shorthand (spread local `props`)
 
-Like JavaScript's object shorthand (`{ props }` means `{ props: props }`), you can use `data-props` or `props` with no value to spread a `props` variable:
+Use `data-props` with no value to spread a variable named `props` in scope:
 
 ```html
-<script on:build>
+<script is:build>
 	const props = { title: 'Hello', count: 42 }
 </script>
-<my-component props />
+<my-component data-props />
 <!-- Equivalent to: data-props="{ ...props }" -->
 ```
-
-This only works if you have a variable named `props` in scope.
 
 ### 6. Mixed Approach
 
@@ -95,12 +95,11 @@ Combine `data-props` with individual attributes:
 
 ## Receiving Props in Components
 
-Components access props by destructuring `Aero.props`:
+Components access props by destructuring `aero.props` (or `Aero.props`):
 
 ```html
-<script on:build>
-	// Destructure the props you need
-	const { title, subtitle } = Aero.props
+<script is:build>
+	const { title, subtitle } = aero.props
 </script>
 
 <header>
@@ -112,16 +111,16 @@ Components access props by destructuring `Aero.props`:
 ### With Defaults
 
 ```html
-<script on:build>
-	const { title = 'Default Title', subtitle } = Aero.props
+<script is:build>
+	const { title = 'Default Title', subtitle } = aero.props
 </script>
 ```
 
 ### With Fallbacks to Site Data
 
 ```html
-<script on:build>
-	const { title, description } = Aero.props
+<script is:build>
+	const { title, description } = aero.props
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
@@ -130,13 +129,13 @@ Components access props by destructuring `Aero.props`:
 
 ## Available Globals
 
-Inside `on:build` scripts, you have access to:
+Inside `<script is:build>` you have access to:
 
-- **`Aero.props`** - Props passed to this component
+- **`aero.props`** (or **`Aero.props`**) — Props passed to this component
 - **`Aero.request`** - Current request object
 - **`Aero.url`** - Current page URL
 - **`Aero.params`** - Route params for dynamic routes
-- **`site`** - Global site configuration (from your content module, e.g. `src/content/site.ts`, imported via `@content/site`)
+- **`site`** — Global site data (from your content module, e.g. `content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
 
@@ -153,7 +152,7 @@ Inside `on:build` scripts, you have access to:
 ### Read request metadata
 
 ```html
-<script on:build>
+<script is:build>
 	const userAgent = Aero.request.headers.get('user-agent') || 'unavailable'
 </script>
 
@@ -166,8 +165,8 @@ In static builds, request-specific headers may be unavailable.
 ### Build canonical links from the current URL
 
 ```html
-<script on:build>
-	const canonical = new URL(Aero.url.pathname, site.meta.url).toString()
+<script is:build>
+	const canonical = new URL(Aero.url.pathname, Aero.site || '').toString()
 </script>
 
 <link rel="canonical" href="{ canonical }" />
@@ -175,10 +174,10 @@ In static builds, request-specific headers may be unavailable.
 
 ### Use dynamic route params
 
-In a dynamic route file such as `src/pages/docs/[slug].html`:
+In a dynamic route file such as `client/pages/docs/[slug].html`:
 
 ```html
-<script on:build>
+<script is:build>
 	const slug = Aero.params.slug || 'index'
 </script>
 
@@ -190,9 +189,9 @@ In a dynamic route file such as `src/pages/docs/[slug].html`:
 ### Simple Component
 
 ```html
-<!-- components/greeting.html -->
-<script on:build>
-	const { name } = Aero.props
+<!-- client/components/greeting.html -->
+<script is:build>
+	const { name } = aero.props
 </script>
 
 <h1>Hello, { name }!</h1>
@@ -207,8 +206,8 @@ Usage:
 ### Component with Computed Props
 
 ```html
-<!-- pages/index.html -->
-<script on:build>
+<!-- client/pages/index.html -->
+<script is:build>
 	import header from '@components/header'
 
 	const headerProps = {

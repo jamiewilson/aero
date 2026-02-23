@@ -6,7 +6,7 @@ Modern web frameworks should optimize static assets natively during the build st
 
 Zero configuration is required for image optimization. The integration depends on `sharp` for raster graphics (JPEG, PNG, WebP) and `svgo` for vector graphics (SVG).
 
-When you run `pnpm run build`, Aero automatically scans both your project's static directories and manually imported images:
+When you run `pnpm build`, Aero automatically scans both your project's static directories and manually imported images:
 
 ```html
 <script is:build>
@@ -22,7 +22,7 @@ Assets imported anywhere in `client/assets/images` are automatically collected a
 
 ## Expected Results
 
-During the build process, the CLI will output compression savings for every processed image:
+During the build, the pipeline reports compression savings for every processed image:
 
 ```bash
 [vite-plugin-image-optimizer] - optimized images successfully:

@@ -12,7 +12,7 @@ aero/
 │   ├── core/              # Framework: compiler, runtime, Vite plugin (@aero-ssg/core)
 │   ├── vite/              # Vite plugin re-export (@aero-ssg/vite)
 │   ├── vscode/            # VS Code extension (syntaxes)
-│   ├── start/             # Project initializer (create-aero); apps/ for scaffolded apps
+│   ├── start/             # Project initializer (create-aero); dist/ for scaffolded apps
 │   ├── templates/
 │   │   ├── kitchen-sink/  # Full demo app (@aero-ssg/template-kitchen-sink); root dev/build runs this
 │   │   │   ├── client/    # Pages, components, layouts, assets
@@ -72,6 +72,29 @@ aero/
 3. **Dev:** `pnpm dev` (from root) runs `packages/templates/kitchen-sink` dev server (Vite + Aero plugin; Nitro when enabled).
 4. **Build app:** `pnpm build` builds core then runs kitchen-sink build (output to `packages/templates/kitchen-sink/dist/` and `.output/`).
 5. **Tests:** `pnpm test` runs Vitest inside `packages/core` (compiler and vite tests). Run from repo root.
+
+## Build output and asset layout
+
+The static build writes a flat, predictable output for deployment and caching.
+
+- **`dist/`** — Result of `pnpm build` (Vite + Aero plugin). Pre-rendered HTML and built assets.
+- **`.output/`** — When Nitro is enabled (`aero({ nitro: true })`). Contains `public/` (static) and `server/` (Nitro). Deploy this when you need API routes.
+
+Static assets (CSS, JS, images) go under **`dist/assets/`** with hashed filenames. No deep nested paths:
+
+```
+dist/
+├── index.html
+├── about/index.html
+├── 404.html
+├── sitemap.xml          (when site is set)
+└── assets/
+    ├── global-[hash].css
+    ├── index-[hash].js
+    └── about-[hash].jpg
+```
+
+Links in built HTML are rewritten to be relative so the site works from any base path (CDN or `file://`).
 
 ## Summary
 

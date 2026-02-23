@@ -1,10 +1,10 @@
-# Content Package API Enhancements
+# Content API
 
-Aero provides a full-featured Markdown/content management engine wrapped inside `@aero-ssg/content`. The API recently underwent massive refactoring for developer flexibility, lazy evaluation, and routing performance.
+Aero’s content layer (`@aero-ssg/content`) provides typed content collections, Markdown rendering, and integration with file-based routing.
 
 ## Content Schema & Definitions
 
-First, declare your `aero.content.ts` (usually in `packages/start`). We utilize `zod` schema constraints so you always have guaranteed typing inside templates. No Vite transformers are required.
+Declare your content schema in `aero.content.ts` in your project root (or as configured). The API uses Zod so you get typed data in templates without custom Vite transformers.
 
 ```typescript
 import { defineCollection, z } from '@aero-ssg/content'
@@ -26,7 +26,7 @@ The global `getCollection('name')` method is the modern approach to iterating an
 Instead of relying on clunky static `allDocs` exports, you fetch collections natively on demand:
 
 ```html
-<!-- src/pages/docs/index.html -->
+<!-- client/pages/docs/index.html -->
 <script is:build>
 	import { getCollection } from 'aero:content'
 
@@ -47,7 +47,7 @@ Instead of relying on clunky static `allDocs` exports, you fetch collections nat
 Previously, Markdown bodies were parsed, transpiled to HTML, and embedded immediately when the collection was fetched. This bloats memory usages exponentially on routing list pages over time. Now, HTML generation is handled lazily to save computing thresholds!
 
 ```html
-<!-- src/pages/docs/[slug].html -->
+<!-- client/pages/docs/[slug].html -->
 <script is:build>
 	import { render } from 'aero:content'
 

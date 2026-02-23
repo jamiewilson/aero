@@ -72,5 +72,5 @@ If you only want the sitemap link when `site` is set (e.g. to avoid a broken lin
 
 ## Notes
 
-- The **content global** `site` (from `src/content/site.ts` or similar) is separate: it holds your app’s content (title, nav, etc.). The **config** `site` is only the origin URL.
+- The **content global** `site` (from your content module, e.g. `content/site.ts` or `@content/site`) is separate: it holds your app’s content (title, nav, etc.). The **config** `site` is only the canonical origin URL.
 - RSS and other features can use `Aero.site` or `import.meta.env.SITE` to build absolute URLs.
