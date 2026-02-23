@@ -32,5 +32,15 @@ describe('render', () => {
 		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('render() received null'))
 		consoleSpy.mockRestore()
 	})
-	// TODO: edge case — document with empty body (e.g. body === '') returns { html: '' }
+
+	it('returns { html: "" } when document body is empty', async () => {
+		const doc = {
+			id: 'test',
+			body: '',
+			data: {},
+			_meta: { filename: 'test.md', slug: 'test', path: 'test', extension: '.md' },
+		}
+		const result = await render(doc as any)
+		expect(result).toEqual({ html: '' })
+	})
 })

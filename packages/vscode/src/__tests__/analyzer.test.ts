@@ -84,16 +84,31 @@ describe('collectDefinedVariables', () => {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
 	} as any
 
-	it('should correctly parse named imports', () => {
+	it('should correctly parse named imports in build scope', () => {
 		const text = `import { foo, bar } from 'pkg'`
-		const [vars] = collectDefinedVariables(mockDoc, text)
+		const [buildScopeVars] = collectDefinedVariables(mockDoc, text)
 
-		expect(vars.has('foo')).toBe(true)
-		expect(vars.get('foo')?.kind).toBe('import')
-		expect(vars.has('bar')).toBe(true)
-		expect(vars.get('bar')?.kind).toBe('import')
+		expect(buildScopeVars.has('foo')).toBe(true)
+		expect(buildScopeVars.get('foo')?.kind).toBe('import')
+		expect(buildScopeVars.has('bar')).toBe(true)
+		expect(buildScopeVars.get('bar')?.kind).toBe('import')
 
-		expect(vars.has('foo, bar')).toBe(false)
+		expect(buildScopeVars.has('foo, bar')).toBe(false)
+	})
+
+	it('returns only build-scope variables (is:build), not client/bundled script vars', () => {
+		const text = `<script is:build>
+import { buildOnly } from 'pkg'
+const buildVar = 1
+</script>
+<script>
+const clientVar = 2
+</script>`
+		const [buildScopeVars] = collectDefinedVariables(mockDoc, text)
+
+		expect(buildScopeVars.has('buildOnly')).toBe(true)
+		expect(buildScopeVars.has('buildVar')).toBe(true)
+		expect(buildScopeVars.has('clientVar')).toBe(false)
 	})
 
 	it('should calculate correct position for pass:data variables', () => {
@@ -185,5 +200,3 @@ describe('collectTemplateScopes', () => {
 		expect(scopes).toHaveLength(0)
 	})
 })
-
-// TODO: collectDefinedVariables returns array of Map per scope; only first scope is asserted in "named imports" test — consider asserting build scope explicitly.

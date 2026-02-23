@@ -64,5 +64,10 @@ describe('compileMarkdown', () => {
 		expect(html).toContain('<p>First paragraph</p>')
 		expect(html).toContain('<p>Second paragraph</p>')
 	})
-	// TODO: consider asserting raw HTML in markdown is escaped (XSS) if remark-html config changes
+
+	it('does not output raw script tags (XSS regression if remark-html config allows raw HTML)', async () => {
+		const html = await compileMarkdown(makeDoc('Text <script>alert(1)</script> more'))
+		expect(html).not.toContain('<script>')
+		expect(html).not.toContain('</script>')
+	})
 })

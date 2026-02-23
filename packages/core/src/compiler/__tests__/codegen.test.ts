@@ -741,6 +741,63 @@ describe('Codegen', () => {
 		expect(output).not.toContain('Other')
 	})
 
+	it('should treat lone data-else (invalid markup) as normal element and strip directive', async () => {
+		// data-else without preceding data-if is not a conditional chain; element is compiled as normal, directive stripped
+		const html = `<script is:build></script>
+									<div>
+										<p data-else>Standalone else</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Standalone else')
+		expect(output).not.toContain('data-else')
+	})
+
+	// =========================================================================
+	// Void elements and self-closing component handling
+	// =========================================================================
+
+	it('should emit void elements without closing tags', async () => {
+		const html = `<script is:build>
+										const src = 'photo.jpg';
+									</script>
+									<div>
+										<br>
+										<img src="{ src }">
+										<hr>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<br>')
+		expect(output).not.toContain('</br>')
+		expect(output).toContain('<img src="photo.jpg">')
+		expect(output).not.toContain('</img>')
+		expect(output).toContain('<hr>')
+		expect(output).not.toContain('</hr>')
+	})
+
+	it('should expand self-closing component and emit same component call as with closing tag', () => {
+		// Self-closing <logo-component /> is expanded to <logo-component></logo-component> before parse;
+		// then compiled like any component. We assert on generated code (imports are module-level, so execute() has no logo).
+		const html = `<script is:build>
+										import logo from '@components/logo'
+									</script>
+									<div>
+										<logo-component />
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		expect(code).toContain('Aero.renderComponent(logo,')
+	})
+
 	// =========================================================================
 	// getStaticPaths extraction
 	// =========================================================================
@@ -1027,7 +1084,7 @@ describe('Codegen', () => {
 // extractGetStaticPaths helper (used by codegen to split build script and emit named export)
 // =========================================================================
 
-// TODO: Consider testing data-else without preceding data-if (invalid markup); void/self-closing component handling.
+// See _reference/codegen-todo-considerations.md for data-else/void/self-closing behavior; tests added above.
 
 describe('extractGetStaticPaths', () => {
 	it('should extract a sync function', () => {

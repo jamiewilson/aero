@@ -256,6 +256,25 @@ describe('serializeContentModule', () => {
 
 		expect(output).toContain('import.meta.env.PROD')
 		expect(output).toContain('item.data.published === true')
-		// TODO: add integration test that runs emitted getCollection in PROD and asserts filtering
+	})
+
+	it('getCollection in PROD filters to only item.data.published === true', () => {
+		const loaded = new Map<string, any[]>()
+		loaded.set('docs', [
+			{ id: 'a', data: { published: true }, body: '', _meta: {} },
+			{ id: 'b', data: { published: false }, body: '', _meta: {} },
+			{ id: 'c', data: { published: true }, body: '', _meta: {} },
+		])
+
+		const emitted = serializeContentModule(loaded)
+			.replace('export function getCollection', 'function getCollection')
+			.replace(/export\s*\{\s*render\s*\}\s*from\s*['"][^'"]+['"];?\s*/g, '')
+			.replace(/import\.meta\.env\.PROD/g, 'true')
+
+		const getCollection = new Function(emitted + '; return getCollection;')()
+		const result = getCollection('docs')
+
+		expect(result).toHaveLength(2)
+		expect(result.map((d: any) => d.id)).toEqual(['a', 'c'])
 	})
 })
