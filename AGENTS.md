@@ -2,14 +2,15 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** (pages, components, config) lives in **packages/start**; the repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** used for dev/build is **packages/templates/kitchen-sink**; **packages/start** is the create-aero project initializer (scaffolds from templates). Repo root is the workspace root.
 
 ### Monorepo
 
 - **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aero-ssg/core` and `@aero-ssg/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/start** - Starter app: `src/`, `server/`, vite.config.ts, nitro.config.ts, tsconfig.json. Depends on `@aero-ssg/vite`.
-- **Root** - Workspace root. Scripts delegate: `pnpm dev` builds core then runs start's dev; `pnpm test` runs core tests.
+- **packages/start** - Project initializer (create-aero). Run from `packages/start`: `pnpm run create-aero <name>`; scaffolds into `packages/start/dist/<name>` (gitignored).
+- **packages/templates/** - Templates: **kitchen-sink** (full demo app; root `pnpm dev`/build runs this), **minimal** (stripped-down app).
+- **Root** - Workspace root. Scripts delegate: `pnpm dev` runs kitchen-sink dev; `pnpm test` runs core tests.
 
 ### Compilation pipeline (packages/core)
 
@@ -61,16 +62,16 @@ Components receive via `aero.props`:
 </script>
 ```
 
-### Path Aliases (packages/start/tsconfig.json)
+### Path Aliases (templates use client/; tsconfig in kitchen-sink, minimal)
 
-- `@components/*` → src/components/\*
-- `@layouts/*` → src/layouts/\*
-- `@pages/*` → src/pages/\*
-- `@content/*` → src/content/\*
-- `@styles/*` → src/assets/styles/\*
-- `@scripts/*` → src/assets/scripts/\*
-- `@images/*` → src/assets/images/\*
-- `@src/*` → src/\*
+- `@components/*` → client/components/\*
+- `@layouts/*` → client/layouts/\*
+- `@pages/*` → client/pages/\*
+- `@content/*` → content/\*
+- `@styles/*` → client/assets/styles/\*
+- `@scripts/*` → client/assets/scripts/\*
+- `@images/*` → client/assets/images/\*
+- `@src/*` → client/\*
 - `@server/*` → server/\*
 - `~/*` → project root
 
@@ -102,7 +103,8 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 
 ## File Structure
 
-- **packages/start:** `src/pages/`, `src/components/`, `src/layouts/`, `src/content/`, `src/assets/`, `server/api/`, `server/routes/`
+- **packages/templates/kitchen-sink:** `client/pages/`, `client/components/`, `client/layouts/`, `content/`, `client/assets/`, `server/api/`, `server/routes/`
+- **packages/start/** - create-aero initializer (no app source; scaffolds from templates)
 - **packages/core/** - Framework (compiler, runtime, vite)
 - **packages/vite/** - Vite plugin re-export
 - **packages/vscode/** - VS Code extension

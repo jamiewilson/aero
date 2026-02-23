@@ -2,8 +2,13 @@
   "name": "create-aero",
   "version": "0.1.0",
   "type": "module",
-  "bin": "index.js",
-  "scripts": {},
+  "bin": {
+    "create-aero": "index.js"
+  },
+  "scripts": {
+    "create": "node .",
+    "create-aero": "node index.js"
+  },
   "dependencies": {
     "@aero-ssg/template-kitchen-sink": "workspace:*",
     "@aero-ssg/template-minimal": "workspace:*"

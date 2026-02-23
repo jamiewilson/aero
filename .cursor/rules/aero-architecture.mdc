@@ -9,11 +9,13 @@ Aero is a static site generator with an HTML-first template engine.
 
 ## Monorepo Layout
 
-- **Root** - Workspace root. Scripts delegate to packages/core and packages/start.
+- **Root** - Workspace root. Scripts delegate to packages/core and packages/templates/kitchen-sink.
 - **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsup; consumed as `@aero-ssg/core` and `@aero-ssg/vite`.
 - **packages/vite** - Vite plugin re-export (@aero-ssg/vite).
 - **packages/vscode** - VS Code extension (syntaxes, etc.).
-- **packages/start** - Starter/scaffold app (src/, server/, vite.config, nitro.config).
+- **packages/start** - Project initializer (create-aero). Scaffolds into packages/start/dist/<name> from templates (dist is gitignored).
+- **packages/templates/kitchen-sink** - Full demo app (client/, server/, vite.config, nitro.config). Root `dev`/`build`/`preview` run this.
+- **packages/templates/minimal** - Minimal template (client/, content/, no server).
 
 Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the app uses the built framework.
 
@@ -24,14 +26,14 @@ Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the a
 3. **Vite Plugin** (packages/core/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
 4. **Runtime** (packages/core/runtime/index.ts) - `Aero` class renders pages and components with context
 
-## App File Structure (root)
+## App File Structure (templates: kitchen-sink, minimal)
 
-- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
-- `src/components/` - Reusable components
-- `src/layouts/` - Layout wrappers with `<slot>` support
-- `src/content/` - Global data (e.g. site.ts, theme.ts exposed as `site` in templates)
-- `src/assets/` - Styles, scripts, images
-- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
+- `client/pages/` - Route pages (index.html → `/`, about.html → `/about`)
+- `client/components/` - Reusable components
+- `client/layouts/` - Layout wrappers with `<slot>` support
+- `content/` - Global data (e.g. site.ts exposed as `site` in templates)
+- `client/assets/` - Styles, scripts, images
+- `server/api/` - Nitro API handlers (e.g. submit.post.ts; kitchen-sink only)
 - `server/routes/` - Nitro routes (e.g. catch-all for static files)
 
 ## Commands
@@ -42,15 +44,15 @@ Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the a
 - `pnpm run preview:api` - Full server preview (static + API)
 - `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
 
-## Path Aliases (root tsconfig.json)
+## Path Aliases (templates: tsconfig in kitchen-sink, minimal)
 
-- `@components/*` → src/components/*
-- `@layouts/*` → src/layouts/*
-- `@pages/*` → src/pages/*
-- `@content/*` → src/content/*
-- `@styles/*` → src/assets/styles/*
-- `@scripts/*` → src/assets/scripts/*
-- `@images/*` → src/assets/images/*
-- `@src/*` → src/*
+- `@components/*` → client/components/*
+- `@layouts/*` → client/layouts/*
+- `@pages/*` → client/pages/*
+- `@content/*` → content/*
+- `@styles/*` → client/assets/styles/*
+- `@scripts/*` → client/assets/scripts/*
+- `@images/*` → client/assets/images/*
+- `@src/*` → client/*
 - `@server/*` → server/*
 - `~/*` → project root

@@ -22,7 +22,7 @@ Full demo template for the Aero static site generator. Used for development and 
 
 ## Commands
 
-From repo root (or from `packages/start` if core is built):
+From repo root (or from `packages/templates/kitchen-sink` if core is built):
 
 - **pnpm dev** — Vite dev server with HMR (and Nitro when `server: true`).
 - **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
