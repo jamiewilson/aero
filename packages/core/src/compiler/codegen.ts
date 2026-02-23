@@ -4,13 +4,16 @@
  * @remarks
  * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
  * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
- * to emit code for elements, components, slots, data-each, data-if/else-if/else, and script/style pass:data.
- * Output is a string of JavaScript (default async render function, optionally preceded by getStaticPaths export).
+ * to lower to IR (elements, components, slots, data-each, data-if/else-if/else, script/style pass:data),
+ * then a single emitter turns IR → JS. Output is a string of JavaScript (default async render function,
+ * optionally preceded by getStaticPaths export).
  */
 
 import type { ParseResult, CompileOptions } from '../types'
+import type { IRNode } from './ir'
 import * as CONST from './constants'
 import * as Helper from './helpers'
+import { emitToJS, emitBodyAndStyle } from './emit'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 
@@ -26,8 +29,8 @@ interface ParsedComponentAttrs {
 	propsString: string
 }
 
-/** Internal compiler: walks DOM nodes and emits append/control-flow statements; used by compile(). */
-class Compiler {
+/** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
+class Lowerer {
 	private resolver: Resolver
 	private slotCounter = 0
 
@@ -211,20 +214,20 @@ class Compiler {
 		return { attrString, loopData, passDataExpr }
 	}
 
-	/** Dispatch by node type: text (3) → compileText, element (1) → compileElement; other types emit nothing. */
-	compileNode(node: any, skipInterpolation = false, outVar = '__out'): string {
+	/** Dispatch by node type: text (3) → compileText, element (1) → compileElement; other types return []. */
+	compileNode(node: any, skipInterpolation = false, outVar = '__out'): IRNode[] {
 		switch (node.nodeType) {
 			case 3:
 				return this.compileText(node, skipInterpolation, outVar)
 			case 1:
 				return this.compileElement(node, skipInterpolation, outVar)
 			default:
-				return ''
+				return []
 		}
 	}
 
-	/** Compile a list of nodes (e.g. body children) with interpolation enabled; returns generated statements for `outVar`. */
-	compileFragment(nodes: NodeList | undefined): string {
+	/** Lower a list of nodes (e.g. body children) to IR. */
+	compileFragment(nodes: NodeList | undefined): IRNode[] {
 		return this.compileChildNodes(nodes, false, '__out')
 	}
 
@@ -232,50 +235,51 @@ class Compiler {
 		nodes: NodeList | undefined,
 		skipInterpolation: boolean,
 		outVar: string,
-	): string {
-		if (!nodes) return ''
-		let out = ''
+	): IRNode[] {
+		if (!nodes) return []
+		const out: IRNode[] = []
 		let i = 0
 		while (i < nodes.length) {
 			const node = nodes[i]
 
 			// Check if this starts a conditional chain
 			if (this.hasIfAttr(node)) {
-				const { code, consumed } = this.compileConditionalChain(
+				const { nodes: chainNodes, consumed } = this.compileConditionalChain(
 					nodes,
 					i,
 					skipInterpolation,
 					outVar,
 				)
-				out += code
+				out.push(...chainNodes)
 				i += consumed
 				continue
 			}
 
-			out += this.compileNode(node, skipInterpolation, outVar)
+			out.push(...this.compileNode(node, skipInterpolation, outVar))
 			i++
 		}
 		return out
 	}
 
 	/**
-	 * Compiles a conditional chain (if/else-if/else siblings) into proper control flow.
-	 * Returns the generated code and how many nodes were consumed.
+	 * Lowers a conditional chain (if/else-if/else siblings) into one IR If node.
+	 * Returns the IR and how many DOM nodes were consumed.
 	 */
 	private compileConditionalChain(
 		nodes: NodeList,
 		startIndex: number,
 		skipInterpolation: boolean,
 		outVar: string,
-	): { code: string; consumed: number } {
-		let out = ''
+	): { nodes: IRNode[]; consumed: number } {
 		let i = startIndex
-		let isFirst = true
+		let condition: string | null = null
+		let body: IRNode[] = []
+		const elseIf: { condition: string; body: IRNode[] }[] = []
+		let elseBody: IRNode[] | undefined
 
 		while (i < nodes.length) {
 			const node = nodes[i] as any
 			if (!node || node.nodeType !== 1) {
-				// Skip text nodes (whitespace) between conditional elements
 				if (node?.nodeType === 3 && node.textContent?.trim() === '') {
 					i++
 					continue
@@ -283,51 +287,46 @@ class Compiler {
 				break
 			}
 
-			if (isFirst) {
+			if (condition === null) {
 				// First element must have if
 				if (!this.hasIfAttr(node)) break
-				const condition = this.getCondition(node, CONST.ATTR_IF)
-				out += Helper.emitIf(condition!)
-				out += this.compileElement(node, skipInterpolation, outVar)
-				out += Helper.emitEnd()
-				isFirst = false
+				condition = this.getCondition(node, CONST.ATTR_IF)!
+				body = this.compileElement(node, skipInterpolation, outVar)
 				i++
 			} else if (this.hasElseIfAttr(node)) {
-				// else-if branch
-				const condition = this.getCondition(node, CONST.ATTR_ELSE_IF)
-				out = out.slice(0, -2) // Remove "}\n" to chain else-if
-				out += Helper.emitElseIf(condition!)
-				out += this.compileElement(node, skipInterpolation, outVar)
-				out += Helper.emitEnd()
+				const elseIfCondition = this.getCondition(node, CONST.ATTR_ELSE_IF)!
+				elseIf.push({ condition: elseIfCondition, body: this.compileElement(node, skipInterpolation, outVar) })
 				i++
 			} else if (this.hasElseAttr(node)) {
-				// else branch (final)
-				out = out.slice(0, -2) // Remove "}\n" to chain else
-				out += Helper.emitElse()
-				out += this.compileElement(node, skipInterpolation, outVar)
-				out += Helper.emitEnd()
+				elseBody = this.compileElement(node, skipInterpolation, outVar)
 				i++
-				break // else is always the last branch
+				break
 			} else {
-				// Not part of the chain
 				break
 			}
 		}
 
-		return { code: out, consumed: i - startIndex }
+		const ifNode: IRNode = {
+			kind: 'If',
+			condition: condition!,
+			body,
+			...(elseIf.length > 0 && { elseIf }),
+			...(elseBody && elseBody.length > 0 && { else: elseBody }),
+		}
+		return { nodes: [ifNode], consumed: i - startIndex }
 	}
 
-	private compileText(node: any, skipInterpolation: boolean, outVar: string): string {
+	private compileText(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const text = node.textContent || ''
-		if (!text) return ''
+		if (!text) return []
 		const content = skipInterpolation
 			? Helper.escapeBackticks(text)
 			: Helper.compileInterpolation(text)
-		return Helper.emitAppend(content, outVar)
+		return [{ kind: 'Append', content, outVar }]
 	}
 
-	/** Compile one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
-	private compileElement(node: any, skipInterpolation: boolean, outVar: string): string {
+	/** Lower one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
+	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 
 		if (tagName === CONST.TAG_SLOT) {
@@ -338,89 +337,61 @@ class Compiler {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		let out = ''
 		const { attrString, loopData, passDataExpr } = this.parseElementAttributes(node)
+		const childSkip = skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
 
-		// Emit for loop opening
-		if (loopData) {
-			out += Helper.emitForOf(loopData.item, loopData.items)
-		}
+		const inner: IRNode[] = []
 
 		if (CONST.VOID_TAGS.has(tagName)) {
-			out += Helper.emitAppend(`<${tagName}${attrString}>`, outVar)
+			inner.push({ kind: 'Append', content: `<${tagName}${attrString}>`, outVar })
 		} else {
-		const childSkip = skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
-			out += Helper.emitAppend(`<${tagName}${attrString}>`, outVar)
+			inner.push({ kind: 'Append', content: `<${tagName}${attrString}>`, outVar })
 
 			const isScript = tagName === 'script'
 			const isStyle = tagName === 'style'
 			let closeBlock = false
 
 			if (isScript && passDataExpr) {
-				const result = this.emitScriptPassData(passDataExpr, node, outVar)
-				out += result.code
+				const result = this.emitScriptPassDataIR(passDataExpr, node, outVar)
+				inner.push(...result.nodes)
 				closeBlock = result.closeBlock
 			} else if (isStyle && passDataExpr) {
-				out += this.emitStylePassData(passDataExpr, outVar)
+				inner.push({ kind: 'StylePassData', passDataExpr, outVar })
 			}
 
-			out += this.compileChildNodes(node.childNodes, childSkip, outVar)
+			inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar))
 
 			if (closeBlock) {
-				out += Helper.emitAppend('\\n}\\n', outVar)
+				inner.push({ kind: 'Append', content: '\\n}\\n', outVar })
 			}
 
-			out += Helper.emitAppend(`</${tagName}>`, outVar)
+			inner.push({ kind: 'Append', content: `</${tagName}>`, outVar })
 		}
 
-		// Close for loop
 		if (loopData) {
-			out += Helper.emitEnd()
+			return [{ kind: 'For', item: loopData.item, items: loopData.items, body: inner }]
 		}
-
-		return out
+		return inner
 	}
 
 	/**
-	 * Emits code that injects `pass:data` variables into a `<script>` tag.
-	 * For non-module scripts, wraps the injected constants in a block scope `{ }`.
-	 * Each key from the data object becomes a `const k = JSON.stringify(v);` declaration.
+	 * Builds IR for injecting `pass:data` into a `<script>` tag.
+	 * For non-module scripts, the emitter emits the opening `{\n`; caller must append closing `}\n` (Append IR).
 	 */
-	private emitScriptPassData(
+	private emitScriptPassDataIR(
 		passDataExpr: string,
 		node: any,
 		outVar: string,
-	): { code: string; closeBlock: boolean } {
-		let code = ''
+	): { nodes: IRNode[]; closeBlock: boolean } {
 		const isModule = node.getAttribute('type') === 'module'
-		let closeBlock = false
-
-		if (!isModule) {
-			code += Helper.emitAppend('\\n{\\n', outVar)
-			closeBlock = true
-		}
-
-		const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
-		code += Helper.emitAppend(`\${${jsMapExpr}}\\n`, outVar)
-
-		return { code, closeBlock }
+		const nodes: IRNode[] = [{ kind: 'ScriptPassData', passDataExpr, isModule, outVar }]
+		return { nodes, closeBlock: !isModule }
 	}
 
-	/**
-	 * Emits code that injects `pass:data` variables into a `<style>` tag
-	 * as CSS custom properties within a `:root` block.
-	 * Each key becomes `--key: String(value);`.
-	 */
-	private emitStylePassData(passDataExpr: string, outVar: string): string {
-		const cssMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
-		return Helper.emitAppend(`\n:root {\${${cssMapExpr}}\n}\n`, outVar)
-	}
-
-	private compileSlot(node: any, skipInterpolation: boolean, outVar: string): string {
+	private compileSlot(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-		// Compile default content as template literal content
 		const defaultContent = this.compileSlotDefaultContent(node.childNodes, skipInterpolation)
-		return Helper.emitSlotOutput(slotName, defaultContent, outVar)
+		return [{ kind: 'Slot', name: slotName, defaultContent, outVar }]
 	}
 
 	/** Compiles slot default content into template literal content (for simple fallbacks). */
@@ -485,46 +456,36 @@ class Compiler {
 		tagName: string,
 		skipInterpolation: boolean,
 		outVar: string,
-	): string {
-		let out = ''
+	): IRNode[] {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = this.parseComponentAttributes(node)
 
-		// Compile slot content as statements into captured variables (Hyperspace-style)
 		const slotVarMap: Record<string, string> = {}
 		const slotContentMap: Record<string, any[]> = { [CONST.SLOT_NAME_DEFAULT]: [] }
 
-		// First pass: categorize children by slot name
 		if (node.childNodes) {
 			for (let i = 0; i < node.childNodes.length; i++) {
 				const child = node.childNodes[i]
 				let slotName = CONST.SLOT_NAME_DEFAULT
-
 				if (child.nodeType === 1) {
 					const slotAttr = child.getAttribute(CONST.ATTR_SLOT)
 					if (slotAttr) slotName = slotAttr
 				}
-
 				slotContentMap[slotName] = slotContentMap[slotName] || []
 				slotContentMap[slotName]!.push(child)
 			}
 		}
 
-		// Second pass: compile each slot's content as statements
+		const slots: Record<string, IRNode[]> = {}
 		for (const [slotName, children] of Object.entries(slotContentMap)) {
 			const slotVar = `__slot_${this.slotCounter++}`
 			slotVarMap[slotName] = slotVar
 
-			// Emit slot variable declaration
-			out += Helper.emitSlotVar(slotVar)
-
-			// Compile children into the slot variable
+			const slotIR: IRNode[] = []
 			for (const child of children) {
 				if (child.nodeType === 1) {
 					const childTagName = child.tagName?.toLowerCase()
-
-					// Handle slot passthrough: <slot name="x" slot="y">
 					if (
 						childTagName === CONST.TAG_SLOT &&
 						child.hasAttribute(CONST.ATTR_NAME) &&
@@ -535,19 +496,25 @@ class Compiler {
 							child.childNodes,
 							skipInterpolation,
 						)
-						out += Helper.emitSlotOutput(passthroughName, defaultContent, slotVar)
+						slotIR.push({ kind: 'Slot', name: passthroughName, defaultContent, outVar: slotVar })
 						continue
 					}
 				}
-
-				out += this.compileNode(child, skipInterpolation, slotVar)
+				slotIR.push(...this.compileNode(child, skipInterpolation, slotVar))
 			}
+			slots[slotName] = slotIR
 		}
 
-		const slotsString = Helper.emitSlotsObjectVars(slotVarMap)
-		out += `${outVar} += await Aero.renderComponent(${baseName}, ${propsString}, ${slotsString}, { request, url, params, styles, scripts });\n`
-
-		return out
+		return [
+			{
+				kind: 'Component',
+				baseName,
+				propsString,
+				slots,
+				slotVarMap,
+				outVar,
+			},
+		]
 	}
 }
 
@@ -561,13 +528,12 @@ class Compiler {
 export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const inlineScripts = options.inlineScripts ?? parsed.inlineScripts
 
-	// Create resolver once and share with compiler
 	const resolver = new Resolver({
 		root: options.root,
 		resolvePath: options.resolvePath,
 	})
 
-	const compiler = new Compiler(resolver)
+	const lowerer = new Lowerer(resolver)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
@@ -621,15 +587,17 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		for (const node of children) {
 			if (node.nodeType === 1 && (node as any).tagName === 'STYLE') {
 				const styleVar = `__out_style_${Math.random().toString(36).slice(2)}`
+				const styleIR = lowerer.compileNode(node, false, styleVar)
 				styleCode += `let ${styleVar} = '';\n`
-				styleCode += compiler.compileNode(node, false, styleVar)
+				styleCode += emitToJS(styleIR, styleVar)
 				styleCode += `styles?.add(${styleVar});\n`
 				;(node as any).remove()
 			}
 		}
 	}
 
-	let bodyCode = document.body ? compiler.compileFragment(document.body.childNodes) : ''
+	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
+	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
 
 	const rootScripts: string[] = []
 	const headScripts: string[] = []
@@ -637,10 +605,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Process Bundled Client Scripts
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
-			const hasType = clientScript.attrs.includes('type=')
-			const baseAttrs = hasType
-				? clientScript.attrs
-				: `type="module"${clientScript.attrs ? ' ' + clientScript.attrs : ''}`
+			const attrs = clientScript.attrs ?? ''
+			const hasType = attrs.includes('type=')
+			const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
 			const moduleTag = `<script ${baseAttrs} src="${clientScript.content}"></script>`
 
 			if (clientScript.passDataExpr) {
@@ -679,19 +646,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
-		${script}
-		${styleCode}
-		${rootScripts.length > 0 ? rootScripts.join('\n\t\t') : ''}
-		${headScripts.length > 0 ? headScripts.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t') : ''}
-		let __out = '';
-		${bodyCode}return __out;
-	}`
+	const renderFn = Helper.emitRenderFunction(script, bodyCode, {
+		getStaticPathsFn: getStaticPathsFn || undefined,
+		styleCode,
+		rootScriptsLines: rootScripts,
+		headScriptsLines: headScripts,
+	})
 
-	return (
-		importsCode +
-		'\n' +
-		(getStaticPathsFn ? `${getStaticPathsFn}\n\n${renderFn}`.trim() : renderFn.trim())
-	)
+	return importsCode + '\n' + renderFn
 }

@@ -158,22 +158,46 @@ export function extractGetStaticPaths(script: string): {
 }
 
 /**
- * Emit the default async render function: destructured context, script block, optional style/script adds, then body that appends to `__out`.
+ * Options for emitRenderFunction. All optional; used by codegen as the single source of truth for render emission.
+ */
+export interface EmitRenderFunctionOptions {
+	/** Extracted getStaticPaths to prepend as named export. */
+	getStaticPathsFn?: string | null
+	/** Style labels to add to `styles` set (simple string labels). */
+	rootStyles?: string[]
+	/** Script labels to add to `scripts` set (simple string labels). */
+	rootScripts?: string[]
+	/** Generated code for compiled <style> blocks (styles?.add(...)). */
+	styleCode?: string
+	/** Full statements that add client script tags to `scripts` (e.g. scripts?.add(...) or pass:data IIFE). */
+	rootScriptsLines?: string[]
+	/** Expressions for blocking head scripts (emitted as injectedHeadScripts?.add(...)). */
+	headScriptsLines?: string[]
+}
+
+/**
+ * Emit the default async render function: destructured context, script block, optional style/script/head blocks, then body that appends to `__out`.
+ * Single source of truth for the shape of the compiled render function; codegen calls this with all sections.
  *
  * @param script - Build script content (imports + user code).
  * @param body - Generated statements that build the HTML string.
- * @param getStaticPathsFn - Optional extracted getStaticPaths to prepend as named export.
- * @param rootStyles - Optional style labels to add to `styles` set.
- * @param rootScripts - Optional script labels to add to `scripts` set.
+ * @param options - Optional getStaticPathsFn, rootStyles, rootScripts, styleCode, rootScriptsLines, headScriptsLines.
  * @returns Full module source (getStaticPaths + default render function).
  */
 export function emitRenderFunction(
 	script: string,
 	body: string,
-	getStaticPathsFn?: string | null,
-	rootStyles?: string[],
-	rootScripts?: string[],
+	options: EmitRenderFunctionOptions = {},
 ): string {
+	const {
+		getStaticPathsFn,
+		rootStyles,
+		rootScripts,
+		styleCode = '',
+		rootScriptsLines = [],
+		headScriptsLines = [],
+	} = options
+
 	const stylesCode =
 		rootStyles && rootStyles.length > 0
 			? rootStyles.map(s => `styles?.add(${JSON.stringify(s)});`).join('\n\t\t')
@@ -184,11 +208,21 @@ export function emitRenderFunction(
 			? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t')
 			: ''
 
+	const rootScriptsBlock =
+		rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
+	const headScriptsBlock =
+		headScriptsLines.length > 0
+			? headScriptsLines.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t')
+			: ''
+
 	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, styles, scripts } = Aero;
+		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
 		${script}
+		${styleCode}
 		${stylesCode}
 		${scriptsCode}
+		${rootScriptsBlock}
+		${headScriptsBlock}
 		let __out = '';
 		${body}return __out;
 	}`

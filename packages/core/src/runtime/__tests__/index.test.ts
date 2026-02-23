@@ -1,10 +1,12 @@
 /**
  * Unit tests for the Aero runtime (index.ts): globals, registerPages, toRoutePath,
- * resolveDynamicPage, render, and renderComponent. Uses (aero as any) to assert internal
+ * render, and renderComponent. Page resolution (resolveDynamicPage, resolvePageTarget) is
+ * tested in utils/__tests__/routing.test.ts. Uses (aero as any) to assert internal
  * state where the public API does not expose it.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
+import { resolveDynamicPage } from '../../utils/routing'
 import { Aero } from '../index'
 
 describe('Aero class', () => {
@@ -79,8 +81,8 @@ describe('Aero class', () => {
 		})
 	})
 
-	/** Matches path segments to [param] segments; first match wins. Single [slug] acts as single-segment wildcard. */
-	describe('resolveDynamicPage', () => {
+	/** Matches path segments to [param] segments; first match wins. Uses shared resolveDynamicPage with pagesMap. */
+	describe('resolveDynamicPage (via routing)', () => {
 		beforeEach(() => {
 			aero = new Aero()
 			aero.registerPages({
@@ -90,21 +92,21 @@ describe('Aero class', () => {
 		})
 
 		it('should resolve dynamic page with single param', () => {
-			const result = (aero as any).resolveDynamicPage('hello')
+			const result = resolveDynamicPage('hello', (aero as any).pagesMap)
 			expect(result).not.toBeNull()
-			expect(result.params.slug).toBe('hello')
+			expect(result!.params.slug).toBe('hello')
 		})
 
 		it('should resolve dynamic page with nested param', () => {
-			const result = (aero as any).resolveDynamicPage('blog/123')
+			const result = resolveDynamicPage('blog/123', (aero as any).pagesMap)
 			expect(result).not.toBeNull()
-			expect(result.params.id).toBe('123')
+			expect(result!.params.id).toBe('123')
 		})
 
 		it('should resolve dynamic page for any path (wildcard behavior)', () => {
-			const result = (aero as any).resolveDynamicPage('static-page')
+			const result = resolveDynamicPage('static-page', (aero as any).pagesMap)
 			expect(result).not.toBeNull()
-			expect(result.params.slug).toBe('static-page')
+			expect(result!.params.slug).toBe('static-page')
 		})
 	})
 

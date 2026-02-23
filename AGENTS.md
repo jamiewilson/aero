@@ -13,7 +13,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 
 ### Compilation pipeline (packages/core)
 
-1. **Parser** (packages/core/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+1. **Parser** (packages/core/compiler/parser.ts) extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks from HTML
 2. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
 3. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
 4. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
@@ -25,7 +25,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 Components use `-component` or `-layout` suffix in markup and are imported without suffix:
 
 ```html
-<script on:build>
+<script is:build>
 	import header from '@components/header' <!-- resolves header.html -->
 </script>
 <header-component title="Hello" />
@@ -33,10 +33,12 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ### Script Types
 
-- `<script on:build>` - Runs at build time, has access to `aero.props`, `site` globals, imports
-- `<script on:client>` - Bundled as virtual module, runs in browser
-- `<script src="...">` - External scripts allowed without attributes
-- **Required**: All inline scripts must have `on:client` or `on:build` attribute
+- `<script is:build>` - Runs at build time; has access to `aero.props`, `site` globals, imports. One per template.
+- Plain `<script>` (no `is:*`) - Bundled as virtual module, runs in browser (client).
+- `<script is:inline>` - Left in place in HTML; not bundled by Vite; runs in browser immediately.
+- `<script is:blocking>` - Extracted and emitted in `<head>` (e.g. blocking scripts).
+- `<script src="...">` - External scripts allowed without attributes.
+- See [docs/script-taxonomy.md](docs/script-taxonomy.md) for full taxonomy.
 
 ### Props System
 
@@ -54,7 +56,7 @@ Props passed via attributes or `data-props`:
 Components receive via `aero.props`:
 
 ```html
-<script on:build>
+<script is:build>
 	const { title, subtitle } = aero.props
 </script>
 ```

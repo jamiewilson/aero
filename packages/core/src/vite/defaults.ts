@@ -10,6 +10,15 @@ import type { AeroDirs } from '../types'
 
 /** Virtual URL prefix for extracted client scripts (e.g. `/@aero/client/client/pages/home.js`). Root-relative; no filesystem path. */
 export const CLIENT_SCRIPT_PREFIX = '/@aero/client/'
+
+/**
+ * Virtual URL for one client script. Single script uses `.js`, multiple use `.0.js`, `.1.js`, etc.
+ * Use this in the Vite transform and static build so URL generation is consistent.
+ */
+export function getClientScriptVirtualUrl(baseName: string, index: number, total: number): string {
+	const suffix = total === 1 ? '.js' : `.${index}.js`
+	return CLIENT_SCRIPT_PREFIX + baseName + suffix
+}
 /** Virtual module ID requested by the app; resolved to `RESOLVED_*` so `load()` can re-export from the real runtime instance. */
 export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance'
 /** Resolved ID (with `\0` prefix) so Vite treats it as an internal module. */

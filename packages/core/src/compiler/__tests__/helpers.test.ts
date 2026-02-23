@@ -188,9 +188,19 @@ describe('emitRenderFunction', () => {
 
 	it('should include getStaticPaths when provided', () => {
 		const getStaticPathsFn = 'export async function getStaticPaths() { return [] }'
-		const result = emitRenderFunction('', '', getStaticPathsFn)
+		const result = emitRenderFunction('', '', { getStaticPathsFn })
 		expect(result).toContain('export async function getStaticPaths() { return [] }')
 		expect(result).toContain('export default async function(Aero)')
+	})
+
+	it('should include styleCode and rootScriptsLines when provided', () => {
+		const result = emitRenderFunction('', '__out += "x";', {
+			styleCode: 'styles?.add("<style>");',
+			rootScriptsLines: ['scripts?.add("<script src=a>");'],
+		})
+		expect(result).toContain('styles?.add("<style>");')
+		expect(result).toContain('scripts?.add("<script src=a>");')
+		expect(result).toContain('injectedHeadScripts')
 	})
 })
 

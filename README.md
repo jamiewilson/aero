@@ -1,5 +1,3 @@
-dist/ ← vite build (static-only deployment target)
-
 # Aero
 
 Aero is a static site generator and full-stack framework with a custom HTML-first template engine.
