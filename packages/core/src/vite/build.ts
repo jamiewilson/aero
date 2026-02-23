@@ -604,4 +604,5 @@ export const __internal = {
 	rewriteRenderedHtml,
 	isDynamicPage,
 	expandPattern,
+	discoverPages,
 }

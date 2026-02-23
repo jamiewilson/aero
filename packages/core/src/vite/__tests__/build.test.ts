@@ -6,6 +6,9 @@
  * expandPattern, isDynamicPage). Does not run full renderStaticPages integration.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import type { Manifest } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { __internal, createBuildConfig } from '../build'
@@ -34,6 +37,20 @@ describe('vite build helpers', () => {
 			'./name/',
 		)
 		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
+	})
+
+	/** normalizeRelativeLink: fromDir → targetPath; returns ./ for empty or same-dir, else ./relative path. */
+	it('normalizeRelativeLink returns ./ for empty or same-dir', () => {
+		expect(__internal.normalizeRelativeLink('', '')).toBe('./')
+		expect(__internal.normalizeRelativeLink('about', 'about')).toBe('./')
+		expect(__internal.normalizeRelativeLink('docs/name', 'docs/name')).toBe('./')
+	})
+	it('normalizeRelativeLink produces relative path to file in same dir or child', () => {
+		expect(__internal.normalizeRelativeLink('about', 'about/index.html')).toBe('./index.html')
+		expect(__internal.normalizeRelativeLink('', 'assets/foo.js')).toBe('./assets/foo.js')
+		expect(__internal.normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe(
+			'./intro/index.html',
+		)
 	})
 
 	/** normalizeRelativeRouteLink: fromDir → routePath; appends trailing slash except for root and 404 (file). */
@@ -96,7 +113,6 @@ describe('vite build helpers', () => {
 	/**
 	 * rewriteRenderedHtml parses HTML, rewrites script[src] for CLIENT_SCRIPT_PREFIX to hashed asset,
 	 * sets type="module", and adds doctype. LINK_ATTRS (href, action, hx-*) are also rewritten in the real path.
-	 * TODO: Add a case that asserts href/action/hx-* rewrite on a full document for regression coverage.
 	 */
 	it('rewrites virtual client script src to manifest asset path in rewriteRenderedHtml', () => {
 		const html = `<html><body><script type="module" src="/@aero/client/client/pages/home.js"></script></body></html>`
@@ -113,6 +129,27 @@ describe('vite build helpers', () => {
 		expect(result).not.toContain('@aero/client')
 	})
 
+	it('rewrites href, action, and hx-* attributes to relative paths in full document', () => {
+		const routeSet = new Set(['', 'about', 'docs', 'docs/name', 'contact'])
+		const manifest: Manifest = {}
+		const html = `<!doctype html>
+<html lang="en">
+<head><title>Test</title></head>
+<body>
+  <a href="/about">About</a>
+  <form action="/contact"><button>Send</button></form>
+  <div hx-get="/docs" hx-post="/api/submit">Load</div>
+</body>
+</html>`
+		// output docs/index.html → fromDir is 'docs'; route links become relative
+		const result = __internal.rewriteRenderedHtml(html, 'docs/index.html', manifest, routeSet)
+		expect(result).toContain('href="../about/"')
+		expect(result).toContain('action="../contact/"')
+		expect(result).toContain('hx-get="./"')
+		// API URLs are left absolute
+		expect(result).toContain('hx-post="/api/submit"')
+	})
+
 	/** URLs under apiPrefix are left absolute so server/preview can handle them. */
 	it('keeps api routes absolute for preview/server mode', () => {
 		const routeSet = new Set<string>()
@@ -121,7 +158,33 @@ describe('vite build helpers', () => {
 			'/api/submit',
 		)
 	})
-	// FIXME: rewriteAbsoluteUrl edge cases not covered: query/hash preservation (suffix), /assets/ path when not in manifest, dist-root files (e.g. /favicon.ico).
+
+	it('preserves query and hash suffix when rewriting absolute URLs', () => {
+		const routeSet = new Set(['', 'about'])
+		const manifest: Manifest = {}
+		expect(
+			__internal.rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet),
+		).toBe('./about/?q=1&sort=asc#section')
+	})
+
+	it('rewrites /assets/ path to relative when not in manifest', () => {
+		const routeSet = new Set<string>()
+		const manifest: Manifest = {}
+		expect(
+			__internal.rewriteAbsoluteUrl('/assets/foo.js', 'about', manifest, routeSet),
+		).toBe('../assets/foo.js')
+	})
+
+	it('rewrites dist-root files (e.g. favicon) to relative path', () => {
+		const routeSet = new Set<string>()
+		const manifest: Manifest = {}
+		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe(
+			'./favicon.ico',
+		)
+		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe(
+			'../favicon.ico',
+		)
+	})
 
 	it('resolves directory overrides; pages always derived from client', () => {
 		expect(resolveDirs()).toEqual({
@@ -192,5 +255,35 @@ describe('vite build helpers', () => {
 		)
 	})
 
-	// TODO: Consider direct unit tests for __internal.normalizeRelativeLink (empty, same-dir) and integration test for renderStaticPages/discoverPages.
+	// =========================================================================
+	// discoverPages (integration: temp dir with .html files)
+	// =========================================================================
+
+	it('discoverPages finds .html files and maps to pageName, routePath, outputFile', () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-discover-'))
+		try {
+			const pagesDir = path.join(tmp, 'pages')
+			fs.mkdirSync(pagesDir, { recursive: true })
+			fs.mkdirSync(path.join(pagesDir, 'about'), { recursive: true })
+			fs.writeFileSync(path.join(pagesDir, 'index.html'), '<html></html>')
+			fs.writeFileSync(path.join(pagesDir, 'about.html'), '<html></html>')
+			fs.writeFileSync(path.join(pagesDir, 'about', 'index.html'), '<html></html>')
+
+			const pages = __internal.discoverPages(tmp, 'pages')
+
+			expect(pages.length).toBe(3)
+			const byName = Object.fromEntries(pages.map(p => [p.pageName, p]))
+			expect(byName['index']).toBeDefined()
+			expect(byName['index'].routePath).toBe('')
+			expect(byName['index'].outputFile).toBe('index.html')
+			expect(byName['about']).toBeDefined()
+			expect(byName['about'].routePath).toBe('about')
+			expect(byName['about'].outputFile).toBe('about/index.html')
+			expect(byName['about/index']).toBeDefined()
+			expect(byName['about/index'].routePath).toBe('about')
+			expect(byName['about/index'].outputFile).toBe('about/index.html')
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+		}
+	})
 })

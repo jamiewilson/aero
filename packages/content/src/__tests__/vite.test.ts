@@ -2,6 +2,9 @@
  * Tests for the content Vite plugin: resolveId, load, configResolved, handleHotUpdate.
  * Virtual module aero:content (and aero:content/…) resolves to serialized collections + getCollection + render.
  */
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { aeroContent } from '../vite'
 
@@ -64,26 +67,22 @@ describe('aeroContent', () => {
 			vi.clearAllMocks()
 		})
 
-		/**
-		 * Plugin uses dynamic import() for config, not fs; warning depends on import failing (e.g. ENOENT).
-		 * FIXME: This test may be environment-dependent; consider using a temp dir with no config file for a stable ENOENT.
-		 */
-		it('warns when config file cannot be loaded (missing or unloadable)', async () => {
-			const plugin = aeroContent()
-			const configResolved = plugin.configResolved as Function
-			const warnSpy = vi.spyOn(mockConfig.logger, 'warn')
+		it('warns when config file cannot be loaded (missing in temp dir)', async () => {
+			const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-content-'))
+			try {
+				const plugin = aeroContent()
+				const configResolved = plugin.configResolved as Function
+				const warnSpy = vi.spyOn(mockConfig.logger, 'warn')
+				const configWithTmpRoot = { ...mockConfig, root: tmp }
 
-			vi.mock('node:fs', () => ({
-				readFileSync: () => {
-					throw Object.assign(new Error('File not found'), { code: 'ENOENT' })
-				},
-			}))
+				await configResolved(configWithTmpRoot as any)
 
-			await configResolved(mockConfig as any)
-
-			expect(warnSpy).toHaveBeenCalledWith(
-				expect.stringContaining('No config found'),
-			)
+				expect(warnSpy).toHaveBeenCalledWith(
+					expect.stringContaining('No config found'),
+				)
+			} finally {
+				fs.rmSync(tmp, { recursive: true, force: true })
+			}
 		})
 	})
 
