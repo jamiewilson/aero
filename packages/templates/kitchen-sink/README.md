@@ -1,6 +1,6 @@
-# @aero-ssg/start
+# @aero-ssg/template-kitchen-sink
 
-Starter app for the Aero static site generator. Demonstrates pages, layouts, components, content collections, Nitro API routes, and client scripts.
+Full demo template for the Aero static site generator. Used for development and feature testing. Demonstrates pages, layouts, components, content collections, Nitro API routes, and client scripts (Alpine, HTMX).
 
 ## Structure
 

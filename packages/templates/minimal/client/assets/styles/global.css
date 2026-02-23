@@ -1,0 +1,29 @@
+html,
+body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	display: grid;
+	place-content: center;
+	text-align: center;
+	font-size: 1rem;
+	font-family: system-ui, sans-serif;
+	line-height: 1.5;
+	padding: 1rem;
+}
+
+header,
+section {
+	margin-bottom: 2rem;
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+}
+
+a:hover {
+	text-decoration: underline;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@aero-ssg/template-kitchen-sink",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "AERO_NITRO=false vite build && vite preview",
+    "preview:api": "vite build && node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@aero-ssg/config": "workspace:*",
+    "@aero-ssg/content": "workspace:*",
+    "@aero-ssg/core": "workspace:*",
+    "@alpinejs/persist": "^3.15.8",
+    "alpinejs": "^3.15.8",
+    "htmx.org": "^2.0.8"
+  },
+  "devDependencies": {
+    "@types/alpinejs": "^3.13.11",
+    "@types/alpinejs__persist": "^3.13.4",
+    "autoprefixer": "^10.4.24",
+    "nitro": "^3.0.1-alpha.2",
+    "vite": "8.0.0-beta.15",
+    "zod": "^4.3.6"
+  }
+}

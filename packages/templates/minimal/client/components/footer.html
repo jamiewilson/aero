@@ -1,0 +1,29 @@
+<script is:build>
+	import site from '@content/site'
+	const links = site.footer.links
+</script>
+
+<footer>
+	<ul>
+		<li each="{link in links}">
+			<a href="{link.path}">{link.label}</a>
+		</li>
+	</ul>
+	<style>
+		@scope {
+			:scope {
+				position: fixed;
+				inset-inline: 0;
+				margin-inline: auto;
+				bottom: 2rem;
+				width: fit-content;
+			}
+			ul {
+				display: flex;
+				gap: 2rem;
+				justify-content: center;
+				list-style-type: none;
+			}
+		}
+	</style>
+</footer>
