@@ -1,19 +1,23 @@
 /**
  * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
- * virtual client scripts, pass:data preamble injection, and rendering via Aero runtime.
- * Uses the split plugins (config, virtuals, transform) with a minimal mock context.
+ * virtual client scripts, pass:data preamble injection, rendering via Aero runtime,
+ * resolveId for extensionless .html, buildStart prefill, and handleHotUpdate.
  */
 
 import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import { Aero } from '../../runtime'
 import { aero } from '../../vite'
-import path from 'path'
+import { RESOLVED_RUNTIME_INSTANCE_MODULE_ID } from '../../vite/defaults'
 
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = aero()
 	const configPlugin = plugins.find((p: any) => p.config)
 	const transformPlugin = plugins.find((p: any) => p.transform)
 	const virtualsPlugin = plugins.find((p: any) => p.load)
+	const hmrPlugin = plugins.find((p: any) => p.handleHotUpdate)
 
 	// Simulate the real Vite lifecycle: config() → configResolved()
 	configPlugin.config({ root: process.cwd() })
@@ -97,5 +101,98 @@ describe('Vite Plugin Integration', () => {
 		expect(finalOutput).toBe('<h1>Dynamic Title</h1>')
 	})
 
-	// TODO: resolveId for .html imports without extension, buildStart/clientScripts prefill, handleHotUpdate not covered.
+	it('should resolve path-like extensionless imports to .html via resolveId', async () => {
+		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
+		const resolveCtx = {
+			...pluginCtx,
+			resolve: async (id: string) => {
+				if (id === '@components/header') return null
+				if (id === '@components/header.html') return { id: resolvedHtmlPath }
+				return null
+			},
+		}
+		const result = await virtualsPlugin.resolveId.call(resolveCtx, '@components/header', undefined)
+		expect(result).toBeDefined()
+		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
+	})
+
+	it('should not resolve package specifiers to .html (path-like check)', async () => {
+		const resolveCtx = {
+			...pluginCtx,
+			resolve: async () => null,
+		}
+		const result = await virtualsPlugin.resolveId.call(
+			resolveCtx,
+			'@aero-ssg/content/render',
+			undefined,
+		)
+		expect(result).toBeNull()
+	})
+
+	it('prefills clientScripts in buildStart so load can serve discovered client scripts', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-test-'))
+		const clientDir = path.join(tmpDir, 'client', 'pages')
+		fs.mkdirSync(clientDir, { recursive: true })
+		const htmlPath = path.join(clientDir, 'prefill-test.html')
+		const unique = 'PREFILL_CLIENT_SCRIPT_CONTENT'
+		fs.writeFileSync(
+			htmlPath,
+			`<script is:build>const x = 1;</script><div>Static</div><script>${unique}</script>`,
+			'utf-8',
+		)
+		try {
+			configPlugin.config({ root: tmpDir })
+			configPlugin.configResolved({ root: tmpDir })
+			virtualsPlugin.buildStart?.()
+			const virtualId = '\0/@aero/client/client/pages/prefill-test.js'
+			const loaded = virtualsPlugin.load(virtualId)
+			expect(loaded).toContain(unique)
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+			configPlugin.config({ root: process.cwd() })
+			configPlugin.configResolved({ root: process.cwd() })
+		}
+	})
+
+	it('handleHotUpdate invalidates runtime instance when content/*.ts changes', () => {
+		const root = process.cwd()
+		const contentFile = path.join(root, 'client/content/site.ts')
+		const mockModule = { id: RESOLVED_RUNTIME_INSTANCE_MODULE_ID }
+		let invalidated: unknown = null
+		const server = {
+			moduleGraph: {
+				getModuleById: (id: string) => (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID ? mockModule : null),
+				invalidateModule: (mod: unknown) => {
+					invalidated = mod
+				},
+			},
+		}
+		const result = hmrPlugin.handleHotUpdate!(
+			{ file: contentFile, server, modules: [] } as any,
+			{} as any,
+		)
+		expect(invalidated).toBe(mockModule)
+		expect(Array.isArray(result) && result).toContain(mockModule)
+	})
+
+	it('handleHotUpdate invalidates virtual client module when parent .html changes', () => {
+		const root = process.cwd()
+		const htmlFile = path.join(root, 'client/pages/foo.html')
+		const virtualId = '\0/@aero/client/client/pages/foo.js'
+		const mockVirtualModule = { id: virtualId }
+		let invalidated: unknown = null
+		const server = {
+			moduleGraph: {
+				getModuleById: (id: string) => (id === virtualId ? mockVirtualModule : null),
+				invalidateModule: (mod: unknown) => {
+					invalidated = mod
+				},
+			},
+		}
+		hmrPlugin.handleHotUpdate!(
+			{ file: htmlFile, server, modules: [] } as any,
+			{} as any,
+		)
+		expect(invalidated).toBe(mockVirtualModule)
+	})
 })
