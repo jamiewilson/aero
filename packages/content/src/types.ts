@@ -1,8 +1,12 @@
+/**
+ * Content package types: document metadata, collection config, and define helpers.
+ *
+ * @remarks
+ * Used by the loader (frontmatter + body → ContentDocument), by content.config.ts (defineCollection, defineConfig), and by the Vite plugin.
+ */
 import type { ZodType } from 'zod'
 
-// ─── Document Metadata ──────────────────────────────────────────────
-
-/** Metadata automatically attached to every content document. */
+/** Metadata attached to every content document (path, slug, filename, extension). */
 export interface ContentMeta {
 	/** Path relative to the collection directory (no extension). */
 	path: string
@@ -10,11 +14,11 @@ export interface ContentMeta {
 	slug: string
 	/** The raw filename including extension. */
 	filename: string
-	/** The file extension (e.g. '.md'). */
+	/** The file extension (e.g. `'.md'`). */
 	extension: string
 }
 
-/** A raw content document before user transforms. */
+/** A content document: id, validated frontmatter (`data`), raw body, and `_meta`. */
 export interface ContentDocument<TSchema extends Record<string, any> = Record<string, any>> {
 	/** Unique identifier: collection-relative path without extension. */
 	id: string
@@ -26,8 +30,7 @@ export interface ContentDocument<TSchema extends Record<string, any> = Record<st
 	_meta: ContentMeta
 }
 
-// ─── Collection Configuration ───────────────────────────────────────
-
+/** Single collection definition: name, directory, glob, optional schema and transform. */
 export interface ContentCollectionConfig<
 	TSchema extends Record<string, any> = Record<string, any>,
 	TOutput = ContentDocument<TSchema>,
@@ -36,39 +39,24 @@ export interface ContentCollectionConfig<
 	name: string
 	/** Directory to scan, relative to project root. */
 	directory: string
-	/** Glob pattern for files to include (default: `'**\/*.md'`). */
+	/** Glob pattern for files to include (default: `**\/*.md`). */
 	include?: string
-	/**
-	 * Zod schema for frontmatter validation.
-	 * When provided, each document's frontmatter is parsed and validated.
-	 * The `body` field (raw body) is always available regardless of schema.
-	 */
+	/** Zod schema for frontmatter validation; `body` is always present. */
 	schema?: ZodType<TSchema>
-	/**
-	 * Optional async transform applied after schema validation.
-	 * Receives the full document and should return the final shape.
-	 */
+	/** Optional async transform after validation; receives document, returns final shape. */
 	transform?: (document: ContentDocument<TSchema>) => TOutput | Promise<TOutput>
 }
 
+/** Top-level content config: array of collection definitions. */
 export interface ContentConfig {
-	/** Array of collection definitions. */
 	collections: ContentCollectionConfig<any, any>[]
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
-
 /**
- * Define a content collection.
+ * Define a content collection (typed helper for content.config.ts).
  *
- * ```ts
- * const docs = defineCollection({
- *   name: 'docs',
- *   directory: 'client/content/docs',
- *   include: '**\/*.md',
- *   schema: z.object({ title: z.string() }),
- * })
- * ```
+ * @param config - Collection config (name, directory, include, schema, transform).
+ * @returns The same config (unchanged).
  */
 export function defineCollection<
 	TSchema extends Record<string, any> = Record<string, any>,
@@ -80,13 +68,10 @@ export function defineCollection<
 }
 
 /**
- * Define the content configuration with one or more collections.
+ * Define the content config (typed helper for content.config.ts).
  *
- * ```ts
- * export default defineConfig({
- *   collections: [docs, posts],
- * })
- * ```
+ * @param config - Config with `collections` array.
+ * @returns The same config (unchanged).
  */
 export function defineConfig(config: ContentConfig): ContentConfig {
 	return config

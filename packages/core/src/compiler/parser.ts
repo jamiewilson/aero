@@ -1,7 +1,7 @@
 import type { ParseResult } from '../types'
 import { parseHTML } from 'linkedom'
 
-/** Ranges [start, end] of HTML comments in order. */
+/** Returns [start, end] ranges of all HTML comments in order. Used to skip scripts inside comments. */
 function getCommentRanges(html: string): [number, number][] {
 	const ranges: [number, number][] = []
 	const commentRegex = /<!--[\s\S]*?-->/g
@@ -12,22 +12,22 @@ function getCommentRanges(html: string): [number, number][] {
 	return ranges
 }
 
+/** True if position is inside any of the given comment ranges. */
 function isInsideComment(pos: number, commentRanges: [number, number][]): boolean {
 	return commentRanges.some(([start, end]) => pos >= start && pos < end)
 }
 
 /**
- * Parses the input HTML and extracts Aero-specific scripts.
+ * Parse HTML and extract Aero script blocks; return build script, client/inline/blocking script arrays, and template.
  *
- * We use a hybrid approach: regex to find script tags in the **original** HTML
- * and linkedom to validate attributes. All removal/replacement is done by
- * character range so that comments and whitespace do not break removal.
+ * @remarks
+ * Hybrid approach: regex finds `<script>...</script>` in the original HTML; linkedom parses each tag
+ * to read attributes. Edits are applied by character range so comments/whitespace don't break removal.
+ * Script taxonomy: `is:build` (extracted → render body), `is:inline` (left in place), `is:blocking`
+ * (extracted → head), default (extracted → virtual client module). BOM is stripped first.
  *
- * Script types (v2 taxonomy):
- * - `is:build`    — extracted, becomes the render function body (build-time)
- * - `is:inline`   — left in template exactly where it is (not extracted)
- * - `is:blocking` — extracted, hoisted to the <head> of the document
- * - Default       — extracted, served as virtual ES module (bundled client-side)
+ * @param html - Full template HTML (may include BOM).
+ * @returns ParseResult with buildScript, clientScripts, inlineScripts, blockingScripts, and template (script blocks removed/replaced).
  */
 export function parse(html: string): ParseResult {
 	// Strip BOM so comment/script positions are consistent and scripts immediately

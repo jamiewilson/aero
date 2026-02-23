@@ -1,3 +1,9 @@
+/**
+ * Eager markdown-to-HTML compilation for use in collection transforms.
+ *
+ * @remarks
+ * Uses remark + remark-html. For lazy rendering in pages, use `render()` from `aero:content` instead.
+ */
 import type { ContentDocument } from './types'
 import { remark } from 'remark'
 import remarkHtml from 'remark-html'
@@ -5,23 +11,10 @@ import remarkHtml from 'remark-html'
 const processor = remark().use(remarkHtml)
 
 /**
- * Eagerly compile a document's markdown body into HTML.
+ * Compile a document's markdown body to HTML. Use in `transform` to attach `html` to each document.
  *
- * This is available as a convenience for transforms in `content.config.ts`.
- * For lazy rendering in pages, use `render()` from `aero:content` instead.
- *
- * ```ts
- * import { compileMarkdown } from '@aero-ssg/content/markdown'
- *
- * const docs = defineCollection({
- *   // ...
- *   transform: async (doc) => ({
- *     ...doc.data,
- *     html: await compileMarkdown(doc),
- *     slug: doc._meta.slug,
- *   }),
- * })
- * ```
+ * @param document - Content document (body is compiled).
+ * @returns HTML string.
  */
 export async function compileMarkdown(document: ContentDocument): Promise<string> {
 	const result = await processor.process(document.body)

@@ -1,6 +1,16 @@
 /**
- * Compiles a text node, handling Aero's interpolation syntax.
- * Replaces `{...}` with `${...}` for JS template literals.
+ * Helpers for the Aero codegen: interpolation, attributes, slots, and render-function emission.
+ *
+ * @remarks
+ * Used by `codegen.ts` to compile `{ expr }` to template literals, build props/slots code, and emit
+ * the top-level render wrapper. Some helpers (e.g. `extractObjectKeys`) are also used by the Vite plugin.
+ */
+
+/**
+ * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
+ *
+ * @param text - Raw text (may contain `{...}` interpolation).
+ * @returns String safe for embedding in a template literal (backticks escaped).
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
@@ -12,8 +22,10 @@ export function compileInterpolation(text: string): string {
 }
 
 /**
- * Compiles an attribute value, supporting {expr} interpolation and escaped
- * literal braces via double-brace syntax: `{{` and `}}`.
+ * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
+ *
+ * @param text - Attribute value string.
+ * @returns String safe for template literal (backticks escaped, double-braces replaced).
  */
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
@@ -31,12 +43,12 @@ export function compileAttributeInterpolation(text: string): string {
 	return compiled
 }
 
-/** Checks if an attribute name matches either 'attr' or 'data-attr' */
+/** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
 }
 
-/** Strips surrounding braces from a string: "{expr}" → "expr" */
+/** Remove outer braces: `"{ expr }"` → `expr`. */
 export function stripBraces(s: string): string {
 	const trimmed = s.trim()
 	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
@@ -45,12 +57,12 @@ export function stripBraces(s: string): string {
 	return trimmed
 }
 
-/** Converts kebab-case to camelCase: "my-component" → "myComponent" */
+/** Convert kebab-case to camelCase (e.g. `my-component` → `myComponent`). */
 export function kebabToCamelCase(s: string): string {
 	return s.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }
 
-/** Builds a props object string from entries and optional spread expression */
+/** Build a props object code string from key-value entries and optional spread (e.g. `{ ...base, title }`). */
 export function buildPropsString(entries: string[], spreadExpr: string | null): string {
 	if (spreadExpr) {
 		return entries.length > 0
@@ -60,12 +72,12 @@ export function buildPropsString(entries: string[], spreadExpr: string | null): 
 	return `{ ${entries.join(', ')} }`
 }
 
-/** Escapes backticks in a string for safe embedding inside generated template literals. */
+/** Escape backticks for safe embedding in generated template literals. */
 export function escapeBackticks(s: string): string {
 	return s.replace(/`/g, '\\`')
 }
 
-/** Emits code for a slots object { "name": varName } using variable references */
+/** Emit code for a slots object whose values are variable names (e.g. `{ "default": __slot0 }`). */
 export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 	const entries = Object.entries(slotsMap)
 		.map(([k, varName]) => `"${k}": ${varName}`)
@@ -74,11 +86,10 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 }
 
 /**
- * Extracts an `export [async] function getStaticPaths(...)` from build script
- * content so it can be emitted as a top-level named module export.
+ * Extract `export [async] function getStaticPaths(...)` from build script content for top-level module export.
  *
- * Returns the extracted function text (with `export` keyword) and the remaining
- * script with the function removed.
+ * @param script - Full build script content.
+ * @returns Extracted function text (with `export`) and remaining script, or `{ fnText: null, remaining: script }` if not found/unbalanced.
  */
 export function extractGetStaticPaths(script: string): {
 	fnText: string | null
@@ -146,7 +157,16 @@ export function extractGetStaticPaths(script: string): {
 	return { fnText, remaining }
 }
 
-/** Emits the top-level render function wrapper (script + body statements). */
+/**
+ * Emit the default async render function: destructured context, script block, optional style/script adds, then body that appends to `__out`.
+ *
+ * @param script - Build script content (imports + user code).
+ * @param body - Generated statements that build the HTML string.
+ * @param getStaticPathsFn - Optional extracted getStaticPaths to prepend as named export.
+ * @param rootStyles - Optional style labels to add to `styles` set.
+ * @param rootScripts - Optional script labels to add to `scripts` set.
+ * @returns Full module source (getStaticPaths + default render function).
+ */
 export function emitRenderFunction(
 	script: string,
 	body: string,
@@ -184,42 +204,42 @@ export function emitRenderFunction(
 // Statement-emitting helpers
 // ============================================================================
 
-/** Emits: let varName = ''; */
+/** Emit `let varName = '';` for a slot accumulator. */
 export function emitSlotVar(varName: string): string {
 	return `let ${varName} = '';\n`
 }
 
-/** Emits: outVar += `content`; */
+/** Emit `outVar += \`content\`;` (default `outVar` is `__out`). */
 export function emitAppend(content: string, outVar = '__out'): string {
 	return `${outVar} += \`${content}\`;\n`
 }
 
-/** Emits: if (condition) { */
+/** Emit `if (condition) {`. */
 export function emitIf(condition: string): string {
 	return `if (${condition}) {\n`
 }
 
-/** Emits: } else if (condition) { */
+/** Emit `} else if (condition) {`. */
 export function emitElseIf(condition: string): string {
 	return `} else if (${condition}) {\n`
 }
 
-/** Emits: } else { */
+/** Emit `} else {`. */
 export function emitElse(): string {
 	return `} else {\n`
 }
 
-/** Emits: } */
+/** Emit `}`. */
 export function emitEnd(): string {
 	return `}\n`
 }
 
-/** Emits: for (const item of items) { */
+/** Emit `for (const item of items) {`. */
 export function emitForOf(item: string, items: string): string {
 	return `for (const ${item} of ${items}) {\n`
 }
 
-/** Emits: outVar += slots['name'] ?? `defaultContent`; */
+/** Emit `outVar += slots['name'] ?? \`defaultContent\`;` (default `outVar` is `__out`). */
 export function emitSlotOutput(
 	name: string,
 	defaultContent: string,
@@ -229,11 +249,10 @@ export function emitSlotOutput(
 }
 
 /**
- * Extracts top-level property keys from an object-literal expression string.
- * E.g. `{ title: expr, id: 42 }` → `['title', 'id']`
- * E.g. `{ config }` → `['config']` (shorthand)
+ * Extract top-level property keys from an object-literal expression string.
  *
- * Does NOT support spread (`...obj`) — callers should reject or handle separately.
+ * @param expr - e.g. `{ title: expr, id: 42 }` or `{ config }` (shorthand).
+ * @returns e.g. `['title', 'id']` or `['config']`. Does not support spread; callers must handle `...obj` separately.
  */
 export function extractObjectKeys(expr: string): string[] {
 	let inner = expr.trim()
@@ -273,7 +292,7 @@ export function extractObjectKeys(expr: string): string[] {
 	return keys
 }
 
-/** Extracts the key name from a single object property entry. */
+/** Extract key from one property entry: `key: value` → key, shorthand `ident` → ident; returns null for spread or invalid. */
 function extractKeyFromEntry(entry: string): string | null {
 	if (!entry) return null
 

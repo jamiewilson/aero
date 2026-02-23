@@ -1,3 +1,12 @@
+/**
+ * Aero runtime: page registration, route resolution, and HTML rendering.
+ *
+ * @remarks
+ * The `Aero` class holds globals and a map of page/layout modules. `render()` resolves a page name
+ * (e.g. from `resolvePageName`), builds template context, and invokes the compiled render function.
+ * `mount` is optionally set by the client entry (`core/src/index.ts`).
+ */
+
 import type {
 	AeroRenderInput,
 	AeroRouteParams,
@@ -5,6 +14,7 @@ import type {
 	MountOptions,
 } from '../types'
 
+/** Result of matching a request path to a dynamic route (e.g. `posts/[id]`). */
 interface PageMatch {
 	module: any
 	pageName: string
@@ -12,17 +22,34 @@ interface PageMatch {
 }
 
 export class Aero {
+	/** Global values merged into template context (e.g. from content modules). */
 	private globals: Record<string, any> = {}
+	/** Map from page name (or path) to module. Keys include both canonical name and full path for lookup. */
 	private pagesMap: Record<string, any> = {}
+	/** Set by client entry when running in the browser; used to attach the app to a DOM root. */
 	mount?: (options?: MountOptions) => Promise<void>
 
+	/**
+	 * Register a global value available in all templates as `name`.
+	 *
+	 * @param name - Key used in templates (e.g. `site`).
+	 * @param value - Any value (object, string, etc.).
+	 */
 	global(name: string, value: any) {
 		this.globals[name] = value
 	}
 
+	/**
+	 * Register page/layout modules from a Vite glob (e.g. `import.meta.glob('@pages/**\/*.html')`).
+	 * Derives a lookup key from each path: for paths containing `pages/`, uses the segment after it;
+	 * otherwise uses the last segment or the full path. Also stores by full path (without extension).
+	 *
+	 * @param pages - Record of resolved path → module (default export is the render function).
+	 */
 	registerPages(pages: Record<string, any>) {
 		for (const [path, mod] of Object.entries(pages)) {
 			const withoutExt = path.replace(/\.html$/, '').replace(/\\/g, '/')
+			// TODO: Extract key derivation to a helper (e.g. pagePathToKey) to simplify and unit-test lookup rules.
 			const key = withoutExt.includes('pages/')
 				? withoutExt.split('pages/').pop()!
 				: withoutExt.split('/').filter(Boolean).length > 1
@@ -33,11 +60,13 @@ export class Aero {
 		}
 	}
 
+	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, request, url, params, routePath). */
 	private isRenderInput(value: any): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
 		return ['props', 'request', 'url', 'params', 'routePath'].some(key => key in value)
 	}
 
+	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */
 	private normalizeRenderInput(input: any): AeroRenderInput {
 		if (!input) return {}
 		if (this.isRenderInput(input)) return input
@@ -45,6 +74,7 @@ export class Aero {
 		return { props: {} }
 	}
 
+	/** Convert a page name to a route path (e.g. `index` → `'/'`, `about` → `'/about'`). */
 	private toRoutePath(pageName = 'index'): string {
 		if (!pageName || pageName === 'index' || pageName === 'home') return '/'
 		if (pageName.endsWith('/index')) {
@@ -53,6 +83,7 @@ export class Aero {
 		return pageName.startsWith('/') ? pageName : '/' + pageName
 	}
 
+	/** Build a URL from route path and optional raw URL. Uses `http://localhost` as base when only a path is given. */
 	private toURL(routePath: string, rawUrl?: URL | string): URL {
 		if (rawUrl instanceof URL) return rawUrl
 		if (typeof rawUrl === 'string' && rawUrl.length > 0) {
@@ -61,6 +92,7 @@ export class Aero {
 		return new URL(routePath, 'http://localhost')
 	}
 
+	/** Match a page name (e.g. `posts/42`) against registered dynamic routes (e.g. `posts/[id]`). Returns first match or null. */
 	private resolveDynamicPage(pageName: string): PageMatch | null {
 		const requestedSegments = pageName.split('/').filter(Boolean)
 		for (const [key, mod] of Object.entries(this.pagesMap)) {
@@ -93,6 +125,7 @@ export class Aero {
 		return null
 	}
 
+	/** Build template context: globals, props, slots, request, url, params, and `renderComponent` / `nextPassDataId`. */
 	private createContext(input: {
 		props?: Record<string, any>
 		slots?: Record<string, string>
@@ -125,6 +158,7 @@ export class Aero {
 		return context
 	}
 
+	/** True if entry params and request params have the same keys and stringified values. */
 	private paramsMatch(entryParams: AeroRouteParams, requestParams: AeroRouteParams): boolean {
 		const entryKeys = Object.keys(entryParams)
 		if (entryKeys.length !== Object.keys(requestParams).length) return false
@@ -134,6 +168,20 @@ export class Aero {
 		return true
 	}
 
+	/**
+	 * Render a page or layout to HTML.
+	 *
+	 * @remarks
+	 * Resolves `component` (page name string or module) via `pagesMap`, with fallbacks: directory index
+	 * (`foo` → `foo/index`), `index` → `home`, dynamic routes, and trailing-slash stripping. If the module
+	 * exports `getStaticPaths` and no props are provided, finds the matching static path and uses its props.
+	 * For root-level renders, injects accumulated styles and scripts into the document and fixes content
+	 * that ends up after `</html>` when using layouts (moves it into `</body>`).
+	 *
+	 * @param component - Page name (e.g. `'index'`, `'about'`) or the module object.
+	 * @param input - Render input (props, request, url, params, etc.). Can be a plain object (treated as props).
+	 * @returns HTML string, or `null` if the page is not found or no static path match.
+	 */
 	async render(component: any, input: any = {}) {
 		const renderInput = this.normalizeRenderInput(input)
 		const isRootRender = !renderInput.styles
@@ -143,6 +191,7 @@ export class Aero {
 			renderInput.headScripts = new Set<string>()
 		}
 
+		// TODO: Consider extracting page/module resolution (target + matchedPageName + dynamicParams) into resolvePageTarget(component) to make render() easier to follow.
 		let target = component
 		let matchedPageName = typeof component === 'string' ? component : 'index'
 		let dynamicParams: AeroRouteParams = {}
@@ -243,9 +292,8 @@ export class Aero {
 		if (typeof renderFn === 'function') {
 			let html = await renderFn(context)
 			if (isRootRender) {
-				// When the page uses a layout, the layout returns the full document and the page's
-				// remaining body nodes (e.g. is:inline and <script src>) are appended after it,
-				// ending up after </html>. Move that trailing content into the body so it isn't lost.
+				// Layout returns full document; page's trailing nodes (e.g. inline scripts) can end up after </html>.
+				// Move that content into the body so it isn't lost.
 				if (html.includes('</html>')) {
 					const afterHtml = html.split('</html>')[1]?.trim()
 					if (afterHtml && html.includes('</body>')) {
@@ -287,6 +335,16 @@ export class Aero {
 		return ''
 	}
 
+	/**
+	 * Render a child component (layout or component) with the given props and slots.
+	 * Used by compiled templates via context.renderComponent.
+	 *
+	 * @param component - Render function or module with `default` render function.
+	 * @param props - Props object for the component.
+	 * @param slots - Named slot content (key → HTML string).
+	 * @param input - Optional request/url/params for context; `headScripts` is not passed through.
+	 * @returns HTML string from the component's render function, or empty string if not invokable.
+	 */
 	async renderComponent(
 		component: any,
 		props: any = {},

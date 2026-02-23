@@ -1,3 +1,12 @@
+/**
+ * Resolves import specifiers and attribute values using project path aliases.
+ *
+ * @remarks
+ * Wraps a `resolvePath` function (e.g. from tsconfig aliases). Paths that look like file/URL paths
+ * (starting with `./`, `../`, `/`, `@`, `~`) are resolved and normalized; others are returned unchanged.
+ * Paths under the project root are returned as root-relative with forward slashes.
+ */
+
 import type { ResolverOptions } from '../types'
 import path from 'path'
 
@@ -12,6 +21,7 @@ export class Resolver {
 		this.resolvePathFn = options.resolvePath || ((v: string) => v)
 	}
 
+	/** Normalize resolved path: root-relative with `/` if under root, else posix-normalized; always forward slashes. */
 	private normalizeResolved(next: string): string {
 		if (path.isAbsolute(next)) {
 			const absolute = path.resolve(next)
@@ -28,6 +38,13 @@ export class Resolver {
 		return next.replace(/\\/g, '/')
 	}
 
+	/**
+	 * Resolve an import specifier (e.g. `@components/header`) to a path.
+	 * Returns the original specifier if the resolved value does not look like a path.
+	 *
+	 * @param specifier - Import specifier from the source file.
+	 * @returns Resolved path or unchanged specifier.
+	 */
 	resolveImport(specifier: string): string {
 		let next = this.resolvePathFn(specifier)
 		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
@@ -37,6 +54,13 @@ export class Resolver {
 		return next
 	}
 
+	/**
+	 * Resolve an attribute value that may be a path (e.g. `src` on script).
+	 * Same rules as `resolveImport`; returns unchanged value if not path-like.
+	 *
+	 * @param value - Raw attribute value.
+	 * @returns Resolved path or unchanged value.
+	 */
 	resolveAttrValue(value: string): string {
 		let next = this.resolvePathFn(value)
 		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)

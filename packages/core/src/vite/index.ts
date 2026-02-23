@@ -1,3 +1,13 @@
+/**
+ * Aero Vite plugin: HTML transform, virtual modules, dev server middleware, and static build.
+ *
+ * @remarks
+ * Main plugin: resolve/load virtual runtime instance and client scripts, transform .html to JS render
+ * functions, configureServer for SSR on GET requests, resolveId for .html imports. Static build plugin
+ * runs after closeBundle: renderStaticPages then optionally runNitroBuild. Nitro plugin is applied for
+ * serve only (not build/preview). Image optimizer is always included.
+ */
+
 import type { AeroOptions, AliasResult } from '../types'
 import { extractObjectKeys } from '../compiler/helpers'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
@@ -22,6 +32,7 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 
+/** Run `nitro build` in root; used after static pages are written when options.nitro is true. */
 async function runNitroBuild(root: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
 	await new Promise<void>((resolve, reject) => {
@@ -42,6 +53,12 @@ async function runNitroBuild(root: string): Promise<void> {
 	})
 }
 
+/**
+ * Aero Vite plugin factory. Returns an array of plugins: main Aero plugin, static-build plugin, image optimizer, and optionally Nitro (serve only).
+ *
+ * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
+ * @returns PluginOption[] to pass to Vite's plugins array.
+ */
 export function aero(options: AeroOptions = {}): PluginOption[] {
 	const clientScripts = new Map<string, { content: string; passDataExpr?: string }>()
 	const runtimeInstanceJsPath = fileURLToPath(
@@ -62,7 +79,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 	const mainPlugin: Plugin = {
 		name: 'vite-plugin-aero',
-
+		/** Set base, resolve.alias from tsconfig, and build config (createBuildConfig). */
 		config(userConfig) {
 			const root = userConfig.root || process.cwd()
 			aliasResult = loadTsconfigAliases(root)
@@ -81,13 +98,13 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			config = resolvedConfig
 		},
 
+		/** Pre-populate clientScripts from discovered templates so virtual client script IDs resolve during build. */
 		buildStart() {
-			// Pre-populate clientScripts so virtual modules resolve during build (HTML is not
-			// in the dependency graph, so transform() would not run for them).
 			const contentMap = discoverClientScriptContentMap(config.root, dirs.client)
 			contentMap.forEach((entry, url) => clientScripts.set(url, entry))
 		},
 
+		/** SSR middleware: for GET with Accept HTML, render page (or 404), transform index HTML, send response. */
 		configureServer(server) {
 			server.middlewares.use(async (req, res, next) => {
 				if (!req.url) return next()
@@ -163,6 +180,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			})
 		},
 
+		/** Resolve virtual runtime instance to resolved ID; client script prefix to \0-prefixed ID; .html with or without extension. */
 		async resolveId(id, importer) {
 			if (id === RUNTIME_INSTANCE_MODULE_ID) {
 				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
@@ -196,6 +214,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			return null
 		},
 
+		/** Load: runtime instance → re-export from real path; virtual client ID → script content (with optional pass:data preamble). */
 		load(id) {
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
 				return `export { aero, onUpdate } from ${JSON.stringify(runtimeInstancePath)}`
@@ -224,8 +243,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			return null
 		},
 
+		/** Transform .html: parse, register client script URLs in clientScripts, compile to JS module. */
 		transform(code, id) {
-			// Only process .html files (resolved absolute paths)
 			if (!id.endsWith('.html')) return null
 
 			try {
@@ -270,6 +289,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			}
 		},
 
+		/** HMR: invalidate runtime instance when content/*.ts changes; invalidate virtual client when parent .html changes. */
 		handleHotUpdate({ file, server, modules }) {
 			const contentDir = path.resolve(config.root, dirs.client, 'content')
 			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
@@ -298,6 +318,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		},
 	}
 
+	/** Runs after Vite's bundle: renderStaticPages into outDir, then optionally runNitroBuild. */
 	const staticBuildPlugin: Plugin = {
 		name: 'vite-plugin-aero-static',
 		apply: 'build',
