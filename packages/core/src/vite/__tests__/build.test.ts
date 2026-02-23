@@ -286,4 +286,26 @@ describe('vite build helpers', () => {
 			fs.rmSync(tmp, { recursive: true, force: true })
 		}
 	})
+
+	it('writeSitemap generates sitemap.xml with absolute URLs and excludes 404', () => {
+		const tmp = path.join(os.tmpdir(), `aero-sitemap-${Date.now()}`)
+		fs.mkdirSync(tmp, { recursive: true })
+		try {
+			__internal.writeSitemap(
+				['', 'about', 'docs', '404'],
+				'https://example.com',
+				tmp,
+			)
+			const sitemapPath = path.join(tmp, 'sitemap.xml')
+			expect(fs.existsSync(sitemapPath)).toBe(true)
+			const xml = fs.readFileSync(sitemapPath, 'utf-8')
+			expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"')
+			expect(xml).toContain('<loc>https://example.com/</loc>')
+			expect(xml).toContain('<loc>https://example.com/about/</loc>')
+			expect(xml).toContain('<loc>https://example.com/docs/</loc>')
+			expect(xml).not.toContain('404')
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+		}
+	})
 })

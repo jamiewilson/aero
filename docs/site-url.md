@@ -50,7 +50,27 @@ Or with a trailing slash and pathname:
 <meta property="og:url" content="{ Aero.site }{ Aero.url.pathname }" />
 ```
 
+## Sitemap
+
+When `site` is set, the static build generates **`sitemap.xml`** in the output directory (`dist/`). It lists all pre-rendered routes (static and expanded dynamic) as absolute URLs; the 404 page is excluded. No extra config is required.
+
+To help crawlers and tools discover the sitemap, link to it from your layout (e.g. in `<head>`):
+
+```html
+<script is:build>
+  const base = Aero.site || ''
+</script>
+<!-- ... other head content ... -->
+<link rel="sitemap" type="application/xml" href="{ base }/sitemap.xml" />
+```
+
+If you only want the sitemap link when `site` is set (e.g. to avoid a broken link in local dev), wrap it with `data-if`:
+
+```html
+<link rel="sitemap" type="application/xml" href="{ Aero.site }/sitemap.xml" data-if="{ Aero.site }" />
+```
+
 ## Notes
 
 - The **content global** `site` (from `src/content/site.ts` or similar) is separate: it holds your app’s content (title, nav, etc.). The **config** `site` is only the origin URL.
-- Future sitemap and RSS features will use this value to build absolute URLs.
+- RSS and other features can use `Aero.site` or `import.meta.env.SITE` to build absolute URLs.
