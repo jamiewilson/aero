@@ -1,3 +1,9 @@
+/**
+ * Aero diagnostics: validate script directives, control flow, component imports, and template references.
+ *
+ * @remarks
+ * Runs on Aero HTML files; reports missing/duplicate script types, invalid directive expressions, unresolved components, and undefined template variables. Uses analyzer (scopes, defined variables, template refs) and getResolver.
+ */
 import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
@@ -15,11 +21,7 @@ import { kebabToCamelCase, collectImportedSpecifiers, findInnermostScope } from 
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
-// ---------------------------------------------------------------------------
-// Regex patterns for diagnostics
-// ---------------------------------------------------------------------------
-
-/** Matches <script ...>...</script> tags with attributes and content */
+/** Matches `<script ...>...</script>` tags with attributes and content. */
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
 /** Matches is:build, is:bundled, is:inline, or is:blocking in attributes */
@@ -67,10 +69,6 @@ const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g
 /** Matches opening tags with component/layout suffix */
 const COMPONENT_TAG_OPEN_REGEX =
 	/<([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout))\b[^>]*\/?>/gi
-
-// ---------------------------------------------------------------------------
-// Diagnostics class
-// ---------------------------------------------------------------------------
 
 export class AeroDiagnostics implements vscode.Disposable {
 	private collection: vscode.DiagnosticCollection

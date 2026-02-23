@@ -1,10 +1,13 @@
+/**
+ * Position classification: what the cursor is on in an Aero HTML document (import path, component tag, content global, etc.).
+ *
+ * @remarks
+ * Used by definition, hover, and completion providers to decide what to resolve or suggest. classifyPosition runs the detection pipeline (imports, assets, component tags, expression identifiers).
+ */
 import * as vscode from 'vscode'
 import { IMPORT_REGEX, COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
+/** Result of classifying a position: kind-specific data and range, or null. */
 export type PositionKind =
 	| { kind: 'import-path'; specifier: string; range: vscode.Range }
 	| { kind: 'import-name'; name: string; specifier: string; range: vscode.Range }
@@ -27,13 +30,12 @@ export type PositionKind =
 	| { kind: 'expression-identifier'; identifier: string; range: vscode.Range }
 	| null
 
-// ---------------------------------------------------------------------------
-// Main classifier
-// ---------------------------------------------------------------------------
-
 /**
  * Classify what the cursor is on at the given position in an HTML document.
- * Returns a descriptor or null if nothing Aero-specific is detected.
+ *
+ * @param document - The HTML text document.
+ * @param position - Cursor position.
+ * @returns PositionKind descriptor or null if nothing Aero-specific.
  */
 export function classifyPosition(
 	document: vscode.TextDocument,
