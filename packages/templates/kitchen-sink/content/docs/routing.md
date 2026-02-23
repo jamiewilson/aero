@@ -1,58 +1,43 @@
 ---
 published: true
 title: Routing
-subtitle: Learn how Aero's file-based routing system works for static and dynamic pages.
-date: 2026-03-15
+subtitle: How Aero's file-based routing works for static and dynamic pages.
 ---
 
-Aero uses file-based routing. HTML files inside `client/pages/` map directly to URL paths. There is no router configuration — the file system _is_ the router.
+Aero uses file-based routing. HTML files inside `client/pages/` (or your configured pages directory) map directly to URL paths. There is no router config — the file system is the router.
 
-## Static Pages
+## Static pages
 
-Every `.html` file in `client/pages/` becomes a route:
+Every `.html` file in the pages directory becomes a route. Examples:
 
-| File                           | URL        | Build output            |
-| ------------------------------ | ---------- | ----------------------- |
-| `client/pages/home.html`       | `/`        | `dist/index.html`       |
-| `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
-| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
-| `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
+- `client/pages/index.html` → `/` (root; build output `dist/index.html`)
+- `client/pages/about.html` → `/about` (build output `dist/about/index.html`)
+- `client/pages/404.html` → 404 page (build output `dist/404.html`)
+- `client/pages/docs/index.html` → `/docs` (build output `dist/docs/index.html`)
 
-### Home page
+**Root and index:** `index.html` at the root of the pages directory maps to `/`. Other filenames (e.g. `home.html`) map to their name (`/home`). If both `index.html` and `home.html` exist in the same directory, `index.html` is `/` and `home.html` is `/home`.
 
-`home.html` is treated as the root index page (`/`). If both `home.html` and `index.html` exist at the same directory level, `index.html` takes precedence and `home.html` becomes `/home`.
-
-### Nested directories
-
-Subdirectories map to URL path segments. An `index.html` inside a directory serves as the directory's root:
+**Nested directories:** Subdirectories map to URL segments. An `index.html` inside a directory is that segment’s root:
 
 ```
 client/pages/
   docs/
-    index.html      → /docs
+    index.html           → /docs
     getting-started.html → /docs/getting-started
 ```
 
-### 404 page
+**404:** `client/pages/404.html` is the error page, rendered to `dist/404.html`. With Nitro preview, unmatched URLs are served this page with a 404 status.
 
-`client/pages/404.html` is used as the error page. It is rendered to `dist/404.html` (not nested inside a `404/` directory). In preview mode with Nitro, unmatched URLs receive this page with a `404` status code.
+## Dynamic routes
 
-## Dynamic Routes
+Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.params.<name>`.
 
-Pages with bracket-delimited filenames create dynamic routes that match multiple URL paths. The bracket content becomes a named parameter accessible via `Aero.params`.
+- `client/pages/[id].html` → `/:id` (e.g. `/alpha`, `/beta`)
+- `client/pages/docs/[slug].html` → `/docs/:slug` (e.g. `/docs/intro`, `/docs/name`)
 
-| File                            | Pattern       | Example URLs                |
-| ------------------------------- | ------------- | --------------------------- |
-| `client/pages/[id].html`        | `/:id`        | `/alpha`, `/beta`           |
-| `client/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`, `/docs/name` |
+**Dev mode:** During `pnpm dev`, dynamic routes are resolved at request time. Visiting `/alpha` matches `[id].html` and sets `Aero.params.id = 'alpha'`. Any segment matches; no upfront list needed.
 
-### Dev mode
-
-During development (`pnpm dev`), dynamic routes are resolved at request time. When you visit `/alpha`, the runtime matches it against `[id].html` and sets `Aero.params.id = 'alpha'`. Any URL segment will match — no upfront enumeration needed.
-
-### Build mode
-
-For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPaths()` function from their `<script is:build>` block. This tells the build which concrete paths to generate.
+**Build mode:** For static builds (`pnpm build`), dynamic pages must export `getStaticPaths()` from their `<script is:build>` block so the build knows which paths to generate.
 
 ```html
 <!-- client/pages/[id].html -->
@@ -73,80 +58,26 @@ For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPath
 </base-layout>
 ```
 
-This generates three static files:
+This produces `dist/alpha/index.html`, `dist/beta/index.html`, and `dist/gamma/index.html`.
 
-```
-dist/alpha/index.html
-dist/beta/index.html
-dist/gamma/index.html
-```
+**Nested dynamic:** Same idea in subdirectories — e.g. `client/pages/docs/[slug].html` with `getStaticPaths()` returning `{ params: { slug: 'intro' } }` and similar produces `dist/docs/intro/index.html`, etc.
 
-#### Nested dynamic routes
+**Async paths:** `getStaticPaths` can be `async` so you can load paths from an API, CMS, or filesystem at build time.
 
-Dynamic segments work inside subdirectories:
+**Missing getStaticPaths:** If a dynamic page does not export `getStaticPaths`, it is skipped at build with a warning. The page still works in dev but does not emit static files.
 
-```html
-<!-- client/pages/docs/[slug].html -->
-<script is:build>
-	import base from '@layouts/base'
+## Template context
 
-	export function getStaticPaths() {
-		return [{ params: { slug: 'intro' } }, { params: { slug: 'name' } }]
-	}
-</script>
+Inside `<script is:build>` and in template expressions you have:
 
-<base-layout title="{Aero.params.slug}">
-	<h1>{Aero.params.slug}</h1>
-</base-layout>
-```
+- **Aero.params** — Dynamic route parameters (e.g. `{ id: 'alpha' }`).
+- **Aero.url** — Full URL object for the current page.
+- **Aero.url.pathname** — The path (e.g. `'/alpha'`).
+- **Aero.props** — Props from a parent component or layout (e.g. `{ title: 'Hello' }`).
 
-Output:
+## Linking between pages
 
-```
-dist/docs/intro/index.html
-dist/docs/name/index.html
-```
-
-#### Async data sources
-
-`getStaticPaths` can be `async`, so you can fetch paths from an API, CMS, or filesystem at build time:
-
-```html
-<script is:build>
-	import base from '@layouts/base'
-
-	export async function getStaticPaths() {
-		const res = await fetch('https://api.example.com/posts')
-		const posts = await res.json()
-		return posts.map(post => ({ params: { slug: post.slug } }))
-	}
-</script>
-```
-
-#### Missing `getStaticPaths`
-
-If a dynamic page does not export `getStaticPaths`, it is **skipped** during the build with a warning:
-
-```
-[aero] ⚠ Skipping [id].html — no getStaticPaths() exported. Page will not be pre-rendered.
-```
-
-The page will still work in dev mode but will not produce output files in the static build.
-
-## Template Context
-
-Every page has access to these routing-related values inside `<script is:build>` and template expressions:
-
-| Value               | Description                                 | Example                      |
-| ------------------- | ------------------------------------------- | ---------------------------- |
-| `Aero.params`       | Dynamic route parameters                    | `{ id: 'alpha' }`            |
-| `Aero.url`          | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
-| `Aero.url.pathname` | The URL path                                | `'/alpha'`                   |
-| `Aero.props`        | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
-
-## Linking Between Pages
-
-Use standard `<a href>` tags with absolute paths:
+Use normal `<a href>` with absolute paths:
 
 ```html
 <a href="/">Home</a>
@@ -154,31 +85,25 @@ Use standard `<a href>` tags with absolute paths:
 <a href="/docs/intro">Intro</a>
 ```
 
-During the build, absolute `href` values (starting with `/`) are automatically rewritten to relative paths so the site works when deployed to any base path.
+The build rewrites absolute `href` values to relative paths so the site works from any base path.
 
-## Modes & Behaviour Summary
+## Modes and behaviour
 
-| Behaviour             | `pnpm dev`                       | `pnpm build` + `preview`          | `pnpm build` + `preview:api`      |
-| --------------------- | -------------------------------- | --------------------------------- | --------------------------------- |
-| Static pages          | Rendered on request              | Pre-rendered to `dist/`           | Served from `dist/`               |
-| Dynamic routes        | Resolved at request time         | Expanded via `getStaticPaths`     | Served from `dist/`               |
-| Unknown routes        | Returns "Page not found" message | 404 (no file on disk)             | Serves `dist/404.html` with 404   |
-| API routes (`/api/*`) | Nitro dev server handles them    | Not available                     | Nitro server handles them         |
-| Links                 | Absolute paths (`/about`)        | Rewritten to relative (`./about`) | Rewritten to relative (`./about`) |
+- **pnpm dev:** Pages are rendered on request; dynamic routes resolved at request time; unknown routes show "Page not found"; API routes (`/api/*`) are handled by Nitro when enabled; links stay absolute.
+- **pnpm build + preview:** Pages are pre-rendered to `dist/`; dynamic routes are expanded via `getStaticPaths`; unknown routes mean no file (404); no API; links in HTML are rewritten to relative.
+- **pnpm build + preview:api:** Same static output is served; Nitro also serves `dist/404.html` for unknown routes and handles `/api/*`; links are relative.
 
-### Trailing-slash redirects
+**Trailing slash:** The Nitro catch-all redirects bare paths like `/docs` to `/docs/` so relative links (e.g. `./name`) resolve to `/docs/name` correctly.
 
-The Nitro catch-all server redirects bare directory paths (e.g. `/docs`) to include a trailing slash (`/docs/`). This ensures that relative links inside the page (like `./name`) resolve correctly to `/docs/name` rather than `/name`.
-
-## File Structure Reference
+## File structure reference
 
 ```
 client/pages/
-  home.html             → /          (root page)
+  index.html            → /          (root page)
   about.html            → /about
   404.html              → (error page, dist/404.html)
-  [id].html             → /:id       (dynamic, needs getStaticPaths for build)
+  [id].html             → /:id        (dynamic; needs getStaticPaths for build)
   docs/
     index.html          → /docs
-    [slug].html         → /docs/:slug (dynamic, needs getStaticPaths for build)
+    [slug].html         → /docs/:slug (dynamic; needs getStaticPaths for build)
 ```

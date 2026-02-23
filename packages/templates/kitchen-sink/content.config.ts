@@ -9,7 +9,6 @@ const docs = defineCollection({
 		published: z.boolean().default(false),
 		title: z.string(),
 		subtitle: z.string(),
-		date: z.date(),
 	}),
 })
 

@@ -1,25 +1,38 @@
 ---
 published: true
-title: Slot Passthrough
-subtitle: Learn about the new slot passthrough feature in Aero, which allows you to forward named slots through a component hierarchy.
-date: 2026-02-15
+title: Slots
+subtitle: Compose layouts with default and named slots, and forward slots through the component hierarchy.
 ---
 
-## ✅ Feature Implemented
+Slots let you pass content into a component and choose where it is rendered. You can also **pass through** a named slot from a parent to a child so multi-level layouts stay simple.
 
-You can now pass named slots through a component hierarchy using the following syntax:
+## Basic slots
+
+**Receiving content:** Use `<slot>` for the default content, or `<slot name="nav">` for a named slot. Content from the parent that has `slot="nav"` goes into the named slot; everything else goes into the default slot.
+
+```html
+<slot name="nav">Fallback content</slot>
+```
+
+- Receives content from the parent’s `slot="nav"` attribute.
+- The optional content between the tags is fallback when nothing is provided.
+
+## Slot passthrough
+
+To receive a slot from the parent and forward it to your own child component, use both `name` and `slot` on the same `<slot>`:
 
 ```html
 <slot name="nav" slot="nav"></slot>
 ```
 
-This allows a component to receive a named slot from its parent and forward it to its own child component.
+- **name="nav"** — Receive the `nav` slot from the parent.
+- **slot="nav"** — Pass that content as the `nav` slot to the child.
 
-## How It Works
+You can put fallback content between the tags if you like.
 
-### Use Case: Three-Level Component Hierarchy
+## Example: three-level hierarchy
 
-**Grandparent Component (page.html)**
+**Page (grandparent):**
 
 ```html
 <parent-component>
@@ -28,7 +41,7 @@ This allows a component to receive a named slot from its parent and forward it t
 </parent-component>
 ```
 
-**Parent Component (parent.html)**
+**Parent (e.g. client/layouts/parent.html):**
 
 ```html
 <script is:build>
@@ -36,67 +49,29 @@ This allows a component to receive a named slot from its parent and forward it t
 </script>
 
 <child-component>
-	<!-- Receive 'nav' slot from grandparent and pass it to child -->
 	<slot name="nav" slot="nav"></slot>
-
-	<!-- Pass through default slot as well -->
 	<slot></slot>
 </child-component>
 ```
 
-**Child Component (child.html)**
+**Child (e.g. client/layouts/child.html):**
 
 ```html
 <div class="wrapper">
 	<nav>
-		<!-- Renders the "Custom Navigation Content" from grandparent -->
 		<slot name="nav">Default Nav</slot>
 	</nav>
-
 	<main>
-		<!-- Renders "Main content here" from grandparent -->
 		<slot>Default Content</slot>
 	</main>
 </div>
 ```
 
-## Syntax Explanation
+The page’s “Custom Navigation Content” ends up in the child’s `nav` slot; “Main content here” ends up in the default slot.
 
-### Regular Slot (receiving content)
+## Example in a layout
 
-```html
-<slot name="nav">Fallback content</slot>
-```
-
-- Receives content from parent's `slot="nav"` attribute
-- Shows fallback if no content provided
-
-### Slot Passthrough (receiving AND forwarding)
-
-```html
-<slot name="nav" slot="nav"></slot>
-```
-
-- **`name="nav"`**: Receives content from **parent** component
-- **`slot="nav"`**: Forwards content to **child** component
-- Supports fallback content between tags
-
-## Implementation Details
-
-The compiler generates the following code for slot passthrough:
-
-```javascript
-// For: <slot name="nav" slot="nav">Fallback</slot>
-{
-	nav: `${slots['nav'] || `Fallback`}`
-}
-```
-
-This takes the `nav` slot from the component's received slots and passes it as the `nav` slot to the child component.
-
-## Example in Your Codebase
-
-In `client/layouts/sub.html`:
+In `client/layouts/sub.html` you can forward slots to a base layout:
 
 ```html
 <base-layout data-props>
@@ -105,8 +80,4 @@ In `client/layouts/sub.html`:
 </base-layout>
 ```
 
-This allows sub-layout to:
-
-1. Receive a `nav` slot from any page that uses it
-2. Pass that `nav` slot through to `base-layout`
-3. Also pass through the default slot content
+Then any page that uses this layout can pass a `nav` slot and main content; both are forwarded to `base-layout`.
