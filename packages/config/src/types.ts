@@ -6,8 +6,9 @@
  */
 import type { UserConfig } from 'vite'
 import type { AeroContentOptions } from '@aero-ssg/content/vite'
+import type { AeroMiddleware, RedirectRule } from '@aero-ssg/core/types'
 
-/** User-facing Aero configuration (content, server, dirs, optional Vite overrides). */
+/** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {
 	/** Enable content collections (default: `false`). Pass `true` or `AeroContentOptions`. */
 	content?: boolean | AeroContentOptions
@@ -30,6 +31,18 @@ export interface AeroConfig {
 		/** Build output directory (default: `'dist'`). */
 		dist?: string
 	}
+
+	/**
+	 * Redirect rules applied in dev and when using the Nitro server (preview:api / production).
+	 * For static-only deploys use host redirect config (_redirects, vercel.json, etc.).
+	 */
+	redirects?: RedirectRule[]
+
+	/**
+	 * Request-time middleware (rewrites, custom responses). Runs in dev only.
+	 * For redirects use `redirects` so they apply in dev and server.
+	 */
+	middleware?: AeroMiddleware[]
 
 	/** Vite configuration merged with Aero defaults (plugins, build, etc.). */
 	vite?: UserConfig
