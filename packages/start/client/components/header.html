@@ -6,7 +6,7 @@
 
 <header>
 	<logo-component if="{isHomepage}" class="logo" />
-	<h1 else-if="{props.custom}">{props.custom.title}</h1>
+	<h1 else-if="{props.title}">{props.title}</h1>
 	<h2 else>Fallback Title</h2>
 
 	<p class="subtitle secondary">{props.subtitle}</p>

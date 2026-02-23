@@ -47,10 +47,10 @@ export class Aero {
 		}
 	}
 
-	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, request, url, params, routePath). */
+	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath). */
 	private isRenderInput(value: any): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
-		return ['props', 'request', 'url', 'params', 'routePath'].some(key => key in value)
+		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(key => key in value)
 	}
 
 	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */
@@ -185,7 +185,7 @@ export class Aero {
 		const routePath = renderInput.routePath || this.toRoutePath(matchedPageName)
 		const context = this.createContext({
 			props: renderInput.props || {},
-			slots: {},
+			slots: renderInput.slots || {},
 			request: renderInput.request,
 			url: renderInput.url,
 			params: { ...dynamicParams, ...(renderInput.params || {}) },

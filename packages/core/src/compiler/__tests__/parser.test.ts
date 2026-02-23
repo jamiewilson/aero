@@ -253,8 +253,8 @@ describe('Parser (V2 Taxonomy)', () => {
 	</script>
 </base-layout>
 
-<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by default -->
-<!-- FIXME [VSCODE]: Should not require type="module" -->
+<!-- should be bundled/module & hoisted to bottom by default -->
+<!-- Should not require type="module" -->
 <script>
 	import { allCaps } from '@scripts/utils/transform'
 	const message = allCaps('[aero] PLAIN <script type="module">')
@@ -273,7 +273,7 @@ describe('Parser (V2 Taxonomy)', () => {
 `
 		const result = parse(html)
 		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
-		const plainScript = result.clientScripts.find((s) => s.content.includes('allCaps'))
+		const plainScript = result.clientScripts.find(s => s.content.includes('allCaps'))
 		expect(plainScript).toBeDefined()
 		expect(plainScript!.content).toContain('PLAIN')
 		expect(result.template).not.toContain('import { allCaps }')
@@ -286,7 +286,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		const html = fs.readFileSync(homePath, 'utf-8')
 		const result = parse(html)
 		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
-		expect(result.clientScripts.some((s) => s.content.includes('allCaps'))).toBe(true)
+		expect(result.clientScripts.some(s => s.content.includes('allCaps'))).toBe(true)
 	})
 
 	// Baseline for home.html-style page: is:build, is:inline, external src, is:blocking, script src= (no default client scripts)
@@ -327,5 +327,29 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toMatch(/\sdefer\s+/)
 	})
 
-	// TODO: Edge cases not covered — scripts inside SVG/other namespaces.
+	it('should leave scripts inside SVG in the template (not extract as Aero scripts)', () => {
+		const input = `<div><svg viewBox="0 0 10 10"><script>console.log('svg')</script></svg></div>`
+		const result = parse(input)
+		expect(result.clientScripts).toHaveLength(0)
+		expect(result.buildScript).toBeNull()
+		expect(result.template).toContain('<svg')
+		expect(result.template).toContain('<script>console.log(\'svg\')</script>')
+		expect(result.template).toContain('</svg>')
+	})
+
+	it('should leave scripts inside MathML in the template', () => {
+		const input = `<math><script>alert(1)</script></math>`
+		const result = parse(input)
+		expect(result.clientScripts).toHaveLength(0)
+		expect(result.template).toContain('<script>alert(1)</script>')
+	})
+
+	it('should still extract is:build script when outside SVG', () => {
+		const input = `<script is:build>const x = 1;</script><svg><script>ignored</script></svg>`
+		const result = parse(input)
+		expect(result.buildScript).not.toBeNull()
+		expect(result.buildScript!.content).toContain('const x = 1')
+		expect(result.clientScripts).toHaveLength(0)
+		expect(result.template).toContain('<script>ignored</script>')
+	})
 })
