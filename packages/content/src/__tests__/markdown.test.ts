@@ -1,3 +1,7 @@
+/**
+ * Tests for compileMarkdown (remark + remark-html): document body → HTML.
+ * Used in collection transforms; for lazy rendering in pages see render.test.ts.
+ */
 import { describe, it, expect } from 'vitest'
 import { compileMarkdown } from '../markdown'
 import type { ContentDocument } from '../types'
@@ -12,52 +16,53 @@ function makeDoc(body: string): ContentDocument {
 }
 
 describe('compileMarkdown', () => {
-	it('should convert markdown headings to HTML', async () => {
+	it('converts markdown headings to HTML', async () => {
 		const html = await compileMarkdown(makeDoc('# Hello World'))
 		expect(html).toContain('<h1>Hello World</h1>')
 	})
 
-	it('should convert bold text', async () => {
+	it('converts bold text', async () => {
 		const html = await compileMarkdown(makeDoc('This is **bold** text'))
 		expect(html).toContain('<strong>bold</strong>')
 	})
 
-	it('should convert italic text', async () => {
+	it('converts italic text', async () => {
 		const html = await compileMarkdown(makeDoc('This is *italic* text'))
 		expect(html).toContain('<em>italic</em>')
 	})
 
-	it('should convert unordered lists', async () => {
+	it('converts unordered lists', async () => {
 		const html = await compileMarkdown(makeDoc('- Item one\n- Item two'))
 		expect(html).toContain('<ul>')
 		expect(html).toContain('<li>Item one</li>')
 		expect(html).toContain('<li>Item two</li>')
 	})
 
-	it('should convert links', async () => {
+	it('converts links', async () => {
 		const html = await compileMarkdown(makeDoc('[Link](https://example.com)'))
 		expect(html).toContain('<a href="https://example.com">Link</a>')
 	})
 
-	it('should convert code blocks', async () => {
+	it('converts fenced code blocks', async () => {
 		const html = await compileMarkdown(makeDoc('```js\nconst x = 1\n```'))
 		expect(html).toContain('<code')
 		expect(html).toContain('const x = 1')
 	})
 
-	it('should convert inline code', async () => {
+	it('converts inline code', async () => {
 		const html = await compileMarkdown(makeDoc('Use `foo()` here'))
 		expect(html).toContain('<code>foo()</code>')
 	})
 
-	it('should handle empty content', async () => {
+	it('returns empty string for empty body', async () => {
 		const html = await compileMarkdown(makeDoc(''))
 		expect(html).toBe('')
 	})
 
-	it('should convert paragraphs', async () => {
+	it('converts paragraphs (double newline separated)', async () => {
 		const html = await compileMarkdown(makeDoc('First paragraph\n\nSecond paragraph'))
 		expect(html).toContain('<p>First paragraph</p>')
 		expect(html).toContain('<p>Second paragraph</p>')
 	})
+	// TODO: consider asserting raw HTML in markdown is escaped (XSS) if remark-html config changes
 })

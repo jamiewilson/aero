@@ -1,3 +1,7 @@
+/**
+ * Tests for the content loader: collection discovery, frontmatter parsing,
+ * schema validation, transforms, and virtual module serialization.
+ */
 import { describe, it, expect, vi } from 'vitest'
 import {
 	loadAllCollections,
@@ -23,7 +27,7 @@ const docsCollection = defineCollection({
 })
 
 describe('loadAllCollections', () => {
-	it('should discover and load all markdown files', async () => {
+	it('discovers and loads all markdown files in the collection directory', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -32,7 +36,7 @@ describe('loadAllCollections', () => {
 		expect(docs.length).toBe(3)
 	})
 
-	it('should parse frontmatter correctly', async () => {
+	it('parses frontmatter (gray-matter) and applies Zod schema', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -44,7 +48,7 @@ describe('loadAllCollections', () => {
 		expect(hello.data.date).toBeInstanceOf(Date)
 	})
 
-	it('should set id from collection-relative path', async () => {
+	it('sets id from collection-relative path (dir/name for nested files)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -58,7 +62,7 @@ describe('loadAllCollections', () => {
 		expect(nested.id).toBe('guides/nested')
 	})
 
-	it('should generate correct _meta for root-level files', async () => {
+	it('generates _meta (path, slug, filename, extension) for root-level files', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -70,7 +74,7 @@ describe('loadAllCollections', () => {
 		expect(hello._meta.extension).toBe('.md')
 	})
 
-	it('should generate correct _meta for nested files', async () => {
+	it('generates _meta for nested files (slug is basename only)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -82,7 +86,7 @@ describe('loadAllCollections', () => {
 		expect(nested._meta.filename).toBe('nested.md')
 	})
 
-	it('should include raw markdown as body field', async () => {
+	it('includes raw markdown (post-frontmatter) as body', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -92,7 +96,7 @@ describe('loadAllCollections', () => {
 		expect(hello.body).toContain('**test**')
 	})
 
-	it('should handle optional schema fields', async () => {
+	it('allows optional schema fields to be omitted in frontmatter', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -103,7 +107,7 @@ describe('loadAllCollections', () => {
 		expect(second.data.subtitle).toBeUndefined()
 	})
 
-	it('should skip files that fail schema validation', async () => {
+	it('skips files that fail schema validation and warns with file path', async () => {
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 		const invalidCollection = defineCollection({
@@ -123,7 +127,7 @@ describe('loadAllCollections', () => {
 		warnSpy.mockRestore()
 	})
 
-	it('should load without schema validation when no schema provided', async () => {
+	it('loads without schema validation when no schema is provided', async () => {
 		const noSchemaCollection = defineCollection({
 			name: 'raw',
 			directory: path.resolve(FIXTURES_DIR, 'docs'),
@@ -140,7 +144,11 @@ describe('loadAllCollections', () => {
 		expect(docs[0].body).toBeDefined()
 	})
 
-	it('should apply transforms when provided', async () => {
+	/**
+	 * Transform runs after validation and replaces the document shape;
+	 * the returned object is what gets stored (no _meta/body unless re-added).
+	 */
+	it('applies optional transform and uses its return value as the document', async () => {
 		const transformed = defineCollection({
 			name: 'docs',
 			directory: path.resolve(FIXTURES_DIR, 'docs'),
@@ -165,26 +173,25 @@ describe('loadAllCollections', () => {
 
 		expect(hello).toBeDefined()
 		expect(hello.uppercaseTitle).toBe('TEST POST')
-		// Transform replaces the document shape — no _meta or body
 		expect(hello._meta).toBeUndefined()
 		expect(hello.body).toBeUndefined()
 	})
 })
 
 describe('toExportName', () => {
-	it('should convert simple names', () => {
+	it('converts collection name to allCamelCase export name', () => {
 		expect(toExportName('docs')).toBe('allDocs')
 		expect(toExportName('posts')).toBe('allPosts')
 	})
 
-	it('should convert hyphenated names to camelCase', () => {
+	it('converts hyphenated names to camelCase', () => {
 		expect(toExportName('blog-posts')).toBe('allBlogPosts')
 		expect(toExportName('my-cool-collection')).toBe('allMyCoolCollection')
 	})
 })
 
 describe('getWatchedDirs', () => {
-	it('should resolve absolute paths for all collection directories', () => {
+	it('resolves collection directories to absolute paths (for HMR watch)', () => {
 		const config = defineConfig({
 			collections: [
 				defineCollection({ name: 'a', directory: 'content/a' }),
@@ -201,7 +208,7 @@ describe('getWatchedDirs', () => {
 })
 
 describe('serializeContentModule', () => {
-	it('should produce a getCollection function', () => {
+	it('emits ESM with __collections, getCollection(name, filterFn), and serialized data', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('docs', [{ title: 'Hello' }])
 		loaded.set('posts', [{ title: 'Post 1' }])
@@ -214,7 +221,7 @@ describe('serializeContentModule', () => {
 		expect(output).toContain('"title": "Post 1"')
 	})
 
-	it('should not produce static allDocs exports', () => {
+	it('does not emit static allDocs-style exports (only getCollection)', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('docs', [])
 
@@ -223,7 +230,7 @@ describe('serializeContentModule', () => {
 		expect(output).not.toContain('export const allDocs')
 	})
 
-	it('should re-export render from @aero-ssg/content/render', () => {
+	it('re-exports render from @aero-ssg/content/render', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('docs', [])
 
@@ -232,7 +239,7 @@ describe('serializeContentModule', () => {
 		expect(output).toContain("export { render } from '@aero-ssg/content/render'")
 	})
 
-	it('should handle empty collections', () => {
+	it('includes empty collection keys in __collections', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('empty', [])
 
@@ -240,13 +247,15 @@ describe('serializeContentModule', () => {
 		expect(output).toContain('"empty": []')
 	})
 
-	it('should include PROD filter for published documents', () => {
+	/** Asserts emitted source contains PROD guard and published filter; does not run getCollection in PROD. */
+	it('emits PROD guard that filters by item.data.published === true', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('docs', [{ title: 'Published', data: { published: true } }])
 
 		const output = serializeContentModule(loaded)
 
 		expect(output).toContain('import.meta.env.PROD')
-		expect(output).toContain("item.data.published === true")
+		expect(output).toContain('item.data.published === true')
+		// TODO: add integration test that runs emitted getCollection in PROD and asserts filtering
 	})
 })
