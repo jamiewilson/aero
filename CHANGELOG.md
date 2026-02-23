@@ -4,7 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
-## [0.1.0]
+## [Unreleased]
+
+### Added
+
+- Add TSDocs to core and packages ([`87f3486`](https://github.com/jamiewilson/aero/commit/87f3486))
+- Add documentation for VS Code extension ([`bbed627`](https://github.com/jamiewilson/aero/commit/bbed627))
+- Add documentation updates across repo ([`54389c1`](https://github.com/jamiewilson/aero/commit/54389c1))
+- Add docs for content package tests ([`80ba0fc`](https://github.com/jamiewilson/aero/commit/80ba0fc))
+- Add expanded Vite plugin test coverage ([`a6c6188`](https://github.com/jamiewilson/aero/commit/a6c6188))
+
+### Changed
+
+- Add IR layer for codegen (DOM → IR → JS) ([`b0f18d8`](https://github.com/jamiewilson/aero/commit/b0f18d8))
+- Split Vite plugin into focused sub-plugins ([`51081b3`](https://github.com/jamiewilson/aero/commit/51081b3))
+- Use single `emitRenderFunction` for render emission ([`cf7554d`](https://github.com/jamiewilson/aero/commit/cf7554d))
+- Centralize page resolution and key derivation in routing ([`ef0ee6c`](https://github.com/jamiewilson/aero/commit/ef0ee6c))
+- Unify script type and client URL handling ([`0fd41e9`](https://github.com/jamiewilson/aero/commit/0fd41e9))
+- Improve HMR state, runtime slots/404/instance, parser SVG and Math handling ([`2bae20f`](https://github.com/jamiewilson/aero/commit/2bae20f))
+- Update agent and rule docs ([`7f426b2`](https://github.com/jamiewilson/aero/commit/7f426b2))
+- Address TODOs and FIXMEs across core, content, and VS Code ([`0b70e15`](https://github.com/jamiewilson/aero/commit/0b70e15))
+- Remove unneeded warnings from VS Code diagnostics ([`afb1198`](https://github.com/jamiewilson/aero/commit/afb1198))
+- Clean up and polish script handling ([`7ee023a`](https://github.com/jamiewilson/aero/commit/7ee023a))
+
+### Fixed
+
+- Fix logic for checking head scripts ([`4877635`](https://github.com/jamiewilson/aero/commit/4877635))
+- Fix `pass:data` for bundled client scripts and parser index-based edits ([`4e55c32`](https://github.com/jamiewilson/aero/commit/4e55c32))
+- Fix build for new script syntax/taxonomy ([`a768756`](https://github.com/jamiewilson/aero/commit/a768756))
+- Fix handling of scripts in `<head>` ([`2d9315b`](https://github.com/jamiewilson/aero/commit/2d9315b))
+- Fix VS Code diagnostic bugs for updated script types ([`7f950e2`](https://github.com/jamiewilson/aero/commit/7f950e2))
+- Fix diagnostics for all new script types and scopes (including `pass:data`) ([`79c1e9b`](https://github.com/jamiewilson/aero/commit/79c1e9b))
 
 ### Added
 
@@ -45,5 +75,3 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 - Fix incorrect flagging of variables ([`2e8d36d`](https://github.com/jamiewilson/aero/commit/2e8d36d))
 - Handle redeclaring imports and consts ([`41565c4`](https://github.com/jamiewilson/aero/commit/41565c4))
 - Fix VSCode diagnostic bugs ([`cb0f9cd`](https://github.com/jamiewilson/aero/commit/cb0f9cd))
-
-[0.1.0]: https://github.com/jamiewilson/aero/releases/tag/v0.1.0

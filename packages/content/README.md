@@ -1,64 +1,84 @@
-# Aero Content Package
+# @aero-ssg/content
 
-## Overview
+Content collections for Aero: load Markdown (and other files) with frontmatter, validate with Zod, and render to HTML. Powers the `aero:content` virtual module and optional content plugin.
 
-The Aero Content package provides a flexible content loader, parser, and renderer for static site generation. It powers the `aero:content` module, enabling you to fetch, transform, and render content collections (such as Markdown files) for use in Aero apps. This package is designed for seamless integration with Aero’s template engine and build pipeline.
+## Exports
 
-## Features
+| Export | Description |
+|--------|-------------|
+| `@aero-ssg/content` | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
+| `@aero-ssg/content/vite` | `aeroContent(options?)` Vite plugin. |
+| `@aero-ssg/content/markdown` | Markdown/remark utilities (used internally). |
+| `@aero-ssg/content/render` | `render(doc)` for markdown-to-HTML. |
+| `@aero-ssg/content/types` | TypeScript types. |
 
-### 1. Content Collection Loader
-- **getCollection(name: string): Promise<Array<Doc>>**
-  - Loads all documents from a named collection (e.g., `docs`, `guides`).
-  - Supports nested folders and custom content structures.
+## Usage in apps
 
-### 2. Markdown Parsing
-- Parses Markdown files into structured content objects.
-- Extracts frontmatter (YAML/JSON) for metadata (title, subtitle, published, etc).
-- Supports nested collections and custom fields.
+Enable content in `aero.config.ts` (`content: true` or `content: { config: 'content.config.ts' }`), then define collections in **content.config.ts** and import from `aero:content` in templates.
 
-### 3. Content Rendering
-- **render(doc: Doc): Promise<{ html: string, data: object }>**
-  - Converts parsed Markdown content into HTML.
-  - Returns both rendered HTML and extracted metadata.
+**content.config.ts**
 
-### 4. Type Definitions
-- Provides TypeScript types for content documents, collections, and metadata.
-- Ensures type safety for content operations in Aero apps.
+```ts
+import { defineConfig, defineCollection } from '@aero-ssg/content'
+import { z } from 'zod'
 
-### 5. Vite Integration
-- Exposes a Vite plugin for content hot-reloading and build-time content resolution.
-- Enables `aero:content` alias for easy imports in templates and scripts.
+const docs = defineCollection({
+	name: 'docs',
+	directory: 'content/docs',
+	include: '**/*.md',
+	schema: z.object({ title: z.string(), published: z.boolean().optional() }),
+	transform: async (doc) => ({ ...doc, data: { ...doc.data, slug: doc._meta.slug } }),
+})
 
-### 6. Test Coverage
-- Includes Vitest tests for loader, markdown parsing, rendering, and Vite plugin.
-- Test fixtures for valid and invalid content scenarios.
-
-## Usage Example
-
-```js
-import { getCollection, render } from 'aero:content'
-
-export async function getStaticPaths() {
-  const docs = await getCollection('docs')
-  return docs.map(doc => ({ params: { slug: doc.id }, props: doc }))
-}
-
-const doc = Aero.props
-const { html } = await render(doc)
+export default defineConfig({ collections: [docs] })
 ```
 
-## File Structure
+**In a page (e.g. getStaticPaths + render)**
 
-- `src/loader.ts` — Loads content collections
-- `src/markdown.ts` — Parses Markdown files and frontmatter
-- `src/render.ts` — Renders content to HTML
-- `src/types.ts` — TypeScript types for content
-- `src/vite.ts` — Vite plugin integration
-- `__tests__/` — Test suite and fixtures
+```html
+<script is:build>
+	import { getCollection, render } from 'aero:content'
 
-## Supported Content Features
-- Markdown with frontmatter
-- Nested collections (folders)
-- Custom metadata fields
-- Static path generation for dynamic routes
-- Hot-reloading in development
+	export async function getStaticPaths() {
+		const docs = await getCollection('docs')
+		return docs.map((doc) => ({ params: { slug: doc._meta.slug }, props: doc }))
+	}
+
+	const doc = aero.props
+	const { html } = await render(doc)
+</script>
+<article data-each="{ doc in [doc] }">
+	<h1>{ doc.data.title }</h1>
+	<div>{ html }</div>
+</article>
+```
+
+## API (from `aero:content`)
+
+- **getCollection(name, filterFn?)** — Returns a promise of documents for the named collection. In production, only documents with `data.published === true` are returned unless overridden. Optional `filterFn(doc)` can filter further.
+- **render(doc)** — Renders a content document’s markdown body to HTML. Returns `{ html: string }`. Use with a document from `getCollection` or props.
+
+## Content document shape
+
+Each document has:
+
+- **id** — Collection-relative path without extension.
+- **data** — Validated frontmatter (from schema).
+- **body** — Raw markdown (after frontmatter).
+- **_meta** — `{ path, slug, filename, extension }`.
+
+## Vite plugin
+
+`aeroContent(options?)` resolves the virtual module `aero:content` (and `aero:content/...`) with serialized collections, `getCollection`, and `render`. It loads `content.config.ts` at config resolve/build start and watches collection directories for HMR. Options: `config` (path to config file, default `content.config.ts`).
+
+## File structure
+
+- `src/loader.ts` — Load collections, serialize to virtual module source.
+- `src/markdown.ts` — Parse Markdown and frontmatter (gray-matter, remark).
+- `src/render.ts` — Lazy markdown-to-HTML (remark).
+- `src/types.ts` — `defineCollection`, `defineConfig`, types.
+- `src/vite.ts` — Vite plugin.
+
+## Tests
+
+Vitest in `packages/content`: loader, markdown, render, Vite plugin. Run from repo root: `pnpm test`.
