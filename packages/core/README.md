@@ -1,113 +1,117 @@
-# Aero Core Package
+# @aero-ssg/core
+
+The core package of the Aero static site generator. It provides the compiler, runtime, and Vite plugin that power Aero’s HTML-first template engine, component system, and build pipeline.
 
 ## Overview
 
-The Aero Core package is the heart of the Aero static site generator. It provides the compiler, runtime, and Vite plugin that power Aero’s HTML-first template engine, component system, and build pipeline. This package is designed for flexibility, performance, and seamless integration with modern frontend tooling.
+- **Compiler** — Parses Aero HTML templates, extracts script blocks, and compiles templates into async render functions (DOM → IR → JS).
+- **Runtime** — Renders pages and components with context; supports props, slots, globals, and 404 handling.
+- **Vite plugin** — Integrates templates into the Vite build: virtual client modules, HMR, static generation, optional Nitro and image optimization.
+
+## Exports
+
+| Export | Description |
+|--------|-------------|
+| `@aero-ssg/core` | Default: shared `aero` instance with `mount()` for the client entry. |
+| `@aero-ssg/core/vite` | `aero()` Vite plugin for build and dev. |
+| `@aero-ssg/core/runtime` | `Aero` class for programmatic rendering. |
+| `@aero-ssg/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR. |
+| `@aero-ssg/core/types` | Shared TypeScript types. |
+
+## Script taxonomy
+
+Script blocks are classified by attributes (see [docs/script-taxonomy.md](https://github.com/jamiewilson/aero/blob/main/docs/script-taxonomy.md) in the repo):
+
+| Script type | Attribute | When it runs | Notes |
+|-------------|-----------|---------------|--------|
+| Build | `<script is:build>` | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
+| Client | Plain `<script>` | Browser | Bundled as a Vite virtual module; HMR. Use `pass:data` to inject build-time data. |
+| Inline | `<script is:inline>` | Browser | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention). |
+| Blocking | `<script is:blocking>` | Browser | Extracted and emitted in `<head>`. |
 
 ## Features
 
-### 1. Template Compiler
+### Template compiler
 
-- Parses Aero HTML templates, extracting `<script on:build>` and `<script on:client>` blocks.
-- Compiles templates into async render functions with `{ }` interpolation for dynamic content.
-- Supports custom component syntax, slot passthrough, and data loops.
+- Parses templates and extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks.
+- Lowers template DOM to an **IR** (intermediate representation), then emits a single async render function with `{ }` interpolation.
+- Supports components, slots, `data-each`, `data-if` / `data-else-if` / `data-else`, and `pass:data` on scripts and styles.
 
-#### Example
+**Example**
 
 ```html
-<script on:build>
+<script is:build>
 	import header from '@components/header'
+	const { title } = aero.props
 </script>
-<header-component title="{ site.title }" />
+<header-component title="{ title }" />
 ```
 
-### 2. Runtime Engine
+### Runtime
 
-- Provides the `Aero` class for rendering pages and components with context.
-- Handles props, slots, and global data injection.
+- **Aero** class: `global()`, `registerPages()`, `render()`, `renderComponent()`.
+- Context includes globals (e.g. from content), props, slots, request, url, params.
+- Resolves pages by name with fallbacks (index, trailing slash, `getStaticPaths`); returns `null` for 404 when no static path matches.
 
-#### Example
+**Example**
 
 ```js
-import { Aero } from '@aero-ssg/core'
-const html = await Aero.render(page, context)
+import { Aero } from '@aero-ssg/core/runtime'
+const aero = new Aero()
+aero.global('site', { title: 'My Site' })
+// … registerPages, then:
+const html = await aero.render('index', { props: { title: 'Home' } })
 ```
 
-### 3. Vite Plugin
+### Vite plugin
 
-- Integrates Aero templates and components into the Vite build process.
-- Handles virtual modules for client scripts (`/@aero/client/`), HMR, and middleware for serving pages.
+- **Plugin** from `@aero-ssg/core/vite`: `aero(options?)`. Options: `nitro`, `apiPrefix`, `dirs`.
+- Sub-plugins: config resolution, virtual client modules (`\0`-prefixed), HTML transform, SSR middleware, HMR.
+- Build: page discovery, static render, optional Nitro build, optional image optimizer (sharp/svgo).
 
-#### Example
+**Example**
 
 ```js
-import { aeroVitePlugin } from '@aero-ssg/vite'
+import { aero } from '@aero-ssg/core/vite'
 export default {
-	plugins: [aeroVitePlugin()],
+	plugins: [aero({ nitro: true })],
 }
 ```
 
-### 4. Component & Layout System
+Apps typically use `@aero-ssg/config` and `createViteConfig(aeroConfig)`, which wires the Aero plugin for them.
 
-- Supports reusable components (`-component`) and layouts (`-layout`) with slot support.
-- Props passed via attributes or `data-props`.
+### Client entry
 
-#### Example
-
-```html
-<my-component title="{ site.title }" />
-<my-layout>
-	<slot name="main">{ content }</slot>
-</my-layout>
-```
-
-### 5. Path Aliases
-
-- Resolves path aliases for components, layouts, pages, content, assets, and server files.
-- Simplifies imports in templates and scripts.
-
-### 6. Client Stack Integration
-
-- Preserves Alpine.js and HTMX attributes for client-side interactivity.
-- Skips interpolation for attributes matching `^(x-|[@:.]).*`.
-
-### 7. Test Coverage
-
-- Includes Vitest tests for compiler, runtime, and Vite plugin.
-
-## File Structure
-
-- `src/compiler/` — Parser, codegen, helpers, resolver
-- `src/runtime/` — Aero class and rendering logic
-- `src/utils/` — Aliases, routing utilities
-- `src/vite/` — Vite plugin and build integration
-- `__tests__/` — Test suite for compiler, runtime, and Vite
-
-## Usage Example
-
-**Compile and Render a Page:**
+The default export of `@aero-ssg/core` is the shared `aero` instance with `mount(options?)` attached. Use it as the browser entry (e.g. in your main script). It does not perform an initial render; it attaches to a root element and subscribes to HMR re-renders in dev.
 
 ```js
-import { parse, codegen } from '@aero-ssg/core/compiler'
-const ast = parse(template)
-const renderFn = codegen(ast)
-const html = await renderFn(context)
+import aero from '@aero-ssg/core'
+aero.mount({ target: '#app', onRender: (el) => { /* optional */ } })
 ```
 
-**Vite Plugin Setup:**
+### Components and layouts
 
-```js
-import { aeroVitePlugin } from '@aero-ssg/vite'
-export default {
-	plugins: [aeroVitePlugin()],
-}
+- Components: use `-component` suffix in markup; import without suffix (e.g. `@components/header` → `header.html`).
+- Layouts: use `-layout` and `<slot>` (with `name` and optional `slot` attribute).
+- Props: attributes or `data-props` / `data-props="{ ... }"`. In build script, read via `aero.props`.
+
+### Path aliases and client stack
+
+- Path aliases (e.g. `@components/*`, `@layouts/*`, `@content/*`) are resolved from the project tsconfig.
+- Alpine.js and HTMX attributes (e.g. `x-data`, `:disabled`, `hx-post`) are preserved; attributes matching `^(x-|[@:.]).*` are not interpolated.
+
+## File structure
+
+```
+src/
+  compiler/     # parser.ts, codegen.ts, ir.ts, emit.ts, resolver.ts, helpers.ts, constants.ts
+  runtime/      # index.ts (Aero), instance.ts, client.ts
+  vite/         # index.ts (plugin), build.ts, defaults.ts
+  utils/        # aliases.ts, routing.ts
+  types.ts
+  index.ts      # client entry (aero + mount)
 ```
 
-## Supported Features
+## Tests
 
-- HTML-first templates with build/client scripts
-- Component and layout system with slots
-- Dynamic props and data interpolation
-- Path alias resolution
-- Client stack integration (Alpine.js, HTMX)
-- Static site generation and HMR
+Vitest in `packages/core`: `compiler/__tests__/`, `runtime/__tests__/`, `vite/__tests__/`. Run from repo root: `pnpm test`.
