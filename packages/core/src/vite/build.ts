@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
+import { pagePathToKey } from '../utils/routing'
 import { createServer } from 'vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
@@ -162,20 +163,19 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 	return walkHtmlFiles(path.resolve(root, templateRoot))
 }
 
-/** Static pages from pagesRoot: file paths, page names, route paths, output files; home → index when no sibling index. */
+/** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. */
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
 	const pageFiles = walkHtmlFiles(pagesDir)
 
-	// Build a set of all page names so we can detect when home.html should
-	// act as the root index (i.e. when no sibling index.html exists).
+	// Use same key derivation as runtime (pagePathToKey) so page names align.
 	const allPageNames = new Set(
-		pageFiles.map(f => toPosix(path.relative(pagesDir, f)).replace(/\.html$/i, '')),
+		pageFiles.map(f => pagePathToKey(toPosix(path.relative(root, f)))),
 	)
 
 	return pageFiles.map(file => {
-		const rel = toPosix(path.relative(pagesDir, file))
-		let pageName = rel.replace(/\.html$/i, '')
+		const relFromRoot = toPosix(path.relative(root, file))
+		let pageName = pagePathToKey(relFromRoot)
 
 		// Mirror the runtime fallback: treat home as index when there is no
 		// explicit index.html at the same directory level.

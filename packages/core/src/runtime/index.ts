@@ -13,13 +13,7 @@ import type {
 	AeroTemplateContext,
 	MountOptions,
 } from '../types'
-
-/** Result of matching a request path to a dynamic route (e.g. `posts/[id]`). */
-interface PageMatch {
-	module: any
-	pageName: string
-	params: AeroRouteParams
-}
+import { pagePathToKey, resolvePageTarget } from '../utils/routing'
 
 export class Aero {
 	/** Global values merged into template context (e.g. from content modules). */
@@ -41,20 +35,13 @@ export class Aero {
 
 	/**
 	 * Register page/layout modules from a Vite glob (e.g. `import.meta.glob('@pages/**\/*.html')`).
-	 * Derives a lookup key from each path: for paths containing `pages/`, uses the segment after it;
-	 * otherwise uses the last segment or the full path. Also stores by full path (without extension).
+	 * Derives a lookup key from each path via pagePathToKey; also stores by full path for resolution.
 	 *
 	 * @param pages - Record of resolved path → module (default export is the render function).
 	 */
 	registerPages(pages: Record<string, any>) {
 		for (const [path, mod] of Object.entries(pages)) {
-			const withoutExt = path.replace(/\.html$/, '').replace(/\\/g, '/')
-			// TODO: Extract key derivation to a helper (e.g. pagePathToKey) to simplify and unit-test lookup rules.
-			const key = withoutExt.includes('pages/')
-				? withoutExt.split('pages/').pop()!
-				: withoutExt.split('/').filter(Boolean).length > 1
-					? withoutExt.split('/').filter(Boolean).join('/')
-					: withoutExt.split('/').pop() || path
+			const key = pagePathToKey(path)
 			this.pagesMap[key] = mod
 			this.pagesMap[path] = mod
 		}
@@ -90,39 +77,6 @@ export class Aero {
 			return new URL(rawUrl, 'http://localhost')
 		}
 		return new URL(routePath, 'http://localhost')
-	}
-
-	/** Match a page name (e.g. `posts/42`) against registered dynamic routes (e.g. `posts/[id]`). Returns first match or null. */
-	private resolveDynamicPage(pageName: string): PageMatch | null {
-		const requestedSegments = pageName.split('/').filter(Boolean)
-		for (const [key, mod] of Object.entries(this.pagesMap)) {
-			if (!key.includes('[') || !key.includes(']') || key.includes('.')) continue
-			const keySegments = key.split('/').filter(Boolean)
-			if (keySegments.length !== requestedSegments.length) continue
-
-			const params: AeroRouteParams = {}
-			let matched = true
-			for (let i = 0; i < keySegments.length; i++) {
-				const routeSegment = keySegments[i]
-				const requestSegment = requestedSegments[i]
-				const dynamicMatch = routeSegment.match(/^\[(.+)\]$/)
-
-				if (dynamicMatch) {
-					params[dynamicMatch[1]] = decodeURIComponent(requestSegment)
-					continue
-				}
-
-				if (routeSegment !== requestSegment) {
-					matched = false
-					break
-				}
-			}
-
-			if (matched) {
-				return { module: mod, pageName: key, params }
-			}
-		}
-		return null
 	}
 
 	/** Build template context: globals, props, slots, request, url, params, and `renderComponent` / `nextPassDataId`. */
@@ -191,56 +145,12 @@ export class Aero {
 			renderInput.headScripts = new Set<string>()
 		}
 
-		// TODO: Consider extracting page/module resolution (target + matchedPageName + dynamicParams) into resolvePageTarget(component) to make render() easier to follow.
-		let target = component
-		let matchedPageName = typeof component === 'string' ? component : 'index'
-		let dynamicParams: AeroRouteParams = {}
-		if (typeof component === 'string') {
-			target = this.pagesMap[component]
+		const resolved = resolvePageTarget(component, this.pagesMap)
+		if (!resolved) return null
 
-			// Fallback: If not found, try as directory index (e.g. /docs -> docs/index)
-			if (!target) {
-				target = this.pagesMap[`${component}/index`]
-			}
-			// Fallback: If index is not found, try home
-			if (!target && component === 'index') {
-				target = this.pagesMap['home']
-			}
-
-			if (!target) {
-				const dynamicMatch =
-					this.resolveDynamicPage(component) || this.resolveDynamicPage(`${component}/index`)
-				if (dynamicMatch) {
-					target = dynamicMatch.module
-					matchedPageName = dynamicMatch.pageName
-					dynamicParams = dynamicMatch.params
-				}
-			}
-
-			// Fallback: trailing-slash URLs resolve to "foo/index" via
-			// resolvePageName, but the actual page may be "foo" (static) or
-			// matched by a dynamic pattern with fewer segments.  Strip the
-			// "/index" suffix and retry the full lookup chain.
-			if (!target && component.endsWith('/index')) {
-				const stripped = component.slice(0, -'/index'.length)
-				target = this.pagesMap[stripped]
-				if (target) {
-					matchedPageName = stripped
-				}
-				if (!target) {
-					const dynamicMatch = this.resolveDynamicPage(stripped)
-					if (dynamicMatch) {
-						target = dynamicMatch.module
-						matchedPageName = dynamicMatch.pageName
-						dynamicParams = dynamicMatch.params
-					}
-				}
-			}
-		}
-
-		if (!target) {
-			return null
-		}
+		let target = resolved.module
+		const matchedPageName = resolved.pageName
+		const dynamicParams = resolved.params
 
 		// Handle lazy-loaded modules (Vite import.meta.glob without eager)
 		// Lazy loaders are () => import(...), while render functions are aero => ...
