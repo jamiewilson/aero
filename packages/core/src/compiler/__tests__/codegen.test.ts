@@ -35,6 +35,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const aeroContext = {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
+		styles: new Set<string>(),
 		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
 		request: new Request('http://localhost'),
@@ -42,6 +43,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		params: {},
 		slots: {},
 		props: {},
+		site: '',
 		...context,
 	}
 	return await renderFn(aeroContext)

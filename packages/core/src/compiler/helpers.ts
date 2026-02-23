@@ -216,7 +216,7 @@ export function emitRenderFunction(
 			: ''
 
 	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
+		const { slots = {}, renderComponent, request, url, params, site: __aero_site, styles, scripts, headScripts: injectedHeadScripts } = Aero;
 		${script}
 		${styleCode}
 		${stylesCode}

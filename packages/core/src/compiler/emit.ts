@@ -78,7 +78,7 @@ function emitNode(node: IRNode, outVar: string): string {
 			}
 			const slotsString = Helper.emitSlotsObjectVars(node.slotVarMap)
 			const targetVar = outVarFor(node, outVar)
-			code += `${targetVar} += await Aero.renderComponent(${node.baseName}, ${node.propsString}, ${slotsString}, { request, url, params, styles, scripts });\n`
+			code += `${targetVar} += await Aero.renderComponent(${node.baseName}, ${node.propsString}, ${slotsString}, { request, url, params, site: __aero_site, styles, scripts });\n`
 			return code
 		}
 		case 'ScriptPassData': {

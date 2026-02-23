@@ -79,7 +79,7 @@ export class Aero {
 		return new URL(routePath, 'http://localhost')
 	}
 
-	/** Build template context: globals, props, slots, request, url, params, and `renderComponent` / `nextPassDataId`. */
+	/** Build template context: globals, props, slots, request, url, params, site, and `renderComponent` / `nextPassDataId`. */
 	private createContext(input: {
 		props?: Record<string, any>
 		slots?: Record<string, string>
@@ -87,6 +87,7 @@ export class Aero {
 		url?: URL | string
 		params?: AeroRouteParams
 		routePath?: string
+		site?: string
 		styles?: Set<string>
 		scripts?: Set<string>
 		headScripts?: Set<string>
@@ -102,6 +103,7 @@ export class Aero {
 			request,
 			url,
 			params: input.params || {},
+			site: input.site ?? '',
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
@@ -190,6 +192,7 @@ export class Aero {
 			url: renderInput.url,
 			params: { ...dynamicParams, ...(renderInput.params || {}) },
 			routePath,
+			site: renderInput.site,
 			styles: renderInput.styles,
 			scripts: renderInput.scripts,
 			headScripts: renderInput.headScripts,
@@ -268,6 +271,7 @@ export class Aero {
 			url: input.url,
 			params: input.params,
 			routePath: input.routePath || '/',
+			site: input.site,
 			styles: input.styles,
 			scripts: input.scripts,
 		})

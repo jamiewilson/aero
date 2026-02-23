@@ -437,7 +437,7 @@ class Lowerer {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, styles, scripts }) }`
+			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, site: __aero_site, styles, scripts }) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)

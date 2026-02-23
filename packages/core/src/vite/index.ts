@@ -70,10 +70,14 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		config(userConfig) {
 			const root = userConfig.root || process.cwd()
 			state.aliasResult = loadTsconfigAliases(root)
+			const site = state.options.site ?? ''
 
 			return {
 				base: './',
 				resolve: { alias: state.aliasResult.aliases },
+				define: {
+					'import.meta.env.SITE': JSON.stringify(site),
+				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolvePath, dirs: state.options.dirs },
 					root,
@@ -249,6 +253,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							headers: requestHeaders,
 						}),
 						routePath: pathname,
+						site: state.options.site,
 					}
 
 					let rendered = await mod.aero.render(pageName, renderInput)
@@ -375,6 +380,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					configFile: state.config!.configFile,
 					vitePlugins: state.config!.configFile ? [] : aeroCorePlugins,
 					minify: shouldMinifyHtml,
+					site: options.site,
 				},
 				outDir,
 			)

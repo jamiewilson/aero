@@ -21,6 +21,11 @@ export interface AeroOptions {
 	apiPrefix?: string
 	/** Directory overrides. */
 	dirs?: AeroDirs
+	/**
+	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
+	 * as `Aero.site` in templates. Used for sitemap, RSS, and canonical links.
+	 */
+	site?: string
 }
 
 /** Options for the client-side `mount()` entry (see `core/src/index.ts`). */
@@ -131,6 +136,8 @@ export interface AeroRenderInput {
 	scripts?: Set<string>
 	/** Scripts to inject in <head>. */
 	headScripts?: Set<string>
+	/** Canonical site URL from config (e.g. `'https://example.com'`). Exposed as Aero.site in templates. */
+	site?: string
 }
 
 /**
@@ -154,6 +161,8 @@ export interface AeroTemplateContext {
 	request: Request
 	url: URL
 	params: AeroRouteParams
+	/** Canonical site URL from config (e.g. `'https://example.com'`). */
+	site?: string
 	styles?: Set<string>
 	scripts?: Set<string>
 	headScripts?: Set<string>
