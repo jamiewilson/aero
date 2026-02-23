@@ -1,32 +1,36 @@
+/**
+ * Tests for the content Vite plugin: resolveId, load, configResolved, handleHotUpdate.
+ * Virtual module aero:content (and aero:content/…) resolves to serialized collections + getCollection + render.
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { aeroContent } from '../vite'
 
 describe('aeroContent', () => {
-	it('should return a plugin with the correct name', () => {
+	it('returns a plugin named vite-plugin-aero-content', () => {
 		const plugin = aeroContent()
 		expect(plugin.name).toBe('vite-plugin-aero-content')
 	})
 
-	it('should accept custom config path option', () => {
+	it('accepts custom config path option', () => {
 		const plugin = aeroContent({ config: 'custom.content.ts' })
 		expect(plugin.name).toBe('vite-plugin-aero-content')
 	})
 
 	describe('resolveId', () => {
-		it('should resolve aero:content to the virtual module ID', () => {
+		it('resolves aero:content to the virtual module ID', () => {
 			const plugin = aeroContent()
 			const resolveId = plugin.resolveId as Function
 			expect(resolveId('aero:content')).toBe('\0aero:content')
 		})
 
-		it('should resolve aero:content/collection to the same virtual module', () => {
+		it('resolves aero:content/<name> to the same virtual module', () => {
 			const plugin = aeroContent()
 			const resolveId = plugin.resolveId as Function
 			expect(resolveId('aero:content/docs')).toBe('\0aero:content')
 			expect(resolveId('aero:content/posts')).toBe('\0aero:content')
 		})
 
-		it('should return null for unrelated module IDs', () => {
+		it('returns null for unrelated module IDs', () => {
 			const plugin = aeroContent()
 			const resolveId = plugin.resolveId as Function
 			expect(resolveId('some-other-module')).toBeNull()
@@ -35,14 +39,14 @@ describe('aeroContent', () => {
 	})
 
 	describe('load', () => {
-		it('should return a comment stub when no config is loaded', async () => {
+		it('returns a comment stub when no config is loaded (e.g. missing content.config.ts)', async () => {
 			const plugin = aeroContent()
 			const load = plugin.load as Function
 			const result = await load('\0aero:content')
 			expect(result).toContain('no collections configured')
 		})
 
-		it('should return null for unrelated module IDs', async () => {
+		it('returns null for non-content module IDs', async () => {
 			const plugin = aeroContent()
 			const load = plugin.load as Function
 			const result = await load('some-other-module')
@@ -60,10 +64,13 @@ describe('aeroContent', () => {
 			vi.clearAllMocks()
 		})
 
-		it('should warn and skip when config file does not exist', async () => {
+		/**
+		 * Plugin uses dynamic import() for config, not fs; warning depends on import failing (e.g. ENOENT).
+		 * FIXME: This test may be environment-dependent; consider using a temp dir with no config file for a stable ENOENT.
+		 */
+		it('warns when config file cannot be loaded (missing or unloadable)', async () => {
 			const plugin = aeroContent()
 			const configResolved = plugin.configResolved as Function
-
 			const warnSpy = vi.spyOn(mockConfig.logger, 'warn')
 
 			vi.mock('node:fs', () => ({
@@ -89,7 +96,8 @@ describe('aeroContent', () => {
 			handleHotUpdate = plugin.handleHotUpdate as Function
 		})
 
-		it('should do nothing when file is not in watched directories', () => {
+		/** Relies on mutating plugin internals (watchedDirs); full flow would require configResolved with real config. */
+		it('does not invalidate or full-reload when changed file is outside watched dirs', () => {
 			const mockServer = {
 				moduleGraph: {
 					getModuleById: vi.fn().mockReturnValue(null),
@@ -99,9 +107,7 @@ describe('aeroContent', () => {
 				},
 			}
 
-			plugin.configResolved = vi.fn().mockImplementation(async (config: any) => {
-				;(plugin as any).watchedDirs = ['/project/content']
-			})
+			;(plugin as any).watchedDirs = ['/project/content']
 
 			handleHotUpdate({
 				file: '/project/src/other.ts',
