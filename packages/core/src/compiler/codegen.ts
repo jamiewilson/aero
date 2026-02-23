@@ -678,19 +678,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, styles, scripts, headScripts: injectedHeadScripts } = Aero;
-		${script}
-		${styleCode}
-		${rootScripts.length > 0 ? rootScripts.join('\n\t\t') : ''}
-		${headScripts.length > 0 ? headScripts.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t') : ''}
-		let __out = '';
-		${bodyCode}return __out;
-	}`
+	const renderFn = Helper.emitRenderFunction(script, bodyCode, {
+		getStaticPathsFn: getStaticPathsFn || undefined,
+		styleCode,
+		rootScriptsLines: rootScripts,
+		headScriptsLines: headScripts,
+	})
 
-	return (
-		importsCode +
-		'\n' +
-		(getStaticPathsFn ? `${getStaticPathsFn}\n\n${renderFn}`.trim() : renderFn.trim())
-	)
+	return importsCode + '\n' + renderFn
 }
