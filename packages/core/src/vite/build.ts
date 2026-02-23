@@ -8,7 +8,7 @@
  * and optionally minifies HTML. Also provides createBuildConfig for Rollup inputs and discoverClientScriptContentMap for the plugin.
  */
 
-import type { AeroDirs, ScriptEntry, StaticPathEntry } from '../types'
+import type { AeroDirs, RedirectRule, ScriptEntry, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import { minify as minifyHTML } from 'html-minifier-next'
 import fs from 'node:fs'
@@ -27,7 +27,7 @@ import {
 	resolveDirs,
 } from './defaults'
 
-/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify, site. */
+/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify, site, redirects. */
 interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
@@ -38,6 +38,8 @@ interface StaticBuildOptions {
 	minify?: boolean
 	/** Canonical site URL (e.g. 'https://example.com'). Passed into render context as Aero.site. */
 	site?: string
+	/** Redirect rules; pages whose path matches a redirect `from` are not built (so only the redirect handles that path). */
+	redirects?: RedirectRule[]
 }
 
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
@@ -528,9 +530,23 @@ export async function renderStaticPages(
 			}
 		}
 
-		const routeSet = new Set(pages.map(p => p.routePath))
+		// Skip building pages that are redirect sources so the Nitro routeRule is the only handler.
+		const redirectFromSet = new Set(
+			(options.redirects ?? []).map(r =>
+				r.from.replace(/^\/+|\/+$/g, '').trim() || '',
+			),
+		)
+		const pathMatchesRedirect = (page: StaticPage): boolean => {
+			const pathSegment = page.routePath === '' ? '' : page.routePath
+			return redirectFromSet.has(pathSegment)
+		}
+		const pagesToRender = options.redirects?.length
+			? pages.filter(p => !pathMatchesRedirect(p))
+			: pages
 
-		for (const page of pages) {
+		const routeSet = new Set(pagesToRender.map(p => p.routePath))
+
+		for (const page of pagesToRender) {
 			const routePath = page.routePath ? `/${page.routePath}` : '/'
 			const pageUrl = new URL(routePath, 'http://localhost')
 
@@ -577,7 +593,7 @@ export async function renderStaticPages(
 		}
 
 		if (options.site && options.site.trim() !== '') {
-			const routePaths = [...new Set(pages.map(p => p.routePath))]
+			const routePaths = [...new Set(pagesToRender.map(p => p.routePath))]
 			writeSitemap(routePaths, options.site.trim(), distDir)
 		}
 	} finally {

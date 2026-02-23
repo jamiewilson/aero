@@ -14,6 +14,13 @@ export interface AeroDirs {
 	dist?: string
 }
 
+/** One redirect rule: from path to URL, optional status (default 302). */
+export interface RedirectRule {
+	from: string
+	to: string
+	status?: number
+}
+
 export interface AeroOptions {
 	/** Enable Nitro server integration (default: `false`). */
 	nitro?: boolean
@@ -26,7 +33,38 @@ export interface AeroOptions {
 	 * as `Aero.site` in templates. Used for sitemap, RSS, and canonical links.
 	 */
 	site?: string
+	/**
+	 * Redirect rules applied in dev (Vite) and when using the Nitro server (preview:api / production).
+	 * For static-only deploys use host redirect config (_redirects, vercel.json, etc.).
+	 */
+	redirects?: RedirectRule[]
+	/**
+	 * Optional request-time middleware (redirects, rewrites, custom responses).
+	 * Runs in dev before rendering; for production redirects use Nitro server middleware or `redirects` config.
+	 */
+	middleware?: AeroMiddleware[]
 }
+
+/** Request context passed to middleware (url, request, route path, resolved page name, site). */
+export interface AeroRequestContext {
+	url: URL
+	request: Request
+	routePath: string
+	pageName: string
+	site?: string
+}
+
+/** Result of middleware: redirect, rewrite render input, or send a custom response. */
+export type AeroMiddlewareResult =
+	| { redirect: { url: string; status?: number } }
+	| { rewrite: Partial<AeroRenderInput> & { pageName?: string } }
+	| { response: Response }
+	| void
+
+/** Middleware handler: receives request context; returns redirect/rewrite/response or nothing to continue. */
+export type AeroMiddleware = (
+	ctx: AeroRequestContext,
+) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
 
 /** Options for the client-side `mount()` entry (see `core/src/index.ts`). */
 export interface MountOptions {

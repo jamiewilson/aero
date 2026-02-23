@@ -6,7 +6,13 @@
  * Static build plugin runs after closeBundle; Nitro and image optimizer are composed in the factory.
  */
 
-import type { AeroOptions, AliasResult, ScriptEntry } from '../types'
+import type {
+	AeroMiddlewareResult,
+	AeroOptions,
+	AliasResult,
+	AeroRenderInput,
+	ScriptEntry,
+} from '../types'
 import { extractObjectKeys } from '../compiler/helpers'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
@@ -231,6 +237,19 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 				const ext = path.extname(pathname)
 				if (ext && ext !== '.html') return next()
 
+				// Apply config redirects first (exact path match)
+				const redirects = state.options.redirects
+				if (redirects?.length) {
+					for (const rule of redirects) {
+						if (pathname === rule.from) {
+							res.statusCode = rule.status ?? 302
+							res.setHeader('Location', rule.to)
+							res.end()
+							return
+						}
+					}
+				}
+
 				try {
 					const pageName = resolvePageName(req.url)
 					const mod = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
@@ -246,17 +265,58 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 						requestHeaders.set(name, value)
 					}
 
-					const renderInput = {
+					const request = new Request(requestUrl.toString(), {
+						method: req.method || 'GET',
+						headers: requestHeaders,
+					})
+
+					let renderPageName = pageName
+					let renderInput: AeroRenderInput = {
 						url: requestUrl,
-						request: new Request(requestUrl.toString(), {
-							method: req.method || 'GET',
-							headers: requestHeaders,
-						}),
+						request,
 						routePath: pathname,
 						site: state.options.site,
 					}
 
-					let rendered = await mod.aero.render(pageName, renderInput)
+					// Run middleware (redirects, rewrites, custom response)
+					const middleware = state.options.middleware
+					if (middleware?.length) {
+						const ctx = {
+							url: requestUrl,
+							request,
+							routePath: pathname,
+							pageName,
+							site: state.options.site,
+						}
+						for (const handler of middleware) {
+							const result: AeroMiddlewareResult = await Promise.resolve(
+								handler(ctx),
+							)
+							if (result && 'redirect' in result) {
+								res.statusCode = result.redirect.status ?? 302
+								res.setHeader('Location', result.redirect.url)
+								res.end()
+								return
+							}
+							if (result && 'response' in result) {
+								res.statusCode = result.response.status
+								result.response.headers.forEach(
+									(v: string, k: string) => res.setHeader(k, v),
+								)
+								const body = await result.response.arrayBuffer()
+								res.end(Buffer.from(body))
+								return
+							}
+							if (result && 'rewrite' in result) {
+								if (result.rewrite.pageName !== undefined)
+									renderPageName = result.rewrite.pageName
+								const { pageName: _pn, ...rest } = result.rewrite
+								renderInput = { ...renderInput, ...rest }
+							}
+						}
+					}
+
+					let rendered = await mod.aero.render(renderPageName, renderInput)
 
 					if (rendered === null) {
 						res.statusCode = 404
@@ -381,10 +441,12 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					vitePlugins: state.config!.configFile ? [] : aeroCorePlugins,
 					minify: shouldMinifyHtml,
 					site: options.site,
+					redirects: options.redirects,
 				},
 				outDir,
 			)
 			if (enableNitro) {
+				process.env.AERO_REDIRECTS = JSON.stringify(options.redirects ?? [])
 				await runNitroBuild(root)
 			}
 		},

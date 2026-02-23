@@ -34,13 +34,16 @@ export function createViteConfig(
 			? aeroConfig({ command: options.command, mode: options.mode })
 			: aeroConfig
 
-	const { content, server, site, dirs, vite: userViteConfig } = resolvedConfig
+	const { content, server, site, dirs, redirects, middleware, vite: userViteConfig } =
+		resolvedConfig
 
 	const basePlugins: UserConfig['plugins'] = [
 		aero({
 			nitro: server ?? false,
 			site,
 			dirs,
+			redirects,
+			middleware,
 		}),
 	]
 

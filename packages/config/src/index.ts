@@ -6,4 +6,5 @@
  */
 export { defineConfig } from './defineConfig'
 export { createViteConfig } from './createViteConfig'
+export { redirectsToRouteRules } from './redirects'
 export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'

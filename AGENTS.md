@@ -98,6 +98,7 @@ Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, c
 
 Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aero.config.ts` (`site: '...'`) or passed to `aero({ site: '...' })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [docs/site-url.md](docs/site-url.md).
 - **Environment variables:** Vite’s `import.meta.env`; use `VITE_` prefix for client-exposed vars. Aero injects `SITE` when `site` is set. Optional `env.d.ts` for types. See [docs/environment-variables.md](docs/environment-variables.md).
+- **Middleware/hooks:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev only) for redirects, rewrites, or custom responses. See [_reference/middleware.md](_reference/middleware.md).
 
 ## File Structure
 
