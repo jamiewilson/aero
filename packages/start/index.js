@@ -6,13 +6,12 @@ import {
 	existsSync,
 	statSync,
 	readdirSync,
-	readFileSync,
-	writeFileSync,
 	lstatSync,
 } from 'fs'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
+import { parseArgs, rewritePackageJson, findWorkspaceRoot } from './lib.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
@@ -21,22 +20,6 @@ const APPS_DIR = 'dist'
 
 const TEMPLATES = ['minimal', 'kitchen-sink']
 const DEFAULT_TEMPLATE = 'minimal'
-
-function parseArgs(argv) {
-	const args = argv.slice(2)
-	let target = null
-	let template = DEFAULT_TEMPLATE
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === '--template' && args[i + 1]) {
-			template = args[++i]
-			continue
-		}
-		if (!args[i].startsWith('-') && !target) {
-			target = args[i]
-		}
-	}
-	return { target, template }
-}
 
 function resolveTemplatePath(templateName) {
 	const pkgName = `@aero-ssg/template-${templateName}`
@@ -78,34 +61,6 @@ function isInMonorepo() {
 		return lstatSync(templatePath).isSymbolicLink()
 	} catch {
 		return false
-	}
-}
-
-function rewritePackageJson(targetDir, projectName, inMonorepo) {
-	const pkgPath = join(targetDir, 'package.json')
-	if (!existsSync(pkgPath)) return
-	const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-	pkg.name = projectName
-	if (!inMonorepo) {
-		const rewrite = deps => {
-			if (!deps) return
-			for (const key of Object.keys(deps)) {
-				if (deps[key] === 'workspace:*') deps[key] = '*'
-			}
-		}
-		rewrite(pkg.dependencies)
-		rewrite(pkg.devDependencies)
-	}
-	writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
-}
-
-function findWorkspaceRoot(fromDir) {
-	let dir = fromDir
-	for (;;) {
-		if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return dir
-		const parent = dirname(dir)
-		if (parent === dir) return null
-		dir = parent
 	}
 }
 
