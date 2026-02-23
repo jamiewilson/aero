@@ -5,14 +5,14 @@
 	"packageManager": "pnpm@10.28.0",
 	"scripts": {
 		"test": "vitest run",
-		"dev": "pnpm --dir packages/start dev",
-		"preview": "pnpm --dir packages/start preview",
-		"build": "pnpm build:core && pnpm build:config && pnpm build:content && pnpm build:start",
+		"dev": "pnpm --dir packages/templates/kitchen-sink dev",
+		"preview": "pnpm --dir packages/templates/kitchen-sink preview",
+		"build": "pnpm build:core && pnpm build:config && pnpm build:content && pnpm build:kitchen-sink",
 		"typecheck": "pnpm -r typecheck",
 		"build:core": "pnpm --dir packages/core build",
 		"build:config": "pnpm --dir packages/config build",
 		"build:content": "pnpm --dir packages/content build",
-		"build:start": "pnpm --dir packages/start build",
+		"build:kitchen-sink": "pnpm --dir packages/templates/kitchen-sink build",
 		"build:vscode": "pnpm --dir packages/vscode build",
 		"clean:all": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
 	},

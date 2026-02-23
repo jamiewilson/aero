@@ -6,6 +6,7 @@ export default defineConfig({
 			'packages/core/**/*.test.ts',
 			'packages/content/**/*.test.ts',
 			'packages/vscode/**/*.test.ts',
+			'packages/start/**/*.test.js',
 		],
 	},
 })

@@ -1,0 +1,14 @@
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+
+	const headerProps = {
+		title: site.home.title,
+		subtitle: site.home.subtitle,
+	}
+</script>
+
+<base-layout>
+	<header-component props="{...headerProps}" />
+</base-layout>

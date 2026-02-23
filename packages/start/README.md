@@ -1,50 +1,54 @@
-# @aero-ssg/start
+# create-aero
 
-Starter app for the Aero static site generator. Demonstrates pages, layouts, components, content collections, Nitro API routes, and client scripts.
+Project initializer for [Aero](https://github.com/aero-ssg/aero). Scaffolds a new app from the **minimal** or **kitchen-sink** template.
 
-## Structure
+## Development (monorepo)
 
-| Path | Description |
-|------|-------------|
-| `client/` | Front-end source: pages, components, layouts, assets. |
-| `client/pages/` | Route pages (e.g. `home.html` → `/`, `about.html` → `/about`, `docs/[slug].html` → `/docs/:slug`). |
-| `client/components/` | Reusable components (`-component` suffix in markup). |
-| `client/layouts/` | Layout wrappers with `<slot>`. |
-| `client/assets/` | Styles, scripts, images. |
-| `content/` | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals. |
-| `server/` | Nitro: `api/` (e.g. `submit.post.ts`), `routes/` (e.g. catch-all for static). |
-| `public/` | Static assets copied as-is. |
-| `aero.config.ts` | Aero config (content, server, dirs, vite). |
-| `content.config.ts` | Content collections (used when `content: true`). |
-| `vite.config.ts` | Build entry: `createViteConfig(aeroConfig, { command, mode })`. |
-| `tsconfig.json` | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc. |
-| `env.d.ts` | Optional: extends `ImportMetaEnv` with `SITE` and custom env vars for TypeScript. See docs/environment-variables.md. |
+Run from **`packages/start`** only. The app is created at `packages/start/dist/<name>` and is a workspace package, so `@aero-ssg/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
 
-## Commands
+```bash
+cd packages/start
+pnpm run create-aero my-app
+pnpm run create-aero my-app --template kitchen-sink
+```
 
-From repo root (or from `packages/start` if core is built):
+Then:
 
-- **pnpm dev** — Vite dev server with HMR (and Nitro when `server: true`).
-- **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
-- **pnpm preview** — Static preview only (`AERO_NITRO=false` build + `vite preview`).
-- **pnpm preview:api** — Full server preview (static + Nitro API).
+```bash
+cd dist/my-app
+pnpm dev
+```
 
-Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs core build first).
+Or from repo root:
 
-## Dependencies
+```bash
+pnpm --dir packages/start/dist/my-app dev
+```
 
-- `@aero-ssg/config`, `@aero-ssg/content`, `@aero-ssg/core` (workspace)
-- Optional: Alpine.js, HTMX (included in this starter)
+## Published usage
 
-## Path aliases (tsconfig)
+When `create-aero` is installed from npm:
 
-- `@components/*` → client/components/*
-- `@layouts/*` → client/layouts/*
-- `@pages/*` → client/pages/*
-- `@content/*` → content/*
-- `@styles/*` → client/assets/styles/*
-- `@scripts/*` → client/assets/scripts/*
-- `@images/*` → client/assets/images/*
-- `@src/*` → client/*
-- `@server/*` → server/*
-- `~/*` → project root
+```bash
+pnpm create aero <dir> [--template minimal|kitchen-sink]
+npm create aero@latest <dir> [--template minimal|kitchen-sink]
+yarn create aero <dir> [--template minimal|kitchen-sink]
+```
+
+The app is created in the current directory (or the given path). The CLI rewrites `workspace:*` to `*` and runs `pnpm install` (or npm/yarn) in the new project.
+
+## Arguments
+
+| Argument   | Description                                                                 |
+|-----------|-----------------------------------------------------------------------------|
+| **&lt;dir&gt;** | App name and directory (e.g. `my-app` → `packages/start/dist/my-app` in monorepo). |
+| **--template** | `minimal` (default) or `kitchen-sink`.                                      |
+
+## Templates
+
+| Template       | Description                                                                 |
+|----------------|-----------------------------------------------------------------------------|
+| **minimal**    | One layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. |
+| **kitchen-sink** | Full demo: pages, layouts, components, content collections, Nitro API, Alpine, HTMX.   |
+
+Templates are provided by `@aero-ssg/template-minimal` and `@aero-ssg/template-kitchen-sink` (workspace or published).

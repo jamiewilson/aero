@@ -1,0 +1,17 @@
+<script is:build>
+	const props = Aero.props
+</script>
+
+<header>
+	<h1>{props.title || 'Fallback Title'}</h1>
+	<p class="subtitle">{props.subtitle}</p>
+</header>
+
+<style>
+	@scope {
+		.subtitle {
+			max-width: 45ch;
+			text-wrap: pretty;
+		}
+	}
+</style>

@@ -279,9 +279,9 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('import { allCaps }')
 	})
 
-	/** Optional: runs only when packages/start has client/pages/home.html (snapshot of real page). */
+	/** Optional: runs only when packages/templates/kitchen-sink has client/pages/home.html (snapshot of real page). */
 	it('should extract plain script when parsing home.html from file (if present)', () => {
-		const homePath = path.resolve(__dirname, '../../../../start/client/pages/home.html')
+		const homePath = path.resolve(__dirname, '../../../../templates/kitchen-sink/client/pages/home.html')
 		if (!fs.existsSync(homePath)) return
 		const html = fs.readFileSync(homePath, 'utf-8')
 		const result = parse(html)

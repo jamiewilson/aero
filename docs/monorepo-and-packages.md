@@ -1,25 +1,27 @@
 # Aero Monorepo and Packages Reference
 
-This document describes the current monorepo layout and how the Aero framework package relates to the app.
+This document describes the current monorepo layout and how the Aero framework package relates to the app and templates.
 
 ## Layout Overview
 
 ```
-aero-start/
+aero/
 ├── package.json           # Workspace root; scripts delegate to packages
 ├── pnpm-workspace.yaml
 ├── packages/
 │   ├── core/              # Framework: compiler, runtime, Vite plugin (@aero-ssg/core)
 │   ├── vite/              # Vite plugin re-export (@aero-ssg/vite)
 │   ├── vscode/            # VS Code extension (syntaxes)
-│   └── start/             # Starter/scaffold app (@aero-ssg/start)
-│       ├── package.json
-│       ├── vite.config.ts
-│       ├── nitro.config.ts
-│       ├── tsconfig.json
-│       ├── src/            # Pages, components, layouts, content, assets
-│       ├── server/         # Nitro API and routes
-│       └── public/
+│   ├── start/             # Project initializer (create-aero); apps/ for scaffolded apps
+│   ├── templates/
+│   │   ├── kitchen-sink/  # Full demo app (@aero-ssg/template-kitchen-sink); root dev/build runs this
+│   │   │   ├── client/    # Pages, components, layouts, assets
+│   │   │   ├── content/   # Global data, content collections
+│   │   │   ├── server/    # Nitro API and routes
+│   │   │   ├── public/
+│   │   │   ├── vite.config.ts
+│   │   │   └── nitro.config.ts
+│   │   └── minimal/       # Minimal template (@aero-ssg/template-minimal)
 ├── docs/
 ├── .cursor/
 └── .github/
@@ -28,8 +30,8 @@ aero-start/
 ## packages/core (framework)
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
-- **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts `predev`, `prebuild`, `prepreview`, `prepreview:api` run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `packages/start/vite.config.ts` does `import { aero } from '@aero-ssg/vite'` and uses `aero({ nitro: true })` (optional `site: 'https://...'` for canonical URL; see [site-url.md](site-url.md)). The app’s `package.json` has `"@aero-ssg/vite": "workspace:*"` in its devDependencies.
+- **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts run `pnpm --dir packages/core build` so the app always uses the built package.
+- **Consumption:** `packages/templates/kitchen-sink/vite.config.ts` (and minimal) use `import { createViteConfig } from '@aero-ssg/config'` and depend on `@aero-ssg/core`. The template `package.json` has `"@aero-ssg/core": "workspace:*"` (and config, content).
 - **Exports (package.json):**
   - `@aero-ssg/core` → main entry and types
   - `@aero-ssg/core/vite` → Vite plugin (also re-exported as `@aero-ssg/vite`)
@@ -46,24 +48,34 @@ aero-start/
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.
 
-## packages/start (starter app)
+## packages/start (create-aero)
 
-- **Purpose:** Scaffold/starter project. The app that root scripts run (e.g. `pnpm dev` → runs start's dev server).
-- **Source directory:** `packages/start/src/` (configurable via `aero({ dirs: { src: '…' } })`). Pages at `src/pages/`, components at `src/components/`, layouts at `src/layouts/`, global data at `src/content/`.
-- **Path aliases:** Defined in `packages/start/tsconfig.json` (e.g. `@components/*` → `./src/components/*`). The Aero resolver uses these when resolving component/layout imports in HTML.
-- **Server:** `packages/start/server/api/` and `packages/start/server/routes/`; `packages/start/nitro.config.ts` has `scanDirs: ['server']`.
+- **Purpose:** Project initializer. Run from `packages/start`: `pnpm run create-aero <name>` to scaffold a new app into `packages/start/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aero-ssg/template-minimal` and `@aero-ssg/template-kitchen-sink`.
+- **No app source** in start; templates live in `packages/templates/` and are copied from node_modules.
+
+## packages/templates/kitchen-sink (app used for dev/build)
+
+- **Purpose:** Full demo app. Root `pnpm dev`, `pnpm build`, `pnpm preview` run this package.
+- **Source directory:** `client/` (pages at `client/pages/`, components at `client/components/`, layouts at `client/layouts/`, assets at `client/assets/`). Global data at `content/` (e.g. `site.ts`, content collections).
+- **Path aliases:** Defined in `packages/templates/kitchen-sink/tsconfig.json` (e.g. `@components/*` → `./client/components/*`). The Aero resolver uses these when resolving component/layout imports in HTML.
+- **Server:** `server/api/`, `server/routes/`; `nitro.config.ts` has `scanDirs: ['server']`.
+
+## packages/templates/minimal
+
+- **Purpose:** Minimal template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm run create-aero <name>` by default.
+- **Structure:** Same as kitchen-sink but stripped: `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
 
 ## Build and test flow
 
 1. **Install:** `pnpm install` (pnpm workspace installs root + packages).
 2. **Build framework:** `pnpm --dir packages/core build` (or run via predev/prebuild from root).
-3. **Dev:** `pnpm dev` (from root) builds core then runs `packages/start` dev server (Vite + Aero plugin; Nitro when `aero({ nitro: true })`).
-4. **Build app:** `pnpm build` builds core then runs start's build (output to `packages/start/dist/` and `packages/start/.output/`).
+3. **Dev:** `pnpm dev` (from root) runs `packages/templates/kitchen-sink` dev server (Vite + Aero plugin; Nitro when enabled).
+4. **Build app:** `pnpm build` builds core then runs kitchen-sink build (output to `packages/templates/kitchen-sink/dist/` and `.output/`).
 5. **Tests:** `pnpm test` runs Vitest inside `packages/core` (compiler and vite tests). Run from repo root.
 
 ## Summary
 
 - **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin).
-- **Starter app** lives in `packages/start` (src/, server/, config). Root is a thin workspace; scripts delegate to core and start.
-- **Path conventions** use `src/` and `src/content/` for global data within the start package.
-- **Cursor rules and AGENTS.md** reference `packages/core` for the pipeline and `packages/start` for the app.
+- **App used for dev/build** is `packages/templates/kitchen-sink` (client/, content/, server/, config). Root scripts delegate to kitchen-sink.
+- **create-aero** lives in `packages/start`; scaffolds from `packages/templates/minimal` or `packages/templates/kitchen-sink`.
+- **Path conventions** use `client/` and `content/` in templates (not `src/`).
