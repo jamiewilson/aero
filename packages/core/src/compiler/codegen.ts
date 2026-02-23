@@ -637,10 +637,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Process Bundled Client Scripts
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
-			const hasType = clientScript.attrs.includes('type=')
-			const baseAttrs = hasType
-				? clientScript.attrs
-				: `type="module"${clientScript.attrs ? ' ' + clientScript.attrs : ''}`
+			const attrs = clientScript.attrs ?? ''
+			const hasType = attrs.includes('type=')
+			const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
 			const moduleTag = `<script ${baseAttrs} src="${clientScript.content}"></script>`
 
 			if (clientScript.passDataExpr) {

@@ -32,6 +32,16 @@ export interface MountOptions {
 }
 
 /**
+ * Single script entry: attrs (optional), content (body or virtual URL), optional pass:data expression.
+ * Used by parser, codegen, Vite plugin, and static build for client/inline/blocking script arrays.
+ */
+export interface ScriptEntry {
+	attrs?: string
+	content: string
+	passDataExpr?: string
+}
+
+/**
  * Input to the codegen compiler for a single template.
  *
  * @remarks
@@ -39,12 +49,12 @@ export interface MountOptions {
  */
 export interface CompileOptions {
 	root: string
-	/** `<script on:client>` entries: attrs string, body content, optional data-pass expression (e.g. `{ { config } }`). */
-	clientScripts?: { attrs: string; content: string; passDataExpr?: string }[]
-	/** Inline scripts (non-client, non-build) to be emitted in the page. */
-	inlineScripts?: { attrs: string; content: string; passDataExpr?: string }[]
-	/** Blocking scripts to be emitted in the page. */
-	blockingScripts?: { attrs: string; content: string; passDataExpr?: string }[]
+	/** Client script entries (plain `<script>`): after transform, `content` may be virtual URL. */
+	clientScripts?: ScriptEntry[]
+	/** Inline scripts (`is:inline`) to be emitted in the page. */
+	inlineScripts?: ScriptEntry[]
+	/** Blocking scripts (`is:blocking`) to be emitted in the page. */
+	blockingScripts?: ScriptEntry[]
 	/** Resolve import specifiers (e.g. `@components/foo`) to absolute paths. */
 	resolvePath?: (specifier: string) => string
 }
@@ -62,16 +72,14 @@ export interface ResolverOptions {
  * Produced by `parser.ts`. Extracted script blocks and the remaining template string for codegen.
  */
 export interface ParseResult {
-	/** Single `<script on:build>` block, or `null` if none. */
+	/** Single `<script is:build>` block, or `null` if none. */
 	buildScript: { content: string } | null
-	clientScripts: { attrs: string; content: string; passDataExpr?: string }[]
-	inlineScripts: { attrs: string; content: string; passDataExpr?: string }[]
-	blockingScripts: { attrs: string; content: string; passDataExpr?: string }[]
+	clientScripts: ScriptEntry[]
+	inlineScripts: ScriptEntry[]
+	blockingScripts: ScriptEntry[]
 	/** HTML after script blocks are stripped; used as input to codegen. */
 	template: string
 }
-
-// TODO: Script entry shape { attrs, content, passDataExpr? } is duplicated in CompileOptions and ParseResult; vite/build.ts has a similar ClientScriptEntry. Consider a shared type only if it simplifies the pipeline without adding indirection.
 
 /** One path alias from tsconfig (e.g. find: `@components`, replacement: `.../src/components`). */
 export interface UserAlias {
@@ -124,7 +132,7 @@ export interface AeroRenderInput {
 }
 
 /**
- * Context object available inside compiled templates (`on:build`) and when rendering components.
+ * Context object available inside compiled templates (`is:build`) and when rendering components.
  *
  * @remarks
  * Includes `props`, `slots`, `renderComponent`, `request`, `url`, `params`, and optional style/script sets.

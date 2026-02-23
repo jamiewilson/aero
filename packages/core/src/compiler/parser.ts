@@ -1,4 +1,4 @@
-import type { ParseResult } from '../types'
+import type { ParseResult, ScriptEntry } from '../types'
 import { parseHTML } from 'linkedom'
 
 /** Returns [start, end] ranges of all HTML comments in order. Used to skip scripts inside comments. */
@@ -35,9 +35,9 @@ export function parse(html: string): ParseResult {
 	html = html.replace(/^\uFEFF/, '')
 	const commentRanges = getCommentRanges(html)
 	let buildContent: string[] = []
-	let clientScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
-	let inlineScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
-	let blockingScripts: { attrs: string; content: string; passDataExpr?: string }[] = []
+	let clientScripts: ScriptEntry[] = []
+	let inlineScripts: ScriptEntry[] = []
+	let blockingScripts: ScriptEntry[] = []
 
 	// Match <script ...>...</script> in the original HTML
 	const SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi

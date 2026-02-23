@@ -8,7 +8,7 @@
  * serve only (not build/preview). Image optimizer is always included.
  */
 
-import type { AeroOptions, AliasResult } from '../types'
+import type { AeroOptions, AliasResult, ScriptEntry } from '../types'
 import { extractObjectKeys } from '../compiler/helpers'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
@@ -17,6 +17,7 @@ import { nitro } from 'nitro/vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
+	getClientScriptVirtualUrl,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
 	resolveDirs,
 	RUNTIME_INSTANCE_MODULE_ID,
@@ -60,7 +61,7 @@ async function runNitroBuild(root: string): Promise<void> {
  * @returns PluginOption[] to pass to Vite's plugins array.
  */
 export function aero(options: AeroOptions = {}): PluginOption[] {
-	const clientScripts = new Map<string, { content: string; passDataExpr?: string }>()
+	const clientScripts = new Map<string, ScriptEntry>()
 	const runtimeInstanceJsPath = fileURLToPath(
 		new URL('../runtime/instance.js', import.meta.url),
 	)
@@ -250,15 +251,14 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			try {
 				const parsed = parse(code)
 
-				if (parsed.clientScripts) {
+				if (parsed.clientScripts.length > 0) {
 					const relativePath = path.relative(config.root, id).replace(/\\/g, '/')
 					const baseName = relativePath.replace(/\.html$/i, '')
+					const total = parsed.clientScripts.length
 
-					for (let i = 0; i < parsed.clientScripts.length; i++) {
+					for (let i = 0; i < total; i++) {
 						const clientScript = parsed.clientScripts[i]
-						// If there's only 1 script, keep the ".js" suffix. Otherwise use ".0.js", ".1.js"
-						const suffix = parsed.clientScripts.length === 1 ? '.js' : `.${i}.js`
-						const clientScriptUrl = CLIENT_SCRIPT_PREFIX + baseName + suffix
+						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
 
 						clientScripts.set(clientScriptUrl, {
 							content: clientScript.content,

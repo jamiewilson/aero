@@ -8,7 +8,7 @@
  * and optionally minifies HTML. Also provides createBuildConfig for Rollup inputs and discoverClientScriptContentMap for the plugin.
  */
 
-import type { AeroDirs, StaticPathEntry } from '../types'
+import type { AeroDirs, ScriptEntry, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import { minify as minifyHTML } from 'html-minifier-next'
 import fs from 'node:fs'
@@ -19,6 +19,7 @@ import { createServer } from 'vite'
 import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
+	getClientScriptVirtualUrl,
 	LINK_ATTRS,
 	RUNTIME_INSTANCE_MODULE_ID,
 	SKIP_PROTOCOL_REGEX,
@@ -197,31 +198,28 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	})
 }
 
-/** Virtual URL as in HTML (with leading slash). Used by plugin load() and rewrite lookup. */
-export type ClientScriptEntry = { content: string; passDataExpr?: string }
-
 /**
  * Discover all extracted client scripts from templates under root/templateRoot.
  *
  * @param root - Project root.
  * @param templateRoot - Directory under root containing .html templates (e.g. client).
- * @returns Map from virtual URL (e.g. `/@aero/client/client/pages/home.js`) to `{ content, passDataExpr }`.
+ * @returns Map from virtual URL (e.g. `/@aero/client/client/pages/home.js`) to ScriptEntry.
  */
 export function discoverClientScriptContentMap(
 	root: string,
 	templateRoot: string,
-): Map<string, ClientScriptEntry> {
-	const map = new Map<string, ClientScriptEntry>()
+): Map<string, ScriptEntry> {
+	const map = new Map<string, ScriptEntry>()
 	for (const file of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
-		if (!parsed.clientScripts || parsed.clientScripts.length === 0) continue
+		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosix(path.relative(root, file))
 		const baseName = rel.replace(/\.html$/i, '')
 		const { clientScripts } = parsed
-		for (let i = 0; i < clientScripts.length; i++) {
-			const suffix = clientScripts.length === 1 ? '.js' : `.${i}.js`
-			const virtualPath = `${CLIENT_SCRIPT_PREFIX}${baseName}${suffix}`
+		const total = clientScripts.length
+		for (let i = 0; i < total; i++) {
+			const virtualPath = getClientScriptVirtualUrl(baseName, i, total)
 			map.set(virtualPath, {
 				content: clientScripts[i].content,
 				passDataExpr: clientScripts[i].passDataExpr,
@@ -240,13 +238,13 @@ function discoverClientScriptVirtualInputs(
 	for (const file of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
-		if (!parsed.clientScripts || parsed.clientScripts.length === 0) continue
+		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosix(path.relative(root, file))
 		const baseName = rel.replace(/\.html$/i, '')
 		const { clientScripts } = parsed
-		for (let i = 0; i < clientScripts.length; i++) {
-			const suffix = clientScripts.length === 1 ? '.js' : `.${i}.js`
-			const virtualPath = `${CLIENT_SCRIPT_PREFIX}${baseName}${suffix}`
+		const total = clientScripts.length
+		for (let i = 0; i < total; i++) {
+			const virtualPath = getClientScriptVirtualUrl(baseName, i, total)
 			const manifestKey = virtualPath.replace(/^\//, '')
 			entries[manifestKey] = virtualPath
 		}
