@@ -1,3 +1,9 @@
+/**
+ * Content loader: discover files, parse frontmatter (gray-matter), validate with Zod, run transforms, and serialize to virtual module source.
+ *
+ * @remarks
+ * Used by the Vite plugin to load all collections and emit the `aero:content` virtual module (getCollection + serialized data).
+ */
 import type {
 	ContentCollectionConfig,
 	ContentConfig,
@@ -9,10 +15,7 @@ import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
 
-/**
- * Load a single content collection: discover files, parse frontmatter,
- * validate schemas, and run transforms.
- */
+/** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
 	root: string,
@@ -75,8 +78,11 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 export type LoadedContent = Map<string, any[]>
 
 /**
- * Load all collections defined in a content config.
- * Returns a `Map<collectionName, documents[]>`.
+ * Load all collections; returns a map from collection name to document array.
+ *
+ * @param config - ContentConfig (collections array).
+ * @param root - Project root.
+ * @returns Map<collectionName, documents[]>.
  */
 export async function loadAllCollections(
 	config: ContentConfig,
@@ -92,31 +98,22 @@ export async function loadAllCollections(
 	return result
 }
 
-/**
- * Resolve the absolute directories watched for content changes.
- */
+/** Absolute paths of all collection directories (for HMR watch and invalidation). */
 export function getWatchedDirs(config: ContentConfig, root: string): string[] {
 	return config.collections.map(c => path.resolve(root, c.directory))
 }
 
-/**
- * Convert a collection name to its camelCase export name.
- * e.g. "docs" → "allDocs", "blog-posts" → "allBlogPosts"
- */
+/** Collection name to camelCase export name (e.g. `docs` → `allDocs`, `blog-posts` → `allBlogPosts`). */
 export function toExportName(collectionName: string): string {
 	const camel = collectionName.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
 	return `all${camel.charAt(0).toUpperCase()}${camel.slice(1)}`
 }
 
 /**
- * Serialize loaded content into an ESM module string.
+ * Serialize loaded collections into ESM source: `__collections` object, `getCollection(name, filterFn)`, and re-export of `render`.
  *
- * Produces:
- * ```js
- * const __collections = { docs: [...], posts: [...] };
- * export function getCollection(name) { ... }
- * export { render } from '@aero-ssg/content/render';
- * ```
+ * @param loaded - Map of collection name → document array (from loadAllCollections).
+ * @returns Full module source string for the virtual module.
  */
 export function serializeContentModule(loaded: LoadedContent): string {
 	const collectionsContent = Array.from(loaded.entries())

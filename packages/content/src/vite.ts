@@ -1,36 +1,35 @@
+/**
+ * Vite plugin for content collections: virtual module `aero:content`, config loading, and HMR invalidation.
+ *
+ * @remarks
+ * Resolves/loads `aero:content` (and `aero:content/...`) with serialized collections and getCollection/render.
+ * Loads content.config.ts in configResolved (and buildStart fallback); watches collection dirs and invalidates on change.
+ */
 import type { ContentConfig } from './types'
 import type { Plugin, ResolvedConfig } from 'vite'
 import {
 	loadAllCollections,
 	serializeContentModule,
 	getWatchedDirs,
-	toExportName,
 } from './loader'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-/** Virtual module prefix for content imports. */
 const CONTENT_MODULE_ID = 'aero:content'
 const RESOLVED_CONTENT_MODULE_ID = '\0aero:content'
-
-/** Default config file name. */
 const CONFIG_FILE = 'content.config.ts'
 
+/** Options for the content plugin (config file path). */
 export interface AeroContentOptions {
-	/** Path to the content config file, relative to project root. Default: `content.config.ts` */
+	/** Path to content config file relative to project root (default: `content.config.ts`). */
 	config?: string
 }
 
 /**
- * Vite plugin that provides the `aero:content` virtual module.
+ * Vite plugin that provides the `aero:content` virtual module (getCollection, render, serialized data).
  *
- * ```ts
- * import { aeroContent } from '@aero-ssg/content/vite'
- *
- * export default defineConfig({
- *   plugins: [aero(), aeroContent()],
- * })
- * ```
+ * @param options - Optional config file path.
+ * @returns Vite plugin.
  */
 export function aeroContent(options: AeroContentOptions = {}): Plugin {
 	let resolvedConfig: ResolvedConfig
@@ -40,7 +39,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 
 	return {
 		name: 'vite-plugin-aero-content',
-
+		/** Load content.config.ts, set contentConfig and watchedDirs; warn if config missing. */
 		async configResolved(config) {
 			resolvedConfig = config
 			const root = config.root
@@ -64,18 +63,18 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			}
 		},
 
+		/** Resolve aero:content and aero:content/… to the resolved virtual ID. */
 		resolveId(id) {
 			if (id === CONTENT_MODULE_ID) {
 				return RESOLVED_CONTENT_MODULE_ID
 			}
-			// Support per-collection imports: aero:content/docs → resolves to same module
-			// (individual collection exports are available from the main module)
 			if (id.startsWith(CONTENT_MODULE_ID + '/')) {
 				return RESOLVED_CONTENT_MODULE_ID
 			}
 			return null
 		},
 
+		/** Load virtual module: loadAllCollections, serializeContentModule, return ESM source. */
 		async load(id) {
 			if (id !== RESOLVED_CONTENT_MODULE_ID) return null
 			if (!contentConfig) {
@@ -88,8 +87,8 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			return serialized
 		},
 
+		/** Invalidate virtual module and full-reload when a file in a watched content dir changes. */
 		handleHotUpdate({ file, server }) {
-			// Check if the changed file is inside any watched content directory
 			const isContent = watchedDirs.some(dir => file.startsWith(dir))
 			if (!isContent) return
 
@@ -102,8 +101,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			}
 		},
 
-		// During the build, ensure the config is loaded via Vite's SSR pipeline
-		// so that TS config files are correctly transpiled.
+		/** Fallback: load config in build if not already loaded in configResolved. */
 		async buildStart() {
 			if (contentConfig) return // Already loaded in configResolved
 

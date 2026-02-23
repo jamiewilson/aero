@@ -1,19 +1,32 @@
+/**
+ * Codegen: compile parsed HTML template and script blocks into an async render function (module source).
+ *
+ * @remarks
+ * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
+ * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
+ * to emit code for elements, components, slots, data-each, data-if/else-if/else, and script/style pass:data.
+ * Output is a string of JavaScript (default async render function, optionally preceded by getStaticPaths export).
+ */
+
 import type { ParseResult, CompileOptions } from '../types'
 import * as CONST from './constants'
 import * as Helper from './helpers'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 
+/** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional pass:data expr. */
 interface ParsedElementAttrs {
 	attrString: string
 	loopData: { item: string; items: string } | null
 	passDataExpr: string | null
 }
 
+/** Result of parsing a component's attributes: props object code string (with optional spread). */
 interface ParsedComponentAttrs {
 	propsString: string
 }
 
+/** Internal compiler: walks DOM nodes and emits append/control-flow statements; used by compile(). */
 class Compiler {
 	private resolver: Resolver
 	private slotCounter = 0
@@ -198,6 +211,7 @@ class Compiler {
 		return { attrString, loopData, passDataExpr }
 	}
 
+	/** Dispatch by node type: text (3) → compileText, element (1) → compileElement; other types emit nothing. */
 	compileNode(node: any, skipInterpolation = false, outVar = '__out'): string {
 		switch (node.nodeType) {
 			case 3:
@@ -209,7 +223,7 @@ class Compiler {
 		}
 	}
 
-	/** Compiles a list of nodes (e.g. body children) with interpolation enabled. */
+	/** Compile a list of nodes (e.g. body children) with interpolation enabled; returns generated statements for `outVar`. */
 	compileFragment(nodes: NodeList | undefined): string {
 		return this.compileChildNodes(nodes, false, '__out')
 	}
@@ -312,6 +326,7 @@ class Compiler {
 		return Helper.emitAppend(content, outVar)
 	}
 
+	/** Compile one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
 	private compileElement(node: any, skipInterpolation: boolean, outVar: string): string {
 		const tagName = node.tagName.toLowerCase()
 
@@ -536,6 +551,13 @@ class Compiler {
 	}
 }
 
+/**
+ * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
+ *
+ * @param parsed - Result from parser (buildScript, clientScripts, inlineScripts, blockingScripts, template).
+ * @param options - Root, resolvePath, and optional overrides for client/inline/blocking script arrays.
+ * @returns Module source: optional getStaticPaths export and default async function(Aero) that returns HTML string.
+ */
 export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const inlineScripts = options.inlineScripts ?? parsed.inlineScripts
 

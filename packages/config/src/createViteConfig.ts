@@ -1,3 +1,10 @@
+/**
+ * Build the final Vite config from Aero config: resolve config function, merge Aero + content plugins and user vite overrides.
+ *
+ * @remarks
+ * Invokes `aeroConfig` with env if it's a function, then builds base config (defaultViteConfig + aero plugin + optional aeroContent).
+ * User `vite` is merged via Vite's mergeConfig; explicit `minify`/`cssMinify` from base are preserved when user sets them to true/null.
+ */
 import { mergeConfig } from 'vite'
 import { aero } from '@aero-ssg/core/vite'
 import { aeroContent } from '@aero-ssg/content/vite'
@@ -5,11 +12,19 @@ import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'
 
+/** Environment passed to createViteConfig (command and mode). */
 export interface CreateViteConfigOptions {
 	command: 'dev' | 'build'
 	mode: 'development' | 'production'
 }
 
+/**
+ * Create the Vite UserConfig from Aero config and env.
+ *
+ * @param aeroConfig - Static config or function receiving `{ command, mode }`.
+ * @param options - Current command and mode (e.g. from CLI).
+ * @returns Merged Vite config (defaults + Aero plugins + user vite; minify/cssMinify preserved when user overrides).
+ */
 export function createViteConfig(
 	aeroConfig: AeroConfig | AeroConfigFunction,
 	options: CreateViteConfigOptions,

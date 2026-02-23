@@ -1,3 +1,13 @@
+/**
+ * Static build: page discovery, client script discovery, HTML rendering, and URL rewriting.
+ *
+ * @remarks
+ * Used after Vite's main bundle (closeBundle). Discovers pages from client/pages, expands dynamic
+ * routes via getStaticPaths, runs a minimal Vite server in middleware mode to render each page,
+ * rewrites virtual script URLs and absolute hrefs/src to dist-relative paths using the manifest,
+ * and optionally minifies HTML. Also provides createBuildConfig for Rollup inputs and discoverClientScriptContentMap for the plugin.
+ */
+
 import type { AeroDirs, StaticPathEntry } from '../types'
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import { minify as minifyHTML } from 'html-minifier-next'
@@ -15,6 +25,7 @@ import {
 	resolveDirs,
 } from './defaults'
 
+/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify. */
 interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
@@ -25,6 +36,7 @@ interface StaticBuildOptions {
 	minify?: boolean
 }
 
+/** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
 interface StaticPage {
 	pageName: string
 	routePath: string
@@ -34,16 +46,12 @@ interface StaticPage {
 	props?: Record<string, any>
 }
 
-/** The pageName or routePath contains bracket-delimited dynamic segments. */
+/** True if page has dynamic segments (e.g. `posts/[id]`). */
 function isDynamicPage(page: StaticPage): boolean {
 	return /\[.+?\]/.test(page.pageName)
 }
 
-/**
- * Replace bracket segments in a pattern with concrete param values.
- * e.g. expandPattern('[id]', { id: 'alpha' }) → 'alpha'
- *      expandPattern('docs/[slug]', { slug: 'intro' }) → 'docs/intro'
- */
+/** Replace `[key]` in pattern with params[key]; throws if a key is missing. */
 function expandPattern(pattern: string, params: Record<string, string>): string {
 	return pattern.replace(/\[(.+?)\]/g, (_, key) => {
 		if (!(key in params)) {
@@ -60,6 +68,7 @@ function toPosix(value: string): string {
 	return value.replace(/\\/g, '/')
 }
 
+/** Recursively collect all .html file paths under dir. */
 function walkHtmlFiles(dir: string): string[] {
 	if (!fs.existsSync(dir)) return []
 	const files: string[] = []
@@ -76,18 +85,21 @@ function walkHtmlFiles(dir: string): string[] {
 	return files
 }
 
+/** Page name to route path (e.g. index → '', about → about, blog/index → blog). */
 function toRouteFromPageName(pageName: string): string {
 	if (pageName === 'index') return ''
 	if (pageName.endsWith('/index')) return pageName.slice(0, -'/index'.length)
 	return pageName
 }
 
+/** Route path to output file path (e.g. '' → index.html, about → about/index.html). */
 function toOutputFile(routePath: string): string {
 	if (routePath === '') return 'index.html'
 	if (routePath === '404') return '404.html'
 	return toPosix(path.join(routePath, 'index.html'))
 }
 
+/** Relative path from fromDir to targetPath, always starting with ./ when non-empty. */
 function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 	const rel = path.posix.relative(fromDir, targetPath)
 	if (!rel) return './'
@@ -95,6 +107,7 @@ function normalizeRelativeLink(fromDir: string, targetPath: string): string {
 	return `./${rel}`
 }
 
+/** Relative path to a route (directory index); appends trailing slash for non-root routes. */
 function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
 	const targetDir = routePath === '' ? '' : routePath
 	const rel = path.posix.relative(fromDir, targetDir)
@@ -113,15 +126,18 @@ function normalizeRoutePathFromHref(value: string): string {
 	return value.replace(/^\/+/, '').replace(/\/+$/, '')
 }
 
+/** True if URL is empty or matches SKIP_PROTOCOL_REGEX (external, hash, etc.). */
 function isSkippableUrl(value: string): boolean {
 	if (!value) return true
 	return SKIP_PROTOCOL_REGEX.test(value)
 }
 
+/** Root-relative path for manifest key (posix). */
 function toManifestKey(root: string, filePath: string): string {
 	return toPosix(path.relative(root, filePath))
 }
 
+/** Resolve script/link src or href to absolute path; returns null for external/skippable or unresolvable. */
 function resolveTemplateAssetPath(
 	rawValue: string,
 	templateFile: string,
@@ -140,10 +156,12 @@ function resolveTemplateAssetPath(
 	return null
 }
 
+/** All .html files under root/templateRoot (recursive). */
 function discoverTemplates(root: string, templateRoot: string): string[] {
 	return walkHtmlFiles(path.resolve(root, templateRoot))
 }
 
+/** Static pages from pagesRoot: file paths, page names, route paths, output files; home → index when no sibling index. */
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
 	const pageFiles = walkHtmlFiles(pagesDir)
@@ -183,9 +201,11 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 export type ClientScriptEntry = { content: string; passDataExpr?: string }
 
 /**
- * Discovers all extracted client scripts from templates and returns a map from
- * virtual URL (e.g. "/@aero/client/client/pages/home.js") to { content, passDataExpr }.
- * Used by the Vite plugin to serve and bundle these scripts (including pass:data preamble).
+ * Discover all extracted client scripts from templates under root/templateRoot.
+ *
+ * @param root - Project root.
+ * @param templateRoot - Directory under root containing .html templates (e.g. client).
+ * @returns Map from virtual URL (e.g. `/@aero/client/client/pages/home.js`) to `{ content, passDataExpr }`.
  */
 export function discoverClientScriptContentMap(
 	root: string,
@@ -211,10 +231,7 @@ export function discoverClientScriptContentMap(
 	return map
 }
 
-/**
- * Returns Rollup input entries for virtual client scripts so they are bundled and
- * appear in the manifest. Keys are manifest keys (no leading slash) for rewriteAbsoluteUrl.
- */
+/** Rollup input entries for virtual client scripts (manifest key → virtual path); used by createBuildConfig. */
 function discoverClientScriptVirtualInputs(
 	root: string,
 	templateRoot: string,
@@ -237,6 +254,7 @@ function discoverClientScriptVirtualInputs(
 	return entries
 }
 
+/** Rollup input entries: script/link refs from templates, default client index, and assets/images. */
 function discoverAssetInputs(
 	root: string,
 	resolvePath?: (specifier: string) => string,
@@ -287,6 +305,7 @@ function discoverAssetInputs(
 	return Object.fromEntries(entries)
 }
 
+/** Recursively collect all file paths under dir (no extension filter). */
 function walkFiles(dir: string): string[] {
 	if (!fs.existsSync(dir)) return []
 	const files: string[] = []
@@ -303,10 +322,12 @@ function walkFiles(dir: string): string[] {
 	return files
 }
 
+/** Prepend `<!doctype html>` if missing. */
 function addDoctype(html: string): string {
 	return /^\s*<!doctype\s+html/i.test(html) ? html : `<!doctype html>\n${html}`
 }
 
+/** Rewrite one absolute URL to dist-relative using manifest and route set; leaves API and external URLs unchanged. */
 function rewriteAbsoluteUrl(
 	value: string,
 	fromDir: string,
@@ -346,6 +367,7 @@ function rewriteAbsoluteUrl(
 	return rel + suffix
 }
 
+/** Rewrite script src (virtual client → hashed asset) and LINK_ATTRS in rendered HTML; add doctype. */
 function rewriteRenderedHtml(
 	html: string,
 	outputFile: string,
@@ -396,6 +418,12 @@ function readManifest(distDir: string): Manifest {
 	return JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as Manifest
 }
 
+/**
+ * Render all static pages into outDir: discover pages, expand dynamic routes via getStaticPaths, run Vite in middleware mode, rewrite URLs, optionally minify.
+ *
+ * @param options - StaticBuildOptions (root, dirs, resolvePath, vitePlugins, configFile, minify).
+ * @param outDir - Output directory (e.g. dist).
+ */
 export async function renderStaticPages(
 	options: StaticBuildOptions,
 	outDir: string,
@@ -531,6 +559,13 @@ interface BuildConfigOptions {
 	resolvePath?: (specifier: string) => string
 }
 
+/**
+ * Vite build config: outDir, manifest, emptyOutDir, rollupOptions.input from discovered assets and virtual client scripts.
+ *
+ * @param options - Optional dirs and resolvePath for asset discovery.
+ * @param root - Project root (default process.cwd()).
+ * @returns Vite UserConfig.build fragment.
+ */
 export function createBuildConfig(
 	options: BuildConfigOptions = {},
 	root = process.cwd(),
