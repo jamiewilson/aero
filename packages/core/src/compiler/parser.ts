@@ -18,6 +18,20 @@ function isInsideComment(pos: number, commentRanges: [number, number][]): boolea
 }
 
 /**
+ * True if position is inside SVG or MathML (foreign content). Scripts there are not Aero template
+ * scripts and should be left in the template.
+ */
+function isInsideForeignNamespace(html: string, pos: number): boolean {
+	const before = html.slice(0, pos)
+	const svgOpens = (before.match(/<svg[\s>]/gi) || []).length
+	const svgCloses = (before.match(/<\/svg\s*>/gi) || []).length
+	if (svgOpens > svgCloses) return true
+	const mathOpens = (before.match(/<math[\s>]/gi) || []).length
+	const mathCloses = (before.match(/<\/math\s*>/gi) || []).length
+	return mathOpens > mathCloses
+}
+
+/**
  * Parse HTML and extract Aero script blocks; return build script, client/inline/blocking script arrays, and template.
  *
  * @remarks
@@ -76,6 +90,12 @@ export function parse(html: string): ParseResult {
 
 		// Skip scripts that are inside HTML comments
 		if (isInsideComment(start, commentRanges)) {
+			match = SCRIPT_REGEX.exec(html)
+			continue
+		}
+
+		// Skip scripts inside SVG/MathML (foreign content); leave them in the template
+		if (isInsideForeignNamespace(html, start)) {
 			match = SCRIPT_REGEX.exec(html)
 			continue
 		}

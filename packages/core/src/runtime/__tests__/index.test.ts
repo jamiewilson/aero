@@ -155,9 +155,44 @@ describe('Aero class', () => {
 			expect(capturedCtx.url).toBeInstanceOf(URL)
 			expect(capturedCtx.params).toEqual({ id: '1' })
 		})
-	})
 
-	// TODO: render() with slots in context; 404 fallback (render('404', input)); instance.ts / onUpdate not covered.
+		it('should pass slots in context when provided in input', async () => {
+			let capturedCtx: any
+			aero.registerPages({
+				'pages/index.html': {
+					default: (ctx: any) => {
+						capturedCtx = ctx
+						return ''
+					},
+				},
+			})
+
+			await aero.render('index', {
+				slots: { header: '<h1>Hi</h1>', footer: '<p>Bye</p>' },
+			})
+
+			expect(capturedCtx).toBeDefined()
+			expect(capturedCtx.slots).toEqual({ header: '<h1>Hi</h1>', footer: '<p>Bye</p>' })
+		})
+
+		it('should render 404 page with input (e.g. fallback page)', async () => {
+			let capturedCtx: any
+			aero.registerPages({
+				'pages/404.html': {
+					default: (ctx: any) => {
+						capturedCtx = ctx
+						return `<div>Not found: ${ctx.params?.path ?? 'unknown'}</div>`
+					},
+				},
+			})
+
+			const html = await aero.render('404', { params: { path: '/missing' } })
+
+			expect(capturedCtx).toBeDefined()
+			expect(capturedCtx.params).toEqual({ path: '/missing' })
+			expect(html).toContain('Not found: /missing')
+		})
+	})
 
 	/** Used by compiled templates; accepts function or module with default export. */
 	describe('renderComponent', () => {
@@ -175,11 +210,11 @@ describe('Aero class', () => {
 
 		it('should provide renderComponent in context', async () => {
 			let ctx: any
-			const component = (c: any) => { 
+			const component = (c: any) => {
 				ctx = c
-				return '' 
+				return ''
 			}
-			
+
 			await aero.renderComponent(component, {})
 
 			expect(ctx.renderComponent).toBeDefined()
@@ -187,3 +222,6 @@ describe('Aero class', () => {
 		})
 	})
 })
+
+// instance.ts and onUpdate are not unit-tested here: the module uses import.meta.glob('@components/...')
+// which requires a Vite app context. They are covered by client entry (core/src/index.ts) and dev/build usage.

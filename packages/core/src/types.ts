@@ -118,6 +118,8 @@ export interface StaticPathEntry {
  */
 export interface AeroRenderInput {
 	props?: Record<string, any>
+	/** Named slot content (key → HTML string) for layout/page render. */
+	slots?: Record<string, string>
 	request?: Request
 	url?: URL | string
 	params?: AeroRouteParams

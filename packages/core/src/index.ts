@@ -16,11 +16,11 @@ import { renderPage } from './runtime/client'
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
 
-/** Last element passed to `mount()`; used by the HMR callback to re-render the same root. */
-let lastEl: HTMLElement
-/** Unsubscribe from `onUpdate`. Set once when HMR is active; not cleared (single dev session). */
-let unsubscribe: () => void
-// TODO: Consider grouping lastEl + unsubscribe into a single HMR state object (or moving to runtime/client) to make the dev pipeline easier to trace.
+/** HMR state: root element for re-renders and unsubscribe. Set when mount() runs; subscription is registered once per dev session. */
+const hmrState: {
+	lastEl: HTMLElement | null
+	unsubscribe: (() => void) | null
+} = { lastEl: null, unsubscribe: null }
 
 /**
  * Attach the app to a DOM element and optionally set up HMR re-renders.
@@ -44,18 +44,19 @@ function mount(options: MountOptions = {}): Promise<void> {
 
 	if (!el) throw new Error('Target element not found: ' + target)
 
-	lastEl = el
+	hmrState.lastEl = el
 
 	// Skip initial render as we assume SSR provided the correct HTML.
 	// We just need to initialize any client-side logic (listeners, hydration, etc.)
 	if (onRender) onRender(el)
 	const done = Promise.resolve()
 
-	if (import.meta.hot && !unsubscribe) {
-		unsubscribe = onUpdate(() => {
-			if (lastEl) {
-				void renderPage(lastEl, coreRender).then(() => {
-					if (onRender) onRender(lastEl)
+	if (import.meta.hot && !hmrState.unsubscribe) {
+		hmrState.unsubscribe = onUpdate(() => {
+			const el = hmrState.lastEl
+			if (el) {
+				void renderPage(el, coreRender).then(() => {
+					if (onRender) onRender(el)
 				})
 			}
 		})
