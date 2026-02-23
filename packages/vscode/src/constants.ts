@@ -20,7 +20,6 @@ export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
 export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 
 export const ATTR_IS_BUILD = 'is:build'
-export const ATTR_IS_BUNDLED = 'is:bundled'
 export const ATTR_IS_INLINE = 'is:inline'
 
 /** Content globals: identifier → alias path. Files in `client/content/` are exposed as globals in Aero templates. */

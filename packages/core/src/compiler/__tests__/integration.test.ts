@@ -1,8 +1,15 @@
+/**
+ * Integration tests for the full parse → compile pipeline: getStaticPaths is extracted as a
+ * top-level named export (before the default async render function) and survives complex
+ * braces in strings/comments inside the function.
+ */
+
 import { describe, it, expect } from 'vitest'
 import { compile } from '../codegen'
 import { parse } from '../parser'
 
 describe('Compiler Integration', () => {
+	/** getStaticPaths must appear before export default async function(Aero) so Vite can expose it. */
 	it('should correctly extract getStaticPaths as a named export', async () => {
 		const src = `
 <script is:build>
@@ -34,10 +41,10 @@ describe('Compiler Integration', () => {
 		expect(getStaticPathsIndex).toBeGreaterThan(-1)
 		expect(defaultExportIndex).toBeGreaterThan(-1)
 
-		// getStaticPaths should typically be defined BEFORE default export in our codegen logic
 		expect(getStaticPathsIndex).toBeLessThan(defaultExportIndex)
 	})
 
+	/** extractGetStaticPaths must not break on { } inside strings or single-line comments. */
 	it('should handle getStaticPaths with complex braces in strings/comments', () => {
 		const src = `
 <script is:build>

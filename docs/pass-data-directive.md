@@ -31,9 +31,9 @@ Inline client scripts are directly embedded into the HTML. When interacting with
 </script>
 ```
 
-### Passing Data to `is:bundled` Modules
+### Passing Data to Client (Plain) Script Modules
 
-To prevent data serialization strings from congesting chunk sizes, `is:bundled` elements employ an optimized **DOM JSON + Auto-Inject** architecture for data passing:
+To prevent data serialization strings from congesting chunk sizes, plain `<script>` (client) elements use a **DOM JSON + Auto-Inject** architecture for data passing:
 
 1. **JSON Tag rendering**: Aero serializes the pass data locally into the HTML alongside the bundled request. E.g `<script type="application/json" id="__aero_data_xyz">{"systemConfig":{"timeout":5000}}</script>`
 2. **Vite auto-injection**: Aero hooks into Vite to prepend a destructuring `JSON.parse` to the virtual module.
@@ -43,7 +43,7 @@ To prevent data serialization strings from congesting chunk sizes, `is:bundled` 
 	const envStatus = process.env.STATUS
 </script>
 
-<script is:bundled pass:data="{ { envStatus } }">
+<script pass:data="{ { envStatus } }">
 	// "envStatus" feels like magic here.
 	// Under the hood, Aero automatically prefixes the module with:
 	// const { envStatus } = JSON.parse(document.getElementById('__aero_data')?.textContent || '{}');

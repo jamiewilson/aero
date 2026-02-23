@@ -1,3 +1,8 @@
+/**
+ * Unit tests for utils/routing.ts: resolvePageName mapping URL paths to page names.
+ * Covers root, simple/nested paths, .html strip, trailing slash → index, and query/hash stripping.
+ */
+
 import { describe, it, expect } from 'vitest'
 import { resolvePageName } from '../routing'
 

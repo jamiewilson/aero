@@ -24,8 +24,8 @@ const DIAGNOSTIC_SOURCE = 'aero'
 /** Matches `<script ...>...</script>` tags with attributes and content. */
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
-/** Matches is:build, is:bundled, is:inline, or is:blocking in attributes */
-const IS_ATTR_REGEX = /\bis:(build|bundled|inline|blocking)\b/
+/** Matches is:build, is:inline, or is:blocking in attributes */
+const IS_ATTR_REGEX = /\bis:(build|inline|blocking)\b/
 
 /** Matches src= in script attributes (external scripts are exempt) */
 const SRC_ATTR_REGEX = /\bsrc\s*=/
@@ -246,8 +246,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				}
 			}
 
-			// Valid if has any is:* attribute (build, bundled, inline, blocking)
-			// or pass:data (handled by Vite). Plain <script> are bundled as module by default — no warning.
+			// Valid if has any is:* attribute (build, inline, blocking) or pass:data (handled by Vite). Plain <script> = client by default — no warning.
 			if (IS_ATTR_REGEX.test(attrs) || /\bpass:data\b/.test(attrs)) {
 				continue
 			}
@@ -562,7 +561,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		// Check unused in is:build scope (template + build scripts)
 		this.checkUnusedInScope(document, text, 'build', usedInTemplate, diagnostics)
 
-		// Check unused in bundled scope (is:bundled or type="module" scripts)
+		// Check unused in bundled scope (plain/client scripts)
 		this.checkUnusedInScope(document, text, 'bundled', usedInTemplate, diagnostics)
 
 		// Check unused in is:inline scope (inline scripts only)
@@ -634,7 +633,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private getScriptContentByScope(text: string, scope: 'build' | 'bundled' | 'inline' | 'blocking'): string {
 		const scopeAttr: Record<'build' | 'bundled' | 'inline' | 'blocking', RegExp> = {
 			build: /\bis:build\b/,
-			bundled: /\bis:bundled\b/,
+			bundled: /(?!)/, // bundled = plain/client scripts; match via fallback below
 			inline: /\bis:inline\b/,
 			blocking: /\bis:blocking\b/,
 		}
@@ -651,7 +650,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			// Check if script matches the requested scope
 			let isMatch = scopeAttr[scope].test(attrs)
 
-			// For bundled scope: include plain <script> (no is:*) — they are bundled as module by default
+			// For bundled scope: plain <script> (no is:build, is:inline, is:blocking)
 			if (scope === 'bundled' && !isMatch) {
 				if (!/\bis:build\b/.test(attrs) && !/\bis:inline\b/.test(attrs) && !/\bis:blocking\b/.test(attrs)) {
 					isMatch = true

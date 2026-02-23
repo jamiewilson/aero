@@ -1,9 +1,18 @@
+/**
+ * Unit tests for the Aero codegen (codegen.ts): compile(parse(html)) → async render function.
+ *
+ * Covers interpolation, data-each, components (props, data-props, slots), if/else-if/else,
+ * getStaticPaths extraction, pass:data (client/inline/blocking/style), client script injection,
+ * Alpine/HTMX attribute preservation, and the extractGetStaticPaths helper. Uses an execute()
+ * helper that evals the generated module body with a mock Aero context.
+ */
+
 import { describe, it, expect } from 'vitest'
 import { parse } from '../parser'
 import { compile } from '../codegen'
 import { extractGetStaticPaths } from '../helpers'
 
-// Helper to execute the generated code
+/** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
 async function execute(code: string, context: Record<string, any> = {}) {
 	// Generate the wrapper function
 	// We expect the code to contain `export default async function(Aero) { ... }`
@@ -39,7 +48,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 }
 
 const mockOptions = {
-	root: '/' /* What is this?? */,
+	root: '/',
 	resolvePath: (v: string) => v,
 }
 
@@ -506,9 +515,8 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ base: 'value', extra: 'additional' })
 	})
 
+	/** Grandparent → parent → child: parent receives slot and forwards via <slot name="nav" slot="nav">. */
 	it('should support slot passthrough (receiving and forwarding named slots)', async () => {
-		// This tests the scenario: grandparent -> parent -> child
-		// where parent receives a slot and passes it through to child
 		const html = `<script is:build>
 										const parent = { name: 'parent' };
 										const child = { name: 'child' };
@@ -596,7 +604,7 @@ describe('Codegen', () => {
 	})
 
 	// =========================================================================
-	// if/else-if/else conditional chains
+	// if/else-if/else conditional chains (data-if / data-else-if / data-else or if/else-if/else)
 	// =========================================================================
 
 	it('should compile simple if/else chain', async () => {
@@ -647,7 +655,6 @@ describe('Codegen', () => {
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
-		// console.log('GENERATED CODE:', code)
 
 		const output = await execute(code)
 		expect(output).toContain('Default')
@@ -862,11 +869,8 @@ describe('Codegen', () => {
 			expect(out).toContain('<script>')
 		})
 
+		/** Double-brace `{ { theme } }` passes one key "theme" with the object value; for CSS vars use flat object: pass:data="{ theme }". */
 		it('should pass data to style tags as CSS variables', async () => {
-			// When using double-brace shorthand `{ { theme } }`, the key is "theme"
-			// and the value is the whole object. String(object) = "[object Object]".
-			// This documents the intentional behavior — for useful CSS vars,
-			// pass the flat object directly: `pass:data="{ theme }"`.
 			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
@@ -1020,8 +1024,10 @@ describe('Codegen', () => {
 })
 
 // =========================================================================
-// extractGetStaticPaths helper
+// extractGetStaticPaths helper (used by codegen to split build script and emit named export)
 // =========================================================================
+
+// TODO: Consider testing data-else without preceding data-if (invalid markup); void/self-closing component handling.
 
 describe('extractGetStaticPaths', () => {
 	it('should extract a sync function', () => {

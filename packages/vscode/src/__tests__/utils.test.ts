@@ -1,3 +1,9 @@
+/**
+ * Unit tests for scope.ts (isAeroDocument, getScopeMode) and pathResolver.ts (getResolver,
+ * clearResolverCache). Mocks vscode workspace/Uri and node:fs so workspace detection and
+ * config file presence are under test control.
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('vscode', () => {
@@ -42,6 +48,7 @@ describe('scope', () => {
 		vi.clearAllMocks()
 	})
 
+	/** Aero documents: file scheme + HTML languageId; untitled and non-HTML are excluded. */
 	describe('isAeroDocument', () => {
 		it('should return false for non-HTML documents', async () => {
 			const { isAeroDocument } = await import('../scope')
@@ -66,6 +73,7 @@ describe('scope', () => {
 		})
 	})
 
+	/** Scope mode from workspace config (e.g. 'auto', 'always'); mock returns 'auto'. */
 	describe('getScopeMode', () => {
 		it('should return default mode as auto', async () => {
 			const { getScopeMode } = await import('../scope')
@@ -80,6 +88,7 @@ describe('pathResolver', () => {
 		vi.clearAllMocks()
 	})
 
+	/** Resolver is built from document's workspace folder; root and resolve() are used by providers. */
 	describe('getResolver', () => {
 		it('should return a resolver object with root and resolve method', async () => {
 			const { getResolver, clearResolverCache } = await import('../pathResolver')

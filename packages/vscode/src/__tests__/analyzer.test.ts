@@ -1,3 +1,9 @@
+/**
+ * Unit tests for the Aero VS Code analyzer (analyzer.ts): template references (components,
+ * attributes), defined variables (imports), template scopes (data-each), and variables by scope
+ * (e.g. pass:data in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
+ */
+
 import { describe, it, expect, vi } from 'vitest'
 import {
 	collectTemplateReferences,
@@ -6,7 +12,6 @@ import {
 	collectVariablesByScope,
 } from '../analyzer'
 
-// Mock vscode.Range and Position since they are classes
 vi.mock('vscode', () => {
 	return {
 		Range: class {
@@ -28,6 +33,7 @@ vi.mock('vscode', () => {
 	}
 })
 
+/** Component/attribute references in template; must skip HTML comments and structural directives (data-if, data-else, etc.) when not on elements. */
 describe('collectTemplateReferences', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
@@ -72,6 +78,7 @@ describe('collectTemplateReferences', () => {
 	})
 })
 
+/** Build-scope defined variables (imports, etc.) and pass:data variable positions in client (bundled) scope. */
 describe('collectDefinedVariables', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
@@ -90,7 +97,7 @@ describe('collectDefinedVariables', () => {
 	})
 
 	it('should calculate correct position for pass:data variables', () => {
-		const text = `<script pass:data="{{ isHomepage }}" is:bundled>
+		const text = `<script pass:data="{{ isHomepage }}">
 	import { debug } from '@scripts/utils/debug'
 </script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
@@ -103,7 +110,7 @@ describe('collectDefinedVariables', () => {
 	})
 
 	it('should calculate correct position for pass:data with no spaces', () => {
-		const text = `<script pass:data="{{isHomepage}}" is:bundled></script>`
+		const text = `<script pass:data="{{isHomepage}}"></script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
 
 		expect(vars.has('isHomepage')).toBe(true)
@@ -113,7 +120,7 @@ describe('collectDefinedVariables', () => {
 	})
 
 	it('should calculate correct position for multiple pass:data variables', () => {
-		const text = `<script pass:data="{{ foo, bar }}" is:bundled></script>`
+		const text = `<script pass:data="{{ foo, bar }}"></script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
 
 		expect(vars.has('foo')).toBe(true)
@@ -123,6 +130,7 @@ describe('collectDefinedVariables', () => {
 	})
 })
 
+/** data-each / each scopes: item name and source expression; nested loops return inner-first. */
 describe('collectTemplateScopes', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
@@ -177,3 +185,5 @@ describe('collectTemplateScopes', () => {
 		expect(scopes).toHaveLength(0)
 	})
 })
+
+// TODO: collectDefinedVariables returns array of Map per scope; only first scope is asserted in "named imports" test — consider asserting build scope explicitly.

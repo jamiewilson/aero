@@ -1,3 +1,11 @@
+/**
+ * Unit tests for the Vite static build pipeline (build.ts) and related defaults.
+ *
+ * Covers route→output mapping, URL rewriting (routes, assets, API passthrough),
+ * directory resolution, build config, and dynamic page helpers (bracket patterns,
+ * expandPattern, isDynamicPage). Does not run full renderStaticPages integration.
+ */
+
 import type { Manifest } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { __internal, createBuildConfig } from '../build'
@@ -11,6 +19,10 @@ describe('vite build helpers', () => {
 		expect(__internal.toOutputFile('docs/name')).toBe('docs/name/index.html')
 	})
 
+	/**
+	 * rewriteAbsoluteUrl: fromDir is the output directory (e.g. "docs" for docs/index.html).
+	 * Route links become relative paths with trailing slash for directory indexes; root is ".." from a child route.
+	 */
 	it('rewrites route URLs to relative output paths', () => {
 		const routeSet = new Set(['', 'about', 'docs', 'docs/name'])
 		const manifest: Manifest = {}
@@ -21,24 +33,16 @@ describe('vite build helpers', () => {
 		expect(__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe(
 			'./name/',
 		)
-		// Ensure root still works
 		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
 	})
 
+	/** normalizeRelativeRouteLink: fromDir → routePath; appends trailing slash except for root and 404 (file). */
 	it('normalizes relative route links with trailing slashes for directories', () => {
-		// Siblings
 		expect(__internal.normalizeRelativeRouteLink('', 'docs')).toBe('./docs/')
 		expect(__internal.normalizeRelativeRouteLink('about', 'docs')).toBe('../docs/')
-
-		// Nested
 		expect(__internal.normalizeRelativeRouteLink('', 'about/team')).toBe('./about/team/')
-
-		// Root should not have trailing slash (it's ./)
 		expect(__internal.normalizeRelativeRouteLink('about', '')).toBe('..')
 		expect(__internal.normalizeRelativeRouteLink('', '')).toBe('./')
-
-		// 404 is special case, no trailing slash as it's a file
-		// Note: The function logic explicitly excludes '404' from trailing slash addition
 		expect(__internal.normalizeRelativeRouteLink('', '404')).toBe('./404')
 	})
 
@@ -70,8 +74,8 @@ describe('vite build helpers', () => {
 		).toBe('../../assets/global-123.css')
 	})
 
+	/** Root-relative script src is resolved via manifest (build discovers and bundles template refs). */
 	it('rewrites local script src (root-relative path) to manifest asset path', () => {
-		// Option A: script[src] stays in template; build discovers and bundles; rewrite uses manifest
 		const routeSet = new Set<string>()
 		expect(
 			__internal.rewriteAbsoluteUrl(
@@ -89,6 +93,11 @@ describe('vite build helpers', () => {
 		).toBe('./assets/module.ts-abc123.js')
 	})
 
+	/**
+	 * rewriteRenderedHtml parses HTML, rewrites script[src] for CLIENT_SCRIPT_PREFIX to hashed asset,
+	 * sets type="module", and adds doctype. LINK_ATTRS (href, action, hx-*) are also rewritten in the real path.
+	 * TODO: Add a case that asserts href/action/hx-* rewrite on a full document for regression coverage.
+	 */
 	it('rewrites virtual client script src to manifest asset path in rewriteRenderedHtml', () => {
 		const html = `<html><body><script type="module" src="/@aero/client/client/pages/home.js"></script></body></html>`
 		const manifest: Manifest = {
@@ -104,6 +113,7 @@ describe('vite build helpers', () => {
 		expect(result).not.toContain('@aero/client')
 	})
 
+	/** URLs under apiPrefix are left absolute so server/preview can handle them. */
 	it('keeps api routes absolute for preview/server mode', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
@@ -111,6 +121,7 @@ describe('vite build helpers', () => {
 			'/api/submit',
 		)
 	})
+	// FIXME: rewriteAbsoluteUrl edge cases not covered: query/hash preservation (suffix), /assets/ path when not in manifest, dist-root files (e.g. /favicon.ico).
 
 	it('resolves directory overrides; pages always derived from client', () => {
 		expect(resolveDirs()).toEqual({
@@ -136,9 +147,10 @@ describe('vite build helpers', () => {
 	})
 
 	// =========================================================================
-	// Dynamic page helpers
+	// Dynamic page helpers (bracket segments, expandPattern, getStaticPaths)
 	// =========================================================================
 
+	/** isDynamicPage: any pageName containing [...] is dynamic; used to branch on getStaticPaths. */
 	it('detects dynamic pages by bracket segments', () => {
 		const staticPage = {
 			pageName: 'about',
@@ -164,6 +176,7 @@ describe('vite build helpers', () => {
 		expect(__internal.isDynamicPage(nestedDynamic)).toBe(true)
 	})
 
+	/** expandPattern replaces [key] with params[key]; used for getStaticPaths → output paths. */
 	it('expands bracket patterns with concrete params', () => {
 		expect(__internal.expandPattern('[id]', { id: 'alpha' })).toBe('alpha')
 		expect(__internal.expandPattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
@@ -178,4 +191,6 @@ describe('vite build helpers', () => {
 			'missing param "slug"',
 		)
 	})
+
+	// TODO: Consider direct unit tests for __internal.normalizeRelativeLink (empty, same-dir) and integration test for renderStaticPages/discoverPages.
 })
