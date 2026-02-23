@@ -1,13 +1,15 @@
+/**
+ * Completion provider for Aero HTML: attributes, import paths, component/layout tags, content globals.
+ *
+ * @remarks
+ * Triggers on `<`, `/`, `@`, `"`, `'`. Supplies Aero attributes (data-each, data-if, etc.), path/alias completions from the resolver, and content global properties. Uses classifyPosition and getResolver.
+ */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { getResolver } from './pathResolver'
 import { CONTENT_GLOBALS } from './constants'
 import { isAeroDocument } from './scope'
-
-// ---------------------------------------------------------------------------
-// Aero-specific attribute completions
-// ---------------------------------------------------------------------------
 
 const AERO_ATTRIBUTES: Array<{
 	label: string

@@ -12,19 +12,10 @@ import {
 import { kebabToCamelCase, collectImportedSpecifiers, findInnermostScope } from './utils'
 
 /**
- * Provides Go to Definition for Aero template references in HTML files.
+ * Go to Definition for Aero template references in HTML files.
  *
- * Returns LocationLink[] (not Location) so that `originSelectionRange` controls
- * the underlined region in the source document -- e.g. the entire path string
- * acts as one clickable link rather than splitting on `/` and `.`.
- *
- * Supports:
- * - Import paths:        `import meta from '@components/meta'` -> client/components/meta.html
- * - Imported names:      `import meta from '...'` (name "meta") -> same file
- * - Script/link assets:  `src="@scripts/index.ts"` -> resolved asset
- * - Component tags:      `<nav-component>` -> client/components/nav.html
- * - Layout tags:         `<base-layout>` -> client/layouts/base.html
- * - Content globals:     `{ site.home.title }` -> client/content/site.ts (at property)
+ * @remarks
+ * Returns LocationLink[] so `originSelectionRange` keeps the full path as one link. Supports: import paths/names, script-src/link-href, component/layout tags, content globals (with property range). Uses classifyPosition, getResolver, and analyzer (defined variables, scopes).
  */
 export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 	provideDefinition(

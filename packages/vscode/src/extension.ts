@@ -1,3 +1,9 @@
+/**
+ * Aero VS Code extension entry: registers language providers and wires cache invalidation.
+ *
+ * @remarks
+ * Registers definition, completion, hover, and diagnostics for HTML (Aero) files. Clears path and scope caches when tsconfig or aero.scopeMode changes.
+ */
 import * as vscode from 'vscode'
 import { AeroDefinitionProvider } from './definitionProvider'
 import { AeroCompletionProvider } from './completionProvider'
@@ -6,10 +12,6 @@ import { AeroDiagnostics } from './diagnostics'
 import { clearResolverCache } from './pathResolver'
 import { clearScopeCache } from './scope'
 import { HTML_SELECTOR } from './constants'
-
-// ---------------------------------------------------------------------------
-// Activation
-// ---------------------------------------------------------------------------
 
 export function activate(context: vscode.ExtensionContext): void {
 	// ---- Definition Provider (Phase 2) ----
@@ -65,6 +67,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	)
 }
 
+/** Called when the extension is deactivated; clears path and scope caches. */
 export function deactivate(): void {
 	clearResolverCache()
 	clearScopeCache()

@@ -5,12 +5,10 @@ import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 
 /**
- * Provides hover information for Aero template references in HTML files.
+ * Hover provider for Aero template references in HTML files.
  *
- * Supports:
- * - Component/layout tags: shows file path and first few lines
- * - Import paths: shows resolved file path
- * - Content globals: shows resolved file path and preview
+ * @remarks
+ * Supports: component/layout tags (file path + preview), import paths/names, script-src/link-href, content globals. Uses classifyPosition and getResolver.
  */
 export class AeroHoverProvider implements vscode.HoverProvider {
 	provideHover(

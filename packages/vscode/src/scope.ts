@@ -1,18 +1,28 @@
+/**
+ * Scope detection: whether a document is treated as an Aero template (for providers and diagnostics).
+ *
+ * @remarks
+ * Uses `aero.scopeMode`: `auto` (markers or in-Aero project), `strict` (only in-Aero project), `always` (all HTML).
+ * Caches "is this dir in an Aero project?" per workspace root + dir to avoid repeated filesystem scans.
+ */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 
+/** When to treat an HTML file as an Aero document: auto (markers or project), strict (project only), always (all HTML). */
 export type AeroScopeMode = 'auto' | 'strict' | 'always'
 
 const CONFIG_SECTION = 'aero'
 const CONFIG_SCOPE_MODE = 'scopeMode'
 
+/** Regexes that indicate Aero template content (script on:build/on:client, -component/-layout tags, data-* directives). */
 const AERO_MARKERS = [
 	/<script\b[^>]*\bon:(?:build|client)\b/i,
 	/<[a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout)\b/i,
 	/\bdata-(?:if|else-if|else|each|props)\b/,
 ]
 
+/** Patterns that indicate an Aero project (in vite/tsconfig/package). */
 const PROJECT_MARKERS: RegExp[] = [
 	/@aero-ssg/,
 	/@components\/\*/,
@@ -22,10 +32,12 @@ const PROJECT_MARKERS: RegExp[] = [
 
 const cache = new Map<string, boolean>()
 
+/** Clear the "is Aero project" cache (e.g. when tsconfig changes). */
 export function clearScopeCache(): void {
 	cache.clear()
 }
 
+/** Current `aero.scopeMode` from workspace config (auto | strict | always). */
 export function getScopeMode(): AeroScopeMode {
 	const value = vscode.workspace
 		.getConfiguration(CONFIG_SECTION)
@@ -34,6 +46,7 @@ export function getScopeMode(): AeroScopeMode {
 	return 'auto'
 }
 
+/** True if document is considered an Aero template (used by providers/diagnostics). */
 export function isAeroDocument(document: vscode.TextDocument): boolean {
 	if (document.languageId !== 'html' || document.uri.scheme !== 'file') return false
 

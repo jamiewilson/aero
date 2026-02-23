@@ -1,11 +1,13 @@
+/**
+ * Resolve import specifiers and paths using tsconfig paths and relative resolution.
+ *
+ * @remarks
+ * Finds tsconfig.json by walking up from the document directory; builds alias list and caches a PathResolver per project root. Used by definition, hover, and completion providers.
+ */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { RESOLVE_EXTENSIONS } from './constants'
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 interface Alias {
 	find: string
@@ -19,14 +21,7 @@ export interface PathResolver {
 	root: string
 }
 
-// ---------------------------------------------------------------------------
-// Tsconfig discovery and parsing
-// ---------------------------------------------------------------------------
-
-/**
- * Walk up from `startDir` to find the nearest tsconfig.json.
- * Returns the parsed compilerOptions.paths and the base directory, or null.
- */
+/** Walk up from startDir to find the nearest tsconfig.json; returns paths, baseDir, or null. */
 function findTsconfig(startDir: string): {
 	tsconfigPath: string
 	paths: Record<string, string[]>
@@ -57,10 +52,6 @@ function findTsconfig(startDir: string): {
 	return null
 }
 
-// ---------------------------------------------------------------------------
-// Build alias list from tsconfig paths
-// ---------------------------------------------------------------------------
-
 function buildAliases(paths: Record<string, string[]>, baseDir: string): Alias[] {
 	const aliases: Alias[] = []
 	for (const [key, values] of Object.entries(paths)) {
@@ -75,15 +66,13 @@ function buildAliases(paths: Record<string, string[]>, baseDir: string): Alias[]
 	return aliases
 }
 
-// ---------------------------------------------------------------------------
-// Create resolver for a given document
-// ---------------------------------------------------------------------------
-
 const resolverCache = new Map<string, PathResolver>()
 
 /**
- * Get or create a PathResolver for the workspace containing the given document.
- * Caches by project root so tsconfig is only read once per root.
+ * Get or create a PathResolver for the document's workspace. Caches by project root.
+ *
+ * @param document - Text document (used for path and workspace folder).
+ * @returns PathResolver or undefined if no tsconfig (returns minimal resolver for relative paths only).
  */
 export function getResolver(document: vscode.TextDocument): PathResolver | undefined {
 	const docDir = path.dirname(document.uri.fsPath)
@@ -129,16 +118,10 @@ export function getResolver(document: vscode.TextDocument): PathResolver | undef
 	return resolver
 }
 
-/**
- * Clear the resolver cache (e.g. when tsconfig changes).
- */
+/** Clear the resolver cache (e.g. when tsconfig changes). */
 export function clearResolverCache(): void {
 	resolverCache.clear()
 }
-
-// ---------------------------------------------------------------------------
-// Resolve helpers
-// ---------------------------------------------------------------------------
 
 function resolveRelative(
 	specifier: string,
@@ -159,9 +142,7 @@ function resolveRelative(
 	return resolveWithExtensions(resolved)
 }
 
-/**
- * If `resolved` exists as-is, return it. Otherwise try adding common extensions.
- */
+/** Return path if it exists as file; else try with RESOLVE_EXTENSIONS or as directory/index; else return resolved for "go to" to missing files. */
 function resolveWithExtensions(resolved: string): string | undefined {
 	// Exact path
 	if (fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {

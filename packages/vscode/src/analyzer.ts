@@ -1,6 +1,13 @@
+/**
+ * Analyzer for Aero HTML: extract variables (imports, declarations), template scopes (data-each), and template references ({ expr }, components, content globals).
+ *
+ * @remarks
+ * Used by definition provider (go to def for variables), completion (scope-aware suggestions), and diagnostics (undefined refs, component resolution). Preserves ranges for navigation and diagnostics.
+ */
 import * as vscode from 'vscode'
 import { IMPORT_REGEX, CURLY_INTERPOLATION_REGEX, CONTENT_GLOBALS } from './constants'
 
+/** A single variable definition: name, range, kind (import|declaration|parameter|reference), optional content ref or properties. */
 export type VariableDefinition = {
 	name: string
 	range: vscode.Range
@@ -9,6 +16,7 @@ export type VariableDefinition = {
 	properties?: Set<string>
 }
 
+/** Scope introduced by a data-each: item name, range, source expression, and byte offsets for containment. */
 export type TemplateScope = {
 	itemName: string
 	itemRange: vscode.Range
@@ -19,6 +27,7 @@ export type TemplateScope = {
 	endOffset: number
 }
 
+/** A reference in the template: content, range, offset, and optional property path / component / Alpine flags. */
 export type TemplateReference = {
 	content: string
 	range: vscode.Range
@@ -30,16 +39,11 @@ export type TemplateReference = {
 	isAlpine?: boolean
 }
 
-/**
- * Replaces JS comments with spaces to preserve indices.
- */
+/** Replace JS comments with spaces to preserve character indices for range calculations. */
 export function maskJsComments(text: string): string {
 	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
 }
 
-/**
- * Checks if a position is inside an HTML comment.
- */
 function isInsideHtmlComment(text: string, position: number): boolean {
 	const commentRegex = /<!--[\s\S]*?-->/g
 	let match: RegExpExecArray | null
@@ -53,8 +57,11 @@ function isInsideHtmlComment(text: string, position: number): boolean {
 }
 
 /**
- * Collects all defined variables in <script> blocks (imports, declarations).
- * Returns tuple: [variables map, duplicates array]
+ * Collect all defined variables in script blocks (imports, const/let/var, params). Returns variables map and duplicates list.
+ *
+ * @param document - Text document (for ranges).
+ * @param text - Full document text (optionally comment-masked).
+ * @returns Tuple of [Map<name, VariableDefinition>, duplicates[]].
  */
 export function collectDefinedVariables(
 	document: vscode.TextDocument,

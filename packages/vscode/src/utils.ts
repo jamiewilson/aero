@@ -1,10 +1,15 @@
+/**
+ * Shared utilities: kebab-case conversion, import extraction, and scope lookup.
+ */
 import { IMPORT_REGEX } from './constants'
 import type { TemplateScope } from './analyzer'
 
+/** Convert kebab-case to camelCase (e.g. `my-component` → `myComponent`). */
 export function kebabToCamelCase(value: string): string {
 	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }
 
+/** Extract all imported names and their specifiers from script text (default, named, namespace). */
 export function collectImportedSpecifiers(text: string): Map<string, string> {
 	const imports = new Map<string, string>()
 	IMPORT_REGEX.lastIndex = 0
@@ -32,6 +37,7 @@ export function collectImportedSpecifiers(text: string): Map<string, string> {
 	return imports
 }
 
+/** Return the smallest scope that contains the given offset (for nested scopes). */
 export function findInnermostScope(scopes: TemplateScope[], offset: number): TemplateScope | null {
 	let best: TemplateScope | null = null
 	for (const scope of scopes) {
