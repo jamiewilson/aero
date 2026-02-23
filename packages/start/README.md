@@ -18,6 +18,7 @@ Starter app for the Aero static site generator. Demonstrates pages, layouts, com
 | `content.config.ts` | Content collections (used when `content: true`). |
 | `vite.config.ts` | Build entry: `createViteConfig(aeroConfig, { command, mode })`. |
 | `tsconfig.json` | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc. |
+| `env.d.ts` | Optional: extends `ImportMetaEnv` with `SITE` and custom env vars for TypeScript. See docs/environment-variables.md. |
 
 ## Commands
 
