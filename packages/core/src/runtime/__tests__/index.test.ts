@@ -1,3 +1,9 @@
+/**
+ * Unit tests for the Aero runtime (index.ts): globals, registerPages, toRoutePath,
+ * resolveDynamicPage, render, and renderComponent. Uses (aero as any) to assert internal
+ * state where the public API does not expose it.
+ */
+
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Aero } from '../index'
 
@@ -11,7 +17,6 @@ describe('Aero class', () => {
 	describe('global', () => {
 		it('should set a global value', () => {
 			aero.global('site', { title: 'Test' })
-			// Accessing internal state for testing
 			expect((aero as any).globals.site).toEqual({ title: 'Test' })
 		})
 
@@ -22,6 +27,7 @@ describe('Aero class', () => {
 		})
 	})
 
+	/** Keys are derived from path: segment after "pages/" or last segment; stored with and without .html. */
 	describe('registerPages', () => {
 		it('should register pages with key normalization', () => {
 			const pages = {
@@ -73,6 +79,7 @@ describe('Aero class', () => {
 		})
 	})
 
+	/** Matches path segments to [param] segments; first match wins. Single [slug] acts as single-segment wildcard. */
 	describe('resolveDynamicPage', () => {
 		beforeEach(() => {
 			aero = new Aero()
@@ -95,7 +102,6 @@ describe('Aero class', () => {
 		})
 
 		it('should resolve dynamic page for any path (wildcard behavior)', () => {
-			// [slug] matches any single segment - this is expected behavior
 			const result = (aero as any).resolveDynamicPage('static-page')
 			expect(result).not.toBeNull()
 			expect(result.params.slug).toBe('static-page')
@@ -128,19 +134,20 @@ describe('Aero class', () => {
 			expect(result).toBe('<div>Test Title</div>')
 		})
 
+		/** normalizeRenderInput merges input into context; request/url are built from routePath when not provided. */
 		it('should pass context with request, url, params', async () => {
 			let capturedCtx: any
 			aero.registerPages({
-				'pages/index.html': { 
-					default: (ctx: any) => { 
+				'pages/index.html': {
+					default: (ctx: any) => {
 						capturedCtx = ctx
-						return '' 
-					} 
+						return ''
+					},
 				},
 			})
 
 			await aero.render('index', { props: {}, params: { id: '1' } })
-			
+
 			expect(capturedCtx).toBeDefined()
 			expect(capturedCtx.request).toBeInstanceOf(Request)
 			expect(capturedCtx.url).toBeInstanceOf(URL)
@@ -148,6 +155,9 @@ describe('Aero class', () => {
 		})
 	})
 
+	// TODO: render() with slots in context; 404 fallback (render('404', input)); instance.ts / onUpdate not covered.
+
+	/** Used by compiled templates; accepts function or module with default export. */
 	describe('renderComponent', () => {
 		it('should render component function', async () => {
 			const fn = (ctx: any) => `<div>${ctx.props.name}</div>`

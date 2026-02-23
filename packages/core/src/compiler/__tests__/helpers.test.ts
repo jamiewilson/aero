@@ -1,3 +1,8 @@
+/**
+ * Unit tests for compiler helpers (helpers.ts): interpolation, attributes, props string building,
+ * slot/conditional/loop emitters, extractGetStaticPaths, extractObjectKeys, and related utilities.
+ */
+
 import { describe, it, expect } from 'vitest'
 import {
 	compileInterpolation,
@@ -152,6 +157,7 @@ describe('emitSlotsObjectVars', () => {
 	})
 })
 
+/** extractGetStaticPaths: splits build script into named export fn and remaining script for codegen. */
 describe('extractGetStaticPaths', () => {
 	it('should extract getStaticPaths function', () => {
 		const script = `
@@ -246,6 +252,7 @@ describe('emitSlotOutput', () => {
 	})
 })
 
+/** extractObjectKeys: parses object literal/shorthand to keys; used for pass:data preamble in client scripts. */
 describe('extractObjectKeys', () => {
 	it('should extract simple keys', () => {
 		expect(extractObjectKeys('{ a: 1, b: 2 }')).toEqual(['a', 'b'])

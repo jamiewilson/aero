@@ -1,3 +1,10 @@
+/**
+ * Unit tests for VS Code language providers: AeroCompletionProvider, AeroHoverProvider,
+ * AeroDefinitionProvider. Mocks vscode (Range, Position, workspace, languages, etc.),
+ * pathResolver (getResolver), and scope (isAeroDocument, getScopeMode). Asserts completion
+ * items, hover null for non-Aero docs, and definition locations for content globals and components.
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockSet = vi.fn()
@@ -126,6 +133,7 @@ import { AeroCompletionProvider } from '../completionProvider'
 import { AeroHoverProvider } from '../hoverProvider'
 import { AeroDefinitionProvider } from '../definitionProvider'
 
+/** Completions: after < (tags), inside tag (attrs), inside { } (content globals), import paths. */
 describe('AeroCompletionProvider', () => {
 	let provider: AeroCompletionProvider
 
@@ -198,6 +206,7 @@ describe('AeroCompletionProvider', () => {
 	})
 })
 
+/** Hover: returns null when isAeroDocument is false; otherwise hover content for symbols. */
 describe('AeroHoverProvider', () => {
 	let provider: AeroHoverProvider
 
@@ -224,6 +233,7 @@ describe('AeroHoverProvider', () => {
 	})
 })
 
+/** Go-to-definition: null for non-Aero docs; content global (site) and component tags resolve to file locations. */
 describe('AeroDefinitionProvider', () => {
 	let provider: AeroDefinitionProvider
 

@@ -1,3 +1,8 @@
+/**
+ * Unit tests for utils/aliases.ts: loadTsconfigAliases with mocked get-tsconfig.
+ * Covers missing tsconfig, empty paths, path parsing (baseUrl + paths), and resolvePath behavior.
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { loadTsconfigAliases } from '../aliases'
 

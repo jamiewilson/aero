@@ -1,3 +1,11 @@
+/**
+ * Unit tests for the Aero HTML parser (parser.ts).
+ *
+ * Covers script taxonomy: is:build (extracted to build), default/plain script (client),
+ * is:inline (left in place), is:blocking (hoisted to head), script[src]; pass:data extraction;
+ * head vs body behavior; and removal by index (including when HTML comments appear inside script).
+ */
+
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -7,6 +15,7 @@ import { parse } from '../parser'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 describe('Parser (V2 Taxonomy)', () => {
+	/** Build script and default (no attribute) body script are extracted; template must not contain them. */
 	it('should categorize script correctly based on taxonomy', () => {
 		const input = `
             <script is:build>
@@ -181,9 +190,11 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('console.log(theme);')
 	})
 
+	/**
+	 * Removal is by character range (start/end) so that when script content contains
+	 * HTML comments, the original fullTag still matches and is removed correctly.
+	 */
 	it('should remove extracted scripts by index even when HTML comment inside script (cleaned vs original would differ)', () => {
-		// Previously we matched on cleaned HTML but removed from original: fullTag from cleaned
-		// would not appear in original, so template.replace(fullTag, '') did nothing.
 		const input = `
 <script is:build>
 <!-- inline html comment -->
@@ -242,7 +253,7 @@ describe('Parser (V2 Taxonomy)', () => {
 	</script>
 </base-layout>
 
-<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by defualt -->
+<!-- FIXME [CORE]: should be bundled/module & hoisted to bottom by default -->
 <!-- FIXME [VSCODE]: Should not require type="module" -->
 <script>
 	import { allCaps } from '@scripts/utils/transform'
@@ -268,6 +279,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('import { allCaps }')
 	})
 
+	/** Optional: runs only when packages/start has client/pages/home.html (snapshot of real page). */
 	it('should extract plain script when parsing home.html from file (if present)', () => {
 		const homePath = path.resolve(__dirname, '../../../../start/client/pages/home.html')
 		if (!fs.existsSync(homePath)) return
@@ -314,4 +326,6 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toMatch(/\bdefer\s*=\s*["']?/)
 		expect(result.template).not.toMatch(/\sdefer\s+/)
 	})
+
+	// TODO: Edge cases not covered — scripts inside SVG/other namespaces.
 })

@@ -23,11 +23,6 @@ const AERO_ATTRIBUTES: Array<{
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
-		label: 'is:bundled',
-		detail: 'Client-side script block (Aero)',
-		kind: vscode.CompletionItemKind.Property,
-	},
-	{
 		label: 'is:inline',
 		detail: 'Inline client script, no bundling (Aero)',
 		kind: vscode.CompletionItemKind.Property,

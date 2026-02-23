@@ -1,3 +1,9 @@
+/**
+ * Tests for dynamic page rendering with getStaticPaths: runtime calls getStaticPaths when
+ * props are missing and injects matching entry's props; returns null (404) when params
+ * don't match any path; skips getStaticPaths when props are already provided (e.g. static build).
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Aero } from '../index'
 
@@ -5,6 +11,7 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 	beforeEach(() => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
 	})
+
 	it('should execute getStaticPaths and inject props when props are missing', async () => {
 		const aero = new Aero()
 
@@ -62,10 +69,11 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 		expect(html).toBeNull()
 	})
 
+	/** When props are supplied (e.g. by static build from getStaticPaths), runtime does not call getStaticPaths again. */
 	it('should use provided props if available (skipping getStaticPaths validation in Build mode)', async () => {
 		const aero = new Aero()
 
-		const getStaticPaths = vi.fn() // Should NOT be called
+		const getStaticPaths = vi.fn()
 
 		const pageModule = {
 			getStaticPaths,

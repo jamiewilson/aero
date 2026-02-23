@@ -1,6 +1,12 @@
+/**
+ * Unit tests for AeroDiagnostics (diagnostics.ts): unused/undefined variable reporting,
+ * script tag validation (is:build, is:inline, type="module"), conditional chains
+ * (data-if/else-if/else), directive brace requirements, duplicate declarations, and component
+ * reference checks. Uses mocked vscode APIs and calls updateDiagnostics(doc) to assert reported diagnostics.
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mocks
 const mockSet = vi.fn()
 const mockCollection = {
 	set: mockSet,
@@ -58,6 +64,7 @@ vi.mock('vscode', () => {
 
 import { AeroDiagnostics } from '../diagnostics'
 
+/** Unused imports/vars: build scope vs bundled scope are separate; usage in template/Alpine/HTMX/getStaticPaths must count. */
 describe('AeroDiagnostics Unused Variables', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -120,9 +127,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedHeaderDiag).toBeUndefined()
 	})
 
-	it('should NOT flag imports from is:build as unused when an is:bundled block is also present', () => {
-		// The real issue: with two script blocks, each block was checked independently.
-		// Imports in is:build would appear 0 times in is:bundled content → false unused.
+	it('should NOT flag imports from is:build as unused when a client script block is also present', () => {
 		const text = `
 <script is:build>
   import base from '@layouts/base'
@@ -133,7 +138,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 <base-layout title="{doc.data.title}">
   <section>{html}</section>
 </base-layout>
-<script is:bundled>
+<script>
   console.log('client side')
 </script>
 `
@@ -160,16 +165,14 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedDiags).toHaveLength(0)
 	})
 
-	it('should flag is:build import as unused even if the same name is declared in is:bundled', () => {
-		// is:bundled is browser-only — a `const base = ...` there must NOT count as usage
-		// of the `import base` in is:build.
+	it('should flag is:build import as unused even if the same name is declared in client script', () => {
 		const text = `
 <script is:build>
   import base from '@layouts/base'
 </script>
 <div>no template usage of base</div>
-<script is:bundled>
-  const base = 'test' // same name, different scope — must not satisfy is:build import
+<script>
+  const base = 'test'
   console.log(base)
 </script>
 `
@@ -322,6 +325,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 	})
 })
 
+/** Undefined refs in template expressions; content globals (e.g. site) and Alpine x-data are excluded. */
 describe('AeroDiagnostics Undefined Variables', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -429,6 +433,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 	})
 })
 
+/** Script tag rules: plain/is:build valid; is:inline import requires type="module"; comments ignored. */
 describe('AeroDiagnostics Script Tags', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -483,38 +488,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes(
-				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
-			),
-		)
-		expect(scriptDiag).toBeUndefined()
-	})
-
-	it('should NOT warn when script has is:bundled', () => {
-		const text = `
-<script is:bundled>
-	console.log('hello')
-</script>
-<div></div>
-`
-		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
-
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
-
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes(
-				'Inline <script> should have is:build, is:bundled, or is:inline attribute',
-			),
+			d.message.includes('<script> without attribute'),
 		)
 		expect(scriptDiag).toBeUndefined()
 	})
@@ -755,6 +729,7 @@ describe('AeroDiagnostics Script Tags', () => {
 	})
 })
 
+/** data-else-if and data-else must follow an element with data-if or data-else-if. */
 describe('AeroDiagnostics Conditional Chains', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -837,6 +812,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 	})
 })
 
+/** Directives (data-if, data-each, etc.) must use braced expressions (e.g. data-if="{ cond }"). */
 describe('AeroDiagnostics Directive Expression Braces', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -891,6 +867,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 	})
 })
 
+/** Same name declared in same scope (e.g. import + const) → "declared multiple times". */
 describe('AeroDiagnostics Duplicate Declarations', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -953,14 +930,15 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 	})
 })
 
+/** Component usage in template must have matching import; strings inside client scripts are ignored. */
 describe('AeroDiagnostics Component References', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
 	})
 
-	it('should ignore components inside is:bundled scripts', () => {
+	it('should ignore components inside client scripts', () => {
 		const text = `
-<script is:bundled>
+<script>
 	const tag = "<header-component>"
 </script>
 `

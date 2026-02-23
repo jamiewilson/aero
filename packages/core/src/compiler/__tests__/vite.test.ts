@@ -1,3 +1,9 @@
+/**
+ * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
+ * virtual client scripts, pass:data preamble injection, and rendering via Aero runtime.
+ * Uses the real plugin and a minimal mock plugin context (no full Vite server).
+ */
+
 import { describe, it, expect } from 'vitest'
 import { Aero } from '../../runtime'
 import { aero } from '../../vite'
@@ -31,34 +37,6 @@ describe('Vite Plugin Integration', () => {
 		const result: any = plugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('export default async function(Aero)')
 		expect(result.code).toContain('Vite Test')
-	})
-
-	it('should handle is:bundled via virtual modules', async () => {
-		const html = `
-            <script is:bundled>
-                console.log('client side');
-            </script>
-            <div>Client</div>
-        `
-		const id = path.join(process.cwd(), 'aero/pages/client.html')
-
-		// 1. Transform the HTML – client script URL is root-relative and .js (no user path, no .html)
-		const result: any = plugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('/@aero/client/')
-		expect(result.code).toContain('aero/pages/client.js')
-		expect(result.code).not.toMatch(/\/Users\/[^"'\s]+\.html/)
-
-		// 2. Resolve and load the virtual module (Vite uses \0 prefix for virtual module IDs)
-		const relativePath = path
-			.relative(process.cwd(), id)
-			.replace(/\\/g, '/')
-			.replace(/\.html$/i, '.js')
-		const virtualId = '/@aero/client/' + relativePath
-		const resolvedId = await plugin.resolveId.call(pluginCtx, virtualId)
-		expect(resolvedId).toBe('\0' + virtualId)
-
-		const loadedContent = plugin.load(resolvedId)
-		expect(loadedContent).toContain("console.log('client side')")
 	})
 
 	it('should treat plain <script> (no is:inline) as default client and emit virtual script URL', async () => {
@@ -117,4 +95,6 @@ describe('Vite Plugin Integration', () => {
 		})
 		expect(finalOutput).toBe('<h1>Dynamic Title</h1>')
 	})
+
+	// TODO: resolveId for .html imports without extension, buildStart/clientScripts prefill, handleHotUpdate not covered.
 })

@@ -2,7 +2,7 @@
 
 Aero features a clear and explicit taxonomy for `<script>` tags, making it easy to reason about when and where your JavaScript code executes.
 
-The previous `on:build` and `on:client` attributes have been deprecated in favor of three distinct `is:*` attributes: `is:build`, `is:bundled`, and `is:inline`.
+The previous `on:build` and `on:client` attributes have been deprecated in favor of `is:build`, `is:inline`, and plain `<script>` (client).
 
 ## Environment Types
 
@@ -24,18 +24,17 @@ The `is:build` attribute defines the "server-side render body" of your component
 <header title="{title}" />
 ```
 
-### `is:bundled`
+### Plain `<script>` (client)
 
-The `is:bundled` attribute declares a client-side module script that gets processed natively by Vite.
+A `<script>` tag with no `is:*` attribute is treated as a client-side module script and processed by Vite.
 
 - **Execution Context:** Runs in the client's browser.
-- **Purpose:** Handling interactive front-end logic, importing client-side libraries via NPM, and utilizing Vite's Hot Module Replacement (HMR) during development.
-- **Bundling:** Aero hands the contents of these scripts over to Vite as a virtual module (`/@aero/client/...`). Vite automatically minifies, chunks, and optimizes the code based on your production settings.
-- **Data Passing:** You can safely bridge context from the server down to these modules using the `pass:data` directive.
+- **Purpose:** Interactive front-end logic, client-side imports, and Vite HMR during development.
+- **Bundling:** Aero hands the contents to Vite as a virtual module (`/@aero/client/...`). Vite minifies, chunks, and optimizes the code.
+- **Data Passing:** Use the `pass:data` directive to pass server context into the module.
 
 ```html
-<script is:bundled pass:data="{ { apiToken } }">
-	// Evaluates in the browser with `apiToken` already in scope!
+<script pass:data="{ { apiToken } }">
 	import { initAnalytics } from 'my-analytics'
 	initAnalytics(apiToken)
 </script>
@@ -63,6 +62,6 @@ The `is:inline` attribute tells the compiler to leave the script tag mostly alon
 Migrating to the v2 taxonomy is primarily just renaming your script tags:
 
 - Replace `<script on:build>` with `<script is:build>`
-- Replace `<script on:client>` with `<script is:bundled>`
+- Replace `<script on:client>` with plain `<script>` (client module by default)
 
-If you had any `on:client` scripts that you intended to be completely externalized from Vite's bundling pipeline (e.g., inline analytics init), change them to `<script is:inline>` instead.
+If you had any `on:client` scripts that you intended to be completely externalized from Vite's bundling pipeline (e.g., inline analytics init), use `<script is:inline>` instead.

@@ -20,7 +20,6 @@ export const ATTR_NAME = 'name'
 export const ATTR_SLOT = 'slot'
 /** Script runs at build time; extracted and becomes render function body. */
 export const ATTR_IS_BUILD = 'is:build'
-export const ATTR_IS_BUNDLED = 'is:bundled'
 /** Script left in template in place; not extracted. */
 export const ATTR_IS_INLINE = 'is:inline'
 /** Script receives data from template: `pass:data="{ config }"`. */

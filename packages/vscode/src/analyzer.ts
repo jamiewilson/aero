@@ -194,12 +194,10 @@ export function collectDefinedVariables(
 
 		const attrs = (scriptMatch[1] || '').toLowerCase()
 		if (/\bsrc\s*=/.test(attrs)) continue
-		// Skip client-side scripts (bundled, inline, blocking) — they are browser-only and isolated from the template
-		if (/\bis:bundled\b/.test(attrs)) continue
+		// Only collect from is:build scripts (template-visible); skip client/inline/blocking
+		if (!/\bis:build\b/.test(attrs)) continue
 		if (/\bis:inline\b/.test(attrs)) continue
 		if (/\bis:blocking\b/.test(attrs)) continue
-		// Skip scripts without is:* that have type="module" (default bundled behavior)
-		if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) continue
 
 		const content = scriptMatch[2]
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
@@ -304,7 +302,7 @@ export type ScriptScope = 'build' | 'inline' | 'bundled' | 'blocking'
 /**
  * Collects variables from script blocks filtered by scope type.
  * - build: is:build scripts (visible to template)
- * - bundled: is:bundled scripts or scripts with type="module" (browser-only, with pass:data)
+ * - bundled: plain <script> or scripts with type="module" (client scripts, with pass:data)
  * - inline: is:inline scripts (browser-only, with pass:data)
  * - blocking: is:blocking scripts (browser-only, in head)
  */
@@ -321,7 +319,7 @@ export function collectVariablesByScope(
 
 	const scopeToAttr: Record<ScriptScope, RegExp> = {
 		build: /\bis:build\b/,
-		bundled: /\bis:bundled\b/,
+		bundled: /(?!)/, // bundled scope: no attribute; match via fallback below
 		inline: /\bis:inline\b/,
 		blocking: /\bis:blocking\b/,
 	}
@@ -342,9 +340,9 @@ export function collectVariablesByScope(
 		// Check if script matches the requested scope
 		let isMatch = attrRegex.test(attrs)
 
-		// For bundled scope: also include scripts without is:* but with type="module" (default bundled)
+		// For bundled scope: plain <script> (no is:build, is:inline, is:blocking) = client scripts
 		if (scope === 'bundled' && !isMatch) {
-			if (/\btype\s*=\s*["']?module["']?\b/.test(attrs)) {
+			if (!/\bis:(build|inline|blocking)\b/.test(attrs)) {
 				isMatch = true
 			}
 		}
