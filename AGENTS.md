@@ -33,7 +33,7 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ### Script Types
 
-- `<script is:build>` - Runs at build time; has access to `aero.props`, `site` globals, imports. One per template.
+- `<script is:build>` - Runs at build time; has access to `aero.props`, `Aero.site` (canonical URL from config), `site` globals (from content), imports. One per template.
 - Plain `<script>` (no `is:*`) - Bundled as virtual module, runs in browser (client).
 - `<script is:inline>` - Left in place in HTML; not bundled by Vite; runs in browser immediately.
 - `<script is:blocking>` - Extracted and emitted in `<head>` (e.g. blocking scripts).
@@ -93,6 +93,10 @@ Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, c
 - **Alpine.js** - Attributes like `x-data`, `x-model`, `:disabled` are preserved (not interpolated)
 - **HTMX** - Attributes like `hx-post`, `hx-target` are passed through
 - Alpine attributes use regex `^(x-|[@:.]).*` to skip `{ }` interpolation
+
+## Configuration (site URL)
+
+Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aero.config.ts` (`site: '...'`) or passed to `aero({ site: '...' })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [docs/site-url.md](docs/site-url.md).
 
 ## File Structure
 

@@ -172,7 +172,7 @@ In static builds, request-specific headers may be unavailable.
 
 ```html
 <script is:build>
-	const canonical = new URL(Aero.url.pathname, site.meta.url).toString()
+	const canonical = new URL(Aero.url.pathname, Aero.site).toString()
 </script>
 
 <link rel="canonical" href="{ canonical }" />

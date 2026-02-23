@@ -29,7 +29,7 @@ aero-start/
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
 - **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts `predev`, `prebuild`, `prepreview`, `prepreview:api` run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `packages/start/vite.config.ts` does `import { aero } from '@aero-ssg/vite'` and uses `aero({ nitro: true })`. The app’s `package.json` has `"@aero-ssg/vite": "workspace:*"` in its devDependencies.
+- **Consumption:** `packages/start/vite.config.ts` does `import { aero } from '@aero-ssg/vite'` and uses `aero({ nitro: true })` (optional `site: 'https://...'` for canonical URL; see [site-url.md](site-url.md)). The app’s `package.json` has `"@aero-ssg/vite": "workspace:*"` in its devDependencies.
 - **Exports (package.json):**
   - `@aero-ssg/core` → main entry and types
   - `@aero-ssg/core/vite` → Vite plugin (also re-exported as `@aero-ssg/vite`)

@@ -27,7 +27,7 @@ import {
 	resolveDirs,
 } from './defaults'
 
-/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify. */
+/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify, site. */
 interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
@@ -36,6 +36,8 @@ interface StaticBuildOptions {
 	vitePlugins?: Plugin[]
 	configFile?: string | false
 	minify?: boolean
+	/** Canonical site URL (e.g. 'https://example.com'). Passed into render context as Aero.site. */
+	site?: string
 }
 
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
@@ -519,6 +521,7 @@ export async function renderStaticPages(
 				routePath,
 				params: page.params || {},
 				props: page.props || {},
+				site: options.site,
 			})
 			rendered = rewriteRenderedHtml(
 				addDoctype(rendered),

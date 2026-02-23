@@ -15,6 +15,12 @@ export interface AeroConfig {
 	/** Enable Nitro server integration (default: `false`). */
 	server?: boolean
 
+	/**
+	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
+	 * `Aero.site` in templates; used for sitemap, RSS, and canonical links.
+	 */
+	site?: string
+
 	/** Directory overrides. */
 	dirs?: {
 		/** Site source directory; pages live at `client/pages` (default: `'client'`). */
