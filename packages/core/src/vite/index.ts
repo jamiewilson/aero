@@ -262,6 +262,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 						state.clientScripts.set(clientScriptUrl, {
 							content: clientScript.content,
 							passDataExpr: clientScript.passDataExpr,
+							injectInHead: clientScript.injectInHead,
 						})
 						clientScript.content = clientScriptUrl
 					}
@@ -323,6 +324,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 						state.clientScripts.set(clientScriptUrl, {
 							content: clientScript.content,
 							passDataExpr: clientScript.passDataExpr,
+							injectInHead: clientScript.injectInHead,
 						})
 
 						clientScript.content = clientScriptUrl

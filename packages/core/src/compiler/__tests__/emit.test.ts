@@ -98,6 +98,22 @@ describe('emitToJS', () => {
 		expect(out).toContain('__out += await Aero.renderComponent(header, { title: "Hi" }, { "default": __slot_0 }')
 	})
 
+	it('emits Component with headScripts so layout head scripts are injected', () => {
+		const ir: IRNode[] = [
+			{
+				kind: 'Component',
+				baseName: 'baseLayout',
+				propsString: '{}',
+				slots: { default: [{ kind: 'Append', content: 'page' }] },
+				slotVarMap: { default: '__slot_0' },
+			},
+		]
+		const out = emitToJS(ir)
+		// Layouts/components with plain <script> in <head> must receive the root headScripts set
+		// so their bundled script tags are injected into the final <head>.
+		expect(out).toContain('headScripts: injectedHeadScripts')
+	})
+
 	it('emits with custom outVar', () => {
 		const ir: IRNode[] = [
 			{ kind: 'Append', content: 'x', outVar: '__html' },

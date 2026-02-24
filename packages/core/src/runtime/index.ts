@@ -274,6 +274,7 @@ export class Aero {
 			site: input.site,
 			styles: input.styles,
 			scripts: input.scripts,
+			headScripts: input.headScripts,
 		})
 
 		if (typeof component === 'function') {

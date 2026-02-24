@@ -7,7 +7,10 @@
 	<head>
 		<meta-component props="{...Aero.props}" />
 		<link rel="stylesheet" href="@styles/global.css" />
-		<script type="module" src="@scripts/index.ts"></script>
+		<script type="module">
+			import aero from '@aero-ssg/core'
+			aero.mount()
+		</script>
 	</head>
 
 	<body id="app">

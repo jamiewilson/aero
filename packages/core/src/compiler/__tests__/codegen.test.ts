@@ -35,6 +35,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const aeroContext = {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
+		injectedHeadScripts: new Set<string>(),
 		styles: new Set<string>(),
 		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
@@ -366,6 +367,51 @@ describe('Codegen', () => {
 		const scripts = new Set<string>()
 		await execute(code, { scripts })
 		expect(scripts.has('<script type="module" src="/test.js"></script>')).toBe(true)
+	})
+
+	it('should inject clientScripts with injectInHead into headScripts', async () => {
+		const html = '<div>Content</div>'
+
+		const parsed = parse(html)
+		const code = compile(parsed, {
+			...mockOptions,
+			clientScripts: [{ attrs: '', content: '/test.js', injectInHead: true }],
+		})
+
+		// The generated code uses "headScripts: injectedHeadScripts" so we pass headScripts in context
+		const headScripts = new Set<string>()
+		await execute(code, { headScripts })
+		
+		expect(headScripts.has('<script type="module" src="/test.js"></script>')).toBe(true)
+	})
+
+	it('should inject plain script in head from component render', async () => {
+		// This simulates a layout being rendered via renderComponent
+		const layoutHtml = `<html><head><script>
+			import { helper } from './helper.js'
+			console.log(helper());
+		</script></head><body>Content</body></html>`
+
+		const parsed = parse(layoutHtml)
+		expect(parsed.clientScripts).toHaveLength(1)
+		expect(parsed.clientScripts[0].injectInHead).toBe(true)
+
+		const code = compile(parsed, {
+			...mockOptions,
+			clientScripts: parsed.clientScripts,
+		})
+
+		// The generated code uses "headScripts: injectedHeadScripts" so we pass headScripts in context
+		const scripts = new Set<string>()
+		const headScripts = new Set<string>()
+		await execute(code, { scripts, headScripts })
+
+		// Should be in headScripts, not scripts
+		expect(headScripts.size).toBe(1)
+		expect(scripts.size).toBe(0)
+		const headScript = Array.from(headScripts)[0]
+		expect(headScript).toContain('type="module"')
+		expect(headScript).toContain('helper.js')
 	})
 
 	it('should handle attributes with colons (Alpine.js style)', async () => {

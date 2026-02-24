@@ -437,7 +437,7 @@ class Lowerer {
 			const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 			const baseName = Helper.kebabToCamelCase(kebabBase)
 			const { propsString } = this.parseComponentAttributes(node)
-			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, site: __aero_site, styles, scripts }) }`
+			return `\${ await Aero.renderComponent(${baseName}, ${propsString}, {}, { request, url, params, site: __aero_site, styles, scripts, headScripts: injectedHeadScripts }) }`
 		}
 
 		const { attrString } = this.parseElementAttributes(node)
@@ -622,13 +622,28 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			const baseAttrsEscaped = baseAttrs.replace(/'/g, "\\'")
 			const tagExpr = `'<script ${baseAttrsEscaped} src="'+${urlExpr}+'"></script>'`
 
+			// Determine target: headScripts (if injectInHead) or rootScripts (body)
+			// Note: headScripts content gets wrapped in injectedHeadScripts?.add() by headScriptsBlock in helpers.ts
+			// So we push raw string literals for head, and use scripts?.add() for body
+			const isHead = clientScript.injectInHead
+
 			if (clientScript.passDataExpr) {
 				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
-				rootScripts.push(
-					`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`,
-				)
+				if (isHead) {
+					headScripts.push(
+						`(function(){const __pid=Aero.nextPassDataId();\`<\`+'script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>';window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);})();${tagExpr}`,
+					)
+				} else {
+					rootScripts.push(
+						`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`,
+					)
+				}
 			} else {
-				rootScripts.push(`scripts?.add(${tagExpr});`)
+				if (isHead) {
+					headScripts.push(tagExpr)
+				} else {
+					rootScripts.push(`scripts?.add(${tagExpr});`)
+				}
 			}
 		}
 	}

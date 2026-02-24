@@ -1,6 +1,6 @@
 export default {
 	meta: {
-		title: 'Site Meta Title',
+		title: 'Minimal Template',
 		description: 'Site Meta Description',
 		ogImage: '/aero.png',
 		icon: {
