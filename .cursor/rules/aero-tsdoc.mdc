@@ -1,0 +1,49 @@
+---
+description: TSDoc conventions for TypeScript; block-style comments and standard tags only
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TSDoc Conventions
+
+When adding or refactoring JSDoc/TSDoc in TypeScript files, follow the [TSDoc guide](_reference/tsdoc-guide.md). Use **only tags defined in the TSDoc spec**; there is no `@property` tag in the standard.
+
+## Summary
+
+- **Block style:** One `/** ... */` block above each exported declaration. Avoid scattering inline comments on every member.
+- **Standard tags only:** `@param`, `@returns`, `@remarks`, `@see`, `@example`, `@defaultValue`, `@typeParam`, `@throws`. Tag names are camelCase (e.g. `@defaultValue`). Do **not** use `@property`.
+- **Interfaces/types:** Describe members and defaults in the **summary** and/or **@remarks** as prose.
+- **Links:** In `@see` or in text, use `{@link SymbolOrUrl}` or `{@link url|label}`; TSDoc does not auto-link plain text after `@see`.
+- **Reference:** Full rules in [_reference/tsdoc-guide.md](_reference/tsdoc-guide.md). Official tags: [StandardTags.ts](https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/details/StandardTags.ts).
+
+## Example (interfaces)
+
+See `packages/core/src/types.ts` for the project’s block-style TSDoc. Example:
+
+```ts
+/**
+ * Options for the client-side mount() entry.
+ *
+ * @remarks
+ * - `target`: root element (CSS selector or HTMLElement). Default `'#app'`.
+ * - `onRender`: callback invoked with the root element after mount and after each HMR re-render.
+ *
+ * @see Mount usage in `packages/core/src/index.ts`
+ */
+export interface MountOptions {
+  target?: string | HTMLElement
+  onRender?: (root: HTMLElement) => void
+}
+```
+
+## Example (functions / types)
+
+```ts
+/**
+ * Middleware handler invoked at request time.
+ *
+ * @param ctx - Request context (url, request, route path, page name, site).
+ * @returns Redirect, rewrite, custom response, or void to continue.
+ */
+export type AeroMiddleware = (ctx: AeroRequestContext) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
+```
