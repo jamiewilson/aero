@@ -1,56 +1,56 @@
 {
-  "name": "@aero-ssg/core",
-  "version": "0.1.0",
-  "type": "module",
-  "private": false,
-  "types": "./dist/types.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsup src/index.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/types.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./vite": {
-      "types": "./dist/vite/index.d.ts",
-      "default": "./dist/vite/index.js"
-    },
-    "./runtime": {
-      "types": "./dist/runtime/index.d.ts",
-      "default": "./dist/runtime/index.js"
-    },
-    "./runtime/instance": {
-      "types": "./dist/runtime/instance.d.ts",
-      "default": "./dist/runtime/instance.js"
-    },
-    "./types": "./dist/types.d.ts",
-    "./utils/redirects": {
-      "types": "./dist/utils/redirects.d.ts",
-      "default": "./dist/utils/redirects.js"
-    }
-  },
-  "dependencies": {
-    "get-tsconfig": "^4.13.6",
-    "html-minifier-next": "^5.1.1",
-    "linkedom": "^0.18.12",
-    "nitro": "^3.0.1-alpha.2",
-    "sharp": "^0.34.5",
-    "svgo": "^4.0.0",
-    "vite-plugin-image-optimizer": "^2.0.3"
-  },
-  "peerDependencies": {
-    "vite": "8.0.0-beta.15"
-  },
-  "devDependencies": {
-    "@types/node": "^25.3.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
-  }
+	"name": "@aero-ssg/core",
+	"version": "0.1.0",
+	"type": "module",
+	"private": false,
+	"types": "./dist/types.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup src/index.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/types.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./vite": {
+			"types": "./dist/vite/index.d.ts",
+			"default": "./dist/vite/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/runtime/index.d.ts",
+			"default": "./dist/runtime/index.js"
+		},
+		"./runtime/instance": {
+			"types": "./dist/runtime/instance.d.ts",
+			"default": "./dist/runtime/instance.js"
+		},
+		"./types": "./dist/types.d.ts",
+		"./utils/redirects": {
+			"types": "./dist/utils/redirects.d.ts",
+			"default": "./dist/utils/redirects.js"
+		}
+	},
+	"dependencies": {
+		"get-tsconfig": "^4.13.6",
+		"html-minifier-next": "^5.1.1",
+		"linkedom": "^0.18.12",
+		"nitro": "^3.0.1-alpha.2",
+		"sharp": "^0.34.5",
+		"svgo": "^4.0.0",
+		"vite-plugin-image-optimizer": "^2.0.3"
+	},
+	"peerDependencies": {
+		"vite": "8.0.0-beta.15"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
+	}
 }

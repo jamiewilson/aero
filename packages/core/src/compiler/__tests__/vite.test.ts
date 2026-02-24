@@ -154,7 +154,7 @@ describe('Vite Plugin Integration', () => {
 		}
 	})
 
-	it('handleHotUpdate invalidates runtime instance when content/*.ts changes', () => {
+	it('handleHotUpdate invalidates runtime instance when content/*.ts changes (client/content)', () => {
 		const root = process.cwd()
 		const contentFile = path.join(root, 'client/content/site.ts')
 		const mockModule = { id: RESOLVED_RUNTIME_INSTANCE_MODULE_ID }
@@ -175,24 +175,109 @@ describe('Vite Plugin Integration', () => {
 		expect(Array.isArray(result) && result).toContain(mockModule)
 	})
 
-	it('handleHotUpdate invalidates virtual client module when parent .html changes', () => {
+	it('handleHotUpdate invalidates runtime instance when content/*.ts changes (project root content/)', () => {
 		const root = process.cwd()
-		const htmlFile = path.join(root, 'client/pages/foo.html')
-		const virtualId = '\0/@aero/client/client/pages/foo.js'
-		const mockVirtualModule = { id: virtualId }
+		const contentFile = path.join(root, 'content/site.ts')
+		const mockModule = { id: RESOLVED_RUNTIME_INSTANCE_MODULE_ID }
 		let invalidated: unknown = null
 		const server = {
 			moduleGraph: {
-				getModuleById: (id: string) => (id === virtualId ? mockVirtualModule : null),
+				getModuleById: (id: string) => (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID ? mockModule : null),
 				invalidateModule: (mod: unknown) => {
 					invalidated = mod
 				},
 			},
 		}
-		hmrPlugin.handleHotUpdate!(
+		const result = hmrPlugin.handleHotUpdate!(
+			{ file: contentFile, server, modules: [] } as any,
+			{} as any,
+		)
+		expect(invalidated).toBe(mockModule)
+		expect(Array.isArray(result) && result).toContain(mockModule)
+	})
+
+	it('handleHotUpdate invalidates runtime instance when .html changes', () => {
+		const root = process.cwd()
+		const htmlFile = path.join(root, 'client/pages/bar.html')
+		const mockInstanceModule = { id: RESOLVED_RUNTIME_INSTANCE_MODULE_ID }
+		let invalidated: unknown = null
+		const server = {
+			moduleGraph: {
+				getModuleById: (id: string) => (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID ? mockInstanceModule : null),
+				invalidateModule: (mod: unknown) => {
+					invalidated = mod
+				},
+			},
+		}
+		const result = hmrPlugin.handleHotUpdate!(
 			{ file: htmlFile, server, modules: [] } as any,
 			{} as any,
 		)
-		expect(invalidated).toBe(mockVirtualModule)
+		expect(invalidated).toBe(mockInstanceModule)
+		expect(Array.isArray(result) && result).toContain(mockInstanceModule)
+	})
+
+	it('handleHotUpdate invalidates virtual client module when parent .html changes', () => {
+		const root = process.cwd()
+		const htmlWithScript = `
+<script is:build>const x = 1;</script>
+<div>Content</div>
+<script>console.log('foo')</script>
+`
+		const id = path.join(root, 'client/pages/foo.html')
+		transformPlugin.transform.call(pluginCtx, htmlWithScript, id)
+
+		const virtualId = '\0/@aero/client/client/pages/foo.js'
+		const mockVirtualModule = { id: virtualId }
+		const invalidatedModules: unknown[] = []
+		const server = {
+			moduleGraph: {
+				getModuleById: (id: string) => (id === virtualId ? mockVirtualModule : null),
+				invalidateModule: (mod: unknown) => {
+					invalidatedModules.push(mod)
+				},
+			},
+		}
+		hmrPlugin.handleHotUpdate!(
+			{ file: id, server, modules: [] } as any,
+			{} as any,
+		)
+		expect(invalidatedModules).toContain(mockVirtualModule)
+	})
+
+	it('handleHotUpdate invalidates all virtual client modules when .html has multiple scripts', () => {
+		const root = process.cwd()
+		const htmlWithTwoScripts = `
+<script is:build>const x = 1;</script>
+<div>Content</div>
+<script>console.log('first')</script>
+<script>console.log('second')</script>
+`
+		const id = path.join(root, 'client/pages/multi.html')
+		transformPlugin.transform.call(pluginCtx, htmlWithTwoScripts, id)
+
+		const virtualId0 = '\0/@aero/client/client/pages/multi.0.js'
+		const virtualId1 = '\0/@aero/client/client/pages/multi.1.js'
+		const mock0 = { id: virtualId0 }
+		const mock1 = { id: virtualId1 }
+		const invalidatedModules: unknown[] = []
+		const server = {
+			moduleGraph: {
+				getModuleById: (id: string) => {
+					if (id === virtualId0) return mock0
+					if (id === virtualId1) return mock1
+					return null
+				},
+				invalidateModule: (mod: unknown) => {
+					invalidatedModules.push(mod)
+				},
+			},
+		}
+		hmrPlugin.handleHotUpdate!(
+			{ file: id, server, modules: [] } as any,
+			{} as any,
+		)
+		expect(invalidatedModules).toContain(mock0)
+		expect(invalidatedModules).toContain(mock1)
 	})
 })

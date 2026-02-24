@@ -1,6 +1,5 @@
 <script is:build>
 	import meta from '@components/meta'
-	import nav from '@components/nav'
 	import footer from '@components/footer'
 </script>
 
@@ -11,12 +10,7 @@
 	</head>
 
 	<body id="app">
-		<nav-component>
-			<slot name="into-nav"></slot>
-		</nav-component>
-
 		<slot></slot>
-
 		<footer-component />
 	</body>
 </html>
