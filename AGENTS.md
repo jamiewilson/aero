@@ -125,6 +125,10 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 
 For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md).
 
+## Documentation (TSDoc)
+
+When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
+
 ## Gotchas
 
 - Virtual client scripts use `/@aero/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
