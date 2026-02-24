@@ -62,6 +62,16 @@ Components receive via `aero.props` in `<script on:build>`.
 - `@server/*` → server/\*
 - `~/*` → project root
 
+## TDD (Test-Driven Development)
+
+Use a **red-to-green** approach for implementing new features or tracking down bugs:
+
+1. **Red**: Write or run a failing test that captures the desired behavior or reproduces the bug. Run the test suite and confirm the test fails.
+2. **Green**: Implement the minimal change to make the test pass. Run the test suite and confirm it passes.
+3. **Refactor** (if needed): Improve the implementation without changing behavior; keep tests green.
+
+For bug fixes: start by adding or adjusting a test that fails in the current code (red), then fix the code until the test passes (green). Do not skip writing the failing test.
+
 ## Development Commands
 
 ```bash

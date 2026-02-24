@@ -36,6 +36,10 @@ Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the a
 - `server/api/` - Nitro API handlers (e.g. submit.post.ts; kitchen-sink only)
 - `server/routes/` - Nitro routes (e.g. catch-all for static files)
 
+## TDD (red-to-green)
+
+When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
+
 ## Commands
 
 - `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `aero({ nitro: true })`; optional `site: 'https://...'` for canonical URL)

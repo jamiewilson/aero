@@ -6,6 +6,10 @@ alwaysApply: false
 
 # Aero Server (Nitro)
 
+## TDD (red-to-green)
+
+When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
+
 API and routes live in **packages/start/server/** (server/api/, server/routes/). Nitro is configured in `packages/start/nitro.config.ts` with `scanDirs: ['server']`.
 
 ## API Handlers
