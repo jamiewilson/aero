@@ -4,6 +4,7 @@
  * @remarks
  * Invokes `aeroConfig` with env if it's a function, then builds base config (defaultViteConfig + aero plugin + optional aeroContent).
  * User `vite` is merged via Vite's mergeConfig; explicit `minify`/`cssMinify` from base are preserved when user sets them to true/null.
+ * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
 import { mergeConfig } from 'vite'
 import { aero } from '@aero-ssg/core/vite'
@@ -11,6 +12,7 @@ import { aeroContent } from '@aero-ssg/content/vite'
 import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'
+import { loadAeroConfig } from './loadAeroConfig'
 
 /** Environment passed to createViteConfig (command and mode). */
 export interface CreateViteConfigOptions {
@@ -18,14 +20,58 @@ export interface CreateViteConfigOptions {
 	mode: 'development' | 'production'
 }
 
+/** Derive command and mode from argv/NODE_ENV. Use with createViteConfig(aeroConfig, getDefaultOptions()). */
+export function getDefaultOptions(): CreateViteConfigOptions {
+	return {
+		command: process.argv.includes('build') ? 'build' : 'dev',
+		mode:
+			process.env.NODE_ENV === 'production' ? 'production' : 'development',
+	}
+}
+
 /**
  * Create the Vite UserConfig from Aero config and env.
  *
- * @param aeroConfig - Static config or function receiving `{ command, mode }`.
- * @param options - Current command and mode (e.g. from CLI).
+ * When called with no arguments, loads aero.config.ts (or .js/.mjs) from process.cwd() if present;
+ * otherwise uses empty config. Command and mode are derived from argv and NODE_ENV.
+ *
+ * @param aeroConfigOrOptions - Optional: static config, config function, or options. Omit to auto-load aero.config.
+ * @param options - Optional when first arg is config. Command and mode (defaults from argv/NODE_ENV when using no-arg form).
  * @returns Merged Vite config (defaults + Aero plugins + user vite; minify/cssMinify preserved when user overrides).
  */
 export function createViteConfig(
+	aeroConfigOrOptions?: AeroConfig | AeroConfigFunction | CreateViteConfigOptions,
+	options?: CreateViteConfigOptions,
+): UserConfig {
+	let aeroConfig: AeroConfig | AeroConfigFunction
+	let opts: CreateViteConfigOptions
+
+	const isOptionsObject = (x: unknown): x is CreateViteConfigOptions =>
+		typeof x === 'object' &&
+		x !== null &&
+		'command' in x &&
+		'mode' in x
+
+	const hasExplicitConfig =
+		aeroConfigOrOptions !== undefined &&
+		(typeof aeroConfigOrOptions === 'function' ||
+			(typeof aeroConfigOrOptions === 'object' && !isOptionsObject(aeroConfigOrOptions)))
+
+	if (hasExplicitConfig) {
+		aeroConfig = aeroConfigOrOptions as AeroConfig | AeroConfigFunction
+		opts = options ?? getDefaultOptions()
+	} else {
+		opts = isOptionsObject(aeroConfigOrOptions)
+			? aeroConfigOrOptions
+			: getDefaultOptions()
+		const loaded = loadAeroConfig(process.cwd())
+		aeroConfig = loaded ?? {}
+	}
+
+	return createViteConfigFromAero(aeroConfig, opts)
+}
+
+function createViteConfigFromAero(
 	aeroConfig: AeroConfig | AeroConfigFunction,
 	options: CreateViteConfigOptions,
 ): UserConfig {
@@ -37,6 +83,7 @@ export function createViteConfig(
 	const { content, server, site, dirs, redirects, middleware, vite: userViteConfig } =
 		resolvedConfig
 
+	const contentOptions = content === true ? {} : typeof content === 'object' ? content : undefined
 	const basePlugins: UserConfig['plugins'] = [
 		aero({
 			nitro: server ?? false,
@@ -44,11 +91,11 @@ export function createViteConfig(
 			dirs,
 			redirects,
 			middleware,
+			staticServerPlugins:
+				contentOptions !== undefined ? [aeroContent(contentOptions)] : undefined,
 		}),
 	]
-
-	if (content === true) {
-		const contentOptions = typeof content === 'object' ? content : {}
+	if (contentOptions !== undefined) {
 		basePlugins.push(aeroContent(contentOptions))
 	}
 

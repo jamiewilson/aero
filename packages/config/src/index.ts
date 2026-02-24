@@ -5,6 +5,6 @@
  * Re-exports `defineConfig`, `createViteConfig`, and config types for use in `aero.config.ts` and the CLI/build entry.
  */
 export { defineConfig } from './defineConfig'
-export { createViteConfig } from './createViteConfig'
+export { createViteConfig, getDefaultOptions } from './createViteConfig'
 export { redirectsToRouteRules } from './redirects'
 export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'

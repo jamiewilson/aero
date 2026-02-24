@@ -27,14 +27,14 @@ import {
 	resolveDirs,
 } from './defaults'
 
-/** Options for renderStaticPages: root, dirs, resolvePath, optional vitePlugins/configFile/minify, site, redirects. */
+/** Options for renderStaticPages: root, dirs, resolvePath, vitePlugins, optional minify, site, redirects. */
 interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
 	apiPrefix?: string
 	resolvePath?: (specifier: string) => string
+	/** Plugins for the static render server. When provided, configFile is not loaded and a dedicated cacheDir is used. */
 	vitePlugins?: Plugin[]
-	configFile?: string | false
 	minify?: boolean
 	/** Canonical site URL (e.g. 'https://example.com'). Passed into render context as Aero.site. */
 	site?: string
@@ -453,7 +453,7 @@ function readManifest(distDir: string): Manifest {
 /**
  * Render all static pages into outDir: discover pages, expand dynamic routes via getStaticPaths, run Vite in middleware mode, rewrite URLs, optionally minify.
  *
- * @param options - StaticBuildOptions (root, dirs, resolvePath, vitePlugins, configFile, minify).
+ * @param options - StaticBuildOptions (root, dirs, resolvePath, vitePlugins, minify).
  * @param outDir - Output directory (e.g. dist).
  */
 export async function renderStaticPages(
@@ -473,12 +473,16 @@ export async function renderStaticPages(
 	const previousAeroNitro = process.env.AERO_NITRO
 	process.env.AERO_NITRO = 'false'
 
+	// Use a dedicated cache dir so the static server does not reuse the main build's
+	// transform cache (which would hand compiled .html→JS to import-analysis and fail).
+	const staticCacheDir = path.join(root, '.aero', 'vite-ssr')
 	const server = await createServer({
-		configFile: options.configFile ?? false,
+		configFile: false,
 		root,
+		cacheDir: staticCacheDir,
 		appType: 'custom',
 		logLevel: 'error',
-		plugins: options.vitePlugins,
+		plugins: options.vitePlugins ?? [],
 		server: {
 			middlewareMode: true,
 			hmr: false,

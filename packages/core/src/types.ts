@@ -43,6 +43,11 @@ export interface AeroOptions {
 	 * Runs in dev before rendering; for production redirects use Nitro server middleware or `redirects` config.
 	 */
 	middleware?: AeroMiddleware[]
+	/**
+	 * Optional plugins to add to the static render server (e.g. content plugin when using aero:content).
+	 * Merged after the core Aero plugins so pages that import aero:content resolve during static build.
+	 */
+	staticServerPlugins?: import('vite').Plugin[]
 }
 
 /** Request context passed to middleware (url, request, route path, resolved page name, site). */

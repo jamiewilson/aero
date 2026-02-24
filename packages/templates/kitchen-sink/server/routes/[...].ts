@@ -1,9 +1,26 @@
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { existsSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import { HTTPError, defineHandler, getRequestURL, serveStatic } from 'nitro/h3'
 
-const distDir = path.resolve(process.cwd(), process.env.AERO_DIST || 'dist')
+/** Resolve dist directory: AERO_DIST override, else from Nitro entry (works regardless of cwd), else cwd + dist. */
+function getDistDir(): string {
+	const fromEnv = process.env.AERO_DIST
+	if (fromEnv) {
+		return path.isAbsolute(fromEnv) ? fromEnv : path.resolve(process.cwd(), fromEnv)
+	}
+	const mainUrl = (globalThis as unknown as { __nitro_main__?: string }).__nitro_main__
+	if (typeof mainUrl === 'string') {
+		const entryDir = path.dirname(fileURLToPath(mainUrl))
+		// entryDir is .output/server; project root is two levels up
+		const projectRoot = path.resolve(entryDir, '..', '..')
+		return path.join(projectRoot, 'dist')
+	}
+	return path.resolve(process.cwd(), 'dist')
+}
+
+const distDir = getDistDir()
 const distIndexPath = path.join(distDir, 'index.html')
 const dist404Path = path.join(distDir, '404.html')
 const apiPrefix = process.env.AERO_API_PREFIX || '/api'
