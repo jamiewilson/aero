@@ -8,7 +8,7 @@ htmx.onLoad(node => Alpine.initTree(node as HTMLElement))
 
 aero.mount({
 	target: '#app',
-	onRender(el: HTMLElement) {
+	onRender(el) {
 		htmx.process(el)
 		Alpine.initTree(el)
 	},

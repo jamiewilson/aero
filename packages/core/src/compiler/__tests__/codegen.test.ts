@@ -383,7 +383,7 @@ describe('Codegen', () => {
 		const html = '<form hx-post="/api/submit"></form>'
 		const parsed = parse(html)
 		const code = compile(parsed, {
-			root: '/Users/jamie/dev/aero',
+			root: process.cwd(),
 			resolvePath: () => '/../../../../api/submit',
 		})
 

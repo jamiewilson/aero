@@ -1,7 +1,9 @@
 import aero from '@aero-ssg/core'
 
-const htmx = (await import('htmx.org')).default
-const Alpine = (await import('@scripts/alpine')).default
+declare global {
+	var htmx: typeof import('htmx.org').default
+	var Alpine: import('alpinejs').Alpine
+}
 
 htmx.config.globalViewTransitions = true
 htmx.onLoad(node => Alpine.initTree(node as HTMLElement))
