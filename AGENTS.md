@@ -89,6 +89,16 @@ pnpm test             # Run Vitest (packages/core compiler + vite tests)
 
 Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
 
+## TDD (Test-Driven Development)
+
+Use a **red-to-green** approach for implementing new features or tracking down bugs:
+
+1. **Red**: Write or run a failing test that captures the desired behavior or reproduces the bug. Run the test suite and confirm the test fails.
+2. **Green**: Implement the minimal change to make the test pass. Run the test suite and confirm it passes.
+3. **Refactor** (if needed): Improve the implementation without changing behavior; keep tests green.
+
+For bug fixes: start by adding or adjusting a test that fails in the current code (red), then fix the code until the test passes (green). Do not skip writing the failing test.
+
 ## Client entry and HMR
 
 The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aero-ssg/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.

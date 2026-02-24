@@ -23,6 +23,10 @@ All of the following live in **packages/core** (the framework package).
 
 Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_ON_CLIENT`, `ATTR_ON_BUILD`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
 
+## TDD (red-to-green)
+
+When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
+
 ## Tests
 
 - Vitest in **packages/core**: `compiler/__tests__/` (parser.test.ts, codegen.test.ts, vite-plugin.test.ts), `vite/__tests__/` (build.test.ts)
