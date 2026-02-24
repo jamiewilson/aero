@@ -359,6 +359,9 @@ function addDoctype(html: string): string {
 	return /^\s*<!doctype\s+html/i.test(html) ? html : `<!doctype html>\n${html}`
 }
 
+/** Image extensions: when a manifest entry's .file is a .js chunk but .assets lists the real image, use it. */
+const ASSET_IMAGE_EXT = /\.(jpg|jpeg|png|gif|webp|svg|ico)(\?|$)/i
+
 /** Rewrite one absolute URL to dist-relative using manifest and route set; leaves API and external URLs unchanged. */
 function rewriteAbsoluteUrl(
 	value: string,
@@ -373,10 +376,23 @@ function rewriteAbsoluteUrl(
 	const suffix = value.slice(noQuery.length)
 	const manifestKey = noQuery.replace(/^\//, '')
 	// Vite manifest may key entries with or without leading slash
-	const manifestEntry = manifest[noQuery] ?? manifest[manifestKey]
+	let manifestEntry = manifest[noQuery] ?? manifest[manifestKey]
+
+	// Entry may be keyed by source path; URL in HTML may be the output path (e.g. /assets/about.jpg-xxx.js from SSR import)
+	if (!manifestEntry && noQuery.startsWith('assets/')) {
+		const entry = Object.values(manifest).find(
+			(e: any) => e?.file === noQuery || e?.file === manifestKey,
+		)
+		if (entry) manifestEntry = entry as typeof manifestEntry
+	}
 
 	if (manifestEntry?.file) {
-		const rel = normalizeRelativeLink(fromDir, manifestEntry.file)
+		// Prefer the actual image asset when the entry's .file is a .js chunk (image import wrapper)
+		const entryWithAssets = manifestEntry as { file: string; assets?: string[] }
+		const imageAsset =
+			entryWithAssets.assets?.find((a: string) => ASSET_IMAGE_EXT.test(a))
+		const fileToUse = imageAsset ?? manifestEntry.file
+		const rel = normalizeRelativeLink(fromDir, fileToUse)
 		return rel + suffix
 	}
 
@@ -642,6 +658,12 @@ export function createBuildConfig(
 					return `assets/${name}-[hash].js`
 				},
 				chunkFileNames(chunkInfo) {
+					// Facade chunks for aero-html templates only re-export from the real content chunk.
+					// Name them aero-[hash].js so they don't collide with the content chunk (e.g. badge-[hash].js).
+					const facade = chunkInfo.facadeModuleId ?? ''
+					if (facade.includes('aero-html')) {
+						return `assets/aero-[hash].js`
+					}
 					const name = path.basename(chunkInfo.name)
 					return `assets/${name}-[hash].js`
 				},

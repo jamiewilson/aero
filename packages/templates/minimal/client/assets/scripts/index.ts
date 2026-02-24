@@ -1,1 +1,3 @@
-// TODO: Mount app here with aero.mount() for HMR, etc.
+import aero from '@aero-ssg/core'
+
+aero.mount()

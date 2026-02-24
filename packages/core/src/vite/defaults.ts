@@ -24,6 +24,12 @@ export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance'
 /** Resolved ID (with `\0` prefix) so Vite treats it as an internal module. */
 export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:aero/runtime-instance'
 
+/** Prefix for virtual empty-CSS modules used when Vite requests .html?html-proxy&inline-css (Aero .html are JS, not HTML with styles). */
+export const AERO_EMPTY_INLINE_CSS_PREFIX = '\0aero:empty-inline-css:'
+
+/** Prefix for virtual HTML template modules. Resolving .html to this id returns compiled JS so vite:build-html never sees raw/compiled HTML. */
+export const AERO_HTML_VIRTUAL_PREFIX = '\0aero-html:'
+
 /** Default directory names: client source, server (Nitro), dist output. */
 export const DEFAULT_DIRS = {
 	client: 'client',
