@@ -7,7 +7,7 @@ htmx.config.globalViewTransitions = true
 htmx.onLoad(node => Alpine.initTree(node as HTMLElement))
 
 aero.mount({
-	target: '#app',
+	target: '#custom-target',
 	onRender(el: HTMLElement) {
 		htmx.process(el)
 		Alpine.initTree(el)

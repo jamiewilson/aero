@@ -12,15 +12,13 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
 
-		<!-- Should data in inline scripts resolve to raw values? -->
-		<!-- Instead of current `const a, b = ... ? -->
 		<script pass:data="{{storageKey, attribute}}">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
 		</script>
 	</head>
 
-	<body id="app">
+	<body id="custom-target">
 		<nav-component>
 			<slot name="into-nav"></slot>
 		</nav-component>
