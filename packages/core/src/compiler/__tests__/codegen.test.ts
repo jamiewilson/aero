@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from '../parser'
 import { compile } from '../codegen'
-import { extractGetStaticPaths } from '../helpers'
+import { extractGetStaticPaths, getRenderComponentContextArg } from '../helpers'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
 async function execute(code: string, context: Record<string, any> = {}) {
@@ -456,6 +456,15 @@ describe('Codegen', () => {
 
 		const output = await execute(code, Aero)
 		expect(output).toContain('<nav-mock />')
+	})
+
+	it('emits component-in-slot-default with full context from single source (same as emit.ts)', () => {
+		// Component in slot default content uses codegen's compileElementDefaultContent path
+		const html = `<script is:build></script><slot name="nav"><nav-component /></slot>`
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const contextArg = getRenderComponentContextArg()
+		expect(code).toContain(contextArg)
 	})
 
 	it('should support inline object literals in data-props', async () => {

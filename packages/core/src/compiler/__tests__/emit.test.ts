@@ -98,7 +98,7 @@ describe('emitToJS', () => {
 		expect(out).toContain('__out += await Aero.renderComponent(header, { title: "Hi" }, { "default": __slot_0 }')
 	})
 
-	it('emits Component with headScripts so layout head scripts are injected', () => {
+	it('emits Component with full context from single source (request, url, params, site, styles, scripts, headScripts)', () => {
 		const ir: IRNode[] = [
 			{
 				kind: 'Component',
@@ -109,9 +109,9 @@ describe('emitToJS', () => {
 			},
 		]
 		const out = emitToJS(ir)
-		// Layouts/components with plain <script> in <head> must receive the root headScripts set
-		// so their bundled script tags are injected into the final <head>.
-		expect(out).toContain('headScripts: injectedHeadScripts')
+		// Both emit.ts and codegen.ts must pass the same context; canonical string lives in helpers.getRenderComponentContextArg()
+		const contextArg = Helper.getRenderComponentContextArg()
+		expect(out).toContain(contextArg)
 	})
 
 	it('emits with custom outVar', () => {
