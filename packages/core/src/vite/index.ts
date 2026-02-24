@@ -2,7 +2,7 @@
  * Aero Vite plugin: HTML transform, virtual modules, dev server middleware, and static build.
  *
  * @remarks
- * Split into focused sub-plugins: config, virtuals (resolve/load), transform, SSR middleware, HMR.
+ * Split into focused sub-plugins: config, virtuals (resolve/load), transform, SSR middleware.
  * Static build plugin runs after closeBundle; Nitro and image optimizer are composed in the factory.
  */
 
@@ -14,11 +14,13 @@ import type {
 	ScriptEntry,
 } from '../types'
 import { extractObjectKeys } from '../compiler/helpers'
-import type { ModuleNode, Plugin, PluginOption, ResolvedConfig } from 'vite'
+import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
 
 import {
+	AERO_EMPTY_INLINE_CSS_PREFIX,
+	AERO_HTML_VIRTUAL_PREFIX,
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	getClientScriptVirtualUrl,
@@ -33,9 +35,12 @@ import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
 import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages } from './build'
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
+
+const require = createRequire(import.meta.url)
 
 import { redirectsToRouteRules } from '../utils/redirects'
 
@@ -108,14 +113,26 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 	return {
 		name: 'vite-plugin-aero-config',
 		enforce: 'pre',
-		config(userConfig) {
+		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
 			state.aliasResult = loadTsconfigAliases(root)
 			const site = state.options.site ?? ''
 
+			// Production build: use minimal client entry (no instance/template chunks) so dist/assets stays small.
+			const alias =
+				env?.command === 'build'
+					? [
+							...state.aliasResult.aliases,
+							{
+								find: '@aero-ssg/core',
+								replacement: require.resolve('@aero-ssg/core/static'),
+							},
+						]
+					: state.aliasResult.aliases
+
 			return {
 				base: './',
-				resolve: { alias: state.aliasResult.aliases },
+				resolve: { alias },
 				define: {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
@@ -129,6 +146,23 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			state.config = resolvedConfig
 		},
 	}
+}
+
+/** True if filePath is an Aero template under client/pages, client/components, or client/layouts. */
+function isAeroTemplateHtml(
+	filePath: string,
+	root: string,
+	dirs: AeroPluginState['dirs'],
+): boolean {
+	const clientBase = path.join(root, dirs.client)
+	const rel = path.relative(clientBase, filePath)
+	if (rel.startsWith('..') || path.isAbsolute(rel)) return false
+	const sep = path.sep
+	return (
+		rel.startsWith('pages' + sep) ||
+		rel.startsWith('components' + sep) ||
+		rel.startsWith('layouts' + sep)
+	)
 }
 
 function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
@@ -148,6 +182,18 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
 				return '\0' + id
 			}
+			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
+				return id
+			}
+
+			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
+				return id
+			}
+
+			// Vite 8 may request .html with ?html-proxy&inline-css to extract inline styles; Aero .html are compiled to JS, so serve empty CSS.
+			if (id.includes('html-proxy') && id.includes('inline-css')) {
+				return AERO_EMPTY_INLINE_CSS_PREFIX + id
+			}
 
 			if (id.startsWith('aero:content')) {
 				return null
@@ -155,6 +201,15 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 
 			const resolved = await this.resolve(id, importer, { skipSelf: true })
 			if (resolved && resolved.id.endsWith('.html')) {
+				// Only in build: resolve Aero template .html to virtual id so vite:build-html never sees them.
+				// In dev we keep the real path so Vite's file watcher invalidates the module when the file changes (HMR + fresh SSR).
+				if (
+					state.config?.command === 'build' &&
+					state.aliasResult &&
+					isAeroTemplateHtml(resolved.id, state.config.root, state.dirs)
+				) {
+					return AERO_HTML_VIRTUAL_PREFIX + resolved.id.replace(/\.html$/i, '.aero')
+				}
 				return resolved
 			}
 
@@ -168,6 +223,13 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			if (isPathLike && !id.includes('.') && !id.startsWith('\0')) {
 				const resolvedHtml = await this.resolve(id + '.html', importer, { skipSelf: true })
 				if (resolvedHtml) {
+					if (
+						state.config?.command === 'build' &&
+						state.aliasResult &&
+						isAeroTemplateHtml(resolvedHtml.id, state.config.root, state.dirs)
+					) {
+						return AERO_HTML_VIRTUAL_PREFIX + resolvedHtml.id.replace(/\.html$/i, '.aero')
+					}
 					return resolvedHtml
 				}
 			}
@@ -177,6 +239,43 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 		load(id) {
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
 				return `export { aero, onUpdate } from ${JSON.stringify(state.runtimeInstancePath)}`
+			}
+
+			if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {
+				return '/* aero: no inline styles */'
+			}
+
+			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
+				const filePath = id.slice(AERO_HTML_VIRTUAL_PREFIX.length).replace(/\.aero$/i, '.html')
+				if (!state.config || !state.aliasResult) return null
+				// So Vite invalidates this virtual module when the source .html changes (HMR).
+				this.addWatchFile(filePath)
+				try {
+					const code = readFileSync(filePath, 'utf-8')
+					const parsed = parse(code)
+					const relativePath = path.relative(state.config.root, filePath).replace(/\\/g, '/')
+					const baseName = relativePath.replace(/\.html$/i, '')
+					const total = parsed.clientScripts.length
+					for (let i = 0; i < total; i++) {
+						const clientScript = parsed.clientScripts[i]
+						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
+						state.clientScripts.set(clientScriptUrl, {
+							content: clientScript.content,
+							passDataExpr: clientScript.passDataExpr,
+						})
+						clientScript.content = clientScriptUrl
+					}
+					const generated = compile(parsed, {
+						root: state.config.root,
+						clientScripts: parsed.clientScripts,
+						blockingScripts: parsed.blockingScripts,
+						inlineScripts: parsed.inlineScripts,
+						resolvePath: state.aliasResult.resolvePath,
+					})
+					return { code: generated, map: null }
+				} catch {
+					return null
+				}
 			}
 
 			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
@@ -205,6 +304,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 		name: 'vite-plugin-aero-transform',
 		enforce: 'pre',
 		transform(code, id) {
+			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) return null
 			if (!id.endsWith('.html')) return null
 			if (!state.config || !state.aliasResult) return null
 
@@ -380,60 +480,11 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 	}
 }
 
-function createAeroHmrPlugin(state: AeroPluginState): Plugin {
-	return {
-		name: 'vite-plugin-aero-hmr',
-		handleHotUpdate({ file, server, modules }) {
-			if (!state.config) return modules
-
-			const root = state.config.root
-			const toInvalidate: ModuleNode[] = []
-
-			const invalidateRuntimeInstance = () => {
-				const instanceModule = server.moduleGraph.getModuleById(
-					RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
-				)
-				if (instanceModule) {
-					server.moduleGraph.invalidateModule(instanceModule)
-					toInvalidate.push(instanceModule)
-				}
-			}
-
-			// Content: client/content (legacy) or project-root content/
-			const contentDirLegacy = path.resolve(root, state.dirs.client, 'content')
-			const contentDirRoot = path.resolve(root, 'content')
-			const isContentFile =
-				(file.startsWith(contentDirLegacy) || file.startsWith(contentDirRoot)) &&
-				file.endsWith('.ts')
-			if (isContentFile) {
-				invalidateRuntimeInstance()
-				return toInvalidate.length ? [...modules, ...toInvalidate] : modules
-			}
-
-			if (file.endsWith('.html')) {
-				invalidateRuntimeInstance()
-				const relativePath = path.relative(root, file).replace(/\\/g, '/')
-				const baseName = relativePath.replace(/\.html$/i, '')
-				const prefix = CLIENT_SCRIPT_PREFIX + baseName
-				for (const [url] of state.clientScripts) {
-					if (url.startsWith(prefix) && url.endsWith('.js')) {
-						const virtualModule = server.moduleGraph.getModuleById('\0' + url)
-						if (virtualModule) {
-							server.moduleGraph.invalidateModule(virtualModule)
-							toInvalidate.push(virtualModule)
-						}
-					}
-				}
-			}
-
-			return toInvalidate.length ? [...modules, ...toInvalidate] : modules
-		},
-	}
-}
-
 /**
- * Aero Vite plugin factory. Returns an array of plugins: config, virtuals, transform, SSR, HMR,
+ * Aero Vite plugin factory. Returns an array of plugins: config, virtuals, transform, SSR,
  * static-build, image optimizer, and optionally Nitro (serve only).
+ * HMR for templates and content is handled by Vite's dependency graph when the app uses a single
+ * client entry that imports @aero-ssg/core and calls aero.mount().
  *
  * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
  * @returns PluginOption[] to pass to Vite's plugins array.
@@ -467,7 +518,6 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const aeroVirtualsPlugin = createAeroVirtualsPlugin(state)
 	const aeroTransformPlugin = createAeroTransformPlugin(state)
 	const aeroSsrPlugin = createAeroSsrPlugin(state)
-	const aeroHmrPlugin = createAeroHmrPlugin(state)
 
 	/** Plugins needed for static build (resolve, load, transform); no SSR/HMR. */
 	const aeroCorePlugins: Plugin[] = [
@@ -518,7 +568,6 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		aeroVirtualsPlugin,
 		aeroTransformPlugin,
 		aeroSsrPlugin,
-		aeroHmrPlugin,
 		staticBuildPlugin,
 		ViteImageOptimizer({
 			exclude: undefined,

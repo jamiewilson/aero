@@ -603,22 +603,32 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const headScripts: string[] = []
 
 	// Process Bundled Client Scripts
+	// Virtual client URLs: use helper + string concatenation so no "${}" appears in script tag (vite:build-html would otherwise resolve it as a module).
+	const virtualPrefix = '/@aero/client/'
+	const hasVirtualClientScripts =
+		options.clientScripts?.some((c) => c.content.startsWith(virtualPrefix)) ?? false
+	if (hasVirtualClientScripts) {
+		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
+	}
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
 			const attrs = clientScript.attrs ?? ''
 			const hasType = attrs.includes('type=')
 			const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
-			const moduleTag = `<script ${baseAttrs} src="${clientScript.content}"></script>`
+			const urlExpr = clientScript.content.startsWith(virtualPrefix)
+				? `__aeroScriptUrl(${JSON.stringify(clientScript.content.slice(virtualPrefix.length))})`
+				: JSON.stringify(clientScript.content)
+			// String concatenation (no template literal) so vite:build-html does not see "${...}" and try to resolve it
+			const baseAttrsEscaped = baseAttrs.replace(/'/g, "\\'")
+			const tagExpr = `'<script ${baseAttrsEscaped} src="'+${urlExpr}+'"></script>'`
 
 			if (clientScript.passDataExpr) {
-				// Module scripts run deferred so document.currentScript is null; use an inline
-				// bridge script that runs immediately and sets window.__aero_data_next for the module to read.
 				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
 				rootScripts.push(
-					`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${JSON.stringify(moduleTag)});})();`,
+					`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`,
 				)
 			} else {
-				rootScripts.push(`scripts?.add(${JSON.stringify(moduleTag)});`)
+				rootScripts.push(`scripts?.add(${tagExpr});`)
 			}
 		}
 	}

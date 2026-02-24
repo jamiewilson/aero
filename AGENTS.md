@@ -89,6 +89,10 @@ pnpm test             # Run Vitest (packages/core compiler + vite tests)
 
 Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
 
+## Client entry and HMR
+
+The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aero-ssg/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
+
 ## Client Stack Integration
 
 - **Alpine.js** - Attributes like `x-data`, `x-model`, `:disabled` are preserved (not interpolated)
