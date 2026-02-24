@@ -24,6 +24,9 @@ import {
 	emitEnd,
 	emitForOf,
 	emitSlotOutput,
+	RENDER_COMPONENT_CONTEXT_PAIRS,
+	getRenderComponentContextArg,
+	getRenderContextDestructurePattern,
 } from '../helpers'
 
 describe('compileInterpolation', () => {
@@ -298,5 +301,42 @@ describe('extractObjectKeys', () => {
 	it('should handle empty input', () => {
 		expect(extractObjectKeys('{}')).toEqual([])
 		expect(extractObjectKeys('  ')).toEqual([])
+	})
+})
+
+describe('renderComponent context (single source of truth)', () => {
+	it('RENDER_COMPONENT_CONTEXT_PAIRS includes all pass-through keys', () => {
+		expect(RENDER_COMPONENT_CONTEXT_PAIRS).toEqual([
+			['request', 'request'],
+			['url', 'url'],
+			['params', 'params'],
+			['site', '__aero_site'],
+			['styles', 'styles'],
+			['scripts', 'scripts'],
+			['headScripts', 'injectedHeadScripts'],
+		])
+	})
+
+	it('getRenderComponentContextArg returns object literal string for 4th arg', () => {
+		const arg = getRenderComponentContextArg()
+		expect(arg).toContain('request')
+		expect(arg).toContain('url')
+		expect(arg).toContain('params')
+		expect(arg).toContain('site: __aero_site')
+		expect(arg).toContain('styles')
+		expect(arg).toContain('scripts')
+		expect(arg).toContain('headScripts: injectedHeadScripts')
+	})
+
+	it('getRenderContextDestructurePattern includes slots, renderComponent, and context keys', () => {
+		const pattern = getRenderContextDestructurePattern()
+		expect(pattern).toContain('slots = {}')
+		expect(pattern).toContain('renderComponent')
+		expect(pattern).toContain('headScripts: injectedHeadScripts')
+	})
+
+	it('emitRenderFunction destructuring matches getRenderComponentContextArg keys', () => {
+		const fn = emitRenderFunction('', '')
+		expect(fn).toContain(getRenderContextDestructurePattern())
 	})
 })

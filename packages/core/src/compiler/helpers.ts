@@ -216,7 +216,7 @@ export function emitRenderFunction(
 			: ''
 
 	const renderFn = `export default async function(Aero) {
-		const { slots = {}, renderComponent, request, url, params, site: __aero_site, styles, scripts, headScripts: injectedHeadScripts } = Aero;
+		const { ${getRenderContextDestructurePattern()} } = Aero;
 		${script}
 		${styleCode}
 		${stylesCode}
@@ -232,6 +232,40 @@ export function emitRenderFunction(
 	}
 
 	return renderFn.trim()
+}
+
+// ============================================================================
+// renderComponent context (single source of truth for emit + codegen)
+// ============================================================================
+
+/**
+ * Pairs of [inputKey, destructuredVarName] for the 4th argument to Aero.renderComponent(..., input).
+ * Must stay in sync with runtime createContext / AeroRenderInput fields used by renderComponent.
+ */
+export const RENDER_COMPONENT_CONTEXT_PAIRS: [key: string, varName: string][] = [
+	['request', 'request'],
+	['url', 'url'],
+	['params', 'params'],
+	['site', '__aero_site'],
+	['styles', 'styles'],
+	['scripts', 'scripts'],
+	['headScripts', 'injectedHeadScripts'],
+]
+
+/** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). Used by emit.ts and codegen.ts. */
+export function getRenderComponentContextArg(): string {
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(
+		([key, varName]) => (key === varName ? key : `${key}: ${varName}`),
+	)
+	return `{ ${entries.join(', ')} }`
+}
+
+/** Build destructuring pattern for the render function: request, url, params, site: __aero_site, ... */
+export function getRenderContextDestructurePattern(): string {
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(
+		([key, varName]) => (key === varName ? key : `${key}: ${varName}`),
+	)
+	return `slots = {}, renderComponent, ${entries.join(', ')}`
 }
 
 // ============================================================================
