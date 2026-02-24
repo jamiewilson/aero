@@ -14,7 +14,7 @@ import type {
 	ScriptEntry,
 } from '../types'
 import { extractObjectKeys } from '../compiler/helpers'
-import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
+import type { ModuleNode, Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
 
@@ -386,29 +386,47 @@ function createAeroHmrPlugin(state: AeroPluginState): Plugin {
 		handleHotUpdate({ file, server, modules }) {
 			if (!state.config) return modules
 
-			const contentDir = path.resolve(state.config.root, state.dirs.client, 'content')
-			if (file.startsWith(contentDir) && file.endsWith('.ts')) {
+			const root = state.config.root
+			const toInvalidate: ModuleNode[] = []
+
+			const invalidateRuntimeInstance = () => {
 				const instanceModule = server.moduleGraph.getModuleById(
 					RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
 				)
 				if (instanceModule) {
 					server.moduleGraph.invalidateModule(instanceModule)
-					return [...modules, instanceModule]
+					toInvalidate.push(instanceModule)
 				}
+			}
+
+			// Content: client/content (legacy) or project-root content/
+			const contentDirLegacy = path.resolve(root, state.dirs.client, 'content')
+			const contentDirRoot = path.resolve(root, 'content')
+			const isContentFile =
+				(file.startsWith(contentDirLegacy) || file.startsWith(contentDirRoot)) &&
+				file.endsWith('.ts')
+			if (isContentFile) {
+				invalidateRuntimeInstance()
+				return toInvalidate.length ? [...modules, ...toInvalidate] : modules
 			}
 
 			if (file.endsWith('.html')) {
-				const relativePath = path.relative(state.config.root, file).replace(/\\/g, '/')
-				const clientScriptUrl =
-					'\0' + CLIENT_SCRIPT_PREFIX + relativePath.replace(/\.html$/i, '.js')
-				const virtualModule = server.moduleGraph.getModuleById(clientScriptUrl)
-
-				if (virtualModule) {
-					server.moduleGraph.invalidateModule(virtualModule)
+				invalidateRuntimeInstance()
+				const relativePath = path.relative(root, file).replace(/\\/g, '/')
+				const baseName = relativePath.replace(/\.html$/i, '')
+				const prefix = CLIENT_SCRIPT_PREFIX + baseName
+				for (const [url] of state.clientScripts) {
+					if (url.startsWith(prefix) && url.endsWith('.js')) {
+						const virtualModule = server.moduleGraph.getModuleById('\0' + url)
+						if (virtualModule) {
+							server.moduleGraph.invalidateModule(virtualModule)
+							toInvalidate.push(virtualModule)
+						}
+					}
 				}
 			}
 
-			return modules
+			return toInvalidate.length ? [...modules, ...toInvalidate] : modules
 		},
 	}
 }

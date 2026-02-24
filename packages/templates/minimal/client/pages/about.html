@@ -2,13 +2,8 @@
 	import base from '@layouts/base'
 	import header from '@components/header'
 	import site from '@content/site'
-
-	const headerProps = {
-		title: site.about.title,
-		subtitle: site.about.subtitle,
-	}
 </script>
 
-<base-layout title="About">
-	<header-component props="{...headerProps}" />
+<base-layout title="About Meta Title">
+	<header-component title="{site.about.title}" subtitle="{site.about.subtitle}" />
 </base-layout>

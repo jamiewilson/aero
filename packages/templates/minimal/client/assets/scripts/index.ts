@@ -1,1 +1,1 @@
-// Minimal template: no client framework. Add your scripts here.
+// TODO: Mount app here with aero.mount() for HMR, etc.
