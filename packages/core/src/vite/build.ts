@@ -257,6 +257,7 @@ export function discoverClientScriptContentMap(
 			map.set(virtualPath, {
 				content: clientScripts[i].content,
 				passDataExpr: clientScripts[i].passDataExpr,
+				injectInHead: clientScripts[i].injectInHead,
 			})
 		}
 	}

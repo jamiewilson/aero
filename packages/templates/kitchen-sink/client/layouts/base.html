@@ -16,6 +16,12 @@
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
 		</script>
+
+		<script>
+			import { allCaps } from '@scripts/utils/transform'
+			const message = allCaps('[aero] plain <script> in <head>')
+			console.debug(message)
+		</script>
 	</head>
 
 	<body id="custom-target">

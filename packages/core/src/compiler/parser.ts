@@ -131,8 +131,7 @@ export function parse(html: string): ParseResult {
 			// so we don't rely on linkedom (script content containing "<script ...>" can
 			// produce multiple elements or wrong attributes).
 			const openingTag = fullTag.slice(0, fullTag.indexOf('>') + 1)
-			const isPlainDefault =
-				/^<script\s*>$/i.test(openingTag) && !inHead
+			const isPlainDefault = /^<script\s*>$/i.test(openingTag)
 
 			if (isPlainDefault) {
 				scriptsToRemove.push({
@@ -142,6 +141,7 @@ export function parse(html: string): ParseResult {
 					content: content.trim(),
 					attrs: cleanedAttrs,
 					passDataExpr: passData,
+					injectInHead: inHead,
 				})
 				edits.push({ start, end })
 			} else if (scriptEl.hasAttribute('is:build')) {
@@ -227,7 +227,12 @@ export function parse(html: string): ParseResult {
 	for (const s of scriptsToRemove) {
 		if (s.type === 'build') buildContent.push(s.content)
 		if (s.type === 'client')
-			clientScripts.push({ attrs: s.attrs, content: s.content, passDataExpr: s.passDataExpr })
+			clientScripts.push({
+				attrs: s.attrs,
+				content: s.content,
+				passDataExpr: s.passDataExpr,
+				injectInHead: s.injectInHead,
+			})
 		if (s.type === 'blocking')
 			blockingScripts.push({
 				attrs: s.attrs,

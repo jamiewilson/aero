@@ -87,6 +87,8 @@ export interface ScriptEntry {
 	attrs?: string
 	content: string
 	passDataExpr?: string
+	/** If true, client script is injected in <head> instead of before </body>. */
+	injectInHead?: boolean
 }
 
 /**

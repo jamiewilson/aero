@@ -190,6 +190,31 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('console.log(theme);')
 	})
 
+	it('should extract plain script in head as client script with injectInHead flag', () => {
+		const input = `
+<html>
+<head>
+	<script>
+		import { helper } from '@scripts/utils/helper'
+		console.log(helper());
+	</script>
+</head>
+<body>
+	<h1>Title</h1>
+</body>
+</html>
+        `
+		const result = parse(input)
+
+		// Plain script in head should be extracted to clientScripts with injectInHead: true
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].content).toContain('import { helper }')
+		expect(result.clientScripts[0].content).toContain('console.log(helper());')
+		expect(result.clientScripts[0].injectInHead).toBe(true)
+		// Should NOT be in template
+		expect(result.template).not.toContain('import { helper }')
+	})
+
 	/**
 	 * Removal is by character range (start/end) so that when script content contains
 	 * HTML comments, the original fullTag still matches and is removed correctly.
