@@ -2,3 +2,4 @@ packages:
   - "packages/*"
   - "packages/templates/*"
   - "packages/start/dist/*"
+  - "examples/*"

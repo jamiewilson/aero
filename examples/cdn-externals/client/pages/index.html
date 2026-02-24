@@ -1,0 +1,13 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+<base-layout>
+	<h1>CDN externals</h1>
+	<div x-data="{ count: 0 }" class="demo">
+		<p>
+			Alpine counter:
+			<span x-text="count"></span>
+		</p>
+		<button @click="count++">Increment</button>
+	</div>
+</base-layout>

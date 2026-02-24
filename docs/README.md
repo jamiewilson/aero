@@ -19,6 +19,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 - **[Script taxonomy](script-taxonomy.md)** — Script types (`is:build`, plain `<script>`, `is:inline`, `is:blocking`, `src`), behavior, and `pass:data` with multiple instances.
 - **[pass:data directive](pass-data-directive.md)** — Threading build-time data into client scripts and `<style>`.
+- **[Importing and bundling](importing-and-bundling.md)** — How client scripts are bundled; options (single bundle, CDN + globals, externals, code-splitting) for htmx, Alpine, and other deps.
 
 ## Content and configuration
 
