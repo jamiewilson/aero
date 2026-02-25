@@ -10,6 +10,7 @@
  */
 
 import type { AeroRouteParams } from '../types'
+import { toPosix } from './path'
 
 /**
  * Result of resolving a page: the module (or lazy loader), canonical page name, and route params.
@@ -32,7 +33,7 @@ export interface PageTargetResult {
  * @returns Canonical key for pagesMap lookup.
  */
 export function pagePathToKey(path: string): string {
-	const withoutExt = path.replace(/\.html$/i, '').replace(/\\/g, '/')
+	const withoutExt = toPosix(path).replace(/\.html$/i, '')
 	if (withoutExt.includes('pages/')) {
 		return withoutExt.split('pages/').pop()!
 	}

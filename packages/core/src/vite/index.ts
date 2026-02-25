@@ -33,7 +33,8 @@ import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
-import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages } from './build'
+import { toPosixRelative } from '../utils/path'
+import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages, registerClientScriptsToMap, addDoctype } from './build'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -253,18 +254,11 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				try {
 					const code = readFileSync(filePath, 'utf-8')
 					const parsed = parse(code)
-					const relativePath = path.relative(state.config.root, filePath).replace(/\\/g, '/')
+					const relativePath = toPosixRelative(filePath, state.config.root)
 					const baseName = relativePath.replace(/\.html$/i, '')
-					const total = parsed.clientScripts.length
-					for (let i = 0; i < total; i++) {
-						const clientScript = parsed.clientScripts[i]
-						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
-						state.clientScripts.set(clientScriptUrl, {
-							content: clientScript.content,
-							passDataExpr: clientScript.passDataExpr,
-							injectInHead: clientScript.injectInHead,
-						})
-						clientScript.content = clientScriptUrl
+					registerClientScriptsToMap(parsed, baseName, state.clientScripts)
+					for (let i = 0; i < parsed.clientScripts.length; i++) {
+						parsed.clientScripts[i].content = getClientScriptVirtualUrl(baseName, i, parsed.clientScripts.length)
 					}
 					const generated = compile(parsed, {
 						root: state.config.root,
@@ -287,8 +281,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				if (entry.passDataExpr) {
 					const keys = extractObjectKeys(entry.passDataExpr)
 					if (keys.length > 0) {
-						const preamble =
-							`var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
+						const preamble = `var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
 						return preamble + entry.content
 					}
 				}
@@ -313,21 +306,11 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 				const parsed = parse(code)
 
 				if (parsed.clientScripts.length > 0) {
-					const relativePath = path.relative(state.config.root, id).replace(/\\/g, '/')
+					const relativePath = toPosixRelative(id, state.config.root)
 					const baseName = relativePath.replace(/\.html$/i, '')
-					const total = parsed.clientScripts.length
-
-					for (let i = 0; i < total; i++) {
-						const clientScript = parsed.clientScripts[i]
-						const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
-
-						state.clientScripts.set(clientScriptUrl, {
-							content: clientScript.content,
-							passDataExpr: clientScript.passDataExpr,
-							injectInHead: clientScript.injectInHead,
-						})
-
-						clientScript.content = clientScriptUrl
+					registerClientScriptsToMap(parsed, baseName, state.clientScripts)
+					for (let i = 0; i < parsed.clientScripts.length; i++) {
+						parsed.clientScripts[i].content = getClientScriptVirtualUrl(baseName, i, parsed.clientScripts.length)
 					}
 				}
 
@@ -426,9 +409,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							site: state.options.site,
 						}
 						for (const handler of middleware) {
-							const result: AeroMiddlewareResult = await Promise.resolve(
-								handler(ctx),
-							)
+							const result: AeroMiddlewareResult = await Promise.resolve(handler(ctx))
 							if (result && 'redirect' in result) {
 								res.statusCode = result.redirect.status ?? 302
 								res.setHeader('Location', result.redirect.url)
@@ -437,9 +418,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							}
 							if (result && 'response' in result) {
 								res.statusCode = result.response.status
-								result.response.headers.forEach(
-									(v: string, k: string) => res.setHeader(k, v),
-								)
+								result.response.headers.forEach((v: string, k: string) => res.setHeader(k, v))
 								const body = await result.response.arrayBuffer()
 								res.end(Buffer.from(body))
 								return
@@ -467,9 +446,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 						return
 					}
 
-					if (!/^\s*<!doctype\s+html/i.test(rendered)) {
-						rendered = `<!doctype html>\n${rendered}`
-					}
+					rendered = addDoctype(rendered)
 
 					const transformed = await server.transformIndexHtml(req.url, rendered)
 					res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -522,11 +499,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const aeroSsrPlugin = createAeroSsrPlugin(state)
 
 	/** Plugins needed for static build (resolve, load, transform); no SSR/HMR. */
-	const aeroCorePlugins: Plugin[] = [
-		aeroConfigPlugin,
-		aeroVirtualsPlugin,
-		aeroTransformPlugin,
-	]
+	const aeroCorePlugins: Plugin[] = [aeroConfigPlugin, aeroVirtualsPlugin, aeroTransformPlugin]
 
 	const staticBuildPlugin: Plugin = {
 		name: 'vite-plugin-aero-static',
@@ -537,10 +510,9 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =
 				state.config!.build.minify !== false && process.env.NODE_ENV === 'production'
-			const staticPlugins =
-				options.staticServerPlugins?.length
-					? [...aeroCorePlugins, ...options.staticServerPlugins]
-					: aeroCorePlugins
+			const staticPlugins = options.staticServerPlugins?.length
+				? [...aeroCorePlugins, ...options.staticServerPlugins]
+				: aeroCorePlugins
 			await renderStaticPages(
 				{
 					root,
@@ -555,11 +527,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				outDir,
 			)
 			if (enableNitro) {
-				const configCwd = writeGeneratedNitroConfig(
-					root,
-					dirs.server,
-					options.redirects,
-				)
+				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects)
 				await runNitroBuild(root, configCwd)
 			}
 		},

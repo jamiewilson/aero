@@ -8,7 +8,14 @@
  * and optionally minifies HTML. Also provides createBuildConfig for Rollup inputs and discoverClientScriptContentMap for the plugin.
  */
 
-import type { AeroDirs, RedirectRule, ScriptEntry, StaticPathEntry } from '../types'
+import type {
+	AeroDirs,
+	RedirectRule,
+	ScriptEntry,
+	StaticPathEntry,
+	ParseResult,
+} from '../types'
+
 import type { Manifest, Plugin, UserConfig } from 'vite'
 import { minify as minifyHTML } from 'html-minifier-next'
 import fs from 'node:fs'
@@ -17,6 +24,7 @@ import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import { pagePathToKey } from '../utils/routing'
 import { createServer } from 'vite'
+
 import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
@@ -26,6 +34,29 @@ import {
 	SKIP_PROTOCOL_REGEX,
 	resolveDirs,
 } from './defaults'
+
+import { toPosix, toPosixRelative } from '../utils/path'
+
+/**
+ * Register client scripts from parsed template into a Map.
+ * Converts client script content to virtual URLs for Vite bundling.
+ */
+export function registerClientScriptsToMap(
+	parsed: ParseResult,
+	baseName: string,
+	target: Map<string, ScriptEntry>,
+): void {
+	const total = parsed.clientScripts.length
+	for (let i = 0; i < total; i++) {
+		const clientScript = parsed.clientScripts[i]
+		const clientScriptUrl = getClientScriptVirtualUrl(baseName, i, total)
+		target.set(clientScriptUrl, {
+			content: clientScript.content,
+			passDataExpr: clientScript.passDataExpr,
+			injectInHead: clientScript.injectInHead,
+		})
+	}
+}
 
 /** Options for renderStaticPages: root, dirs, resolvePath, vitePlugins, optional minify, site, redirects. */
 interface StaticBuildOptions {
@@ -68,10 +99,6 @@ function expandPattern(pattern: string, params: Record<string, string>): string 
 		}
 		return params[key]
 	})
-}
-
-function toPosix(value: string): string {
-	return value.replace(/\\/g, '/')
 }
 
 /** Recursively collect all .html file paths under dir. */
@@ -170,7 +197,7 @@ function isSkippableUrl(value: string): boolean {
 
 /** Root-relative path for manifest key (posix). */
 function toManifestKey(root: string, filePath: string): string {
-	return toPosix(path.relative(root, filePath))
+	return toPosixRelative(filePath, root)
 }
 
 /** Resolve script/link src or href to absolute path; returns null for external/skippable or unresolvable. */
@@ -204,11 +231,11 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 
 	// Use same key derivation as runtime (pagePathToKey) so page names align.
 	const allPageNames = new Set(
-		pageFiles.map(f => pagePathToKey(toPosix(path.relative(root, f)))),
+		pageFiles.map(f => pagePathToKey(toPosixRelative(f, root))),
 	)
 
 	return pageFiles.map(file => {
-		const relFromRoot = toPosix(path.relative(root, file))
+		const relFromRoot = toPosixRelative(file, root)
 		let pageName = pagePathToKey(relFromRoot)
 
 		// Mirror the runtime fallback: treat home as index when there is no
@@ -248,18 +275,9 @@ export function discoverClientScriptContentMap(
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
-		const rel = toPosix(path.relative(root, file))
+		const rel = toPosixRelative(file, root)
 		const baseName = rel.replace(/\.html$/i, '')
-		const { clientScripts } = parsed
-		const total = clientScripts.length
-		for (let i = 0; i < total; i++) {
-			const virtualPath = getClientScriptVirtualUrl(baseName, i, total)
-			map.set(virtualPath, {
-				content: clientScripts[i].content,
-				passDataExpr: clientScripts[i].passDataExpr,
-				injectInHead: clientScripts[i].injectInHead,
-			})
-		}
+		registerClientScriptsToMap(parsed, baseName, map)
 	}
 	return map
 }
@@ -274,7 +292,7 @@ function discoverClientScriptVirtualInputs(
 		const source = fs.readFileSync(file, 'utf-8')
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
-		const rel = toPosix(path.relative(root, file))
+		const rel = toPosixRelative(file, root)
 		const baseName = rel.replace(/\.html$/i, '')
 		const { clientScripts } = parsed
 		const total = clientScripts.length
@@ -356,7 +374,7 @@ function walkFiles(dir: string): string[] {
 }
 
 /** Prepend `<!doctype html>` if missing. */
-function addDoctype(html: string): string {
+export function addDoctype(html: string): string {
 	return /^\s*<!doctype\s+html/i.test(html) ? html : `<!doctype html>\n${html}`
 }
 
@@ -575,11 +593,7 @@ export async function renderStaticPages(
 			// dynamic page name (e.g. "[id]") so the runtime finds the module,
 			// while passing the concrete params so the template has real values.
 			const renderTarget = isDynamicPage(page)
-				? toPosix(
-						path
-							.relative(path.resolve(root, dirs.client, 'pages'), page.sourceFile)
-							.replace(/\.html$/i, ''),
-					)
+				? toPosixRelative(page.sourceFile, path.resolve(root, dirs.client, 'pages')).replace(/\.html$/i, '')
 				: page.pageName
 
 			let rendered = await runtime.aero.render(renderTarget, {
