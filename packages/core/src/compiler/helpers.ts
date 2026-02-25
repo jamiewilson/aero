@@ -3,7 +3,7 @@
  *
  * @remarks
  * Used by `codegen.ts` to compile `{ expr }` to template literals, build props/slots code, and emit
- * the top-level render wrapper. Some helpers (e.g. `extractObjectKeys`) are also used by the Vite plugin.
+ * the top-level render wrapper.
  */
 
 /**
@@ -208,8 +208,7 @@ export function emitRenderFunction(
 			? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t')
 			: ''
 
-	const rootScriptsBlock =
-		rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
+	const rootScriptsBlock = rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
 	const headScriptsBlock =
 		headScriptsLines.length > 0
 			? headScriptsLines.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t')
@@ -254,16 +253,16 @@ export const RENDER_COMPONENT_CONTEXT_PAIRS: [key: string, varName: string][] = 
 
 /** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). Used by emit.ts and codegen.ts. */
 export function getRenderComponentContextArg(): string {
-	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(
-		([key, varName]) => (key === varName ? key : `${key}: ${varName}`),
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
+		key === varName ? key : `${key}: ${varName}`,
 	)
 	return `{ ${entries.join(', ')} }`
 }
 
 /** Build destructuring pattern for the render function: request, url, params, site: __aero_site, ... */
 export function getRenderContextDestructurePattern(): string {
-	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(
-		([key, varName]) => (key === varName ? key : `${key}: ${varName}`),
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
+		key === varName ? key : `${key}: ${varName}`,
 	)
 	return `slots = {}, renderComponent, ${entries.join(', ')}`
 }
@@ -314,69 +313,4 @@ export function emitSlotOutput(
 	outVar = '__out',
 ): string {
 	return `${outVar} += slots['${name}'] ?? \`${defaultContent}\`;\n`
-}
-
-/**
- * Extract top-level property keys from an object-literal expression string.
- *
- * @param expr - e.g. `{ title: expr, id: 42 }` or `{ config }` (shorthand).
- * @returns e.g. `['title', 'id']` or `['config']`. Does not support spread; callers must handle `...obj` separately.
- */
-export function extractObjectKeys(expr: string): string[] {
-	let inner = expr.trim()
-	// Strip all matching outer braces (e.g. `{{ title }}` -> `title`)
-	while (inner.startsWith('{') && inner.endsWith('}')) {
-		inner = inner.slice(1, -1).trim()
-	}
-
-	if (!inner) return []
-
-	const keys: string[] = []
-	let depth = 0
-	let current = ''
-
-	for (let i = 0; i < inner.length; i++) {
-		const char = inner[i]
-		if (char === '{' || char === '[' || char === '(') {
-			depth++
-			current += char
-		} else if (char === '}' || char === ']' || char === ')') {
-			depth--
-			current += char
-		} else if (char === ',' && depth === 0) {
-			// End of a property — extract the key
-			const key = extractKeyFromEntry(current.trim())
-			if (key) keys.push(key)
-			current = ''
-		} else {
-			current += char
-		}
-	}
-
-	// Handle the last entry
-	const lastKey = extractKeyFromEntry(current.trim())
-	if (lastKey) keys.push(lastKey)
-
-	return keys
-}
-
-/** Extract key from one property entry: `key: value` → key, shorthand `ident` → ident; returns null for spread or invalid. */
-function extractKeyFromEntry(entry: string): string | null {
-	if (!entry) return null
-
-	// Reject spread syntax
-	if (entry.startsWith('...')) return null
-
-	// Check for `key: value` pattern
-	const colonIdx = entry.indexOf(':')
-	if (colonIdx > 0) {
-		return entry.slice(0, colonIdx).trim()
-	}
-
-	// Shorthand: bare identifier (e.g. `config`)
-	if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(entry)) {
-		return entry
-	}
-
-	return null
 }
