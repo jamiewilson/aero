@@ -125,7 +125,7 @@ describe('emitToJS', () => {
 
 describe('emitBodyAndStyle', () => {
 	it('returns bodyCode and empty styleCode when no style IR', () => {
-		const ir = { body: [{ kind: 'Append', content: '<div></div>' }], style: [] }
+		const ir = { body: [{ kind: 'Append' as const, content: '<div></div>' }], style: [] }
 		const { bodyCode, styleCode } = emitBodyAndStyle(ir)
 		expect(bodyCode).toContain('__out += `<div></div>`;')
 		expect(styleCode).toBe('')
@@ -134,7 +134,7 @@ describe('emitBodyAndStyle', () => {
 	it('wraps style IR in style var and styles?.add()', () => {
 		const ir = {
 			body: [],
-			style: [{ kind: 'Append', content: ':root { }' }],
+			style: [{ kind: 'Append' as const, content: ':root { }' }],
 		}
 		const { bodyCode, styleCode } = emitBodyAndStyle(ir)
 		expect(bodyCode).toBe('')
