@@ -66,6 +66,7 @@ export function parse(html: string): ParseResult {
 		content: string
 		attrs: string
 		passDataExpr?: string
+		injectInHead?: boolean
 	}[] = []
 
 	const isInHead = (html: string, scriptStart: number): boolean => {
