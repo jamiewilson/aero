@@ -338,7 +338,8 @@ class Lowerer {
 		}
 
 		const { attrString, loopData, passDataExpr } = this.parseElementAttributes(node)
-		const childSkip = skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
+		const childSkip =
+			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
 
 		const inner: IRNode[] = []
 
@@ -496,7 +497,12 @@ class Lowerer {
 							child.childNodes,
 							skipInterpolation,
 						)
-						slotIR.push({ kind: 'Slot', name: passthroughName, defaultContent, outVar: slotVar })
+						slotIR.push({
+							kind: 'Slot',
+							name: passthroughName,
+							defaultContent,
+							outVar: slotVar,
+						})
 						continue
 					}
 				}
@@ -606,7 +612,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Virtual client URLs: use helper + string concatenation so no "${}" appears in script tag (vite:build-html would otherwise resolve it as a module).
 	const virtualPrefix = '/@aero/client/'
 	const hasVirtualClientScripts =
-		options.clientScripts?.some((c) => c.content.startsWith(virtualPrefix)) ?? false
+		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
 	if (hasVirtualClientScripts) {
 		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
 	}

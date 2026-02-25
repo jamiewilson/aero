@@ -9,6 +9,7 @@
 
 import type { ResolverOptions } from '../types'
 import path from 'path'
+import { toPosix } from '../utils/path'
 
 export class Resolver {
 	private root: string
@@ -32,10 +33,10 @@ export class Resolver {
 				next = '/' + path.relative(this.rootAbs, absolute)
 			} else {
 				// Preserve URL-like absolute paths (e.g. "/api/submit"), but canonicalize segments
-				next = path.posix.normalize(next.replace(/\\/g, '/'))
+				next = path.posix.normalize(toPosix(next))
 			}
 		}
-		return next.replace(/\\/g, '/')
+		return toPosix(next)
 	}
 
 	/**
