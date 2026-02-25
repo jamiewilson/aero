@@ -4,7 +4,7 @@
  * @remarks
  * The `Aero` class holds globals and a map of page/layout modules. `render()` resolves a page name
  * (e.g. from `resolvePageName`), builds template context, and invokes the compiled render function.
- * `mount` is optionally set by the client entry (`core/src/index.ts`).
+ * `mount` is optionally set by the client entry (`core/src/entry-dev.ts`).
  */
 
 import type {
@@ -50,7 +50,9 @@ export class Aero {
 	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath). */
 	private isRenderInput(value: any): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
-		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(key => key in value)
+		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(
+			key => key in value,
+		)
 	}
 
 	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */

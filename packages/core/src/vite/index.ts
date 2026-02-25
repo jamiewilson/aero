@@ -13,7 +13,7 @@ import type {
 	AeroRenderInput,
 	ScriptEntry,
 } from '../types'
-import { extractObjectKeys } from '../compiler/helpers'
+import { extractObjectKeys } from '../utils/parse'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
@@ -34,7 +34,13 @@ import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
-import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages, registerClientScriptsToMap, addDoctype } from './build'
+import {
+	createBuildConfig,
+	discoverClientScriptContentMap,
+	renderStaticPages,
+	registerClientScriptsToMap,
+	addDoctype,
+} from './build'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -126,7 +132,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 							...state.aliasResult.aliases,
 							{
 								find: '@aero-ssg/core',
-								replacement: require.resolve('@aero-ssg/core/static'),
+								replacement: require.resolve('@aero-ssg/core/entry-prod'),
 							},
 						]
 					: state.aliasResult.aliases
@@ -258,7 +264,11 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					const baseName = relativePath.replace(/\.html$/i, '')
 					registerClientScriptsToMap(parsed, baseName, state.clientScripts)
 					for (let i = 0; i < parsed.clientScripts.length; i++) {
-						parsed.clientScripts[i].content = getClientScriptVirtualUrl(baseName, i, parsed.clientScripts.length)
+						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
+							baseName,
+							i,
+							parsed.clientScripts.length,
+						)
 					}
 					const generated = compile(parsed, {
 						root: state.config.root,
@@ -310,7 +320,11 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 					const baseName = relativePath.replace(/\.html$/i, '')
 					registerClientScriptsToMap(parsed, baseName, state.clientScripts)
 					for (let i = 0; i < parsed.clientScripts.length; i++) {
-						parsed.clientScripts[i].content = getClientScriptVirtualUrl(baseName, i, parsed.clientScripts.length)
+						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
+							baseName,
+							i,
+							parsed.clientScripts.length,
+						)
 					}
 				}
 
@@ -509,7 +523,9 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const root = state.config!.root
 			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =
-				state.config!.build.minify !== false && typeof import.meta !== 'undefined' && import.meta.env?.PROD
+				state.config!.build.minify !== false &&
+				typeof import.meta !== 'undefined' &&
+				import.meta.env?.PROD
 			const staticPlugins = options.staticServerPlugins?.length
 				? [...aeroCorePlugins, ...options.staticServerPlugins]
 				: aeroCorePlugins
