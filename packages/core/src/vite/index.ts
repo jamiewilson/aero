@@ -509,7 +509,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const root = state.config!.root
 			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =
-				state.config!.build.minify !== false && process.env.NODE_ENV === 'production'
+				state.config!.build.minify !== false && typeof import.meta !== 'undefined' && import.meta.env?.PROD
 			const staticPlugins = options.staticServerPlugins?.length
 				? [...aeroCorePlugins, ...options.staticServerPlugins]
 				: aeroCorePlugins

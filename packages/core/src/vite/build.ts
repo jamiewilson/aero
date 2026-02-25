@@ -613,7 +613,8 @@ export async function renderStaticPages(
 			)
 
 			// Minify HTML in production
-			if (options.minify && process.env.NODE_ENV === 'production') {
+			const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+			if (options.minify && isProd) {
 				rendered = await minifyHTML(rendered, {
 					collapseWhitespace: true,
 					removeComments: true,
