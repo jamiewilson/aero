@@ -71,7 +71,7 @@ export type AeroMiddleware = (
 	ctx: AeroRequestContext,
 ) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
 
-/** Options for the client-side `mount()` entry (see `core/src/index.ts`). */
+/** Options for the client-side `mount()` entry (see `core/src/entry-dev.ts`). */
 export interface MountOptions {
 	/** Root element: CSS selector or `HTMLElement`. Defaults to `#app`. */
 	target?: string | HTMLElement

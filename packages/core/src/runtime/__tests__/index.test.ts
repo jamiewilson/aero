@@ -127,8 +127,8 @@ describe('Aero class', () => {
 
 		it('should render with props', async () => {
 			aero.registerPages({
-				'pages/index.html': { 
-					default: (ctx: any) => `<div>${ctx.props.title}</div>` 
+				'pages/index.html': {
+					default: (ctx: any) => `<div>${ctx.props.title}</div>`,
 				},
 			})
 
@@ -224,4 +224,4 @@ describe('Aero class', () => {
 })
 
 // instance.ts and onUpdate are not unit-tested here: the module uses import.meta.glob('@components/...')
-// which requires a Vite app context. They are covered by client entry (core/src/index.ts) and dev/build usage.
+// which requires a Vite app context. They are covered by client entry (core/src/entry-dev.ts) and dev/build usage.
