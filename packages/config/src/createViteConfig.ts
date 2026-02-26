@@ -7,8 +7,8 @@
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
 import { mergeConfig } from 'vite'
-import { aero } from '@aero-ssg/core/vite'
-import { aeroContent } from '@aero-ssg/content/vite'
+import { aero } from '@aerobuilt/core/vite'
+import { aeroContent } from '@aerobuilt/content/vite'
 import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'
@@ -24,8 +24,7 @@ export interface CreateViteConfigOptions {
 export function getDefaultOptions(): CreateViteConfigOptions {
 	return {
 		command: process.argv.includes('build') ? 'build' : 'dev',
-		mode:
-			process.env.NODE_ENV === 'production' ? 'production' : 'development',
+		mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 	}
 }
 
@@ -47,10 +46,7 @@ export function createViteConfig(
 	let opts: CreateViteConfigOptions
 
 	const isOptionsObject = (x: unknown): x is CreateViteConfigOptions =>
-		typeof x === 'object' &&
-		x !== null &&
-		'command' in x &&
-		'mode' in x
+		typeof x === 'object' && x !== null && 'command' in x && 'mode' in x
 
 	const hasExplicitConfig =
 		aeroConfigOrOptions !== undefined &&
@@ -61,9 +57,7 @@ export function createViteConfig(
 		aeroConfig = aeroConfigOrOptions as AeroConfig | AeroConfigFunction
 		opts = options ?? getDefaultOptions()
 	} else {
-		opts = isOptionsObject(aeroConfigOrOptions)
-			? aeroConfigOrOptions
-			: getDefaultOptions()
+		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
 		const loaded = loadAeroConfig(process.cwd())
 		aeroConfig = loaded ?? {}
 	}
@@ -80,10 +74,18 @@ function createViteConfigFromAero(
 			? aeroConfig({ command: options.command, mode: options.mode })
 			: aeroConfig
 
-	const { content, server, site, dirs, redirects, middleware, vite: userViteConfig } =
-		resolvedConfig
+	const {
+		content,
+		server,
+		site,
+		dirs,
+		redirects,
+		middleware,
+		vite: userViteConfig,
+	} = resolvedConfig
 
-	const contentOptions = content === true ? {} : typeof content === 'object' ? content : undefined
+	const contentOptions =
+		content === true ? {} : typeof content === 'object' ? content : undefined
 	const basePlugins: UserConfig['plugins'] = [
 		aero({
 			nitro: server ?? false,

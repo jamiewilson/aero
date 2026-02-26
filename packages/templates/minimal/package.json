@@ -1,18 +1,16 @@
 {
-  "name": "@aero-ssg/template-minimal",
-  "type": "module",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite build && vite preview"
-  },
-  "dependencies": {
-    "@aero-ssg/config": "workspace:*",
-    "@aero-ssg/content": "workspace:*",
-    "@aero-ssg/core": "workspace:*"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.24",
-    "vite": "8.0.0-beta.15"
-  }
+	"name": "@aerobuilt/template-minimal",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite build && vite preview"
+	},
+	"dependencies": {
+		"aerobuilt": "workspace:*"
+	},
+	"devDependencies": {
+		"autoprefixer": "^10.4.24",
+		"vite": "8.0.0-beta.15"
+	}
 }

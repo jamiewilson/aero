@@ -1,4 +1,4 @@
-import { defineCollection, defineConfig } from '@aero-ssg/content'
+import { defineCollection, defineConfig } from 'aerobuilt/content'
 import { z } from 'zod'
 
 const docs = defineCollection({

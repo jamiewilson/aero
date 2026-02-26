@@ -1,30 +1,30 @@
 {
-  "name": "@aero-ssg/config",
-  "version": "0.1.0",
-  "type": "module",
-  "private": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "autoprefixer": "^10.4.24",
-    "jiti": "^2.4.2"
-  },
-  "peerDependencies": {
-    "vite": "^8.0.0",
-    "@aero-ssg/core": "workspace:*",
-    "@aero-ssg/content": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^25.3.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
-  }
+	"name": "@aerobuilt/config",
+	"version": "0.1.0",
+	"type": "module",
+	"private": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"autoprefixer": "^10.4.24",
+		"jiti": "^2.4.2"
+	},
+	"peerDependencies": {
+		"vite": "^8.0.0",
+		"@aerobuilt/core": "workspace:*",
+		"@aerobuilt/content": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3"
+	}
 }

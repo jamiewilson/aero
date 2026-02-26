@@ -7,9 +7,7 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"@aero-ssg/config": "workspace:*",
-		"@aero-ssg/content": "workspace:*",
-		"@aero-ssg/core": "workspace:*"
+		"aerobuilt": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/alpinejs": "^3.13.11",

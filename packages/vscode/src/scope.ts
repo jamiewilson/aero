@@ -24,7 +24,7 @@ const AERO_MARKERS = [
 
 /** Patterns that indicate an Aero project (in vite/tsconfig/package). */
 const PROJECT_MARKERS: RegExp[] = [
-	/@aero-ssg/,
+	/@aerobuilt/,
 	/@components\/\*/,
 	/@layouts\/\*/,
 	/on:(?:build|client)/,

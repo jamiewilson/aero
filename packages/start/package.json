@@ -1,16 +1,16 @@
 {
-  "name": "create-aero",
-  "version": "0.1.0",
-  "type": "module",
-  "bin": {
-    "create-aero": "index.js"
-  },
-  "scripts": {
-    "create": "node .",
-    "create-aero": "node index.js"
-  },
-  "dependencies": {
-    "@aero-ssg/template-kitchen-sink": "workspace:*",
-    "@aero-ssg/template-minimal": "workspace:*"
-  }
+	"name": "create-aero",
+	"version": "0.1.0",
+	"type": "module",
+	"bin": {
+		"create-aero": "index.js"
+	},
+	"scripts": {
+		"create": "node .",
+		"create-aero": "node index.js"
+	},
+	"dependencies": {
+		"@aerobuilt/template-kitchen-sink": "workspace:*",
+		"@aerobuilt/template-minimal": "workspace:*"
+	}
 }

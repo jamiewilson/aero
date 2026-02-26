@@ -3,7 +3,7 @@
  * virtual client scripts, pass:data preamble injection, rendering via Aero runtime,
  * resolveId for extensionless .html, and buildStart prefill.
  * HMR for templates and content is dependency-driven (no custom handleHotUpdate); the app uses
- * a single client entry that imports @aero-ssg/core and calls aero.mount().
+ * a single client entry that imports @aerobuilt/core and calls aero.mount().
  */
 
 import { describe, it, expect } from 'vitest'
@@ -114,7 +114,11 @@ describe('Vite Plugin Integration', () => {
 			},
 		}
 		// In dev (command: serve) we keep the real path so file watcher and transform work (HMR + fresh SSR)
-		const result = await virtualsPlugin.resolveId.call(resolveCtx, '@components/header', undefined)
+		const result = await virtualsPlugin.resolveId.call(
+			resolveCtx,
+			'@components/header',
+			undefined,
+		)
 		expect(result).toBeDefined()
 		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
 	})
@@ -129,8 +133,14 @@ describe('Vite Plugin Integration', () => {
 				return null
 			},
 		}
-		const result = await virtualsPlugin.resolveId.call(resolveCtx, '@components/header.html', undefined)
-		expect(result).toBe(AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'))
+		const result = await virtualsPlugin.resolveId.call(
+			resolveCtx,
+			'@components/header.html',
+			undefined,
+		)
+		expect(result).toBe(
+			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'),
+		)
 		configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
 	})
 
@@ -141,7 +151,7 @@ describe('Vite Plugin Integration', () => {
 		}
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
-			'@aero-ssg/content/render',
+			'@aerobuilt/content/render',
 			undefined,
 		)
 		expect(result).toBeNull()
@@ -173,7 +183,9 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('does not register a custom HMR plugin (handleHotUpdate); HMR is dependency-driven via single client entry', () => {
-		const withHandleHotUpdate = plugins.some((p: any) => typeof p?.handleHotUpdate === 'function')
+		const withHandleHotUpdate = plugins.some(
+			(p: any) => typeof p?.handleHotUpdate === 'function',
+		)
 		expect(withHandleHotUpdate).toBe(false)
 	})
 })

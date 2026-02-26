@@ -1,4 +1,4 @@
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 
 declare global {
 	var htmx: typeof import('htmx.org').default

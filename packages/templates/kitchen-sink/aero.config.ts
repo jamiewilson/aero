@@ -1,4 +1,4 @@
-import { defineConfig } from '@aero-ssg/config'
+import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
 	site: 'https://with.aero',

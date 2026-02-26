@@ -1,4 +1,4 @@
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 import htmx from 'htmx.org'
 import Alpine from 'alpinejs'
 

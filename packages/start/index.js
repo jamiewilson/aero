@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 
-import {
-	cpSync,
-	mkdirSync,
-	existsSync,
-	statSync,
-	readdirSync,
-	lstatSync,
-} from 'fs'
+import { cpSync, mkdirSync, existsSync, statSync, readdirSync, lstatSync } from 'fs'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
@@ -22,7 +15,7 @@ const TEMPLATES = ['minimal', 'kitchen-sink']
 const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
-	const pkgName = `@aero-ssg/template-${templateName}`
+	const pkgName = `@aerobuilt/template-${templateName}`
 	const templatePath = join(pkgRoot, pkgName)
 	if (!existsSync(templatePath)) {
 		console.error(
@@ -56,7 +49,7 @@ function copyTemplate(src, dest) {
 
 function isInMonorepo() {
 	try {
-		const templatePath = join(pkgRoot, `@aero-ssg/template-${DEFAULT_TEMPLATE}`)
+		const templatePath = join(pkgRoot, `@aerobuilt/template-${DEFAULT_TEMPLATE}`)
 		if (!existsSync(templatePath)) return false
 		return lstatSync(templatePath).isSymbolicLink()
 	} catch {

@@ -6,10 +6,11 @@
 	"scripts": {
 		"test": "vitest run",
 		"typecheck": "pnpm -r typecheck",
-		"build": "pnpm build:core && pnpm build:config && pnpm build:content",
+		"build": "pnpm build:core && pnpm build:content && pnpm build:config && pnpm build:aerobuilt",
 		"build:core": "pnpm --dir packages/core build",
 		"build:config": "pnpm --dir packages/config build",
 		"build:content": "pnpm --dir packages/content build",
+		"build:aerobuilt": "pnpm --dir packages/aerobuilt build",
 		"build:vscode": "pnpm --dir packages/vscode build",
 		"clean:all": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
 	},

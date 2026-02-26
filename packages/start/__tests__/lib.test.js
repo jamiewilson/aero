@@ -14,9 +14,10 @@ describe('create-aero lib', () => {
 		})
 
 		it('returns template when --template is given', () => {
-			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'kitchen-sink'])).toEqual(
-				{ target: 'my-app', template: 'kitchen-sink' },
-			)
+			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'kitchen-sink'])).toEqual({
+				target: 'my-app',
+				template: 'kitchen-sink',
+			})
 		})
 
 		it('allows template before target', () => {
@@ -53,7 +54,7 @@ describe('create-aero lib', () => {
 		it('sets name to projectName', () => {
 			writeFileSync(
 				join(tmpDir, 'package.json'),
-				JSON.stringify({ name: '@aero-ssg/template-minimal', dependencies: {} }),
+				JSON.stringify({ name: '@aerobuilt/template-minimal', dependencies: {} }),
 			)
 			rewritePackageJson(tmpDir, 'my-app', true)
 			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
@@ -65,12 +66,12 @@ describe('create-aero lib', () => {
 				join(tmpDir, 'package.json'),
 				JSON.stringify({
 					name: 'template',
-					dependencies: { '@aero-ssg/core': 'workspace:*' },
+					dependencies: { '@aerobuilt/core': 'workspace:*' },
 				}),
 			)
 			rewritePackageJson(tmpDir, 'my-app', true)
 			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
-			expect(pkg.dependencies['@aero-ssg/core']).toBe('workspace:*')
+			expect(pkg.dependencies['@aerobuilt/core']).toBe('workspace:*')
 		})
 
 		it('when inMonorepo false, rewrites workspace:* to *', () => {
@@ -78,14 +79,14 @@ describe('create-aero lib', () => {
 				join(tmpDir, 'package.json'),
 				JSON.stringify({
 					name: 'template',
-					dependencies: { '@aero-ssg/core': 'workspace:*' },
+					dependencies: { '@aerobuilt/core': 'workspace:*' },
 					devDependencies: { vite: '^1.0.0' },
 				}),
 			)
 			rewritePackageJson(tmpDir, 'my-app', false)
 			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
 			expect(pkg.name).toBe('my-app')
-			expect(pkg.dependencies['@aero-ssg/core']).toBe('*')
+			expect(pkg.dependencies['@aerobuilt/core']).toBe('*')
 			expect(pkg.devDependencies.vite).toBe('^1.0.0')
 		})
 

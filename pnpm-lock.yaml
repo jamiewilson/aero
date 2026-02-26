@@ -17,15 +17,9 @@ importers:
 
   examples/cdn-externals:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../packages/config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/aerobuilt
     devDependencies:
       '@types/alpinejs':
         specifier: ^3.13.11
@@ -45,15 +39,9 @@ importers:
 
   examples/cdn-globals:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../packages/config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/aerobuilt
     devDependencies:
       '@types/alpinejs':
         specifier: ^3.13.11
@@ -73,15 +61,9 @@ importers:
 
   examples/dynamic-import:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../packages/config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/aerobuilt
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -98,15 +80,9 @@ importers:
 
   examples/esm-import-map:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../packages/config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/aerobuilt
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -123,15 +99,9 @@ importers:
 
   examples/single-bundle:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../packages/config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/aerobuilt
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -146,12 +116,31 @@ importers:
         specifier: 8.0.0-beta.15
         version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
-  packages/config:
+  packages/aerobuilt:
     dependencies:
-      '@aero-ssg/content':
+      '@aerobuilt/config':
+        specifier: workspace:*
+        version: link:../config
+      '@aerobuilt/content':
         specifier: workspace:*
         version: link:../content
-      '@aero-ssg/core':
+      '@aerobuilt/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/config:
+    dependencies:
+      '@aerobuilt/content':
+        specifier: workspace:*
+        version: link:../content
+      '@aerobuilt/core':
         specifier: workspace:*
         version: link:../core
       autoprefixer:
@@ -250,67 +239,21 @@ importers:
 
   packages/start:
     dependencies:
-      '@aero-ssg/template-kitchen-sink':
+      '@aerobuilt/template-kitchen-sink':
         specifier: workspace:*
         version: link:../templates/kitchen-sink
-      '@aero-ssg/template-minimal':
+      '@aerobuilt/template-minimal':
         specifier: workspace:*
         version: link:../templates/minimal
 
-  packages/start/dist/test:
-    dependencies:
-      '@aero-ssg/config':
-        specifier: workspace:*
-        version: link:../../../config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../../content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../../core
-      '@alpinejs/persist':
-        specifier: ^3.15.8
-        version: 3.15.8
-      alpinejs:
-        specifier: ^3.15.8
-        version: 3.15.8
-      htmx.org:
-        specifier: ^2.0.8
-        version: 2.0.8
-    devDependencies:
-      '@types/alpinejs':
-        specifier: ^3.13.11
-        version: 3.13.11
-      '@types/alpinejs__persist':
-        specifier: ^3.13.4
-        version: 3.13.4
-      autoprefixer:
-        specifier: ^10.4.24
-        version: 10.4.24(postcss@8.5.6)
-      nitro:
-        specifier: ^3.0.1-alpha.2
-        version: 3.0.1-alpha.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.57.1)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-      vite:
-        specifier: 8.0.0-beta.15
-        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-
   packages/templates/kitchen-sink:
     dependencies:
-      '@aero-ssg/config':
-        specifier: workspace:*
-        version: link:../../config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../core
       '@alpinejs/persist':
         specifier: ^3.15.8
         version: 3.15.8
+      aerobuilt:
+        specifier: workspace:*
+        version: link:../../aerobuilt
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -339,15 +282,9 @@ importers:
 
   packages/templates/minimal:
     dependencies:
-      '@aero-ssg/config':
+      aerobuilt:
         specifier: workspace:*
-        version: link:../../config
-      '@aero-ssg/content':
-        specifier: workspace:*
-        version: link:../../content
-      '@aero-ssg/core':
-        specifier: workspace:*
-        version: link:../../core
+        version: link:../../aerobuilt
     devDependencies:
       autoprefixer:
         specifier: ^10.4.24
