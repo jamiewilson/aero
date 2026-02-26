@@ -25,6 +25,27 @@ yarn create aero my-app
 - **Fits the “HTML over the wire” stack** — Aero doesn’t own the DOM. Use HTMX for partial updates and Alpine for lightweight client behavior without a heavy JS framework.
 - **Content and config as code** — `content/` (e.g. `site.ts`) and optional content collections with `getCollection()` and lazy `render()` for markdown/docs.
 
+## How close to the platform?
+
+Aero's goal is to stay as close to the web platform as possible while still being useful as a build tool. Here's an honest breakdown:
+
+**What stays standard:**
+
+- **You write HTML files** — not JSX, not a custom file format. Pages, components, and layouts are `.html`.
+- **CSS is just CSS** — no CSS-in-JS, no scoping magic, no preprocessor lock-in.
+- **Client JS is just JS** — use Alpine, HTMX, vanilla JS, or nothing at all. Aero doesn't own the DOM.
+- **Output is plain static HTML** — no hydration, no client runtime, no framework overhead.
+
+**What Aero adds:**
+
+- **`{ }` expressions** in HTML for build-time interpolation.
+- **`<script is:build>`** and other script attributes (`is:inline`, `is:blocking`) to separate build and client code.
+- **`data-each`**, **`if`/`else`** directives for loops and conditionals in templates.
+- **Component imports** and the `-component`/`-layout` naming convention.
+- **`aero.props`**, **`data-props`**, **`pass:data`** for passing data between templates.
+
+The abstractions are thin, HTML-shaped, and designed to disappear at build time. The source looks like HTML, the output is HTML, and everything in between stays as close to the platform as possible.
+
 ## Quick examples
 
 ### Page (file-based routing)
