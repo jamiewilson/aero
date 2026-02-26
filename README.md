@@ -95,16 +95,16 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 
 ## Monorepo layout
 
-| Package                             | Role                                                                |
-| ----------------------------------- | ------------------------------------------------------------------- |
-| **packages/core**                   | Compiler, runtime, Vite plugin (`@aero-ssg/core`, `@aero-ssg/vite`) |
-| **packages/vite**                   | Re-export of the Vite plugin                                        |
-| **packages/vscode**                 | VS Code extension (syntax, completion, diagnostics)                 |
-| **packages/start**                  | Project initializer (create-aero); scaffolds from templates         |
-| **packages/templates/kitchen-sink** | Full demo app (root `pnpm dev` / `pnpm build` run this)             |
-| **packages/templates/minimal**      | Minimal template (no server, no content collections)                |
-| **packages/config**                 | Shared config and redirect helpers                                  |
-| **packages/content**                | Content collections and markdown rendering                          |
+| Package                             | Role                                                                  |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| **packages/core**                   | Compiler, runtime, Vite plugin (`@aerobuilt/core`, `@aerobuilt/vite`) |
+| **packages/vite**                   | Re-export of the Vite plugin                                          |
+| **packages/vscode**                 | VS Code extension (syntax, completion, diagnostics)                   |
+| **packages/start**                  | Project initializer (create-aero); scaffolds from templates           |
+| **packages/templates/kitchen-sink** | Full demo app (root `pnpm dev` / `pnpm build` run this)               |
+| **packages/templates/minimal**      | Minimal template (no server, no content collections)                  |
+| **packages/config**                 | Shared config and redirect helpers                                    |
+| **packages/content**                | Content collections and markdown rendering                            |
 
 ## Configuration
 
@@ -112,17 +112,17 @@ In **`vite.config.ts`**, the `aero()` plugin supports:
 
 - **`nitro`** (boolean) — Enable Nitro (API + optional server). Default `false`.
 - **`site`** (string) — Canonical site URL (e.g. `'https://example.com'`). Used for sitemap, RSS, canonical/OG tags. Exposed as `import.meta.env.SITE` and `Aero.site` in templates.
-- **`redirects`** — `[{ from, to, status? }]`. Applied in dev and passed to Nitro for production (use `redirectsToRouteRules()` from `@aero-ssg/config` in `nitro.config.ts`).
+- **`redirects`** — `[{ from, to, status? }]`. Applied in dev and passed to Nitro for production (use `redirectsToRouteRules()` from `@aerobuilt/config` in `nitro.config.ts`).
 - **`middleware`** — Optional request-time handlers in dev (redirects, rewrites, custom responses).
 - **`dirs`** — Override `client`, `server`, `dist` (defaults: `client`, `server`, `dist`).
 - **`apiPrefix`** — URL prefix for API routes (default `/api`).
 
-You can use **`aero.config.ts`** with `defineConfig` from `@aero-ssg/config` to set `site`, `redirects`, `middleware`, `content`, `server`, etc., and the Vite plugin will pick it up.
+You can use **`aero.config.ts`** with `defineConfig` from `@aerobuilt/config` to set `site`, `redirects`, `middleware`, `content`, `server`, etc., and the Vite plugin will pick it up.
 
 ### Example
 
 ```ts
-import { aero } from '@aero-ssg/vite'
+import { aero } from 'aerobuilt/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -143,12 +143,12 @@ Preview: `pnpm preview` (static) or `pnpm preview:api` (Nitro serving `dist/` + 
 
 ## Docs
 
-- [docs/README.md](docs/README.md) — Documentation index.  
-- [docs/overview.md](docs/overview.md) — What Aero is and what it supports.  
-- [AGENTS.md](AGENTS.md) — AI/developer orientation and conventions.  
-- [docs/script-taxonomy.md](docs/script-taxonomy.md) — Script types and behavior.  
-- [docs/content-api.md](docs/content-api.md) — Content collections and `getCollection` / `render`.  
-- [docs/site-url.md](docs/site-url.md) — Canonical URL and sitemap.  
+- [docs/README.md](docs/README.md) — Documentation index.
+- [docs/overview.md](docs/overview.md) — What Aero is and what it supports.
+- [AGENTS.md](AGENTS.md) — AI/developer orientation and conventions.
+- [docs/script-taxonomy.md](docs/script-taxonomy.md) — Script types and behavior.
+- [docs/content-api.md](docs/content-api.md) — Content collections and `getCollection` / `render`.
+- [docs/site-url.md](docs/site-url.md) — Canonical URL and sitemap.
 - [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md) — Package layout, build flow, and output.
 
 ## Inspiration

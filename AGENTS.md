@@ -6,7 +6,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 
 ### Monorepo
 
-- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aero-ssg/core` and `@aero-ssg/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
+- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/start** - Project initializer (create-aero). Run from `packages/start`: `pnpm run create-aero <name>`; scaffolds into `packages/start/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **kitchen-sink** (full demo app; root `pnpm dev`/build runs this), **minimal** (stripped-down app).
@@ -101,7 +101,7 @@ For bug fixes: start by adding or adjusting a test that fails in the current cod
 
 ## Client entry and HMR
 
-The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aero-ssg/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
+The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aerobuilt/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
 
 ## Client Stack Integration
 

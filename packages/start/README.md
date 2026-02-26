@@ -1,10 +1,10 @@
 # create-aero
 
-Project initializer for [Aero](https://github.com/aero-ssg/aero). Scaffolds a new app from the **minimal** or **kitchen-sink** template.
+Project initializer for [Aero](https://github.com/aerobuilt/aero). Scaffolds a new app from the **minimal** or **kitchen-sink** template.
 
 ## Development (monorepo)
 
-Run from **`packages/start`** only. The app is created at `packages/start/dist/<name>` and is a workspace package, so `@aero-ssg/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
+Run from **`packages/start`** only. The app is created at `packages/start/dist/<name>` and is a workspace package, so `@aerobuilt/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
 
 ```bash
 cd packages/start
@@ -39,16 +39,16 @@ The app is created in the current directory (or the given path). The CLI rewrite
 
 ## Arguments
 
-| Argument   | Description                                                                 |
-|-----------|-----------------------------------------------------------------------------|
+| Argument        | Description                                                                        |
+| --------------- | ---------------------------------------------------------------------------------- |
 | **&lt;dir&gt;** | App name and directory (e.g. `my-app` → `packages/start/dist/my-app` in monorepo). |
-| **--template** | `minimal` (default) or `kitchen-sink`.                                      |
+| **--template**  | `minimal` (default) or `kitchen-sink`.                                             |
 
 ## Templates
 
-| Template       | Description                                                                 |
-|----------------|-----------------------------------------------------------------------------|
-| **minimal**    | One layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. |
-| **kitchen-sink** | Full demo: pages, layouts, components, content collections, Nitro API, Alpine, HTMX.   |
+| Template         | Description                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| **minimal**      | One layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. |
+| **kitchen-sink** | Full demo: pages, layouts, components, content collections, Nitro API, Alpine, HTMX.          |
 
-Templates are provided by `@aero-ssg/template-minimal` and `@aero-ssg/template-kitchen-sink` (workspace or published).
+Templates are provided by `@aerobuilt/template-minimal` and `@aerobuilt/template-kitchen-sink` (workspace or published).

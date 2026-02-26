@@ -1,13 +1,13 @@
 # Content API
 
-Aero’s content layer (`@aero-ssg/content`) provides typed content collections, Markdown rendering, and integration with file-based routing.
+Aero’s content layer (`@aerobuilt/content`) provides typed content collections, Markdown rendering, and integration with file-based routing.
 
 ## Content Schema & Definitions
 
 Declare your content schema in `aero.content.ts` in your project root (or as configured). The API uses Zod so you get typed data in templates without custom Vite transformers.
 
 ```typescript
-import { defineCollection, z } from '@aero-ssg/content'
+import { defineCollection, z } from 'aerobuilt/content'
 
 export const docs = defineCollection({
 	name: 'docs',

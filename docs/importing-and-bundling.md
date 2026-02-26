@@ -19,7 +19,7 @@ Demo: [examples/single-bundle](../examples/single-bundle) — `pnpm --dir exampl
 **What you do:** Import everything in your client entry (e.g. `client/assets/scripts/index.ts`):
 
 ```typescript
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 import htmx from 'htmx.org'
 import Alpine from '@scripts/alpine'
 
@@ -65,7 +65,7 @@ Demo: [examples/cdn-globals](../examples/cdn-globals) — `pnpm --dir examples/c
 2. In your entry, use the globals and optionally type them:
 
 ```typescript
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 
 declare global {
 	var htmx: typeof import('htmx.org').default
@@ -116,7 +116,7 @@ Many libraries ship an **ESM build** on the CDN (e.g. Alpine's `module.esm.min.j
 
 ```typescript
 // aero.config.ts
-import { defineConfig } from '@aero-ssg/config'
+import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
 	vite: {
@@ -147,7 +147,7 @@ export default defineConfig({
    - In your entry, use normal imports. Because Alpine's ESM build does not auto-start, call `Alpine.start()` before configuring htmx:
 
 ```typescript
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 import htmx from 'htmx.org'
 import Alpine from 'alpinejs'
 
@@ -181,7 +181,7 @@ Demo: [examples/cdn-externals](../examples/cdn-externals) — `pnpm --dir exampl
 
 ```typescript
 // aero.config.ts
-import { defineConfig } from '@aero-ssg/config'
+import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
 	vite: {
@@ -207,7 +207,7 @@ export default defineConfig({
 
 ```typescript
 // client/assets/scripts/index.ts
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 
 declare global {
 	var htmx: typeof import('htmx.org').default
@@ -246,7 +246,7 @@ Demo: [examples/dynamic-import](../examples/dynamic-import) — `pnpm --dir exam
 **What you do:** Keep imports, but load heavy libs asynchronously so Vite can put them in separate chunks (e.g. with top-level `await import()`):
 
 ```typescript
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 
 const htmx = (await import('htmx.org')).default
 const Alpine = (await import('@scripts/alpine')).default

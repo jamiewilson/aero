@@ -1,4 +1,4 @@
-# @aero-ssg/core
+# @aerobuilt/core
 
 The core package of the Aero static site generator. It provides the compiler, runtime, and Vite plugin that power Aero’s HTML-first template engine, component system, and build pipeline.
 
@@ -12,11 +12,11 @@ The core package of the Aero static site generator. It provides the compiler, ru
 
 | Export | Description |
 |--------|-------------|
-| `@aero-ssg/core` | Default: shared `aero` instance with `mount()` for the client entry. |
-| `@aero-ssg/core/vite` | `aero()` Vite plugin for build and dev. |
-| `@aero-ssg/core/runtime` | `Aero` class for programmatic rendering. |
-| `@aero-ssg/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR. |
-| `@aero-ssg/core/types` | Shared TypeScript types. |
+| `@aerobuilt/core` | Default: shared `aero` instance with `mount()` for the client entry. |
+| `aerobuilt/vite` | `aero()` Vite plugin for build and dev. |
+| `@aerobuilt/core/runtime` | `Aero` class for programmatic rendering. |
+| `@aerobuilt/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR. |
+| `@aerobuilt/core/types` | Shared TypeScript types. |
 
 ## Script taxonomy
 
@@ -56,7 +56,7 @@ Script blocks are classified by attributes (see [docs/script-taxonomy.md](https:
 **Example**
 
 ```js
-import { Aero } from '@aero-ssg/core/runtime'
+import { Aero } from '@aerobuilt/core/runtime'
 const aero = new Aero()
 aero.global('site', { title: 'My Site' })
 // … registerPages, then:
@@ -65,27 +65,27 @@ const html = await aero.render('index', { props: { title: 'Home' } })
 
 ### Vite plugin
 
-- **Plugin** from `@aero-ssg/core/vite`: `aero(options?)`. Options: `nitro`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
+- **Plugin** from `aerobuilt/vite`: `aero(options?)`. Options: `nitro`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
 - Sub-plugins: config resolution, virtual client modules (`\0`-prefixed), HTML transform, SSR middleware, HMR.
 - Build: page discovery, static render, optional Nitro build, optional image optimizer (sharp/svgo).
 
 **Example**
 
 ```js
-import { aero } from '@aero-ssg/core/vite'
+import { aero } from 'aerobuilt/vite'
 export default {
 	plugins: [aero({ nitro: true })],
 }
 ```
 
-Apps typically use `@aero-ssg/config` and `createViteConfig(aeroConfig)`, which wires the Aero plugin for them.
+Apps typically use `@aerobuilt/config` and `createViteConfig(aeroConfig)`, which wires the Aero plugin for them.
 
 ### Client entry
 
-The default export of `@aero-ssg/core` is the shared `aero` instance with `mount(options?)` attached. Use it as the browser entry (e.g. in your main script). It does not perform an initial render; it attaches to a root element and subscribes to HMR re-renders in dev.
+The default export of `@aerobuilt/core` is the shared `aero` instance with `mount(options?)` attached. Use it as the browser entry (e.g. in your main script). It does not perform an initial render; it attaches to a root element and subscribes to HMR re-renders in dev.
 
 ```js
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 aero.mount({ target: '#app', onRender: (el) => { /* optional */ } })
 ```
 
