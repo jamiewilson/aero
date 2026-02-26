@@ -159,7 +159,7 @@ importers:
         specifier: ^25.3.0
         version: 25.3.0
       '@types/vscode':
-        specifier: ^1.109.0
+        specifier: ^1.74.0
         version: 1.109.0
       tsup:
         specifier: ^8.5.1
@@ -297,6 +297,9 @@ importers:
       '@aerobuilt/template-minimal':
         specifier: workspace:*
         version: link:../templates/minimal
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
   packages/templates/minimal:
     dependencies:
