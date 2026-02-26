@@ -48,9 +48,9 @@ aero/
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.
 
-## packages/start (create-aero)
+## packages/create-aero (create-aero)
 
-- **Purpose:** Project initializer. Run from `packages/start`: `pnpm run create-aero <name>` to scaffold a new app into `packages/start/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aerobuilt/template-minimal` and `@aerobuilt/template-kitchen-sink`.
+- **Purpose:** Project initializer. Run from `packages/create-aero`: `pnpm run create-aero <name>` to scaffold a new app into `packages/create-aero/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aerobuilt/template-minimal` and `@aerobuilt/template-kitchen-sink`.
 - **No app source** in start; templates live in `packages/templates/` and are copied from node_modules.
 
 ## packages/templates/kitchen-sink (app used for dev/build)
@@ -100,5 +100,5 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 - **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin).
 - **App used for dev/build** is `packages/templates/kitchen-sink` (client/, content/, server/, config). Root scripts delegate to kitchen-sink.
-- **create-aero** lives in `packages/start`; scaffolds from `packages/templates/minimal` or `packages/templates/kitchen-sink`.
+- **create-aero** lives in `packages/create-aero`; scaffolds from `packages/templates/minimal` or `packages/templates/kitchen-sink`.
 - **Path conventions** use `client/` and `content/` in templates (not `src/`).

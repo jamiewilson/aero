@@ -2,13 +2,13 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** used for dev/build is **packages/templates/kitchen-sink**; **packages/start** is the create-aero project initializer (scaffolds from templates). Repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** used for dev/build is **packages/templates/kitchen-sink**; **packages/create-aero** is the create-aero project initializer (scaffolds from templates). Repo root is the workspace root.
 
 ### Monorepo
 
 - **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/start** - Project initializer (create-aero). Run from `packages/start`: `pnpm run create-aero <name>`; scaffolds into `packages/start/dist/<name>` (gitignored).
+- **packages/create-aero** - Project initializer (create-aero). Run from `packages/create-aero`: `pnpm run create-aero <name>`; scaffolds into `packages/create-aero/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **kitchen-sink** (full demo app; root `pnpm dev`/build runs this), **minimal** (stripped-down app).
 - **Root** - Workspace root. Scripts delegate: `pnpm dev` runs kitchen-sink dev; `pnpm test` runs core tests.
 
@@ -112,13 +112,14 @@ The recommended client setup is a **single entry** (e.g. `client/assets/scripts/
 ## Configuration (site URL)
 
 Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aero.config.ts` (`site: '...'`) or passed to `aero({ site: '...' })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [docs/site-url.md](docs/site-url.md).
+
 - **Environment variables:** Vite’s `import.meta.env`; use `VITE_` prefix for client-exposed vars. Aero injects `SITE` when `site` is set. Optional `env.d.ts` for types. See [docs/environment-variables.md](docs/environment-variables.md).
-- **Middleware/hooks:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev only) for redirects, rewrites, or custom responses. See [_reference/middleware.md](_reference/middleware.md).
+- **Middleware/hooks:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev only) for redirects, rewrites, or custom responses. See [\_reference/middleware.md](_reference/middleware.md).
 
 ## File Structure
 
 - **packages/templates/kitchen-sink:** `client/pages/`, `client/components/`, `client/layouts/`, `content/`, `client/assets/`, `server/api/`, `server/routes/`
-- **packages/start/** - create-aero initializer (no app source; scaffolds from templates)
+- **packages/create-aero/** - create-aero initializer (no app source; scaffolds from templates)
 - **packages/core/** - Framework (compiler, runtime, vite)
 - **packages/vite/** - Vite plugin re-export
 - **packages/vscode/** - VS Code extension
@@ -127,7 +128,7 @@ For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md]
 
 ## Documentation (TSDoc)
 
-When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
+When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
 
 ## Gotchas
 

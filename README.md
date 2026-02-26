@@ -84,7 +84,7 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 
 ## Tools and commands
 
-- **create-aero** — Scaffold a new app: from repo `cd packages/start && pnpm run create-aero my-app` (or `--template kitchen-sink`). When published: `pnpm create aero my-app`.
+- **create-aero** — Scaffold a new app: from repo `cd packages/create-aero && pnpm run create-aero my-app` (or `--template kitchen-sink`). When published: `pnpm create aero my-app`.
 - **VS Code** — The `packages/vscode` extension adds syntax and diagnostics for Aero templates.
 - **Commands (from repo root)**
   - `pnpm install` then `pnpm dev` — Build core and run the kitchen-sink app.
@@ -100,7 +100,7 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 | **packages/core**                   | Compiler, runtime, Vite plugin (`@aerobuilt/core`, `@aerobuilt/vite`) |
 | **packages/vite**                   | Re-export of the Vite plugin                                          |
 | **packages/vscode**                 | VS Code extension (syntax, completion, diagnostics)                   |
-| **packages/start**                  | Project initializer (create-aero); scaffolds from templates           |
+| **packages/create-aero**            | Project initializer (create-aero); scaffolds from templates           |
 | **packages/templates/kitchen-sink** | Full demo app (root `pnpm dev` / `pnpm build` run this)               |
 | **packages/templates/minimal**      | Minimal template (no server, no content collections)                  |
 | **packages/config**                 | Shared config and redirect helpers                                    |
