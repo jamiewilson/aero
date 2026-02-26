@@ -1,0 +1,45 @@
+{
+	"folders": [
+		{
+			"name": "aero",
+			"path": ".",
+		},
+		{
+			"name": "aerobuilt",
+			"path": "packages/aerobuilt",
+		},
+		{
+			"name": "docs",
+			"path": "docs",
+		},
+		{
+			"name": "examples",
+			"path": "examples",
+		},
+		{
+			"name": "core",
+			"path": "packages/core",
+		},
+		{
+			"name": "config",
+			"path": "packages/config",
+		},
+		{
+			"name": "content",
+			"path": "packages/content",
+		},
+		{
+			"name": "templates",
+			"path": "packages/templates",
+		},
+		{
+			"name": "create-aero",
+			"path": "packages/create-aero",
+		},
+		{
+			"name": "aero-vscode",
+			"path": "packages/aero-vscode",
+		},
+	],
+	"settings": {},
+}
