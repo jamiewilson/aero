@@ -221,13 +221,18 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			}
 
 			// Only try id + '.html' for path-like specifiers (relative, absolute, or path aliases like @components/foo).
-			// Skip bare packages (nitro, nitro/app) and scoped packages (@aerobuilt/content/render).
+			// Skip package subpaths: @scope/name/subpath (3+ segments) and any id that resolved into node_modules.
 			const isPathLike =
-				id.startsWith('./') ||
-				id.startsWith('../') ||
-				id.startsWith('/') ||
-				(id.startsWith('@') && !id.slice(1).split('/')[0].includes('-'))
-			if (isPathLike && !id.includes('.') && !id.startsWith('\0')) {
+				(id.startsWith('./') ||
+					id.startsWith('../') ||
+					id.startsWith('/') ||
+					(id.startsWith('@') &&
+						!id.slice(1).split('/')[0].includes('-') &&
+						id.split('/').length < 3)) &&
+				!id.includes('.') &&
+				!id.startsWith('\0') &&
+				!resolved?.id.includes('node_modules')
+			if (isPathLike) {
 				const resolvedHtml = await this.resolve(id + '.html', importer, { skipSelf: true })
 				if (resolvedHtml) {
 					if (
