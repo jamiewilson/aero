@@ -12,7 +12,7 @@
 		"build:content": "pnpm --dir packages/content build",
 		"build:aerobuilt": "pnpm --dir packages/aerobuilt build",
 		"build:vscode": "pnpm --dir packages/vscode build",
-		"clean:all": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm -rf packages/*/.output"
+		"clean:all": "rm -rf node_modules && find packages -type d \\( -name node_modules -o -name dist -o -name .output \\) -prune -exec rm -rf {} +"
 	},
 	"devDependencies": {
 		"vitest": "^4.0.18"
