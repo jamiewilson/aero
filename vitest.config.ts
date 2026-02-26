@@ -5,7 +5,7 @@ export default defineConfig({
 		include: [
 			'packages/core/**/*.test.ts',
 			'packages/content/**/*.test.ts',
-			'packages/vscode/**/*.test.ts',
+			'packages/aero-vscode/**/*.test.ts',
 			'packages/create-aero/**/*.test.js',
 		],
 	},

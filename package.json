@@ -11,7 +11,7 @@
 		"build:config": "pnpm --dir packages/config build",
 		"build:content": "pnpm --dir packages/content build",
 		"build:aerobuilt": "pnpm --dir packages/aerobuilt build",
-		"build:vscode": "pnpm --dir packages/vscode build",
+		"build:vscode": "pnpm --dir packages/aero-vscode build",
 		"clean:all": "rm -rf node_modules && find packages -type d \\( -name node_modules -o -name dist -o -name .output \\) -prune -exec rm -rf {} +"
 	},
 	"devDependencies": {

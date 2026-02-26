@@ -1,10 +1,10 @@
 {
-	"name": "vscode",
+	"name": "aero-vscode",
 	"displayName": "Aero",
 	"icon": "images/logo.png",
 	"description": "Language support for Aero templates in HTML",
 	"version": "0.0.1",
-	"publisher": "@aerobuilt",
+	"publisher": "aerobuilt",
 	"engines": {
 		"vscode": "^1.74.0"
 	},

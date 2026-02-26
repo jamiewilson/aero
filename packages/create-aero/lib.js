@@ -62,3 +62,72 @@ export function findWorkspaceRoot(fromDir) {
 		dir = parent
 	}
 }
+
+/**
+ * Write a project-appropriate README.md into targetDir.
+ * @param {string} targetDir
+ * @param {string} projectName
+ * @param {string} template
+ */
+export function writeReadme(targetDir, projectName, template) {
+	const isKitchenSink = template === 'kitchen-sink'
+	const lines = [
+		`# ${projectName}`,
+		'',
+		`Built with [Aero](https://github.com/aerobuilt/aero) — an HTML-first static site generator powered by Vite.`,
+		'',
+		'## Commands',
+		'',
+		'| Command | Description |',
+		'|---|---|',
+		'| `pnpm dev` | Start the dev server |',
+		'| `pnpm build` | Build for production |',
+		'| `pnpm preview` | Preview the built site |',
+	]
+
+	if (isKitchenSink) {
+		lines.push('| `pnpm preview:api` | Preview with Nitro API server |')
+	}
+
+	lines.push(
+		'',
+		'## Project Structure',
+		'',
+		'```',
+		`${projectName}/`,
+		'├── client/',
+		'│   ├── assets/         # Styles, scripts, images',
+		'│   ├── components/     # Reusable .html components',
+		'│   ├── layouts/        # Layout wrappers with <slot>',
+		'│   └── pages/          # File-based routing',
+		'├── content/',
+		'│   └── site.ts         # Global site data',
+		'├── public/             # Static assets (copied as-is)',
+		'├── vite.config.ts      # Aero Vite plugin',
+		'└── tsconfig.json       # Path aliases',
+		'```',
+	)
+
+	if (isKitchenSink) {
+		lines.push(
+			'',
+			'Additional directories:',
+			'',
+			'- `server/api/` — Nitro API routes',
+			'- `server/routes/` — Nitro server routes',
+			'- `aero.config.ts` — Aero configuration',
+			'- `content.config.ts` — Content collection schemas',
+		)
+	}
+
+	lines.push(
+		'',
+		'## Learn More',
+		'',
+		'- [Aero on GitHub](https://github.com/aerobuilt/aero)',
+		'- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)',
+		'',
+	)
+
+	writeFileSync(join(targetDir, 'README.md'), lines.join('\n'))
+}

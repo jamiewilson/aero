@@ -8,12 +8,12 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 ### Core stack
 
-| Tool     | Role                         | Why it helps                                   |
-| -------- | ---------------------------- | ---------------------------------------------- |
-| **Vite** | Dev server & bundler         | Fast HMR, plugin system, asset bundling        |
-| **Nitro** | Server engine               | API routes, optional server deployment        |
-| **HTMX** | Client/server interactivity  | Dynamic HTML updates without full page reloads  |
-| **Alpine** | Lightweight JS framework   | Declarative UI in the markup                   |
+| Tool       | Role                        | Why it helps                                   |
+| ---------- | --------------------------- | ---------------------------------------------- |
+| **Vite**   | Dev server & bundler        | Fast HMR, plugin system, asset bundling        |
+| **Nitro**  | Server engine               | API routes, optional server deployment         |
+| **HTMX**   | Client/server interactivity | Dynamic HTML updates without full page reloads |
+| **Alpine** | Lightweight JS framework    | Declarative UI in the markup                   |
 
 - [Vite](https://vitejs.dev/) · [Nitro](https://nitro.build/) · [HTMX](https://htmx.org/) · [Alpine.js](https://alpinejs.dev/)
 
@@ -68,7 +68,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 ### Assets and tooling
 
 - **Image optimization** — Optional pipeline during build. [image-optimization.md](image-optimization.md)
-- **VS Code extension** — Syntax and diagnostics (packages/vscode).
+- **VS Code extension** — Syntax and diagnostics (packages/aero-vscode).
 - **TypeScript** — Scripts and content; path aliases from tsconfig.
 
 ### Server and client libraries
