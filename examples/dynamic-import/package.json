@@ -14,5 +14,6 @@
 	"devDependencies": {
 		"autoprefixer": "^10.4.24",
 		"vite": "8.0.0-beta.15"
-	}
+	},
+	"version": "0.0.1"
 }

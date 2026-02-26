@@ -1,5 +1,9 @@
 # Aero VS Code Extension
 
+[![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/aerobuilt.aero-vscode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+[![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/aerobuilt.aero-vscode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 Language support for Aero templates in HTML files: syntax highlighting, completions, hovers, definitions, and diagnostics for Aero expressions and components.
 
 ## Features
@@ -33,9 +37,12 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 ## Installation
 
 1. Open VS Code or Cursor.
-2. **Command Palette** → **Developer: Install Extension from Location**.
-3. Select the `packages/aero-vscode` folder (or the folder containing this README).
-4. Reload the editor if prompted.
+2. Search for **Aero** in the Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+3. Click Install.
+
+## Repository
+
+The source code for this extension is part of the [Aero Monorepo](https://github.com/aerobuilt/aero). Please file any issues or feature requests on the [GitHub Issues](https://github.com/aerobuilt/aero/issues) page.
 
 ## Usage
 

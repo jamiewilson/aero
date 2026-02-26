@@ -1,6 +1,6 @@
 {
 	"name": "@aerobuilt/core",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -18,7 +18,8 @@
 	"scripts": {
 		"build": "tsup src/entry-dev.ts src/entry-prod.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run"
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
 	},
 	"exports": {
 		".": {

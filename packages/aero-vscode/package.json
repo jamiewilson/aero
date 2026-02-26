@@ -3,13 +3,33 @@
 	"displayName": "Aero",
 	"icon": "images/logo.png",
 	"description": "Language support for Aero templates in HTML",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "aerobuilt",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aerobuilt/aero.git",
+		"directory": "packages/aero-vscode"
+	},
+	"bugs": {
+		"url": "https://github.com/aerobuilt/aero/issues"
+	},
+	"license": "MIT",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
 	"categories": [
 		"Programming Languages"
+	],
+	"keywords": [
+		"aero",
+		"aerobuilt",
+		"html",
+		"template",
+		"framework",
+		"syntax",
+		"highlight",
+		"completions",
+		"snippets"
 	],
 	"main": "./dist/extension.js",
 	"activationEvents": [
@@ -17,13 +37,14 @@
 	],
 	"scripts": {
 		"dev": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --watch",
-		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode",
+		"build": "tsup src/extension.ts --format cjs --out-dir dist --external vscode --minify",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run"
+		"test": "vitest run",
+		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.0",
-		"@types/vscode": "^1.109.0",
+		"@types/vscode": "^1.74.0",
 		"tsup": "^8.5.1",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.18"

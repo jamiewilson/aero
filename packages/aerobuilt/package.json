@@ -1,6 +1,6 @@
 {
 	"name": "aerobuilt",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"type": "module",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -37,7 +37,8 @@
 		"@aerobuilt/content": "workspace:*"
 	},
 	"scripts": {
-		"build": "tsup src/client.ts src/config.ts src/content.ts src/vite.ts --format esm --dts --clean --out-dir dist"
+		"build": "tsup src/client.ts src/config.ts src/content.ts src/vite.ts --format esm --dts --clean --out-dir dist --minify",
+		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
 		"tsup": "^8.5.1",

@@ -1,6 +1,6 @@
 {
 	"name": "@aerobuilt/config",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -22,7 +22,8 @@
 	},
 	"scripts": {
 		"build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
 		"autoprefixer": "^10.4.24",
