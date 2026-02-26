@@ -40,11 +40,13 @@ Aero's goal is to stay as close to the web platform as possible while still bein
 
 - **`{ }` expressions** in HTML for build-time interpolation.
 - **`<script is:build>`** and other script attributes (`is:inline`, `is:blocking`) to separate build and client code.
-- **`data-each`**, **`if`/`else`** directives for loops and conditionals in templates.
+- **`each`**, **`if`/`else`** directives for loops and conditionals in templates.
 - **Component imports** and the `-component`/`-layout` naming convention.
-- **`aero.props`**, **`data-props`**, **`pass:data`** for passing data between templates.
+- **`aero.props`**, **`props`**, **`pass:data`** for passing data between templates.
 
 The abstractions are thin, HTML-shaped, and designed to disappear at build time. The source looks like HTML, the output is HTML, and everything in between stays as close to the platform as possible.
+
+> **Note:** All custom attributes (`props`, `each`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `data-props`, `data-each`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
 
 ## Quick examples
 
@@ -94,11 +96,11 @@ Components use a `-component` or `-layout` suffix in markup; you import the temp
 
 ### Loops and conditionals
 
-Use `data-each` and `if` / `else-if` / `else` (with `{ }` expressions):
+Use `each` and `if` / `else-if` / `else` (with `{ }` expressions):
 
 ```html
 <ul>
-	<li data-each="{ item in items }">{ item.name }</li>
+	<li each="{ item in items }">{ item.name }</li>
 </ul>
 <div if="{ user }">Hello, { user.name }</div>
 <p else>Not logged in.</p>
@@ -114,7 +116,7 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Routing**      | `client/pages/index.html` → `/`, `about.html` → `/about`, `blog/[slug].html` → `/blog/:slug`. Use `getStaticPaths` for dynamic routes.                 |
 | **Components**   | Import without extension: `import header from '@components/header'` → `header.html`. Use `<header-component>` (or `-layout`) in markup.                |
-| **Props**        | Pass via attributes `title="{ x }"` or `data-props` / `data-props="{ ...obj }"`. In the component, read `aero.props`.                                  |
+| **Props**        | Pass via attributes `title="{ x }"` or `props` / `props="{ ...obj }"`. In the component, read `aero.props`.                                            |
 | **Slots**        | Layouts expose `<slot>` (optionally named). Put content between opening/closing layout tags.                                                           |
 | **Path aliases** | `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, `@styles/*`, `@scripts/*`, `@images/*`, `@src/*`, `@server/*`, `~/*` (see template tsconfig). |
 

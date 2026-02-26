@@ -1,10 +1,10 @@
 ---
 published: true
 title: Props
-subtitle: Pass and receive data in components with attributes and data-props.
+subtitle: Pass and receive data in components with attributes and props.
 ---
 
-Aero’s props system lets you pass data into components and layouts via attributes or `data-props`, and read it in build scripts from `aero.props` (or `Aero.props`).
+Aero’s props system lets you pass data into components and layouts via attributes or `props`, and read it in build scripts from `aero.props` (or `Aero.props`).
 
 ## Core concept
 
@@ -13,8 +13,8 @@ All props are read from **aero.props** (or **Aero.props**) in `<script is:build>
 ## How attribute values work
 
 - **Normal attributes** are string literals unless you wrap the value in `{ ... }`. Use `{ expression }` for booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `data-each`) need brace-wrapped expressions, e.g. `if="{ condition }"`, `data-each="{ item in items }"`. Unbraced values are invalid.
-- **data-props:** `data-props="{ ...data }"` spreads the object’s keys as props. `data-props="{ data }"` passes the object as one prop named `data`. `data-props` with no value spreads a local variable named `props`. Without braces, non-strings become strings and can cause bugs.
+- **Directives** (`if`, `else-if`, `else`, `each`) need brace-wrapped expressions, e.g. `if="{ condition }"`, `each="{ item in items }"`. Unbraced values are invalid.
+- **props:** `props="{ ...data }"` spreads the object’s keys as props. `props="{ data }"` passes the object as one prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-strings become strings and can cause bugs.
 
 ## Passing props
 
@@ -40,39 +40,39 @@ Compose strings with inline expressions:
 
 Use double braces to output literal `{` and `}` in strings: `title="{{ slug }} + { Aero.params.slug }"`.
 
-**3. Spread with data-props**
+**3. Spread with props**
 
 ```html
 <script is:build>
 	const myProps = { title: 'Hello', count: 42 }
 </script>
-<my-component data-props="{ ...myProps }" />
+<my-component props="{ ...myProps }" />
 ```
 
-The value must be a brace-wrapped expression (e.g. `data-props="{ ...myProps }"`, not `data-props="myProps"`).
+The value must be a brace-wrapped expression (e.g. `props="{ ...myProps }"`, not `props="myProps"`).
 
 **4. Inline object**
 
 ```html
-<my-component data-props="{ title: 'Hello', count: 42 }" />
-<my-component data-props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
+<my-component props="{ title: 'Hello', count: 42 }" />
+<my-component props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
 ```
 
 **5. Shorthand (spread local props)**
 
-Use `data-props` with no value to spread a variable named `props` in scope:
+Use `props` with no value to spread a variable named `props` in scope:
 
 ```html
 <script is:build>
 	const props = { title: 'Hello', count: 42 }
 </script>
-<my-component data-props />
+<my-component props />
 ```
 
 **6. Mixed**
 
 ```html
-<my-component data-props="{ ...baseProps }" extra="value" override="{ computed }" />
+<my-component props="{ ...baseProps }" extra="value" override="{ computed }" />
 ```
 
 ## Receiving props
@@ -145,14 +145,14 @@ Usage: `<greeting-component name="World" />`
 		subtitle: site.home.subtitle.toUpperCase(),
 	}
 </script>
-<header-component data-props="{ ...headerProps }" />
+<header-component props="{ ...headerProps }" />
 ```
 
 **Mixed props:**
 
 ```html
 <my-component
-	data-props="{ title: site.meta.title, count: 42 }"
+	props="{ title: site.meta.title, count: 42 }"
 	extra="static value"
 	computed="{ someExpression }" />
 ```

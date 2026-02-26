@@ -9,8 +9,8 @@ Aero provides a flexible, Astro-inspired props system for component composition.
 ## How attribute values work
 
 - **Normal attributes** are **string literals** unless you wrap the value in `{ ... }`. Use `{ expression }` to pass booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `data-each`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `data-each="{ item in items }"`. Unbraced values are invalid.
-- **`data-props`** — `data-props="{ ...data }"` spreads the object’s keys as props. `data-props="{ data }"` passes the object as a single prop named `data`. `data-props` with no value spreads a local variable named `props`. Without braces, non-string values become strings and can cause type bugs.
+- **Directives** (`if`, `else-if`, `else`, `each`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `each="{ item in items }"`. Unbraced values are invalid.
+- **`props`** — `props="{ ...data }"` spreads the object’s keys as props. `props="{ data }"` passes the object as a single prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-string values become strings and can cause type bugs.
 
 ## Passing Props to Components
 
@@ -48,49 +48,49 @@ If `Aero.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
 
 ### 3. Spread Syntax
 
-Spread an existing object using `data-props`:
+Spread an existing object using `props`:
 
 ```html
 <script is:build>
 	const myProps = { title: 'Hello', count: 42 }
 </script>
-<my-component data-props="{ ...myProps }" />
+<my-component props="{ ...myProps }" />
 ```
 
-The value must be a brace-wrapped expression. For example, `data-props="myProps"` is invalid; use `data-props="{ ...myProps }"`.
+The value must be a brace-wrapped expression. For example, `props="myProps"` is invalid; use `props="{ ...myProps }"`.
 
 ### 4. Inline Object Literals
 
-Define props inline with `data-props`:
+Define props inline with `props`:
 
 ```html
-<my-component data-props="{ title: 'Hello', count: 42 }" />
+<my-component props="{ title: 'Hello', count: 42 }" />
 ```
 
 You can use expressions:
 
 ```html
-<my-component data-props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
+<my-component props="{ title: site.meta.title.toUpperCase(), count: 2 * 21 }" />
 ```
 
 ### 5. Shorthand (spread local `props`)
 
-Use `data-props` with no value to spread a variable named `props` in scope:
+Use `props` with no value to spread a variable named `props` in scope:
 
 ```html
 <script is:build>
 	const props = { title: 'Hello', count: 42 }
 </script>
-<my-component data-props />
-<!-- Equivalent to: data-props="{ ...props }" -->
+<my-component props />
+<!-- Equivalent to: props="{ ...props }" -->
 ```
 
 ### 6. Mixed Approach
 
-Combine `data-props` with individual attributes:
+Combine `props` with individual attributes:
 
 ```html
-<my-component data-props="{ ...baseProps }" extra="value" override="{ computed }" />
+<my-component props="{ ...baseProps }" extra="value" override="{ computed }" />
 ```
 
 ## Receiving Props in Components
@@ -216,14 +216,14 @@ Usage:
 	}
 </script>
 
-<header-component data-props="{ ...headerProps }" />
+<header-component props="{ ...headerProps }" />
 ```
 
 ### Component with Mixed Props
 
 ```html
 <my-component
-	data-props="{ title: site.meta.title, count: 42 }"
+	props="{ title: site.meta.title, count: 42 }"
 	extra="static value"
 	computed="{ someExpression }" />
 ```

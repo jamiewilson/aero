@@ -13,7 +13,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Components and templating
 
-- **[Props guide](props_guide.md)** — Passing and receiving props, how attribute values work, `data-props`, and globals.
+- **[Props guide](props_guide.md)** — Passing and receiving props, how attribute values work, `props`, and globals.
 - **[Slot passthrough](slot-passthrough.md)** — Passing named slots through layout hierarchies.
 
 ## Scripts and data
