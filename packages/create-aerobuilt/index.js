@@ -8,7 +8,6 @@ import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '.
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
-const pkgRoot = join(startPkgDir, 'node_modules')
 const APPS_DIR = 'dist'
 
 const TEMPLATES = ['minimal']
@@ -16,15 +15,15 @@ const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
 	const pkgName = `@aerobuilt/template-${templateName}`
-	const templatePath = join(pkgRoot, pkgName)
-	if (!existsSync(templatePath)) {
-		console.error(
-			`create-aerobuilt: template "${templateName}" not found (expected ${templatePath}).`,
-		)
-		console.error('Install dependencies with: pnpm install')
+	try {
+		const pkgUrl = import.meta.resolve(`${pkgName}/package.json`)
+		const templatePath = dirname(fileURLToPath(pkgUrl))
+		return templatePath
+	} catch (e) {
+		console.error(`create-aerobuilt: template "${templateName}" not found.`)
+		console.error(`Please install with: npm install -g ${pkgName} (or locally)`)
 		process.exit(1)
 	}
-	return templatePath
 }
 
 function copyTemplate(src, dest) {
@@ -49,9 +48,8 @@ function copyTemplate(src, dest) {
 
 function isInMonorepo() {
 	try {
-		const templatePath = join(pkgRoot, `@aerobuilt/template-${DEFAULT_TEMPLATE}`)
-		if (!existsSync(templatePath)) return false
-		return lstatSync(templatePath).isSymbolicLink()
+		const rootPath = join(startPkgDir, '..', '..')
+		return existsSync(join(rootPath, 'pnpm-workspace.yaml'))
 	} catch {
 		return false
 	}
@@ -77,11 +75,15 @@ function installInMonorepo(targetDir) {
 }
 
 function installStandalone(targetDir) {
-	const hasPnpm = existsSync(join(targetDir, 'pnpm-lock.yaml'))
-	const hasNpm = existsSync(join(targetDir, 'package-lock.json'))
-	const hasYarn = existsSync(join(targetDir, 'yarn.lock'))
-	const cmd = hasPnpm ? 'pnpm' : hasYarn ? 'yarn' : 'npm'
-	const args = hasPnpm || hasYarn ? ['install'] : ['install']
+	const userAgent = process.env.npm_config_user_agent || ''
+	let cmd = 'pnpm' // prefer pnpm as default for Aero
+	if (userAgent.startsWith('yarn')) cmd = 'yarn'
+	else if (userAgent.startsWith('npm')) cmd = 'npm'
+	else if (userAgent.startsWith('bun')) cmd = 'bun'
+
+	const args = ['install']
+	if (cmd === 'npm') args.push('--legacy-peer-deps')
+
 	const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: targetDir, shell: true })
 	if (r.status !== 0) {
 		console.error(
