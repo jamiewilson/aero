@@ -34,7 +34,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 1. Open VS Code or Cursor.
 2. **Command Palette** → **Developer: Install Extension from Location**.
-3. Select the `packages/vscode` folder (or the folder containing this README).
+3. Select the `packages/aero-vscode` folder (or the folder containing this README).
 4. Reload the editor if prompted.
 
 ## Usage

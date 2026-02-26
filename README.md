@@ -1,6 +1,27 @@
 # Aero
 
-**Aero** is a static site generator and full-stack framework with an **HTML-first template engine**. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
+**Aero** (`aerobuilt` on npm) is a static site generator and full-stack framework with an **HTML-first template engine**. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
+
+## Get Started
+
+```bash
+pnpm create aero my-app
+cd my-app
+pnpm dev
+```
+
+Also works with npm and yarn:
+
+```bash
+npx create-aero@latest my-app
+yarn create aero my-app
+```
+
+Choose a template — **minimal** (default) for static pages only, or **kitchen-sink** for the full demo with content collections, Nitro API, Alpine.js, and HTMX:
+
+```bash
+pnpm create aero my-app --template kitchen-sink
+```
 
 ## What problems does Aero solve?
 
@@ -85,7 +106,7 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 ## Tools and commands
 
 - **create-aero** — Scaffold a new app: from repo `cd packages/create-aero && pnpm run create-aero my-app` (or `--template kitchen-sink`). When published: `pnpm create aero my-app`.
-- **VS Code** — The `packages/vscode` extension adds syntax and diagnostics for Aero templates.
+- **VS Code** — The `packages/aero-vscode` extension adds syntax and diagnostics for Aero templates.
 - **Commands (from repo root)**
   - `pnpm install` then `pnpm dev` — Build core and run the kitchen-sink app.
   - `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
@@ -99,7 +120,7 @@ Put TypeScript/JavaScript in `content/` (e.g. `content/site.ts`). Import in buil
 | ----------------------------------- | --------------------------------------------------------------------- |
 | **packages/core**                   | Compiler, runtime, Vite plugin (`@aerobuilt/core`, `@aerobuilt/vite`) |
 | **packages/vite**                   | Re-export of the Vite plugin                                          |
-| **packages/vscode**                 | VS Code extension (syntax, completion, diagnostics)                   |
+| **packages/aero-vscode**            | VS Code extension (syntax, completion, diagnostics)                   |
 | **packages/create-aero**            | Project initializer (create-aero); scaffolds from templates           |
 | **packages/templates/kitchen-sink** | Full demo app (root `pnpm dev` / `pnpm build` run this)               |
 | **packages/templates/minimal**      | Minimal template (no server, no content collections)                  |

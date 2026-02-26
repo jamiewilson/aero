@@ -1,54 +1,72 @@
 # create-aero
 
-Project initializer for [Aero](https://github.com/aerobuilt/aero). Scaffolds a new app from the **minimal** or **kitchen-sink** template.
+Scaffold a new [Aero](https://github.com/aerobuilt/aero) project. Aero is an HTML-first static site generator powered by Vite.
 
-## Development (monorepo)
-
-Run from **`packages/create-aero`** only. The app is created at `packages/create-aero/dist/<name>` and is a workspace package, so `@aerobuilt/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
+## Usage
 
 ```bash
-cd packages/create-aero
-pnpm run create-aero my-app
-pnpm run create-aero my-app --template kitchen-sink
-```
-
-Then:
-
-```bash
-cd dist/my-app
+pnpm create aero my-app
+cd my-app
 pnpm dev
 ```
 
-Or from repo root:
+Also works with npm, yarn, and `pnpm dlx`:
 
 ```bash
-pnpm --dir packages/create-aero/dist/my-app dev
+npx create-aero@latest my-app
+yarn create aero my-app
+pnpm dlx create-aero my-app
 ```
 
-## Published usage
+## Options
 
-When `create-aero` is installed from npm:
-
-```bash
-pnpm create aero <dir> [--template minimal|kitchen-sink]
-npm create aero@latest <dir> [--template minimal|kitchen-sink]
-yarn create aero <dir> [--template minimal|kitchen-sink]
-```
-
-The app is created in the current directory (or the given path). The CLI rewrites `workspace:*` to `*` and runs `pnpm install` (or npm/yarn) in the new project.
-
-## Arguments
-
-| Argument        | Description                                                                              |
-| --------------- | ---------------------------------------------------------------------------------------- |
-| **&lt;dir&gt;** | App name and directory (e.g. `my-app` → `packages/create-aero/dist/my-app` in monorepo). |
-| **--template**  | `minimal` (default) or `kitchen-sink`.                                                   |
+| Argument            | Description                | Default      |
+| ------------------- | -------------------------- | ------------ |
+| `<dir>`             | Project name and directory | _(required)_ |
+| `--template <name>` | Starter template to use    | `minimal`    |
 
 ## Templates
 
-| Template         | Description                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| **minimal**      | One layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. |
-| **kitchen-sink** | Full demo: pages, layouts, components, content collections, Nitro API, Alpine, HTMX.          |
+| Template         | Description                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| **minimal**      | One layout, two pages, `site.ts`. No server, no content collections, no Alpine/HTMX. |
+| **kitchen-sink** | Full demo: content collections, Nitro API, Alpine.js, HTMX, dynamic routes.          |
 
-Templates are provided by `@aerobuilt/template-minimal` and `@aerobuilt/template-kitchen-sink` (workspace or published).
+```bash
+pnpm create aero my-app                        # minimal (default)
+pnpm create aero my-app --template kitchen-sink # full-featured
+```
+
+## What it does
+
+1. Copies the selected template into a new directory
+2. Rewrites `package.json` with your project name
+3. Auto-detects your package manager (pnpm > yarn > npm) and installs dependencies
+4. Prints next steps
+
+After scaffolding, the project has `aerobuilt` as its only framework dependency.
+
+## Project structure (minimal)
+
+```
+my-app/
+├── client/
+│   ├── assets/         # Styles, scripts, images
+│   ├── components/     # Reusable .html components
+│   ├── layouts/        # Layout wrappers with <slot>
+│   └── pages/          # File-based routing
+├── content/
+│   └── site.ts         # Global site data
+├── public/             # Static assets (copied as-is)
+├── vite.config.ts      # Aero Vite plugin
+└── tsconfig.json       # Path aliases
+```
+
+## Links
+
+- [GitHub](https://github.com/aerobuilt/aero)
+- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)
+
+## License
+
+MIT

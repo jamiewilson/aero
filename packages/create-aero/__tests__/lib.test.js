@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { parseArgs, rewritePackageJson, findWorkspaceRoot } from '../lib.js'
+import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '../lib.js'
 
 describe('create-aero lib', () => {
 	describe('parseArgs', () => {
@@ -122,6 +122,42 @@ describe('create-aero lib', () => {
 
 		it('returns null when no pnpm-workspace.yaml found', () => {
 			expect(findWorkspaceRoot(tmpDir)).toBe(null)
+		})
+	})
+
+	describe('writeReadme', () => {
+		/** @type {string} */
+		let tmpDir
+
+		beforeEach(() => {
+			tmpDir = mkdtempSync(join(tmpdir(), 'create-aero-readme-'))
+		})
+
+		afterEach(() => {
+			rmSync(tmpDir, { recursive: true, force: true })
+		})
+
+		it('writes README with project name as title', () => {
+			writeReadme(tmpDir, 'my-app', 'minimal')
+			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
+			expect(readme).toMatch(/^# my-app/)
+			expect(readme).toContain('pnpm dev')
+			expect(readme).toContain('pnpm build')
+		})
+
+		it('does not include Nitro commands for minimal template', () => {
+			writeReadme(tmpDir, 'my-app', 'minimal')
+			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
+			expect(readme).not.toContain('preview:api')
+			expect(readme).not.toContain('server/api')
+		})
+
+		it('includes Nitro commands and server dirs for kitchen-sink', () => {
+			writeReadme(tmpDir, 'my-app', 'kitchen-sink')
+			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
+			expect(readme).toContain('preview:api')
+			expect(readme).toContain('server/api')
+			expect(readme).toContain('aero.config.ts')
 		})
 	})
 })

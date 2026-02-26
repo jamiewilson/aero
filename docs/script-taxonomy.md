@@ -1,4 +1,4 @@
-# v2 Script Taxonomy
+# Script Taxonomy
 
 Aero features a clear and explicit taxonomy for `<script>` tags, making it easy to reason about when and where your JavaScript code executes.
 
@@ -73,12 +73,12 @@ If you had any `on:client` scripts that you intended to be completely externaliz
 
 ### Behavior summary
 
-| Type | Bundled | Hoisted | Deduped | Notes |
-|------|---------|---------|---------|-------|
-| Plain `<script>` | Yes | End of `<body>` | Yes | `type="module"` when missing |
-| `is:inline` | No | No | No | Runs in place; Vite ignores it |
-| `is:blocking` | No | `<head>` | — | Contradictory attributes (e.g. `defer`) ignored or warned |
-| `src="https://..."` | No | — | — | Tag left as-is |
+| Type                | Bundled | Hoisted         | Deduped | Notes                                                     |
+| ------------------- | ------- | --------------- | ------- | --------------------------------------------------------- |
+| Plain `<script>`    | Yes     | End of `<body>` | Yes     | `type="module"` when missing                              |
+| `is:inline`         | No      | No              | No      | Runs in place; Vite ignores it                            |
+| `is:blocking`       | No      | `<head>`        | —       | Contradictory attributes (e.g. `defer`) ignored or warned |
+| `src="https://..."` | No      | —               | —       | Tag left as-is                                            |
 
 ### Scripts with `src`
 

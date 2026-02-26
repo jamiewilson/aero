@@ -7,7 +7,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 ### Monorepo
 
 - **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
-- **packages/vscode** - VS Code extension (syntaxes for Aero templates).
+- **packages/aero-vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create-aero** - Project initializer (create-aero). Run from `packages/create-aero`: `pnpm run create-aero <name>`; scaffolds into `packages/create-aero/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **kitchen-sink** (full demo app; root `pnpm dev`/build runs this), **minimal** (stripped-down app).
 - **Root** - Workspace root. Scripts delegate: `pnpm dev` runs kitchen-sink dev; `pnpm test` runs core tests.
@@ -122,7 +122,7 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 - **packages/create-aero/** - create-aero initializer (no app source; scaffolds from templates)
 - **packages/core/** - Framework (compiler, runtime, vite)
 - **packages/vite/** - Vite plugin re-export
-- **packages/vscode/** - VS Code extension
+- **packages/aero-vscode/** - VS Code extension
 
 For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md).
 

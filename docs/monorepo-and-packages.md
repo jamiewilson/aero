@@ -43,7 +43,7 @@ aero/
   - `runtime/` — Aero class, instance context, client entry
   - `utils/` — aliases (tsconfig path loading), routing
 
-## packages/vscode
+## packages/aero-vscode
 
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.

@@ -4,7 +4,7 @@ import { cpSync, mkdirSync, existsSync, statSync, readdirSync, lstatSync } from 
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
-import { parseArgs, rewritePackageJson, findWorkspaceRoot } from './lib.js'
+import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from './lib.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
@@ -133,6 +133,7 @@ function main() {
 	console.log(`Creating Aero app in ${target} from template "${template}"...`)
 	copyTemplate(templatePath, targetDir)
 	rewritePackageJson(targetDir, target, inMonorepo)
+	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')
 	if (inMonorepo) {
 		installInMonorepo(targetDir)
