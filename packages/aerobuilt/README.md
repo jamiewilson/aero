@@ -1,6 +1,6 @@
 # Aero
 
-**Aero** (`aerobuilt` on npm) is an HTML-first static site generator powered by Vite. Write pages, components, and layouts in plain `.html` with `{ }` expressions — Aero compiles them at build time and outputs static HTML.
+Aero (`aerobuilt` on npm) is an HTML-first static site generator powered by Vite. Write pages, components, and layouts in plain `.html` with `{ }` expressions — Aero compiles them at build time and outputs static HTML.
 
 ## Quick Start
 
