@@ -1,4 +1,4 @@
-# @aero-ssg/content
+# @aerobuilt/content
 
 Content collections for Aero: load Markdown (and other files) with frontmatter, validate with Zod, and render to HTML. Powers the `aero:content` virtual module and optional content plugin.
 
@@ -6,11 +6,11 @@ Content collections for Aero: load Markdown (and other files) with frontmatter, 
 
 | Export | Description |
 |--------|-------------|
-| `@aero-ssg/content` | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
-| `@aero-ssg/content/vite` | `aeroContent(options?)` Vite plugin. |
-| `@aero-ssg/content/markdown` | Markdown/remark utilities (used internally). |
-| `@aero-ssg/content/render` | `render(doc)` for markdown-to-HTML. |
-| `@aero-ssg/content/types` | TypeScript types. |
+| `@aerobuilt/content` | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
+| `@aerobuilt/content/vite` | `aeroContent(options?)` Vite plugin. |
+| `@aerobuilt/content/markdown` | Markdown/remark utilities (used internally). |
+| `@aerobuilt/content/render` | `render(doc)` for markdown-to-HTML. |
+| `@aerobuilt/content/types` | TypeScript types. |
 
 ## Usage in apps
 
@@ -19,7 +19,7 @@ Enable content in `aero.config.ts` (`content: true` or `content: { config: 'cont
 **content.config.ts**
 
 ```ts
-import { defineConfig, defineCollection } from '@aero-ssg/content'
+import { defineConfig, defineCollection } from 'aerobuilt/content'
 import { z } from 'zod'
 
 const docs = defineCollection({

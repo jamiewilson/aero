@@ -1,4 +1,4 @@
-# @aero-ssg/template-minimal
+# @aerobuilt/template-minimal
 
 Minimal Aero template: one layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. Use with `pnpm create aero my-app` (default) or `pnpm create aero my-app --template minimal`.
 

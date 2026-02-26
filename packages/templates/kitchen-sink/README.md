@@ -1,4 +1,4 @@
-# @aero-ssg/template-kitchen-sink
+# @aerobuilt/template-kitchen-sink
 
 Full demo template for the Aero static site generator. Used for development and feature testing. Demonstrates pages, layouts, components, content collections, Nitro API routes, and client scripts (Alpine, HTMX).
 
@@ -33,7 +33,7 @@ Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs co
 
 ## Dependencies
 
-- `@aero-ssg/config`, `@aero-ssg/content`, `@aero-ssg/core` (workspace)
+- `@aerobuilt/config`, `@aerobuilt/content`, `@aerobuilt/core` (workspace)
 - Optional: Alpine.js, HTMX (included in this starter)
 
 ## Path aliases (tsconfig)

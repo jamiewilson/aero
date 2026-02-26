@@ -4,10 +4,10 @@ Aero can be configured with a **canonical site URL** (e.g. `https://example.com`
 
 ## Configuration
 
-**With `@aero-ssg/config` (aero.config.ts):**
+**With `@aerobuilt/config` (aero.config.ts):**
 
 ```ts
-import { defineConfig } from '@aero-ssg/config'
+import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
   content: true,
@@ -19,7 +19,7 @@ export default defineConfig({
 **With the Vite plugin directly:**
 
 ```ts
-import { aero } from '@aero-ssg/core/vite'
+import { aero } from 'aerobuilt/vite'
 
 export default {
   plugins: [aero({ nitro: true, site: 'https://example.com' })],

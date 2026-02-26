@@ -8,7 +8,7 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 
 ### Added
 
-- **Redirects:** `redirects` option in `aero.config.ts` or `aero({ redirects: [{ from, to, status? }] })`. Applied in dev and passed to Nitro for production; use `@aero-ssg/config`’s `redirectsToRouteRules()` in `nitro.config.ts` to emit route rules.
+- **Redirects:** `redirects` option in `aero.config.ts` or `aero({ redirects: [{ from, to, status? }] })`. Applied in dev and passed to Nitro for production; use `@aerobuilt/config`’s `redirectsToRouteRules()` in `nitro.config.ts` to emit route rules.
 - **Request-time middleware:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev) for redirects, rewrites, or custom responses.
 - **create-aero refactor:** Project initializer moved into `packages/start` with CLI; templates live in `packages/templates/minimal` and `packages/templates/kitchen-sink`. Scaffold with `pnpm run create-aero <name>` from `packages/start` or `pnpm create aero <dir>` when published.
 - **pnpm workspace:** Monorepo uses pnpm workspaces; root `dev`/`build` run kitchen-sink; `packages/start` scaffolds into `packages/start/dist/<name>` (gitignored).
