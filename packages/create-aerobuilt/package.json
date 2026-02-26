@@ -1,5 +1,5 @@
 {
-	"name": "create-aero",
+	"name": "create-aerobuilt",
 	"version": "0.1.0",
 	"type": "module",
 	"license": "MIT",
@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/aerobuilt/aero.git",
-		"directory": "packages/create-aero"
+		"directory": "packages/create-aerobuilt"
 	},
 	"homepage": "https://github.com/aerobuilt/aero",
 	"files": [
@@ -16,11 +16,11 @@
 		"README.md"
 	],
 	"bin": {
-		"create-aero": "index.js"
+		"create-aerobuilt": "index.js"
 	},
 	"scripts": {
 		"create": "node .",
-		"create-aero": "node index.js"
+		"create-aerobuilt": "node index.js"
 	},
 	"dependencies": {
 		"@aerobuilt/template-minimal": "workspace:*"

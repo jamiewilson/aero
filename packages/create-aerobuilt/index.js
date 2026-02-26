@@ -19,7 +19,7 @@ function resolveTemplatePath(templateName) {
 	const templatePath = join(pkgRoot, pkgName)
 	if (!existsSync(templatePath)) {
 		console.error(
-			`create-aero: template "${templateName}" not found (expected ${templatePath}).`,
+			`create-aerobuilt: template "${templateName}" not found (expected ${templatePath}).`,
 		)
 		console.error('Install dependencies with: pnpm install')
 		process.exit(1)
@@ -60,7 +60,7 @@ function isInMonorepo() {
 function installInMonorepo(targetDir) {
 	const root = findWorkspaceRoot(targetDir)
 	if (!root) {
-		console.error('create-aero: could not find workspace root (pnpm-workspace.yaml).')
+		console.error('create-aerobuilt: could not find workspace root (pnpm-workspace.yaml).')
 		process.exit(1)
 	}
 	const r = spawnSync('pnpm', ['install', '--no-frozen-lockfile'], {
@@ -69,7 +69,9 @@ function installInMonorepo(targetDir) {
 		shell: true,
 	})
 	if (r.status !== 0) {
-		console.error('create-aero: pnpm install failed. Run "pnpm install" from the repo root.')
+		console.error(
+			'create-aerobuilt: pnpm install failed. Run "pnpm install" from the repo root.',
+		)
 		process.exit(1)
 	}
 }
@@ -83,7 +85,7 @@ function installStandalone(targetDir) {
 	const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: targetDir, shell: true })
 	if (r.status !== 0) {
 		console.error(
-			`create-aero: ${cmd} install failed. Run "${cmd} install" in the project directory.`,
+			`create-aerobuilt: ${cmd} install failed. Run "${cmd} install" in the project directory.`,
 		)
 		process.exit(1)
 	}
@@ -93,20 +95,20 @@ function main() {
 	const { target, template } = parseArgs(process.argv)
 
 	if (!target) {
-		console.error('create-aero: missing target directory.')
-		console.error('Usage: pnpm run create-aero <dir>')
-		console.error('Example: pnpm run create-aero my-app')
+		console.error('create-aerobuilt: missing target directory.')
+		console.error('Usage: pnpm run create-aerobuilt <dir>')
+		console.error('Example: pnpm run create-aerobuilt my-app')
 		process.exit(1)
 	}
 
 	if (!TEMPLATES.includes(template)) {
 		console.error(
-			`create-aero: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`,
+			`create-aerobuilt: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`,
 		)
 		process.exit(1)
 	}
 
-	// Run from packages/create-aero: scaffold into packages/create-aero/dist/<target>
+	// Run from packages/create-aerobuilt: scaffold into packages/create-aerobuilt/dist/<target>
 	const inMonorepo = isInMonorepo()
 	const targetDir = inMonorepo
 		? join(startPkgDir, APPS_DIR, target)
@@ -119,12 +121,12 @@ function main() {
 	if (existsSync(targetDir)) {
 		const stat = statSync(targetDir)
 		if (!stat.isDirectory()) {
-			console.error(`create-aero: "${target}" exists and is not a directory.`)
+			console.error(`create-aerobuilt: "${target}" exists and is not a directory.`)
 			process.exit(1)
 		}
 		const files = readdirSync(targetDir)
 		if (files.length > 0) {
-			console.error(`create-aero: directory "${target}" already exists and is not empty.`)
+			console.error(`create-aerobuilt: directory "${target}" already exists and is not empty.`)
 			process.exit(1)
 		}
 	}

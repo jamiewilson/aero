@@ -30,7 +30,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Build and deployment
 
-- **[Monorepo and packages](monorepo-and-packages.md)** — Package layout, build flow, create-aero, and build output (dist/, assets).
+- **[Monorepo and packages](monorepo-and-packages.md)** — Package layout, build flow, create-aerobuilt, and build output (dist/, assets).
 - **[Image optimization](image-optimization.md)** — Optional image pipeline during build.
 
 ## Server and client libraries

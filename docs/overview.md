@@ -38,7 +38,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 - **Vite** — Dev server, HMR, production build via the Aero Vite plugin.
 - **Static build** — Output to `dist/` with minification and optional Nitro output in `.output/`.
-- **create-aero** — Scaffold from the minimal template. See [monorepo-and-packages.md](monorepo-and-packages.md#packagescreate-aero-create-aero). Full demo in [examples/kitchen-sink](../examples/kitchen-sink).
+- **create-aerobuilt** — Scaffold from the minimal template. See [monorepo-and-packages.md](monorepo-and-packages.md#packagescreate-aerobuilt-create-aerobuilt). Full demo in [examples/kitchen-sink](../examples/kitchen-sink).
 
 ### Routing and layouts
 

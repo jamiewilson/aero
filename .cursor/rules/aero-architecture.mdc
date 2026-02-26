@@ -13,7 +13,7 @@ Aero is a static site generator with an HTML-first template engine.
 - **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsup; consumed as `@aero-ssg/core` and `@aero-ssg/vite`.
 - **packages/vite** - Vite plugin re-export (@aero-ssg/vite).
 - **packages/vscode** - VS Code extension (syntaxes, etc.).
-- **packages/start** - Project initializer (create-aero). Scaffolds into packages/start/dist/<name> from templates (dist is gitignored).
+- **packages/start** - Project initializer (create-aerobuilt). Scaffolds into packages/start/dist/<name> from templates (dist is gitignored).
 - **packages/templates/kitchen-sink** - Full demo app (client/, server/, vite.config, nitro.config). Root `dev`/`build`/`preview` run this.
 - **packages/templates/minimal** - Minimal template (client/, content/, no server).
 
@@ -50,13 +50,13 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Path Aliases (templates: tsconfig in kitchen-sink, minimal)
 
-- `@components/*` → client/components/*
-- `@layouts/*` → client/layouts/*
-- `@pages/*` → client/pages/*
-- `@content/*` → content/*
-- `@styles/*` → client/assets/styles/*
-- `@scripts/*` → client/assets/scripts/*
-- `@images/*` → client/assets/images/*
-- `@src/*` → client/*
-- `@server/*` → server/*
+- `@components/*` → client/components/\*
+- `@layouts/*` → client/layouts/\*
+- `@pages/*` → client/pages/\*
+- `@content/*` → content/\*
+- `@styles/*` → client/assets/styles/\*
+- `@scripts/*` → client/assets/scripts/\*
+- `@images/*` → client/assets/images/\*
+- `@src/*` → client/\*
+- `@server/*` → server/\*
 - `~/*` → project root
