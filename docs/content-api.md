@@ -36,7 +36,7 @@ Instead of relying on clunky static `allDocs` exports, you fetch collections nat
 </script>
 
 <ul>
-	<li data-each="{ doc in allDocs }">
+	<li each="{ doc in allDocs }">
 		<a href="/docs/{ doc.id }">{ doc.data.title }</a>
 	</li>
 </ul>

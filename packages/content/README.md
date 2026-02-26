@@ -4,13 +4,13 @@ Content collections for Aero: load Markdown (and other files) with frontmatter, 
 
 ## Exports
 
-| Export | Description |
-|--------|-------------|
-| `@aerobuilt/content` | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
-| `@aerobuilt/content/vite` | `aeroContent(options?)` Vite plugin. |
-| `@aerobuilt/content/markdown` | Markdown/remark utilities (used internally). |
-| `@aerobuilt/content/render` | `render(doc)` for markdown-to-HTML. |
-| `@aerobuilt/content/types` | TypeScript types. |
+| Export                        | Description                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `@aerobuilt/content`          | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
+| `@aerobuilt/content/vite`     | `aeroContent(options?)` Vite plugin.                                                                                              |
+| `@aerobuilt/content/markdown` | Markdown/remark utilities (used internally).                                                                                      |
+| `@aerobuilt/content/render`   | `render(doc)` for markdown-to-HTML.                                                                                               |
+| `@aerobuilt/content/types`    | TypeScript types.                                                                                                                 |
 
 ## Usage in apps
 
@@ -27,7 +27,7 @@ const docs = defineCollection({
 	directory: 'content/docs',
 	include: '**/*.md',
 	schema: z.object({ title: z.string(), published: z.boolean().optional() }),
-	transform: async (doc) => ({ ...doc, data: { ...doc.data, slug: doc._meta.slug } }),
+	transform: async doc => ({ ...doc, data: { ...doc.data, slug: doc._meta.slug } }),
 })
 
 export default defineConfig({ collections: [docs] })
@@ -47,7 +47,7 @@ export default defineConfig({ collections: [docs] })
 	const doc = aero.props
 	const { html } = await render(doc)
 </script>
-<article data-each="{ doc in [doc] }">
+<article each="{ doc in [doc] }">
 	<h1>{ doc.data.title }</h1>
 	<div>{ html }</div>
 </article>
@@ -65,7 +65,7 @@ Each document has:
 - **id** — Collection-relative path without extension.
 - **data** — Validated frontmatter (from schema).
 - **body** — Raw markdown (after frontmatter).
-- **_meta** — `{ path, slug, filename, extension }`.
+- **\_meta** — `{ path, slug, filename, extension }`.
 
 ## Vite plugin
 

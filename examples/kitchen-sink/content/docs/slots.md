@@ -74,7 +74,7 @@ The page’s “Custom Navigation Content” ends up in the child’s `nav` slot
 In `client/layouts/sub.html` you can forward slots to a base layout:
 
 ```html
-<base-layout data-props>
+<base-layout props>
 	<slot name="nav" slot="nav"></slot>
 	<slot></slot>
 </base-layout>

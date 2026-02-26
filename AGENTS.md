@@ -44,14 +44,14 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ### Props System
 
-Props passed via attributes or `data-props`:
+Props passed via attributes or `props`:
 
 ```html
 <my-component title="{ site.title }" />
 <!-- expression -->
-<my-component data-props />
+<my-component props />
 <!-- spreads local `props` var -->
-<my-component data-props="{ ...baseProps }" />
+<my-component props="{ ...baseProps }" />
 <!-- explicit spread -->
 ```
 
@@ -135,4 +135,5 @@ When adding or refactoring comments in TypeScript files, use **block-style TSDoc
 
 - Virtual client scripts use `/@aero/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
 - Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
-- `data-each` for loops: `<li data-each="{ item in items }">{ item.name }</li>`
+- `each` for loops: `<li each="{ item in items }">{ item.name }</li>`
+- All custom attributes (`props`, `each`, `if`, etc.) also accept a `data-` prefix for HTML spec compliance

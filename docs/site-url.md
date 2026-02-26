@@ -10,9 +10,9 @@ Aero can be configured with a **canonical site URL** (e.g. `https://example.com`
 import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
-  content: true,
-  server: true,
-  site: 'https://example.com',
+	content: true,
+	server: true,
+	site: 'https://example.com',
 })
 ```
 
@@ -22,7 +22,7 @@ export default defineConfig({
 import { aero } from 'aerobuilt/vite'
 
 export default {
-  plugins: [aero({ nitro: true, site: 'https://example.com' })],
+	plugins: [aero({ nitro: true, site: 'https://example.com' })],
 }
 ```
 
@@ -30,16 +30,16 @@ export default {
 
 ## Where it appears
 
-| Context | How to use it |
-|--------|----------------|
-| **Build scripts / templates** | `Aero.site` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags). |
-| **Build-time JS (Vite)** | `import.meta.env.SITE` — replaced at build time by the plugin. See [Environment variables](environment-variables.md) for `.env` and TypeScript. |
+| Context                       | How to use it                                                                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Build scripts / templates** | `Aero.site` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags).                                                         |
+| **Build-time JS (Vite)**      | `import.meta.env.SITE` — replaced at build time by the plugin. See [Environment variables](environment-variables.md) for `.env` and TypeScript. |
 
 Example in a layout:
 
 ```html
 <script is:build>
-  const base = Aero.site || ''
+	const base = Aero.site || ''
 </script>
 <link rel="canonical" href="{ base }{ Aero.url.pathname }" />
 ```
@@ -58,16 +58,20 @@ To help crawlers and tools discover the sitemap, link to it from your layout (e.
 
 ```html
 <script is:build>
-  const base = Aero.site || ''
+	const base = Aero.site || ''
 </script>
 <!-- ... other head content ... -->
 <link rel="sitemap" type="application/xml" href="{ base }/sitemap.xml" />
 ```
 
-If you only want the sitemap link when `site` is set (e.g. to avoid a broken link in local dev), wrap it with `data-if`:
+If you only want the sitemap link when `site` is set (e.g. to avoid a broken link in local dev), wrap it with `if`:
 
 ```html
-<link rel="sitemap" type="application/xml" href="{ Aero.site }/sitemap.xml" data-if="{ Aero.site }" />
+<link
+	rel="sitemap"
+	type="application/xml"
+	href="{ Aero.site }/sitemap.xml"
+	if="{ Aero.site }" />
 ```
 
 ## Notes

@@ -10,24 +10,24 @@ The core package of the Aero static site generator. It provides the compiler, ru
 
 ## Exports
 
-| Export | Description |
-|--------|-------------|
-| `@aerobuilt/core` | Default: shared `aero` instance with `mount()` for the client entry. |
-| `aerobuilt/vite` | `aero()` Vite plugin for build and dev. |
-| `@aerobuilt/core/runtime` | `Aero` class for programmatic rendering. |
-| `@aerobuilt/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR. |
-| `@aerobuilt/core/types` | Shared TypeScript types. |
+| Export                             | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `@aerobuilt/core`                  | Default: shared `aero` instance with `mount()` for the client entry. |
+| `aerobuilt/vite`                   | `aero()` Vite plugin for build and dev.                              |
+| `@aerobuilt/core/runtime`          | `Aero` class for programmatic rendering.                             |
+| `@aerobuilt/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR.                       |
+| `@aerobuilt/core/types`            | Shared TypeScript types.                                             |
 
 ## Script taxonomy
 
 Script blocks are classified by attributes (see [docs/script-taxonomy.md](https://github.com/jamiewilson/aero/blob/main/docs/script-taxonomy.md) in the repo):
 
-| Script type | Attribute | When it runs | Notes |
-|-------------|-----------|---------------|--------|
-| Build | `<script is:build>` | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
-| Client | Plain `<script>` | Browser | Bundled as a Vite virtual module; HMR. Use `pass:data` to inject build-time data. |
-| Inline | `<script is:inline>` | Browser | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention). |
-| Blocking | `<script is:blocking>` | Browser | Extracted and emitted in `<head>`. |
+| Script type | Attribute              | When it runs      | Notes                                                                                     |
+| ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| Build       | `<script is:build>`    | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
+| Client      | Plain `<script>`       | Browser           | Bundled as a Vite virtual module; HMR. Use `pass:data` to inject build-time data.         |
+| Inline      | `<script is:inline>`   | Browser           | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention).     |
+| Blocking    | `<script is:blocking>` | Browser           | Extracted and emitted in `<head>`.                                                        |
 
 ## Features
 
@@ -35,7 +35,7 @@ Script blocks are classified by attributes (see [docs/script-taxonomy.md](https:
 
 - Parses templates and extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks.
 - Lowers template DOM to an **IR** (intermediate representation), then emits a single async render function with `{ }` interpolation.
-- Supports components, slots, `data-each`, `data-if` / `data-else-if` / `data-else`, and `pass:data` on scripts and styles.
+- Supports components, slots, `each`, `if` / `else-if` / `else`, and `pass:data` on scripts and styles.
 
 **Example**
 
@@ -86,14 +86,19 @@ The default export of `@aerobuilt/core` is the shared `aero` instance with `moun
 
 ```js
 import aero from 'aerobuilt'
-aero.mount({ target: '#app', onRender: (el) => { /* optional */ } })
+aero.mount({
+	target: '#app',
+	onRender: el => {
+		/* optional */
+	},
+})
 ```
 
 ### Components and layouts
 
 - Components: use `-component` suffix in markup; import without suffix (e.g. `@components/header` → `header.html`).
 - Layouts: use `-layout` and `<slot>` (with `name` and optional `slot` attribute).
-- Props: attributes or `data-props` / `data-props="{ ... }"`. In build script, read via `aero.props`.
+- Props: attributes or `props` / `props="{ ... }"`. In build script, read via `aero.props`.
 
 ### Path aliases and client stack
 

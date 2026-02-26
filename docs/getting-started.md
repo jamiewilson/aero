@@ -141,7 +141,7 @@ Pass data to components via attributes. Use `{ }` for expressions:
 <greeting-component name="{ site.author }" />
 
 <!-- Spread an object -->
-<greeting-component data-props="{ ...myProps }" />
+<greeting-component props="{ ...myProps }" />
 ```
 
 Components receive props via `aero.props`:
@@ -185,7 +185,7 @@ Use it in any template or component:
 
 <title>{ site.meta.title }</title>
 <nav>
-	<a data-each="{ link in site.nav }" href="{ link.path }">{ link.label }</a>
+	<a each="{ link in site.nav }" href="{ link.path }">{ link.label }</a>
 </nav>
 ```
 
@@ -269,11 +269,11 @@ Vite handles CSS bundling, autoprefixing, and minification automatically.
 
 ### Loops
 
-Use `data-each` to iterate:
+Use `each` to iterate:
 
 ```html
 <ul>
-	<li data-each="{ item in items }">{ item.name }</li>
+	<li each="{ item in items }">{ item.name }</li>
 </ul>
 ```
 
