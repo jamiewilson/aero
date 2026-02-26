@@ -1,11 +1,11 @@
-# create-aero
+# create-aerobuilt
 
 Scaffold a new [Aero](https://github.com/aerobuilt/aero) project. Aero is an HTML-first static site generator powered by Vite.
 
 ## Usage
 
 ```bash
-pnpm create aero my-app
+pnpm create aerobuilt my-app
 cd my-app
 pnpm dev
 ```
@@ -13,9 +13,9 @@ pnpm dev
 Also works with npm, yarn, and `pnpm dlx`:
 
 ```bash
-npx create-aero@latest my-app
-yarn create aero my-app
-pnpm dlx create-aero my-app
+npx create-aerobuilt@latest my-app
+yarn create aerobuilt my-app
+pnpm dlx create-aerobuilt my-app
 ```
 
 ## Options

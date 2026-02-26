@@ -1,5 +1,5 @@
 packages:
   - 'packages/*'
   - 'packages/templates/*'
-  - 'packages/create-aero/dist/*'
+  - 'packages/create-aerobuilt/dist/*'
   - 'examples/*'

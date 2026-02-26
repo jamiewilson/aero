@@ -5,7 +5,7 @@ This guide walks you through creating your first Aero project — from installat
 ## Create a Project
 
 ```bash
-pnpm create aero my-app
+pnpm create aerobuilt my-app
 cd my-app
 pnpm dev
 ```

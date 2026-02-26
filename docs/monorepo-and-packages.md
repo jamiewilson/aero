@@ -12,7 +12,7 @@ aero/
 │   ├── core/              # Framework: compiler, runtime, Vite plugin (@aerobuilt/core)
 │   ├── vite/              # Vite plugin re-export (@aerobuilt/vite)
 │   ├── aero-vscode/       # VS Code extension
-│   ├── create-aero/       # Project initializer (create-aero)
+│   ├── create-aerobuilt/       # Project initializer (create-aerobuilt)
 │   ├── templates/
 │   │   └── minimal/       # Starter template (@aerobuilt/template-minimal)
 ├── examples/
@@ -48,10 +48,10 @@ aero/
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.
 
-## packages/create-aero (create-aero)
+## packages/create-aerobuilt (create-aerobuilt)
 
-- **Purpose:** Project initializer. Run from `packages/create-aero`: `pnpm run create-aero <name>` to scaffold a new app into `packages/create-aero/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aerobuilt/template-minimal`.
-- **No app source** in create-aero; templates live in `packages/templates/` and are copied from node_modules.
+- **Purpose:** Project initializer. Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>` to scaffold a new app into `packages/create-aerobuilt/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aerobuilt/template-minimal`.
+- **No app source** in create-aerobuilt; templates live in `packages/templates/` and are copied from node_modules.
 
 ## examples/kitchen-sink (demo app used for dev/build)
 
@@ -62,7 +62,7 @@ aero/
 
 ## packages/templates/minimal
 
-- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm run create-aero <name>` by default.
+- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm run create-aerobuilt <name>` by default.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
 
 ## Build and test flow
@@ -100,5 +100,5 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 - **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin).
 - **Demo app for dev/build** is `examples/kitchen-sink` (client/, content/, server/, config). Root scripts delegate to kitchen-sink.
-- **create-aero** lives in `packages/create-aero`; scaffolds from `packages/templates/minimal`.
+- **create-aerobuilt** lives in `packages/create-aerobuilt`; scaffolds from `packages/templates/minimal`.
 - **Path conventions** use `client/` and `content/` in templates (not `src/`).

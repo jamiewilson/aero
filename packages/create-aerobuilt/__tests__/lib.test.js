@@ -4,7 +4,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '../lib.js'
 
-describe('create-aero lib', () => {
+describe('create-aerobuilt lib', () => {
 	describe('parseArgs', () => {
 		it('returns target as first positional and default template', () => {
 			expect(parseArgs(['node', 'index.js', 'my-app'])).toEqual({
@@ -44,7 +44,7 @@ describe('create-aero lib', () => {
 		let tmpDir
 
 		beforeEach(() => {
-			tmpDir = mkdtempSync(join(tmpdir(), 'create-aero-test-'))
+			tmpDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-test-'))
 		})
 
 		afterEach(() => {
@@ -101,7 +101,7 @@ describe('create-aero lib', () => {
 		let tmpDir
 
 		beforeEach(() => {
-			tmpDir = mkdtempSync(join(tmpdir(), 'create-aero-ws-'))
+			tmpDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-ws-'))
 		})
 
 		afterEach(() => {
@@ -130,7 +130,7 @@ describe('create-aero lib', () => {
 		let tmpDir
 
 		beforeEach(() => {
-			tmpDir = mkdtempSync(join(tmpdir(), 'create-aero-readme-'))
+			tmpDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-readme-'))
 		})
 
 		afterEach(() => {

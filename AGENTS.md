@@ -2,14 +2,14 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create-aero** is the create-aero project initializer (scaffolds from templates). Repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create-aerobuilt** is the create-aerobuilt project initializer (scaffolds from templates). Repo root is the workspace root.
 
 ### Monorepo
 
 - **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
 - **packages/aero-vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/create-aero** - Project initializer (create-aero). Run from `packages/create-aero`: `pnpm run create-aero <name>`; scaffolds into `packages/create-aero/dist/<name>` (gitignored).
-- **packages/templates/** - Templates: **minimal** (starter template for create-aero).
+- **packages/create-aerobuilt** - Project initializer (create-aerobuilt). Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>` (gitignored).
+- **packages/templates/** - Templates: **minimal** (starter template for create-aerobuilt).
 - **examples/kitchen-sink** - Full demo app (root `pnpm dev`/build runs this): content collections, Nitro API, Alpine.js, HTMX.
 - **Root** - Workspace root. Scripts delegate: `pnpm dev` runs kitchen-sink dev; `pnpm test` runs core tests.
 
@@ -120,7 +120,7 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 ## File Structure
 
 - **examples/kitchen-sink:** `client/pages/`, `client/components/`, `client/layouts/`, `content/`, `client/assets/`, `server/api/`, `server/routes/`
-- **packages/create-aero/** - create-aero initializer (no app source; scaffolds from templates)
+- **packages/create-aerobuilt/** - create-aerobuilt initializer (no app source; scaffolds from templates)
 - **packages/core/** - Framework (compiler, runtime, vite)
 - **packages/vite/** - Vite plugin re-export
 - **packages/aero-vscode/** - VS Code extension

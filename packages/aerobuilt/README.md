@@ -5,7 +5,7 @@
 ## Quick Start
 
 ```bash
-pnpm create aero my-app
+pnpm create aerobuilt my-app
 cd my-app
 pnpm dev
 ```
@@ -13,8 +13,8 @@ pnpm dev
 Or with npm / yarn:
 
 ```bash
-npx create-aero@latest my-app
-yarn create aero my-app
+npx create-aerobuilt@latest my-app
+yarn create aerobuilt my-app
 ```
 
 ## Install
@@ -87,7 +87,7 @@ export default createViteConfig(aeroConfig)
 
 ## Template
 
-`create-aero` scaffolds from the **minimal** starter template — pages, layouts, components, and `site.ts`. No server, no content collections.
+`create-aerobuilt` scaffolds from the **minimal** starter template — pages, layouts, components, and `site.ts`. No server, no content collections.
 
 For a full-featured example with content collections, Nitro API, Alpine.js, and HTMX, see the [kitchen-sink example](https://github.com/aerobuilt/aero/tree/main/examples/kitchen-sink).
 
