@@ -10,8 +10,8 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 
 - **Redirects:** `redirects` option in `aero.config.ts` or `aero({ redirects: [{ from, to, status? }] })`. Applied in dev and passed to Nitro for production; use `@aerobuilt/config`’s `redirectsToRouteRules()` in `nitro.config.ts` to emit route rules.
 - **Request-time middleware:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev) for redirects, rewrites, or custom responses.
-- **create-aero refactor:** Project initializer moved into `packages/start` with CLI; templates live in `packages/templates/minimal` and `packages/templates/kitchen-sink`. Scaffold with `pnpm run create-aero <name>` from `packages/start` or `pnpm create aero <dir>` when published.
-- **pnpm workspace:** Monorepo uses pnpm workspaces; root `dev`/`build` run kitchen-sink; `packages/start` scaffolds into `packages/start/dist/<name>` (gitignored).
+- **create-aero refactor:** Project initializer moved into `packages/create-aero` with CLI; templates live in `packages/templates/minimal` and `packages/templates/kitchen-sink`. Scaffold with `pnpm run create-aero <name>` from `packages/create-aero` or `pnpm create aero <dir>` when published.
+- **pnpm workspace:** Monorepo uses pnpm workspaces; root `dev`/`build` run kitchen-sink; `packages/create-aero` scaffolds into `packages/create-aero/dist/<name>` (gitignored).
 - Add `site` option for canonical site URL: set in `aero.config.ts` or `aero({ site: 'https://example.com' })`. Exposed as `import.meta.env.SITE` and `Aero.site` in templates for sitemap, RSS, and canonical links.
 - Add automatic **sitemap.xml** generation when `site` is set: written to `dist/sitemap.xml` after the static build, listing all pre-rendered routes as absolute URLs (404 excluded).
 - Document **environment variable** convention: Vite’s `import.meta.env`, `VITE_` prefix for client-exposed vars, `.env` loading, and optional `env.d.ts` for TypeScript. Add example `env.d.ts` in the start package.

@@ -4,10 +4,10 @@ Project initializer for [Aero](https://github.com/aerobuilt/aero). Scaffolds a n
 
 ## Development (monorepo)
 
-Run from **`packages/start`** only. The app is created at `packages/start/dist/<name>` and is a workspace package, so `@aerobuilt/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
+Run from **`packages/create-aero`** only. The app is created at `packages/create-aero/dist/<name>` and is a workspace package, so `@aerobuilt/*` deps resolve from the monorepo. The `dist/` directory is gitignored, so scaffolded apps are not committed.
 
 ```bash
-cd packages/start
+cd packages/create-aero
 pnpm run create-aero my-app
 pnpm run create-aero my-app --template kitchen-sink
 ```
@@ -22,7 +22,7 @@ pnpm dev
 Or from repo root:
 
 ```bash
-pnpm --dir packages/start/dist/my-app dev
+pnpm --dir packages/create-aero/dist/my-app dev
 ```
 
 ## Published usage
@@ -39,10 +39,10 @@ The app is created in the current directory (or the given path). The CLI rewrite
 
 ## Arguments
 
-| Argument        | Description                                                                        |
-| --------------- | ---------------------------------------------------------------------------------- |
-| **&lt;dir&gt;** | App name and directory (e.g. `my-app` → `packages/start/dist/my-app` in monorepo). |
-| **--template**  | `minimal` (default) or `kitchen-sink`.                                             |
+| Argument        | Description                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| **&lt;dir&gt;** | App name and directory (e.g. `my-app` → `packages/create-aero/dist/my-app` in monorepo). |
+| **--template**  | `minimal` (default) or `kitchen-sink`.                                                   |
 
 ## Templates
 

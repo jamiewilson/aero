@@ -237,7 +237,7 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
-  packages/start:
+  packages/create-aero:
     dependencies:
       '@aerobuilt/template-kitchen-sink':
         specifier: workspace:*

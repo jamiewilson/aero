@@ -106,7 +106,7 @@ function main() {
 		process.exit(1)
 	}
 
-	// Run from packages/start: scaffold into packages/start/dist/<target>
+	// Run from packages/create-aero: scaffold into packages/create-aero/dist/<target>
 	const inMonorepo = isInMonorepo()
 	const targetDir = inMonorepo
 		? join(startPkgDir, APPS_DIR, target)
