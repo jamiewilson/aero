@@ -20,33 +20,20 @@ pnpm dlx create-aero my-app
 
 ## Options
 
-| Argument            | Description                | Default      |
-| ------------------- | -------------------------- | ------------ |
-| `<dir>`             | Project name and directory | _(required)_ |
-| `--template <name>` | Starter template to use    | `minimal`    |
-
-## Templates
-
-| Template         | Description                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| **minimal**      | One layout, two pages, `site.ts`. No server, no content collections, no Alpine/HTMX. |
-| **kitchen-sink** | Full demo: content collections, Nitro API, Alpine.js, HTMX, dynamic routes.          |
-
-```bash
-pnpm create aero my-app                        # minimal (default)
-pnpm create aero my-app --template kitchen-sink # full-featured
-```
+| Argument | Description                | Default      |
+| -------- | -------------------------- | ------------ |
+| `<dir>`  | Project name and directory | _(required)_ |
 
 ## What it does
 
-1. Copies the selected template into a new directory
+1. Copies the minimal template into a new directory
 2. Rewrites `package.json` with your project name
 3. Auto-detects your package manager (pnpm > yarn > npm) and installs dependencies
 4. Prints next steps
 
 After scaffolding, the project has `aerobuilt` as its only framework dependency.
 
-## Project structure (minimal)
+## Project structure
 
 ```
 my-app/

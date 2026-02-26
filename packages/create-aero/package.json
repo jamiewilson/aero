@@ -10,7 +10,6 @@
 		"create-aero": "node index.js"
 	},
 	"dependencies": {
-		"@aerobuilt/template-kitchen-sink": "workspace:*",
 		"@aerobuilt/template-minimal": "workspace:*"
 	}
 }

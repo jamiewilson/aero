@@ -70,7 +70,6 @@ export function findWorkspaceRoot(fromDir) {
  * @param {string} template
  */
 export function writeReadme(targetDir, projectName, template) {
-	const isKitchenSink = template === 'kitchen-sink'
 	const lines = [
 		`# ${projectName}`,
 		'',
@@ -84,10 +83,6 @@ export function writeReadme(targetDir, projectName, template) {
 		'| `pnpm build` | Build for production |',
 		'| `pnpm preview` | Preview the built site |',
 	]
-
-	if (isKitchenSink) {
-		lines.push('| `pnpm preview:api` | Preview with Nitro API server |')
-	}
 
 	lines.push(
 		'',
@@ -107,18 +102,6 @@ export function writeReadme(targetDir, projectName, template) {
 		'└── tsconfig.json       # Path aliases',
 		'```',
 	)
-
-	if (isKitchenSink) {
-		lines.push(
-			'',
-			'Additional directories:',
-			'',
-			'- `server/api/` — Nitro API routes',
-			'- `server/routes/` — Nitro server routes',
-			'- `aero.config.ts` — Aero configuration',
-			'- `content.config.ts` — Content collection schemas',
-		)
-	}
 
 	lines.push(
 		'',

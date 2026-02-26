@@ -67,7 +67,7 @@ const NITRO_CONFIG_FILENAME = 'nitro.config.mjs'
 
 /**
  * Generate Nitro config from Aero options and write to <projectRoot>/.aero/nitro.config.mjs.
- * root is the app/site directory (Vite config.root), e.g. kitchen-sink or a create-aero project folder.
+ * root is the app/site directory (Vite config.root), e.g. examples/kitchen-sink or a create-aero project folder.
  * Returns the absolute path to .aero (Nitro cwd so it loads this file).
  */
 function writeGeneratedNitroConfig(
@@ -524,7 +524,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		name: 'vite-plugin-aero-static',
 		apply: 'build',
 		async closeBundle() {
-			// Project root (site/app directory: e.g. kitchen-sink or create-aero generated project), not monorepo root
+			// Project root (site/app directory: e.g. examples/kitchen-sink or create-aero generated project), not monorepo root
 			const root = state.config!.root
 			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =

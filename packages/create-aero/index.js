@@ -11,7 +11,7 @@ const startPkgDir = __dirname
 const pkgRoot = join(startPkgDir, 'node_modules')
 const APPS_DIR = 'dist'
 
-const TEMPLATES = ['minimal', 'kitchen-sink']
+const TEMPLATES = ['minimal']
 const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
@@ -94,7 +94,7 @@ function main() {
 
 	if (!target) {
 		console.error('create-aero: missing target directory.')
-		console.error('Usage: pnpm run create-aero <dir> [--template minimal|kitchen-sink]')
+		console.error('Usage: pnpm run create-aero <dir>')
 		console.error('Example: pnpm run create-aero my-app')
 		process.exit(1)
 	}

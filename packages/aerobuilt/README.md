@@ -85,17 +85,11 @@ export default createViteConfig(aeroConfig)
 | `aerobuilt/config`  | `defineConfig`, `createViteConfig`, config types            |
 | `aerobuilt/content` | `defineCollection`, `defineConfig`, `render`, content types |
 
-## Templates
+## Template
 
-`create-aero` ships two starter templates:
+`create-aero` scaffolds from the **minimal** starter template — pages, layouts, components, and `site.ts`. No server, no content collections.
 
-- **minimal** (default) — Pages, layouts, components, `site.ts`. No server, no content collections.
-- **kitchen-sink** — Full demo: content collections, Nitro API, Alpine.js, HTMX, dynamic routes.
-
-```bash
-pnpm create aero my-app                        # minimal
-pnpm create aero my-app --template kitchen-sink # full
-```
+For a full-featured example with content collections, Nitro API, Alpine.js, and HTMX, see the [kitchen-sink example](https://github.com/aerobuilt/aero/tree/main/examples/kitchen-sink).
 
 ## Commands
 

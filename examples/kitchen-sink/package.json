@@ -1,5 +1,5 @@
 {
-	"name": "@aerobuilt/template-kitchen-sink",
+	"name": "@aerobuilt/example-kitchen-sink",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

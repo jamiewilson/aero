@@ -304,9 +304,12 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).not.toContain('import { allCaps }')
 	})
 
-	/** Optional: runs only when packages/templates/kitchen-sink has client/pages/home.html (snapshot of real page). */
+	/** Optional: runs only when examples/kitchen-sink has client/pages/home.html (snapshot of real page). */
 	it('should extract plain script when parsing home.html from file (if present)', () => {
-		const homePath = path.resolve(__dirname, '../../../../templates/kitchen-sink/client/pages/home.html')
+		const homePath = path.resolve(
+			__dirname,
+			'../../../../../examples/kitchen-sink/client/pages/home.html',
+		)
 		if (!fs.existsSync(homePath)) return
 		const html = fs.readFileSync(homePath, 'utf-8')
 		const result = parse(html)
@@ -358,7 +361,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.clientScripts).toHaveLength(0)
 		expect(result.buildScript).toBeNull()
 		expect(result.template).toContain('<svg')
-		expect(result.template).toContain('<script>console.log(\'svg\')</script>')
+		expect(result.template).toContain("<script>console.log('svg')</script>")
 		expect(result.template).toContain('</svg>')
 	})
 

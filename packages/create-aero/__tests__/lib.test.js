@@ -14,9 +14,9 @@ describe('create-aero lib', () => {
 		})
 
 		it('returns template when --template is given', () => {
-			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'kitchen-sink'])).toEqual({
+			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])).toEqual({
 				target: 'my-app',
-				template: 'kitchen-sink',
+				template: 'minimal',
 			})
 		})
 
@@ -150,14 +150,6 @@ describe('create-aero lib', () => {
 			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
 			expect(readme).not.toContain('preview:api')
 			expect(readme).not.toContain('server/api')
-		})
-
-		it('includes Nitro commands and server dirs for kitchen-sink', () => {
-			writeReadme(tmpDir, 'my-app', 'kitchen-sink')
-			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
-			expect(readme).toContain('preview:api')
-			expect(readme).toContain('server/api')
-			expect(readme).toContain('aero.config.ts')
 		})
 	})
 })

@@ -1,6 +1,6 @@
 ## Nitro Server Features
 
-When you enable Nitro in Aero (`aero({ nitro: true })`), your `server/` directory is used for API routes and optional server routes. The structure and handler API below apply to that server. Static pages are still built by Aero’s Vite pipeline; Nitro can serve them via a catch-all route (see the kitchen-sink template).
+When you enable Nitro in Aero (`aero({ nitro: true })`), your `server/` directory is used for API routes and optional server routes. The structure and handler API below apply to that server. Static pages are still built by Aero’s Vite pipeline; Nitro can serve them via a catch-all route (see the [kitchen-sink example](../examples/kitchen-sink)).
 
 ### File-Based Routing
 
