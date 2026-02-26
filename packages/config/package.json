@@ -2,7 +2,18 @@
 	"name": "@aerobuilt/config",
 	"version": "0.1.0",
 	"type": "module",
+	"license": "MIT",
+	"author": "Jamie Wilson",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aerobuilt/aero.git",
+		"directory": "packages/config"
+	},
+	"homepage": "https://github.com/aerobuilt/aero",
 	"private": false,
+	"files": [
+		"dist"
+	],
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
