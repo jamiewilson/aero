@@ -131,8 +131,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					? [
 							...state.aliasResult.aliases,
 							{
-								find: '@aero-ssg/core',
-								replacement: require.resolve('@aero-ssg/core/entry-prod'),
+								find: '@aerobuilt/core',
+								replacement: require.resolve('@aerobuilt/core/entry-prod'),
 							},
 						]
 					: state.aliasResult.aliases
@@ -221,7 +221,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			}
 
 			// Only try id + '.html' for path-like specifiers (relative, absolute, or path aliases like @components/foo).
-			// Skip bare packages (nitro, nitro/app) and scoped packages (@aero-ssg/content/render).
+			// Skip bare packages (nitro, nitro/app) and scoped packages (@aerobuilt/content/render).
 			const isPathLike =
 				id.startsWith('./') ||
 				id.startsWith('../') ||
@@ -477,7 +477,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
  * Aero Vite plugin factory. Returns an array of plugins: config, virtuals, transform, SSR,
  * static-build, image optimizer, and optionally Nitro (serve only).
  * HMR for templates and content is handled by Vite's dependency graph when the app uses a single
- * client entry that imports @aero-ssg/core and calls aero.mount().
+ * client entry that imports @aerobuilt/core and calls aero.mount().
  *
  * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
  * @returns PluginOption[] to pass to Vite's plugins array.

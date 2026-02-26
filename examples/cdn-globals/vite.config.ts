@@ -1,4 +1,4 @@
-import { aero } from '@aero-ssg/core/vite'
+import { aero } from 'aerobuilt/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({

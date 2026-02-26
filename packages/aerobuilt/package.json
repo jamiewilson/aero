@@ -1,0 +1,35 @@
+{
+	"name": "aerobuilt",
+	"version": "0.1.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/client.d.ts",
+			"default": "./dist/client.js"
+		},
+		"./config": {
+			"types": "./dist/config.d.ts",
+			"default": "./dist/config.js"
+		},
+		"./content": {
+			"types": "./dist/content.d.ts",
+			"default": "./dist/content.js"
+		},
+		"./vite": {
+			"types": "./dist/vite.d.ts",
+			"default": "./dist/vite.js"
+		}
+	},
+	"dependencies": {
+		"@aerobuilt/core": "workspace:*",
+		"@aerobuilt/config": "workspace:*",
+		"@aerobuilt/content": "workspace:*"
+	},
+	"scripts": {
+		"build": "tsup src/client.ts src/config.ts src/content.ts src/vite.ts --format esm --dts --clean --out-dir dist"
+	},
+	"devDependencies": {
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3"
+	}
+}

@@ -1,2 +1,2 @@
-import aero from '@aero-ssg/core'
+import aero from 'aerobuilt'
 aero.mount()

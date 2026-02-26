@@ -5,8 +5,8 @@
  * Used by `aero.config.ts` and by `createViteConfig` to build the final Vite config.
  */
 import type { UserConfig } from 'vite'
-import type { AeroContentOptions } from '@aero-ssg/content/vite'
-import type { AeroMiddleware, RedirectRule } from '@aero-ssg/core/types'
+import type { AeroContentOptions } from '@aerobuilt/content/vite'
+import type { AeroMiddleware, RedirectRule } from '@aerobuilt/core/types'
 
 /** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {

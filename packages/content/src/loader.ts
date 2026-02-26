@@ -140,6 +140,6 @@ export function getCollection(name, filterFn) {
   return data;
 }
 
-export { render } from '@aero-ssg/content/render';
+export { render } from '@aerobuilt/content/render';
 `
 }
