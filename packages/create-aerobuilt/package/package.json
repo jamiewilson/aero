@@ -18,11 +18,6 @@
 	"bin": {
 		"create-aerobuilt": "index.js"
 	},
-	"scripts": {
-		"create": "node .",
-		"create-aerobuilt": "node index.js",
-		"prepack": "cp ../../LICENSE ."
-	},
 	"dependencies": {
 		"@aerobuilt/template-minimal": "^0.2.1"
 	},
@@ -33,5 +28,9 @@
 		"vite": {
 			"optional": true
 		}
+	},
+	"scripts": {
+		"create": "node .",
+		"create-aerobuilt": "node index.js"
 	}
 }
