@@ -1,7 +1,14 @@
 import aero from 'aerobuilt'
 
+/** Minimal type for htmx loaded via script tag (CDN). */
+interface HtmxGlobal {
+	config: { globalViewTransitions: boolean }
+	onLoad(fn: (node: Node) => void): void
+	process(el: HTMLElement): void
+}
+
 declare global {
-	var htmx: typeof import('htmx.org').default
+	var htmx: HtmxGlobal
 	var Alpine: import('alpinejs').Alpine
 }
 

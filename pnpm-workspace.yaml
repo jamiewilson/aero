@@ -3,3 +3,4 @@ packages:
   - 'packages/templates/*'
   - 'packages/create-aerobuilt/dist/*'
   - 'examples/*'
+  - 'examples/import-bundling/*'

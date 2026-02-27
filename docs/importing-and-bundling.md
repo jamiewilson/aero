@@ -14,7 +14,7 @@ That single-bundle behavior is normal and correct for many apps. Whether you wan
 
 ## Option 1: Single bundle (default)
 
-Demo: [examples/single-bundle](../examples/single-bundle) — `pnpm --dir examples/single-bundle dev`
+Demo: [examples/import-bundling/single-bundle](../examples/import-bundling/single-bundle) — `pnpm --dir examples/import-bundling/single-bundle dev`
 
 **What you do:** Import everything in your client entry (e.g. `client/assets/scripts/index.ts`):
 
@@ -49,7 +49,7 @@ aero.mount({
 
 ## Option 2: Load from the page (CDN or static), use globals
 
-Demo: [examples/cdn-globals](../examples/cdn-globals) — `pnpm --dir examples/cdn-globals dev`
+Demo: [examples/import-bundling/cdn-globals](../examples/import-bundling/cdn-globals) — `pnpm --dir examples/import-bundling/cdn-globals dev`
 
 **What you do:** Do **not** import htmx or Alpine in your client entry. Instead:
 
@@ -100,7 +100,7 @@ If you use Alpine plugins (e.g. persist) or stores, add their script tags before
 
 ## Option 3: ESM from CDN (import map or external URL)
 
-Demo: [examples/esm-import-map](../examples/esm-import-map) — `pnpm --dir examples/esm-import-map dev`
+Demo: [examples/import-bundling/esm-import-map](../examples/import-bundling/esm-import-map) — `pnpm --dir examples/import-bundling/esm-import-map dev`
 
 Many libraries ship an **ESM build** on the CDN (e.g. Alpine's `module.esm.min.js`:  
 `https://unpkg.com/alpinejs@3.15.8/dist/module.esm.min.js`). Using that instead of the UMD/IIFE build gives you:
@@ -173,7 +173,7 @@ aero.mount({
 
 ## Option 4: Externals (don’t bundle, expect globals)
 
-Demo: [examples/cdn-externals](../examples/cdn-externals) — `pnpm --dir examples/cdn-externals dev`
+Demo: [examples/import-bundling/cdn-externals](../examples/import-bundling/cdn-externals) — `pnpm --dir examples/import-bundling/cdn-externals dev`
 
 **What you do:** Tell Vite **not** to bundle htmx and Alpine by marking them as externals. The built output will expect them as globals at runtime, so you load them via `<script>` in the layout (as in Option 2) and use the globals in your entry. Set `vite.build.rolldownOptions.external` in `aero.config.ts` and use `createViteConfig(aeroConfig)` in `vite.config.ts`.
 
@@ -241,7 +241,7 @@ You can keep `import htmx from 'htmx.org'` and `import Alpine from 'alpinejs'` i
 
 ## Option 5: Code-splitting with dynamic import()
 
-Demo: [examples/dynamic-import](../examples/dynamic-import) — `pnpm --dir examples/dynamic-import dev`
+Demo: [examples/import-bundling/dynamic-import](../examples/import-bundling/dynamic-import) — `pnpm --dir examples/import-bundling/dynamic-import dev`
 
 **What you do:** Keep imports, but load heavy libs asynchronously so Vite can put them in separate chunks (e.g. with top-level `await import()`):
 
@@ -287,12 +287,12 @@ In all cases, your **Aero runtime** and app code stay in the client entry (or it
 
 ## Demos
 
-Runnable demos for each option live in the repo under `examples/`. From the repo root, install once (`pnpm install`), then run or build any demo:
+Runnable demos for each option live in the repo under `examples/import-bundling/`. From the repo root, install once (`pnpm install`), then run or build any demo:
 
-- **Option 1:** `pnpm --dir examples/single-bundle dev` (or `build` / `preview`)
-- **Option 2:** `pnpm --dir examples/cdn-globals dev`
-- **Option 3:** `pnpm --dir examples/esm-import-map dev`
-- **Option 4:** `pnpm --dir examples/cdn-externals dev`
-- **Option 5:** `pnpm --dir examples/dynamic-import dev`
+- **Option 1:** `pnpm --dir examples/import-bundling/single-bundle dev` (or `build` / `preview`)
+- **Option 2:** `pnpm --dir examples/import-bundling/cdn-globals dev`
+- **Option 3:** `pnpm --dir examples/import-bundling/esm-import-map dev`
+- **Option 4:** `pnpm --dir examples/import-bundling/cdn-externals dev`
+- **Option 5:** `pnpm --dir examples/import-bundling/dynamic-import dev`
 
-Each demo has a single page with an Alpine counter; if the counter works, that option’s setup is valid. See `examples/README.md` for more.
+Each demo has a single page with an Alpine counter; if the counter works, that option’s setup is valid. See `examples/import-bundling/README.md` for more.
