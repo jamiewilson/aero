@@ -14,6 +14,7 @@ import type { IRNode } from './ir'
 import * as CONST from './constants'
 import * as Helper from './helpers'
 import { analyzeBuildScript } from './build-script-analysis'
+import { isDirectiveAttr } from './directive-attributes'
 import { emitToJS, emitBodyAndStyle } from './emit'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
@@ -202,8 +203,7 @@ class Lowerer {
 
 				let val = this.resolver.resolveAttrValue(attr.value ?? '')
 
-				const isAlpine = CONST.ALPINE_ATTR_REGEX.test(attr.name)
-				if (!isAlpine) {
+				if (!isDirectiveAttr(attr.name)) {
 					val = Helper.compileAttributeInterpolation(val)
 				}
 				attributes.push(`${attr.name}="${val}"`)

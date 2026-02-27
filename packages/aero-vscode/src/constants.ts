@@ -13,7 +13,18 @@ export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 export const IMPORT_REGEX =
 	/((?:^|[\r\n;])\s*)import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\5/g
 
-/** Alpine.js attributes that should not be treated as Aero expressions (`x-*`, `@*`, `:*`, `.*`). */
+/** Default directive prefixes (must match core compiler/directive-attributes.ts). */
+export const DEFAULT_DIRECTIVE_PREFIXES: string[] = ['x-', '@', ':', '.']
+
+/**
+ * Returns true if the attribute is a directive that should skip Aero interpolation.
+ * Kept in sync with packages/core compiler/directive-attributes.ts.
+ */
+export function isDirectiveAttr(attrName: string): boolean {
+	return DEFAULT_DIRECTIVE_PREFIXES.some((p) => attrName.startsWith(p))
+}
+
+/** @deprecated Use isDirectiveAttr(attrName) instead. */
 export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 
 export const ATTR_IS_BUILD = 'is:build'
