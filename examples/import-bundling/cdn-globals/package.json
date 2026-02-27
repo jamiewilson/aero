@@ -1,5 +1,5 @@
 {
-	"name": "import-dynamic-import",
+	"name": "cdn-globals",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -7,12 +7,10 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"aerobuilt": "workspace:*",
-		"alpinejs": "^3.15.8",
-		"htmx.org": "^2.0.8"
+		"aerobuilt": "workspace:*"
 	},
 	"devDependencies": {
-		"autoprefixer": "^10.4.24",
+		"@types/alpinejs": "^3.13.11",
 		"vite": "8.0.0-beta.15"
 	},
 	"version": "0.0.1",
