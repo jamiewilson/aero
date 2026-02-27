@@ -11,6 +11,7 @@
 
 import type { AeroRouteParams } from '../types'
 import { toPosix } from './path'
+import { matchRoutePattern } from './route-pattern'
 
 /**
  * Result of resolving a page: the module (or lazy loader), canonical page name, and route params.
@@ -87,31 +88,10 @@ export function resolveDynamicPage(
 	pageName: string,
 	pagesMap: Record<string, any>,
 ): PageTargetResult | null {
-	const requestedSegments = pageName.split('/').filter(Boolean)
 	for (const [key, mod] of Object.entries(pagesMap)) {
 		if (!key.includes('[') || !key.includes(']') || key.includes('.')) continue
-		const keySegments = key.split('/').filter(Boolean)
-		if (keySegments.length !== requestedSegments.length) continue
-
-		const params: AeroRouteParams = {}
-		let matched = true
-		for (let i = 0; i < keySegments.length; i++) {
-			const routeSegment = keySegments[i]
-			const requestSegment = requestedSegments[i]
-			const dynamicMatch = routeSegment.match(/^\[(.+)\]$/)
-
-			if (dynamicMatch) {
-				params[dynamicMatch[1]] = decodeURIComponent(requestSegment)
-				continue
-			}
-
-			if (routeSegment !== requestSegment) {
-				matched = false
-				break
-			}
-		}
-
-		if (matched) {
+		const params = matchRoutePattern(key, pageName)
+		if (params != null) {
 			return { module: mod, pageName: key, params }
 		}
 	}

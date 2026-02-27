@@ -23,6 +23,10 @@ import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import { pagePathToKey } from '../utils/routing'
+import {
+	expandRoutePattern,
+	isDynamicRoutePattern,
+} from '../utils/route-pattern'
 import { createServer } from 'vite'
 
 import {
@@ -85,20 +89,12 @@ interface StaticPage {
 
 /** True if page has dynamic segments (e.g. `posts/[id]`). */
 function isDynamicPage(page: StaticPage): boolean {
-	return /\[.+?\]/.test(page.pageName)
+	return isDynamicRoutePattern(page.pageName)
 }
 
 /** Replace `[key]` in pattern with params[key]; throws if a key is missing. */
 function expandPattern(pattern: string, params: Record<string, string>): string {
-	return pattern.replace(/\[(.+?)\]/g, (_, key) => {
-		if (!(key in params)) {
-			throw new Error(
-				`[aero] getStaticPaths: missing param "${key}" for pattern "${pattern}". ` +
-					`Provided params: ${JSON.stringify(params)}`,
-			)
-		}
-		return params[key]
-	})
+	return expandRoutePattern(pattern, params)
 }
 
 /** Recursively collect all .html file paths under dir. */
