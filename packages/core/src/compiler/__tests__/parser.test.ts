@@ -216,10 +216,10 @@ describe('Parser (V2 Taxonomy)', () => {
 	})
 
 	/**
-	 * Removal is by character range (start/end) so that when script content contains
-	 * HTML comments, the original fullTag still matches and is removed correctly.
+	 * DOM-based removal: when script content contains HTML comments, the script is still
+	 * correctly identified and removed (no regex boundary issues).
 	 */
-	it('should remove extracted scripts by index even when HTML comment inside script (cleaned vs original would differ)', () => {
+	it('should remove extracted scripts even when HTML comment inside script (cleaned vs original would differ)', () => {
 		const input = `
 <script is:build>
 <!-- inline html comment -->
@@ -232,6 +232,33 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.buildScript?.content).toContain('const x = 1;')
 		expect(result.template).not.toContain('<script')
 		expect(result.template).toContain('<div>Content</div>')
+	})
+
+	/**
+	 * When script content contains the literal '</script>' in a string, HTML5 requires
+	 * the parser to close the script at that point. DOM parsing yields exactly one
+	 * script element (truncated content); the remainder is template. Documents that
+	 * we do not get duplicate or misclassified scripts (e.g. regex could have matched
+	 * the second </script> as start of a new script in some edge cases).
+	 */
+	it('should yield single script with truncated content when source contains literal "</script>" in a string', () => {
+		const input = `
+<script is:build>
+const tag = '</script>';
+const x = 1;
+</script>
+<div>Content</div>
+`
+		const result = parse(input)
+
+		// HTML5: script ends at first </script>, so content is truncated
+		expect(result.buildScript).not.toBeNull()
+		expect(result.buildScript!.content).toContain("const tag = '")
+		expect(result.buildScript!.content).not.toContain('</script>')
+		// Exactly one script extracted; trailing '</script>'; const x = 1; </script> is not a second script
+		expect(result.clientScripts).toHaveLength(0)
+		expect(result.template).toContain('<div>Content</div>')
+		expect(result.template).not.toContain('const tag =')
 	})
 
 	it('should treat plain <script> (no is:inline) as default bundled client script', () => {
@@ -379,5 +406,69 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.buildScript!.content).toContain('const x = 1')
 		expect(result.clientScripts).toHaveLength(0)
 		expect(result.template).toContain('<script>ignored</script>')
+	})
+
+	/**
+	 * HTML5 parsing ends script at the first "</script>" even inside a string, so both
+	 * regex and DOM parsers truncate. We assert we still get a build script and correct template.
+	 */
+	it('should extract build script and template when content contains "</script>" in a string (truncated per HTML5)', () => {
+		const input = `
+<script is:build>
+const tag = "</script>";
+const x = 1;
+</script>
+<div>Content</div>
+`
+		const result = parse(input)
+
+		expect(result.buildScript).not.toBeNull()
+		// HTML5 ends script at first </script>, so content is truncated
+		expect(result.buildScript!.content).toContain('const tag = "')
+		expect(result.template).toContain('<div>Content</div>')
+		expect(result.template).not.toContain('const tag =')
+	})
+
+	/**
+	 * When a template has script before <html> (e.g. is:build) and scripts inside <head>,
+	 * all must be collected by walking from the document root. Regression test for
+	 * kitchen-sink base.html-style layout.
+	 */
+	it('should collect and classify head scripts when script appears before <html> (full document)', () => {
+		const input = `<script is:build>
+	const site = {};
+</script>
+<html lang="en">
+	<head>
+		<script src="@scripts/index.ts"></script>
+		<script pass:data="{{ key }}">const k = 1;</script>
+		<script>
+			import { fn } from '@scripts/utils'
+			console.log(fn());
+		</script>
+	</head>
+	<body><p>Body</p></body>
+</html>`
+		const result = parse(input)
+
+		expect(result.buildScript).not.toBeNull()
+		expect(result.buildScript!.content).toContain('const site = {}')
+
+		// Plain script in head must be extracted as client with injectInHead
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].content).toContain('import { fn }')
+		expect(result.clientScripts[0].injectInHead).toBe(true)
+
+		// Local script[src] in head must get type=module in template
+		expect(result.template).toContain('type="module"')
+		expect(result.template).toContain('@scripts/index.ts')
+
+		// pass:data script stays in template
+		expect(result.template).toContain('pass:data')
+		expect(result.template).toContain('const k = 1')
+
+		// Plain script content must not appear in template
+		expect(result.template).not.toContain('import { fn }')
+		expect(result.template).toContain('<p>Body</p>')
 	})
 })
