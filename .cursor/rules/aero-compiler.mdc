@@ -10,10 +10,11 @@ All of the following live in **packages/core** (the framework package).
 
 ## Modules
 
-- **compiler/parser.ts** - Extract script blocks, parse imports; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
+- **compiler/parser.ts** - Extract script blocks from HTML; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
+- **compiler/build-script-analysis.ts** - AST-based analysis of build script content (oxc-parser): extracts imports and `export function getStaticPaths`; used by codegen.
 - **compiler/tokenizer.ts** - Re-exports from `@aerobuilt/interpolation`; use for text/attribute compilation.
 - **packages/interpolation** - Shared package `@aerobuilt/interpolation`: `{ }` tokenizer (brace depth, strings, comments). Used by core and can be used by aero-vscode.
-- **compiler/codegen.ts** - Emit async render functions, handle `{ }` interpolation via helpers, `data-each`, `data-if` / `data-else-if` / `data-else`
+- **compiler/codegen.ts** - Emit async render functions; uses build-script-analysis for build script imports and getStaticPaths; handle `{ }` interpolation via helpers, `data-each`, `data-if` / `data-else-if` / `data-else`
 - **compiler/resolver.ts** - Resolve component/layout paths against path aliases (from project tsconfig)
 - **compiler/helpers.ts** - Interpolation (compileInterpolation, compileAttributeInterpolation use tokenizer), attribute helpers
 - **vite/index.ts** - Vite plugin: virtual modules for client scripts; use `\0` prefix for Vite virtual module IDs (not `/@aero/client/` in emitted IDs)
@@ -31,7 +32,7 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Tests
 
-- Vitest in **packages/core**: `compiler/__tests__/` (parser.test.ts, codegen.test.ts, vite-plugin.test.ts), `vite/__tests__/` (build.test.ts)
+- Vitest in **packages/core**: `compiler/__tests__/` (parser.test.ts, codegen.test.ts, build-script-analysis.test.ts, vite-plugin.test.ts), `vite/__tests__/` (build.test.ts)
 - Run from repo root: `pnpm test` or from packages/core: `pnpm test`
 
 ## Gotchas

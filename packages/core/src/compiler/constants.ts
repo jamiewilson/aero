@@ -44,9 +44,6 @@ export const EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
 export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
-/** Matches ES import statements for extraction (captures: default name, named bindings, namespace, quote, path). */
-export const IMPORT_REGEX =
-	/((?:^|[\r\n;])\s*)import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\5/g
 /** Self-closing tag: `<tag ... />`. */
 export const SELF_CLOSING_TAG_REGEX = /<([a-z0-9-]+)([^>]*?)\/>/gi
 export const SELF_CLOSING_TAIL_REGEX = /\/>$/

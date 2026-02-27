@@ -44,7 +44,7 @@ describe('Compiler Integration', () => {
 		expect(getStaticPathsIndex).toBeLessThan(defaultExportIndex)
 	})
 
-	/** extractGetStaticPaths must not break on { } inside strings or single-line comments. */
+	/** Build script analysis must not break on { } inside strings or single-line comments. */
 	it('should handle getStaticPaths with complex braces in strings/comments', () => {
 		const src = `
 <script is:build>
