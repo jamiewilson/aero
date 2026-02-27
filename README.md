@@ -183,7 +183,7 @@ Preview: `pnpm preview` (static) or `pnpm preview:api` (Nitro serving `dist/` + 
 
 ## Docs
 
-For full documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/table-of-contents.md).
+For full documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/README.md).
 
 ## Links
 
