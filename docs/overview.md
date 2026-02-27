@@ -63,7 +63,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 - **Site URL** — Canonical URL, sitemap, `Aero.site` / `import.meta.env.SITE`. [site-url.md](site-url.md)
 - **Environment variables** — Vite’s `import.meta.env`, `VITE_` prefix, `.env`. [environment-variables.md](environment-variables.md)
-- **Redirects and middleware** — Config redirects and request-time middleware (dev). Root [README](../README.md#configuration).
+- **Redirects and middleware** — Config redirects and request-time middleware (dev). [middleware.md](middleware.md)
 
 ### Assets and tooling
 

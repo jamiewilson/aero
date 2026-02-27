@@ -9,14 +9,6 @@
 			"path": "packages/aerobuilt",
 		},
 		{
-			"name": "docs",
-			"path": "docs",
-		},
-		{
-			"name": "examples",
-			"path": "examples",
-		},
-		{
 			"name": "core",
 			"path": "packages/core",
 		},
