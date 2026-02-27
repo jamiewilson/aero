@@ -22,8 +22,12 @@ export const ATTR_SLOT = 'slot'
 export const ATTR_IS_BUILD = 'is:build'
 /** Script left in template in place; not extracted. */
 export const ATTR_IS_INLINE = 'is:inline'
+/** Script hoisted to head; extracted. */
+export const ATTR_IS_BLOCKING = 'is:blocking'
 /** Script receives data from template: `pass:data="{ config }"`. */
 export const ATTR_PASS_DATA = 'pass:data'
+/** Script external source (HTML attribute). */
+export const ATTR_SRC = 'src'
 
 export const TAG_SLOT = 'slot'
 /** Default slot name when no name is given. */
