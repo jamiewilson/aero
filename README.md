@@ -29,6 +29,8 @@ yarn create aerobuilt my-app
 
 Aero's goal is to stay as close to the web platform as possible while still being useful as a build tool. Here's an honest breakdown:
 
+_(Also see: [Why Not Web Components?](_reference/why-not-web-components.md) for a comparison of our approaches.)_
+
 **What stays standard:**
 
 - **You write HTML files** — not JSX, not a custom file format. Pages, components, and layouts are `.html`.
