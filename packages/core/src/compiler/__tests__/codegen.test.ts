@@ -455,6 +455,15 @@ describe('Codegen', () => {
 		expect(output).toContain('Click')
 	})
 
+	it('should not interpolate directive attributes (x-, @, :, .)', async () => {
+		// Directive attrs skip compileAttributeInterpolation; { foo } stays literal.
+		const html = '<div x-bind:class="{ foo }"></div>'
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code, {})
+		expect(output).toContain('x-bind:class="{ foo }"')
+	})
+
 	it('should normalize absolute attr paths that include parent segments', async () => {
 		const html = '<form hx-post="/api/submit"></form>'
 		const parsed = parse(html)

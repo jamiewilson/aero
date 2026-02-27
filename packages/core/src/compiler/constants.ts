@@ -48,7 +48,12 @@ export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 export const SELF_CLOSING_TAG_REGEX = /<([a-z0-9-]+)([^>]*?)\/>/gi
 export const SELF_CLOSING_TAIL_REGEX = /\/>$/
 
-/** Attribute names that should not be interpolated (Alpine.js, etc.): `x-*`, `@*`, `:*`, `.*`. */
+/**
+ * Attribute names that should not be interpolated (Alpine.js, etc.): `x-*`, `@*`, `:*`, `.*`.
+ *
+ * @deprecated Use `isDirectiveAttr()` from compiler/directive-attributes.ts for configurable
+ *   directive detection. Kept for backwards compatibility (e.g. aero-vscode).
+ */
 export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 /** HTML void elements that have no closing tag. */
 export const VOID_TAGS = new Set([
