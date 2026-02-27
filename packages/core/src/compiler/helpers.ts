@@ -6,6 +6,11 @@
  * the top-level render wrapper.
  */
 
+import {
+	tokenizeCurlyInterpolation,
+	compileInterpolationFromSegments,
+} from './tokenizer'
+
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
  *
@@ -14,33 +19,20 @@
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
-	// Escape backticks to prevent breaking the template literal
-	let compiled = text.replace(/`/g, '\\`')
-	// Convert {expression} to ${expression}
-	compiled = compiled.replace(/{([\s\S]+?)}/g, '${$1}')
-	return compiled
+	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+	return compileInterpolationFromSegments(segments)
 }
 
 /**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
  *
  * @param text - Attribute value string.
- * @returns String safe for template literal (backticks escaped, double-braces replaced).
+ * @returns String safe for template literal (backticks escaped, double-braces as literals).
  */
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
-
-	const openSentinel = '__AERO_ESC_OPEN__'
-	const closeSentinel = '__AERO_ESC_CLOSE__'
-
-	let compiled = text.replace(/`/g, '\\`')
-	compiled = compiled.replace(/{{/g, openSentinel).replace(/}}/g, closeSentinel)
-	compiled = compiled.replace(/{([\s\S]+?)}/g, '${$1}')
-	compiled = compiled
-		.replace(new RegExp(openSentinel, 'g'), '{')
-		.replace(new RegExp(closeSentinel, 'g'), '}')
-
-	return compiled
+	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
+	return compileInterpolationFromSegments(segments)
 }
 
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */

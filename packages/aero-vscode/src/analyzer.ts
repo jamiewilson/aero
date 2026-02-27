@@ -5,7 +5,8 @@
  * Used by definition provider (go to def for variables), completion (scope-aware suggestions), and diagnostics (undefined refs, component resolution). Preserves ranges for navigation and diagnostics.
  */
 import * as vscode from 'vscode'
-import { IMPORT_REGEX, CURLY_INTERPOLATION_REGEX, CONTENT_GLOBALS } from './constants'
+import { tokenizeCurlyInterpolation } from '@aerobuilt/interpolation'
+import { IMPORT_REGEX, CONTENT_GLOBALS } from './constants'
 
 /** A single variable definition: name, range, kind (import|declaration|parameter|reference), optional content ref or properties. */
 export type VariableDefinition = {
@@ -762,14 +763,13 @@ export function collectTemplateReferences(
 					// MASK value so global scan skips it
 					maskRange(absValueStart, value.length)
 				} else {
-					// Standard attribute, check for interpolations { ... }
-					// Scan for curlies inside this attribute value.
-					const valueIterRegex = /{([\s\S]+?)}/g
-					let localCurlyMatch: RegExpExecArray | null
-					while ((localCurlyMatch = valueIterRegex.exec(value)) !== null) {
-						const content = localCurlyMatch[1]
-						const contentStart = absValueStart + localCurlyMatch.index + 1 // +1 for {
-						extractIdentifiers(content, contentStart, document, refs, true)
+					// Standard attribute: use tokenizer (attribute mode for {{/}} literals).
+					const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+					for (const seg of segments) {
+						if (seg.kind === 'interpolation') {
+							const contentStart = absValueStart + seg.start + 1 // +1 for opening {
+							extractIdentifiers(seg.expression, contentStart, document, refs, true)
+						}
 					}
 					// MASK value so global scan skips it
 					maskRange(absValueStart, value.length)
@@ -801,12 +801,12 @@ export function collectTemplateReferences(
 
 	// 1. Content interpolations: { foo } (Global scan on remaining text)
 	// Now maskedText has Scripts, Styles, AND Attribute Values masked out.
-	CURLY_INTERPOLATION_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = CURLY_INTERPOLATION_REGEX.exec(maskedText)) !== null) {
-		const content = match[1]
-		const contentStart = match.index + match[0].indexOf(content)
-		extractIdentifiers(content, contentStart, document, refs, false)
+	const contentSegments = tokenizeCurlyInterpolation(maskedText, { attributeMode: false })
+	for (const seg of contentSegments) {
+		if (seg.kind === 'interpolation') {
+			const contentStart = seg.start + 1 // +1 for opening {
+			extractIdentifiers(seg.expression, contentStart, document, refs, false)
+		}
 	}
 
 	return refs

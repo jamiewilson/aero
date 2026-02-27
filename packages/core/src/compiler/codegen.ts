@@ -199,12 +199,11 @@ class Lowerer {
 					continue
 				}
 
-				let val = Helper.escapeBackticks(attr.value)
-				val = this.resolver.resolveAttrValue(val)
+				let val = this.resolver.resolveAttrValue(attr.value ?? '')
 
 				const isAlpine = CONST.ALPINE_ATTR_REGEX.test(attr.name)
 				if (!isAlpine) {
-					val = val.replace(CONST.CURLY_INTERPOLATION_REGEX, '${$1}')
+					val = Helper.compileAttributeInterpolation(val)
 				}
 				attributes.push(`${attr.name}="${val}"`)
 			}
