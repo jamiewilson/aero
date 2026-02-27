@@ -3,14 +3,15 @@
  *
  * Covers interpolation, data-each, components (props, data-props, slots), if/else-if/else,
  * getStaticPaths extraction, pass:data (client/inline/blocking/style), client script injection,
- * Alpine/HTMX attribute preservation, and the extractGetStaticPaths helper. Uses an execute()
+ * Alpine/HTMX attribute preservation. Uses an execute()
  * helper that evals the generated module body with a mock Aero context.
  */
 
 import { describe, it, expect } from 'vitest'
 import { parse } from '../parser'
 import { compile } from '../codegen'
-import { extractGetStaticPaths, getRenderComponentContextArg } from '../helpers'
+import { getRenderComponentContextArg } from '../helpers'
+import { analyzeBuildScript } from '../build-script-analysis'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
 async function execute(code: string, context: Record<string, any> = {}) {
@@ -328,7 +329,9 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
 
-		expect(code).toContain("const { foo } = await import('./fake-module')")
+		expect(code).toContain('await import')
+		expect(code).toContain('foo')
+		expect(code).toMatch(/const\s*\{\s*foo\s*\}\s*=\s*await import\([^)]+\)/)
 		expect(code).not.toContain('import { foo } from')
 	})
 
@@ -1165,42 +1168,40 @@ describe('Codegen', () => {
 })
 
 // =========================================================================
-// extractGetStaticPaths helper (used by codegen to split build script and emit named export)
+// analyzeBuildScript (build script analysis used by codegen for imports + getStaticPaths)
 // =========================================================================
 
-// See _reference/codegen-todo-considerations.md for data-else/void/self-closing behavior; tests added above.
-
-describe('extractGetStaticPaths', () => {
-	it('should extract a sync function', () => {
+describe('analyzeBuildScript (getStaticPaths contract)', () => {
+	it('should extract a sync getStaticPaths and remaining script', () => {
 		const script = `const x = 1;
 export function getStaticPaths() {
 	return [{ params: { id: 'a' } }]
 }
 const y = 2;`
 
-		const { fnText, remaining } = extractGetStaticPaths(script)
+		const result = analyzeBuildScript(script)
 
-		expect(fnText).toContain('export function getStaticPaths()')
-		expect(fnText).toContain("return [{ params: { id: 'a' } }]")
-		expect(remaining).toContain('const x = 1;')
-		expect(remaining).toContain('const y = 2;')
-		expect(remaining).not.toContain('getStaticPaths')
+		expect(result.getStaticPathsFn).toContain('export function getStaticPaths()')
+		expect(result.getStaticPathsFn).toContain("return [{ params: { id: 'a' } }]")
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = 1;')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const y = 2;')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('getStaticPaths')
 	})
 
-	it('should extract an async function', () => {
+	it('should extract async getStaticPaths with empty remaining', () => {
 		const script = `export async function getStaticPaths() {
 	const data = await fetch('/api')
 	return data
 }`
 
-		const { fnText, remaining } = extractGetStaticPaths(script)
+		const result = analyzeBuildScript(script)
 
-		expect(fnText).toContain('export async function getStaticPaths()')
-		expect(fnText).toContain('await fetch')
-		expect(remaining).toBe('')
+		expect(result.getStaticPathsFn).toContain('export async function getStaticPaths()')
+		expect(result.getStaticPathsFn).toContain('await fetch')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toBe('')
 	})
 
-	it('should handle nested braces', () => {
+	it('should handle nested braces in getStaticPaths', () => {
 		const script = `export function getStaticPaths() {
 	const items = [{ a: 1 }, { b: 2 }]
 	if (items.length > 0) {
@@ -1209,20 +1210,20 @@ const y = 2;`
 	return []
 }`
 
-		const { fnText, remaining } = extractGetStaticPaths(script)
+		const result = analyzeBuildScript(script)
 
-		expect(fnText).not.toBeNull()
-		expect(fnText).toContain('return []')
-		expect(remaining).toBe('')
+		expect(result.getStaticPathsFn).not.toBeNull()
+		expect(result.getStaticPathsFn).toContain('return []')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toBe('')
 	})
 
-	it('should return null when no getStaticPaths exists', () => {
+	it('should return null getStaticPathsFn when no getStaticPaths exists', () => {
 		const script = `const x = 1;
 const y = 2;`
 
-		const { fnText, remaining } = extractGetStaticPaths(script)
+		const result = analyzeBuildScript(script)
 
-		expect(fnText).toBeNull()
-		expect(remaining).toBe(script)
+		expect(result.getStaticPathsFn).toBeNull()
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toBe(script.trim())
 	})
 })

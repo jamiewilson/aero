@@ -13,6 +13,7 @@ import type { ParseResult, CompileOptions } from '../types'
 import type { IRNode } from './ir'
 import * as CONST from './constants'
 import * as Helper from './helpers'
+import { analyzeBuildScript } from './build-script-analysis'
 import { emitToJS, emitBodyAndStyle } from './emit'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
@@ -542,27 +543,28 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
-	const imports: string[] = []
-	script = script.replace(CONST.IMPORT_REGEX, (m, prefix, name, names, starName, q, p) => {
-		const resolved = resolver.resolveImport(p)
-		if (name) {
-			imports.push(`const ${name} = (await import(${q}${resolved}${q})).default`)
-		} else if (names) {
-			imports.push(`const {${names}} = await import(${q}${resolved}${q})`)
-		} else if (starName) {
-			imports.push(`const ${starName} = await import(${q}${resolved}${q})`)
+	const analysis = analyzeBuildScript(script)
+	script = analysis.scriptWithoutImportsAndGetStaticPaths
+	const getStaticPathsFn = analysis.getStaticPathsFn
+
+	const importsLines: string[] = []
+	const quote = '"'
+	for (const imp of analysis.imports) {
+		const resolved = resolver.resolveImport(imp.specifier)
+		const modExpr = `await import(${quote}${resolved}${quote})`
+		if (imp.defaultBinding) {
+			importsLines.push(`const ${imp.defaultBinding} = (${modExpr}).default`)
+		} else if (imp.namedBindings.length > 0) {
+			const names = imp.namedBindings
+				.map(b => (b.imported === b.local ? b.local : `${b.imported} as ${b.local}`))
+				.join(', ')
+			importsLines.push(`const {${names}} = ${modExpr}`)
+		} else if (imp.namespaceBinding) {
+			importsLines.push(`const ${imp.namespaceBinding} = ${modExpr}`)
 		}
-		return prefix
-	})
-
-	const importsCode = imports.join('\n')
-
-	// Extract getStaticPaths before inlining into the render function.
-	// This function is emitted as a separate named module export so the
-	// build system can call it to expand dynamic routes.
-	const { fnText: getStaticPathsFn, remaining: scriptWithoutPaths } =
-		Helper.extractGetStaticPaths(script)
-	script = scriptWithoutPaths
+		// Side-effect-only imports: no bindings to emit
+	}
+	const importsCode = importsLines.join('\n')
 
 	const expandedTemplate = parsed.template.replace(
 		CONST.SELF_CLOSING_TAG_REGEX,

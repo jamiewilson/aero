@@ -1,6 +1,6 @@
 /**
  * Unit tests for compiler helpers (helpers.ts): interpolation, attributes, props string building,
- * slot/conditional/loop emitters, extractGetStaticPaths, and related utilities.
+ * slot/conditional/loop emitters, and related utilities.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -13,7 +13,6 @@ import {
 	buildPropsString,
 	escapeBackticks,
 	emitSlotsObjectVars,
-	extractGetStaticPaths,
 	emitRenderFunction,
 	emitSlotVar,
 	emitAppend,
@@ -156,28 +155,6 @@ describe('emitSlotsObjectVars', () => {
 
 	it('should handle empty object', () => {
 		expect(emitSlotsObjectVars({})).toBe('{  }')
-	})
-})
-
-/** extractGetStaticPaths: splits build script into named export fn and remaining script for codegen. */
-describe('extractGetStaticPaths', () => {
-	it('should extract getStaticPaths function', () => {
-		const script = `
-export async function getStaticPaths() {
-	return []
-}
-const foo = 'bar'
-`
-		const result = extractGetStaticPaths(script)
-		expect(result.fnText).toContain('getStaticPaths')
-		expect(result.remaining).toContain("const foo = 'bar'")
-	})
-
-	it('should return null when no getStaticPaths', () => {
-		const script = `const foo = 'bar'`
-		const result = extractGetStaticPaths(script)
-		expect(result.fnText).toBeNull()
-		expect(result.remaining).toBe(script)
 	})
 })
 

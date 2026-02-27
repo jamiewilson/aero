@@ -16,9 +16,10 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 ### Compilation pipeline (packages/core)
 
 1. **Parser** (packages/core/compiler/parser.ts) extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks from HTML
-2. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
-4. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
+2. **Build-script analysis** (packages/core/compiler/build-script-analysis.ts) parses build script content with oxc-parser (JS/TS): extracts imports and `export function getStaticPaths`, returns structured result for codegen
+3. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation; uses build-script-analysis for build script imports and getStaticPaths
+4. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
+5. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
 
 ## Key Conventions
 
