@@ -29,7 +29,7 @@ yarn create aerobuilt my-app
 
 Aero's goal is to stay as close to the web platform as possible while still being useful as a build tool. Here's an honest breakdown:
 
-_(Also see: [Why Not Web Components?](_reference/why-not-web-components.md) for a comparison of our approaches.)_
+_(Also see: [What Makes Aero Different?](docs/what-makes-aero-different.md) for our architectural philosophy, and [Why Not Web Components?](docs/why-not-web-components.md) for a comparison of our approaches.)_
 
 **What stays standard:**
 
