@@ -82,6 +82,33 @@ describe('Codegen', () => {
 		expect(output).toContain('<div class="active"></div>')
 	})
 
+	it('should compile nested braces in text as single interpolation', async () => {
+		const html = `<script is:build>
+										const obj = { label: 'Nested' };
+										const fn = (x) => x.label;
+									</script>
+									<p>{ fn({ label: obj.label }) }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<p>Nested</p>')
+	})
+
+	it('should compile nested braces in attribute as single interpolation', async () => {
+		const html = `<script is:build>
+										const getVal = (x) => x.v;
+									</script>
+									<div title="{ getVal({ v: 'ok' }) }"></div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('title="ok"')
+	})
+
 	it('should handle missing script', async () => {
 		const html = '<div>Static</div>'
 

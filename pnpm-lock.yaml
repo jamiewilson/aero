@@ -127,6 +127,10 @@ importers:
         version: 4.3.6
 
   packages/aero-vscode:
+    dependencies:
+      '@aerobuilt/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
     devDependencies:
       '@types/node':
         specifier: ^25.3.0
@@ -227,6 +231,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@aerobuilt/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
       get-tsconfig:
         specifier: ^4.13.6
         version: 4.13.6
@@ -273,6 +280,21 @@ importers:
       vite:
         specifier: 8.0.0-beta.15
         version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+
+  packages/interpolation:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.3.0
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
   packages/templates/minimal:
     dependencies:

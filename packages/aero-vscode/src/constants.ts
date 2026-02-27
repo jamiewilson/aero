@@ -13,9 +13,6 @@ export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 export const IMPORT_REGEX =
 	/((?:^|[\r\n;])\s*)import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\5/g
 
-/** Matches `{ ... }` expressions in template text. */
-export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
-
 /** Alpine.js attributes that should not be treated as Aero expressions (`x-*`, `@*`, `:*`, `.*`). */
 export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 

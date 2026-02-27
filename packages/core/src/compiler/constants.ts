@@ -35,7 +35,12 @@ export const SLOT_NAME_DEFAULT = 'default'
 
 /** Matches `item in items` for data-each (captures: loop variable, iterable expression). */
 export const EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
-/** Matches `{ expression }` for interpolation (capture: expression). */
+/**
+ * Matches `{ expression }` for interpolation (capture: expression).
+ *
+ * @deprecated Use the tokenizer in compiler/tokenizer.ts for correct nesting and string/comment
+ *   handling. Kept for backwards compatibility (e.g. aero-vscode); core no longer uses this.
+ */
 export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/

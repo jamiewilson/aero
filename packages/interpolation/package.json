@@ -1,0 +1,28 @@
+{
+  "name": "@aerobuilt/interpolation",
+  "version": "0.2.1",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jamie Wilson",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aerobuilt/aero.git",
+    "directory": "packages/interpolation"
+  },
+  "homepage": "https://github.com/aerobuilt/aero",
+  "private": true,
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

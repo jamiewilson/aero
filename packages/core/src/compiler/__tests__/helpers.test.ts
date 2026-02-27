@@ -52,19 +52,19 @@ describe('compileAttributeInterpolation', () => {
 	})
 
 	it('should convert {expr} to ${expr}', () => {
-		expect(compileAttributeInterpolation('value="{name}"')).toBe('value="${name}"')
+		expect(compileAttributeInterpolation('{name}')).toBe('${name}')
 	})
 
 	it('should escape backticks', () => {
-		expect(compileAttributeInterpolation('value="`test`"')).toBe('value="\\`test\\`"')
+		expect(compileAttributeInterpolation('`test`')).toBe('\\`test\\`')
 	})
 
 	it('should handle escaped braces {{ and }}', () => {
-		expect(compileAttributeInterpolation('value="{{ literal }}"')).toBe('value="{ literal }"')
+		expect(compileAttributeInterpolation('{{ literal }}')).toBe('{ literal }')
 	})
 
 	it('should handle mixed escaped and interpolation', () => {
-		expect(compileAttributeInterpolation('value="{{ {expr} }}"')).toBe('value="{ ${expr} }"')
+		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('{ ${expr} }')
 	})
 })
 

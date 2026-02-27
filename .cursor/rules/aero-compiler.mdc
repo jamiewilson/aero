@@ -11,9 +11,11 @@ All of the following live in **packages/core** (the framework package).
 ## Modules
 
 - **compiler/parser.ts** - Extract script blocks, parse imports; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
-- **compiler/codegen.ts** - Emit async render functions, handle `{ }` interpolation, `data-each`, `data-if` / `data-else-if` / `data-else`
+- **compiler/tokenizer.ts** - Re-exports from `@aerobuilt/interpolation`; use for text/attribute compilation.
+- **packages/interpolation** - Shared package `@aerobuilt/interpolation`: `{ }` tokenizer (brace depth, strings, comments). Used by core and can be used by aero-vscode.
+- **compiler/codegen.ts** - Emit async render functions, handle `{ }` interpolation via helpers, `data-each`, `data-if` / `data-else-if` / `data-else`
 - **compiler/resolver.ts** - Resolve component/layout paths against path aliases (from project tsconfig)
-- **compiler/helpers.ts** - Attribute helpers (e.g. data-attr vs attr)
+- **compiler/helpers.ts** - Interpolation (compileInterpolation, compileAttributeInterpolation use tokenizer), attribute helpers
 - **vite/index.ts** - Vite plugin: virtual modules for client scripts; use `\0` prefix for Vite virtual module IDs (not `/@aero/client/` in emitted IDs)
 - **vite/build.ts** - Build orchestration, page discovery, Nitro integration
 - **runtime/** - `Aero` class, instance context, client entry (client.ts, index.ts, instance.ts)
@@ -21,7 +23,7 @@ All of the following live in **packages/core** (the framework package).
 
 ## Constants (packages/core/compiler/constants.ts)
 
-Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_PASS_DATA`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`. Script taxonomy: `is:build`, `is:inline`, `is:blocking`, plain `<script>` (client); see docs/script-taxonomy.md.
+Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_PASS_DATA`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`. For `{ }` interpolation use **compiler/tokenizer.ts** (not `CURLY_INTERPOLATION_REGEX`, which is deprecated). Script taxonomy: `is:build`, `is:inline`, `is:blocking`, plain `<script>` (client); see docs/script-taxonomy.md.
 
 ## TDD (red-to-green)
 
