@@ -181,20 +181,25 @@ Preview: `pnpm preview` (static) or `pnpm preview:api` (Nitro serving `dist/` + 
 
 ## Docs
 
-- [docs/README.md](docs/README.md) — Documentation index.
-- [docs/overview.md](docs/overview.md) — What Aero is and what it supports.
-- [AGENTS.md](AGENTS.md) — AI/developer orientation and conventions.
-- [docs/script-taxonomy.md](docs/script-taxonomy.md) — Script types and behavior.
-- [docs/content-api.md](docs/content-api.md) — Content collections and `getCollection` / `render`.
-- [docs/site-url.md](docs/site-url.md) — Canonical URL and sitemap.
-- [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md) — Package layout, build flow, and output.
+For full documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/table-of-contents.md).
+
+## Links
+
+- **VS Code Extension:** [Aero](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+- **NPM Packages:**
+  - [`aerobuilt`](https://www.npmjs.com/package/aerobuilt)
+  - [`create-aerobuilt`](https://www.npmjs.com/package/create-aerobuilt)
+  - [`@aerobuilt/core`](https://www.npmjs.com/package/@aerobuilt/core)
+  - [`@aerobuilt/content`](https://www.npmjs.com/package/@aerobuilt/content)
+  - [`@aerobuilt/config`](https://www.npmjs.com/package/@aerobuilt/config)
+  - [`@aerobuilt/template-minimal`](https://www.npmjs.com/package/@aerobuilt/template-minimal)
 
 ## Inspiration
 
 Aero draws inspiration from and shares ideas with the following projects:
 
-- **[Astro](https://astro.build)** — HTML-first authoring, static-by-default, and the “script type” taxonomy (`is:build` / client scripts).
-- **[Vite](https://vitejs.dev)** — Dev server, HMR, and plugin system.
-- **[Nitro](https://nitro.build)** — Server engine and deployment flexibility.
-- **[HTMX](https://htmx.org)** — Allows you to access modern browser features directly from HTML, rather than using javascript.
-- **[Alpine.js](https://alpinejs.dev)** — A lightweight, JavaScript-free framework for building reactive user interfaces.
+- **[Astro](https://astro.build)** — A web framework for building content-driven websites.
+- **[Vite](https://vitejs.dev)** — A fast, modern frontend tooling.
+- **[Nitro](https://nitro.build)** — A server engine and deployment flexibility.
+- **[HTMX](https://htmx.org)** — AJAX, CSS Transitions, WebSockets and Server Sent via html attributes.
+- **[Alpine.js](https://alpinejs.dev)** — A lightweight tool for composing behavior directly in your markup.

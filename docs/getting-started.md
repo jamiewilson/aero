@@ -154,7 +154,7 @@ Components receive props via `aero.props`:
 <h2>{ greeting }, { name }!</h2>
 ```
 
-> For the full props guide (spread syntax, inline objects, mixed props), see [props_guide.md](props_guide.md).
+> For the full props guide (spread syntax, inline objects, mixed props), see [props.md](props.md).
 
 ---
 
@@ -319,7 +319,7 @@ The `tsconfig.json` in your project defines path aliases so you don't need relat
 Now that you have the basics, explore the reference docs:
 
 - **[Routing](routing.md)** — Dynamic routes, `getStaticPaths`, nested directories
-- **[Props](props_guide.md)** — All the ways to pass and receive data
+- **[Props](props.md)** — All the ways to pass and receive data
 - **[Scripts](script-taxonomy.md)** — Script types, `pass:data`, bundling
 - **[Content](content-api.md)** — Collections, Markdown, `getCollection()` / `render()`
 - **[Nitro](nitro-overview.md)** — API routes and server-side features
