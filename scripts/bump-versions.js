@@ -54,27 +54,4 @@ for (const rel of packagePaths) {
   console.log(`Updated ${rel} -> ${newVersion}`);
 }
 
-// Pin @aerobuilt/template-minimal in create-aerobuilt for naive npm compatibility (publishing.md)
-const createAerobuiltPaths = [
-  'packages/create-aerobuilt/package.json',
-  'packages/create-aerobuilt/package/package.json',
-];
-for (const rel of createAerobuiltPaths) {
-  const path = join(root, rel);
-  let content;
-  try {
-    content = readFileSync(path, 'utf8');
-  } catch {
-    continue;
-  }
-  const depRe = /"@aerobuilt\/template-minimal":\s*"[^"]*"/;
-  if (!depRe.test(content)) continue;
-  const updated = content.replace(
-    depRe,
-    `"@aerobuilt/template-minimal": "^${newVersion}"`
-  );
-  writeFileSync(path, updated);
-  console.log(`Pinned @aerobuilt/template-minimal to ^${newVersion} in ${rel}`);
-}
-
 console.log(`\nBumped ${packagePaths.length} packages to ${newVersion}`);
