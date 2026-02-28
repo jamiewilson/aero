@@ -68,4 +68,4 @@ In VS Code settings, search for **Aero**:
 - Build: `pnpm run build` (tsup, CJS, `dist/`)
 - Test: `pnpm test` (Vitest)
 - **Dependencies:** The extension uses `@aerobuilt/core/editor` (directive attributes, build-script analysis with ranges) and `@aerobuilt/interpolation` (tokenizer). Only the `vscode` module is external; tsup bundles core/editor and interpolation into `dist/extension.js`.
-- **Publishing:** From the extension directory: `pnpm install`, `pnpm run build`, then `npx vsce package`. The `.vscodeignore` excludes `node_modules` and source so the published `.vsix` contains only the bundled `dist/` and assets.
+- **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix` (see `_reference/guides/publishing.md`). Or from the extension directory: `pnpm install`, `pnpm run build`, then `npx vsce package`. The `.vscodeignore` excludes `node_modules` and source so the published `.vsix` contains only the bundled `dist/` and assets.
