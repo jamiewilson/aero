@@ -12,15 +12,15 @@
 	const { html } = await render(doc)
 </script>
 
-<base-layout title="{doc.data.title}">
+<base-layout title="{ doc.data.title }">
 	<article class="prose">
 		<a href="/docs">← All docs</a>
 		<header>
-			<badge-component if="{!doc.data.published}" text="Draft" />
-			<h1>{doc.data.title}</h1>
-			<p class="secondary">{doc.data.subtitle}</p>
+			<badge-component if="{ !doc.data.published }" text="Draft" />
+			<h1>{ doc.data.title }</h1>
+			<p class="secondary">{ doc.data.subtitle }</p>
 			<hr />
 		</header>
-		<section>{html}</section>
+		<section>{ html }</section>
 	</article>
 </base-layout>

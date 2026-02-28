@@ -24,7 +24,7 @@ export const ATTR_IS_BUILD = 'is:build'
 export const ATTR_IS_INLINE = 'is:inline'
 /** Script hoisted to head; extracted. */
 export const ATTR_IS_BLOCKING = 'is:blocking'
-/** Script receives data from template: `pass:data="{ config }"`. */
+/** Script/style receives data from template: `pass:data="{ config }"` or `pass:data="{ ...theme }"`. */
 export const ATTR_PASS_DATA = 'pass:data'
 /** Script external source (HTML attribute). */
 export const ATTR_SRC = 'src'

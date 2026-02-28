@@ -11,6 +11,43 @@ import {
 	compileInterpolationFromSegments,
 } from './tokenizer'
 
+/** Options for validateSingleBracedExpression (directive/tag for error message). */
+export interface ValidateSingleBracedExpressionOptions {
+	directive?: string
+	tagName?: string
+}
+
+/**
+ * Validate that a value is a single well-formed braced expression using the same tokenizer as
+ * attribute interpolation. Used for pass:data (and optionally other braced directives); emission
+ * stays expression-passthrough.
+ *
+ * @param value - Raw attribute value (e.g. pass:data value).
+ * @param options - Optional directive and tagName for error message.
+ * @returns Trimmed value (including braces).
+ * @throws If value is not exactly one interpolation segment spanning the whole trimmed string.
+ */
+export function validateSingleBracedExpression(
+	value: string,
+	options: ValidateSingleBracedExpressionOptions = {},
+): string {
+	const trimmed = value.trim()
+	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	const ok =
+		segments.length === 1 &&
+		segments[0].kind === 'interpolation' &&
+		segments[0].start === 0 &&
+		segments[0].end === trimmed.length
+	if (!ok) {
+		const directive = options.directive ?? 'directive'
+		const tagName = options.tagName ?? 'element'
+		throw new Error(
+			`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`,
+		)
+	}
+	return trimmed
+}
+
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
  *
