@@ -1,42 +1,47 @@
 {
-	"name": "@aerobuilt/config",
-	"version": "0.2.2",
-	"type": "module",
-	"license": "MIT",
-	"author": "Jamie Wilson",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
-		"directory": "packages/config"
-	},
-	"homepage": "https://github.com/aerobuilt/aero",
-	"private": false,
-	"files": [
-		"dist"
-	],
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		}
-	},
-	"scripts": {
-		"build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
-		"typecheck": "tsc --noEmit",
-		"prepack": "cp ../../LICENSE ."
-	},
-	"dependencies": {
-		"autoprefixer": "^10.4.24",
-		"jiti": "^2.4.2"
-	},
-	"peerDependencies": {
-		"vite": "^8.0.0",
-		"@aerobuilt/core": "workspace:*",
-		"@aerobuilt/content": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "^25.3.0",
-		"tsup": "^8.5.1",
-		"typescript": "^5.9.3"
-	}
+  "name": "@aerobuilt/config",
+  "version": "0.2.3",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jamie Wilson",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aerobuilt/aero.git",
+    "directory": "packages/config"
+  },
+  "homepage": "https://github.com/aerobuilt/aero",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
+    "typecheck": "tsc --noEmit",
+    "prepack": "cp ../../LICENSE ."
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.24",
+    "jiti": "^2.4.2"
+  },
+  "peerDependencies": {
+    "vite": "^8.0.0",
+    "@aerobuilt/core": "workspace:*",
+    "@aerobuilt/content": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  }
 }
