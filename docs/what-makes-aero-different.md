@@ -1,12 +1,4 @@
-# What Makes Aero Different?
-
-Aero (`aerobuilt`) is a new kind of static site generator and full-stack framework. While it shares conceptual similarities with frameworks like Astro or Eleventy, its architectural decisions create a fundamentally different (and significantly lighter) developer experience.
-
-Here is a breakdown of what makes Aero unique, and how it avoids reinventing the wheel by leaning on the giants of the modern web ecosystem.
-
----
-
-## 🌟 The Unique & Compelling Features (The "Aero Way")
+# 🌟 Some Unique & Compelling Features of Aero
 
 ### 1. 100% HTML-First Authoring
 
