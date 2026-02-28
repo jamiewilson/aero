@@ -1,14 +1,25 @@
-# Aero
+# ⚡ Aero
 
 Aero (`aerobuilt` on npm) is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
 
-🛤️ **File-based routing:** `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`.  
-🧩 **Components & Layouts:** Import `.html` templates; use `<name-component>` and `<name-layout>`.  
-📤 **Props:** Pass data via attributes or `props`; read with `aero.props` in the component.  
-🔀 **Loops & conditionals:** `each` and `if/else-if/else` right in your markup.  
-🎰 **Slots:** Layouts expose `<slot>`; pass content with `slot` and `name` attributes.  
-📁 **Content as code:** Put data in `content/`; use `getCollection()` and markdown with `render()`.  
-💾 **Server when you need it:** Default is static; easily enable Nitro for API routes and a server.  
+[aerobuilt](https://www.npmjs.com/package/aerobuilt) • [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt) • [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+
+<hr>
+
+🛤️ **File-based routing:** `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`.
+
+🧩 **Components & Layouts:** Import `.html` templates; use `<name-component>` and `<name-layout>`.
+
+📤 **Props:** Pass data via attributes or `props`; read with `aero.props` in the component.
+
+🔀 **Loops & conditionals:** `each` and `if/else-if/else` right in your markup.
+
+🎰 **Slots:** Layouts expose `<slot>`; pass content with `slot` and `name` attributes.
+
+📁 **Content as code:** Put data in `content/`; use `getCollection()` and markdown with `render()`.
+
+💾 **Server when you need it:** Default is static; easily enable Nitro for API routes and a server.
+
 📦 **Plain HTML output:** No hydration, no framework runtime; deploy anywhere.
 
 ## Try it out
