@@ -1,7 +1,7 @@
 /**
  * Shared utilities: kebab-case conversion, import extraction, and scope lookup.
  */
-import { IMPORT_REGEX } from './constants'
+import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
 import type { TemplateScope } from './analyzer'
 
 /** Convert kebab-case to camelCase (e.g. `my-component` → `myComponent`). */
@@ -9,31 +9,46 @@ export function kebabToCamelCase(value: string): string {
 	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }
 
-/** Extract all imported names and their specifiers from script text (default, named, namespace). */
-export function collectImportedSpecifiers(text: string): Map<string, string> {
-	const imports = new Map<string, string>()
-	IMPORT_REGEX.lastIndex = 0
+const BUILD_SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+
+/**
+ * Extract all imported names and their specifiers from an HTML document by
+ * parsing each <script is:build> block and merging results. Use this when
+ * you have the full document text (e.g. diagnostics, definition provider).
+ */
+export function collectImportedSpecifiersFromDocument(documentText: string): Map<string, string> {
+	const merged = new Map<string, string>()
+	BUILD_SCRIPT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
-
-	while ((match = IMPORT_REGEX.exec(text)) !== null) {
-		const defaultImport = match[2]?.trim()
-		const namedImports = match[3]
-		const namespaceImport = match[4]?.trim()
-		const specifier = match[6]
-
-		if (defaultImport) imports.set(defaultImport, specifier)
-		if (namespaceImport) imports.set(namespaceImport, specifier)
-
-		if (!namedImports) continue
-		for (const rawName of namedImports.split(',')) {
-			const name = rawName.trim()
-			if (!name) continue
-			const aliasParts = name.split(/\s+as\s+/i).map(part => part.trim())
-			const localName = aliasParts[1] || aliasParts[0]
-			if (localName) imports.set(localName, specifier)
+	while ((match = BUILD_SCRIPT_REGEX.exec(documentText)) !== null) {
+		const attrs = (match[1] || '').toLowerCase()
+		if (/\bsrc\s*=/.test(attrs)) continue
+		if (!/\bis:build\b/.test(attrs)) continue
+		const content = match[2]
+		const blockImports = collectImportedSpecifiers(content)
+		for (const [name, specifier] of blockImports) {
+			merged.set(name, specifier)
 		}
 	}
+	return merged
+}
 
+/** Extract all imported names and their specifiers from script text (default, named, namespace). Expects script content only, not full HTML. */
+export function collectImportedSpecifiers(text: string): Map<string, string> {
+	const imports = new Map<string, string>()
+	try {
+		const { imports: editorImports } = analyzeBuildScriptForEditor(text)
+		for (const imp of editorImports) {
+			const specifier = imp.specifier
+			if (imp.defaultBinding) imports.set(imp.defaultBinding, specifier)
+			if (imp.namespaceBinding) imports.set(imp.namespaceBinding, specifier)
+			for (const { local } of imp.namedBindings) {
+				imports.set(local, specifier)
+			}
+		}
+	} catch {
+		// Parse error; return empty map
+	}
 	return imports
 }
 

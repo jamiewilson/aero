@@ -147,3 +147,90 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 		scriptWithoutImportsAndGetStaticPaths,
 	}
 }
+
+/** Editor-oriented import entry: same bindings as BuildScriptImport plus source range and per-binding ranges. */
+export interface BuildScriptImportForEditor extends BuildScriptImport {
+	/** Character range of the full import statement [start, end]. */
+	range: [number, number]
+	/** Character range of the specifier string (path) within the script. */
+	specifierRange: [number, number]
+	/** Per-binding character ranges: local name -> [start, end]. */
+	bindingRanges?: Record<string, [number, number]>
+}
+
+/** Result of analyzeBuildScriptForEditor: imports with source ranges for editor use (e.g. definition provider). */
+export interface BuildScriptAnalysisForEditorResult {
+	imports: BuildScriptImportForEditor[]
+}
+
+/**
+ * Analyze build script for editor use: same as analyzeBuildScript but returns imports with
+ * source ranges (full statement and per-binding) so the extension can map to vscode.Range.
+ *
+ * @param script - Raw build script content (JS or TS).
+ * @returns Imports with range and bindingRanges. On parse error, throws.
+ */
+export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysisForEditorResult {
+	if (!script.trim()) {
+		return { imports: [] }
+	}
+
+	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
+		sourceType: 'module',
+		range: true,
+		lang: 'ts',
+	})
+
+	const errors = result.errors
+	if (errors.length > 0) {
+		const first = errors[0]
+		throw new Error(
+			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`,
+		)
+	}
+
+	const mod = result.module
+	const imports: BuildScriptImportForEditor[] = []
+
+	for (const imp of mod.staticImports) {
+		const specifier = imp.moduleRequest.value
+		let defaultBinding: string | null = null
+		const namedBindings: Array<{ imported: string; local: string }> = []
+		let namespaceBinding: string | null = null
+		const bindingRanges: Record<string, [number, number]> = {}
+
+		for (const entry of imp.entries) {
+			if (entry.isType) continue
+			const local = entry.localName.value
+			// Per-binding range from oxc ValueSpan
+			bindingRanges[local] = [entry.localName.start, entry.localName.end]
+			switch (entry.importName.kind) {
+				case ImportNameKind.Default:
+					defaultBinding = local
+					break
+				case ImportNameKind.NamespaceObject:
+					namespaceBinding = local
+					break
+				case ImportNameKind.Name: {
+					const imported = entry.importName.name ?? local
+					namedBindings.push({ imported, local })
+					break
+				}
+				default:
+					break
+			}
+		}
+
+		imports.push({
+			specifier,
+			defaultBinding,
+			namedBindings,
+			namespaceBinding,
+			range: [imp.start, imp.end],
+			specifierRange: [imp.moduleRequest.start, imp.moduleRequest.end],
+			bindingRanges,
+		})
+	}
+
+	return { imports }
+}

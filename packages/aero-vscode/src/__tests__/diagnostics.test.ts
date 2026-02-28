@@ -284,6 +284,41 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedDiag).toBeUndefined()
 	})
 
+	it('should NOT flag build-scope variables as unused when passed via pass:data', () => {
+		const text = `
+<script is:build>
+	const { storageKey, attribute } = site.theme
+</script>
+<script pass:data="{{ storageKey, attribute }}">
+	const theme = JSON.parse(localStorage.getItem(storageKey))
+	document.documentElement.setAttribute(attribute, theme)
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const unusedStorageKey = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'storageKey' is declared but its value is never read"),
+		)
+		const unusedAttribute = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'attribute' is declared but its value is never read"),
+		)
+		expect(unusedStorageKey).toBeUndefined()
+		expect(unusedAttribute).toBeUndefined()
+	})
+
 	it('should NOT flag render when used in getStaticPaths', () => {
 		const text = `
 <script is:build>
@@ -934,6 +969,38 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 describe('AeroDiagnostics Component References', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
+	})
+
+	it('should NOT flag layout/component tags as "not imported" when they are imported in <script is:build>', () => {
+		const text = `<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import form from '@components/form'
+</script>
+<base-layout>
+	<header-component />
+	<form-component />
+</base-layout>
+`
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const notImported = reportedDiagnostics.filter((d: any) =>
+			d.message.includes('is not imported'),
+		)
+		expect(notImported).toHaveLength(0)
 	})
 
 	it('should ignore components inside client scripts', () => {

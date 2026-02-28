@@ -5,7 +5,8 @@
  * Used by definition, hover, and completion providers to decide what to resolve or suggest. classifyPosition runs the detection pipeline (imports, assets, component tags, expression identifiers).
  */
 import * as vscode from 'vscode'
-import { IMPORT_REGEX, COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
+import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 
 /** Result of classifying a position: kind-specific data and range, or null. */
 export type PositionKind =
@@ -45,8 +46,8 @@ export function classifyPosition(
 	const lineText = line.text
 	const offset = position.character
 
-	// 1. Check for import path or imported name
-	const importResult = getImportAt(lineText, position.line, offset)
+	// 1. Check for import path or imported name (AST-based via core/editor)
+	const importResult = getImportAt(document, position)
 	if (importResult) return importResult
 
 	// 2. Check for <script src="..."> or <link href="...">
@@ -65,86 +66,65 @@ export function classifyPosition(
 }
 
 // ---------------------------------------------------------------------------
-// Import path / imported name detection
+// Import path / imported name detection (AST-based via core/editor)
 // ---------------------------------------------------------------------------
 
-function getImportAt(lineText: string, lineNum: number, offset: number): PositionKind {
-	// Reset regex state
-	IMPORT_REGEX.lastIndex = 0
+const SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
+function getImportAt(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+): PositionKind {
+	const text = document.getText()
+	const offset = document.offsetAt(position)
+	SCRIPT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
-	while ((match = IMPORT_REGEX.exec(lineText)) !== null) {
-		const fullMatchStart = match.index
-		const fullMatchEnd = fullMatchStart + match[0].length
-		if (offset < fullMatchStart || offset > fullMatchEnd) continue
+	while ((match = SCRIPT_REGEX.exec(text)) !== null) {
+		const attrs = (match[1] || '').toLowerCase()
+		if (/\bsrc\s*=/.test(attrs)) continue
+		const content = match[2]
+		const contentStart = match.index + match[0].indexOf(content)
+		const contentEnd = contentStart + content.length
+		if (offset < contentStart || offset > contentEnd) continue
 
-		const specifier = match[6]
-		const quote = match[5]
-		// Find the specifier string position within the match
-		const specStart = match[0].lastIndexOf(quote + specifier + quote)
-		const specifierStart = fullMatchStart + specStart + 1 // +1 for opening quote
-		const specifierEnd = specifierStart + specifier.length
-
-		// Is cursor inside the specifier string?
-		if (offset >= specifierStart && offset <= specifierEnd) {
-			return {
-				kind: 'import-path',
-				specifier,
-				range: new vscode.Range(lineNum, specifierStart, lineNum, specifierEnd),
-			}
-		}
-
-		// Is cursor on the imported name?
-		const defaultImport = match[2]
-		const namedImports = match[3]
-		const namespaceImport = match[4]
-
-		if (defaultImport) {
-			const nameStart = lineText.indexOf(defaultImport, fullMatchStart)
-			const nameEnd = nameStart + defaultImport.length
-			if (offset >= nameStart && offset <= nameEnd) {
-				return {
-					kind: 'import-name',
-					name: defaultImport,
-					specifier,
-					range: new vscode.Range(lineNum, nameStart, lineNum, nameEnd),
-				}
-			}
-		}
-
-		if (namespaceImport) {
-			const nameStart = lineText.indexOf(namespaceImport, fullMatchStart)
-			const nameEnd = nameStart + namespaceImport.length
-			if (offset >= nameStart && offset <= nameEnd) {
-				return {
-					kind: 'import-name',
-					name: namespaceImport,
-					specifier,
-					range: new vscode.Range(lineNum, nameStart, lineNum, nameEnd),
-				}
-			}
-		}
-
-		if (namedImports) {
-			const names = namedImports.split(',').map(n => n.trim())
-			for (const name of names) {
-				if (!name) continue
-				// Handle `as` aliases: `import { foo as bar } from '...'`
-				const realName = name.split(/\s+as\s+/)[0].trim()
-				const nameStart = lineText.indexOf(realName, fullMatchStart)
-				const nameEnd = nameStart + realName.length
-				if (offset >= nameStart && offset <= nameEnd) {
+		try {
+			const { imports: editorImports } = analyzeBuildScriptForEditor(content)
+			for (const imp of editorImports) {
+				const [specStart, specEnd] = imp.specifierRange
+				const absSpecStart = contentStart + specStart
+				const absSpecEnd = contentStart + specEnd
+				if (offset >= absSpecStart && offset <= absSpecEnd) {
 					return {
-						kind: 'import-name',
-						name: realName,
-						specifier,
-						range: new vscode.Range(lineNum, nameStart, lineNum, nameEnd),
+						kind: 'import-path',
+						specifier: imp.specifier,
+						range: new vscode.Range(
+							document.positionAt(absSpecStart),
+							document.positionAt(absSpecEnd),
+						),
+					}
+				}
+				const bindingRanges = imp.bindingRanges ?? {}
+				for (const [name, range] of Object.entries(bindingRanges)) {
+					const [r0, r1] = range as [number, number]
+					const absStart = contentStart + r0
+					const absEnd = contentStart + r1
+					if (offset >= absStart && offset <= absEnd) {
+						return {
+							kind: 'import-name',
+							name,
+							specifier: imp.specifier,
+							range: new vscode.Range(
+								document.positionAt(absStart),
+								document.positionAt(absEnd),
+							),
+						}
 					}
 				}
 			}
+		} catch {
+			// Parse error; skip
 		}
 	}
-
 	return null
 }
 

@@ -85,7 +85,9 @@ describe('collectDefinedVariables', () => {
 	} as any
 
 	it('should correctly parse named imports in build scope', () => {
-		const text = `import { foo, bar } from 'pkg'`
+		const text = `<script is:build>
+import { foo, bar } from 'pkg'
+</script>`
 		const [buildScopeVars] = collectDefinedVariables(mockDoc, text)
 
 		expect(buildScopeVars.has('foo')).toBe(true)

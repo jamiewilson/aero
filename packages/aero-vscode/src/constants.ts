@@ -2,30 +2,22 @@
  * Constants for the Aero VS Code extension: regexes, attribute names, selectors, path resolution.
  *
  * @remarks
- * Regex patterns mirror `packages/core/compiler/constants.ts` for consistent parsing. Used by analyzer, positionAt, and providers.
+ * Directive attributes and build-script analysis come from @aerobuilt/core/editor.
  */
 import * as vscode from 'vscode'
+import {
+	isDirectiveAttr as coreIsDirectiveAttr,
+	DEFAULT_DIRECTIVE_PREFIXES as CORE_DEFAULT_DIRECTIVE_PREFIXES,
+} from '@aerobuilt/core/editor'
 
 /** Matches component/layout suffix on tag names: `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 
-/** Matches import statements: `import X from 'path'` */
-export const IMPORT_REGEX =
-	/((?:^|[\r\n;])\s*)import\s+(?:(\w+)|\{([^}]+)\}|\*\s+as\s+(\w+))\s+from\s+(['"])(.+?)\5/g
+/** Default directive prefixes (from core/editor). */
+export const DEFAULT_DIRECTIVE_PREFIXES: string[] = CORE_DEFAULT_DIRECTIVE_PREFIXES
 
-/** Default directive prefixes (must match core compiler/directive-attributes.ts). */
-export const DEFAULT_DIRECTIVE_PREFIXES: string[] = ['x-', '@', ':', '.']
-
-/**
- * Returns true if the attribute is a directive that should skip Aero interpolation.
- * Kept in sync with packages/core compiler/directive-attributes.ts.
- */
-export function isDirectiveAttr(attrName: string): boolean {
-	return DEFAULT_DIRECTIVE_PREFIXES.some((p) => attrName.startsWith(p))
-}
-
-/** @deprecated Use isDirectiveAttr(attrName) instead. */
-export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
+/** Returns true if the attribute is a directive that should skip Aero interpolation. */
+export const isDirectiveAttr = coreIsDirectiveAttr
 
 export const ATTR_IS_BUILD = 'is:build'
 export const ATTR_IS_INLINE = 'is:inline'

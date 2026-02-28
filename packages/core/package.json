@@ -16,7 +16,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "tsup src/entry-dev.ts src/entry-prod.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
+		"build": "tsup src/entry-dev.ts src/entry-prod.ts src/entry-editor.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
@@ -46,6 +46,10 @@
 		"./utils/redirects": {
 			"types": "./dist/utils/redirects.d.ts",
 			"default": "./dist/utils/redirects.js"
+		},
+		"./editor": {
+			"types": "./dist/entry-editor.d.ts",
+			"default": "./dist/entry-editor.js"
 		}
 	},
 	"dependencies": {

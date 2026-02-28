@@ -128,6 +128,9 @@ importers:
 
   packages/aero-vscode:
     dependencies:
+      '@aerobuilt/core':
+        specifier: workspace:*
+        version: link:../core
       '@aerobuilt/interpolation':
         specifier: workspace:*
         version: link:../interpolation

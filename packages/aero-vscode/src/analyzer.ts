@@ -6,7 +6,8 @@
  */
 import * as vscode from 'vscode'
 import { tokenizeCurlyInterpolation } from '@aerobuilt/interpolation'
-import { IMPORT_REGEX, CONTENT_GLOBALS } from './constants'
+import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { CONTENT_GLOBALS } from './constants'
 
 /** A single variable definition: name, range, kind (import|declaration|parameter|reference), optional content ref or properties. */
 export type VariableDefinition = {
@@ -92,110 +93,13 @@ export function collectDefinedVariables(
 		vars.set(name, def)
 	}
 
-	// 1. Imports
-	// Imports are usually at the top, but we should strip comments just in case?
-	// Actually regex for imports might be fragile with comments if we don't.
-	// But standard `import` regex is usually robust enough if anchored.
-	// For now, let's keep imports as is, or mask text globally first?
-	// Masking globally is safer but might be expensive.
-	// Let's stick to masking where we extract identifiers.
-
-	IMPORT_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = IMPORT_REGEX.exec(text)) !== null) {
-		// Skip imports inside HTML comments
-		if (isInsideHtmlComment(text, match.index)) continue
-
-		const defaultImport = match[2]?.trim() // Group 2, not 1
-		const namedImports = match[3] // Group 3, not 2
-		const namespaceImport = match[4]?.trim() // Group 4, not 3
-		const specifier = match[6] // Group 6 is correct
-		const start = match.index
-
-		if (defaultImport) {
-			const nameStart = start + match[0].indexOf(defaultImport)
-			setVar(defaultImport, {
-				name: defaultImport,
-				range: new vscode.Range(
-					document.positionAt(nameStart),
-					document.positionAt(nameStart + defaultImport.length),
-				),
-				kind: 'import',
-			})
-		}
-
-		if (namespaceImport) {
-			const nameStart = start + match[0].indexOf(namespaceImport)
-			setVar(namespaceImport, {
-				name: namespaceImport,
-				range: new vscode.Range(
-					document.positionAt(nameStart),
-					document.positionAt(nameStart + namespaceImport.length),
-				),
-				kind: 'import',
-			})
-		}
-
-		if (namedImports) {
-			const namedPartStart = start + match[0].indexOf(namedImports)
-			// Simple parsing for named imports: `foo, bar as baz`
-			const parts = namedImports.split(',')
-			let currentOffset = 0
-
-			for (const part of parts) {
-				const trimmed = part.trim()
-				if (!trimmed) {
-					currentOffset += part.length + 1 // +1 for comma
-					continue
-				}
-
-				const asIndex = trimmed.indexOf(' as ')
-				let localName = trimmed
-				if (asIndex > -1) {
-					localName = trimmed.slice(asIndex + 4).trim()
-				}
-
-				const relativeStart = part.indexOf(localName)
-				const absStart =
-					namedPartStart +
-					currentOffset +
-					part.indexOf(trimmed) +
-					(asIndex > -1 ? asIndex + 4 : 0) +
-					(localName === trimmed
-						? 0
-						: trimmed.indexOf(localName) - (asIndex > -1 ? asIndex + 4 : 0)) // Approximation, let's do better
-
-				// Re-calculating position more reliably
-				const partIndexInNamed = namedImports.indexOf(part, currentOffset) // Find specific occurrence
-				const localNameIndexInPart = part.lastIndexOf(localName)
-				const finalStart = namedPartStart + partIndexInNamed + localNameIndexInPart
-
-				if (localName) {
-					setVar(localName, {
-						name: localName,
-						range: new vscode.Range(
-							document.positionAt(finalStart),
-							document.positionAt(finalStart + localName.length),
-						),
-						kind: 'import',
-					})
-				}
-
-				currentOffset = partIndexInNamed + part.length
-			}
-		}
-	}
-
-	// 2. Script declarations — only is:build scripts are visible to the template
+	// 1. Imports and declarations from is:build scripts (AST-based imports, regex for declarations)
 	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 	let scriptMatch: RegExpExecArray | null
 	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
-		// Skip scripts inside HTML comments
 		if (isInsideHtmlComment(text, scriptMatch.index)) continue
-
 		const attrs = (scriptMatch[1] || '').toLowerCase()
 		if (/\bsrc\s*=/.test(attrs)) continue
-		// Only collect from is:build scripts (template-visible); skip client/inline/blocking
 		if (!/\bis:build\b/.test(attrs)) continue
 		if (/\bis:inline\b/.test(attrs)) continue
 		if (/\bis:blocking\b/.test(attrs)) continue
@@ -203,6 +107,27 @@ export function collectDefinedVariables(
 		const content = scriptMatch[2]
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
 		const maskedContent = maskJsComments(content)
+
+		// Imports via core's AST-based analysis
+		try {
+			const { imports: editorImports } = analyzeBuildScriptForEditor(content)
+			for (const imp of editorImports) {
+				const bindingRanges = imp.bindingRanges ?? {}
+				for (const [localName, range] of Object.entries(bindingRanges)) {
+					const [start, end] = range as [number, number]
+					setVar(localName, {
+						name: localName,
+						range: new vscode.Range(
+							document.positionAt(contentStart + start),
+							document.positionAt(contentStart + end),
+						),
+						kind: 'import',
+					})
+				}
+			}
+		} catch {
+			// Parse error in build script; skip imports for this block
+		}
 
 		// Regex for top-level const/let/var
 		// Supports: const x = 1, { y } = obj, [z] = arr
@@ -394,75 +319,24 @@ export function collectVariablesByScope(
 
 		// Collect imports for build and bundled scopes (inline doesn't support imports)
 		if (scope !== 'inline') {
-			const maskedForImports = maskJsComments(content)
-			IMPORT_REGEX.lastIndex = 0
-			let importMatch: RegExpExecArray | null
-			while ((importMatch = IMPORT_REGEX.exec(maskedForImports)) !== null) {
-				const defaultImport = importMatch[2]?.trim()
-				const namedImports = importMatch[3]
-				const namespaceImport = importMatch[4]?.trim()
-				const start = contentStart + importMatch.index
-
-				if (defaultImport) {
-					const nameStart = start + importMatch[0].indexOf(defaultImport)
-					setVar(defaultImport, {
-						name: defaultImport,
-						range: new vscode.Range(
-							document.positionAt(nameStart),
-							document.positionAt(nameStart + defaultImport.length),
-						),
-						kind: 'import',
-					})
-				}
-
-				if (namespaceImport) {
-					const nameStart = start + importMatch[0].indexOf(namespaceImport)
-					setVar(namespaceImport, {
-						name: namespaceImport,
-						range: new vscode.Range(
-							document.positionAt(nameStart),
-							document.positionAt(nameStart + namespaceImport.length),
-						),
-						kind: 'import',
-					})
-				}
-
-				if (namedImports) {
-					const namedPartStart = start + importMatch[0].indexOf(namedImports)
-					const parts = namedImports.split(',')
-					let currentOffset = 0
-
-					for (const part of parts) {
-						const trimmed = part.trim()
-						if (!trimmed) {
-							currentOffset += part.length + 1
-							continue
-						}
-
-						const asIndex = trimmed.indexOf(' as ')
-						let localName = trimmed
-						if (asIndex > -1) {
-							localName = trimmed.slice(asIndex + 4).trim()
-						}
-
-						const partIndexInNamed = namedImports.indexOf(part, currentOffset)
-						const localNameIndexInPart = part.lastIndexOf(localName)
-						const finalStart = namedPartStart + partIndexInNamed + localNameIndexInPart
-
-						if (localName) {
-							setVar(localName, {
-								name: localName,
-								range: new vscode.Range(
-									document.positionAt(finalStart),
-									document.positionAt(finalStart + localName.length),
-								),
-								kind: 'import',
-							})
-						}
-
-						currentOffset = partIndexInNamed + part.length
+			try {
+				const { imports: editorImports } = analyzeBuildScriptForEditor(content)
+				for (const imp of editorImports) {
+					const bindingRanges = imp.bindingRanges ?? {}
+					for (const [localName, range] of Object.entries(bindingRanges)) {
+						const [start, end] = range as [number, number]
+						setVar(localName, {
+							name: localName,
+							range: new vscode.Range(
+								document.positionAt(contentStart + start),
+								document.positionAt(contentStart + end),
+							),
+							kind: 'import',
+						})
 					}
 				}
+			} catch {
+				// Parse error; skip imports for this block
 			}
 		}
 
