@@ -24,7 +24,7 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aerobuilt/template-minimal": "workspace:*"
+		"@aerobuilt/template-minimal": "^0.2.2"
 	},
 	"peerDependencies": {
 		"vite": "*"

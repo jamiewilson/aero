@@ -10,10 +10,11 @@
     "directory": "packages/interpolation"
   },
   "homepage": "https://github.com/aerobuilt/aero",
-  "private": true,
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
     "typecheck": "tsc --noEmit",
