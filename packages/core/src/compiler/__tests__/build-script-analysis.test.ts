@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { analyzeBuildScript } from '../build-script-analysis'
+import { analyzeBuildScript, analyzeBuildScriptForEditor } from '../build-script-analysis'
 
 describe('analyzeBuildScript', () => {
 	describe('imports', () => {
@@ -170,5 +170,38 @@ const title = 'Page'`
 		it('should throw on parse error', () => {
 			expect(() => analyzeBuildScript('import { from "./x"')).toThrow(/parse error/)
 		})
+	})
+})
+
+describe('analyzeBuildScriptForEditor', () => {
+	it('should return imports with range and bindingRanges', () => {
+		const script = `import header from '@components/header'
+import { foo, bar as b } from './mod'
+const x = header`
+		const result = analyzeBuildScriptForEditor(script)
+		expect(result.imports).toHaveLength(2)
+		expect(result.imports[0].specifier).toBe('@components/header')
+		expect(result.imports[0].defaultBinding).toBe('header')
+		expect(result.imports[0].range[0]).toBe(0)
+		expect(result.imports[0].range[1]).toBe(script.indexOf('\n'))
+		expect(result.imports[0].bindingRanges).toEqual({ header: expect.any(Array) })
+		expect(result.imports[0].bindingRanges!['header']).toHaveLength(2)
+
+		expect(result.imports[1].specifier).toBe('./mod')
+		expect(result.imports[1].namedBindings).toEqual([
+			{ imported: 'foo', local: 'foo' },
+			{ imported: 'bar', local: 'b' },
+		])
+		expect(result.imports[1].bindingRanges!['foo']).toEqual(expect.any(Array))
+		expect(result.imports[1].bindingRanges!['b']).toEqual(expect.any(Array))
+	})
+
+	it('should return empty imports for empty script', () => {
+		const result = analyzeBuildScriptForEditor('   \n  ')
+		expect(result.imports).toEqual([])
+	})
+
+	it('should throw on parse error', () => {
+		expect(() => analyzeBuildScriptForEditor('import { from "./x"')).toThrow(/parse error/)
 	})
 })
