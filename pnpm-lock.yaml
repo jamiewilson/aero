@@ -178,9 +178,6 @@ importers:
       '@aerobuilt/core':
         specifier: workspace:*
         version: link:../core
-      autoprefixer:
-        specifier: ^10.4.24
-        version: 10.4.27(postcss@8.5.6)
       jiti:
         specifier: ^2.4.2
         version: 2.6.1
@@ -281,11 +278,8 @@ importers:
   packages/create-aerobuilt:
     dependencies:
       '@aerobuilt/template-minimal':
-        specifier: ^0.2.2
-        version: 0.2.2(chokidar@4.0.3)(postcss@8.5.6)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)
-      vite:
-        specifier: 8.0.0-beta.15
-        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+        specifier: workspace:*
+        version: link:../templates/minimal
 
   packages/interpolation:
     devDependencies:
@@ -308,41 +302,11 @@ importers:
         specifier: workspace:*
         version: link:../../aerobuilt
     devDependencies:
-      autoprefixer:
-        specifier: ^10.4.24
-        version: 10.4.27(postcss@8.5.6)
       vite:
         specifier: 8.0.0-beta.15
         version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
 packages:
-
-  '@aerobuilt/config@0.2.2':
-    resolution: {integrity: sha512-q7pINOFikf8o9MgrG1J9WAbi5JiOfIRfcYoyagIK1nT5vBwPuId+OQa1qS6lKk2jzcPQnXgN7pAt3Eost6r1IQ==}
-    peerDependencies:
-      '@aerobuilt/content': 0.2.2
-      '@aerobuilt/core': 0.2.2
-      vite: 8.0.0-beta.15
-
-  '@aerobuilt/content@0.2.2':
-    resolution: {integrity: sha512-tn/Xh0htxx0+jnCa4qy9733DiC5zsS1SI0ZolAwmBuL30AxmiA4j5DhKYI0h7i+9Ui6B15eKUwXtdCNR1ddSmA==}
-    peerDependencies:
-      vite: 8.0.0-beta.15
-      zod: ^4.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
-
-  '@aerobuilt/core@0.2.2':
-    resolution: {integrity: sha512-QqVwFSCOYM1LVUHGrAH5R8WsForIPjxDtSwSXc+mXHLdfjIE5Bc8vdufZAN9gSJ+IiZlZWOAd1PbnVN/gzaQpw==}
-    peerDependencies:
-      vite: 8.0.0-beta.15
-
-  '@aerobuilt/interpolation@0.2.2':
-    resolution: {integrity: sha512-nkFUcilSWSrTJDsN3frpeZWLNApOn/nAmd0S5kNhOHmayCULxLqYtdO/0YqMmvU/aGMZf7z40tAcZqLPFSvdPA==}
-
-  '@aerobuilt/template-minimal@0.2.2':
-    resolution: {integrity: sha512-uw+lz/4XWfwoYCzSMU+llqQHGiGlS/ohEY/8j2Z/0TP5o6GRVG0lr25G4C8CCQWsayfENI2rPXjtUBuSXZgrqA==}
 
   '@alpinejs/persist@3.15.8':
     resolution: {integrity: sha512-xKJk0aa5p0QAquP9ivEuLnpzuBC2MyoWmiMRVzWiTR9/VLnbVgFM+6dE/D+NvfKOzhTSeht6FkYqOi/C27LBTg==}
@@ -1336,9 +1300,6 @@ packages:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  aerobuilt@0.2.2:
-    resolution: {integrity: sha512-ZgCp9mTeDyV/wfbi1nVOxjK/mbYolXXAR/+Pfkq1c1ZM1BkClrPH/7UrQlH88ydpPHTjCcqNNzOC/8smd9oLSA==}
 
   alpinejs@3.15.8:
     resolution: {integrity: sha512-zxIfCRTBGvF1CCLIOMQOxAyBuqibxSEwS6Jm1a3HGA9rgrJVcjEWlwLcQTVGAWGS8YhAsTRLVrtQ5a5QT9bSSQ==}
@@ -2415,117 +2376,6 @@ packages:
 
 snapshots:
 
-  '@aerobuilt/config@0.2.2(@aerobuilt/content@0.2.2(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6))(@aerobuilt/core@0.2.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)))(postcss@8.5.6)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))':
-    dependencies:
-      '@aerobuilt/content': 0.2.2(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)
-      '@aerobuilt/core': 0.2.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-      autoprefixer: 10.4.27(postcss@8.5.6)
-      jiti: 2.6.1
-      vite: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
-    transitivePeerDependencies:
-      - postcss
-
-  '@aerobuilt/content@0.2.2(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)':
-    dependencies:
-      fast-glob: 3.3.3
-      gray-matter: 4.0.3
-      remark: 15.0.1
-      remark-html: 16.0.1
-      vite: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
-    optionalDependencies:
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - supports-color
-
-  '@aerobuilt/core@0.2.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))':
-    dependencies:
-      '@aerobuilt/interpolation': 0.2.2
-      get-tsconfig: 4.13.6
-      html-minifier-next: 5.1.4
-      linkedom: 0.18.12
-      nitro: 3.0.1-alpha.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-      oxc-parser: 0.115.0
-      sharp: 0.34.5
-      svgo: 4.0.0
-      vite: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
-      vite-plugin-image-optimizer: 2.0.3(sharp@0.34.5)(svgo@4.0.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@swc/core'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - better-sqlite3
-      - canvas
-      - chokidar
-      - drizzle-orm
-      - idb-keyval
-      - ioredis
-      - lru-cache
-      - mongodb
-      - mysql2
-      - rolldown
-      - rollup
-      - sqlite3
-      - uploadthing
-      - xml2js
-
-  '@aerobuilt/interpolation@0.2.2': {}
-
-  '@aerobuilt/template-minimal@0.2.2(chokidar@4.0.3)(postcss@8.5.6)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)':
-    dependencies:
-      aerobuilt: 0.2.2(chokidar@4.0.3)(postcss@8.5.6)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@swc/core'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - better-sqlite3
-      - canvas
-      - chokidar
-      - drizzle-orm
-      - idb-keyval
-      - ioredis
-      - lru-cache
-      - mongodb
-      - mysql2
-      - postcss
-      - rolldown
-      - rollup
-      - sqlite3
-      - supports-color
-      - uploadthing
-      - vite
-      - xml2js
-      - zod
-
   '@alpinejs/persist@3.15.8': {}
 
   '@emnapi/core@1.8.1':
@@ -3158,49 +3008,6 @@ snapshots:
   '@vue/shared@3.1.5': {}
 
   acorn@8.16.0: {}
-
-  aerobuilt@0.2.2(chokidar@4.0.3)(postcss@8.5.6)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6):
-    dependencies:
-      '@aerobuilt/config': 0.2.2(@aerobuilt/content@0.2.2(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6))(@aerobuilt/core@0.2.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)))(postcss@8.5.6)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-      '@aerobuilt/content': 0.2.2(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))(zod@4.3.6)
-      '@aerobuilt/core': 0.2.2(chokidar@4.0.3)(rolldown@1.0.0-rc.5)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@swc/core'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - better-sqlite3
-      - canvas
-      - chokidar
-      - drizzle-orm
-      - idb-keyval
-      - ioredis
-      - lru-cache
-      - mongodb
-      - mysql2
-      - postcss
-      - rolldown
-      - rollup
-      - sqlite3
-      - supports-color
-      - uploadthing
-      - vite
-      - xml2js
-      - zod
 
   alpinejs@3.15.8:
     dependencies:

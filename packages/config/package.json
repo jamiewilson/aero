@@ -1,6 +1,6 @@
 {
   "name": "@aerobuilt/config",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "type": "module",
   "license": "MIT",
   "author": "Jamie Wilson",
@@ -26,11 +26,10 @@
     "prepack": "cp ../../LICENSE ."
   },
   "dependencies": {
-    "autoprefixer": "^10.4.24",
     "jiti": "^2.4.2"
   },
   "peerDependencies": {
-    "vite": "^8.0.0",
+    "vite": "^8.0.0-0",
     "@aerobuilt/core": "workspace:*",
     "@aerobuilt/content": "workspace:*"
   },

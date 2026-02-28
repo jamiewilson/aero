@@ -18,7 +18,7 @@
 		"version:bump": "node scripts/bump-versions.js",
 		"release:prep": "pnpm run clean:all && pnpm install && pnpm build",
 		"release": "pnpm run release:prep && pnpm test",
-		"release:publish": "node scripts/publish-with-pin.js"
+		"release:publish": "pnpm -r publish"
 	},
 	"devDependencies": {
 		"vitest": "^4.0.18"
