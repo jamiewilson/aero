@@ -64,9 +64,7 @@ Aero stays as close to the web platform as possible: you write HTML files (not J
 > [!NOTE]
 > Also see: [What Makes Aero Different?](docs/what-makes-aero-different.md) for the architectural philosophy, and [Why Not Web Components?](docs/why-not-web-components.md) for a comparison of our approaches.
 
-## Quick examples
-
-Each section below expands on a [main feature](#aero) at the top of this README.
+## Examples of main featues
 
 ### 🛤️ File-based routing
 
@@ -339,13 +337,15 @@ There is no hydration and no framework runtime in the output; you can deploy to 
 ## Tools and commands
 
 - **create-aerobuilt** — Scaffold a new app: `pnpm create aerobuilt my-app`.
-- **VS Code** — The `packages/aero-vscode` extension adds syntax and diagnostics for Aero templates.
-- **Commands (from repo root)**
+
+- **Commands in a `create-aerobuilt` project**
   - `pnpm install` then `pnpm dev` — Build core and run the example app.
   - `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
   - `pnpm preview` — Static preview.
   - `pnpm preview:api` — Preview with Nitro (static + API from one origin).
   - `pnpm test` — Run Vitest (packages/core).
+
+- **VS Code Extension** — The `packages/aero-vscode` extension adds syntax and diagnostics for Aero templates.
 
 ## Monorepo layout
 
