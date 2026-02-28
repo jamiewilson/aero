@@ -48,8 +48,11 @@ function copyTemplate(src, dest) {
 
 function isInMonorepo() {
 	try {
-		const rootPath = join(startPkgDir, '..', '..')
-		return existsSync(join(rootPath, 'pnpm-workspace.yaml'))
+		const aeroRoot = join(startPkgDir, '..', '..')
+		if (!existsSync(join(aeroRoot, 'pnpm-workspace.yaml'))) return false
+		// Only use monorepo layout (scaffold into dist/) when run from inside this repo
+		const cwdWorkspaceRoot = findWorkspaceRoot(process.cwd())
+		return cwdWorkspaceRoot !== null && cwdWorkspaceRoot === aeroRoot
 	} catch {
 		return false
 	}

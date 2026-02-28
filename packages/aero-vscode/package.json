@@ -3,7 +3,7 @@
 	"displayName": "Aero",
 	"icon": "images/logo.png",
 	"description": "Language support for Aero templates in HTML",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"publisher": "aerobuilt",
 	"repository": {
 		"type": "git",

@@ -1,6 +1,6 @@
 {
 	"name": "create-aerobuilt",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"type": "module",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -24,14 +24,6 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aerobuilt/template-minimal": "^0.2.2"
-	},
-	"peerDependencies": {
-		"vite": "*"
-	},
-	"peerDependenciesMeta": {
-		"vite": {
-			"optional": true
-		}
+		"@aerobuilt/template-minimal": "workspace:*"
 	}
 }
