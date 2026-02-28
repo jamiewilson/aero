@@ -17,7 +17,7 @@ import {
 	TemplateScope,
 	maskJsComments,
 } from './analyzer'
-import { kebabToCamelCase, collectImportedSpecifiers, findInnermostScope } from './utils'
+import { kebabToCamelCase, collectImportedSpecifiersFromDocument, findInnermostScope } from './utils'
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
@@ -370,7 +370,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	): void {
 		const resolver = getResolver(document)
 		if (!resolver) return
-		const imports = collectImportedSpecifiers(text)
+		const imports = collectImportedSpecifiersFromDocument(text)
 		const ignoredRanges = getIgnoredRanges(text)
 
 		COMPONENT_TAG_OPEN_REGEX.lastIndex = 0
@@ -547,6 +547,9 @@ export class AeroDiagnostics implements vscode.Disposable {
 	// 6. Unused variables in script
 	// -----------------------------------------------------------------------
 
+	/** Match pass:data="{{ a, b }}" or pass:data='{{ a, b }}' and capture the list. */
+	private static readonly PASS_DATA_REGEX = /pass:data\s*=\s*(['"])\{\{\s*([\s\S]*?)\s*\}\}\1/gi
+
 	private checkUnusedVariables(
 		document: vscode.TextDocument,
 		text: string,
@@ -556,6 +559,15 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const usedInTemplate = new Set<string>()
 		for (const ref of references) {
 			usedInTemplate.add(ref.content)
+		}
+		// Variables passed to pass:data are "used" from build scope (consumed by client script)
+		AeroDiagnostics.PASS_DATA_REGEX.lastIndex = 0
+		let pdMatch: RegExpExecArray | null
+		while ((pdMatch = AeroDiagnostics.PASS_DATA_REGEX.exec(text)) !== null) {
+			const list = pdMatch[2]
+			for (const name of list.split(',').map(s => s.trim())) {
+				if (/^[a-zA-Z_$][\w$]*$/.test(name)) usedInTemplate.add(name)
+			}
 		}
 
 		// Check unused in is:build scope (template + build scripts)

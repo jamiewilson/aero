@@ -9,7 +9,7 @@ import {
 	VariableDefinition,
 	TemplateScope,
 } from './analyzer'
-import { kebabToCamelCase, collectImportedSpecifiers, findInnermostScope } from './utils'
+import { kebabToCamelCase, collectImportedSpecifiersFromDocument, findInnermostScope } from './utils'
 
 /**
  * Go to Definition for Aero template references in HTML files.
@@ -54,7 +54,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'component-tag': {
-				const imports = collectImportedSpecifiers(document.getText())
+				const imports = collectImportedSpecifiersFromDocument(document.getText())
 				const importName = kebabToCamelCase(classification.baseName)
 				const importedSpecifier = imports.get(importName)
 				const alias =

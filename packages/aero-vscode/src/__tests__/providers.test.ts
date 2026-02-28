@@ -281,6 +281,7 @@ describe('AeroDefinitionProvider', () => {
 			getText: () => '<header-component></header-component>',
 			lineAt: (line: number) => ({ text: '<header-component></header-component>' }),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			offsetAt: (pos: any) => pos.character,
 		} as any
 
 		const position = { line: 0, character: 1 } as any // on 'header'
