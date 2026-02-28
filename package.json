@@ -13,6 +13,7 @@
 		"build:content": "pnpm --dir packages/content build",
 		"build:aerobuilt": "pnpm --dir packages/aerobuilt build",
 		"build:vscode": "pnpm --dir packages/aero-vscode build",
+		"vscode:package": "pnpm run build:vscode && pnpm --dir packages/aero-vscode exec vsce package",
 		"clean:all": "rm -rf node_modules && find packages -type d \\( -name node_modules -o -name dist -o -name .output \\) -prune -exec rm -rf {} +",
 		"version:bump": "node scripts/bump-versions.js",
 		"release:prep": "pnpm run clean:all && pnpm install && pnpm build",
