@@ -87,7 +87,22 @@ class Lowerer {
 		return null
 	}
 
-	private requireBracedExpression(value: string, directive: string, node: any): string {
+	/**
+	 * Require directive value to be a braced expression; optionally strip outer braces.
+	 *
+	 * @param value - Raw attribute value.
+	 * @param directive - Attribute name for error message (e.g. `each`, `pass:data`).
+	 * @param node - DOM node for error message (tag name).
+	 * @param options - `strip: true` (default) returns inner expression; `strip: false` returns trimmed value including braces (e.g. for pass:data).
+	 * @returns Trimmed value, with or without outer braces per options.
+	 */
+	private requireBracedExpression(
+		value: string,
+		directive: string,
+		node: any,
+		options?: { strip?: boolean },
+	): string {
+		const strip = options?.strip !== false
 		const trimmed = value.trim()
 		if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
 			const tagName = node?.tagName?.toLowerCase?.() || 'element'
@@ -95,7 +110,7 @@ class Lowerer {
 				`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`,
 			)
 		}
-		return Helper.stripBraces(trimmed)
+		return strip ? Helper.stripBraces(trimmed) : trimmed
 	}
 
 	private isSingleWrappedExpression(value: string): boolean {
@@ -192,7 +207,10 @@ class Lowerer {
 				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PASS_DATA, CONST.ATTR_PREFIX)) {
-					passDataExpr = this.requireBracedExpression(attr.value || '', attr.name, node)
+					passDataExpr = Helper.validateSingleBracedExpression(attr.value || '', {
+						directive: attr.name,
+						tagName: node?.tagName?.toLowerCase?.() || 'element',
+					})
 					continue
 				}
 
@@ -635,7 +653,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			const isHead = clientScript.injectInHead
 
 			if (clientScript.passDataExpr) {
-				const jsonExpr = `JSON.stringify(${Helper.stripBraces(clientScript.passDataExpr)})`
+				const jsonExpr = `JSON.stringify(${clientScript.passDataExpr})`
 				if (isHead) {
 					headScripts.push(
 						`(function(){const __pid=Aero.nextPassDataId();\`<\`+'script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>';window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);})();${tagExpr}`,
@@ -659,13 +677,11 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (options.blockingScripts) {
 		for (const blockingScript of options.blockingScripts) {
 			if (blockingScript.passDataExpr) {
-				const trimmed = blockingScript.passDataExpr.trim()
-				if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
-					throw new Error(
-						`Directive \`pass:data\` on <script> must use a braced expression, e.g. pass:data="{ { expression } }".`,
-					)
-				}
-				const jsMapExpr = `Object.entries(${Helper.stripBraces(blockingScript.passDataExpr)}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
+					directive: 'pass:data',
+					tagName: 'script',
+				})
+				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
 				headScripts.push(
 					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${blockingScript.content.replace(/`/g, '\\`')}</script>\``,
 				)

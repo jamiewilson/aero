@@ -8,11 +8,11 @@
 
 <html lang="en">
 	<head>
-		<meta-component props="{...Aero.props}" />
+		<meta-component props="{ ...Aero.props }" />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
 
-		<script pass:data="{{storageKey, attribute}}">
+		<script pass:data="{ storageKey, attribute }">
 			const theme = JSON.parse(localStorage.getItem(storageKey))
 			document.documentElement.setAttribute(attribute, theme)
 		</script>

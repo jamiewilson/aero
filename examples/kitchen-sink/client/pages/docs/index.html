@@ -17,10 +17,10 @@
 	</header>
 
 	<ul class="card">
-		<li each="{doc in docs}">
-			<a href="/docs/{doc.id}">{doc.data.title}</a>
-			<badge-component if="{!doc.data.published}" text="Draft" />
-			<p>{doc.data.subtitle}</p>
+		<li each="{ doc in docs }">
+			<a href="/docs/{ doc.id }">{ doc.data.title }</a>
+			<badge-component if="{ !doc.data.published }" text="Draft" />
+			<p>{ doc.data.subtitle }</p>
 		</li>
 		<style>
 			@scope {

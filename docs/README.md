@@ -15,6 +15,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Components and templating
 
+- **[Interpolation](interpolation.md)** — `{ }` expressions in text and attributes, `{{`/`}}` escapes, and `pass:data` semantics (spread for object properties as CSS vars).
 - **[Props guide](props.md)** — Passing and receiving props, how attribute values work, `props`, and globals.
 - **[Slot passthrough](slot-passthrough.md)** — Passing named slots through layout hierarchies.
 

@@ -351,7 +351,7 @@ describe('Codegen', () => {
 		const html = `<script is:build>
 									const config = { theme: 'dark', id: 42 };
 								</script>
-								<script is:inline pass:data="{ { config } }">
+								<script is:inline pass:data="{ config }">
 									console.log(config.theme);
 								</script>`
 
@@ -960,14 +960,14 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark', id: 42 };
 										</script>
-										<script pass:data="{ { config } }">
+										<script pass:data="{ config }">
 											console.log(config.theme);
 										</script>`
 
 			const parsed = parse(html)
 			const code = compile(parsed, {
 				...mockOptions,
-				clientScripts: [{ attrs: '', content: '/auto.js', passDataExpr: '{ { config } }' }],
+				clientScripts: [{ attrs: '', content: '/auto.js', passDataExpr: '{ config }' }],
 			})
 
 			const scripts = new Set<string>()
@@ -986,7 +986,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
-										<script is:inline pass:data="{ { config } }">
+										<script is:inline pass:data="{ config }">
 											console.log(config.theme);
 										</script>`
 
@@ -1005,7 +1005,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
-										<script is:blocking pass:data="{ { config } }">
+										<script is:blocking pass:data="{ config }">
 											console.log(config.theme);
 										</script>`
 
@@ -1022,12 +1022,12 @@ describe('Codegen', () => {
 			expect(out).toContain('<script>')
 		})
 
-		/** Double-brace `{ { theme } }` passes one key "theme" with the object value; for CSS vars use flat object: pass:data="{ theme }". */
+		/** pass:data="{ theme }" passes one key "theme" (whole object); use pass:data="{ ...theme }" for properties as CSS vars. */
 		it('should pass data to style tags as CSS variables', async () => {
 			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
-										<style pass:data="{ { theme } }">
+										<style pass:data="{ theme }">
 											body { color: var(--theme); }
 										</style>`
 
@@ -1047,7 +1047,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
-										<style pass:data="{ theme }">
+										<style pass:data="{ ...theme }">
 											body { color: var(--fg); background: var(--bg); }
 										</style>`
 
@@ -1070,7 +1070,7 @@ describe('Codegen', () => {
 											const debug = true;
 											const version = 3;
 										</script>
-										<script is:inline pass:data="{ { apiUrl, debug, version } }">
+										<script is:inline pass:data="{ apiUrl, debug, version }">
 											console.log(apiUrl, debug, version);
 										</script>`
 
@@ -1092,7 +1092,7 @@ describe('Codegen', () => {
 											const list = [1, 2, 3];
 											const nothing = null;
 										</script>
-										<script is:inline pass:data="{ { str, num, flag, list, nothing } }">
+										<script is:inline pass:data="{ str, num, flag, list, nothing }">
 											console.log(str, num, flag, list, nothing);
 										</script>`
 
@@ -1112,14 +1112,14 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const val = 'test';
 										</script>
-										<script pass:data="{ { val } }">
+										<script pass:data="{ val }">
 											console.log(val);
 										</script>`
 
 			const parsed = parse(html)
 			const code = compile(parsed, {
 				...mockOptions,
-				clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ { val } }' }],
+				clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ val }' }],
 			})
 
 			const scripts = new Set<string>()
@@ -1147,6 +1147,15 @@ describe('Codegen', () => {
 			).toThrow('Directive `pass:data` on <script> must use a braced expression')
 		})
 
+		it('should throw when pass:data value is not a single braced expression (tokenizer validation)', () => {
+			// "{{ }}" is literal braces in attribute mode, so no interpolation segment
+			const html = `<script is:build></script><div pass:data="{{ literal }}">x</div>`
+			const parsed = parse(html)
+			expect(() => compile(parsed, mockOptions)).toThrow(
+				'Directive `pass:data` on <div> must use a braced expression',
+			)
+		})
+
 		it('should emit JSON data tag before bundled module script', async () => {
 			const html = `<script is:build>
 				const themeSettings = { colors: { primary: 'blue' } };
@@ -1157,7 +1166,7 @@ describe('Codegen', () => {
 			const code = compile(parsed, {
 				...mockOptions,
 				clientScripts: [
-					{ attrs: '', content: '/test.js', passDataExpr: '{ { theme: themeSettings } }' },
+					{ attrs: '', content: '/test.js', passDataExpr: '{ theme: themeSettings }' },
 				],
 			})
 
