@@ -4,21 +4,21 @@ Aero (`aerobuilt` on npm) is a static site generator and full-stack framework wi
 
 <hr>
 
-🛤️ **File-based routing:** `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`.
+#### 🧭 File-based routing: `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`.
 
-🧩 **Components & Layouts:** Import `.html` templates; use `<name-component>` and `<name-layout>`.
+#### 🧩 Components & Layouts: Import `.html` templates; use `<name-component>` and `<name-layout>`.
 
-📤 **Props:** Pass data via attributes or `props`; read with `aero.props` in the component.
+#### 📤 Props: Pass data via attributes or `props`; read with `aero.props` in the component.
 
-🔀 **Loops & conditionals:** `each` and `if/else-if/else` right in your markup.
+#### 🔁 Loops & conditionals: `each` and `if/else-if/else` right in your markup.
 
-🎰 **Slots:** Layouts expose `<slot>`; pass content with `slot` and `name` attributes.
+#### 🎰 Slots: Layouts expose `<slot>`; pass content with `slot` and `name` attributes.
 
-📁 **Content as code:** Put data in `content/`; use `getCollection()` and markdown with `render()`.
+#### 📂 Content as code: Put data in `content/`; use `getCollection()` and markdown with `render()`.
 
-💾 **Server when you need it:** Default is static; easily enable Nitro for API routes and a server.
+#### 💾 Server when you need it: Default is static; easily enable Nitro for API routes and a server.
 
-📦 **Plain HTML output:** No hydration, no framework runtime; deploy anywhere.
+#### 🚢 Plain HTML output: No hydration, no framework runtime; deploy anywhere.
 
 ## Try it out
 
