@@ -1,8 +1,6 @@
 # ⚡ Aero
 
-Aero (`aerobuilt` on npm) is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
-
-[aerobuilt](https://www.npmjs.com/package/aerobuilt) • [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt) • [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+Aero (`aerobuilt` on npm) is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity. Links: [aerobuilt](https://www.npmjs.com/package/aerobuilt) — [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
 
 <hr>
 
@@ -25,10 +23,15 @@ Aero (`aerobuilt` on npm) is a static site generator and full-stack framework wi
 ## Try it out
 
 ```bash
+# scaffold a new projet
 pnpm create aerobuilt my-app
+# or use dlx (or npx)
+pnpm dlx create-aerobuilt@latest my-app
+# add to an existing project
+pnpm add aerobuilt
 ```
 
-## At a glance
+## The Basics
 
 A page is just HTML with a build script, a layout, and components. Data comes from `content/` and is interpolated with `{ }`. Build-time code lives in `<script is:build>` and is stripped from the output; plain `<script>` is bundled for the browser.
 
@@ -50,32 +53,11 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 </script>
 ```
 
-Below you'll find installation, how Aero solves common problems, and detailed examples.
+## Mostly just html, css and js/ts, with few things on top
 
-## Installation Options
+Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`aero.props`, `props`, `pass:data`). The source looks like HTML, the output is HTML.
 
-Using `create-aerobuilt`:
-
-```bash
-pnpm create aerobuilt my-app
-# or using dlx
-pnpm dlx create-aerobuilt@latest my-app
-```
-
-## Adding to an existing project:
-
-```bash
-pnpm add aerobuilt
-```
-
-## Standard web, thin layer
-
-Aero stays as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`aero.props`, `props`, `pass:data`). The source looks like HTML, the output is HTML.
-
-> [!NOTE]
-> Also see: [What Makes Aero Different?](docs/what-makes-aero-different.md) for the architectural philosophy, and [Why Not Web Components?](docs/why-not-web-components.md) for a comparison of our approaches.
-
-## Examples of main featues
+> Also check out: [What Makes Aero Different?](docs/what-makes-aero-different.md) and [Why Not Web Components?](docs/why-not-web-components.md)
 
 ### 🛤️ File-based routing
 
@@ -102,6 +84,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Pages** live in `client/pages/`; the path and filename determine the URL (`index.html` = that segment’s root).
 - **Layouts** live in `client/layouts/`; use `<name-layout>` in markup (e.g. `base.html` → `<base-layout>`).
 - **Components** live in `client/components/`; use `<name-component>` (e.g. `header.html` → `<header-component>`).
+- **Path aliases**: For convenience, `create-aerobuilt` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
 > [!NOTE]  
 > For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page’s build script so the build knows which paths to generate. See [Conventions](#conventions) and [docs/content-api.md](docs/content-api.md).
@@ -200,15 +183,20 @@ Use `each` and `if` / `else-if` / `else` with `{ }` expressions:
 
 Layouts expose `<slot>` to receive content from the page (or from a nested layout). Content between the layout’s opening and closing tags fills the slot.
 
-**1. Default slot** — One layout, one `<slot>`. Whatever you put between the layout tags is rendered where the slot is:
+#### 1. The default slot
+
+One layout, one `<slot>`. Whatever you put between the layout tags is rendered where the slot is:
 
 **Layout (`layouts/base.html`):**
 
 ```html
 <html>
+	<head>
+		<!-- Head stuff -->
+	</head>
 	<body>
 		<header>Site header</header>
-		<main><slot></slot></main>
+		<slot></slot>
 		<footer>Site footer</footer>
 	</body>
 </html>
@@ -227,7 +215,9 @@ Layouts expose `<slot>` to receive content from the page (or from a nested layou
 </base-layout>
 ```
 
-**2. Nested layout** — A layout can use another layout. The inner layout’s `<slot>` receives the page content; the outer layout’s `<slot>` receives the inner layout’s output. So the page content flows: page → inner layout’s slot → outer layout’s slot.
+#### 2. Nested layout
+
+A layout can use another layout. The inner layout’s `<slot>` receives the page content; the outer layout’s `<slot>` receives the inner layout’s output. So the page content flows: page → inner layout’s slot → outer layout’s slot.
 
 **Outer layout (`layouts/base.html`):** same as above with `<slot></slot>` in `<main>`.
 
@@ -252,36 +242,51 @@ Layouts expose `<slot>` to receive content from the page (or from a nested layou
 </sub-layout>
 ```
 
-**3. Named slots and pass-through** — A layout can define **named slots** with `name="..."`. The page (or an inner layout) passes content into a named slot using the `slot="..."` attribute. To pass content _through_ a nested layout into a grandparent’s named slot, use **slot passthrough**: on the inner layout’s `<slot>`, set both `name` (the name this layout uses for the hole) and `slot` (the grandparent’s slot name it forwards to).
+#### 3. Named slots and pass-through
 
-**Layout (`layouts/base.html`)** — default slot plus a named slot for nav:
+A layout can define **named slots** with `name="..."`. The page (or an inner layout) passes content into a named slot using the `slot="..."` attribute. To pass content _through_ a nested layout into a grandparent’s named slot, use **slot passthrough**: on the inner layout’s `<slot>`, set both `name` (the name this layout uses for the hole) and `slot` (the grandparent’s slot name it forwards to).
+
+**A page or inner layout** can pass conent to a named slot:
 
 ```html
-<header><slot name="into-nav"></slot></header>
-<main><slot></slot></main>
+<!-- pages/home.html -->
+<sub-layout>
+	<a href="#" slot="thru-sub">Link from Home</a>
+</sub-layout>
 ```
 
-**Nested layout (`layouts/sub.html`)** — passthrough: content for `thru-sub` is forwarded to base’s `into-nav`; the rest goes to the default slot:
+**Then in the layout**, incoming content to `thru-sub` is forwarded to the `into-nav` slot inside `layouts/sub.html`:
 
 ```html
-<script is:build>
-	import base from '@layouts/base'
-</script>
-
+<!-- layouts/sub.html -->
 <base-layout>
 	<slot name="thru-sub" slot="into-nav"></slot>
-	<slot></slot>
 </base-layout>
 ```
 
-**Page** — provide content for the named slot and for the default slot:
+**In the parent layout**, accept the incoming slot and pass all the inner content as the default slot to `<nav-component>`:
 
 ```html
-<sub-layout>
-	<a href="/docs" slot="thru-sub">Docs</a>
-	<h1>Page title</h1>
-	<p>Main slot content.</p>
-</sub-layout>
+<!-- layouts/base.html -->
+<nav-component>
+	<slot name="into-nav"></slot>
+	<a href="#">Link from Base</a>
+</nav-component>
+```
+
+**So, in the component** you accept the all the slotted content, i.e. both links:
+
+```html
+<!-- components/nav.html -->
+<nav>
+	<slot></slot>
+</nav>
+
+<!-- renders as: -->
+<nav>
+	<a href="#">Link from Home</a>
+	<a href="#">Link from Base</a>
+</nav>
 ```
 
 ### 📁 Content as code
@@ -335,45 +340,15 @@ Aero compiles templates to static HTML. Build-time code in `<script is:build>` i
 
 There is no hydration and no framework runtime in the output; you can deploy to any static host or use Nitro for a full server.
 
-## Conventions
-
-| Convention       | Description                                                                                                                                            |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Routing**      | `client/pages/index.html` → `/`, `about.html` → `/about`, `blog/[slug].html` → `/blog/:slug`. Use `getStaticPaths` for dynamic routes.                 |
-| **Components**   | Import without extension: `import header from '@components/header'` → `header.html`. Use `<header-component>` (or `-layout`) in markup.                |
-| **Props**        | Pass via attributes `title="{ x }"` or `props` / `props="{ ...obj }"`. In the component, read `aero.props`.                                            |
-| **Slots**        | Layouts expose `<slot>` (optionally named). Put content between opening/closing layout tags.                                                           |
-| **Path aliases** | `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, `@styles/*`, `@scripts/*`, `@images/*`, `@src/*`, `@server/*`, `~/*` (see template tsconfig). |
-
 ## Tools and commands
 
-- **create-aerobuilt** — Scaffold a new app: `pnpm create aerobuilt my-app`.
-
-- **Commands in a `create-aerobuilt` project**
-  - `pnpm install` then `pnpm dev` — Build core and run the example app.
-  - `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
-  - `pnpm preview` — Static preview.
-  - `pnpm preview:api` — Preview with Nitro (static + API from one origin).
-  - `pnpm test` — Run Vitest (packages/core).
+- **[create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt)** — Scaffold a new app: `pnpm create aerobuilt my-app`.
 
 - **VS Code Extension** — The `packages/aero-vscode` extension adds syntax and diagnostics for Aero templates.
 
-## Monorepo layout
-
-| Package                        | Role                                                                    |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| **packages/core**              | Compiler, runtime, Vite plugin (`@aerobuilt/core`, `@aerobuilt/vite`)   |
-| **packages/vite**              | Re-export of the Vite plugin                                            |
-| **packages/aero-vscode**       | VS Code extension (syntax, completion, diagnostics)                     |
-| **packages/create-aerobuilt**  | Project initializer (create-aerobuilt); scaffolds from minimal template |
-| **packages/templates/minimal** | Minimal template (no server, no content collections)                    |
-| **examples/kitchen-sink**      | Full demo app with content collections, Nitro API, Alpine.js, HTMX      |
-| **packages/config**            | Shared config and redirect helpers                                      |
-| **packages/content**           | Content collections and markdown rendering                              |
-
 ## Configuration
 
-In **`vite.config.ts`**, the `aero()` plugin supports:
+#### In`vite.config.ts`, the `aero()` plugin supports:
 
 - **`nitro`** (boolean) — Enable Nitro (API + optional server). Default `false`.
 - **`site`** (string) — Canonical site URL (e.g. `'https://example.com'`). Used for sitemap, RSS, canonical/OG tags. Exposed as `import.meta.env.SITE` and `Aero.site` in templates.
@@ -383,8 +358,6 @@ In **`vite.config.ts`**, the `aero()` plugin supports:
 - **`apiPrefix`** — URL prefix for API routes (default `/api`).
 
 You can use **`aero.config.ts`** with `defineConfig` from `@aerobuilt/config` to set `site`, `redirects`, `middleware`, `content`, `server`, etc., and the Vite plugin will pick it up.
-
-### Example
 
 ```ts
 import { aero } from 'aerobuilt/vite'
@@ -399,27 +372,34 @@ export default defineConfig({
 })
 ```
 
+## Commands
+
+Commands in a `create-aerobuilt` project:
+
+- `pnpm install` then `pnpm dev` — Build core and run the example app.
+- `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
+- `pnpm preview` — Static preview.
+- `pnpm preview:api` — Preview with Nitro (static + API from one origin).
+- `pnpm test` — Run Vitest (packages/core).
+
 ## Build output
 
 - **Static only:** `pnpm build` → `dist/`. Deploy to any static host or open via `file://`.
 - **With Nitro:** Same build also produces `.output/` (e.g. `.output/public/` for static, `.output/server/` for the server). Deploy `.output/` for API + static from one app.
 
-Preview: `pnpm preview` (static) or `pnpm preview:api` (Nitro serving `dist/` + API).
+## More Documentation
 
-## Docs
-
-For full documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/README.md).
+For more documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/README.md).
 
 ## Links
 
-- **VS Code Extension:** [Aero](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
-- **NPM Packages:**
-  - [`aerobuilt`](https://www.npmjs.com/package/aerobuilt)
-  - [`create-aerobuilt`](https://www.npmjs.com/package/create-aerobuilt)
-  - [`@aerobuilt/core`](https://www.npmjs.com/package/@aerobuilt/core)
-  - [`@aerobuilt/content`](https://www.npmjs.com/package/@aerobuilt/content)
-  - [`@aerobuilt/config`](https://www.npmjs.com/package/@aerobuilt/config)
-  - [`@aerobuilt/template-minimal`](https://www.npmjs.com/package/@aerobuilt/template-minimal)
+- [aerobuilt](https://www.npmjs.com/package/aerobuilt)
+- [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt)
+- [@aerobuilt/core](https://www.npmjs.com/package/@aerobuilt/core)
+- [@aerobuilt/content](https://www.npmjs.com/package/@aerobuilt/content)
+- [@aerobuilt/config](https://www.npmjs.com/package/@aerobuilt/config)
+- [@aerobuilt/template-minimal](https://www.npmjs.com/package/@aerobuilt/template-minimal)
+- [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
 
 ## Inspiration
 
