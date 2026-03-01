@@ -4,7 +4,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "AERO_NITRO=false vite build && vite preview",
+		"preview": "AERO_SERVER=false vite build && vite preview",
 		"preview:api": "vite build && node .output/server/index.mjs"
 	},
 	"dependencies": {

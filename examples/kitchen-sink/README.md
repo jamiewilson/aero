@@ -26,7 +26,7 @@ From repo root (or from `examples/kitchen-sink` if core is built):
 
 - **pnpm dev** — Vite dev server with HMR (and Nitro when `server: true`).
 - **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
-- **pnpm preview** — Static preview only (`AERO_NITRO=false` build + `vite preview`).
+- **pnpm preview** — Static preview only (`AERO_SERVER=false` build + `vite preview`).
 - **pnpm preview:api** — Full server preview (static + Nitro API).
 
 Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs core build first).

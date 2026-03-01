@@ -65,7 +65,7 @@ const html = await aero.render('index', { props: { title: 'Home' } })
 
 ### Vite plugin
 
-- **Plugin** from `aerobuilt/vite`: `aero(options?)`. Options: `nitro`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
+- **Plugin** from `aerobuilt/vite`: `aero(options?)`. Options: `server`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
 - Sub-plugins: config resolution, virtual client modules (`\0`-prefixed), HTML transform, SSR middleware, HMR.
 - Build: page discovery, static render, optional Nitro build, optional image optimizer (sharp/svgo).
 
@@ -74,7 +74,7 @@ const html = await aero.render('index', { props: { title: 'Home' } })
 ```js
 import { aero } from 'aerobuilt/vite'
 export default {
-	plugins: [aero({ nitro: true })],
+	plugins: [aero({ server: true })],
 }
 ```
 

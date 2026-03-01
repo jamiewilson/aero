@@ -20,7 +20,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 ### Core idea
 
 - **Build time:** The parser extracts `<script is:build>` and plain `<script>` (client). Build scripts run in Node; they import components, read content, and prepare data. Client scripts are bundled by Vite. Templates are compiled into async render functions that output HTML.
-- **Output:** By default you get a static `dist/`. With `nitro: true`, you also get a Nitro server for API routes.
+- **Output:** By default you get a static `dist/`. With `server: true`, you also get a Nitro server for API routes.
 - **Client:** HTMX and Alpine attributes are preserved so they run in the browser as-is. Aero does not own the DOM.
 
 ### Design goals
@@ -73,5 +73,5 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 ### Server and client libraries
 
-- **Nitro** — `aero({ nitro: true })`; API in `server/api/`, catch-all for static. [nitro-overview.md](nitro-overview.md)
+- **Nitro** — `aero({ server: true })`; API in `server/api/`, catch-all for static. [nitro-overview.md](nitro-overview.md)
 - **HTMX and Alpine** — Use directly; attributes preserved. [htmx-and-alpine.md](htmx-and-alpine.md)
