@@ -47,9 +47,20 @@ export interface ContentCollectionConfig<
 	transform?: (document: ContentDocument<TSchema>) => TOutput | Promise<TOutput>
 }
 
-/** Top-level content config: array of collection definitions. */
+/** Top-level content config: array of collection definitions with optional highlighting. */
 export interface ContentConfig {
 	collections: ContentCollectionConfig<any, any>[]
+	/**
+	 * Optional syntax highlighting configuration for markdown code blocks.
+	 * Nest under `highlight.shiki` to use Shiki-powered highlighting.
+	 * When omitted, plain `<pre><code>` output is produced (backward compatible).
+	 *
+	 * @see https://shiki.style/guide
+	 */
+	highlight?: {
+		/** Shiki configuration. Uses Shiki's native `theme`/`themes` options. */
+		shiki: import('@aerobuilt/highlight').ShikiConfig
+	}
 }
 
 /**

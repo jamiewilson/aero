@@ -1,9 +1,14 @@
 /**
  * Tests for render(): lazy markdown-to-HTML used in pages (import from aero:content).
- * Same remark pipeline as compileMarkdown; handles null/undefined and returns { html }.
+ * Uses shared processor from processor.ts; reset before each test for clean state.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../render'
+import { resetProcessor, initProcessor } from '../processor'
+
+beforeEach(() => {
+	resetProcessor()
+})
 
 describe('render', () => {
 	it('returns { html } for a valid document body', async () => {
@@ -42,5 +47,21 @@ describe('render', () => {
 		}
 		const result = await render(doc as any)
 		expect(result).toEqual({ html: '' })
+	})
+
+	it('highlights code blocks when Shiki is enabled', async () => {
+		await initProcessor({
+			theme: 'github-light',
+			langs: ['js'],
+		})
+		const doc = {
+			id: 'test',
+			body: '```js\nconst x = 1\n```',
+			data: {},
+			_meta: { filename: 'test.md', slug: 'test', path: 'test', extension: '.md' },
+		}
+		const result = await render(doc as any)
+		expect(result.html).toContain('class="shiki')
+		expect(result.html).toContain('const')
 	})
 })

@@ -1,15 +1,11 @@
 # Aero VS Code Extension
 
-[![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/aerobuilt.aero-vscode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
-[![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/aerobuilt.aero-vscode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-
 Language support for Aero templates in HTML files: syntax highlighting, completions, hovers, definitions, and diagnostics for Aero expressions and components.
 
 ## Features
 
 - **Syntax highlighting**
-  - Aero expressions in text (`{ props.title }`) and attributes (`title="{ meta.title }"`).
+  - Aero expressions in text `{ props.title }` and attributes `title="{ meta.title }"`.
   - Code inside `<script is:build>` and client script blocks is left as standard JS/TS.
 
 - **Completions**

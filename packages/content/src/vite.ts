@@ -7,11 +7,8 @@
  */
 import type { ContentConfig } from './types'
 import type { Plugin, ResolvedConfig } from 'vite'
-import {
-	loadAllCollections,
-	serializeContentModule,
-	getWatchedDirs,
-} from './loader'
+import { loadAllCollections, serializeContentModule, getWatchedDirs } from './loader'
+import { initProcessor } from './processor'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -39,7 +36,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 
 	return {
 		name: 'vite-plugin-aero-content',
-		/** Load content.config.ts, set contentConfig and watchedDirs; warn if config missing. */
+		/** Load content.config.ts, set contentConfig and watchedDirs; initialize processor early. */
 		async configResolved(config) {
 			resolvedConfig = config
 			const root = config.root
@@ -52,6 +49,10 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const mod = await import(/* @vite-ignore */ configUrl)
 				contentConfig = mod.default as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
+
+				// Initialize the markdown processor early with Shiki config (if provided).
+				// This ensures the processor is configured before any modules are loaded.
+				await initProcessor(contentConfig.highlight?.shiki)
 			} catch (err: any) {
 				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT') {
 					config.logger.warn(
@@ -81,6 +82,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				return '// aero:content — no collections configured\n'
 			}
 
+			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
 			const loaded = await loadAllCollections(contentConfig, resolvedConfig.root)
 			serialized = serializeContentModule(loaded)

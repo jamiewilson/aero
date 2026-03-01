@@ -9,6 +9,10 @@
 			"path": "packages/aerobuilt",
 		},
 		{
+			"name": "examples",
+			"path": "examples",
+		},
+		{
 			"name": "core",
 			"path": "packages/core",
 		},
@@ -19,6 +23,10 @@
 		{
 			"name": "content",
 			"path": "packages/content",
+		},
+		{
+			"name": "highlight",
+			"path": "packages/highlight",
 		},
 		{
 			"name": "templates",
