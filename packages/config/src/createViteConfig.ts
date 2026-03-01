@@ -88,7 +88,7 @@ function createViteConfigFromAero(
 		content === true ? {} : typeof content === 'object' ? content : undefined
 	const basePlugins: UserConfig['plugins'] = [
 		aero({
-			nitro: server ?? false,
+			server: server ?? false,
 			site,
 			dirs,
 			redirects,

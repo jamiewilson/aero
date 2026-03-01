@@ -23,7 +23,7 @@ export interface RedirectRule {
 
 export interface AeroOptions {
 	/** Enable Nitro server integration (default: `false`). */
-	nitro?: boolean
+	server?: boolean
 	/** API route prefix (default: `'/api'`). */
 	apiPrefix?: string
 	/** Directory overrides. */

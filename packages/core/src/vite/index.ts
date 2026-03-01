@@ -95,7 +95,7 @@ export default ${JSON.stringify(nitroConfig, null, 2)}
 	return aeroDir
 }
 
-/** Run `nitro build` with generated config; used after static pages are written when options.nitro is true. */
+/** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
 async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
 	await new Promise<void>((resolve, reject) => {
@@ -484,13 +484,13 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
  * HMR for templates and content is handled by Vite's dependency graph when the app uses a single
  * client entry that imports @aerobuilt/core and calls aero.mount().
  *
- * @param options - AeroOptions (nitro, apiPrefix, dirs). Nitro can be disabled at runtime via AERO_NITRO=false.
+ * @param options - AeroOptions (server, apiPrefix, dirs). Server can be disabled at runtime via AERO_SERVER=false.
  * @returns PluginOption[] to pass to Vite's plugins array.
  */
 export function aero(options: AeroOptions = {}): PluginOption[] {
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	const enableNitro = options.nitro === true && process.env.AERO_NITRO !== 'false'
+	const enableNitro = options.server === true && process.env.AERO_SERVER !== 'false'
 
 	const runtimeInstanceJsPath = fileURLToPath(
 		new URL('../runtime/instance.js', import.meta.url),

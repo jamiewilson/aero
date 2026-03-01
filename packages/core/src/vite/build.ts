@@ -501,8 +501,8 @@ export async function renderStaticPages(
 
 	// Disable Nitro plugin during static page rendering to prevent it from handling
 	// requests or starting watchers that might hang the build.
-	const previousAeroNitro = process.env.AERO_NITRO
-	process.env.AERO_NITRO = 'false'
+	const previousAeroServer = process.env.AERO_SERVER
+	process.env.AERO_SERVER = 'false'
 
 	// Use a dedicated cache dir so the static server does not reuse the main build's
 	// transform cache (which would hand compiled .html→JS to import-analysis and fail).
@@ -630,10 +630,10 @@ export async function renderStaticPages(
 		}
 	} finally {
 		await server.close()
-		if (previousAeroNitro === undefined) {
-			delete process.env.AERO_NITRO
+		if (previousAeroServer === undefined) {
+			delete process.env.AERO_SERVER
 		} else {
-			process.env.AERO_NITRO = previousAeroNitro
+			process.env.AERO_SERVER = previousAeroServer
 		}
 	}
 }

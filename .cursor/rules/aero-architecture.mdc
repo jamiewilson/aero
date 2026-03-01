@@ -43,7 +43,7 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Commands
 
-- `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `aero({ nitro: true })`; optional `site: 'https://...'` for canonical URL)
+- `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `aero({ server: true })`; optional `site: 'https://...'` for canonical URL)
 - `pnpm run build` - Static build to dist/; with Nitro also produces .output/
 - `pnpm run preview` - Static preview (no API)
 - `pnpm run preview:api` - Full server preview (static + API)

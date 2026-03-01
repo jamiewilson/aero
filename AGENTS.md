@@ -80,7 +80,7 @@ Components receive via `aero.props`:
 ## Development Commands
 
 ```bash
-pnpm run dev          # Vite dev server with HMR (Nitro when aero({ nitro: true }))
+pnpm run dev          # Vite dev server with HMR (Nitro when aero({ server: true }))
 pnpm run build        # Static build to dist/; with Nitro also .output/
 pnpm run preview      # Static preview only
 pnpm run preview:api  # Full server preview (static + API)

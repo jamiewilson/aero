@@ -22,7 +22,7 @@ export default defineConfig({
 import { aero } from 'aerobuilt/vite'
 
 export default {
-	plugins: [aero({ nitro: true, site: 'https://example.com' })],
+	plugins: [aero({ server: true, site: 'https://example.com' })],
 }
 ```
 
