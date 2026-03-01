@@ -7,18 +7,15 @@
 		background: --currentAlpha(0.05);
 		border: 1px solid --currentAlpha(0.1);
 		border-radius: 0.25rem;
+		text-wrap: nowrap;
 		text-box: trim-both ex alphabetic;
 	}
 
-	pre code {
-		tab-size: 2ch;
-		white-space: pre-wrap;
-		display: block;
-		padding: 1.5rem;
-		overflow-y: hidden;
-		overflow-x: auto;
+	pre:has(code) {
+		background: none;
+		border-radius: 0.5rem;
 
-		&[class*='language-'] {
+		&[data-lang] {
 			position: relative;
 			&::before {
 				font-family: sans-serif;
@@ -31,28 +28,38 @@
 			}
 		}
 
-		&[class*='html']::before {
+		&[data-lang*='html']::before {
 			content: 'html';
 		}
 
-		&[class*='css']::before {
+		&[data-lang*='css']::before {
 			content: 'css';
 		}
 
-		&[class*='ts']::before {
+		&[data-lang*='ts']::before {
 			content: 'ts';
 		}
 
-		&[class*='js']::before {
+		&[data-lang*='js']::before {
 			content: 'js';
 		}
 
-		&[class*='json']::before {
+		&[data-lang*='json']::before {
 			content: 'json';
 		}
 
-		&[class*='bash']::before {
+		&[data-lang*='bash']::before {
 			content: 'bash';
 		}
+	}
+
+	pre code {
+		tab-size: 2ch;
+		white-space: pre-wrap;
+		display: block;
+		padding: 1.5rem;
+		border: none;
+		overflow-y: hidden;
+		overflow-x: auto;
 	}
 }

@@ -1,4 +1,5 @@
 import { defineCollection, defineConfig } from 'aerobuilt/content'
+import { transformerDataLang } from '@aerobuilt/highlight'
 import { z } from 'zod'
 
 const docs = defineCollection({
@@ -14,4 +15,14 @@ const docs = defineCollection({
 
 export default defineConfig({
 	collections: [docs],
+	highlight: {
+		shiki: {
+			themes: {
+				light: 'catppuccin-latte',
+				dark: 'catppuccin-mocha',
+			},
+			defaultColor: 'light-dark()',
+			transformers: [transformerDataLang()],
+		},
+	},
 })

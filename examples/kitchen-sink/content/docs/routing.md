@@ -19,11 +19,11 @@ Every `.html` file in the pages directory becomes a route. Examples:
 
 **Nested directories:** Subdirectories map to URL segments. An `index.html` inside a directory is that segment’s root:
 
-```
+```plaintext
 client/pages/
-  docs/
-    index.html           → /docs
-    getting-started.html → /docs/getting-started
+└── docs/
+    ├── index.html           → /docs
+    └── getting-started.html → /docs/getting-started
 ```
 
 **404:** `client/pages/404.html` is the error page, rendered to `dist/404.html`. With Nitro preview, unmatched URLs are served this page with a 404 status.
@@ -97,13 +97,13 @@ The build rewrites absolute `href` values to relative paths so the site works fr
 
 ## File structure reference
 
-```
+```bash
 client/pages/
-  index.html            → /          (root page)
-  about.html            → /about
-  404.html              → (error page, dist/404.html)
-  [id].html             → /:id        (dynamic; needs getStaticPaths for build)
-  docs/
-    index.html          → /docs
-    [slug].html         → /docs/:slug (dynamic; needs getStaticPaths for build)
+├── index.html     → / (root page)
+├── about.html     → /about
+├── 404.html       → (error page, dist/404.html)
+├── [id].html      → /:id (needs `getStaticPaths` for build)
+└── docs/
+    ├── index.html   → /docs
+    └── [slug].html  → /docs/:slug (needs `getStaticPaths` for build)
 ```

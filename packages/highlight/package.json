@@ -1,0 +1,49 @@
+{
+	"name": "@aerobuilt/highlight",
+	"version": "0.1.0",
+	"type": "module",
+	"license": "MIT",
+	"author": "Jamie Wilson",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aerobuilt/aero.git",
+		"directory": "packages/highlight"
+	},
+	"homepage": "https://github.com/aerobuilt/aero",
+	"private": false,
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./types": "./dist/types.d.ts"
+	},
+	"dependencies": {
+		"shiki": "^3.0.0"
+	},
+	"peerDependencies": {
+		"@shikijs/transformers": "^3.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@shikijs/transformers": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@shikijs/transformers": "^3.0.0",
+		"@types/node": "^25.3.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
+	}
+}

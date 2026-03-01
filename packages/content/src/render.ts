@@ -2,13 +2,11 @@
  * Lazy markdown-to-HTML for use in pages (import from `aero:content`).
  *
  * @remarks
- * Uses the same remark pipeline as compileMarkdown. Call from on:build with a document (e.g. from getCollection); returns `{ html }`.
+ * Delegates to the shared processor from `./processor`. Call from on:build with a document
+ * (e.g. from getCollection); returns `{ html }`.
  */
 import type { ContentDocument } from './types'
-import { remark } from 'remark'
-import remarkHtml from 'remark-html'
-
-const processor = remark().use(remarkHtml)
+import { getProcessor } from './processor'
 
 /**
  * Render a content document's markdown body to HTML. Use in pages with documents from getCollection.
@@ -23,6 +21,6 @@ export async function render(
 		console.warn('[aero] render() received null or undefined document. Returning empty HTML.')
 		return { html: '' }
 	}
-	const result = await processor.process(doc.body)
+	const result = await getProcessor().process(doc.body)
 	return { html: String(result) }
 }

@@ -6,8 +6,9 @@
 	"scripts": {
 		"test": "vitest run",
 		"typecheck": "pnpm -r typecheck",
-		"build": "pnpm build:interpolation && pnpm build:core && pnpm build:content && pnpm build:config && pnpm build:aerobuilt",
+		"build": "pnpm build:interpolation && pnpm build:highlight && pnpm build:core && pnpm build:content && pnpm build:config && pnpm build:aerobuilt",
 		"build:interpolation": "pnpm --dir packages/interpolation build",
+		"build:highlight": "pnpm --dir packages/highlight build",
 		"build:core": "pnpm --dir packages/core build",
 		"build:config": "pnpm --dir packages/config build",
 		"build:content": "pnpm --dir packages/content build",
