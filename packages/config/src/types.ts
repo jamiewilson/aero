@@ -3,10 +3,11 @@
  *
  * @remarks
  * Used by `aero.config.ts` and by `createViteConfig` to build the final Vite config.
+ * dirs shape matches the Vite plugin (aero()) so the same options work in aero.config and vite.config.
  */
 import type { UserConfig } from 'vite'
 import type { AeroContentOptions } from '@aerobuilt/content/vite'
-import type { AeroMiddleware, RedirectRule } from '@aerobuilt/core/types'
+import type { AeroDirs, AeroMiddleware, RedirectRule } from '@aerobuilt/core/types'
 
 /** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {
@@ -22,15 +23,8 @@ export interface AeroConfig {
 	 */
 	site?: string
 
-	/** Directory overrides. */
-	dirs?: {
-		/** Site source directory; pages live at `client/pages` (default: `'client'`). */
-		client?: string
-		/** Nitro server directory (default: `'server'`). */
-		serverDir?: string
-		/** Build output directory (default: `'dist'`). */
-		dist?: string
-	}
+	/** Directory overrides. Same shape as aero() plugin options. */
+	dirs?: Partial<AeroDirs>
 
 	/**
 	 * Redirect rules applied in dev and when using the Nitro server (preview:api / production).

@@ -12,6 +12,7 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
+		"@types/alpinejs": "^3.13.11",
 		"vite": "8.0.0-beta.15"
 	},
 	"version": "0.0.1",

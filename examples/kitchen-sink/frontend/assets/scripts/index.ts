@@ -1,7 +1,7 @@
 import aero from 'aerobuilt'
 
 const htmx = (await import('htmx.org')).default
-const Alpine = (await import('@scripts/alpine')).default
+const Alpine = (await import('~/frontend/assets/scripts/alpine')).default
 
 htmx.config.globalViewTransitions = true
 htmx.onLoad(node => Alpine.initTree(node as HTMLElement))

@@ -3,11 +3,13 @@
  *
  * Uses `get-tsconfig` to find tsconfig.json and extract paths for Vite resolve.alias.
  * Uses `oxc-resolver` for full module resolution (tsconfig paths, extends, package exports).
+ * Framework defaults for @pages, @layouts, @components can be merged via mergeWithDefaultAliases.
  *
  * @packageDocumentation
  */
 
 import type { UserAlias, AliasResult } from '../types'
+import type { ResolvedAeroDirs } from '../vite/defaults'
 import path from 'node:path'
 import { getTsconfig } from 'get-tsconfig'
 import { ResolverFactory } from 'oxc-resolver'
@@ -20,6 +22,18 @@ const resolver = new ResolverFactory({
 	conditionNames: ['node', 'import'],
 	tsconfig: 'auto',
 })
+
+/**
+ * Build default path aliases for @pages, @layouts, @components from project root and dirs.
+ * Used when tsconfig is missing or does not define these keys so the runtime globs resolve.
+ */
+export function getDefaultAliases(root: string, dirs: ResolvedAeroDirs): UserAlias[] {
+	return [
+		{ find: '@pages', replacement: path.join(root, dirs.client, 'pages') },
+		{ find: '@layouts', replacement: path.join(root, dirs.client, 'layouts') },
+		{ find: '@components', replacement: path.join(root, dirs.client, 'components') },
+	]
+}
 
 /**
  * Load path aliases from tsconfig.json at or above the given root.
@@ -67,4 +81,52 @@ export function loadTsconfigAliases(root: string): AliasResult {
 	}
 
 	return { aliases, resolve, projectRoot }
+}
+
+/**
+ * Merge framework default aliases (from dirs) with tsconfig-derived aliases.
+ * Defaults are applied first; any alias from aliasResult with the same `find` overwrites.
+ * Produces a resolve that tries merged aliases first, then falls back to the original resolver.
+ *
+ * Ensures @pages, @layouts, @components always exist so the runtime import.meta.glob patterns resolve.
+ *
+ * @param aliasResult - Result from loadTsconfigAliases (may have empty aliases when no tsconfig).
+ * @param root - Project root.
+ * @param dirs - Resolved client/layouts/components dirs.
+ * @returns AliasResult with merged aliases and a resolve that uses them.
+ */
+export function mergeWithDefaultAliases(
+	aliasResult: AliasResult,
+	root: string,
+	dirs: ResolvedAeroDirs,
+): AliasResult {
+	const defaults = getDefaultAliases(root, dirs)
+	const byFind = new Map<string, string>()
+	for (const a of defaults) {
+		byFind.set(a.find, a.replacement)
+	}
+	for (const a of aliasResult.aliases) {
+		byFind.set(a.find, a.replacement)
+	}
+	const aliases: UserAlias[] = Array.from(byFind.entries()).map(([find, replacement]) => ({
+		find,
+		replacement,
+	}))
+
+	const resolve = (specifier: string, importer: string): string => {
+		for (const { find, replacement } of aliases) {
+			if (specifier === find || specifier.startsWith(find + '/')) {
+				const rest = specifier.slice(find.length)
+				const resolved = path.join(replacement, rest.replace(/^\//, ''))
+				return resolved
+			}
+		}
+		return aliasResult.resolve(specifier, importer)
+	}
+
+	return {
+		aliases,
+		resolve,
+		projectRoot: aliasResult.projectRoot,
+	}
 }

@@ -17,7 +17,7 @@ Typed Aero configuration and Vite config factory. Used by `aero.config.ts` and t
 | `content` | `boolean \| AeroContentOptions` | Enable content collections. `true` or options (e.g. `config` path). |
 | `server` | `boolean` | Enable Nitro server integration (default: `false`). |
 | `site` | `string` | Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and `Aero.site` in templates; used for sitemap, RSS, canonical links. |
-| `dirs` | `object` | Overrides: `client`, `serverDir`, `dist`. |
+| `dirs` | `object` | Overrides: `client`, `server`, `dist`. Same shape as the aero() Vite plugin. |
 | `vite` | `UserConfig` | Vite config merged with Aero defaults. |
 
 ## Usage

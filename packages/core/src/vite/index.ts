@@ -23,6 +23,7 @@ import {
 	AERO_HTML_VIRTUAL_PREFIX,
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
+	DEFAULT_DIRS,
 	getClientScriptVirtualUrl,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
 	resolveDirs,
@@ -32,7 +33,7 @@ import {
 import { parse } from '../compiler/parser'
 import { compile } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
-import { loadTsconfigAliases } from '../utils/aliases'
+import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
 import {
 	createBuildConfig,
@@ -122,7 +123,18 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
-			state.aliasResult = loadTsconfigAliases(root)
+			const rawAliases = loadTsconfigAliases(root)
+			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)
+			if (
+				state.dirs.client !== DEFAULT_DIRS.client &&
+				rawAliases.projectRoot != null
+			) {
+				console.warn(
+					'[aero] Custom dirs.client is set; ensure tsconfig paths for @pages, @layouts, @components match (e.g. @pages → "' +
+						state.dirs.client +
+						'/pages").',
+				)
+			}
 			const site = state.options.site ?? ''
 
 			// Production build: use minimal client entry (no instance/template chunks) so dist/assets stays small.

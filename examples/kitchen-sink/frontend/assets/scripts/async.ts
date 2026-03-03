@@ -1,4 +1,4 @@
-import { allCaps } from '~/client/assets/scripts/utils/transform'
+import { allCaps } from '~/frontend/assets/scripts/utils/transform'
 const message = allCaps('[aero]') + ' <script async>...'
 
 function simulateAsync() {
