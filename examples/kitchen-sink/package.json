@@ -1,6 +1,8 @@
 {
 	"name": "@aerobuilt/example-kitchen-sink",
 	"type": "module",
+	"version": "0.1.0",
+	"private": true,
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -24,7 +26,5 @@
 		"shiki": "^4.0.0",
 		"vite": "8.0.0-beta.15",
 		"zod": "^4.3.6"
-	},
-	"version": "0.0.1",
-	"private": true
+	}
 }

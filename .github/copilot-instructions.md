@@ -2,17 +2,17 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **app** (starter) lives in **packages/start** (src/, server/). Root is the workspace.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **demo app** is **examples/kitchen-sink**; **packages/create-aerobuilt** is the project initializer (scaffolds from templates). Root is the workspace.
 
 ### Monorepo
 
-- **packages/core** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `aerobuilt` and `aerobuilt/vite`.
-- **packages/vscode** - VS Code extension.
-- **packages/start** - Starter app: src/, server/, vite.config.ts, nitro.config.ts. Root scripts delegate to start and core.
+- **packages/core** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `@aerobuilt/core` and `aerobuilt/vite`.
+- **packages/aero-vscode** - VS Code extension.
+- **packages/create-aerobuilt** - Project initializer. Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>`. Root has no app dev script; run dev/build from **examples/kitchen-sink** or **packages/templates/minimal**.
 
 ### Compilation pipeline (packages/core)
 
-1. **Parser** (packages/core/compiler/parser.ts) extracts `<script on:build>` and `<script on:client>` blocks from HTML
+1. **Parser** (packages/core/compiler/parser.ts) extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks from HTML
 2. **Codegen** (packages/core/compiler/codegen.ts) compiles templates into async render functions with `{ }` interpolation
 3. **Vite Plugin** (packages/core/vite/index.ts) orchestrates the build, serves pages via middleware, and handles virtual modules for client scripts
 4. **Runtime** (packages/core/runtime/index.ts) provides the `Aero` class that renders pages and components with context
@@ -24,7 +24,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 Components use `-component` or `-layout` suffix in markup and are imported without suffix:
 
 ```html
-<script on:build>
+<script is:build>
 	import header from '@components/header' <!-- resolves header.html -->
 </script>
 <header-component title="Hello" />
@@ -32,65 +32,42 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ### Script Types
 
-- `<script on:build>` - Runs at build time, has access to `aero.props`, `site` globals, imports
-- `<script on:client>` - Bundled as virtual module, runs in browser
+- `<script is:build>` - Runs at build time, has access to `aero.props`, `site` globals, imports
+- Plain `<script>` (no `is:*`) - Bundled as virtual module, runs in browser (client)
+- `<script is:inline>`, `<script is:blocking>` - See docs/script-taxonomy.md
 - `<script src="...">` - External scripts allowed without attributes
-- **Required**: All inline scripts must have `on:client` or `on:build` attribute
 
 ### Props System
 
-Props passed via attributes or `data-props`:
+Props passed via attributes or `props` (and `data-props` for HTML compliance):
 
 ```html
 <my-component title="{ site.title }" />
-<my-component data-props />
-<my-component data-props="{ ...baseProps }" />
+<my-component props />
+<my-component props="{ ...baseProps }" />
 ```
 
-Components receive via `aero.props` in `<script on:build>`.
+Components receive via `aero.props` in `<script is:build>`.
 
-### Path Aliases (root tsconfig.json)
+### Path Aliases (tsconfig in app)
 
-- `@components/*` → src/components/\*
-- `@layouts/*` → src/layouts/\*
-- `@pages/*` → src/pages/\*
-- `@content/*` → src/content/\*
-- `@styles/*` → src/assets/styles/\*
-- `@scripts/*` → src/assets/scripts/\*
-- `@images/*` → src/assets/images/\*
-- `@src/*` → src/\*
-- `@server/*` → server/\*
-- `~/*` → project root
+- `@components/*` → client/components/\* (or app’s client dir)
+- `@layouts/*`, `@pages/*`, `@content/*`, `@styles/*`, `@scripts/*`, `@images/*`, `@src/*`, `@server/*`, `~/*`
 
 ## TDD (Test-Driven Development)
 
-Use a **red-to-green** approach for implementing new features or tracking down bugs:
-
-1. **Red**: Write or run a failing test that captures the desired behavior or reproduces the bug. Run the test suite and confirm the test fails.
-2. **Green**: Implement the minimal change to make the test pass. Run the test suite and confirm it passes.
-3. **Refactor** (if needed): Improve the implementation without changing behavior; keep tests green.
-
-For bug fixes: start by adding or adjusting a test that fails in the current code (red), then fix the code until the test passes (green). Do not skip writing the failing test.
+Use a **red-to-green** approach: (1) failing test; (2) minimal change to pass; (3) refactor if needed. For bugs, add or adjust a failing test first.
 
 ## Development Commands
 
-```bash
-pnpm run dev          # Vite dev server with HMR
-pnpm run build        # Static build to dist/; with Nitro also .output/
-pnpm run preview      # Static preview
-pnpm run preview:api  # Full server preview
-pnpm test             # Vitest (packages/core)
-```
+Run app dev/build/preview from **examples/kitchen-sink** or **packages/templates/minimal** (e.g. `pnpm --dir examples/kitchen-sink dev`). Root: `pnpm test` (Vitest in packages/core), `pnpm build` (packages only).
 
-## File Structure (root)
+## File Structure (default app layout)
 
-- `src/pages/` - Route pages
-- `src/components/` - Reusable components
-- `src/layouts/` - Layout wrappers with `<slot>` support
-- `src/content/` - Global data (site.ts, theme.ts → `site` in templates)
-- `src/assets/` - Styles, scripts, images
-- `server/api/` - Nitro API handlers
-- `server/routes/` - Nitro routes (e.g. catch-all for dist/)
+- `client/pages/` - Route pages (or frontend/ when custom dirs)
+- `client/components/`, `client/layouts/`, `client/assets/`
+- `content/` - Global data (site.ts, collections)
+- `server/api/`, `server/routes/` - Nitro when server: true
 
 ## Client Stack
 
@@ -102,4 +79,4 @@ pnpm test             # Vitest (packages/core)
 
 - Virtual client scripts use `/@aero/client/` prefix; plugin uses `\0` for Vite virtual modules
 - Slot passthrough: both `name` and `slot` on `<slot>` elements
-- `data-each` for loops: `<li data-each="{ item in items }">{ item.name }</li>`
+- `each` for loops: `<li each="{ item in items }">{ item.name }</li>` (or `data-each`)

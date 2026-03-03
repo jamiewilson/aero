@@ -10,8 +10,8 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/aero-vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create-aerobuilt** - Project initializer (create-aerobuilt). Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **minimal** (starter template for create-aerobuilt).
-- **examples/kitchen-sink** - Full demo app (root `pnpm dev`/build runs this): content collections, Nitro API, Alpine.js, HTMX.
-- **Root** - Workspace root. Scripts delegate: `pnpm dev` runs kitchen-sink dev; `pnpm test` runs core tests.
+- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
+- **Root** - Workspace root. Scripts: `pnpm test` runs core tests; `pnpm build` builds packages only.
 
 ### Compilation pipeline (packages/core)
 
@@ -122,13 +122,12 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 
 ## File Structure
 
-- **examples/kitchen-sink:** `client/pages/`, `client/components/`, `client/layouts/`, `content/`, `client/assets/`, `server/api/`, `server/routes/`
+- **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
 - **packages/create-aerobuilt/** - create-aerobuilt initializer (no app source; scaffolds from templates)
-- **packages/core/** - Framework (compiler, runtime, vite)
-- **packages/vite/** - Vite plugin re-export
+- **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aerobuilt/core and aerobuilt/vite)
 - **packages/aero-vscode/** - VS Code extension
 
-For a detailed monorepo and packages layout, see [docs/monorepo-and-packages.md](docs/monorepo-and-packages.md).
+For a detailed monorepo and packages layout, see [_reference/guides/monorepo.md](_reference/guides/monorepo.md).
 
 ## Documentation (TSDoc)
 

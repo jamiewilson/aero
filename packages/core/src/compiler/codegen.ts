@@ -73,44 +73,23 @@ class Lowerer {
 
 	/** Gets the condition value from if/else-if attribute */
 	private getCondition(node: any, attr: string): string | null {
+		const tagName = node?.tagName?.toLowerCase?.() || 'element'
 		const plainValue = node.getAttribute(attr)
 		if (plainValue !== null) {
-			return this.requireBracedExpression(plainValue, attr, node)
+			return Helper.stripBraces(
+				Helper.validateSingleBracedExpression(plainValue, { directive: attr, tagName }),
+			)
 		}
 
 		const dataAttr = CONST.ATTR_PREFIX + attr
 		const dataValue = node.getAttribute(dataAttr)
 		if (dataValue !== null) {
-			return this.requireBracedExpression(dataValue, dataAttr, node)
+			return Helper.stripBraces(
+				Helper.validateSingleBracedExpression(dataValue, { directive: dataAttr, tagName }),
+			)
 		}
 
 		return null
-	}
-
-	/**
-	 * Require directive value to be a braced expression; optionally strip outer braces.
-	 *
-	 * @param value - Raw attribute value.
-	 * @param directive - Attribute name for error message (e.g. `each`, `pass:data`).
-	 * @param node - DOM node for error message (tag name).
-	 * @param options - `strip: true` (default) returns inner expression; `strip: false` returns trimmed value including braces (e.g. for pass:data).
-	 * @returns Trimmed value, with or without outer braces per options.
-	 */
-	private requireBracedExpression(
-		value: string,
-		directive: string,
-		node: any,
-		options?: { strip?: boolean },
-	): string {
-		const strip = options?.strip !== false
-		const trimmed = value.trim()
-		if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
-			const tagName = node?.tagName?.toLowerCase?.() || 'element'
-			throw new Error(
-				`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`,
-			)
-		}
-		return strip ? Helper.stripBraces(trimmed) : trimmed
 	}
 
 	private isSingleWrappedExpression(value: string): boolean {
@@ -153,7 +132,13 @@ class Lowerer {
 					if (!value) {
 						dataPropsExpression = '...props'
 					} else {
-						dataPropsExpression = this.requireBracedExpression(value, attr.name, node)
+						const tagName = node?.tagName?.toLowerCase?.() || 'element'
+						dataPropsExpression = Helper.stripBraces(
+							Helper.validateSingleBracedExpression(value, {
+								directive: attr.name,
+								tagName,
+							}),
+						)
 					}
 					continue
 				}
@@ -189,7 +174,13 @@ class Lowerer {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
 				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
-					const content = this.requireBracedExpression(attr.value || '', attr.name, node)
+					const tagName = node?.tagName?.toLowerCase?.() || 'element'
+					const content = Helper.stripBraces(
+						Helper.validateSingleBracedExpression(attr.value || '', {
+							directive: attr.name,
+							tagName,
+						}),
+					)
 					const match = content.match(CONST.EACH_REGEX)
 					if (!match) {
 						const tagName = node?.tagName?.toLowerCase?.() || 'element'
