@@ -369,7 +369,6 @@ export class AeroDiagnostics implements vscode.Disposable {
 		diagnostics: vscode.Diagnostic[],
 	): void {
 		const resolver = getResolver(document)
-		if (!resolver) return
 		const imports = collectImportedSpecifiersFromDocument(text)
 		const ignoredRanges = getIgnoredRanges(text)
 

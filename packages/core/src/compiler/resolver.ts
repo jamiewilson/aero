@@ -14,12 +14,14 @@ import { toPosix } from '../utils/path'
 export class Resolver {
 	private root: string
 	private rootAbs: string
-	private resolvePathFn: (specifier: string) => string
+	private resolvePathFn: (specifier: string, importer: string) => string
+	private importer: string
 
 	constructor(options: ResolverOptions) {
 		this.root = options.root
 		this.rootAbs = path.resolve(this.root)
-		this.resolvePathFn = options.resolvePath || ((v: string) => v)
+		this.importer = options.importer ?? options.root
+		this.resolvePathFn = options.resolvePath || ((v: string, _importer: string) => v)
 	}
 
 	/** Normalize resolved path: root-relative with `/` if under root, else posix-normalized; always forward slashes. */
@@ -47,7 +49,7 @@ export class Resolver {
 	 * @returns Resolved path or unchanged specifier.
 	 */
 	resolveImport(specifier: string): string {
-		let next = this.resolvePathFn(specifier)
+		let next = this.resolvePathFn(specifier, this.importer)
 		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
 		if (!looksPath) return specifier
 
@@ -63,7 +65,7 @@ export class Resolver {
 	 * @returns Resolved path or unchanged value.
 	 */
 	resolveAttrValue(value: string): string {
-		let next = this.resolvePathFn(value)
+		let next = this.resolvePathFn(value, this.importer)
 		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
 		if (!looksPath) return value
 		next = this.normalizeResolved(next)

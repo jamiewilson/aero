@@ -555,6 +555,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const resolver = new Resolver({
 		root: options.root,
 		resolvePath: options.resolvePath,
+		importer: options.importer,
 	})
 
 	const lowerer = new Lowerer(resolver)

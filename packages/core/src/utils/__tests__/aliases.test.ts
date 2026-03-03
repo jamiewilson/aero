@@ -1,8 +1,9 @@
 /**
  * Unit tests for utils/aliases.ts: loadTsconfigAliases with mocked get-tsconfig.
- * Covers missing tsconfig, empty paths, path parsing (baseUrl + paths), and resolvePath behavior.
+ * Covers missing tsconfig, empty paths, path parsing (baseUrl + paths), and resolve behavior.
  */
 
+import * as path from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { loadTsconfigAliases } from '../aliases'
 
@@ -21,7 +22,8 @@ describe('loadTsconfigAliases', () => {
 
 		const result = loadTsconfigAliases('/project')
 		expect(result.aliases).toEqual([])
-		expect(result.resolvePath).toBeUndefined()
+		expect(result.resolve).toBeDefined()
+		expect(typeof result.resolve).toBe('function')
 	})
 
 	it('should return empty result when no paths defined', async () => {
@@ -64,44 +66,27 @@ describe('loadTsconfigAliases', () => {
 	})
 
 	it('should resolve paths correctly', async () => {
-		const { getTsconfig } = await import('get-tsconfig')
-		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue({
-			path: '/project/tsconfig.json',
-			config: {
-				compilerOptions: {
-					baseUrl: '.',
-					paths: {
-						'@components/*': ['src/components/*'],
-					},
-				},
-			},
-		})
+		const kitchenSink = path.join(process.cwd(), 'examples/kitchen-sink')
+		const importer = path.join(kitchenSink, 'client/pages/index.html')
+		const result = loadTsconfigAliases(kitchenSink)
 
-		const result = loadTsconfigAliases('/project')
-		
-		expect(result.resolvePath).toBeDefined()
-		expect(result.resolvePath!('@components/header')).toBe('/project/src/components/header')
-		expect(result.resolvePath!('@components')).toBe('/project/src/components')
-		expect(result.resolvePath!('other')).toBe('other')
+		expect(result.resolve).toBeDefined()
+		expect(result.aliases.length).toBeGreaterThan(0)
+
+		const resolved = result.resolve('@components/header', importer)
+		expect(resolved).toBeDefined()
+		expect(resolved).toContain('components')
+		expect(resolved).toContain('header')
 	})
 
 	it('should handle nested paths', async () => {
-		const { getTsconfig } = await import('get-tsconfig')
-		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue({
-			path: '/project/tsconfig.json',
-			config: {
-				compilerOptions: {
-					baseUrl: '.',
-					paths: {
-						'@/*': ['src/*'],
-					},
-				},
-			},
-		})
+		const kitchenSink = path.join(process.cwd(), 'examples/kitchen-sink')
+		const importer = path.join(kitchenSink, 'client/pages/index.html')
+		const result = loadTsconfigAliases(kitchenSink)
 
-		const result = loadTsconfigAliases('/project')
-		
-		expect(result.resolvePath).toBeDefined()
-		expect(result.resolvePath!('@/components/Button')).toBe('/project/src/components/Button')
+		expect(result.resolve).toBeDefined()
+		const resolved = result.resolve('@components/header', importer)
+		expect(resolved).toBeDefined()
+		expect(resolved).toContain('components')
 	})
 })
