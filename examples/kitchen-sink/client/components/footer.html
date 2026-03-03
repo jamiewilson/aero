@@ -16,35 +16,31 @@
 				position: fixed;
 				inset-inline: 0;
 				margin-inline: auto;
-				bottom: 2rem;
+				bottom: calc(var(--page-padding) * 2);
 
-				padding: 1rem 2rem;
+				border-radius: var(--round);
 				width: fit-content;
-				border-radius: 10rem;
 
-				border: 1px solid --currentAlpha(0.1);
-				background: --currentAlpha(0.05);
+				border: 1px solid --opacity(currentColor, 0.1);
+				background: --opacity(currentColor, 0.05);
 				backdrop-filter: blur(10px);
 			}
 
 			ul {
 				display: flex;
-				gap: 2rem;
+				padding-inline: var(--element-base-padding);
 				justify-content: center;
 				list-style-type: none;
 			}
 
-			li {
-				text-box: trim-both ex alphabetic;
-			}
-
 			a {
-				color: var(--color-fg);
-				opacity: 0.5;
-				transition: opacity 0.2s;
+				display: block;
+				text-box: trim-both cap alphabetic;
+				padding: var(--element-base-padding);
+				color: --opacity(var(--color-fg), 0.5);
 
 				&:hover {
-					opacity: 1;
+					color: var(--color-accent);
 				}
 			}
 		}

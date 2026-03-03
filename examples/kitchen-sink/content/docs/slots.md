@@ -8,25 +8,25 @@ Slots let you pass content into a component and choose where it is rendered. You
 
 ## Basic slots
 
-**Receiving content:** Use `<slot>` for the default content, or `<slot name="nav">` for a named slot. Content from the parent that has `slot="nav"` goes into the named slot; everything else goes into the default slot.
+**Receiving content:** Use `<slot>{:html}` for the default content, or `<slot name="nav">{:html}` for a named slot. Content from the parent that has `<a slot="nav">{:html}` goes into the named slot; everything else goes into the default slot.
 
 ```html
 <slot name="nav">Fallback content</slot>
 ```
 
-- Receives content from the parent’s `slot="nav"` attribute.
+- Receives content from the parent’s `<p slot="nav"></p>{:html}` attribute.
 - The optional content between the tags is fallback when nothing is provided.
 
 ## Slot passthrough
 
-To receive a slot from the parent and forward it to your own child component, use both `name` and `slot` on the same `<slot>`:
+To receive a slot from the parent and forward it to your own child component, use both `name` and `slot` on the same `<slot>{:html}`:
 
 ```html
 <slot name="nav" slot="nav"></slot>
 ```
 
-- **name="nav"** — Receive the `nav` slot from the parent.
-- **slot="nav"** — Pass that content as the `nav` slot to the child.
+- **`name="nav"`** — Receive the `nav` slot from the parent.
+- **`slot="nav"`** — Pass that content as the `nav` slot to the child.
 
 You can put fallback content between the tags if you like.
 
@@ -71,7 +71,7 @@ The page’s “Custom Navigation Content” ends up in the child’s `nav` slot
 
 ## Example in a layout
 
-In `client/layouts/sub.html` you can forward slots to a base layout:
+In `client/layouts/sub.html{:plaintext}` you can forward slots to a base layout:
 
 ```html
 <base-layout props>

@@ -1,13 +1,13 @@
 @layer root {
 	:root {
 		--color-light: #fafafa;
-		--color-dark: #010113;
-		--color-accent: light-dark(tomato, salmon);
+		--color-dark: #0c1117;
+		--color-accent: salmon;
 		--color-fg: light-dark(var(--color-dark), var(--color-light));
 		--color-bg: light-dark(var(--color-light), var(--color-dark));
 	}
 
-	@function --currentAlpha(--alpha) {
-		result: oklch(from currentColor l c h / var(--alpha));
+	@function --opacity(--color, --alpha) {
+		result: oklch(from var(--color) l c h / var(--alpha));
 	}
 }
