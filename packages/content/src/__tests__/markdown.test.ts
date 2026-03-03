@@ -70,23 +70,24 @@ describe('compileMarkdown', () => {
 		expect(html).toContain('<p>Second paragraph</p>')
 	})
 
-	it('does not output raw script tags (XSS regression if remark-html config allows raw HTML)', async () => {
+	it('does not output raw script tags (XSS regression)', async () => {
 		const html = await compileMarkdown(makeDoc('Text <script>alert(1)</script> more'))
 		expect(html).not.toContain('<script>')
 		expect(html).not.toContain('</script>')
 	})
 
-	it('highlights fenced code blocks when Shiki is enabled', async () => {
+	it('highlights fenced code blocks with @shikijs/rehype', async () => {
+		const rehypeShiki = (await import('@shikijs/rehype')).default
+
 		await initProcessor({
-			theme: 'github-light',
-			langs: ['js'],
+			rehypePlugins: [[rehypeShiki, { theme: 'github-light', langs: ['js'] }]],
 		})
 		const html = await compileMarkdown(makeDoc('```js\nconst x = 1\n```'))
 		expect(html).toContain('class="shiki')
 		expect(html).toContain('const')
 	})
 
-	it('produces plain code blocks without Shiki config', async () => {
+	it('produces plain code blocks without rehype plugins', async () => {
 		await initProcessor()
 		const html = await compileMarkdown(makeDoc('```js\nconst x = 1\n```'))
 		expect(html).toContain('<code')

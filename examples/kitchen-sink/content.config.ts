@@ -1,5 +1,6 @@
 import { defineCollection, defineConfig } from 'aerobuilt/content'
-import { transformerDataLang } from '@aerobuilt/highlight'
+import { preDataLangTransformer } from '@aerobuilt/highlight'
+import rehypeShiki from '@shikijs/rehype'
 import { z } from 'zod'
 
 const docs = defineCollection({
@@ -15,14 +16,20 @@ const docs = defineCollection({
 
 export default defineConfig({
 	collections: [docs],
-	highlight: {
-		shiki: {
-			themes: {
-				light: 'catppuccin-latte',
-				dark: 'catppuccin-mocha',
-			},
-			defaultColor: 'light-dark()',
-			transformers: [transformerDataLang()],
-		},
+	markdown: {
+		rehypePlugins: [
+			[
+				rehypeShiki,
+				{
+					themes: {
+						light: 'github-light',
+						dark: 'github-dark-high-contrast',
+					},
+					defaultColor: 'light-dark()',
+					inline: 'tailing-curly-colon',
+					transformers: [preDataLangTransformer()],
+				},
+			],
+		],
 	},
 })

@@ -49,10 +49,11 @@ describe('render', () => {
 		expect(result).toEqual({ html: '' })
 	})
 
-	it('highlights code blocks when Shiki is enabled', async () => {
+	it('highlights code blocks with @shikijs/rehype', async () => {
+		const rehypeShiki = (await import('@shikijs/rehype')).default
+
 		await initProcessor({
-			theme: 'github-light',
-			langs: ['js'],
+			rehypePlugins: [[rehypeShiki, { theme: 'github-light', langs: ['js'] }]],
 		})
 		const doc = {
 			id: 'test',

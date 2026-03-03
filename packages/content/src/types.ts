@@ -4,6 +4,7 @@
  * @remarks
  * Used by the loader (frontmatter + body → ContentDocument), by content.config.ts (defineCollection, defineConfig), and by the Vite plugin.
  */
+import type { Pluggable } from 'unified'
 import type { ZodType } from 'zod'
 
 /** Metadata attached to every content document (path, slug, filename, extension). */
@@ -47,20 +48,33 @@ export interface ContentCollectionConfig<
 	transform?: (document: ContentDocument<TSchema>) => TOutput | Promise<TOutput>
 }
 
-/** Top-level content config: array of collection definitions with optional highlighting. */
+/**
+ * Markdown pipeline configuration: custom remark and rehype plugins.
+ *
+ * @remarks
+ * The pipeline is: `remark` -> `[remarkPlugins]` -> `remark-rehype` -> `[rehypePlugins]` -> `rehype-stringify`.
+ * Add syntax highlighting (e.g. `@shikijs/rehype`, `rehype-pretty-code`) as a rehype plugin.
+ */
+export interface MarkdownConfig {
+	/** Remark plugins to apply before the remark-to-rehype bridge. */
+	remarkPlugins?: Pluggable[]
+	/** Rehype plugins to apply after remark-rehype and before rehype-stringify. */
+	rehypePlugins?: Pluggable[]
+}
+
+/** Top-level content config: array of collection definitions with optional markdown pipeline plugins. */
 export interface ContentConfig {
 	collections: ContentCollectionConfig<any, any>[]
 	/**
-	 * Optional syntax highlighting configuration for markdown code blocks.
-	 * Nest under `highlight.shiki` to use Shiki-powered highlighting.
-	 * When omitted, plain `<pre><code>` output is produced (backward compatible).
+	 * Custom remark and rehype plugins for the markdown pipeline.
 	 *
-	 * @see https://shiki.style/guide
+	 * @remarks
+	 * The pipeline is always rehype-based:
+	 * `remark` -> `[remarkPlugins]` -> `remark-rehype` -> `[rehypePlugins]` -> `rehype-stringify`.
+	 * Without any rehype plugins, code blocks render as plain `<pre><code>`.
+	 * Add `@shikijs/rehype` or `rehype-pretty-code` as a rehype plugin for syntax highlighting.
 	 */
-	highlight?: {
-		/** Shiki configuration. Uses Shiki's native `theme`/`themes` options. */
-		shiki: import('@aerobuilt/highlight').ShikiConfig
-	}
+	markdown?: MarkdownConfig
 }
 
 /**
@@ -81,7 +95,7 @@ export function defineCollection<
 /**
  * Define the content config (typed helper for content.config.ts).
  *
- * @param config - Config with `collections` array.
+ * @param config - Config with `collections` array and optional `markdown` pipeline plugins.
  * @returns The same config (unchanged).
  */
 export function defineConfig(config: ContentConfig): ContentConfig {

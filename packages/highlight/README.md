@@ -17,12 +17,13 @@ pnpm add @aerobuilt/highlight
 
 ### With @aerobuilt/content (Markdown Highlighting)
 
-When using `@aerobuilt/content`, enable Shiki highlighting by adding a `highlight.shiki` config to your `content.config.ts`:
+When using `@aerobuilt/content`, enable Shiki highlighting by adding `@shikijs/rehype` to `markdown.rehypePlugins` in your `content.config.ts`. Use `@aerobuilt/highlight` for `preDataLangTransformer()` (adds `data-lang` on `<pre>`) and for shared config types:
 
 ````typescript
 // content.config.ts
 import { defineCollection, defineConfig } from '@aerobuilt/content'
-import { transformerDataLang } from '@aerobuilt/highlight'
+import { preDataLangTransformer } from '@aerobuilt/highlight'
+import rehypeShiki from '@shikijs/rehype'
 import { transformerNotationHighlight, transformerNotationFocus } from '@shikijs/transformers'
 import { z } from 'zod'
 
@@ -37,21 +38,25 @@ const docs = defineCollection({
 
 export default defineConfig({
 	collections: [docs],
-	highlight: {
-		shiki: {
-			themes: { light: 'github-light', dark: 'github-dark' },
-			langs: ['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'bash'],
-			transformers: [
-				transformerDataLang(), // Adds data-lang="..." on <pre>
-				transformerNotationHighlight(), // Highlight lines: ```js {1-3}
-				transformerNotationFocus(), // Focus lines: ```js /focus/
+	markdown: {
+		rehypePlugins: [
+			[
+				rehypeShiki,
+				{
+					themes: { light: 'github-light', dark: 'github-dark' },
+					transformers: [
+						preDataLangTransformer(), // Adds data-lang="..." on <pre>
+						transformerNotationHighlight(), // Highlight lines: ```js {1-3}
+						transformerNotationFocus(), // Focus lines: ```js /focus/
+					],
+				},
 			],
-		},
+		],
 	},
 })
 ````
 
-Now all fenced code blocks in your markdown files will be automatically highlighted:
+All fenced code blocks in your markdown files will be highlighted. The content pipeline is always `remark` → `remark-rehype` → `[rehypePlugins]` → `rehype-stringify`; without any rehype plugins, code blocks render as plain `<pre><code>`.
 
 ````markdown
 ```js
@@ -71,18 +76,16 @@ Becomes:
 </pre>
 ```
 
-**Backward Compatibility**: Projects without a `highlight` config in `content.config.ts` continue to render plain `<pre><code>` blocks (unchanged behavior).
-
 ### Standalone Usage (Direct Import)
 
 Use `@aerobuilt/highlight` directly for one-off highlighting in any context:
 
 ```typescript
-import { highlight, transformerDataLang } from '@aerobuilt/highlight'
+import { highlight, preDataLangTransformer } from '@aerobuilt/highlight'
 
 const html = await highlight('const x = 1', 'js', {
 	themes: { light: 'github-light', dark: 'github-dark' },
-	transformers: [transformerDataLang()],
+	transformers: [preDataLangTransformer()],
 })
 
 console.log(html)
@@ -203,7 +206,7 @@ See [Shiki Languages](https://shiki.style/languages) for the full list. Common I
 Transformers post-process highlighted code to add features like line highlighting, line numbers, and diffs.
 
 ```typescript
-import { transformerDataLang } from '@aerobuilt/highlight'
+import { preDataLangTransformer } from '@aerobuilt/highlight'
 import {
 	transformerNotationHighlight,
 	transformerNotationFocus,
@@ -214,7 +217,7 @@ import {
 const config = {
 	theme: 'github-light',
 	transformers: [
-		transformerDataLang(), // Adds data-lang="..." on <pre>
+		preDataLangTransformer(), // Adds data-lang="..." on <pre>
 		transformerNotationHighlight(), // Highlight lines: [!code highlight]
 		transformerNotationFocus(), // Focus code: [!code focus]
 		transformerRenderWhitespace(), // Render whitespace
@@ -223,7 +226,7 @@ const config = {
 }
 ```
 
-`transformerDataLang()` uses the raw requested language token (including aliases), so a fenced block tagged as `my-js` emits `data-lang="my-js"`.
+`preDataLangTransformer()` uses the raw requested language token (including aliases), so a fenced block tagged as `my-js` emits `data-lang="my-js"`.
 
 See [Shiki Transformers](https://shiki.style/guide/transformers) for all available transformers and usage.
 
@@ -269,14 +272,19 @@ Import in your layout:
 
 ### Markdown with Transformers
 
-In your `content.config.ts`:
+In your `content.config.ts`, add `rehypeShiki` to `markdown.rehypePlugins` with `transformers`:
 
 ```typescript
-highlight: {
-	shiki: {
-		themes: { light: 'github-light', dark: 'github-dark' },
-		transformers: [transformerNotationHighlight()],
-	},
+markdown: {
+	rehypePlugins: [
+		[
+			rehypeShiki,
+			{
+				themes: { light: 'github-light', dark: 'github-dark' },
+				transformers: [transformerNotationHighlight()],
+			},
+		],
+	],
 },
 ```
 
