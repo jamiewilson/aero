@@ -8,13 +8,13 @@ Aero’s props system lets you pass data into components and layouts via attribu
 
 ## Core concept
 
-All props are read from **aero.props** (or **Aero.props**) in `<script is:build>`. Destructure what you need.
+All props are read from **aero.props** (or **Aero.props**) in `<script is:build>{:html}`. Destructure what you need.
 
 ## How attribute values work
 
 - **Normal attributes** are string literals unless you wrap the value in `{ ... }`. Use `{ expression }` for booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `each`) need brace-wrapped expressions, e.g. `if="{ condition }"`, `each="{ item in items }"`. Unbraced values are invalid.
-- **props:** `props="{ ...data }"` spreads the object’s keys as props. `props="{ data }"` passes the object as one prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-strings become strings and can cause bugs.
+- **Directives** (`if`, `else-if`, `else`, `each`) need brace-wrapped expressions, e.g. `<p if="{ condition }">{:html}`, `<p each="{ item in items }">{:html}`. Unbraced values are invalid.
+- **props:** `<my-component props="{ ...data }">{:html}` spreads the object’s keys as props. `<my-component props="{ data }">{:html}` passes the object as one prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-strings become strings and can cause bugs.
 
 ## Passing props
 
@@ -38,7 +38,7 @@ Compose strings with inline expressions:
 <my-component title="Slug: { Aero.params.slug }" />
 ```
 
-Use double braces to output literal `{` and `}` in strings: `title="{{ slug }} + { Aero.params.slug }"`.
+Use double braces to output literal `{` and `}` in strings: `<my-component title="{{ slug }} + { Aero.params.slug }" />{:html}`.
 
 **3. Spread with props**
 
@@ -46,10 +46,11 @@ Use double braces to output literal `{` and `}` in strings: `title="{{ slug }} +
 <script is:build>
 	const myProps = { title: 'Hello', count: 42 }
 </script>
+
 <my-component props="{ ...myProps }" />
 ```
 
-The value must be a brace-wrapped expression (e.g. `props="{ ...myProps }"`, not `props="myProps"`).
+The value must be a brace-wrapped expression (e.g. `"{ ...myProps }"`, not `"myProps"`).
 
 **4. Inline object**
 
@@ -66,6 +67,7 @@ Use `props` with no value to spread a variable named `props` in scope:
 <script is:build>
 	const props = { title: 'Hello', count: 42 }
 </script>
+
 <my-component props />
 ```
 
@@ -110,7 +112,7 @@ With fallbacks to site data:
 
 ## Available globals
 
-Inside `<script is:build>` you have:
+Inside `<script is:build>{:html}` you have:
 
 - **aero.props** (or **Aero.props**) — Props passed to this component
 - **Aero.request** — Current request object
@@ -130,10 +132,11 @@ Inside `<script is:build>` you have:
 <script is:build>
 	const { name } = aero.props
 </script>
+
 <h1>Hello, { name }!</h1>
 ```
 
-Usage: `<greeting-component name="World" />`
+Usage: `<greeting-component name="World" />{:html}`
 
 **Computed props** (e.g. in `client/pages/index.html`):
 
@@ -145,6 +148,7 @@ Usage: `<greeting-component name="World" />`
 		subtitle: site.home.subtitle.toUpperCase(),
 	}
 </script>
+
 <header-component props="{ ...headerProps }" />
 ```
 

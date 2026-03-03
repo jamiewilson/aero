@@ -2,64 +2,74 @@
 
 @import 'reset.css';
 @import 'colors.css';
+@import 'fonts.css';
 @import 'animation.css';
 @import 'theme.css';
 @import 'code.css';
 @import 'prose.css';
+@import 'card.css';
 @import 'toast.css';
 @import 'utils.css';
 /*@import 'debug.css';*/
 
 @layer base {
+	:root {
+		--font-sans: system-ui, sans-serif;
+		--font-mono: 'MonaspaceNeadon', monospace;
+		--page-padding: 1rem;
+		--vertical-spacing: 2rem;
+		--element-base-padding: 1rem;
+		--radius-sm: 0.25rem;
+		--radius-md: 0.5rem;
+		--radius-lg: 1rem;
+		--radius-xl: 2rem;
+		--round: calc(infinity * 1px);
+	}
+
 	html,
 	body {
 		height: 100%;
+		font-size: 18px;
 	}
 
 	body {
 		display: grid;
 		place-content: safe center;
-		text-align: center;
+		padding: var(--page-padding);
 		color: var(--color-fg);
 		background: var(--color-bg);
-		font-size: 1rem;
-		font-family: system-ui, sans-serif;
+		font-family: var(--font-sans);
 		line-height: 1.5;
-		padding: 1rem;
+		text-align: center;
 	}
 
 	header,
 	section {
-		margin-bottom: 2rem;
+		margin-bottom: var(--vertical-spacing);
 	}
 
 	section,
 	form {
 		display: grid;
-		gap: 0.5rem;
+		gap: calc(var(--vertical-spacing) / 4);
 	}
 
 	input,
 	button {
 		text-align: center;
-		background: --currentAlpha(0.05);
-		border: 1px solid --currentAlpha(0.1);
-		padding: 1rem 2rem;
-		border-radius: 2rem;
+		font-family: var(--font-sans);
+		background: --opacity(currentColor, 0.05);
+		border: 1px solid --opacity(currentColor, 0.1);
+
+		padding: var(--element-base-padding) calc(var(--element-base-padding) * 2);
+		border-radius: var(--radius-xl);
 		corner-shape: squircle;
 		justify-self: center;
-
-		&:focus,
-		&:focus-visible {
-			outline: 2px solid var(--color-accent);
-		}
 	}
 
 	button {
-		color: var(--color-dark);
 		transition-property: background, opacity;
 		transition-duration: var(--duration-fast);
-		outline-offset: 2px;
 
 		&[disabled] {
 			opacity: 0.5;
@@ -68,7 +78,8 @@
 	}
 
 	form button {
-		background: var(--color-accent);
+		color: var(--color-bg);
+		background: var(--color-fg);
 	}
 
 	a {
@@ -83,7 +94,12 @@
 
 	hr {
 		border: none;
-		border-top: 1px solid --currentAlpha(0.3);
-		margin: 2rem 0;
+		border-top: 1px solid --opacity(currentColor, 0.3);
+		margin: var(--vertical-spacing) 0;
+	}
+
+	:focus-visible {
+		outline-offset: 2px;
+		outline: 2px solid var(--color-accent);
 	}
 }

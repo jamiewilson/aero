@@ -1,65 +1,63 @@
 @layer base {
-	code {
+	code:not(pre code),
+	pre:has(code) {
+		--tab-size: 2ch;
+		--padding: 2rem;
+		--line-height: 1.8;
+		--outline: 1px solid --opacity(var(--color-fg), 0.2);
+
 		font-size: smaller;
-		font-family: monospace;
-		font-weight: normal;
-		padding: 0.2rem 0.4rem;
-		background: --currentAlpha(0.05);
-		border: 1px solid --currentAlpha(0.1);
-		border-radius: 0.25rem;
-		text-wrap: nowrap;
-		text-box: trim-both ex alphabetic;
+		font-family: var(--font-mono);
+		tab-size: var(--tab-size);
+		border: var(--outline);
 	}
 
-	pre:has(code) {
-		background: none;
-		border-radius: 0.5rem;
+	/* Inline code */
+	code:not(pre code) {
+		padding: 0.1em 0.4em 0.2em;
+		color: --opacity(currentColor, 0.7);
 
+		border-radius: var(--radius-sm);
+
+		@media (width > 768px) {
+			text-wrap: nowrap;
+		}
+	}
+
+	/* Code blocks */
+	pre:has(code) {
+		display: grid;
+		overflow: hidden;
+		border-radius: var(--radius-lg);
+		corner-shape: squircle;
+
+		code {
+			line-height: var(--line-height);
+			text-box: trim-both ex alphabetic;
+			padding: var(--padding);
+			scrollbar-width: none;
+			overflow-y: hidden;
+			overflow-x: auto;
+		}
+	}
+
+	/* Language labels */
+	pre:has(code) {
 		&[data-lang] {
 			position: relative;
+
 			&::before {
-				font-family: sans-serif;
 				position: absolute;
 				top: 0.5rem;
 				right: 0.5rem;
-				opacity: 0.3;
-				font-size: small;
 				text-box: trim-both cap alphabetic;
+				font-family: var(--font-sans);
+				font-size: small;
 			}
 		}
 
-		&[data-lang*='html']::before {
-			content: 'html';
+		&[data-lang]::before {
+			content: attr(data-lang);
 		}
-
-		&[data-lang*='css']::before {
-			content: 'css';
-		}
-
-		&[data-lang*='ts']::before {
-			content: 'ts';
-		}
-
-		&[data-lang*='js']::before {
-			content: 'js';
-		}
-
-		&[data-lang*='json']::before {
-			content: 'json';
-		}
-
-		&[data-lang*='bash']::before {
-			content: 'bash';
-		}
-	}
-
-	pre code {
-		tab-size: 2ch;
-		white-space: pre-wrap;
-		display: block;
-		padding: 1.5rem;
-		border: none;
-		overflow-y: hidden;
-		overflow-x: auto;
 	}
 }

@@ -3,8 +3,8 @@
 	import badge from '@components/badge'
 	import { getCollection } from 'aero:content'
 
-	const props = Aero.props
 	const docs = await getCollection('docs')
+		.sort((a, b) => b.data.published - a.data.published)
 </script>
 
 <base-layout title="Docs">

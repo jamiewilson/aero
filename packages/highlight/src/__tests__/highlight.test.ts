@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { highlight, getHighlighter, resetHighlighter, transformerDataLang } from '../index'
+import { highlight, getHighlighter, resetHighlighter, preDataLangTransformer } from '../index'
 import type { ShikiConfig } from '../types'
 
 beforeEach(() => {
@@ -153,10 +153,10 @@ describe('highlight', () => {
 		expect(html).toContain('--shiki-dark')
 	})
 
-	it('adds data-lang to pre when transformerDataLang is enabled', async () => {
+	it('adds data-lang to pre when preDataLangTransformer is enabled', async () => {
 		const html = await highlight('const x = 1', 'js', {
 			theme: 'github-light',
-			transformers: [transformerDataLang()],
+			transformers: [preDataLangTransformer()],
 		})
 
 		expect(html).toContain('data-lang="js"')
@@ -168,7 +168,7 @@ describe('highlight', () => {
 			theme: 'github-light',
 			langs: ['javascript'],
 			langAlias: { 'my-js': 'javascript' },
-			transformers: [transformerDataLang()],
+			transformers: [preDataLangTransformer()],
 		})
 
 		expect(html).toContain('data-lang="my-js"')

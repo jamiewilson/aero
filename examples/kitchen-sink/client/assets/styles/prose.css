@@ -1,5 +1,6 @@
 @layer utils {
 	.prose {
+		font-size: 1.2rem;
 		max-width: 65ch;
 		margin-inline: auto;
 		margin-block-start: 10vh;
@@ -14,7 +15,12 @@
 		}
 
 		:not(header) * + * {
-			margin-block-start: 2rem;
+			margin-block-start: var(--vertical-spacing);
+		}
+
+		ul,
+		ol {
+			margin-inline-start: 1em;
 		}
 	}
 }

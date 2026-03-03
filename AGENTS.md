@@ -105,6 +105,8 @@ For bug fixes: start by adding or adjusting a test that fails in the current cod
 
 The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aerobuilt/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
 
+On content routes (e.g. `/docs/*`), HMR re-renders in dev use **fetch** to get HTML from the dev server instead of re-running the full markdown pipeline in the browser, which avoids crashes when DevTools is open. If you still see a tab crash on content pages with DevTools open, close DevTools or avoid having the Elements/Console panel focused during HMR; known browser/DevTools issues can cause memory growth or freezes with the tools open.
+
 ## Client Stack Integration
 
 - **Alpine.js** - Attributes like `x-data`, `x-model`, `:disabled` are preserved (not interpolated)

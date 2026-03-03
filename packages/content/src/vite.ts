@@ -50,9 +50,9 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				contentConfig = mod.default as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
 
-				// Initialize the markdown processor early with Shiki config (if provided).
+				// Initialize the markdown processor early with user-supplied plugins.
 				// This ensures the processor is configured before any modules are loaded.
-				await initProcessor(contentConfig.highlight?.shiki)
+				await initProcessor(contentConfig.markdown)
 			} catch (err: any) {
 				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT') {
 					config.logger.warn(

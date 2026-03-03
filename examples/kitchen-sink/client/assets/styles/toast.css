@@ -1,6 +1,6 @@
 @layer components {
 	.toast {
-		top: 1rem;
+		top: var(--page-padding);
 		position: absolute;
 		inset-inline: 0;
 		margin: 0 auto;
@@ -9,10 +9,11 @@
 
 	.toast-content {
 		font-size: smaller;
-		border-radius: 0.5rem;
-		padding: 0.75rem;
+		background: --opacity(currentColor, 0.05);
+		border: 1px solid --opacity(currentColor, 0.1);
 		text-box: trim-both cap alphabetic;
-		border: 1px solid --currentAlpha(0.1);
-		background: --currentAlpha(0.05);
+		padding: var(--element-base-padding);
+		border-radius: var(--radius-lg);
+		corner-shape: squircle;
 	}
 }

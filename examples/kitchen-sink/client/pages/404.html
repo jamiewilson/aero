@@ -1,12 +1,12 @@
 <script is:build>
-	import base from '@layouts/base'
+	import blank from '@layouts/blank'
 
 	const code = '404'
 	const message = 'Page not found'
 	const title = `${code} | ${message}`
 </script>
 
-<base-layout title="{ title }">
+<blank-layout title="{ title }">
 	<main>
 		<header>
 			<h1>{ title }</h1>
@@ -14,4 +14,4 @@
 		</header>
 		<a href="/">Go back to the homepage</a>
 	</main>
-</base-layout>
+</blank-layout>

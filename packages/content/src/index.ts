@@ -11,6 +11,6 @@ export type {
 	ContentConfig,
 	ContentDocument,
 	ContentMeta,
+	MarkdownConfig,
 } from './types'
-export type { ShikiConfig } from '@aerobuilt/highlight'
 export { render } from './render'

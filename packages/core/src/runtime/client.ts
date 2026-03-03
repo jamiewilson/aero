@@ -27,6 +27,9 @@ function extractDocumentParts(html: string): PageFragments {
 	return { head, body }
 }
 
+/** Guard: skip starting a new render while one is in progress (avoids overlapping HMR runs). */
+let rendering = false
+
 /** CSS selectors for nodes that must be kept in <head> during HMR (Vite dev client and dev-injected modules). */
 // prettier-ignore
 const PERSISTENT_SELECTORS = [
@@ -72,8 +75,15 @@ function updateHead(headContent: string) {
 }
 
 /**
+ * Path prefix for content/docs routes. When on such a route in dev, we fetch HTML from the
+ * dev server instead of re-running the full render (including markdown) in the browser.
+ */
+const DOCS_PATH_PREFIX = '/docs'
+
+/**
  * Re-render the current page in the browser (e.g. on HMR).
- * Resolves page name from `window.location.pathname`, fetches HTML via `renderFn`, updates head and app root.
+ * For content routes (e.g. `/docs/*`), fetches HTML from the dev server to avoid running the
+ * full markdown pipeline in the browser. Otherwise resolves page name and uses `renderFn`.
  *
  * @param appEl - Root element to receive the new body content (e.g. `#app`).
  * @param renderFn - Async function that returns full document HTML for a given page name (e.g. `aero.render`).
@@ -82,16 +92,31 @@ export async function renderPage(
 	appEl: HTMLElement,
 	renderFn: (pageName: string) => Promise<string>,
 ) {
-	const pageName = resolvePageName(window.location.pathname)
+	if (rendering) return
+	rendering = true
+	const pathname = window.location.pathname
+	const pageName = resolvePageName(pathname)
 
 	try {
-		const html = await renderFn(pageName)
+		let html: string
+		const useFetch =
+			typeof window !== 'undefined' &&
+			(pathname === DOCS_PATH_PREFIX || pathname.startsWith(DOCS_PATH_PREFIX + '/')) &&
+			import.meta.hot
+		if (useFetch) {
+			const res = await fetch(pathname, { headers: { Accept: 'text/html' } })
+			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+			html = await res.text()
+		} else {
+			html = await renderFn(pageName)
+		}
 		const { head, body } = extractDocumentParts(html)
 		if (head) updateHead(head)
 		appEl.innerHTML = body
-		console.log(`[aero] Rendered: ${pageName}`)
 	} catch (err) {
 		appEl.innerHTML = `<h1>Error rendering page: ${pageName}</h1><pre>${String(err)}</pre>`
 		console.error('[aero] Render Error:', err)
+	} finally {
+		rendering = false
 	}
 }

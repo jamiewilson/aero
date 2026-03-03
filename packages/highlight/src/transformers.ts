@@ -7,15 +7,12 @@ import type { ShikiTransformer } from 'shiki'
  * This is opt-in and preserves existing output unless explicitly added to
  * `transformers`. The emitted value uses the raw requested language (including aliases).
  */
-export function transformerDataLang(): ShikiTransformer {
+export function preDataLangTransformer(): ShikiTransformer {
 	return {
-		name: 'aerobuilt:transformer-data-lang',
+		name: 'aerobuilt:pre-data-lang-transformer',
 		pre(node) {
 			const lang = this.options.lang
-			if (!lang) {
-				return
-			}
-
+			if (!lang) return
 			node.properties ??= {}
 			node.properties['data-lang'] = String(lang)
 		},
