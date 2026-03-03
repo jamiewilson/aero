@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cpSync, mkdirSync, existsSync, statSync, readdirSync, lstatSync } from 'fs'
+import { cpSync, mkdirSync, existsSync, statSync, readdirSync, readFileSync } from 'fs'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
@@ -138,9 +138,18 @@ function main() {
 	}
 
 	const templatePath = resolveTemplatePath(template)
+	let aerobuiltVersion = null
+	if (!inMonorepo) {
+		try {
+			const cliPkg = JSON.parse(readFileSync(join(startPkgDir, 'package.json'), 'utf8'))
+			aerobuiltVersion = cliPkg.version || null
+		} catch {
+			// ignore; lib will fall back to *
+		}
+	}
 	console.log(`Creating Aero app in ${target} from template "${template}"...`)
 	copyTemplate(templatePath, targetDir)
-	rewritePackageJson(templatePath, targetDir, target, inMonorepo)
+	rewritePackageJson(templatePath, targetDir, target, inMonorepo, aerobuiltVersion)
 	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')
 	if (inMonorepo) {
