@@ -1,0 +1,10 @@
+@layer components {
+	.card {
+		display: block;
+		padding: calc(var(--element-base-padding) * 2);
+		border-radius: var(--radius-xl);
+		corner-shape: squircle;
+		background: --opacity(currentColor, 0.03);
+		outline: 1px solid --opacity(currentColor, 0.1);
+	}
+}

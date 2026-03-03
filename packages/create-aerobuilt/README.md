@@ -49,6 +49,8 @@ my-app/
 └── tsconfig.json       # Path aliases
 ```
 
+If you change `dirs.client` (or other dirs) in `vite.config.ts` or `aero.config.ts`, update your `tsconfig.json` `paths` so they match (e.g. `@pages` → `"<client>/pages"`). The dev server will warn when custom dirs are used and a tsconfig is present.
+
 ## Links
 
 - [GitHub](https://github.com/aerobuilt/aero)

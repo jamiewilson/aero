@@ -1,4 +1,11 @@
-import aeroConfig from './aero.config'
-import { createViteConfig } from 'aerobuilt/config'
+import { aero } from 'aerobuilt/vite'
+import { defineConfig } from 'vite'
 
-export default createViteConfig(aeroConfig)
+export default defineConfig({
+	plugins: aero(),
+	build: {
+		rolldownOptions: {
+			external: ['htmx.org', 'alpinejs'],
+		},
+	},
+})

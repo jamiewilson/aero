@@ -63,19 +63,17 @@ export interface ResolvedAeroDirs {
 	dist: string
 }
 
-/** User dirs may use serverDir (config) or server (core); normalize to server. */
-function getServerDir(dirs?: Partial<AeroDirs> & { serverDir?: string }): string {
-	return dirs?.server ?? dirs?.serverDir ?? DEFAULT_DIRS.server
+function getServerDir(dirs?: Partial<AeroDirs>): string {
+	return dirs?.server ?? DEFAULT_DIRS.server
 }
 
 /**
  * Resolve optional user dir overrides with defaults (DEFAULT_DIRS).
- * Accepts both server and serverDir for the Nitro server directory.
  *
- * @param dirs - Optional partial AeroDirs (e.g. `{ dist: 'build' }` or `{ serverDir: 'server' }`).
+ * @param dirs - Optional partial AeroDirs (e.g. `{ dist: 'build' }` or `{ server: 'server' }`).
  * @returns ResolvedAeroDirs with all keys set.
  */
-export function resolveDirs(dirs?: Partial<AeroDirs> & { serverDir?: string }): ResolvedAeroDirs {
+export function resolveDirs(dirs?: Partial<AeroDirs>): ResolvedAeroDirs {
 	return {
 		client: dirs?.client ?? DEFAULT_DIRS.client,
 		server: getServerDir(dirs),
