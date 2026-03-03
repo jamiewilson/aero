@@ -105,14 +105,17 @@ export interface CompileOptions {
 	inlineScripts?: ScriptEntry[]
 	/** Blocking scripts (`is:blocking`) to be emitted in the page. */
 	blockingScripts?: ScriptEntry[]
-	/** Resolve import specifiers (e.g. `@components/foo`) to absolute paths. */
-	resolvePath?: (specifier: string) => string
+	/** Resolve import specifiers (e.g. `@components/foo`) from importer file path. */
+	resolvePath?: (specifier: string, importer: string) => string
+	/** Importer file path (template) for resolution; required when resolvePath is used. */
+	importer?: string
 }
 
 /** Options for the path resolver (e.g. resolving `@components/foo` to a file path). */
 export interface ResolverOptions {
 	root: string
-	resolvePath?: (specifier: string) => string
+	resolvePath?: (specifier: string, importer: string) => string
+	importer?: string
 }
 
 /**
@@ -140,7 +143,8 @@ export interface UserAlias {
 /** Result of loading project path aliases (`utils/aliases.ts`). */
 export interface AliasResult {
 	aliases: UserAlias[]
-	resolvePath?: (specifier: string) => string
+	/** Resolve specifier from importer file path using oxc-resolver. */
+	resolve: (specifier: string, importer: string) => string
 	/** Project root (directory containing tsconfig.json) when a tsconfig was found. */
 	projectRoot?: string
 }

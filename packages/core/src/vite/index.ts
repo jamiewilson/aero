@@ -144,7 +144,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
 				build: createBuildConfig(
-					{ resolvePath: state.aliasResult.resolvePath, dirs: state.options.dirs },
+					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
 					root,
 				),
 			}
@@ -280,7 +280,8 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 						clientScripts: parsed.clientScripts,
 						blockingScripts: parsed.blockingScripts,
 						inlineScripts: parsed.inlineScripts,
-						resolvePath: state.aliasResult.resolvePath,
+						resolvePath: state.aliasResult.resolve,
+						importer: filePath,
 					})
 					return { code: generated, map: null }
 				} catch {
@@ -338,7 +339,8 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 					clientScripts: parsed.clientScripts,
 					blockingScripts: parsed.blockingScripts,
 					inlineScripts: parsed.inlineScripts,
-					resolvePath: state.aliasResult.resolvePath,
+					resolvePath: state.aliasResult.resolve,
+					importer: id,
 				})
 
 				return {
@@ -542,7 +544,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			await renderStaticPages(
 				{
 					root,
-					resolvePath: state.aliasResult!.resolvePath,
+					resolvePath: state.aliasResult!.resolve,
 					dirs: options.dirs,
 					apiPrefix,
 					vitePlugins: staticPlugins,

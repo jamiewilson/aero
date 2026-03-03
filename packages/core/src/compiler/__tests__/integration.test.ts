@@ -24,7 +24,7 @@ describe('Compiler Integration', () => {
 <div>{doc.title}</div>
 `
 		const parsed = parse(src)
-		const code = compile(parsed, { root: '/', resolvePath: s => s })
+		const code = compile(parsed, { root: '/', resolvePath: (s, _i) => s, importer: '/' })
 
 		// rudimentary check: export async function getStaticPaths should appear at top level
 		// and NOT inside the default export function
@@ -57,7 +57,7 @@ describe('Compiler Integration', () => {
 </script>
 `
 		const parsed = parse(src)
-		const code = compile(parsed, { root: '/', resolvePath: s => s })
+		const code = compile(parsed, { root: '/', resolvePath: (s, _i) => s, importer: '/' })
 
 		expect(code).toContain('export async function getStaticPaths() {')
 		expect(code).toContain('const a = "{ brace in string }"')

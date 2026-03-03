@@ -53,7 +53,8 @@ async function execute(code: string, context: Record<string, any> = {}) {
 
 const mockOptions = {
 	root: '/',
-	resolvePath: (v: string) => v,
+	resolvePath: (v: string, _importer: string) => v,
+	importer: '/',
 }
 
 describe('Codegen', () => {
@@ -469,7 +470,7 @@ describe('Codegen', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, {
 			root: process.cwd(),
-			resolvePath: () => '/../../../../api/submit',
+			resolvePath: (_s: string, _i: string) => '/../../../../api/submit',
 		})
 
 		const output = await execute(code)

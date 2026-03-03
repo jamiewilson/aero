@@ -67,7 +67,7 @@ interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
 	apiPrefix?: string
-	resolvePath?: (specifier: string) => string
+	resolvePath?: (specifier: string, importer: string) => string
 	/** Plugins for the static render server. When provided, configFile is not loaded and a dedicated cacheDir is used. */
 	vitePlugins?: Plugin[]
 	minify?: boolean
@@ -201,12 +201,12 @@ function resolveTemplateAssetPath(
 	rawValue: string,
 	templateFile: string,
 	root: string,
-	resolvePath?: (specifier: string) => string,
+	resolvePath?: (specifier: string, importer: string) => string,
 ): string | null {
 	if (!rawValue || isSkippableUrl(rawValue)) return null
 	if (rawValue.startsWith('/')) return path.resolve(root, rawValue.slice(1))
 	if (rawValue.startsWith('@') || rawValue.startsWith('~')) {
-		const resolved = resolvePath ? resolvePath(rawValue) : rawValue
+		const resolved = resolvePath ? resolvePath(rawValue, templateFile) : rawValue
 		return path.isAbsolute(resolved) ? resolved : path.resolve(root, resolved)
 	}
 	if (rawValue.startsWith('./') || rawValue.startsWith('../')) {
@@ -304,7 +304,7 @@ function discoverClientScriptVirtualInputs(
 /** Rollup input entries: script/link refs from templates, default client index, and assets/images. */
 function discoverAssetInputs(
 	root: string,
-	resolvePath?: (specifier: string) => string,
+	resolvePath?: (specifier: string, importer: string) => string,
 	templateRoot = 'client',
 ): Record<string, string> {
 	const entries = new Map<string, string>()
@@ -640,7 +640,7 @@ export async function renderStaticPages(
 
 interface BuildConfigOptions {
 	dirs?: AeroDirs
-	resolvePath?: (specifier: string) => string
+	resolvePath?: (specifier: string, importer: string) => string
 }
 
 /**
