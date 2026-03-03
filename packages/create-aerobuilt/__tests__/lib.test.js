@@ -88,7 +88,7 @@ describe('create-aerobuilt lib', () => {
 			expect(pkg.dependencies.aerobuilt).toBe('workspace:*')
 		})
 
-		it('when inMonorepo false, sets aerobuilt to *', () => {
+		it('when inMonorepo false and no version, sets aerobuilt to *', () => {
 			writeFileSync(
 				join(templateDir, 'package-template.json'),
 				JSON.stringify({
@@ -103,6 +103,20 @@ describe('create-aerobuilt lib', () => {
 			expect(pkg.name).toBe('my-app')
 			expect(pkg.dependencies.aerobuilt).toBe('*')
 			expect(pkg.devDependencies.vite).toBe('^1.0.0')
+		})
+
+		it('when inMonorepo false and aerobuiltVersion given, sets aerobuilt to ^version', () => {
+			writeFileSync(
+				join(templateDir, 'package-template.json'),
+				JSON.stringify({
+					name: '<name>',
+					version: '0.1.0',
+					dependencies: { aerobuilt: '<version>' },
+				}),
+			)
+			rewritePackageJson(templateDir, targetDir, 'my-app', false, '0.2.9')
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			expect(pkg.dependencies.aerobuilt).toBe('^0.2.9')
 		})
 
 		it('exits when package-template.json is missing', () => {

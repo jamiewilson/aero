@@ -31,9 +31,10 @@ const PACKAGE_TEMPLATE = 'package-template.json'
  * @param {string} templatePath - Path to the template directory (e.g. packages/templates/minimal)
  * @param {string} targetDir - Path to the scaffolded project directory
  * @param {string} projectName - Project name for package.json "name"
- * @param {boolean} inMonorepo - If true, use workspace:* for aerobuilt; otherwise *
+ * @param {boolean} inMonorepo - If true, use workspace:* for aerobuilt; otherwise use aerobuiltVersion
+ * @param {string} [aerobuiltVersion] - When !inMonorepo, version range for aerobuilt (e.g. ^0.2.9). Omit to use '*'.
  */
-export function rewritePackageJson(templatePath, targetDir, projectName, inMonorepo) {
+export function rewritePackageJson(templatePath, targetDir, projectName, inMonorepo, aerobuiltVersion) {
 	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
 	if (!existsSync(templatePkgPath)) {
 		console.error(
@@ -43,9 +44,9 @@ export function rewritePackageJson(templatePath, targetDir, projectName, inMonor
 	}
 	const pkg = JSON.parse(readFileSync(templatePkgPath, 'utf8'))
 	pkg.name = projectName
-	const aerobuiltVersion = inMonorepo ? 'workspace:*' : '*'
+	const depVersion = inMonorepo ? 'workspace:*' : (aerobuiltVersion ? `^${aerobuiltVersion}` : '*')
 	if (pkg.dependencies && pkg.dependencies.aerobuilt !== undefined) {
-		pkg.dependencies.aerobuilt = aerobuiltVersion
+		pkg.dependencies.aerobuilt = depVersion
 	}
 	writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
 }
