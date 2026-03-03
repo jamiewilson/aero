@@ -15,7 +15,7 @@ Every `.html` file in the pages directory becomes a route. Examples:
 - `client/pages/404.html` → 404 page outputs to `dist/404.html`
 - `client/pages/docs/index.html` → `/docs` outputs `dist/docs/index.html`
 
-```bash
+```sh
 .
 └── pages
 		└── docs
@@ -112,7 +112,7 @@ Same static output is served; Nitro also serves `dist/404.html` for unknown rout
 
 ## File structure reference
 
-```bash
+```sh
 .
 └── pages
     ├── 404.html        → (error page)

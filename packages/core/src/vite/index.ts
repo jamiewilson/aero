@@ -492,15 +492,20 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	const enableNitro = options.server === true && process.env.AERO_SERVER !== 'false'
 
+	const runtimeInstanceMjsPath = fileURLToPath(
+		new URL('../runtime/instance.mjs', import.meta.url),
+	)
 	const runtimeInstanceJsPath = fileURLToPath(
 		new URL('../runtime/instance.js', import.meta.url),
 	)
 	const runtimeInstanceTsPath = fileURLToPath(
 		new URL('../runtime/instance.ts', import.meta.url),
 	)
-	const runtimeInstancePath = existsSync(runtimeInstanceJsPath)
-		? runtimeInstanceJsPath
-		: runtimeInstanceTsPath
+	const runtimeInstancePath = existsSync(runtimeInstanceMjsPath)
+		? runtimeInstanceMjsPath
+		: existsSync(runtimeInstanceJsPath)
+			? runtimeInstanceJsPath
+			: runtimeInstanceTsPath
 
 	const state: AeroPluginState = {
 		config: null,

@@ -2,68 +2,20 @@
  * Resolve import specifiers and paths using tsconfig paths and relative resolution.
  *
  * @remarks
- * Finds tsconfig.json by walking up from the document directory; builds alias list and caches a PathResolver per project root. Used by definition, hover, and completion providers.
+ * Uses loadTsconfigAliases from @aerobuilt/core/utils/aliases for tsconfig path loading.
+ * Caches a PathResolver per project root. Used by definition, hover, and completion providers.
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { loadTsconfigAliases } from '@aerobuilt/core/utils/aliases'
 import { RESOLVE_EXTENSIONS } from './constants'
-
-interface Alias {
-	find: string
-	replacement: string
-}
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
 	resolve(specifier: string, fromFile?: string): string | undefined
 	/** The project root (directory containing tsconfig.json). */
 	root: string
-}
-
-/** Walk up from startDir to find the nearest tsconfig.json; returns paths, baseDir, or null. */
-function findTsconfig(startDir: string): {
-	tsconfigPath: string
-	paths: Record<string, string[]>
-	baseDir: string
-} | null {
-	let dir = startDir
-	const root = path.parse(dir).root
-
-	while (dir !== root) {
-		const candidate = path.join(dir, 'tsconfig.json')
-		if (fs.existsSync(candidate)) {
-			try {
-				const raw = fs.readFileSync(candidate, 'utf-8')
-				// Strip single-line comments for lenient JSON parsing
-				const stripped = raw.replace(/\/\/.*$/gm, '')
-				const config = JSON.parse(stripped)
-				const options = config.compilerOptions || {}
-				const paths: Record<string, string[]> = options.paths || {}
-				const baseUrl: string = options.baseUrl || '.'
-				const baseDir = path.resolve(path.dirname(candidate), baseUrl)
-				return { tsconfigPath: candidate, paths, baseDir }
-			} catch {
-				// Failed to parse; keep walking
-			}
-		}
-		dir = path.dirname(dir)
-	}
-	return null
-}
-
-function buildAliases(paths: Record<string, string[]>, baseDir: string): Alias[] {
-	const aliases: Alias[] = []
-	for (const [key, values] of Object.entries(paths)) {
-		const first = values[0]
-		if (typeof first !== 'string' || first.length === 0) continue
-
-		const find = key.replace(/\/*$/, '').replace('/*', '')
-		const target = first.replace(/\/*$/, '').replace('/*', '')
-		const replacement = path.resolve(baseDir, target)
-		aliases.push({ find, replacement })
-	}
-	return aliases
 }
 
 const resolverCache = new Map<string, PathResolver>()
@@ -76,9 +28,9 @@ const resolverCache = new Map<string, PathResolver>()
  */
 export function getResolver(document: vscode.TextDocument): PathResolver | undefined {
 	const docDir = path.dirname(document.uri.fsPath)
-	const tsconfig = findTsconfig(docDir)
+	const aliasResult = loadTsconfigAliases(docDir)
 
-	if (!tsconfig) {
+	if (!aliasResult.projectRoot || !aliasResult.resolvePath) {
 		// No tsconfig -- return a minimal resolver that can only handle relative paths
 		return {
 			root: vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath || docDir,
@@ -88,11 +40,11 @@ export function getResolver(document: vscode.TextDocument): PathResolver | undef
 		}
 	}
 
-	const projectRoot = path.dirname(tsconfig.tsconfigPath)
+	const projectRoot = aliasResult.projectRoot
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
 
-	const aliases = buildAliases(tsconfig.paths, tsconfig.baseDir)
+	const resolvePath = aliasResult.resolvePath
 
 	const resolver: PathResolver = {
 		root: projectRoot,
@@ -101,12 +53,9 @@ export function getResolver(document: vscode.TextDocument): PathResolver | undef
 			if (/^(https?:|data:|#|\/\/)/.test(specifier)) return undefined
 
 			// Try alias resolution
-			for (const alias of aliases) {
-				if (specifier === alias.find || specifier.startsWith(`${alias.find}/`)) {
-					const rest = specifier.slice(alias.find.length)
-					const resolved = path.join(alias.replacement, rest)
-					return resolveWithExtensions(resolved)
-				}
+			const aliasResolved = resolvePath(specifier)
+			if (aliasResolved !== specifier) {
+				return resolveWithExtensions(aliasResolved)
 			}
 
 			// Relative or absolute paths

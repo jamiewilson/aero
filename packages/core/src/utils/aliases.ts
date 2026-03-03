@@ -26,7 +26,9 @@ export function loadTsconfigAliases(root: string): AliasResult {
 	const options = config.compilerOptions
 	const paths = options?.paths || {}
 	const baseUrl = options?.baseUrl || '.'
-	const baseDir = path.resolve(path.dirname(result.path || root), baseUrl)
+	const configDir = path.dirname(result.path || root)
+	const baseDir = path.resolve(configDir, baseUrl)
+	const projectRoot = configDir
 	const aliases: UserAlias[] = []
 
 	for (const [key, values] of Object.entries(paths)) {
@@ -51,5 +53,5 @@ export function loadTsconfigAliases(root: string): AliasResult {
 		return id
 	}
 
-	return { aliases: aliases, resolvePath }
+	return { aliases, resolvePath, projectRoot }
 }
