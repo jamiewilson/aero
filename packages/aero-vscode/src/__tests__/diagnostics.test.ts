@@ -289,7 +289,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 <script is:build>
 	const { storageKey, attribute } = site.theme
 </script>
-<script pass:data="{{ storageKey, attribute }}">
+<script pass:data="{ storageKey, attribute }">
 	const theme = JSON.parse(localStorage.getItem(storageKey))
 	document.documentElement.setAttribute(attribute, theme)
 </script>
