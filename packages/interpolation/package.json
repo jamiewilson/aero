@@ -10,19 +10,19 @@
     "directory": "packages/interpolation"
   },
   "homepage": "https://github.com/aerobuilt/aero",
-  "types": "./dist/index.d.ts",
-  "main": "./dist/index.js",
+  "types": "./dist/index.d.mts",
+  "main": "./dist/index.mjs",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --out-dir dist",
+    "build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.21.0-beta.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

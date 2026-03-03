@@ -141,6 +141,8 @@ export interface UserAlias {
 export interface AliasResult {
 	aliases: UserAlias[]
 	resolvePath?: (specifier: string) => string
+	/** Project root (directory containing tsconfig.json) when a tsconfig was found. */
+	projectRoot?: string
 }
 
 /** Head and body HTML fragments (e.g. from `runtime/client` `extractDocumentParts`). */

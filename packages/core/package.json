@@ -11,45 +11,49 @@
 	},
 	"homepage": "https://github.com/aerobuilt/aero",
 	"private": false,
-	"types": "./dist/entry-dev.d.ts",
+	"types": "./dist/entry-dev.d.mts",
 	"files": [
 		"dist"
 	],
 	"scripts": {
-		"build": "tsup src/entry-dev.ts src/entry-prod.ts src/entry-editor.ts src/types.ts src/vite/index.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
+		"build": "tsdown src/entry-dev.ts src/entry-prod.ts src/entry-editor.ts src/types.ts src/vite/index.ts src/utils/aliases.ts src/utils/redirects.ts src/runtime/index.ts src/runtime/instance.ts --format esm --dts --clean --out-dir dist --external @content/site",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"exports": {
 		".": {
-			"types": "./dist/entry-dev.d.ts",
-			"default": "./dist/entry-dev.js"
+			"types": "./dist/entry-dev.d.mts",
+			"default": "./dist/entry-dev.mjs"
 		},
 		"./entry-prod": {
-			"types": "./dist/entry-prod.d.ts",
-			"default": "./dist/entry-prod.js"
+			"types": "./dist/entry-prod.d.mts",
+			"default": "./dist/entry-prod.mjs"
 		},
 		"./vite": {
-			"types": "./dist/vite/index.d.ts",
-			"default": "./dist/vite/index.js"
+			"types": "./dist/vite/index.d.mts",
+			"default": "./dist/vite/index.mjs"
 		},
 		"./runtime": {
-			"types": "./dist/runtime/index.d.ts",
-			"default": "./dist/runtime/index.js"
+			"types": "./dist/runtime/index.d.mts",
+			"default": "./dist/runtime/index.mjs"
 		},
 		"./runtime/instance": {
-			"types": "./dist/runtime/instance.d.ts",
-			"default": "./dist/runtime/instance.js"
+			"types": "./dist/runtime/instance.d.mts",
+			"default": "./dist/runtime/instance.mjs"
 		},
-		"./types": "./dist/types.d.ts",
+		"./types": "./dist/types.d.mts",
+		"./utils/aliases": {
+			"types": "./dist/utils/aliases.d.mts",
+			"default": "./dist/utils/aliases.mjs"
+		},
 		"./utils/redirects": {
-			"types": "./dist/utils/redirects.d.ts",
-			"default": "./dist/utils/redirects.js"
+			"types": "./dist/utils/redirects.d.mts",
+			"default": "./dist/utils/redirects.mjs"
 		},
 		"./editor": {
-			"types": "./dist/entry-editor.d.ts",
-			"default": "./dist/entry-editor.js"
+			"types": "./dist/entry-editor.d.mts",
+			"default": "./dist/entry-editor.mjs"
 		}
 	},
 	"dependencies": {
@@ -73,7 +77,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.0",
-		"tsup": "^8.5.1",
+		"tsdown": "^0.21.0-beta.2",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.18"
 	}
