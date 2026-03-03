@@ -41,58 +41,82 @@ describe('create-aerobuilt lib', () => {
 
 	describe('rewritePackageJson', () => {
 		/** @type {string} */
-		let tmpDir
+		let templateDir
+		/** @type {string} */
+		let targetDir
 
 		beforeEach(() => {
-			tmpDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-test-'))
+			templateDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-template-'))
+			targetDir = mkdtempSync(join(tmpdir(), 'create-aerobuilt-target-'))
 		})
 
 		afterEach(() => {
-			rmSync(tmpDir, { recursive: true, force: true })
+			rmSync(templateDir, { recursive: true, force: true })
+			rmSync(targetDir, { recursive: true, force: true })
 		})
 
-		it('sets name to projectName', () => {
+		it('writes package.json from package-template.json with name and version', () => {
 			writeFileSync(
-				join(tmpDir, 'package.json'),
-				JSON.stringify({ name: '@aerobuilt/template-minimal', dependencies: {} }),
-			)
-			rewritePackageJson(tmpDir, 'my-app', true)
-			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
-			expect(pkg.name).toBe('my-app')
-		})
-
-		it('when inMonorepo true, leaves workspace:* unchanged', () => {
-			writeFileSync(
-				join(tmpDir, 'package.json'),
+				join(templateDir, 'package-template.json'),
 				JSON.stringify({
-					name: 'template',
-					dependencies: { '@aerobuilt/core': 'workspace:*' },
+					name: '<name>',
+					version: '0.1.0',
+					type: 'module',
+					scripts: { dev: 'vite dev' },
+					dependencies: { aerobuilt: '<version>' },
+					devDependencies: { vite: '8.0.0-beta.15' },
 				}),
 			)
-			rewritePackageJson(tmpDir, 'my-app', true)
-			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
-			expect(pkg.dependencies['@aerobuilt/core']).toBe('workspace:*')
+			rewritePackageJson(templateDir, targetDir, 'my-app', true)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			expect(pkg.name).toBe('my-app')
+			expect(pkg.version).toBe('0.1.0')
+			expect(pkg.type).toBe('module')
 		})
 
-		it('when inMonorepo false, rewrites workspace:* to *', () => {
+		it('when inMonorepo true, sets aerobuilt to workspace:*', () => {
 			writeFileSync(
-				join(tmpDir, 'package.json'),
+				join(templateDir, 'package-template.json'),
 				JSON.stringify({
-					name: 'template',
-					dependencies: { '@aerobuilt/core': 'workspace:*' },
+					name: '<name>',
+					version: '0.1.0',
+					dependencies: { aerobuilt: '<version>' },
+				}),
+			)
+			rewritePackageJson(templateDir, targetDir, 'my-app', true)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			expect(pkg.dependencies.aerobuilt).toBe('workspace:*')
+		})
+
+		it('when inMonorepo false, sets aerobuilt to *', () => {
+			writeFileSync(
+				join(templateDir, 'package-template.json'),
+				JSON.stringify({
+					name: '<name>',
+					version: '0.1.0',
+					dependencies: { aerobuilt: '<version>' },
 					devDependencies: { vite: '^1.0.0' },
 				}),
 			)
-			rewritePackageJson(tmpDir, 'my-app', false)
-			const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8'))
+			rewritePackageJson(templateDir, targetDir, 'my-app', false)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
 			expect(pkg.name).toBe('my-app')
-			expect(pkg.dependencies['@aerobuilt/core']).toBe('*')
+			expect(pkg.dependencies.aerobuilt).toBe('*')
 			expect(pkg.devDependencies.vite).toBe('^1.0.0')
 		})
 
-		it('does nothing when package.json does not exist', () => {
-			rewritePackageJson(tmpDir, 'my-app', false)
-			expect(existsSync(join(tmpDir, 'package.json'))).toBe(false)
+		it('exits when package-template.json is missing', () => {
+			const exit = process.exit
+			try {
+				process.exit = /** @type {typeof process.exit} */ (code => {
+					throw new Error(`exit(${code})`)
+				})
+				expect(() => rewritePackageJson(templateDir, targetDir, 'my-app', false)).toThrow(
+					'exit(1)',
+				)
+			} finally {
+				process.exit = exit
+			}
 		})
 	})
 
