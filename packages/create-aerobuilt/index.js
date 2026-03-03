@@ -33,6 +33,7 @@ function copyTemplate(src, dest) {
 		if (name === 'dist' || name === '.output') return true
 		if (name.endsWith('.log') || name === '.DS_Store') return true
 		if (name === '.vite' || name === '.nitro') return true
+		if (name === 'package.json' || name === 'package-template.json') return true
 		return false
 	}
 	mkdirSync(dest, { recursive: true })
@@ -139,7 +140,7 @@ function main() {
 	const templatePath = resolveTemplatePath(template)
 	console.log(`Creating Aero app in ${target} from template "${template}"...`)
 	copyTemplate(templatePath, targetDir)
-	rewritePackageJson(targetDir, target, inMonorepo)
+	rewritePackageJson(templatePath, targetDir, target, inMonorepo)
 	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')
 	if (inMonorepo) {

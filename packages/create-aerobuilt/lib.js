@@ -24,28 +24,30 @@ export function parseArgs(argv) {
 	return { target, template }
 }
 
+const PACKAGE_TEMPLATE = 'package-template.json'
+
 /**
- * Rewrite package.json in targetDir: set name to projectName; if !inMonorepo, replace workspace:* with *.
- * @param {string} targetDir
- * @param {string} projectName
- * @param {boolean} inMonorepo
+ * Write package.json in targetDir from the template's package-template.json, with name and aerobuilt version filled in.
+ * @param {string} templatePath - Path to the template directory (e.g. packages/templates/minimal)
+ * @param {string} targetDir - Path to the scaffolded project directory
+ * @param {string} projectName - Project name for package.json "name"
+ * @param {boolean} inMonorepo - If true, use workspace:* for aerobuilt; otherwise *
  */
-export function rewritePackageJson(targetDir, projectName, inMonorepo) {
-	const pkgPath = join(targetDir, 'package.json')
-	if (!existsSync(pkgPath)) return
-	const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-	pkg.name = projectName
-	if (!inMonorepo) {
-		const rewrite = deps => {
-			if (!deps) return
-			for (const key of Object.keys(deps)) {
-				if (deps[key] === 'workspace:*') deps[key] = '*'
-			}
-		}
-		rewrite(pkg.dependencies)
-		rewrite(pkg.devDependencies)
+export function rewritePackageJson(templatePath, targetDir, projectName, inMonorepo) {
+	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
+	if (!existsSync(templatePkgPath)) {
+		console.error(
+			`create-aerobuilt: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`,
+		)
+		process.exit(1)
 	}
-	writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+	const pkg = JSON.parse(readFileSync(templatePkgPath, 'utf8'))
+	pkg.name = projectName
+	const aerobuiltVersion = inMonorepo ? 'workspace:*' : '*'
+	if (pkg.dependencies && pkg.dependencies.aerobuilt !== undefined) {
+		pkg.dependencies.aerobuilt = aerobuiltVersion
+	}
+	writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
 }
 
 /**
