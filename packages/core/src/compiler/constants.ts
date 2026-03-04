@@ -35,26 +35,12 @@ export const SLOT_NAME_DEFAULT = 'default'
 
 /** Matches `item in items` for data-each (captures: loop variable, iterable expression). */
 export const EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
-/**
- * Matches `{ expression }` for interpolation (capture: expression).
- *
- * @deprecated Use the tokenizer in compiler/tokenizer.ts for correct nesting and string/comment
- *   handling. Kept for backwards compatibility (e.g. aero-vscode); core no longer uses this.
- */
-export const CURLY_INTERPOLATION_REGEX = /{([\s\S]+?)}/g
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 /** Self-closing tag: `<tag ... />`. */
 export const SELF_CLOSING_TAG_REGEX = /<([a-z0-9-]+)([^>]*?)\/>/gi
 export const SELF_CLOSING_TAIL_REGEX = /\/>$/
 
-/**
- * Attribute names that should not be interpolated (Alpine.js, etc.): `x-*`, `@*`, `:*`, `.*`.
- *
- * @deprecated Use `isDirectiveAttr()` from compiler/directive-attributes.ts for configurable
- *   directive detection. Kept for backwards compatibility (e.g. aero-vscode).
- */
-export const ALPINE_ATTR_REGEX = /^(x-|[@:.]).*/
 /** HTML void elements that have no closing tag. */
 export const VOID_TAGS = new Set([
 	'area',

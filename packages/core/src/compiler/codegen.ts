@@ -16,6 +16,7 @@ import * as Helper from './helpers'
 import { analyzeBuildScript } from './build-script-analysis'
 import { isDirectiveAttr } from './directive-attributes'
 import { emitToJS, emitBodyAndStyle } from './emit'
+import { parse } from './parser'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 
@@ -694,4 +695,27 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	})
 
 	return importsCode + '\n' + renderFn
+}
+
+/**
+ * Compile an HTML template source into a JavaScript module string. Single entry for parse + compile.
+ * When optional `parsed` is provided (e.g. after registering client scripts in the plugin), it is used to avoid parsing twice.
+ *
+ * @param htmlSource - Raw HTML template string.
+ * @param options - CompileOptions (root, resolvePath, importer, optional script overrides).
+ * @param parsed - Optional pre-parsed result; when provided, used instead of parsing htmlSource again.
+ * @returns Module source (async render function + optional getStaticPaths).
+ */
+export function compileTemplate(
+	htmlSource: string,
+	options: CompileOptions,
+	parsed?: ParseResult,
+): string {
+	const p = parsed ?? parse(htmlSource)
+	return compile(p, {
+		...options,
+		clientScripts: options.clientScripts ?? p.clientScripts,
+		inlineScripts: options.inlineScripts ?? p.inlineScripts,
+		blockingScripts: options.blockingScripts ?? p.blockingScripts,
+	})
 }

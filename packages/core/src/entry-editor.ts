@@ -22,6 +22,8 @@ export {
 	type DirectiveAttrConfig,
 } from './compiler/directive-attributes'
 
+export { COMPONENT_SUFFIX_REGEX } from './compiler/constants'
+
 export {
 	analyzeBuildScriptForEditor,
 	type BuildScriptImportForEditor,
