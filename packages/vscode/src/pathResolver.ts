@@ -8,6 +8,7 @@
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
+import * as fs from 'node:fs'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
@@ -15,6 +16,7 @@ import {
 
 /** Default dirs when no aero/vite config is available (matches framework defaults). */
 const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }
+const RESOLUTION_EXTENSIONS = ['.html', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json']
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
@@ -52,7 +54,8 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 			if (/^(https?:|data:|#|\/\/)/.test(specifier)) return undefined
 
 			const importer = fromFile ?? document.uri.fsPath
-			const resolved = resolveFn(specifier, importer)
+			const rawResolved = resolveFn(specifier, importer)
+			const resolved = resolveToExistingPath(rawResolved)
 			return resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier)
 				? resolved
 				: undefined
@@ -66,4 +69,21 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 /** Clear the resolver cache (e.g. when tsconfig changes). */
 export function clearResolverCache(): void {
 	resolverCache.clear()
+}
+
+function resolveToExistingPath(candidate: string): string {
+	if (!candidate) return candidate
+	if (fs.existsSync(candidate)) return candidate
+
+	for (const ext of RESOLUTION_EXTENSIONS) {
+		const withExt = `${candidate}${ext}`
+		if (fs.existsSync(withExt)) return withExt
+	}
+
+	for (const ext of RESOLUTION_EXTENSIONS) {
+		const indexPath = path.join(candidate, `index${ext}`)
+		if (fs.existsSync(indexPath)) return indexPath
+	}
+
+	return candidate
 }

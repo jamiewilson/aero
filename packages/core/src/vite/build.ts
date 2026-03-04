@@ -30,16 +30,26 @@ import {
 import { createServer } from 'vite'
 
 import {
-	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	getClientScriptVirtualUrl,
-	LINK_ATTRS,
 	RUNTIME_INSTANCE_MODULE_ID,
-	SKIP_PROTOCOL_REGEX,
 	resolveDirs,
+	SKIP_PROTOCOL_REGEX,
 } from './defaults'
 
+import {
+	addDoctype,
+	normalizeRelativeLink,
+	normalizeRelativeRouteLink,
+	readManifest,
+	rewriteAbsoluteUrl,
+	rewriteRenderedHtml,
+	toOutputFile,
+} from './rewrite'
+
 import { toPosix, toPosixRelative } from '../utils/path'
+
+export { addDoctype } from './rewrite'
 
 /**
  * Register client scripts from parsed template into a Map.
@@ -121,13 +131,6 @@ function toRouteFromPageName(pageName: string): string {
 	return pageName
 }
 
-/** Route path to output file path (e.g. '' → index.html, about → about/index.html). */
-function toOutputFile(routePath: string): string {
-	if (routePath === '') return 'index.html'
-	if (routePath === '404') return '404.html'
-	return toPosix(path.join(routePath, 'index.html'))
-}
-
 /**
  * Generate sitemap.xml from route paths. Only called when site URL is set.
  * Excludes 404. Writes to distDir/sitemap.xml.
@@ -158,42 +161,15 @@ function escapeXml(s: string): string {
 		.replace(/'/g, '&apos;')
 }
 
-/** Relative path from fromDir to targetPath, always starting with ./ when non-empty. */
-function normalizeRelativeLink(fromDir: string, targetPath: string): string {
-	const rel = path.posix.relative(fromDir, targetPath)
-	if (!rel) return './'
-	if (rel.startsWith('.')) return rel
-	return `./${rel}`
-}
-
-/** Relative path to a route (directory index); appends trailing slash for non-root routes. */
-function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
-	const targetDir = routePath === '' ? '' : routePath
-	const rel = path.posix.relative(fromDir, targetDir)
-	let res = !rel ? './' : rel.startsWith('.') ? rel : `./${rel}`
-
-	// If it's a directory link (not empty/root or 404), append slash
-	// We assume 'routePath' corresponds to a directory index unless it's 404
-	if (routePath !== '' && routePath !== '404' && !res.endsWith('/')) {
-		res += '/'
-	}
-	return res
-}
-
-function normalizeRoutePathFromHref(value: string): string {
-	if (value === '/') return ''
-	return value.replace(/^\/+/, '').replace(/\/+$/, '')
+/** Root-relative path for manifest key (posix). */
+function toManifestKey(root: string, filePath: string): string {
+	return toPosixRelative(filePath, root)
 }
 
 /** True if URL is empty or matches SKIP_PROTOCOL_REGEX (external, hash, etc.). */
 function isSkippableUrl(value: string): boolean {
 	if (!value) return true
 	return SKIP_PROTOCOL_REGEX.test(value)
-}
-
-/** Root-relative path for manifest key (posix). */
-function toManifestKey(root: string, filePath: string): string {
-	return toPosixRelative(filePath, root)
 }
 
 /** Resolve script/link src or href to absolute path; returns null for external/skippable or unresolvable. */
@@ -367,118 +343,6 @@ function walkFiles(dir: string): string[] {
 		}
 	}
 	return files
-}
-
-/** Prepend `<!doctype html>` if missing. */
-export function addDoctype(html: string): string {
-	return /^\s*<!doctype\s+html/i.test(html) ? html : `<!doctype html>\n${html}`
-}
-
-/** Image extensions: when a manifest entry's .file is a .js chunk but .assets lists the real image, use it. */
-const ASSET_IMAGE_EXT = /\.(jpg|jpeg|png|gif|webp|svg|ico)(\?|$)/i
-
-/** Rewrite one absolute URL to dist-relative using manifest and route set; leaves API and external URLs unchanged. */
-function rewriteAbsoluteUrl(
-	value: string,
-	fromDir: string,
-	manifest: Manifest,
-	routeSet: Set<string>,
-	apiPrefix = DEFAULT_API_PREFIX,
-): string {
-	if (value.startsWith(apiPrefix)) return value
-
-	const noQuery = value.split(/[?#]/)[0] || value
-	const suffix = value.slice(noQuery.length)
-	const manifestKey = noQuery.replace(/^\//, '')
-	// Vite manifest may key entries with or without leading slash
-	let manifestEntry = manifest[noQuery] ?? manifest[manifestKey]
-
-	// Entry may be keyed by source path; URL in HTML may be the output path (e.g. /assets/about.jpg-xxx.js from SSR import)
-	if (!manifestEntry && noQuery.startsWith('assets/')) {
-		const entry = Object.values(manifest).find(
-			(e: any) => e?.file === noQuery || e?.file === manifestKey,
-		)
-		if (entry) manifestEntry = entry as typeof manifestEntry
-	}
-
-	if (manifestEntry?.file) {
-		// Prefer the actual image asset when the entry's .file is a .js chunk (image import wrapper)
-		const entryWithAssets = manifestEntry as { file: string; assets?: string[] }
-		const imageAsset =
-			entryWithAssets.assets?.find((a: string) => ASSET_IMAGE_EXT.test(a))
-		const fileToUse = imageAsset ?? manifestEntry.file
-		const rel = normalizeRelativeLink(fromDir, fileToUse)
-		return rel + suffix
-	}
-
-	if (noQuery.startsWith('/assets/')) {
-		const rel = normalizeRelativeLink(fromDir, noQuery.replace(/^\//, ''))
-		return rel + suffix
-	}
-
-	const route = normalizeRoutePathFromHref(noQuery)
-	if (routeSet.has(route) || route === '') {
-		const rel =
-			route === '404'
-				? normalizeRelativeLink(fromDir, toOutputFile(route))
-				: normalizeRelativeRouteLink(fromDir, route)
-		return rel + suffix
-	}
-
-	// Treat remaining absolute URLs as dist-root files (e.g. /favicon.svg).
-	const rel = normalizeRelativeLink(fromDir, noQuery.replace(/^\//, ''))
-	return rel + suffix
-}
-
-/** Rewrite script src (virtual client → hashed asset) and LINK_ATTRS in rendered HTML; add doctype. */
-function rewriteRenderedHtml(
-	html: string,
-	outputFile: string,
-	manifest: Manifest,
-	routeSet: Set<string>,
-	apiPrefix = DEFAULT_API_PREFIX,
-): string {
-	const fromDir = path.posix.dirname(outputFile)
-	const { document } = parseHTML(html)
-
-	// Rewrite virtual client script src to hashed asset path (they are bundled as Rollup entries)
-	for (const script of Array.from(document.querySelectorAll('script[src]'))) {
-		const src = script.getAttribute('src') || ''
-		if (src.startsWith(CLIENT_SCRIPT_PREFIX)) {
-			const newSrc = rewriteAbsoluteUrl(src, fromDir, manifest, routeSet, apiPrefix)
-			script.setAttribute('src', newSrc)
-			script.setAttribute('type', 'module')
-			script.removeAttribute('defer') // redundant with type=module
-			continue
-		}
-		// Asset pipeline scripts: strip redundant defer when type=module (modules are deferred by default)
-		if (script.getAttribute('type') === 'module') {
-			script.removeAttribute('defer')
-		}
-	}
-
-	for (const el of Array.from(document.querySelectorAll('*'))) {
-		for (const attrName of LINK_ATTRS) {
-			if (!el.hasAttribute(attrName)) continue
-			const current = (el.getAttribute(attrName) || '').trim()
-			if (!current || isSkippableUrl(current)) continue
-			if (!current.startsWith('/')) continue
-			el.setAttribute(
-				attrName,
-				rewriteAbsoluteUrl(current, fromDir, manifest, routeSet, apiPrefix),
-			)
-		}
-	}
-
-	const htmlTag = document.documentElement
-	if (htmlTag) return addDoctype(htmlTag.outerHTML)
-	return addDoctype(document.toString())
-}
-
-function readManifest(distDir: string): Manifest {
-	const manifestPath = path.join(distDir, '.vite', 'manifest.json')
-	if (!fs.existsSync(manifestPath)) return {}
-	return JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as Manifest
 }
 
 /**

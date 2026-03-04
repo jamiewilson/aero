@@ -1,5 +1,6 @@
 {
 	"name": "aero-vscode",
+	"private": true,
 	"displayName": "Aero",
 	"icon": "images/logo.png",
 	"description": "Language support for Aero templates in HTML",
@@ -98,6 +99,5 @@
 				]
 			}
 		]
-	},
-	"private": true
+	}
 }

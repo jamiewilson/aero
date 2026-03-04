@@ -7,7 +7,6 @@
 import * as vscode from 'vscode'
 import { tokenizeCurlyInterpolation } from '@aerobuilt/interpolation'
 import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
-import { CONTENT_GLOBALS } from './constants'
 
 /**
  * Standalone (valueless) attributes that are treated as variable references in templates.
@@ -310,7 +309,11 @@ export function collectVariablesByScope(
 							// rawAttrs starts at scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
 							// varMatch is relative to pdMatch[0], pdMatch is relative to rawAttrs
 							const rawAttrsStart = scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
-							const varAbsStart = rawAttrsStart + passDataAttrStart + varMatch.index + varMatch[0].indexOf(varName)
+							const varAbsStart =
+								rawAttrsStart +
+								passDataAttrStart +
+								varMatch.index +
+								varMatch[0].indexOf(varName)
 							const varAbsEnd = varAbsStart + varName.length
 
 							setVar(varName, {

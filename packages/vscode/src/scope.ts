@@ -53,7 +53,8 @@ export function isAeroDocument(document: vscode.TextDocument): boolean {
 	const mode = getScopeMode()
 	if (mode === 'always') return true
 
-	if (isInAeroProject(document.uri.fsPath)) return true
+	const inProject = isInAeroProject(document.uri.fsPath)
+	if (inProject) return true
 	if (mode === 'strict') return false
 
 	return hasAeroMarkers(document.getText())
