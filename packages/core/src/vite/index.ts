@@ -125,16 +125,6 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			const root = userConfig.root || process.cwd()
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)
-			if (
-				state.dirs.client !== DEFAULT_DIRS.client &&
-				rawAliases.projectRoot != null
-			) {
-				console.warn(
-					'[aero] Custom dirs.client is set; ensure tsconfig paths for @pages, @layouts, @components match (e.g. @pages → "' +
-						state.dirs.client +
-						'/pages").',
-				)
-			}
 			const site = state.options.site ?? ''
 
 			// Production build: use minimal client entry (no instance/template chunks) so dist/assets stays small.

@@ -68,7 +68,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 ### Assets and tooling
 
 - **Image optimization** — Optional pipeline during build. [image-optimization.md](image-optimization.md)
-- **VS Code extension** — Syntax and diagnostics (packages/aero-vscode).
+- **VS Code extension** — Syntax and diagnostics (packages/vscode).
 - **TypeScript** — Scripts and content; path aliases from tsconfig.
 
 ### Server and client libraries
