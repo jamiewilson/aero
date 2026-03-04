@@ -46,10 +46,14 @@ if (!globalThis.__AERO_LISTENERS__) {
 	globalThis.__AERO_LISTENERS__ = listeners
 }
 
-/** Eager globs so pages, layouts, and components are available synchronously for SSR/build. */
-const components = import.meta.glob('@components/**/*.html', { eager: true })
-const layouts = import.meta.glob('@layouts/*.html', { eager: true })
-const pages = import.meta.glob('@pages/**/*.html', { eager: true })
+/**
+ * Eager globs so pages, layouts, and components are available synchronously for SSR/build.
+ * Patterns use default client dir (./client/...) so Vite's import-glob accepts them; apps with
+ * custom dirs rely on path aliases mapping @components/@layouts/@pages to the same structure.
+ */
+const components = import.meta.glob('./client/components/**/*.html', { eager: true })
+const layouts = import.meta.glob('./client/layouts/*.html', { eager: true })
+const pages = import.meta.glob('./client/pages/**/*.html', { eager: true })
 
 aero.registerPages(components)
 aero.registerPages(layouts)
