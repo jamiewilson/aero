@@ -9,6 +9,16 @@ import { tokenizeCurlyInterpolation } from '@aerobuilt/interpolation'
 import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
 import { CONTENT_GLOBALS } from './constants'
 
+/**
+ * Standalone (valueless) attributes that are treated as variable references in templates.
+ * Only Aero's props shorthand qualifies; all other standalone attrs (HTML booleans, Aero directives) are not refs.
+ *
+ * @remarks
+ * Aero structural directives that can be standalone and must never be refs: `else`, `data-else`.
+ * Directive attributes that always have values (if, else-if, each) are not in the standalone path.
+ */
+const STANDALONE_ATTR_VARIABLE_REFS = new Set(['props', 'data-props'])
+
 /** A single variable definition: name, range, kind (import|declaration|parameter|reference), optional content ref or properties. */
 export type VariableDefinition = {
 	name: string
@@ -649,18 +659,11 @@ export function collectTemplateReferences(
 					maskRange(absValueStart, value.length)
 				}
 			} else {
-				// Standalone attribute
-				// e.g. <comp props /> or <input disabled />
-				// If it's a valid identifier, treat as reference (shorthand)
-				// Also ignore Alpine shorthands if they exist and are not caught by isAlpine (unlikely for pure identifiers)
-				if (
-					/^[a-zA-Z_$][\w$]*$/.test(name) &&
-					!/^(if|else|return|function|var|let|const|import|from|as|in|true|false|null|undefined)$/.test(
-						name,
-					)
-				) {
+				// Standalone attribute: only Aero's props shorthand is a variable reference.
+				// else/data-else and HTML booleans (disabled, hidden, etc.) are not refs.
+				if (STANDALONE_ATTR_VARIABLE_REFS.has(name)) {
 					refs.push({
-						content: name,
+						content: 'props',
 						range: new vscode.Range(
 							document.positionAt(absNameStart),
 							document.positionAt(absNameStart + name.length),

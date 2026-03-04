@@ -402,7 +402,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 			}
 
 			const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
-			if (resolved && !fs.existsSync(resolved)) {
+			const resolvedExists =
+				resolved &&
+				(fs.existsSync(resolved) ||
+					(!resolved.endsWith('.html') && fs.existsSync(resolved + '.html')))
+			if (resolved && !resolvedExists) {
 				const startPos = document.positionAt(match.index)
 				const endPos = document.positionAt(match.index + match[0].length)
 				const diagnostic = new vscode.Diagnostic(
