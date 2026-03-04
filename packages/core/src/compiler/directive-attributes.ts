@@ -1,7 +1,6 @@
 /**
  * Classifier for directive attributes (Alpine.js, HTMX, Vue, etc.) that should
- * skip { } interpolation in the compiler. Replaces ALPINE_ATTR_REGEX with a
- * declarative list for clearer semantics and easier extension.
+ * skip { } interpolation in the compiler.
  *
  * @packageDocumentation
  */

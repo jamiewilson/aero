@@ -31,7 +31,7 @@ import {
 } from './defaults'
 
 import { parse } from '../compiler/parser'
-import { compile } from '../compiler/codegen'
+import { compileTemplate } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
@@ -356,14 +356,14 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 							parsed.clientScripts.length,
 						)
 					}
-					const generated = compile(parsed, {
+					const generated = compileTemplate(code, {
 						root: state.config.root,
 						clientScripts: parsed.clientScripts,
 						blockingScripts: parsed.blockingScripts,
 						inlineScripts: parsed.inlineScripts,
 						resolvePath: state.aliasResult.resolve,
 						importer: filePath,
-					})
+					}, parsed)
 					return { code: generated, map: null }
 				} catch {
 					return null
@@ -415,14 +415,14 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 					}
 				}
 
-				const generated = compile(parsed, {
+				const generated = compileTemplate(code, {
 					root: state.config.root,
 					clientScripts: parsed.clientScripts,
 					blockingScripts: parsed.blockingScripts,
 					inlineScripts: parsed.inlineScripts,
 					resolvePath: state.aliasResult.resolve,
 					importer: id,
-				})
+				}, parsed)
 
 				return {
 					code: generated,
