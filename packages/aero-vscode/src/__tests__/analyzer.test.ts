@@ -76,6 +76,44 @@ describe('collectTemplateReferences', () => {
 		const attrs = refs.filter(r => r.isAttribute)
 		expect(attrs).toHaveLength(0)
 	})
+
+	it('should not treat HTML boolean attributes (disabled, hidden, etc.) as variable refs', () => {
+		const text = `
+    <input disabled />
+    <div hidden></div>
+    <input readonly required />
+    <button type="button" disabled>Submit</button>
+    `
+		const refs = collectTemplateReferences(mockDoc, text)
+
+		const variableRefs = refs.filter(r => !r.isComponent && r.content !== 'props')
+		expect(variableRefs.map(r => r.content)).not.toContain('disabled')
+		expect(variableRefs.map(r => r.content)).not.toContain('hidden')
+		expect(variableRefs.map(r => r.content)).not.toContain('readonly')
+		expect(variableRefs.map(r => r.content)).not.toContain('required')
+	})
+
+	it('should treat standalone props / data-props as variable ref', () => {
+		const text = `<my-component props />`
+		const refs = collectTemplateReferences(mockDoc, text)
+
+		const propsRefs = refs.filter(r => r.content === 'props' && r.isAttribute)
+		expect(propsRefs).toHaveLength(1)
+	})
+
+	it('should not treat Aero standalone directives (else, data-else) as variable refs', () => {
+		const text = `
+    <div data-if="{ show }">yes</div>
+    <div data-else>no</div>
+    <div else>fallback</div>
+    `
+		const refs = collectTemplateReferences(mockDoc, text)
+
+		const variableRefs = refs.filter(r => !r.isComponent && (r.content !== 'props' || !r.isAttribute))
+		expect(variableRefs.map(r => r.content)).not.toContain('else')
+		// data-else is the attribute name; we don't add a ref for "else" or "data-else" as variable
+		expect(variableRefs.filter(r => r.content === 'data-else')).toHaveLength(0)
+	})
 })
 
 /** Build-scope defined variables (imports, etc.) and pass:data variable positions in client (bundled) scope. */

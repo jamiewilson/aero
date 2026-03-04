@@ -1,18 +1,25 @@
 /**
- * Resolve import specifiers and paths using oxc-resolver (tsconfig paths, extensions).
+ * Resolve import specifiers and paths using tsconfig paths + framework defaults.
  *
  * @remarks
- * Uses loadTsconfigAliases from @aerobuilt/core/utils/aliases which wraps oxc-resolver.
+ * Uses loadTsconfigAliases and mergeWithDefaultAliases from @aerobuilt/core/utils/aliases so
+ * @pages, @layouts, @components resolve even when tsconfig is missing or has no paths.
  * Caches a PathResolver per project root. Used by definition, hover, and completion providers.
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
-import { loadTsconfigAliases } from '@aerobuilt/core/utils/aliases'
+import {
+	loadTsconfigAliases,
+	mergeWithDefaultAliases,
+} from '@aerobuilt/core/utils/aliases'
+
+/** Default dirs when no aero/vite config is available (matches framework defaults). */
+const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
 	resolve(specifier: string, fromFile?: string): string | undefined
-	/** The project root (directory containing tsconfig.json). */
+	/** The project root (directory containing tsconfig.json or workspace root). */
 	root: string
 }
 
@@ -26,16 +33,17 @@ const resolverCache = new Map<string, PathResolver>()
  */
 export function getResolver(document: vscode.TextDocument): PathResolver {
 	const docDir = path.dirname(document.uri.fsPath)
-	const aliasResult = loadTsconfigAliases(docDir)
+	const rawAliases = loadTsconfigAliases(docDir)
 
 	const projectRoot =
-		aliasResult.projectRoot ??
+		rawAliases.projectRoot ??
 		vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ??
 		docDir
 
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
 
+	const aliasResult = mergeWithDefaultAliases(rawAliases, projectRoot, DEFAULT_DIRS)
 	const resolveFn = aliasResult.resolve
 
 	const resolver: PathResolver = {
