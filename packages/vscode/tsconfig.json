@@ -1,11 +1,12 @@
 {
 	"compilerOptions": {
 		"target": "ES2020",
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"module": "ES2020",
+		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
-			"@aerobuilt/core/editor": ["../core/dist/entry-editor"]
+			"@aerobuilt/core/editor": ["../core/dist/entry-editor.d.mts"],
+			"@aerobuilt/core/utils/aliases": ["../core/dist/utils/aliases.d.mts"]
 		},
 		"lib": ["ES2020"],
 		"outDir": "dist",

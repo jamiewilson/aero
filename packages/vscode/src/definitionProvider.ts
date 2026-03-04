@@ -3,13 +3,12 @@ import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 import { CONTENT_GLOBALS } from './constants'
+import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from './analyzer'
 import {
-	collectDefinedVariables,
-	collectTemplateScopes,
-	VariableDefinition,
-	TemplateScope,
-} from './analyzer'
-import { kebabToCamelCase, collectImportedSpecifiersFromDocument, findInnermostScope } from './utils'
+	kebabToCamelCase,
+	collectImportedSpecifiersFromDocument,
+	findInnermostScope,
+} from './utils'
 
 /**
  * Go to Definition for Aero template references in HTML files.
@@ -27,7 +26,6 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 
 		const classification = classifyPosition(document, position)
 		if (!classification) return null
-
 		const resolver = getResolver(document)
 		if (!resolver) return null
 
@@ -77,13 +75,14 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'expression-identifier': {
-				return resolveExpressionIdentifierDefinition(
+				const result = resolveExpressionIdentifierDefinition(
 					document,
 					position,
 					classification.identifier,
 					classification.range,
 					resolver,
 				)
+				return result ?? null
 			}
 		}
 	}
@@ -297,12 +296,14 @@ function makeLink(
 	targetPath: string,
 	targetLine: number = 0,
 ): vscode.LocationLink {
-	const targetPos = new vscode.Position(targetLine, 0)
+	const targetStart = new vscode.Position(targetLine, 0)
+	// Use a non-zero-length range so the editor reveals and highlights the definition (zero-length can be ignored).
+	const targetEnd = new vscode.Position(targetLine, 1)
 	return {
 		originSelectionRange: originRange,
 		targetUri: vscode.Uri.file(targetPath),
-		targetRange: new vscode.Range(targetPos, targetPos),
-		targetSelectionRange: new vscode.Range(targetPos, targetPos),
+		targetRange: new vscode.Range(targetStart, targetEnd),
+		targetSelectionRange: new vscode.Range(targetStart, targetEnd),
 	}
 }
 

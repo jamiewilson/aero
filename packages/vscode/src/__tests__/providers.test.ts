@@ -61,7 +61,7 @@ vi.mock('vscode', () => {
 			registerCompletionItemProvider: vi.fn(),
 			registerHoverProvider: vi.fn(),
 		},
-		Uri: { 
+		Uri: {
 			parse: (s: string) => ({ toString: () => s, fsPath: s, scheme: 'file' }),
 			file: (s: string) => ({ fsPath: s, scheme: 'file' }),
 		},
@@ -272,7 +272,7 @@ describe('AeroDefinitionProvider', () => {
 		const result = await provider.provideDefinition(doc, position, {} as any)
 		
 		expect(result).not.toBeNull()
-		expect(result?.length).toBeGreaterThan(0)
+		expect(Array.isArray(result) ? result.length : 0).toBeGreaterThan(0)
 	})
 
 	it('should provide definition for component tag', async () => {
@@ -288,6 +288,6 @@ describe('AeroDefinitionProvider', () => {
 		const result = await provider.provideDefinition(doc, position, {} as any)
 		
 		expect(result).not.toBeNull()
-		expect(result?.length).toBeGreaterThan(0)
+		expect(Array.isArray(result) ? result.length : 0).toBeGreaterThan(0)
 	})
 })

@@ -61,7 +61,6 @@ export function classifyPosition(
 	// 4. Check for content globals / identifiers in { } expressions
 	const exprResult = getExpressionIdentifierAt(document, position)
 	if (exprResult) return exprResult
-
 	return null
 }
 

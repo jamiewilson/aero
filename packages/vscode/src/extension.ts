@@ -14,11 +14,6 @@ import { clearScopeCache } from './scope'
 import { HTML_SELECTOR } from './constants'
 
 export function activate(context: vscode.ExtensionContext): void {
-	// ---- Definition Provider (Phase 2) ----
-	context.subscriptions.push(
-		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider()),
-	)
-
 	// ---- Completion Provider (Phase 3) ----
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider(
@@ -40,6 +35,11 @@ export function activate(context: vscode.ExtensionContext): void {
 	// ---- Diagnostics (Phase 3) ----
 	const diagnostics = new AeroDiagnostics(context)
 	context.subscriptions.push(diagnostics)
+
+	// ---- Definition Provider (register last so we win when selector scores tie) ----
+	context.subscriptions.push(
+		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider()),
+	)
 
 	// ---- Cache invalidation ----
 	// Clear caches when tsconfig or workspace changes
