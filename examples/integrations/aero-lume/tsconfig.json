@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["vite/client"],
+		"paths": {
+			"@styles/*": ["./client/assets/styles/*"],
+			"@scripts/*": ["./client/assets/scripts/*"],
+			"@content/*": ["./content/*"]
+		}
+	}
+}
