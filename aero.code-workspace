@@ -5,12 +5,12 @@
 			"path": ".",
 		},
 		{
-			"name": "aerobuilt",
-			"path": "packages/aerobuilt",
-		},
-		{
 			"name": "examples",
 			"path": "examples",
+		},
+		{
+			"name": "templates",
+			"path": "packages/templates",
 		},
 		{
 			"name": "core",
@@ -29,16 +29,8 @@
 			"path": "packages/highlight",
 		},
 		{
-			"name": "templates",
-			"path": "packages/templates",
-		},
-		{
-			"name": "create-aerobuilt",
-			"path": "packages/create-aerobuilt",
-		},
-		{
-			"name": "aero-vscode",
-			"path": "packages/aero-vscode",
+			"name": "vscode",
+			"path": "packages/vscode",
 		},
 	],
 	"settings": {},

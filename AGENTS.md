@@ -7,7 +7,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 ### Monorepo
 
 - **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
-- **packages/aero-vscode** - VS Code extension (syntaxes for Aero templates).
+- **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create-aerobuilt** - Project initializer (create-aerobuilt). Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **minimal** (starter template for create-aerobuilt).
 - **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
@@ -125,7 +125,7 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 - **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
 - **packages/create-aerobuilt/** - create-aerobuilt initializer (no app source; scaffolds from templates)
 - **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aerobuilt/core and aerobuilt/vite)
-- **packages/aero-vscode/** - VS Code extension
+- **packages/vscode/** - VS Code extension
 
 For a detailed monorepo and packages layout, see [_reference/guides/monorepo.md](_reference/guides/monorepo.md).
 

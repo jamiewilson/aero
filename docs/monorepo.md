@@ -10,7 +10,7 @@ aero/
 ├── pnpm-workspace.yaml
 ├── packages/
 │   ├── core/              # Framework: compiler, runtime, Vite plugin (@aerobuilt/core; Vite plugin via aerobuilt/vite)
-│   ├── aero-vscode/       # VS Code extension
+│   ├── vscode/            # VS Code extension
 │   ├── create-aerobuilt/  # Project initializer (create-aerobuilt)
 │   ├── templates/
 │   │   └── minimal/       # Starter template (@aerobuilt/template-minimal)
@@ -42,7 +42,7 @@ aero/
   - `runtime/` — Aero class, instance context, client entry
   - `utils/` — aliases (tsconfig path loading), routing
 
-## packages/aero-vscode
+## packages/vscode
 
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.

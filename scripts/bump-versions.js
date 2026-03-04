@@ -27,7 +27,7 @@ const packagePaths = [
 	'packages/aerobuilt/package.json',
 	'packages/create-aerobuilt/package.json',
 	'packages/templates/minimal/package.json',
-	'packages/aero-vscode/package.json',
+	'packages/vscode/package.json',
 ]
 
 /** @type {Map<string, string>} */
