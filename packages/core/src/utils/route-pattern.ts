@@ -26,7 +26,7 @@ const PARAM_SEGMENT_REGEX = /^\[([^.\]\[]+)\]$/
  */
 export function parseRoutePattern(pattern: string): RoutePattern {
 	const rawSegments = pattern.split('/').filter(Boolean)
-	const segments: RouteSegment[] = rawSegments.map((seg) => {
+	const segments: RouteSegment[] = rawSegments.map(seg => {
 		const paramMatch = seg.match(PARAM_SEGMENT_REGEX)
 		if (paramMatch) {
 			return { type: 'param', name: paramMatch[1] }
@@ -43,7 +43,7 @@ export function parseRoutePattern(pattern: string): RoutePattern {
  */
 export function isDynamicRoutePattern(pattern: string): boolean {
 	const { segments } = parseRoutePattern(pattern)
-	return segments.some((s) => s.type === 'param')
+	return segments.some(s => s.type === 'param')
 }
 
 /**
@@ -55,7 +55,7 @@ export function isDynamicRoutePattern(pattern: string): boolean {
  */
 export function matchRoutePattern(
 	pattern: string,
-	pageName: string,
+	pageName: string
 ): Record<string, string> | null {
 	const { segments } = parseRoutePattern(pattern)
 	const requestedSegments = pageName.split('/').filter(Boolean)
@@ -84,7 +84,7 @@ export function matchRoutePattern(
  */
 export function expandRoutePattern(
 	pattern: string,
-	params: Record<string, string>,
+	params: Record<string, string>
 ): string {
 	const { segments } = parseRoutePattern(pattern)
 	const parts: string[] = []
@@ -93,7 +93,7 @@ export function expandRoutePattern(
 			if (!(seg.name in params)) {
 				throw new Error(
 					`[aero] getStaticPaths: missing param "${seg.name}" for pattern "${pattern}". ` +
-						`Provided params: ${JSON.stringify(params)}`,
+						`Provided params: ${JSON.stringify(params)}`
 				)
 			}
 			parts.push(params[seg.name])

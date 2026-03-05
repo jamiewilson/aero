@@ -24,7 +24,11 @@ describe('Compiler Integration', () => {
 <div>{doc.title}</div>
 `
 		const parsed = parse(src)
-		const code = compile(parsed, { root: '/', resolvePath: (s, _i) => s, importer: '/' })
+		const code = compile(parsed, {
+			root: '/',
+			resolvePath: (s, _i) => s,
+			importer: '/',
+		})
 
 		// rudimentary check: export async function getStaticPaths should appear at top level
 		// and NOT inside the default export function
@@ -35,8 +39,12 @@ describe('Compiler Integration', () => {
 		// Ensure it is NOT inside the default export
 		// The default export starts with export default async function(Aero) {
 
-		const defaultExportIndex = code.indexOf('export default async function(Aero)')
-		const getStaticPathsIndex = code.indexOf('export async function getStaticPaths()')
+		const defaultExportIndex = code.indexOf(
+			'export default async function(Aero)'
+		)
+		const getStaticPathsIndex = code.indexOf(
+			'export async function getStaticPaths()'
+		)
 
 		expect(getStaticPathsIndex).toBeGreaterThan(-1)
 		expect(defaultExportIndex).toBeGreaterThan(-1)
@@ -57,7 +65,11 @@ describe('Compiler Integration', () => {
 </script>
 `
 		const parsed = parse(src)
-		const code = compile(parsed, { root: '/', resolvePath: (s, _i) => s, importer: '/' })
+		const code = compile(parsed, {
+			root: '/',
+			resolvePath: (s, _i) => s,
+			importer: '/',
+		})
 
 		expect(code).toContain('export async function getStaticPaths() {')
 		expect(code).toContain('const a = "{ brace in string }"')

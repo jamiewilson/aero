@@ -7,7 +7,11 @@
  */
 import type { ContentConfig } from './types'
 import type { Plugin, ResolvedConfig } from 'vite'
-import { loadAllCollections, serializeContentModule, getWatchedDirs } from './loader'
+import {
+	loadAllCollections,
+	serializeContentModule,
+	getWatchedDirs,
+} from './loader'
 import { initProcessor } from './processor'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -56,7 +60,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			} catch (err: any) {
 				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT') {
 					config.logger.warn(
-						`[aero:content] No config found at "${configPath}". Content collections disabled.`,
+						`[aero:content] No config found at "${configPath}". Content collections disabled.`
 					)
 					return
 				}
@@ -84,7 +88,10 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const loaded = await loadAllCollections(contentConfig, resolvedConfig.root)
+			const loaded = await loadAllCollections(
+				contentConfig,
+				resolvedConfig.root
+			)
 			serialized = serializeContentModule(loaded)
 			return serialized
 		},

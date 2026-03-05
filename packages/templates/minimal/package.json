@@ -1,7 +1,7 @@
 {
 	"name": "@aerobuilt/template-minimal",
 	"version": "0.3.2",
-	"type": "module",
+	"homepage": "https://github.com/aerobuilt/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
@@ -9,7 +9,7 @@
 		"url": "https://github.com/aerobuilt/aero.git",
 		"directory": "packages/templates/minimal"
 	},
-	"homepage": "https://github.com/aerobuilt/aero",
+	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",

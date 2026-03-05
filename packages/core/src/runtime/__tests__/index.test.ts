@@ -172,7 +172,10 @@ describe('Aero class', () => {
 			})
 
 			expect(capturedCtx).toBeDefined()
-			expect(capturedCtx.slots).toEqual({ header: '<h1>Hi</h1>', footer: '<p>Bye</p>' })
+			expect(capturedCtx.slots).toEqual({
+				header: '<h1>Hi</h1>',
+				footer: '<p>Bye</p>',
+			})
 		})
 
 		it('should render 404 page with input (e.g. fallback page)', async () => {

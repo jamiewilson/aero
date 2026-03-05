@@ -16,7 +16,16 @@ import {
 
 /** Default dirs when no aero/vite config is available (matches framework defaults). */
 const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }
-const RESOLUTION_EXTENSIONS = ['.html', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json']
+const RESOLUTION_EXTENSIONS = [
+	'.html',
+	'.ts',
+	'.tsx',
+	'.js',
+	'.jsx',
+	'.mjs',
+	'.cjs',
+	'.json',
+]
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
@@ -45,7 +54,11 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
 
-	const aliasResult = mergeWithDefaultAliases(rawAliases, projectRoot, DEFAULT_DIRS)
+	const aliasResult = mergeWithDefaultAliases(
+		rawAliases,
+		projectRoot,
+		DEFAULT_DIRS
+	)
 	const resolveFn = aliasResult.resolve
 
 	const resolver: PathResolver = {

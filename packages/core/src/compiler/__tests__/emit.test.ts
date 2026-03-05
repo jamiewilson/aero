@@ -9,9 +9,7 @@ import * as Helper from '../helpers'
 
 describe('emitToJS', () => {
 	it('emits Append nodes', () => {
-		const ir: IRNode[] = [
-			{ kind: 'Append', content: '<div>hello</div>' },
-		]
+		const ir: IRNode[] = [{ kind: 'Append', content: '<div>hello</div>' }]
 		const out = emitToJS(ir)
 		expect(out).toBe(Helper.emitAppend('<div>hello</div>', '__out'))
 	})
@@ -22,9 +20,7 @@ describe('emitToJS', () => {
 				kind: 'For',
 				item: 'item',
 				items: 'items',
-				body: [
-					{ kind: 'Append', content: '<li>${item}</li>' },
-				],
+				body: [{ kind: 'Append', content: '<li>${item}</li>' }],
 			},
 		]
 		const out = emitToJS(ir)
@@ -53,7 +49,9 @@ describe('emitToJS', () => {
 				kind: 'If',
 				condition: 'x === 1',
 				body: [{ kind: 'Append', content: 'one' }],
-				elseIf: [{ condition: 'x === 2', body: [{ kind: 'Append', content: 'two' }] }],
+				elseIf: [
+					{ condition: 'x === 2', body: [{ kind: 'Append', content: 'two' }] },
+				],
 				else: [{ kind: 'Append', content: 'other' }],
 			},
 		]
@@ -78,7 +76,7 @@ describe('emitToJS', () => {
 			{ kind: 'Append', content: 'content', outVar: '__slot_0' },
 		]
 		const out = emitToJS(ir)
-		expect(out).toContain('let __slot_0 = \'\';')
+		expect(out).toContain("let __slot_0 = '';")
 		expect(out).toContain('__slot_0 += `content`;')
 	})
 
@@ -93,9 +91,11 @@ describe('emitToJS', () => {
 			},
 		]
 		const out = emitToJS(ir)
-		expect(out).toContain('let __slot_0 = \'\';')
+		expect(out).toContain("let __slot_0 = '';")
 		expect(out).toContain('__slot_0 += `slot body`;')
-		expect(out).toContain('__out += await Aero.renderComponent(header, { title: "Hi" }, { "default": __slot_0 }')
+		expect(out).toContain(
+			'__out += await Aero.renderComponent(header, { title: "Hi" }, { "default": __slot_0 }'
+		)
 	})
 
 	it('emits Component with full context from single source (request, url, params, site, styles, scripts, headScripts)', () => {
@@ -115,9 +115,7 @@ describe('emitToJS', () => {
 	})
 
 	it('emits with custom outVar', () => {
-		const ir: IRNode[] = [
-			{ kind: 'Append', content: 'x', outVar: '__html' },
-		]
+		const ir: IRNode[] = [{ kind: 'Append', content: 'x', outVar: '__html' }]
 		const out = emitToJS(ir, '__html')
 		expect(out).toContain('__html += `x`;')
 	})
@@ -125,7 +123,10 @@ describe('emitToJS', () => {
 
 describe('emitBodyAndStyle', () => {
 	it('returns bodyCode and empty styleCode when no style IR', () => {
-		const ir = { body: [{ kind: 'Append' as const, content: '<div></div>' }], style: [] }
+		const ir = {
+			body: [{ kind: 'Append' as const, content: '<div></div>' }],
+			style: [],
+		}
 		const { bodyCode, styleCode } = emitBodyAndStyle(ir)
 		expect(bodyCode).toContain('__out += `<div></div>`;')
 		expect(styleCode).toBe('')

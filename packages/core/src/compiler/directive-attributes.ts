@@ -34,11 +34,11 @@ const defaultConfig: DirectiveAttrConfig = {
  */
 export function isDirectiveAttr(
 	attrName: string,
-	config: DirectiveAttrConfig = defaultConfig,
+	config: DirectiveAttrConfig = defaultConfig
 ): boolean {
 	const prefixes = config.prefixes ?? defaultConfig.prefixes!
 	const exactNames = config.exactNames ?? defaultConfig.exactNames!
 
 	if (exactNames.includes(attrName)) return true
-	return prefixes.some((p) => attrName.startsWith(p))
+	return prefixes.some(p => attrName.startsWith(p))
 }

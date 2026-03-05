@@ -40,10 +40,10 @@ pnpm --dir examples/import-bundling/single-bundle preview
 
 ## What each demo tests
 
-| Demo            | Doc option        | What to check                                                           |
-| --------------- | ----------------- | ----------------------------------------------------------------------- |
-| single-bundle    | 1. Single bundle  | One (or few) hashed JS assets; counter works                            |
-| cdn-globals     | 2. CDN + globals | Network tab: htmx/Alpine from unpkg; entry smaller; counter works       |
-| esm-import-map  | 3. ESM from CDN  | Import map in HTML; externals in build; counter works                   |
-| cdn-externals   | 4. Externals     | Script tags + rolldown external; counter works                          |
-| dynamic-import  | 5. Dynamic import | Multiple chunks (entry + htmx + alpine); counter works after brief load |
+| Demo           | Doc option        | What to check                                                           |
+| -------------- | ----------------- | ----------------------------------------------------------------------- |
+| single-bundle  | 1. Single bundle  | One (or few) hashed JS assets; counter works                            |
+| cdn-globals    | 2. CDN + globals  | Network tab: htmx/Alpine from unpkg; entry smaller; counter works       |
+| esm-import-map | 3. ESM from CDN   | Import map in HTML; externals in build; counter works                   |
+| cdn-externals  | 4. Externals      | Script tags + rolldown external; counter works                          |
+| dynamic-import | 5. Dynamic import | Multiple chunks (entry + htmx + alpine); counter works after brief load |

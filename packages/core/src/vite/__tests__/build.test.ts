@@ -30,34 +30,46 @@ describe('vite build helpers', () => {
 		const routeSet = new Set(['', 'about', 'docs', 'docs/name'])
 		const manifest: Manifest = {}
 
-		expect(__internal.rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)).toBe(
-			'../about/',
-		)
-		expect(__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe(
-			'./name/',
-		)
-		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
+		expect(
+			__internal.rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)
+		).toBe('../about/')
+		expect(
+			__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)
+		).toBe('./name/')
+		expect(
+			__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)
+		).toBe('..')
 	})
 
 	/** normalizeRelativeLink: fromDir → targetPath; returns ./ for empty or same-dir, else ./relative path. */
 	it('normalizeRelativeLink returns ./ for empty or same-dir', () => {
 		expect(__internal.normalizeRelativeLink('', '')).toBe('./')
 		expect(__internal.normalizeRelativeLink('about', 'about')).toBe('./')
-		expect(__internal.normalizeRelativeLink('docs/name', 'docs/name')).toBe('./')
+		expect(__internal.normalizeRelativeLink('docs/name', 'docs/name')).toBe(
+			'./'
+		)
 	})
 	it('normalizeRelativeLink produces relative path to file in same dir or child', () => {
-		expect(__internal.normalizeRelativeLink('about', 'about/index.html')).toBe('./index.html')
-		expect(__internal.normalizeRelativeLink('', 'assets/foo.js')).toBe('./assets/foo.js')
-		expect(__internal.normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe(
-			'./intro/index.html',
+		expect(__internal.normalizeRelativeLink('about', 'about/index.html')).toBe(
+			'./index.html'
 		)
+		expect(__internal.normalizeRelativeLink('', 'assets/foo.js')).toBe(
+			'./assets/foo.js'
+		)
+		expect(
+			__internal.normalizeRelativeLink('docs', 'docs/intro/index.html')
+		).toBe('./intro/index.html')
 	})
 
 	/** normalizeRelativeRouteLink: fromDir → routePath; appends trailing slash except for root and 404 (file). */
 	it('normalizes relative route links with trailing slashes for directories', () => {
 		expect(__internal.normalizeRelativeRouteLink('', 'docs')).toBe('./docs/')
-		expect(__internal.normalizeRelativeRouteLink('about', 'docs')).toBe('../docs/')
-		expect(__internal.normalizeRelativeRouteLink('', 'about/team')).toBe('./about/team/')
+		expect(__internal.normalizeRelativeRouteLink('about', 'docs')).toBe(
+			'../docs/'
+		)
+		expect(__internal.normalizeRelativeRouteLink('', 'about/team')).toBe(
+			'./about/team/'
+		)
 		expect(__internal.normalizeRelativeRouteLink('about', '')).toBe('..')
 		expect(__internal.normalizeRelativeRouteLink('', '')).toBe('./')
 		expect(__internal.normalizeRelativeRouteLink('', '404')).toBe('./404')
@@ -79,15 +91,20 @@ describe('vite build helpers', () => {
 		}
 
 		expect(
-			__internal.rewriteAbsoluteUrl('/client/index.ts', 'about', manifest, routeSet),
+			__internal.rewriteAbsoluteUrl(
+				'/client/index.ts',
+				'about',
+				manifest,
+				routeSet
+			)
 		).toBe('../assets/client/index-123.js')
 		expect(
 			__internal.rewriteAbsoluteUrl(
 				'/client/assets/styles/global.css',
 				'docs/name',
 				manifest,
-				routeSet,
-			),
+				routeSet
+			)
 		).toBe('../../assets/global-123.css')
 	})
 
@@ -105,8 +122,8 @@ describe('vite build helpers', () => {
 						isEntry: true,
 					},
 				},
-				routeSet,
-			),
+				routeSet
+			)
 		).toBe('./assets/module.ts-abc123.js')
 	})
 
@@ -123,7 +140,12 @@ describe('vite build helpers', () => {
 				isEntry: true,
 			},
 		}
-		const result = __internal.rewriteRenderedHtml(html, 'index.html', manifest, new Set())
+		const result = __internal.rewriteRenderedHtml(
+			html,
+			'index.html',
+			manifest,
+			new Set()
+		)
 		expect(result).toContain('src="./assets/home.js-abc123.js"')
 		expect(result).toContain('type="module"')
 		expect(result).not.toContain('@aero/client')
@@ -142,7 +164,12 @@ describe('vite build helpers', () => {
 </body>
 </html>`
 		// output docs/index.html → fromDir is 'docs'; route links become relative
-		const result = __internal.rewriteRenderedHtml(html, 'docs/index.html', manifest, routeSet)
+		const result = __internal.rewriteRenderedHtml(
+			html,
+			'docs/index.html',
+			manifest,
+			routeSet
+		)
 		expect(result).toContain('href="../about/"')
 		expect(result).toContain('action="../contact/"')
 		expect(result).toContain('hx-get="./"')
@@ -154,16 +181,21 @@ describe('vite build helpers', () => {
 	it('keeps api routes absolute for preview/server mode', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(__internal.rewriteAbsoluteUrl('/api/submit', '', manifest, routeSet)).toBe(
-			'/api/submit',
-		)
+		expect(
+			__internal.rewriteAbsoluteUrl('/api/submit', '', manifest, routeSet)
+		).toBe('/api/submit')
 	})
 
 	it('preserves query and hash suffix when rewriting absolute URLs', () => {
 		const routeSet = new Set(['', 'about'])
 		const manifest: Manifest = {}
 		expect(
-			__internal.rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet),
+			__internal.rewriteAbsoluteUrl(
+				'/about?q=1&sort=asc#section',
+				'',
+				manifest,
+				routeSet
+			)
 		).toBe('./about/?q=1&sort=asc#section')
 	})
 
@@ -171,19 +203,24 @@ describe('vite build helpers', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
 		expect(
-			__internal.rewriteAbsoluteUrl('/assets/foo.js', 'about', manifest, routeSet),
+			__internal.rewriteAbsoluteUrl(
+				'/assets/foo.js',
+				'about',
+				manifest,
+				routeSet
+			)
 		).toBe('../assets/foo.js')
 	})
 
 	it('rewrites dist-root files (e.g. favicon) to relative path', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe(
-			'./favicon.ico',
-		)
-		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe(
-			'../favicon.ico',
-		)
+		expect(
+			__internal.rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)
+		).toBe('./favicon.ico')
+		expect(
+			__internal.rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)
+		).toBe('../favicon.ico')
 	})
 
 	it('resolves directory overrides; pages always derived from client', () => {
@@ -242,16 +279,23 @@ describe('vite build helpers', () => {
 	/** expandPattern replaces [key] with params[key]; used for getStaticPaths → output paths. */
 	it('expands bracket patterns with concrete params', () => {
 		expect(__internal.expandPattern('[id]', { id: 'alpha' })).toBe('alpha')
-		expect(__internal.expandPattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
+		expect(__internal.expandPattern('docs/[slug]', { slug: 'intro' })).toBe(
+			'docs/intro'
+		)
 		expect(
-			__internal.expandPattern('[category]/[id]', { category: 'blog', id: 'post-1' }),
+			__internal.expandPattern('[category]/[id]', {
+				category: 'blog',
+				id: 'post-1',
+			})
 		).toBe('blog/post-1')
 	})
 
 	it('throws when a required param is missing from expandPattern', () => {
-		expect(() => __internal.expandPattern('[id]', {})).toThrow('missing param "id"')
+		expect(() => __internal.expandPattern('[id]', {})).toThrow(
+			'missing param "id"'
+		)
 		expect(() => __internal.expandPattern('docs/[slug]', { id: 'x' })).toThrow(
-			'missing param "slug"',
+			'missing param "slug"'
 		)
 	})
 
@@ -267,7 +311,10 @@ describe('vite build helpers', () => {
 			fs.mkdirSync(path.join(pagesDir, 'about'), { recursive: true })
 			fs.writeFileSync(path.join(pagesDir, 'index.html'), '<html></html>')
 			fs.writeFileSync(path.join(pagesDir, 'about.html'), '<html></html>')
-			fs.writeFileSync(path.join(pagesDir, 'about', 'index.html'), '<html></html>')
+			fs.writeFileSync(
+				path.join(pagesDir, 'about', 'index.html'),
+				'<html></html>'
+			)
 
 			const pages = __internal.discoverPages(tmp, 'pages')
 
@@ -294,12 +341,14 @@ describe('vite build helpers', () => {
 			__internal.writeSitemap(
 				['', 'about', 'docs', '404'],
 				'https://example.com',
-				tmp,
+				tmp
 			)
 			const sitemapPath = path.join(tmp, 'sitemap.xml')
 			expect(fs.existsSync(sitemapPath)).toBe(true)
 			const xml = fs.readFileSync(sitemapPath, 'utf-8')
-			expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"')
+			expect(xml).toContain(
+				'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+			)
 			expect(xml).toContain('<loc>https://example.com/</loc>')
 			expect(xml).toContain('<loc>https://example.com/about/</loc>')
 			expect(xml).toContain('<loc>https://example.com/docs/</loc>')

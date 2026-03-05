@@ -1,5 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { highlight, getHighlighter, resetHighlighter, preDataLangTransformer } from '../index'
+import {
+	highlight,
+	getHighlighter,
+	resetHighlighter,
+	preDataLangTransformer,
+} from '../index'
 import type { ShikiConfig } from '../types'
 
 beforeEach(() => {
@@ -117,7 +122,8 @@ describe('highlight', () => {
 	})
 
 	it('applies transformers', async () => {
-		const { transformerNotationHighlight } = await import('@shikijs/transformers')
+		const { transformerNotationHighlight } =
+			await import('@shikijs/transformers')
 
 		const html = await highlight('const x = 1 // [!code highlight]', 'js', {
 			theme: 'github-light',

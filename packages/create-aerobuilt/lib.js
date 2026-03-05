@@ -34,21 +34,34 @@ const PACKAGE_TEMPLATE = 'package-template.json'
  * @param {boolean} inMonorepo - If true, use workspace:* for aerobuilt; otherwise use aerobuiltVersion
  * @param {string} [aerobuiltVersion] - When !inMonorepo, version range for aerobuilt (e.g. ^0.2.9). Omit to use '*'.
  */
-export function rewritePackageJson(templatePath, targetDir, projectName, inMonorepo, aerobuiltVersion) {
+export function rewritePackageJson(
+	templatePath,
+	targetDir,
+	projectName,
+	inMonorepo,
+	aerobuiltVersion
+) {
 	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
 	if (!existsSync(templatePkgPath)) {
 		console.error(
-			`create-aerobuilt: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`,
+			`create-aerobuilt: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`
 		)
 		process.exit(1)
 	}
 	const pkg = JSON.parse(readFileSync(templatePkgPath, 'utf8'))
 	pkg.name = projectName
-	const depVersion = inMonorepo ? 'workspace:*' : (aerobuiltVersion ? `^${aerobuiltVersion}` : '*')
+	const depVersion = inMonorepo
+		? 'workspace:*'
+		: aerobuiltVersion
+			? `^${aerobuiltVersion}`
+			: '*'
 	if (pkg.dependencies && pkg.dependencies.aerobuilt !== undefined) {
 		pkg.dependencies.aerobuilt = depVersion
 	}
-	writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
+	writeFileSync(
+		join(targetDir, 'package.json'),
+		JSON.stringify(pkg, null, 2) + '\n'
+	)
 }
 
 /**
@@ -103,7 +116,7 @@ export function writeReadme(targetDir, projectName, template) {
 		'├── public/             # Static assets (copied as-is)',
 		'├── vite.config.ts      # Aero Vite plugin',
 		'└── tsconfig.json       # Path aliases',
-		'```',
+		'```'
 	)
 
 	lines.push(
@@ -112,7 +125,7 @@ export function writeReadme(targetDir, projectName, template) {
 		'',
 		'- [Aero on GitHub](https://github.com/aerobuilt/aero)',
 		'- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)',
-		'',
+		''
 	)
 
 	writeFileSync(join(targetDir, 'README.md'), lines.join('\n'))

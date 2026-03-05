@@ -14,14 +14,18 @@ import {
 
 describe('tokenizeCurlyInterpolation (text mode)', () => {
 	it('returns single literal segment for string with no braces', () => {
-		const segments = tokenizeCurlyInterpolation('hello world', { attributeMode: false })
+		const segments = tokenizeCurlyInterpolation('hello world', {
+			attributeMode: false,
+		})
 		expect(segments).toEqual([
 			{ kind: 'literal', start: 0, end: 11, value: 'hello world' },
 		])
 	})
 
 	it('parses simple interpolation', () => {
-		const segments = tokenizeCurlyInterpolation('hello {name}', { attributeMode: false })
+		const segments = tokenizeCurlyInterpolation('hello {name}', {
+			attributeMode: false,
+		})
 		expect(segments).toEqual([
 			{ kind: 'literal', start: 0, end: 6, value: 'hello ' },
 			{ kind: 'interpolation', start: 6, end: 12, expression: 'name' },
@@ -53,7 +57,9 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 		const segments = tokenizeCurlyInterpolation(input, { attributeMode: false })
 		expect(segments).toHaveLength(1)
 		expect(segments[0].kind).toBe('interpolation')
-		expect((segments[0] as { expression: string }).expression.trim()).toContain("'\"'")
+		expect((segments[0] as { expression: string }).expression.trim()).toContain(
+			"'\"'"
+		)
 	})
 
 	it('comment containing braces does not end interpolation', () => {
@@ -61,7 +67,9 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 		const segments = tokenizeCurlyInterpolation(input, { attributeMode: false })
 		expect(segments).toHaveLength(1)
 		expect(segments[0].kind).toBe('interpolation')
-		expect((segments[0] as { expression: string }).expression).toContain('a /* } */')
+		expect((segments[0] as { expression: string }).expression).toContain(
+			'a /* } */'
+		)
 	})
 
 	it('line comment containing }', () => {
@@ -72,7 +80,9 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 	})
 
 	it('multiple interpolations', () => {
-		const segments = tokenizeCurlyInterpolation('{a} and {b}', { attributeMode: false })
+		const segments = tokenizeCurlyInterpolation('{a} and {b}', {
+			attributeMode: false,
+		})
 		expect(segments).toEqual([
 			{ kind: 'interpolation', start: 0, end: 3, expression: 'a' },
 			{ kind: 'literal', start: 3, end: 8, value: ' and ' },
@@ -121,7 +131,9 @@ describe('tokenizeCurlyInterpolation (attribute mode)', () => {
 	})
 
 	it('single { without second { starts interpolation in attribute mode', () => {
-		const segments = tokenizeCurlyInterpolation('{name}', { attributeMode: true })
+		const segments = tokenizeCurlyInterpolation('{name}', {
+			attributeMode: true,
+		})
 		expect(segments).toEqual([
 			{ kind: 'interpolation', start: 0, end: 6, expression: 'name' },
 		])

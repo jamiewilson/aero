@@ -15,10 +15,12 @@ import { getProcessor } from './processor'
  * @returns `{ html: string }`.
  */
 export async function render(
-	doc: ContentDocument | null | undefined,
+	doc: ContentDocument | null | undefined
 ): Promise<{ html: string }> {
 	if (!doc) {
-		console.warn('[aero] render() received null or undefined document. Returning empty HTML.')
+		console.warn(
+			'[aero] render() received null or undefined document. Returning empty HTML.'
+		)
 		return { html: '' }
 	}
 	const result = await getProcessor().process(doc.body)

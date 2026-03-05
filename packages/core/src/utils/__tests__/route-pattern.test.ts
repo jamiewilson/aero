@@ -92,7 +92,9 @@ describe('matchRoutePattern', () => {
 
 	it('matches mixed segments and decodes param values', () => {
 		expect(matchRoutePattern('blog/[id]', 'blog/123')).toEqual({ id: '123' })
-		expect(matchRoutePattern('docs/[slug]', 'docs/intro')).toEqual({ slug: 'intro' })
+		expect(matchRoutePattern('docs/[slug]', 'docs/intro')).toEqual({
+			slug: 'intro',
+		})
 		expect(matchRoutePattern('[category]/[id]', 'blog/post-1')).toEqual({
 			category: 'blog',
 			id: 'post-1',
@@ -111,16 +113,18 @@ describe('expandRoutePattern', () => {
 	})
 
 	it('expands multiple segments', () => {
-		expect(expandRoutePattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
+		expect(expandRoutePattern('docs/[slug]', { slug: 'intro' })).toBe(
+			'docs/intro'
+		)
 		expect(
-			expandRoutePattern('[category]/[id]', { category: 'blog', id: 'post-1' }),
+			expandRoutePattern('[category]/[id]', { category: 'blog', id: 'post-1' })
 		).toBe('blog/post-1')
 	})
 
 	it('throws when a required param is missing', () => {
 		expect(() => expandRoutePattern('[id]', {})).toThrow('missing param "id"')
 		expect(() => expandRoutePattern('docs/[slug]', { id: 'x' })).toThrow(
-			'missing param "slug"',
+			'missing param "slug"'
 		)
 	})
 })

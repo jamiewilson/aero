@@ -15,4 +15,7 @@ export const CONTENT_GLOBALS: Record<string, string> = {
 }
 
 /** Document selector for Aero-relevant HTML files (language: html, scheme: file). */
-export const HTML_SELECTOR: vscode.DocumentSelector = { language: 'html', scheme: 'file' }
+export const HTML_SELECTOR: vscode.DocumentSelector = {
+	language: 'html',
+	scheme: 'file',
+}

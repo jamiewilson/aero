@@ -65,7 +65,11 @@ function emitNode(node: IRNode, outVar: string): string {
 			return code + Helper.emitEnd()
 		}
 		case 'Slot':
-			return Helper.emitSlotOutput(node.name, node.defaultContent, outVarFor(node, outVar))
+			return Helper.emitSlotOutput(
+				node.name,
+				node.defaultContent,
+				outVarFor(node, outVar)
+			)
 		case 'SlotVar':
 			return Helper.emitSlotVar(node.varName)
 		case 'Component': {
@@ -105,7 +109,10 @@ function emitNode(node: IRNode, outVar: string): string {
  * Emit body and style IR to JS, and wrap style in a style var + styles?.add().
  * Matches current codegen behavior: bodyCode from body IR, styleCode from style IR.
  */
-export function emitBodyAndStyle(ir: BodyAndStyleIR): { bodyCode: string; styleCode: string } {
+export function emitBodyAndStyle(ir: BodyAndStyleIR): {
+	bodyCode: string
+	styleCode: string
+} {
 	const bodyCode = emitToJS(ir.body, DEFAULT_OUT)
 	let styleCode = ''
 	if (ir.style.length > 0) {

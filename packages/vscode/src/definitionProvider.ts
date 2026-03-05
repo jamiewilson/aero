@@ -3,7 +3,11 @@ import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 import { CONTENT_GLOBALS } from './constants'
-import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from './analyzer'
+import {
+	collectDefinedVariables,
+	collectTemplateScopes,
+	VariableDefinition,
+} from './analyzer'
 import {
 	kebabToCamelCase,
 	collectImportedSpecifiersFromDocument,
@@ -20,7 +24,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 	provideDefinition(
 		document: vscode.TextDocument,
 		position: vscode.Position,
-		_token: vscode.CancellationToken,
+		_token: vscode.CancellationToken
 	): vscode.ProviderResult<vscode.LocationLink[]> {
 		if (!isAeroDocument(document)) return null
 
@@ -31,13 +35,19 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 
 		switch (classification.kind) {
 			case 'import-path': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.specifier,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
 			}
 
 			case 'import-name': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.specifier,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
 			}
@@ -45,14 +55,18 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			case 'script-src':
 			case 'link-href': {
 				const value =
-					classification.kind === 'script-src' ? classification.value : classification.value
+					classification.kind === 'script-src'
+						? classification.value
+						: classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
 			}
 
 			case 'component-tag': {
-				const imports = collectImportedSpecifiersFromDocument(document.getText())
+				const imports = collectImportedSpecifiersFromDocument(
+					document.getText()
+				)
 				const importName = kebabToCamelCase(classification.baseName)
 				const importedSpecifier = imports.get(importName)
 				const alias =
@@ -66,7 +80,10 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'content-global': {
-				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.alias,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 				const targetLine = classification.propertyPath
 					? findPropertyLine(resolved, classification.propertyPath)
@@ -80,7 +97,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 					position,
 					classification.identifier,
 					classification.range,
-					resolver,
+					resolver
 				)
 				return result ?? null
 			}
@@ -97,7 +114,7 @@ function resolveExpressionIdentifierDefinition(
 	position: vscode.Position,
 	identifier: string,
 	originRange: vscode.Range,
-	resolver: ReturnType<typeof getResolver>,
+	resolver: ReturnType<typeof getResolver>
 ): vscode.LocationLink[] | null {
 	const text = document.getText()
 	const offset = document.offsetAt(position)
@@ -110,7 +127,9 @@ function resolveExpressionIdentifierDefinition(
 	const currentScope = findInnermostScope(scopes, offset)
 	if (currentScope) {
 		if (identifier === currentScope.itemName) {
-			return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)]
+			return [
+				makeDocumentLink(originRange, document.uri, currentScope.itemRange),
+			]
 		}
 
 		if (identifier === currentScope.sourceRoot) {
@@ -118,16 +137,34 @@ function resolveExpressionIdentifierDefinition(
 			if (sourceDef) {
 				return [makeDocumentLink(originRange, document.uri, sourceDef.range)]
 			}
-			return [makeDocumentLink(originRange, document.uri, currentScope.sourceRange)]
+			return [
+				makeDocumentLink(originRange, document.uri, currentScope.sourceRange),
+			]
 		}
 
-		const chain = getDotChainAt(document.lineAt(position.line).text, position.character)
-		if (chain && chain.segments.length >= 2 && chain.segments[0] === currentScope.itemName) {
-			const contentRef = resolveContentRefFromExpression(currentScope.sourceExpr, buildVars)
+		const chain = getDotChainAt(
+			document.lineAt(position.line).text,
+			position.character
+		)
+		if (
+			chain &&
+			chain.segments.length >= 2 &&
+			chain.segments[0] === currentScope.itemName
+		) {
+			const contentRef = resolveContentRefFromExpression(
+				currentScope.sourceExpr,
+				buildVars
+			)
 			if (contentRef) {
-				const resolved = resolver?.resolve(contentRef.alias, document.uri.fsPath)
+				const resolved = resolver?.resolve(
+					contentRef.alias,
+					document.uri.fsPath
+				)
 				if (resolved) {
-					const propertyPath = [...contentRef.propertyPath, ...chain.segments.slice(1)]
+					const propertyPath = [
+						...contentRef.propertyPath,
+						...chain.segments.slice(1),
+					]
 					const line = findPropertyLine(resolved, propertyPath)
 					return [makeLink(originRange, resolved, line)]
 				}
@@ -146,7 +183,7 @@ function resolveExpressionIdentifierDefinition(
 		originRange,
 		resolver,
 		buildVars,
-		chainAtCursor,
+		chainAtCursor
 	)
 	if (chainResult) return chainResult
 
@@ -159,14 +196,14 @@ function resolveGenericChainDefinition(
 	originRange: vscode.Range,
 	resolver: ReturnType<typeof getResolver>,
 	buildVars: Map<string, VariableDefinition>,
-	chainAtCursor: { segments: string[]; start: number; end: number } | null,
+	chainAtCursor: { segments: string[]; start: number; end: number } | null
 ): vscode.LocationLink[] | null {
 	if (!chainAtCursor || chainAtCursor.segments.length < 2) return null
 
 	const cursorSegmentIndex = getCursorSegmentIndex(
 		chainAtCursor.segments,
 		chainAtCursor.start,
-		position.character,
+		position.character
 	)
 	if (cursorSegmentIndex <= 0) return null
 
@@ -174,7 +211,10 @@ function resolveGenericChainDefinition(
 	const uptoCursor = chainAtCursor.segments.slice(1, cursorSegmentIndex + 1)
 
 	if (root in CONTENT_GLOBALS) {
-		const resolved = resolver?.resolve(CONTENT_GLOBALS[root], document.uri.fsPath)
+		const resolved = resolver?.resolve(
+			CONTENT_GLOBALS[root],
+			document.uri.fsPath
+		)
 		if (!resolved) return null
 		const line = findPropertyLine(resolved, uptoCursor)
 		return [makeLink(originRange, resolved, line)]
@@ -183,7 +223,10 @@ function resolveGenericChainDefinition(
 	const rootDef = buildVars.get(root)
 	if (!rootDef?.contentRef) return null
 
-	const resolved = resolver?.resolve(rootDef.contentRef.alias, document.uri.fsPath)
+	const resolved = resolver?.resolve(
+		rootDef.contentRef.alias,
+		document.uri.fsPath
+	)
 	if (!resolved) return null
 
 	const propertyPath = [...rootDef.contentRef.propertyPath, ...uptoCursor]
@@ -197,11 +240,11 @@ function resolveGenericChainDefinition(
 
 function resolveContentRefFromExpression(
 	expression: string,
-	buildVars: Map<string, VariableDefinition>,
+	buildVars: Map<string, VariableDefinition>
 ): ContentRef | null {
 	const chainMatch =
 		/^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
-			expression.trim(),
+			expression.trim()
 		)
 	if (!chainMatch) return null
 
@@ -226,7 +269,7 @@ function resolveContentRefFromExpression(
 function makeDocumentLink(
 	originRange: vscode.Range,
 	targetUri: vscode.Uri,
-	targetSelectionRange: vscode.Range,
+	targetSelectionRange: vscode.Range
 ): vscode.LocationLink {
 	return {
 		originSelectionRange: originRange,
@@ -238,19 +281,25 @@ function makeDocumentLink(
 
 function getDotChainAt(
 	lineText: string,
-	offset: number,
+	offset: number
 ): { segments: string[]; start: number; end: number } | null {
 	const ch = lineText[offset]
 	const prevCh = offset > 0 ? lineText[offset - 1] : ''
 	if (!isIdentChar(ch) && ch !== '.' && !isIdentChar(prevCh)) return null
 
 	let start = offset
-	while (start > 0 && (isIdentChar(lineText[start - 1]) || lineText[start - 1] === '.')) {
+	while (
+		start > 0 &&
+		(isIdentChar(lineText[start - 1]) || lineText[start - 1] === '.')
+	) {
 		start--
 	}
 
 	let end = offset
-	while (end < lineText.length && (isIdentChar(lineText[end]) || lineText[end] === '.')) {
+	while (
+		end < lineText.length &&
+		(isIdentChar(lineText[end]) || lineText[end] === '.')
+	) {
 		end++
 	}
 
@@ -271,7 +320,7 @@ function isIdentChar(ch: string | undefined): boolean {
 function getCursorSegmentIndex(
 	segments: string[],
 	chainStart: number,
-	cursorOffset: number,
+	cursorOffset: number
 ): number {
 	let running = chainStart
 	for (let i = 0; i < segments.length; i++) {
@@ -294,7 +343,7 @@ function getCursorSegmentIndex(
 function makeLink(
 	originRange: vscode.Range,
 	targetPath: string,
-	targetLine: number = 0,
+	targetLine: number = 0
 ): vscode.LocationLink {
 	const targetStart = new vscode.Position(targetLine, 0)
 	// Use a non-zero-length range so the editor reveals and highlights the definition (zero-length can be ignored).
@@ -339,10 +388,10 @@ function findPropertyAtDepth(
 	lines: string[],
 	property: string,
 	startLine: number,
-	minDepth: number,
+	minDepth: number
 ): { line: number; depth: number } | null {
 	const keyPattern = new RegExp(
-		`(?:^|\\s|,)(?:${escapeRegex(property)}|'${escapeRegex(property)}'|"${escapeRegex(property)}")\\s*:`,
+		`(?:^|\\s|,)(?:${escapeRegex(property)}|'${escapeRegex(property)}'|"${escapeRegex(property)}")\\s*:`
 	)
 
 	for (let i = startLine; i < lines.length; i++) {

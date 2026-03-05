@@ -4,21 +4,21 @@ Typed Aero configuration and Vite config factory. Used by `aero.config.ts` and t
 
 ## Exports
 
-| Export | Description |
-|--------|-------------|
-| `defineConfig(config)` | Typed helper for `aero.config.ts`. Accepts a static `AeroConfig` or `AeroConfigFunction`. Returns the config unchanged (for IDE/type inference). |
-| `createViteConfig(aeroConfig, options)` | Builds the Vite `UserConfig` from Aero config and env (`command`, `mode`). Merges defaults, Aero + content plugins, and user `vite`; preserves base `minify`/`cssMinify` when user sets them. |
-| `AeroConfig`, `AeroConfigFunction`, `AeroUserConfig` | TypeScript types for config shape and env-aware function. |
+| Export                                               | Description                                                                                                                                                                                   |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineConfig(config)`                               | Typed helper for `aero.config.ts`. Accepts a static `AeroConfig` or `AeroConfigFunction`. Returns the config unchanged (for IDE/type inference).                                              |
+| `createViteConfig(aeroConfig, options)`              | Builds the Vite `UserConfig` from Aero config and env (`command`, `mode`). Merges defaults, Aero + content plugins, and user `vite`; preserves base `minify`/`cssMinify` when user sets them. |
+| `AeroConfig`, `AeroConfigFunction`, `AeroUserConfig` | TypeScript types for config shape and env-aware function.                                                                                                                                     |
 
 ## Config shape (`AeroConfig`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `content` | `boolean \| AeroContentOptions` | Enable content collections. `true` or options (e.g. `config` path). |
-| `server` | `boolean` | Enable Nitro server integration (default: `false`). |
-| `site` | `string` | Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and `Aero.site` in templates; used for sitemap, RSS, canonical links. |
-| `dirs` | `object` | Overrides: `client`, `server`, `dist`. Same shape as the aero() Vite plugin. |
-| `vite` | `UserConfig` | Vite config merged with Aero defaults. |
+| Field     | Type                            | Description                                                                                                                                                |
+| --------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content` | `boolean \| AeroContentOptions` | Enable content collections. `true` or options (e.g. `config` path).                                                                                        |
+| `server`  | `boolean`                       | Enable Nitro server integration (default: `false`).                                                                                                        |
+| `site`    | `string`                        | Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and `Aero.site` in templates; used for sitemap, RSS, canonical links. |
+| `dirs`    | `object`                        | Overrides: `client`, `server`, `dist`. Same shape as the aero() Vite plugin.                                                                               |
+| `vite`    | `UserConfig`                    | Vite config merged with Aero defaults.                                                                                                                     |
 
 ## Usage
 
@@ -66,6 +66,6 @@ export default createViteConfig(aeroConfig, {
 
 ## Peer dependencies
 
-- `vite` ^8.0.0  
-- `@aerobuilt/core` (workspace)  
+- `vite` ^8.0.0
+- `@aerobuilt/core` (workspace)
 - `@aerobuilt/content` (workspace)

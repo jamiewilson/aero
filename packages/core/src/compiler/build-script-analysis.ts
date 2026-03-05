@@ -52,7 +52,7 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 	if (errors.length > 0) {
 		const first = errors[0]
 		throw new Error(
-			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`,
+			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`
 		)
 	}
 
@@ -97,7 +97,15 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 
 	// 2. Find export function getStaticPaths in program body (ESTree/TS-ESTree shape)
 	let getStaticPathsRange: [number, number] | null = null
-	const body = (program as { body?: Array<{ type: string; declaration?: { type: string; id?: { name: string }; async?: boolean }; range?: [number, number] }> }).body
+	const body = (
+		program as {
+			body?: Array<{
+				type: string
+				declaration?: { type: string; id?: { name: string }; async?: boolean }
+				range?: [number, number]
+			}>
+		}
+	).body
 	if (body) {
 		for (const stmt of body) {
 			if (stmt.type !== 'ExportNamedDeclaration') continue
@@ -170,7 +178,9 @@ export interface BuildScriptAnalysisForEditorResult {
  * @param script - Raw build script content (JS or TS).
  * @returns Imports with range and bindingRanges. On parse error, throws.
  */
-export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysisForEditorResult {
+export function analyzeBuildScriptForEditor(
+	script: string
+): BuildScriptAnalysisForEditorResult {
 	if (!script.trim()) {
 		return { imports: [] }
 	}
@@ -185,7 +195,7 @@ export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysis
 	if (errors.length > 0) {
 		const first = errors[0]
 		throw new Error(
-			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`,
+			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`
 		)
 	}
 

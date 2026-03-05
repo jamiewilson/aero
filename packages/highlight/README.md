@@ -24,7 +24,10 @@ When using `@aerobuilt/content`, enable Shiki highlighting by adding `@shikijs/r
 import { defineCollection, defineConfig } from '@aerobuilt/content'
 import { preDataLangTransformer } from '@aerobuilt/highlight'
 import rehypeShiki from '@shikijs/rehype'
-import { transformerNotationHighlight, transformerNotationFocus } from '@shikijs/transformers'
+import {
+	transformerNotationHighlight,
+	transformerNotationFocus,
+} from '@shikijs/transformers'
 import { z } from 'zod'
 
 const docs = defineCollection({

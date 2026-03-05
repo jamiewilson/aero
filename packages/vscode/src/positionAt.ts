@@ -11,7 +11,12 @@ import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 /** Result of classifying a position: kind-specific data and range, or null. */
 export type PositionKind =
 	| { kind: 'import-path'; specifier: string; range: vscode.Range }
-	| { kind: 'import-name'; name: string; specifier: string; range: vscode.Range }
+	| {
+			kind: 'import-name'
+			name: string
+			specifier: string
+			range: vscode.Range
+	  }
 	| { kind: 'script-src'; value: string; range: vscode.Range }
 	| { kind: 'link-href'; value: string; range: vscode.Range }
 	| {
@@ -40,7 +45,7 @@ export type PositionKind =
  */
 export function classifyPosition(
 	document: vscode.TextDocument,
-	position: vscode.Position,
+	position: vscode.Position
 ): PositionKind {
 	const line = document.lineAt(position.line)
 	const lineText = line.text
@@ -72,7 +77,7 @@ const SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 
 function getImportAt(
 	document: vscode.TextDocument,
-	position: vscode.Position,
+	position: vscode.Position
 ): PositionKind {
 	const text = document.getText()
 	const offset = document.offsetAt(position)
@@ -98,7 +103,7 @@ function getImportAt(
 						specifier: imp.specifier,
 						range: new vscode.Range(
 							document.positionAt(absSpecStart),
-							document.positionAt(absSpecEnd),
+							document.positionAt(absSpecEnd)
 						),
 					}
 				}
@@ -114,7 +119,7 @@ function getImportAt(
 							specifier: imp.specifier,
 							range: new vscode.Range(
 								document.positionAt(absStart),
-								document.positionAt(absEnd),
+								document.positionAt(absEnd)
 							),
 						}
 					}
@@ -134,13 +139,18 @@ function getImportAt(
 const SCRIPT_SRC_REGEX = /<script[^>]*?\bsrc\s*=\s*(['"])(.*?)\1/gi
 const LINK_HREF_REGEX = /<link[^>]*?\bhref\s*=\s*(['"])(.*?)\1/gi
 
-function getAssetRefAt(lineText: string, lineNum: number, offset: number): PositionKind {
+function getAssetRefAt(
+	lineText: string,
+	lineNum: number,
+	offset: number
+): PositionKind {
 	// Check <script src="...">
 	SCRIPT_SRC_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
 	while ((match = SCRIPT_SRC_REGEX.exec(lineText)) !== null) {
 		const value = match[2]
-		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
+		const valueStart =
+			match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
 		const valueEnd = valueStart + value.length
 		if (offset >= valueStart && offset <= valueEnd) {
 			return {
@@ -155,7 +165,8 @@ function getAssetRefAt(lineText: string, lineNum: number, offset: number): Posit
 	LINK_HREF_REGEX.lastIndex = 0
 	while ((match = LINK_HREF_REGEX.exec(lineText)) !== null) {
 		const value = match[2]
-		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
+		const valueStart =
+			match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
 		const valueEnd = valueStart + value.length
 		if (offset >= valueStart && offset <= valueEnd) {
 			return {
@@ -177,7 +188,7 @@ const TAG_NAME_REGEX = /<\/?([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/gi
 
 function getComponentTagAt(
 	document: vscode.TextDocument,
-	position: vscode.Position,
+	position: vscode.Position
 ): PositionKind {
 	const lineText = document.lineAt(position.line).text
 	const offset = position.character
@@ -200,7 +211,12 @@ function getComponentTagAt(
 					tagName,
 					baseName,
 					suffix,
-					range: new vscode.Range(position.line, tagNameStart, position.line, tagNameEnd),
+					range: new vscode.Range(
+						position.line,
+						tagNameStart,
+						position.line,
+						tagNameEnd
+					),
 				}
 			}
 		}
@@ -225,12 +241,17 @@ function getComponentTagAt(
  */
 function getExpressionIdentifierAt(
 	document: vscode.TextDocument,
-	position: vscode.Position,
+	position: vscode.Position
 ): PositionKind {
 	const lineText = document.lineAt(position.line).text
 	const offset = position.character
 
-	const expressionRange = getExpressionContextRangeAt(document, position, lineText, offset)
+	const expressionRange = getExpressionContextRangeAt(
+		document,
+		position,
+		lineText,
+		offset
+	)
 	if (!expressionRange) {
 		return null
 	}
@@ -281,14 +302,22 @@ function getExpressionIdentifierAt(
 			identifier: rootIdentifier,
 			alias: CONTENT_GLOBALS[rootIdentifier],
 			propertyPath,
-			range: new vscode.Range(position.line, chain.start, position.line, rangeEnd),
+			range: new vscode.Range(
+				position.line,
+				chain.start,
+				position.line,
+				rangeEnd
+			),
 		}
 	}
 
 	// Not a content global -- return as generic expression identifier
 	const wordRange = getWordRangeAtPosition(lineText, position.line, offset)
 	if (!wordRange) return null
-	const word = lineText.slice(wordRange.start.character, wordRange.end.character)
+	const word = lineText.slice(
+		wordRange.start.character,
+		wordRange.end.character
+	)
 
 	return {
 		kind: 'expression-identifier',
@@ -306,7 +335,7 @@ function getExpressionContextRangeAt(
 	document: vscode.TextDocument,
 	position: vscode.Position,
 	lineText: string,
-	offset: number,
+	offset: number
 ): { start: number; end: number } | null {
 	if (isInsideInlineScript(document, position)) {
 		return { start: 0, end: lineText.length }
@@ -327,7 +356,7 @@ function getExpressionContextRangeAt(
  */
 function isInsideInlineScript(
 	document: vscode.TextDocument,
-	position: vscode.Position,
+	position: vscode.Position
 ): boolean {
 	const text = document.getText()
 	const offset = document.offsetAt(position)
@@ -355,7 +384,7 @@ function isInsideInlineScript(
  */
 function getAeroExpressionAttributeValueRangeAt(
 	lineText: string,
-	offset: number,
+	offset: number
 ): { start: number; end: number } | null {
 	const attrValueRegex =
 		/\b(?:data-if|if|data-else-if|else-if|data-each|each)\s*=\s*(['"])(.*?)\1/gi
@@ -363,7 +392,8 @@ function getAeroExpressionAttributeValueRangeAt(
 	let match: RegExpExecArray | null
 	while ((match = attrValueRegex.exec(lineText)) !== null) {
 		const value = match[2]
-		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
+		const valueStart =
+			match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
 		const openBraceOffset = value.indexOf('{')
 		const closeBraceOffset = value.lastIndexOf('}')
 
@@ -412,7 +442,7 @@ function isInsideCurlyExpression(lineText: string, offset: number): boolean {
  */
 function getDotChainAtPosition(
 	lineText: string,
-	offset: number,
+	offset: number
 ): { text: string; start: number } | null {
 	// First, verify the cursor is on an identifier or dot character
 	const ch = lineText[offset]
@@ -473,7 +503,7 @@ function isIdentStart(ch: string | undefined): boolean {
 function getWordRangeAtPosition(
 	lineText: string,
 	lineNum: number,
-	offset: number,
+	offset: number
 ): vscode.Range | null {
 	const identRegex = /[a-zA-Z_$][a-zA-Z0-9_$]*/g
 	let match: RegExpExecArray | null

@@ -23,13 +23,16 @@ export function activate(context: vscode.ExtensionContext): void {
 			'/', // trigger for path completions
 			'@', // trigger for alias completions
 			'"', // trigger inside attribute values
-			"'", // trigger inside attribute values
-		),
+			"'" // trigger inside attribute values
+		)
 	)
 
 	// ---- Hover Provider (Phase 3) ----
 	context.subscriptions.push(
-		vscode.languages.registerHoverProvider(HTML_SELECTOR, new AeroHoverProvider()),
+		vscode.languages.registerHoverProvider(
+			HTML_SELECTOR,
+			new AeroHoverProvider()
+		)
 	)
 
 	// ---- Diagnostics (Phase 3) ----
@@ -38,12 +41,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	// ---- Definition Provider (register last so we win when selector scores tie) ----
 	context.subscriptions.push(
-		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider()),
+		vscode.languages.registerDefinitionProvider(
+			HTML_SELECTOR,
+			new AeroDefinitionProvider()
+		)
 	)
 
 	// ---- Cache invalidation ----
 	// Clear caches when tsconfig or workspace changes
-	const tsconfigWatcher = vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
+	const tsconfigWatcher =
+		vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
 	tsconfigWatcher.onDidChange(() => {
 		clearResolverCache()
 		clearScopeCache()
@@ -63,7 +70,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (event.affectsConfiguration('aero.scopeMode')) {
 				clearScopeCache()
 			}
-		}),
+		})
 	)
 }
 

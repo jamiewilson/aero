@@ -1,10 +1,22 @@
 #!/usr/bin/env node
 
-import { cpSync, mkdirSync, existsSync, statSync, readdirSync, readFileSync } from 'fs'
+import {
+	cpSync,
+	mkdirSync,
+	existsSync,
+	statSync,
+	readdirSync,
+	readFileSync,
+} from 'fs'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
-import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from './lib.js'
+import {
+	parseArgs,
+	rewritePackageJson,
+	writeReadme,
+	findWorkspaceRoot,
+} from './lib.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
@@ -62,7 +74,9 @@ function isInMonorepo() {
 function installInMonorepo(targetDir) {
 	const root = findWorkspaceRoot(targetDir)
 	if (!root) {
-		console.error('create-aerobuilt: could not find workspace root (pnpm-workspace.yaml).')
+		console.error(
+			'create-aerobuilt: could not find workspace root (pnpm-workspace.yaml).'
+		)
 		process.exit(1)
 	}
 	const r = spawnSync('pnpm', ['install', '--no-frozen-lockfile'], {
@@ -72,7 +86,7 @@ function installInMonorepo(targetDir) {
 	})
 	if (r.status !== 0) {
 		console.error(
-			'create-aerobuilt: pnpm install failed. Run "pnpm install" from the repo root.',
+			'create-aerobuilt: pnpm install failed. Run "pnpm install" from the repo root.'
 		)
 		process.exit(1)
 	}
@@ -88,10 +102,14 @@ function installStandalone(targetDir) {
 	const args = ['install']
 	if (cmd === 'npm') args.push('--legacy-peer-deps')
 
-	const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: targetDir, shell: true })
+	const r = spawnSync(cmd, args, {
+		stdio: 'inherit',
+		cwd: targetDir,
+		shell: true,
+	})
 	if (r.status !== 0) {
 		console.error(
-			`create-aerobuilt: ${cmd} install failed. Run "${cmd} install" in the project directory.`,
+			`create-aerobuilt: ${cmd} install failed. Run "${cmd} install" in the project directory.`
 		)
 		process.exit(1)
 	}
@@ -109,7 +127,7 @@ function main() {
 
 	if (!TEMPLATES.includes(template)) {
 		console.error(
-			`create-aerobuilt: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`,
+			`create-aerobuilt: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`
 		)
 		process.exit(1)
 	}
@@ -127,12 +145,16 @@ function main() {
 	if (existsSync(targetDir)) {
 		const stat = statSync(targetDir)
 		if (!stat.isDirectory()) {
-			console.error(`create-aerobuilt: "${target}" exists and is not a directory.`)
+			console.error(
+				`create-aerobuilt: "${target}" exists and is not a directory.`
+			)
 			process.exit(1)
 		}
 		const files = readdirSync(targetDir)
 		if (files.length > 0) {
-			console.error(`create-aerobuilt: directory "${target}" already exists and is not empty.`)
+			console.error(
+				`create-aerobuilt: directory "${target}" already exists and is not empty.`
+			)
 			process.exit(1)
 		}
 	}
@@ -141,7 +163,9 @@ function main() {
 	let aerobuiltVersion = null
 	if (!inMonorepo) {
 		try {
-			const cliPkg = JSON.parse(readFileSync(join(startPkgDir, 'package.json'), 'utf8'))
+			const cliPkg = JSON.parse(
+				readFileSync(join(startPkgDir, 'package.json'), 'utf8')
+			)
 			aerobuiltVersion = cliPkg.version || null
 		} catch {
 			// ignore; lib will fall back to *
@@ -149,7 +173,13 @@ function main() {
 	}
 	console.log(`Creating Aero app in ${target} from template "${template}"...`)
 	copyTemplate(templatePath, targetDir)
-	rewritePackageJson(templatePath, targetDir, target, inMonorepo, aerobuiltVersion)
+	rewritePackageJson(
+		templatePath,
+		targetDir,
+		target,
+		inMonorepo,
+		aerobuiltVersion
+	)
 	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')
 	if (inMonorepo) {

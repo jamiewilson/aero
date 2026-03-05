@@ -8,9 +8,12 @@ import { HTTPError, defineHandler, getRequestURL, serveStatic } from 'nitro/h3'
 function getDistDir(): string {
 	const fromEnv = process.env.AERO_DIST
 	if (fromEnv) {
-		return path.isAbsolute(fromEnv) ? fromEnv : path.resolve(process.cwd(), fromEnv)
+		return path.isAbsolute(fromEnv)
+			? fromEnv
+			: path.resolve(process.cwd(), fromEnv)
 	}
-	const mainUrl = (globalThis as unknown as { __nitro_main__?: string }).__nitro_main__
+	const mainUrl = (globalThis as unknown as { __nitro_main__?: string })
+		.__nitro_main__
 	if (typeof mainUrl === 'string') {
 		const entryDir = path.dirname(fileURLToPath(mainUrl))
 		// entryDir is .output/server; project root is two levels up
@@ -98,7 +101,7 @@ export default defineHandler(async event => {
 		if (existsSync(dist404Path)) {
 			const html = (await readFile(dist404Path, 'utf-8')).replace(
 				/(href|src|content)="\.\/([^"]*?)"/g,
-				'$1="/$2"',
+				'$1="/$2"'
 			)
 			return new Response(html, {
 				status: 404,

@@ -51,7 +51,7 @@ export class Aero {
 	private isRenderInput(value: any): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
 		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(
-			key => key in value,
+			key => key in value
 		)
 	}
 
@@ -96,7 +96,8 @@ export class Aero {
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
 		const url = this.toURL(routePath, input.url)
-		const request = input.request || new Request(url.toString(), { method: 'GET' })
+		const request =
+			input.request || new Request(url.toString(), { method: 'GET' })
 		let _passDataId = 0
 		const context = {
 			...this.globals,
@@ -117,7 +118,10 @@ export class Aero {
 	}
 
 	/** True if entry params and request params have the same keys and stringified values. */
-	private paramsMatch(entryParams: AeroRouteParams, requestParams: AeroRouteParams): boolean {
+	private paramsMatch(
+		entryParams: AeroRouteParams,
+		requestParams: AeroRouteParams
+	): boolean {
 		const entryKeys = Object.keys(entryParams)
 		if (entryKeys.length !== Object.keys(requestParams).length) return false
 		for (const key of entryKeys) {
@@ -171,12 +175,14 @@ export class Aero {
 			const staticPaths: any[] = await target.getStaticPaths()
 			const combinedParams = { ...dynamicParams, ...(renderInput.params || {}) }
 
-			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
+			const match = staticPaths.find(entry =>
+				this.paramsMatch(entry.params, combinedParams)
+			)
 
 			if (!match) {
 				console.warn(
 					`[aero] 404: Route params ${JSON.stringify(combinedParams)} ` +
-						`not found in getStaticPaths for ${matchedPageName}`,
+						`not found in getStaticPaths for ${matchedPageName}`
 				)
 				return null
 			}
@@ -229,7 +235,10 @@ export class Aero {
 					if (html.includes('</head>')) {
 						html = html.replace('</head>', `\n${headInjections}</head>`)
 					} else if (html.includes('<body')) {
-						html = html.replace(/(<body[^>]*>)/i, `<head>\n${headInjections}</head>\n$1`)
+						html = html.replace(
+							/(<body[^>]*>)/i,
+							`<head>\n${headInjections}</head>\n$1`
+						)
 					} else {
 						html = `${headInjections}${html}`
 					}
@@ -264,7 +273,7 @@ export class Aero {
 		component: any,
 		props: any = {},
 		slots: Record<string, string> = {},
-		input: AeroRenderInput = {},
+		input: AeroRenderInput = {}
 	) {
 		const context = this.createContext({
 			props,

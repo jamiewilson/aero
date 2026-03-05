@@ -27,11 +27,17 @@ const resolver = new ResolverFactory({
  * Build default path aliases for @pages, @layouts, @components from project root and dirs.
  * Used when tsconfig is missing or does not define these keys so the runtime globs resolve.
  */
-export function getDefaultAliases(root: string, dirs: ResolvedAeroDirs): UserAlias[] {
+export function getDefaultAliases(
+	root: string,
+	dirs: ResolvedAeroDirs
+): UserAlias[] {
 	return [
 		{ find: '@pages', replacement: path.join(root, dirs.client, 'pages') },
 		{ find: '@layouts', replacement: path.join(root, dirs.client, 'layouts') },
-		{ find: '@components', replacement: path.join(root, dirs.client, 'components') },
+		{
+			find: '@components',
+			replacement: path.join(root, dirs.client, 'components'),
+		},
 	]
 }
 
@@ -98,7 +104,7 @@ export function loadTsconfigAliases(root: string): AliasResult {
 export function mergeWithDefaultAliases(
 	aliasResult: AliasResult,
 	root: string,
-	dirs: ResolvedAeroDirs,
+	dirs: ResolvedAeroDirs
 ): AliasResult {
 	const defaults = getDefaultAliases(root, dirs)
 	const byFind = new Map<string, string>()
@@ -108,10 +114,12 @@ export function mergeWithDefaultAliases(
 	for (const a of aliasResult.aliases) {
 		byFind.set(a.find, a.replacement)
 	}
-	const aliases: UserAlias[] = Array.from(byFind.entries()).map(([find, replacement]) => ({
-		find,
-		replacement,
-	}))
+	const aliases: UserAlias[] = Array.from(byFind.entries()).map(
+		([find, replacement]) => ({
+			find,
+			replacement,
+		})
+	)
 
 	const resolve = (specifier: string, importer: string): string => {
 		for (const { find, replacement } of aliases) {

@@ -52,7 +52,9 @@ export type TemplateReference = {
 
 /** Replace JS comments with spaces to preserve character indices for range calculations. */
 export function maskJsComments(text: string): string {
-	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
+	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match =>
+		' '.repeat(match.length)
+	)
 }
 
 function isInsideHtmlComment(text: string, position: number): boolean {
@@ -76,7 +78,7 @@ function isInsideHtmlComment(text: string, position: number): boolean {
  */
 export function collectDefinedVariables(
 	document: vscode.TextDocument,
-	text: string,
+	text: string
 ): [
 	Map<string, VariableDefinition>,
 	Array<{ name: string; kind1: string; kind2: string; range: vscode.Range }>,
@@ -128,7 +130,7 @@ export function collectDefinedVariables(
 						name: localName,
 						range: new vscode.Range(
 							document.positionAt(contentStart + start),
-							document.positionAt(contentStart + end),
+							document.positionAt(contentStart + end)
 						),
 						kind: 'import',
 					})
@@ -144,7 +146,8 @@ export function collectDefinedVariables(
 		// For now, sticking to the existing robust regex for simple identifiers + destructuring support
 
 		// Simple identifier: const x = ...
-		const simpleDeclRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
+		const simpleDeclRegex =
+			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
 		let declMatch: RegExpExecArray | null
 		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
 			const name = declMatch[1]
@@ -155,7 +158,7 @@ export function collectDefinedVariables(
 				name,
 				range: new vscode.Range(
 					document.positionAt(start),
-					document.positionAt(start + name.length),
+					document.positionAt(start + name.length)
 				),
 				kind: 'declaration',
 			}
@@ -191,7 +194,8 @@ export function collectDefinedVariables(
 		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
 		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
 			const body = declMatch[1]
-			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
+			const bodyStart =
+				contentStart + declMatch.index + declMatch[0].indexOf(body)
 
 			// Split by comma, handle aliases
 			const parts = body.split(',')
@@ -219,7 +223,7 @@ export function collectDefinedVariables(
 						name: localName,
 						range: new vscode.Range(
 							document.positionAt(absStart),
-							document.positionAt(absStart + localName.length),
+							document.positionAt(absStart + localName.length)
 						),
 						kind: 'declaration',
 					})
@@ -244,7 +248,7 @@ export type ScriptScope = 'build' | 'inline' | 'bundled' | 'blocking'
 export function collectVariablesByScope(
 	document: vscode.TextDocument,
 	text: string,
-	scope: ScriptScope,
+	scope: ScriptScope
 ): Map<string, VariableDefinition> {
 	const vars = new Map<string, VariableDefinition>()
 
@@ -308,7 +312,8 @@ export function collectVariablesByScope(
 							// Find position of variable in the full text
 							// rawAttrs starts at scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
 							// varMatch is relative to pdMatch[0], pdMatch is relative to rawAttrs
-							const rawAttrsStart = scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
+							const rawAttrsStart =
+								scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
 							const varAbsStart =
 								rawAttrsStart +
 								passDataAttrStart +
@@ -320,7 +325,7 @@ export function collectVariablesByScope(
 								name: varName,
 								range: new vscode.Range(
 									document.positionAt(varAbsStart),
-									document.positionAt(varAbsEnd),
+									document.positionAt(varAbsEnd)
 								),
 								kind: 'reference',
 							})
@@ -342,7 +347,7 @@ export function collectVariablesByScope(
 							name: localName,
 							range: new vscode.Range(
 								document.positionAt(contentStart + start),
-								document.positionAt(contentStart + end),
+								document.positionAt(contentStart + end)
 							),
 							kind: 'import',
 						})
@@ -355,7 +360,8 @@ export function collectVariablesByScope(
 
 		// Collect declarations for all scopes
 		// Simple identifier: const x = ...
-		const simpleDeclRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
+		const simpleDeclRegex =
+			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
 		let declMatch: RegExpExecArray | null
 		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
 			const name = declMatch[1]
@@ -366,7 +372,7 @@ export function collectVariablesByScope(
 				name,
 				range: new vscode.Range(
 					document.positionAt(start),
-					document.positionAt(start + name.length),
+					document.positionAt(start + name.length)
 				),
 				kind: 'declaration',
 			}
@@ -394,7 +400,8 @@ export function collectVariablesByScope(
 		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
 		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
 			const body = declMatch[1]
-			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
+			const bodyStart =
+				contentStart + declMatch.index + declMatch[0].indexOf(body)
 
 			const parts = body.split(',')
 			let currentOffset = 0
@@ -420,7 +427,7 @@ export function collectVariablesByScope(
 						name: localName,
 						range: new vscode.Range(
 							document.positionAt(absStart),
-							document.positionAt(absStart + localName.length),
+							document.positionAt(absStart + localName.length)
 						),
 						kind: 'declaration',
 					})
@@ -435,7 +442,7 @@ export function collectVariablesByScope(
 
 export function collectTemplateScopes(
 	document: vscode.TextDocument,
-	text: string,
+	text: string
 ): TemplateScope[] {
 	type StackItem = {
 		tagName: string
@@ -497,7 +504,7 @@ function parseEachAttribute(
 	document: vscode.TextDocument,
 	attrs: string,
 	tagStart: number,
-	fullTag: string,
+	fullTag: string
 ): Omit<TemplateScope, 'startOffset' | 'endOffset'> | null {
 	const eachAttr = /\b(?:data-)?each\s*=\s*(['"])(.*?)\1/i.exec(attrs)
 	if (!eachAttr) return null
@@ -519,7 +526,9 @@ function parseEachAttribute(
 
 	const expr = exprContent.trim()
 	const exprMatch =
-		/^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(expr)
+		/^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(
+			expr
+		)
 	if (!exprMatch) return null
 
 	const itemName = exprMatch[1]
@@ -543,12 +552,15 @@ function parseEachAttribute(
 
 	return {
 		itemName,
-		itemRange: new vscode.Range(document.positionAt(itemStart), document.positionAt(itemEnd)),
+		itemRange: new vscode.Range(
+			document.positionAt(itemStart),
+			document.positionAt(itemEnd)
+		),
 		sourceExpr,
 		sourceRoot,
 		sourceRange: new vscode.Range(
 			document.positionAt(sourceStart),
-			document.positionAt(sourceEnd),
+			document.positionAt(sourceEnd)
 		),
 	}
 }
@@ -558,7 +570,7 @@ function parseEachAttribute(
  */
 export function collectTemplateReferences(
 	document: vscode.TextDocument,
-	text: string,
+	text: string
 ): TemplateReference[] {
 	const refs: TemplateReference[] = []
 
@@ -568,11 +580,13 @@ export function collectTemplateReferences(
 		/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi,
 		(match, tag, content) => {
 			return match.replace(content, ' '.repeat(content.length))
-		},
+		}
 	)
 
 	// 1. Mask HTML comments
-	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
+	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match =>
+		' '.repeat(match.length)
+	)
 
 	// 2. Scan tags and attributes
 	// We scan for tags in the masked text to locate attributes reliably
@@ -597,7 +611,7 @@ export function collectTemplateReferences(
 				content: camelPrefix,
 				range: new vscode.Range(
 					document.positionAt(tagMatch.index + 1),
-					document.positionAt(tagMatch.index + 1 + prefix.length),
+					document.positionAt(tagMatch.index + 1 + prefix.length)
 				),
 				offset: tagMatch.index + 1,
 				isAttribute: false,
@@ -619,7 +633,8 @@ export function collectTemplateReferences(
 
 		// Regex for attributes: name="value" or name
 		// Supports: foo="bar", foo='bar', foo (standalone), @foo="bar", :foo="bar"
-		const attrRegex = /(?:\s|^)([a-zA-Z0-9-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
+		const attrRegex =
+			/(?:\s|^)([a-zA-Z0-9-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
 		let attrMatch: RegExpExecArray | null
 
 		while ((attrMatch = attrRegex.exec(attrsContent)) !== null) {
@@ -634,13 +649,17 @@ export function collectTemplateReferences(
 			const absNameStart = attrsStart + matchStartInAttrs + nameStartInMatch
 
 			// Check for Alpine/Special attributes
-			const isAlpine = name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')
+			const isAlpine =
+				name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')
 
 			if (hasValue) {
 				// Value exists
 				const quote = attrMatch[3]
 				// structure: [space]name [=] [quote] value [quote]
-				const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
+				const quoteIndex = fullMatch.indexOf(
+					quote,
+					nameStartInMatch + name.length
+				)
 				const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
 
 				if (isAlpine) {
@@ -651,11 +670,19 @@ export function collectTemplateReferences(
 					maskRange(absValueStart, value.length)
 				} else {
 					// Standard attribute: use tokenizer (attribute mode for {{/}} literals).
-					const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+					const segments = tokenizeCurlyInterpolation(value, {
+						attributeMode: true,
+					})
 					for (const seg of segments) {
 						if (seg.kind === 'interpolation') {
 							const contentStart = absValueStart + seg.start + 1 // +1 for opening {
-							extractIdentifiers(seg.expression, contentStart, document, refs, true)
+							extractIdentifiers(
+								seg.expression,
+								contentStart,
+								document,
+								refs,
+								true
+							)
 						}
 					}
 					// MASK value so global scan skips it
@@ -669,7 +696,7 @@ export function collectTemplateReferences(
 						content: 'props',
 						range: new vscode.Range(
 							document.positionAt(absNameStart),
-							document.positionAt(absNameStart + name.length),
+							document.positionAt(absNameStart + name.length)
 						),
 						offset: absNameStart,
 						isAttribute: true,
@@ -681,7 +708,9 @@ export function collectTemplateReferences(
 
 	// 1. Content interpolations: { foo } (Global scan on remaining text)
 	// Now maskedText has Scripts, Styles, AND Attribute Values masked out.
-	const contentSegments = tokenizeCurlyInterpolation(maskedText, { attributeMode: false })
+	const contentSegments = tokenizeCurlyInterpolation(maskedText, {
+		attributeMode: false,
+	})
 	for (const seg of contentSegments) {
 		if (seg.kind === 'interpolation') {
 			const contentStart = seg.start + 1 // +1 for opening {
@@ -698,12 +727,12 @@ function extractIdentifiers(
 	document: vscode.TextDocument,
 	refs: TemplateReference[],
 	isAttribute: boolean,
-	isAlpine?: boolean,
+	isAlpine?: boolean
 ) {
 	// Mask string literals to avoid matching inside them
 	// We replace content with spaces to preserve indices
 	const maskedContent = content.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
-		' '.repeat(match.length),
+		' '.repeat(match.length)
 	)
 
 	// Simple tokenizer for identifiers
@@ -714,7 +743,7 @@ function extractIdentifiers(
 		// Skip keywords
 		if (
 			/^(if|else|return|function|var|let|const|import|from|as|in|true|false|null|undefined)$/.test(
-				id,
+				id
 			)
 		)
 			continue
@@ -726,7 +755,8 @@ function extractIdentifiers(
 		if (charBefore === '.') {
 			// Check for spread operator (...)
 			const isSpread =
-				indexInContent >= 3 && content.slice(indexInContent - 3, indexInContent) === '...'
+				indexInContent >= 3 &&
+				content.slice(indexInContent - 3, indexInContent) === '...'
 			if (!isSpread) continue
 		}
 
@@ -763,8 +793,8 @@ function extractIdentifiers(
 			propertyRanges.push(
 				new vscode.Range(
 					document.positionAt(propAbsStart),
-					document.positionAt(propAbsStart + propName.length),
-				),
+					document.positionAt(propAbsStart + propName.length)
+				)
 			)
 
 			const matchLen = propMatch[0].length
@@ -777,7 +807,7 @@ function extractIdentifiers(
 			content: id,
 			range: new vscode.Range(
 				document.positionAt(absStart),
-				document.positionAt(absStart + id.length),
+				document.positionAt(absStart + id.length)
 			),
 			offset: absStart,
 			isAttribute,

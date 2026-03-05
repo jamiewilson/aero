@@ -127,7 +127,7 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 - **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aerobuilt/core and aerobuilt/vite)
 - **packages/vscode/** - VS Code extension
 
-For a detailed monorepo and packages layout, see [_reference/guides/monorepo.md](_reference/guides/monorepo.md).
+For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md](_reference/guides/monorepo.md).
 
 ## Documentation (TSDoc)
 

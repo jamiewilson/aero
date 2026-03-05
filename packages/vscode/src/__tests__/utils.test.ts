@@ -95,7 +95,8 @@ describe('pathResolver', () => {
 	/** Resolver is built from document's workspace folder; root and resolve() are used by providers. */
 	describe('getResolver', () => {
 		it('should return a resolver object with root and resolve method', async () => {
-			const { getResolver, clearResolverCache } = await import('../pathResolver')
+			const { getResolver, clearResolverCache } =
+				await import('../pathResolver')
 			clearResolverCache()
 
 			const doc = {

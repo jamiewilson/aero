@@ -9,7 +9,9 @@ htmx extends HTML with attributes that trigger HTTP requests.
 ### Basics
 
 ```html
-<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">Load Message</button>
+<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">
+	Load Message
+</button>
 <div id="result"></div>
 
 <form hx-post="/api/submit" hx-target="#response" hx-swap="outerHTML">
@@ -21,20 +23,28 @@ htmx extends HTML with attributes that trigger HTTP requests.
 
 ### Core attributes
 
-| Attribute      | Description                                              |
-| -------------- | -------------------------------------------------------- |
-| `hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete` | HTTP method and URL |
-| `hx-target`    | CSS selector for where to swap the response              |
-| `hx-swap`      | How to swap: `innerHTML`, `outerHTML`, `beforeend`, etc. |
-| `hx-trigger`   | Event that triggers the request (default: click/change)  |
-| `hx-indicator` | Element to show during request (loading state)           |
-| `hx-confirm`   | Show confirmation dialog before request                  |
+| Attribute                                              | Description                                              |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| `hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete` | HTTP method and URL                                      |
+| `hx-target`                                            | CSS selector for where to swap the response              |
+| `hx-swap`                                              | How to swap: `innerHTML`, `outerHTML`, `beforeend`, etc. |
+| `hx-trigger`                                           | Event that triggers the request (default: click/change)  |
+| `hx-indicator`                                         | Element to show during request (loading state)           |
+| `hx-confirm`                                           | Show confirmation dialog before request                  |
 
 ### Advanced triggers
 
 ```html
-<input type="search" name="q" hx-get="/api/search" hx-trigger="keyup changed delay:500ms" hx-target="#search-results" placeholder="Search..." />
-<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">Loading...</div>
+<input
+	type="search"
+	name="q"
+	hx-get="/api/search"
+	hx-trigger="keyup changed delay:500ms"
+	hx-target="#search-results"
+	placeholder="Search..." />
+<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">
+	Loading...
+</div>
 <div hx-get="/api/notifications" hx-trigger="every 5s">Notifications here</div>
 ```
 
@@ -67,7 +77,7 @@ Import and start Alpine (and optionally htmx) in your main client script:
 ```typescript
 // e.g. client/assets/scripts/index.ts
 import Alpine from 'alpinejs'
-import 'htmx.org'  // optional
+import 'htmx.org' // optional
 
 window.Alpine = Alpine
 Alpine.start()
@@ -94,17 +104,17 @@ Alpine.start()
 
 ### Core directives
 
-| Directive      | Description                         |
-| -------------- | ----------------------------------- |
-| `x-data`       | Reactive data scope                 |
-| `x-bind` / `:attr` | Bind attributes reactively    |
-| `x-on` / `@event` | Event listeners                 |
-| `x-text`, `x-html` | Text or HTML content           |
-| `x-model`      | Two-way binding for inputs         |
-| `x-show`, `x-if` | Visibility and conditional render |
-| `x-for`        | Loop over items                     |
-| `x-transition` | CSS transitions                     |
-| `x-init`       | Run on init                         |
+| Directive          | Description                       |
+| ------------------ | --------------------------------- |
+| `x-data`           | Reactive data scope               |
+| `x-bind` / `:attr` | Bind attributes reactively        |
+| `x-on` / `@event`  | Event listeners                   |
+| `x-text`, `x-html` | Text or HTML content              |
+| `x-model`          | Two-way binding for inputs        |
+| `x-show`, `x-if`   | Visibility and conditional render |
+| `x-for`            | Loop over items                   |
+| `x-transition`     | CSS transitions                   |
+| `x-init`           | Run on init                       |
 
 ### Reusable components and store
 
@@ -155,8 +165,18 @@ Alpine.start()
 
 ```html
 <div x-data="{ loading: false, query: '' }">
-	<input type="search" x-model="query" hx-get="/api/search" hx-trigger="keyup changed delay:300ms" hx-target="#results" hx-indicator="#search-loading" name="q" placeholder="Search..." />
-	<div id="search-loading" x-show="loading" class="htmx-indicator">Searching...</div>
+	<input
+		type="search"
+		x-model="query"
+		hx-get="/api/search"
+		hx-trigger="keyup changed delay:300ms"
+		hx-target="#results"
+		hx-indicator="#search-loading"
+		name="q"
+		placeholder="Search..." />
+	<div id="search-loading" x-show="loading" class="htmx-indicator">
+		Searching...
+	</div>
 	<div id="results"></div>
 </div>
 ```

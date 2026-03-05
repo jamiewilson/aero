@@ -11,10 +11,10 @@ So: use **no prefix** (or a private convention) for server-only values, and **`V
 
 ## Convention
 
-| Prefix   | Where it’s available        | Example use                    |
-|----------|-----------------------------|--------------------------------|
-| (none)   | Build / server only         | API keys, internal URLs        |
-| `VITE_`  | Build and client            | Public API base URL, feature flags |
+| Prefix  | Where it’s available | Example use                        |
+| ------- | -------------------- | ---------------------------------- |
+| (none)  | Build / server only  | API keys, internal URLs            |
+| `VITE_` | Build and client     | Public API base URL, feature flags |
 
 Example `.env`:
 
@@ -70,13 +70,13 @@ For type-checking and autocomplete on `import.meta.env`, add a declaration file 
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly SITE: string
-  // Add custom env vars (use VITE_ prefix for client-exposed):
-  // readonly VITE_PUBLIC_API: string
+	readonly SITE: string
+	// Add custom env vars (use VITE_ prefix for client-exposed):
+	// readonly VITE_PUBLIC_API: string
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
+	readonly env: ImportMetaEnv
 }
 ```
 

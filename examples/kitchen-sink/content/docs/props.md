@@ -107,7 +107,9 @@ With fallbacks to site data:
 	const { title, description } = aero.props
 </script>
 <meta property="og:title" content="{ title || site.meta.title }" />
-<meta property="og:description" content="{ description || site.meta.description }" />
+<meta
+	property="og:description"
+	content="{ description || site.meta.description }" />
 ```
 
 ## Available globals
@@ -154,9 +156,10 @@ Usage: `<greeting-component name="World" />{:html}`
 
 **Mixed props:**
 
+<!-- prettier-ignore -->
 ```html
-<my-component
-	props="{ title: site.meta.title, count: 42 }"
-	extra="static value"
+<my-component 
+	props="{ title: site.meta.title, count: 42 }" 
+	extra="static value" 
 	computed="{ someExpression }" />
 ```

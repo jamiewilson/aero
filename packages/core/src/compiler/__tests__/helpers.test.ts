@@ -104,7 +104,9 @@ describe('kebabToCamelCase', () => {
 	})
 
 	it('should handle multiple hyphens', () => {
-		expect(kebabToCamelCase('my-long-component-name')).toBe('myLongComponentName')
+		expect(kebabToCamelCase('my-long-component-name')).toBe(
+			'myLongComponentName'
+		)
 	})
 
 	it('should handle single word', () => {
@@ -122,7 +124,9 @@ describe('buildPropsString', () => {
 	})
 
 	it('should build props with spread and entries', () => {
-		expect(buildPropsString(['title="Hello"'], 'props')).toBe('{ props, title="Hello" }')
+		expect(buildPropsString(['title="Hello"'], 'props')).toBe(
+			'{ props, title="Hello" }'
+		)
 	})
 
 	it('should handle multiple entries', () => {
@@ -143,13 +147,13 @@ describe('escapeBackticks', () => {
 describe('emitSlotsObjectVars', () => {
 	it('should emit slots object', () => {
 		expect(emitSlotsObjectVars({ default: '__slot_default' })).toBe(
-			'{ "default": __slot_default }',
+			'{ "default": __slot_default }'
 		)
 	})
 
 	it('should handle multiple slots', () => {
 		expect(emitSlotsObjectVars({ default: '__s1', header: '__s2' })).toBe(
-			'{ "default": __s1, "header": __s2 }',
+			'{ "default": __s1, "header": __s2 }'
 		)
 	})
 
@@ -166,9 +170,12 @@ describe('emitRenderFunction', () => {
 	})
 
 	it('should include getStaticPaths when provided', () => {
-		const getStaticPathsFn = 'export async function getStaticPaths() { return [] }'
+		const getStaticPathsFn =
+			'export async function getStaticPaths() { return [] }'
 		const result = emitRenderFunction('', '', { getStaticPathsFn })
-		expect(result).toContain('export async function getStaticPaths() { return [] }')
+		expect(result).toContain(
+			'export async function getStaticPaths() { return [] }'
+		)
 		expect(result).toContain('export default async function(Aero)')
 	})
 
@@ -232,12 +239,14 @@ describe('emitForOf', () => {
 describe('emitSlotOutput', () => {
 	it('should emit slot output', () => {
 		expect(emitSlotOutput('default', 'content')).toBe(
-			"__out += slots['default'] ?? `content`;\n",
+			"__out += slots['default'] ?? `content`;\n"
 		)
 	})
 
 	it('should use custom output variable', () => {
-		expect(emitSlotOutput('header', 'h', '__html')).toBe("__html += slots['header'] ?? `h`;\n")
+		expect(emitSlotOutput('header', 'h', '__html')).toBe(
+			"__html += slots['header'] ?? `h`;\n"
+		)
 	})
 })
 

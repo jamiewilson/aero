@@ -17,7 +17,11 @@ import {
 	TemplateScope,
 	maskJsComments,
 } from './analyzer'
-import { kebabToCamelCase, collectImportedSpecifiersFromDocument, findInnermostScope } from './utils'
+import {
+	kebabToCamelCase,
+	collectImportedSpecifiersFromDocument,
+	findInnermostScope,
+} from './utils'
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
@@ -79,10 +83,18 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		// Run diagnostics on open and save
 		this.disposables.push(
-			vscode.workspace.onDidOpenTextDocument(doc => this.updateDiagnostics(doc)),
-			vscode.workspace.onDidSaveTextDocument(doc => this.updateDiagnostics(doc)),
-			vscode.workspace.onDidChangeTextDocument(e => this.updateDiagnostics(e.document)),
-			vscode.workspace.onDidCloseTextDocument(doc => this.collection.delete(doc.uri)),
+			vscode.workspace.onDidOpenTextDocument(doc =>
+				this.updateDiagnostics(doc)
+			),
+			vscode.workspace.onDidSaveTextDocument(doc =>
+				this.updateDiagnostics(doc)
+			),
+			vscode.workspace.onDidChangeTextDocument(e =>
+				this.updateDiagnostics(e.document)
+			),
+			vscode.workspace.onDidCloseTextDocument(doc =>
+				this.collection.delete(doc.uri)
+			)
 		)
 
 		// Run on all currently open documents
@@ -123,7 +135,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkDirectiveExpressionBraces(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const ignoredRanges = getIgnoredRanges(text)
 
@@ -152,9 +164,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 				const end = start + attrMatch[0].length
 				const example = `${attrName}="{ expression }"`
 				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					new vscode.Range(
+						document.positionAt(start),
+						document.positionAt(end)
+					),
 					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
-					vscode.DiagnosticSeverity.Error,
+					vscode.DiagnosticSeverity.Error
 				)
 				diagnostic.source = DIAGNOSTIC_SOURCE
 				diagnostics.push(diagnostic)
@@ -191,7 +206,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkScriptTags(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const ignoredRanges = getIgnoredRanges(text)
 
@@ -235,10 +250,10 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const diagnostic = new vscode.Diagnostic(
 							new vscode.Range(
 								document.positionAt(importStart),
-								document.positionAt(importEnd),
+								document.positionAt(importEnd)
 							),
-							"Imports in <script is:inline> require type=\"module\" attribute.",
-							vscode.DiagnosticSeverity.Error,
+							'Imports in <script is:inline> require type="module" attribute.',
+							vscode.DiagnosticSeverity.Error
 						)
 						diagnostic.source = DIAGNOSTIC_SOURCE
 						diagnostics.push(diagnostic)
@@ -262,22 +277,27 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkConditionalChains(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
-		const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
+		const lastConditionalTypeByDepth = new Map<
+			number,
+			'if' | 'else-if' | null
+		>()
 		let depth = 0
 		const ignoredRanges = getIgnoredRanges(text)
 
 		ANY_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
 
-		const getLastConditionalType = (currentDepth: number): 'if' | 'else-if' | null => {
+		const getLastConditionalType = (
+			currentDepth: number
+		): 'if' | 'else-if' | null => {
 			return lastConditionalTypeByDepth.get(currentDepth) ?? null
 		}
 
 		const setLastConditionalType = (
 			currentDepth: number,
-			type: 'if' | 'else-if' | null,
+			type: 'if' | 'else-if' | null
 		): void => {
 			lastConditionalTypeByDepth.set(currentDepth, type)
 		}
@@ -289,7 +309,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const fullTag = match[0]
 			const tagName = (match[1] || '').toLowerCase()
 			const isClosingTag = fullTag.startsWith('</')
-			const isSelfClosingTag = /\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
+			const isSelfClosingTag =
+				/\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
 
 			if (isClosingTag) {
 				depth = Math.max(0, depth - 1)
@@ -320,9 +341,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const start = attrBase + attrMatch.index
 						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(document.positionAt(start), document.positionAt(end)),
+							new vscode.Range(
+								document.positionAt(start),
+								document.positionAt(end)
+							),
 							'else-if must follow an element with if or else-if',
-							vscode.DiagnosticSeverity.Error,
+							vscode.DiagnosticSeverity.Error
 						)
 						diagnostic.source = DIAGNOSTIC_SOURCE
 						diagnostics.push(diagnostic)
@@ -341,9 +365,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const start = attrBase + attrMatch.index
 						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(document.positionAt(start), document.positionAt(end)),
+							new vscode.Range(
+								document.positionAt(start),
+								document.positionAt(end)
+							),
 							'else must follow an element with if or else-if',
-							vscode.DiagnosticSeverity.Error,
+							vscode.DiagnosticSeverity.Error
 						)
 						diagnostic.source = DIAGNOSTIC_SOURCE
 						diagnostics.push(diagnostic)
@@ -366,7 +393,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkComponentReferences(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const resolver = getResolver(document)
 		const imports = collectImportedSpecifiersFromDocument(text)
@@ -394,7 +421,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				const diagnostic = new vscode.Diagnostic(
 					new vscode.Range(startPos, endPos),
 					`Component '${baseName}' is not imported. Explicit imports are required.`,
-					vscode.DiagnosticSeverity.Error,
+					vscode.DiagnosticSeverity.Error
 				)
 				diagnostic.source = DIAGNOSTIC_SOURCE
 				diagnostics.push(diagnostic)
@@ -412,7 +439,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				const diagnostic = new vscode.Diagnostic(
 					new vscode.Range(startPos, endPos),
 					`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
-					vscode.DiagnosticSeverity.Warning,
+					vscode.DiagnosticSeverity.Warning
 				)
 				diagnostic.source = DIAGNOSTIC_SOURCE
 				diagnostics.push(diagnostic)
@@ -426,7 +453,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkUndefinedVariables(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const [definedVars] = collectDefinedVariables(document, text)
 		const templateScopes = collectTemplateScopes(document, text)
@@ -503,7 +530,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const diagnostic = new vscode.Diagnostic(
 							range,
 							`Property '${firstProp}' does not exist on type '${ref.content}'`,
-							vscode.DiagnosticSeverity.Error,
+							vscode.DiagnosticSeverity.Error
 						)
 						diagnostic.source = DIAGNOSTIC_SOURCE
 						diagnostics.push(diagnostic)
@@ -539,7 +566,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const diagnostic = new vscode.Diagnostic(
 				ref.range,
 				message,
-				vscode.DiagnosticSeverity.Error,
+				vscode.DiagnosticSeverity.Error
 			)
 			diagnostic.source = DIAGNOSTIC_SOURCE
 			diagnostics.push(diagnostic)
@@ -557,7 +584,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkUnusedVariables(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const references = collectTemplateReferences(document, text)
 		const usedInTemplate = new Set<string>()
@@ -567,7 +594,9 @@ export class AeroDiagnostics implements vscode.Disposable {
 		// Variables in pass:data expressions are "used" from build scope (injected into client script)
 		AeroDiagnostics.PASS_DATA_VALUE_REGEX.lastIndex = 0
 		let pdMatch: RegExpExecArray | null
-		while ((pdMatch = AeroDiagnostics.PASS_DATA_VALUE_REGEX.exec(text)) !== null) {
+		while (
+			(pdMatch = AeroDiagnostics.PASS_DATA_VALUE_REGEX.exec(text)) !== null
+		) {
 			const value = pdMatch[2]
 			const identifiers = value.match(/\b([a-zA-Z_$][\w$]*)\b/g)
 			if (identifiers) {
@@ -578,16 +607,40 @@ export class AeroDiagnostics implements vscode.Disposable {
 		}
 
 		// Check unused in is:build scope (template + build scripts)
-		this.checkUnusedInScope(document, text, 'build', usedInTemplate, diagnostics)
+		this.checkUnusedInScope(
+			document,
+			text,
+			'build',
+			usedInTemplate,
+			diagnostics
+		)
 
 		// Check unused in bundled scope (plain/client scripts)
-		this.checkUnusedInScope(document, text, 'bundled', usedInTemplate, diagnostics)
+		this.checkUnusedInScope(
+			document,
+			text,
+			'bundled',
+			usedInTemplate,
+			diagnostics
+		)
 
 		// Check unused in is:inline scope (inline scripts only)
-		this.checkUnusedInScope(document, text, 'inline', usedInTemplate, diagnostics)
+		this.checkUnusedInScope(
+			document,
+			text,
+			'inline',
+			usedInTemplate,
+			diagnostics
+		)
 
 		// Check unused in is:blocking scope (blocking scripts only)
-		this.checkUnusedInScope(document, text, 'blocking', usedInTemplate, diagnostics)
+		this.checkUnusedInScope(
+			document,
+			text,
+			'blocking',
+			usedInTemplate,
+			diagnostics
+		)
 	}
 
 	private checkUnusedInScope(
@@ -595,7 +648,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		scope: 'build' | 'bundled' | 'inline' | 'blocking',
 		usedInTemplate: Set<string>,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const definedVars = collectVariablesByScope(document, text, scope)
 
@@ -603,7 +656,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const scopeContent = this.getScriptContentByScope(text, scope)
 		const maskedContent = maskJsComments(scopeContent).replace(
 			/(['"])(?:(?=(\\?))\2.)*?\1/g,
-			() => ' '.repeat(20),
+			() => ' '.repeat(20)
 		)
 
 		for (const [name, def] of definedVars) {
@@ -641,7 +694,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const diagnostic = new vscode.Diagnostic(
 				def.range,
 				`'${name}' is declared but its value is never read.`,
-				vscode.DiagnosticSeverity.Hint,
+				vscode.DiagnosticSeverity.Hint
 			)
 			diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
 			diagnostic.source = DIAGNOSTIC_SOURCE
@@ -649,8 +702,14 @@ export class AeroDiagnostics implements vscode.Disposable {
 		}
 	}
 
-	private getScriptContentByScope(text: string, scope: 'build' | 'bundled' | 'inline' | 'blocking'): string {
-		const scopeAttr: Record<'build' | 'bundled' | 'inline' | 'blocking', RegExp> = {
+	private getScriptContentByScope(
+		text: string,
+		scope: 'build' | 'bundled' | 'inline' | 'blocking'
+	): string {
+		const scopeAttr: Record<
+			'build' | 'bundled' | 'inline' | 'blocking',
+			RegExp
+		> = {
 			build: /\bis:build\b/,
 			bundled: /(?!)/, // bundled = plain/client scripts; match via fallback below
 			inline: /\bis:inline\b/,
@@ -671,7 +730,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 			// For bundled scope: plain <script> (no is:build, is:inline, is:blocking)
 			if (scope === 'bundled' && !isMatch) {
-				if (!/\bis:build\b/.test(attrs) && !/\bis:inline\b/.test(attrs) && !/\bis:blocking\b/.test(attrs)) {
+				if (
+					!/\bis:build\b/.test(attrs) &&
+					!/\bis:inline\b/.test(attrs) &&
+					!/\bis:blocking\b/.test(attrs)
+				) {
 					isMatch = true
 				}
 			}
@@ -687,7 +750,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	private checkDuplicateDeclarations(
 		document: vscode.TextDocument,
 		text: string,
-		diagnostics: vscode.Diagnostic[],
+		diagnostics: vscode.Diagnostic[]
 	): void {
 		const [, duplicates] = collectDefinedVariables(document, text)
 
@@ -695,7 +758,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const diagnostic = new vscode.Diagnostic(
 				dup.range,
 				`'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`,
-				vscode.DiagnosticSeverity.Error,
+				vscode.DiagnosticSeverity.Error
 			)
 			diagnostic.source = DIAGNOSTIC_SOURCE
 			diagnostics.push(diagnostic)
@@ -703,11 +766,17 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 }
 
-function findParentScope(scopes: TemplateScope[], child: TemplateScope): TemplateScope | null {
+function findParentScope(
+	scopes: TemplateScope[],
+	child: TemplateScope
+): TemplateScope | null {
 	let best: TemplateScope | null = null
 	for (const scope of scopes) {
 		if (scope === child) continue
-		if (child.startOffset >= scope.startOffset && child.endOffset <= scope.endOffset) {
+		if (
+			child.startOffset >= scope.startOffset &&
+			child.endOffset <= scope.endOffset
+		) {
 			if (!best) {
 				best = scope
 				continue
@@ -735,7 +804,8 @@ function getIgnoredRanges(text: string): Array<{ start: number; end: number }> {
 		const tagName = scriptMatch[1]
 		const closeTagLen = `</${tagName}>`.length
 		const contentLen = scriptMatch[2].length
-		const start = scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
+		const start =
+			scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
 		const end = start + contentLen
 		ranges.push({ start, end })
 	}
@@ -743,7 +813,10 @@ function getIgnoredRanges(text: string): Array<{ start: number; end: number }> {
 	return ranges
 }
 
-function isInRanges(offset: number, ranges: Array<{ start: number; end: number }>): boolean {
+function isInRanges(
+	offset: number,
+	ranges: Array<{ start: number; end: number }>
+): boolean {
 	for (const range of ranges) {
 		if (offset >= range.start && offset < range.end) return true
 	}

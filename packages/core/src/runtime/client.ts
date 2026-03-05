@@ -51,7 +51,10 @@ function updateHead(headContent: string) {
 		headEl.removeChild(node)
 	}
 	const parser = new DOMParser()
-	const frag = parser.parseFromString(`<head>${headContent}</head>`, 'text/html')
+	const frag = parser.parseFromString(
+		`<head>${headContent}</head>`,
+		'text/html'
+	)
 	const nodes = Array.from(frag.head?.childNodes || [])
 
 	for (const node of nodes) {
@@ -59,7 +62,8 @@ function updateHead(headContent: string) {
 			const el = node as Element
 			if (el.matches(PERSISTENT_SELECTORS)) {
 				const devId = el.getAttribute('data-vite-dev-id')
-				if (devId && headEl.querySelector(`[data-vite-dev-id="${devId}"]`)) continue
+				if (devId && headEl.querySelector(`[data-vite-dev-id="${devId}"]`))
+					continue
 				if (
 					el instanceof HTMLScriptElement &&
 					el.src &&
@@ -90,7 +94,7 @@ const DOCS_PATH_PREFIX = '/docs'
  */
 export async function renderPage(
 	appEl: HTMLElement,
-	renderFn: (pageName: string) => Promise<string>,
+	renderFn: (pageName: string) => Promise<string>
 ) {
 	if (rendering) return
 	rendering = true
@@ -101,7 +105,8 @@ export async function renderPage(
 		let html: string
 		const useFetch =
 			typeof window !== 'undefined' &&
-			(pathname === DOCS_PATH_PREFIX || pathname.startsWith(DOCS_PATH_PREFIX + '/')) &&
+			(pathname === DOCS_PATH_PREFIX ||
+				pathname.startsWith(DOCS_PATH_PREFIX + '/')) &&
 			import.meta.hot
 		if (useFetch) {
 			const res = await fetch(pathname, { headers: { Accept: 'text/html' } })

@@ -68,7 +68,10 @@ if (distinct.length > 1) {
 for (const rel of packagePaths) {
 	const path = join(root, rel)
 	const content = readFileSync(path, 'utf8')
-	const updated = content.replace(/^(\s*"version":\s*)"[^"]*"/m, `$1"${newVersion}"`)
+	const updated = content.replace(
+		/^(\s*"version":\s*)"[^"]*"/m,
+		`$1"${newVersion}"`
+	)
 	if (updated === content) {
 		console.log(`✔︎ ${rel}: already ${newVersion}`)
 		continue

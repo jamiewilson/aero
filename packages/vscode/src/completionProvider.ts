@@ -89,7 +89,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
-		context: vscode.CompletionContext,
+		context: vscode.CompletionContext
 	): vscode.ProviderResult<vscode.CompletionItem[]> {
 		if (!isAeroDocument(document)) return null
 
@@ -127,7 +127,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 	private getComponentTagCompletions(
 		document: vscode.TextDocument,
-		prefix: string,
+		prefix: string
 	): vscode.CompletionItem[] {
 		const resolver = getResolver(document)
 		if (!resolver) return []
@@ -148,7 +148,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 	private scanDirForTags(
 		dir: string,
 		suffix: 'component' | 'layout',
-		prefix: string,
+		prefix: string
 	): vscode.CompletionItem[] {
 		const items: vscode.CompletionItem[] = []
 
@@ -169,7 +169,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 					tagName,
 					suffix === 'component'
 						? vscode.CompletionItemKind.Class
-						: vscode.CompletionItemKind.Struct,
+						: vscode.CompletionItemKind.Struct
 				)
 				item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
 				item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
@@ -210,7 +210,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 	private getImportPathCompletions(
 		document: vscode.TextDocument,
-		partial: string,
+		partial: string
 	): vscode.CompletionItem[] {
 		const resolver = getResolver(document)
 		if (!resolver) return []
@@ -233,7 +233,10 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 			]
 			for (const alias of aliases) {
 				if (alias.startsWith(partial)) {
-					const item = new vscode.CompletionItem(alias, vscode.CompletionItemKind.Folder)
+					const item = new vscode.CompletionItem(
+						alias,
+						vscode.CompletionItemKind.Folder
+					)
 					item.detail = 'Aero path alias'
 					items.push(item)
 				}
@@ -258,12 +261,15 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 						if (stat.isDirectory()) {
 							const item = new vscode.CompletionItem(
 								file + '/',
-								vscode.CompletionItemKind.Folder,
+								vscode.CompletionItemKind.Folder
 							)
 							items.push(item)
 						} else {
 							const baseName = file.replace(/\.(html|ts|js|json)$/, '')
-							const item = new vscode.CompletionItem(baseName, vscode.CompletionItemKind.File)
+							const item = new vscode.CompletionItem(
+								baseName,
+								vscode.CompletionItemKind.File
+							)
 							item.detail = file
 							items.push(item)
 						}
@@ -286,13 +292,19 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 		// Content globals
 		for (const [name, alias] of Object.entries(CONTENT_GLOBALS)) {
-			const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable)
+			const item = new vscode.CompletionItem(
+				name,
+				vscode.CompletionItemKind.Variable
+			)
 			item.detail = `Content global (${alias})`
 			items.push(item)
 		}
 
 		// Aero.props
-		const propsItem = new vscode.CompletionItem('Aero', vscode.CompletionItemKind.Module)
+		const propsItem = new vscode.CompletionItem(
+			'Aero',
+			vscode.CompletionItemKind.Module
+		)
 		propsItem.detail = 'Aero runtime context'
 		items.push(propsItem)
 

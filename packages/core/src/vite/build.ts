@@ -58,7 +58,7 @@ export { addDoctype } from './rewrite'
 export function registerClientScriptsToMap(
 	parsed: ParseResult,
 	baseName: string,
-	target: Map<string, ScriptEntry>,
+	target: Map<string, ScriptEntry>
 ): void {
 	const total = parsed.clientScripts.length
 	for (let i = 0; i < total; i++) {
@@ -103,7 +103,10 @@ function isDynamicPage(page: StaticPage): boolean {
 }
 
 /** Replace `[key]` in pattern with params[key]; throws if a key is missing. */
-function expandPattern(pattern: string, params: Record<string, string>): string {
+function expandPattern(
+	pattern: string,
+	params: Record<string, string>
+): string {
 	return expandRoutePattern(pattern, params)
 }
 
@@ -135,7 +138,11 @@ function toRouteFromPageName(pageName: string): string {
  * Generate sitemap.xml from route paths. Only called when site URL is set.
  * Excludes 404. Writes to distDir/sitemap.xml.
  */
-function writeSitemap(routePaths: string[], site: string, distDir: string): void {
+function writeSitemap(
+	routePaths: string[],
+	site: string,
+	distDir: string
+): void {
 	const base = site.replace(/\/$/, '')
 	const urls = routePaths
 		.filter(r => r !== '404')
@@ -177,12 +184,14 @@ function resolveTemplateAssetPath(
 	rawValue: string,
 	templateFile: string,
 	root: string,
-	resolvePath?: (specifier: string, importer: string) => string,
+	resolvePath?: (specifier: string, importer: string) => string
 ): string | null {
 	if (!rawValue || isSkippableUrl(rawValue)) return null
 	if (rawValue.startsWith('/')) return path.resolve(root, rawValue.slice(1))
 	if (rawValue.startsWith('@') || rawValue.startsWith('~')) {
-		const resolved = resolvePath ? resolvePath(rawValue, templateFile) : rawValue
+		const resolved = resolvePath
+			? resolvePath(rawValue, templateFile)
+			: rawValue
 		return path.isAbsolute(resolved) ? resolved : path.resolve(root, resolved)
 	}
 	if (rawValue.startsWith('./') || rawValue.startsWith('../')) {
@@ -203,7 +212,7 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 
 	// Use same key derivation as runtime (pagePathToKey) so page names align.
 	const allPageNames = new Set(
-		pageFiles.map(f => pagePathToKey(toPosixRelative(f, root))),
+		pageFiles.map(f => pagePathToKey(toPosixRelative(f, root)))
 	)
 
 	return pageFiles.map(file => {
@@ -240,7 +249,7 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
  */
 export function discoverClientScriptContentMap(
 	root: string,
-	templateRoot: string,
+	templateRoot: string
 ): Map<string, ScriptEntry> {
 	const map = new Map<string, ScriptEntry>()
 	for (const file of discoverTemplates(root, templateRoot)) {
@@ -257,7 +266,7 @@ export function discoverClientScriptContentMap(
 /** Rollup input entries for virtual client scripts (manifest key → virtual path); used by createBuildConfig. */
 function discoverClientScriptVirtualInputs(
 	root: string,
-	templateRoot: string,
+	templateRoot: string
 ): Record<string, string> {
 	const entries: Record<string, string> = {}
 	for (const file of discoverTemplates(root, templateRoot)) {
@@ -281,20 +290,27 @@ function discoverClientScriptVirtualInputs(
 function discoverAssetInputs(
 	root: string,
 	resolvePath?: (specifier: string, importer: string) => string,
-	templateRoot = 'client',
+	templateRoot = 'client'
 ): Record<string, string> {
 	const entries = new Map<string, string>()
 	for (const templateFile of discoverTemplates(root, templateRoot)) {
 		const source = fs.readFileSync(templateFile, 'utf-8')
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
-		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
+		const styles = Array.from(
+			document.querySelectorAll('link[rel="stylesheet"][href]')
+		)
 		const refs = [...scripts, ...styles]
 
 		for (const el of refs) {
 			const attr = el.hasAttribute('src') ? 'src' : 'href'
 			const raw = el.getAttribute(attr) || ''
-			const resolved = resolveTemplateAssetPath(raw, templateFile, root, resolvePath)
+			const resolved = resolveTemplateAssetPath(
+				raw,
+				templateFile,
+				root,
+				resolvePath
+			)
 			if (!resolved || !fs.existsSync(resolved)) continue
 			const ext = path.extname(resolved).toLowerCase()
 			if (!['.js', '.mjs', '.ts', '.tsx', '.css'].includes(ext)) continue
@@ -353,7 +369,7 @@ function walkFiles(dir: string): string[] {
  */
 export async function renderStaticPages(
 	options: StaticBuildOptions,
-	outDir: string,
+	outDir: string
 ): Promise<void> {
 	const root = options.root
 	const dirs = resolveDirs(options.dirs)
@@ -401,7 +417,7 @@ export async function renderStaticPages(
 			if (typeof mod.getStaticPaths !== 'function') {
 				console.warn(
 					`[aero] ⚠ Skipping dynamic page "${path.relative(root, page.sourceFile)}" — ` +
-						`no getStaticPaths() exported. Page will not be pre-rendered.`,
+						`no getStaticPaths() exported. Page will not be pre-rendered.`
 				)
 				continue
 			}
@@ -410,7 +426,7 @@ export async function renderStaticPages(
 			if (!Array.isArray(staticPaths) || staticPaths.length === 0) {
 				console.warn(
 					`[aero] ⚠ getStaticPaths() for "${path.relative(root, page.sourceFile)}" ` +
-						`returned no paths. Page will not be pre-rendered.`,
+						`returned no paths. Page will not be pre-rendered.`
 				)
 				continue
 			}
@@ -431,9 +447,9 @@ export async function renderStaticPages(
 
 		// Skip building pages that are redirect sources so the Nitro routeRule is the only handler.
 		const redirectFromSet = new Set(
-			(options.redirects ?? []).map(r =>
-				r.from.replace(/^\/+|\/+$/g, '').trim() || '',
-			),
+			(options.redirects ?? []).map(
+				r => r.from.replace(/^\/+|\/+$/g, '').trim() || ''
+			)
 		)
 		const pathMatchesRedirect = (page: StaticPage): boolean => {
 			const pathSegment = page.routePath === '' ? '' : page.routePath
@@ -453,7 +469,10 @@ export async function renderStaticPages(
 			// dynamic page name (e.g. "[id]") so the runtime finds the module,
 			// while passing the concrete params so the template has real values.
 			const renderTarget = isDynamicPage(page)
-				? toPosixRelative(page.sourceFile, path.resolve(root, dirs.client, 'pages')).replace(/\.html$/i, '')
+				? toPosixRelative(
+						page.sourceFile,
+						path.resolve(root, dirs.client, 'pages')
+					).replace(/\.html$/i, '')
 				: page.pageName
 
 			let rendered = await runtime.aero.render(renderTarget, {
@@ -469,7 +488,7 @@ export async function renderStaticPages(
 				page.outputFile,
 				manifest,
 				routeSet,
-				apiPrefix,
+				apiPrefix
 			)
 
 			// Minify HTML in production
@@ -516,11 +535,18 @@ interface BuildConfigOptions {
  */
 export function createBuildConfig(
 	options: BuildConfigOptions = {},
-	root = process.cwd(),
+	root = process.cwd()
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
-	const virtualClientInputs = discoverClientScriptVirtualInputs(root, dirs.client)
+	const assetInputs = discoverAssetInputs(
+		root,
+		options.resolvePath,
+		dirs.client
+	)
+	const virtualClientInputs = discoverClientScriptVirtualInputs(
+		root,
+		dirs.client
+	)
 	const inputs = { ...assetInputs, ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,
