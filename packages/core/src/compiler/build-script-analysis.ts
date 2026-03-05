@@ -184,9 +184,7 @@ export interface PropsTypeResult {
  * @param script - Raw build script content (JS or TS).
  * @returns The type name and whether it was from destructuring, or null if not found.
  */
-export function getPropsTypeFromBuildScript(
-	script: string
-): PropsTypeResult | null {
+export function getPropsTypeFromBuildScript(script: string): PropsTypeResult | null {
 	if (!script.trim()) return null
 
 	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
@@ -270,7 +268,6 @@ function getTypeNameFromAnnotation(annotation: Record<string, unknown>): string 
 	if (annotation.type === 'TSTypeReference') {
 		const typeName = annotation.typeName as Record<string, unknown>
 		return typeName?.name as string
-
 	}
 	return null
 }
@@ -282,9 +279,7 @@ function getTypeNameFromAnnotation(annotation: Record<string, unknown>): string 
  * @param script - Raw build script content (JS or TS).
  * @returns Imports with range and bindingRanges. On parse error, throws.
  */
-export function analyzeBuildScriptForEditor(
-	script: string
-): BuildScriptAnalysisForEditorResult {
+export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysisForEditorResult {
 	if (!script.trim()) {
 		return { imports: [] }
 	}

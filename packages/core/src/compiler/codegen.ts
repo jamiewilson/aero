@@ -57,8 +57,7 @@ class Lowerer {
 	private hasIfAttr(node: any): boolean {
 		return (
 			node.nodeType === 1 &&
-			(node.hasAttribute(CONST.ATTR_IF) ||
-				node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_IF))
+			(node.hasAttribute(CONST.ATTR_IF) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_IF))
 		)
 	}
 
@@ -75,8 +74,7 @@ class Lowerer {
 	private hasElseAttr(node: any): boolean {
 		return (
 			node.nodeType === 1 &&
-			(node.hasAttribute(CONST.ATTR_ELSE) ||
-				node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE))
+			(node.hasAttribute(CONST.ATTR_ELSE) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE))
 		)
 	}
 
@@ -137,13 +135,10 @@ class Lowerer {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
 				// Skip control flow attributes (handled by compileChildNodes)
-				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX))
-					continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) continue
 				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX))
-					continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX))
-					continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
 					const value = attr.value?.trim() || ''
@@ -170,9 +165,7 @@ class Lowerer {
 				} else {
 					const compiled = Helper.compileAttributeInterpolation(rawValue)
 					const hasInterpolation =
-						compiled.includes('${') ||
-						rawValue.includes('{{') ||
-						rawValue.includes('}}')
+						compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
 					propVal = hasInterpolation ? `\`${compiled}\`` : `"${escapedLiteral}"`
 				}
 
@@ -180,10 +173,7 @@ class Lowerer {
 			}
 		}
 
-		const propsString = Helper.buildPropsString(
-			propsEntries,
-			dataPropsExpression
-		)
+		const propsString = Helper.buildPropsString(propsEntries, dataPropsExpression)
 		return { propsString }
 	}
 
@@ -217,19 +207,14 @@ class Lowerer {
 
 				// Skip control flow attributes (handled by compileChildNodes)
 				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX))
-					continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX))
-					continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PASS_DATA, CONST.ATTR_PREFIX)) {
-					passDataExpr = Helper.validateSingleBracedExpression(
-						attr.value || '',
-						{
-							directive: attr.name,
-							tagName: node?.tagName?.toLowerCase?.() || 'element',
-						}
-					)
+					passDataExpr = Helper.validateSingleBracedExpression(attr.value || '', {
+						directive: attr.name,
+						tagName: node?.tagName?.toLowerCase?.() || 'element',
+					})
 					continue
 				}
 
@@ -252,11 +237,7 @@ class Lowerer {
 	}
 
 	/** Dispatch by node type: text (3) → compileText, element (1) → compileElement; other types return []. */
-	compileNode(
-		node: any,
-		skipInterpolation = false,
-		outVar = '__out'
-	): IRNode[] {
+	compileNode(node: any, skipInterpolation = false, outVar = '__out'): IRNode[] {
 		switch (node.nodeType) {
 			case 3:
 				return this.compileText(node, skipInterpolation, outVar)
@@ -360,11 +341,7 @@ class Lowerer {
 		return { nodes: [ifNode], consumed: i - startIndex }
 	}
 
-	private compileText(
-		node: any,
-		skipInterpolation: boolean,
-		outVar: string
-	): IRNode[] {
+	private compileText(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const text = node.textContent || ''
 		if (!text) return []
 		const content = skipInterpolation
@@ -374,11 +351,7 @@ class Lowerer {
 	}
 
 	/** Lower one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
-	private compileElement(
-		node: any,
-		skipInterpolation: boolean,
-		outVar: string
-	): IRNode[] {
+	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 
 		if (tagName === CONST.TAG_SLOT) {
@@ -389,12 +362,9 @@ class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, passDataExpr } =
-			this.parseElementAttributes(node)
+		const { attrString, loopData, passDataExpr } = this.parseElementAttributes(node)
 		const childSkip =
-			skipInterpolation ||
-			tagName === 'style' ||
-			(tagName === 'script' && !passDataExpr)
+			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
 
 		const inner: IRNode[] = []
 
@@ -455,23 +425,13 @@ class Lowerer {
 		outVar: string
 	): { nodes: IRNode[]; closeBlock: boolean } {
 		const isModule = node.getAttribute('type') === 'module'
-		const nodes: IRNode[] = [
-			{ kind: 'ScriptPassData', passDataExpr, isModule, outVar },
-		]
+		const nodes: IRNode[] = [{ kind: 'ScriptPassData', passDataExpr, isModule, outVar }]
 		return { nodes, closeBlock: !isModule }
 	}
 
-	private compileSlot(
-		node: any,
-		skipInterpolation: boolean,
-		outVar: string
-	): IRNode[] {
-		const slotName =
-			node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-		const defaultContent = this.compileSlotDefaultContent(
-			node.childNodes,
-			skipInterpolation
-		)
+	private compileSlot(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+		const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
+		const defaultContent = this.compileSlotDefaultContent(node.childNodes, skipInterpolation)
 		return [{ kind: 'Slot', name: slotName, defaultContent, outVar }]
 	}
 
@@ -502,20 +462,13 @@ class Lowerer {
 	}
 
 	/** Compiles an element for slot default content (template literal format). */
-	private compileElementDefaultContent(
-		node: any,
-		skipInterpolation: boolean
-	): string {
+	private compileElementDefaultContent(node: any, skipInterpolation: boolean): string {
 		const tagName = node.tagName.toLowerCase()
 
 		// For nested slots in default content, use inline fallback
 		if (tagName === CONST.TAG_SLOT) {
-			const slotName =
-				node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-			const defaultContent = this.compileSlotDefaultContent(
-				node.childNodes,
-				skipInterpolation
-			)
+			const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
+			const defaultContent = this.compileSlotDefaultContent(node.childNodes, skipInterpolation)
 			// make this easier to read without string interpolation
 			return `\${ slots['${slotName}'] ?? ${defaultContent} }`
 		}
@@ -534,8 +487,7 @@ class Lowerer {
 			return `<${tagName}${attrString}>`
 		}
 
-		const childSkip =
-			skipInterpolation || tagName === 'style' || tagName === 'script'
+		const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
 		const children = this.compileSlotDefaultContent(node.childNodes, childSkip)
 		return `<${tagName}${attrString}>${children}</${tagName}>`
 	}
@@ -647,9 +599,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			importsLines.push(`const ${imp.defaultBinding} = (${modExpr}).default`)
 		} else if (imp.namedBindings.length > 0) {
 			const names = imp.namedBindings
-				.map(b =>
-					b.imported === b.local ? b.local : `${b.imported} as ${b.local}`
-				)
+				.map(b => (b.imported === b.local ? b.local : `${b.imported} as ${b.local}`))
 				.join(', ')
 			importsLines.push(`const {${names}} = ${modExpr}`)
 		} else if (imp.namespaceBinding) {
@@ -696,9 +646,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	const bodyIR = document.body
-		? lowerer.compileFragment(document.body.childNodes)
-		: []
+	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
 
 	const rootScripts: string[] = []
@@ -708,19 +656,15 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Virtual client URLs: use helper + string concatenation so no "${}" appears in script tag (vite:build-html would otherwise resolve it as a module).
 	const virtualPrefix = '/@aero/client/'
 	const hasVirtualClientScripts =
-		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ??
-		false
+		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
 	if (hasVirtualClientScripts) {
-		script =
-			`function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
+		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
 	}
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
 			const attrs = clientScript.attrs ?? ''
 			const hasType = attrs.includes('type=')
-			const baseAttrs = hasType
-				? attrs
-				: `type="module"${attrs ? ' ' + attrs : ''}`
+			const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
 			const urlExpr = clientScript.content.startsWith(virtualPrefix)
 				? `__aeroScriptUrl(${JSON.stringify(clientScript.content.slice(virtualPrefix.length))})`
 				: JSON.stringify(clientScript.content)
@@ -759,13 +703,10 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		for (const blockingScript of options.blockingScripts) {
 			const strippedContent = stripTypes(blockingScript.content, 'blocking.ts')
 			if (blockingScript.passDataExpr) {
-				const passDataExpr = Helper.validateSingleBracedExpression(
-					blockingScript.passDataExpr,
-					{
-						directive: 'pass:data',
-						tagName: 'script',
-					}
-				)
+				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
+					directive: 'pass:data',
+					tagName: 'script',
+				})
 				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
 				headScripts.push(
 					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${strippedContent.replace(/`/g, '\\`')}</script>\``

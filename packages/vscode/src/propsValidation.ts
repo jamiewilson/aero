@@ -1,6 +1,10 @@
 /**
  * Prop validation: extract required props from TypeScript interfaces and compare
  * with passed props for cross-file validation diagnostics.
+ *
+ * Interface parsing is regex-based and may miss complex TypeScript (generics,
+ * conditional types, intersection types). Simple interfaces with `prop: Type`
+ * and `prop?: Type` are supported.
  */
 import * as fs from 'node:fs'
 import { getPropsTypeFromBuildScript } from '@aerobuilt/core/editor'

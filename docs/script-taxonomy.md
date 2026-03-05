@@ -90,3 +90,7 @@ If you had any `on:client` scripts that you intended to be completely externaliz
 ### pass:data and multiple instances
 
 When the same component is used multiple times with different `pass:data`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [pass-data-directive.md](pass-data-directive.md) for how to use `pass:data`.
+
+---
+
+**Implementation note:** For contributors changing this taxonomy, see [_reference/script-taxonomy-sync.md](../_reference/script-taxonomy-sync.md) for the implementation checklist.

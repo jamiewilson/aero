@@ -290,7 +290,7 @@ If you edit a shared types file (e.g. `types/props.ts`) and the new definitions 
 
 ### Prop validation when using components
 
-The language server does not yet validate that required props are passed when using `<my-layout>` or `<my-component>`. Type safety applies inside each component's build script (e.g. `Aero.props as MetaProps`), but cross-file validation of component usage is not implemented.
+Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) and layout attributes. The VS Code extension reports missing required props when you pass a typed object via spread or when a layout passes props to a child component. Limitations: validation only applies when the component uses `Aero.props as SomeProps` with a resolvable interface; attribute-based props (e.g. `title="{ x }"`) are not yet validated. Type safety inside each component's build script (e.g. `Aero.props as MetaProps`) is always available.
 
 ---
 
@@ -298,7 +298,7 @@ The language server does not yet validate that required props are passed when us
 
 | Area                    | Approach                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------- |
-| **Component props**     | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring        |
+| **Component props**     | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread and layout attributes (with limitations) |
 | **Content globals**     | Export typed objects from `content/*.ts`; use `satisfies` for validation                 |
 | **Content collections** | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data` |
 | **Ambient globals**     | Use `@aerobuilt/core/env`; extend via project `env.d.ts`                                 |
