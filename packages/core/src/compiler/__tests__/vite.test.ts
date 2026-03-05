@@ -92,10 +92,9 @@ describe('Vite Plugin Integration', () => {
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)
-		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)(
-			'Aero',
-			body,
-		)
+		const renderFn = new (Object.getPrototypeOf(
+			async function () {}
+		).constructor)('Aero', body)
 
 		const finalOutput = await aeroInstance.render(renderFn, {
 			props: { title: 'Dynamic Title' },
@@ -104,7 +103,10 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('should resolve path-like extensionless imports to .html via resolveId', async () => {
-		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
+		const resolvedHtmlPath = path.join(
+			process.cwd(),
+			'client/components/header.html'
+		)
 		const resolveCtx = {
 			...pluginCtx,
 			resolve: async (id: string) => {
@@ -117,7 +119,7 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@components/header',
-			undefined,
+			undefined
 		)
 		expect(result).toBeDefined()
 		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
@@ -125,7 +127,10 @@ describe('Vite Plugin Integration', () => {
 
 	it('should resolve Aero template .html to virtual id in build so vite:build-html never sees them', async () => {
 		configPlugin.configResolved({ root: process.cwd(), command: 'build' })
-		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
+		const resolvedHtmlPath = path.join(
+			process.cwd(),
+			'client/components/header.html'
+		)
 		const resolveCtx = {
 			...pluginCtx,
 			resolve: async (id: string) => {
@@ -136,10 +141,10 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@components/header.html',
-			undefined,
+			undefined
 		)
 		expect(result).toBe(
-			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'),
+			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero')
 		)
 		configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
 	})
@@ -152,7 +157,7 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@aerobuilt/content/render',
-			undefined,
+			undefined
 		)
 		expect(result).toBeNull()
 	})
@@ -166,7 +171,7 @@ describe('Vite Plugin Integration', () => {
 		fs.writeFileSync(
 			htmlPath,
 			`<script is:build>const x = 1;</script><div>Static</div><script>${unique}</script>`,
-			'utf-8',
+			'utf-8'
 		)
 		try {
 			configPlugin.config({ root: tmpDir })
@@ -184,7 +189,7 @@ describe('Vite Plugin Integration', () => {
 
 	it('does not register a custom HMR plugin (handleHotUpdate); HMR is dependency-driven via single client entry', () => {
 		const withHandleHotUpdate = plugins.some(
-			(p: any) => typeof p?.handleHotUpdate === 'function',
+			(p: any) => typeof p?.handleHotUpdate === 'function'
 		)
 		expect(withHandleHotUpdate).toBe(false)
 	})

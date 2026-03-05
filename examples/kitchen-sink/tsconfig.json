@@ -4,16 +4,13 @@
 		"types": ["vite/client"],
 		"moduleResolution": "bundler",
 		"paths": {
-			"~/*": ["./*"],
-			"@client/*": ["./frontend/*"],
-			"@server/*": ["./backend/*"],
-			"@content/*": ["./content/*"],
 			"@pages/*": ["./frontend/pages/*"],
 			"@layouts/*": ["./frontend/layouts/*"],
 			"@components/*": ["./frontend/components/*"],
 			"@styles/*": ["./frontend/assets/styles/*"],
 			"@scripts/*": ["./frontend/assets/scripts/*"],
-			"@images/*": ["./frontend/assets/images/*"]
+			"@images/*": ["./frontend/assets/images/*"],
+			"@content/*": ["./content/*"]
 		}
 	}
 }

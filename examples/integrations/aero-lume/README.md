@@ -229,7 +229,7 @@ Lume’s `data-bind` gives two-way binding for inputs and one-way for text nodes
 
 ```html
 <input data-bind="email" type="email" placeholder="Email" />
-<span data-bind="email"></span>
+<div data-bind="email"></div>
 ```
 
 Store: `state({ email: '' })`. No Aero directives needed.

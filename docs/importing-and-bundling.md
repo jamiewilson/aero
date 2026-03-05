@@ -129,7 +129,7 @@ export default defineConfig({
 })
 ```
 
-   - In your layout, add an import map before your entry:
+- In your layout, add an import map before your entry:
 
 ```html
 <link rel="stylesheet" href="@styles/global.css" />
@@ -144,7 +144,7 @@ export default defineConfig({
 <script type="module" src="@scripts/index.ts"></script>
 ```
 
-   - In your entry, use normal imports. Because Alpine's ESM build does not auto-start, call `Alpine.start()` before configuring htmx:
+- In your entry, use normal imports. Because Alpine's ESM build does not auto-start, call `Alpine.start()` before configuring htmx:
 
 ```typescript
 import aero from 'aerobuilt'

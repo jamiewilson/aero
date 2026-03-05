@@ -1,7 +1,8 @@
 {
 	"name": "@aerobuilt/core",
 	"version": "0.3.2",
-	"type": "module",
+	"private": false,
+	"homepage": "https://github.com/aerobuilt/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
@@ -9,18 +10,11 @@
 		"url": "https://github.com/aerobuilt/aero.git",
 		"directory": "packages/core"
 	},
-	"homepage": "https://github.com/aerobuilt/aero",
-	"private": false,
-	"types": "./dist/entry-dev.d.mts",
 	"files": [
 		"dist"
 	],
-	"scripts": {
-		"build": "tsdown",
-		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
-		"prepack": "cp ../../LICENSE ."
-	},
+	"type": "module",
+	"types": "./dist/entry-dev.d.mts",
 	"exports": {
 		".": {
 			"types": "./dist/entry-dev.d.mts",
@@ -56,17 +50,29 @@
 			"default": "./dist/entry-editor.mjs"
 		}
 	},
+	"scripts": {
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
+	},
 	"dependencies": {
 		"@aerobuilt/interpolation": "workspace:*",
 		"get-tsconfig": "^4.13.6",
-		"oxc-resolver": "^11.19.0",
 		"html-minifier-next": "^5.1.1",
 		"linkedom": "^0.18.12",
 		"nitro": "^3.0.1-alpha.2",
 		"oxc-parser": "^0.115.0",
+		"oxc-resolver": "^11.19.0",
 		"sharp": "^0.34.5",
 		"svgo": "^4.0.0",
 		"vite-plugin-image-optimizer": "^2.0.3"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
 	},
 	"peerDependencies": {
 		"vite": "^8.0.0-0"
@@ -75,11 +81,5 @@
 		"vite": {
 			"optional": true
 		}
-	},
-	"devDependencies": {
-		"@types/node": "^25.3.0",
-		"tsdown": "^0.21.0-beta.2",
-		"typescript": "^5.9.3",
-		"vitest": "^4.0.18"
 	}
 }

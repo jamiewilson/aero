@@ -39,8 +39,11 @@ export function getDefaultOptions(): CreateViteConfigOptions {
  * @returns Merged Vite config (defaults + Aero plugins + user vite; minify/cssMinify preserved when user overrides).
  */
 export function createViteConfig(
-	aeroConfigOrOptions?: AeroConfig | AeroConfigFunction | CreateViteConfigOptions,
-	options?: CreateViteConfigOptions,
+	aeroConfigOrOptions?:
+		| AeroConfig
+		| AeroConfigFunction
+		| CreateViteConfigOptions,
+	options?: CreateViteConfigOptions
 ): UserConfig {
 	let aeroConfig: AeroConfig | AeroConfigFunction
 	let opts: CreateViteConfigOptions
@@ -51,13 +54,16 @@ export function createViteConfig(
 	const hasExplicitConfig =
 		aeroConfigOrOptions !== undefined &&
 		(typeof aeroConfigOrOptions === 'function' ||
-			(typeof aeroConfigOrOptions === 'object' && !isOptionsObject(aeroConfigOrOptions)))
+			(typeof aeroConfigOrOptions === 'object' &&
+				!isOptionsObject(aeroConfigOrOptions)))
 
 	if (hasExplicitConfig) {
 		aeroConfig = aeroConfigOrOptions as AeroConfig | AeroConfigFunction
 		opts = options ?? getDefaultOptions()
 	} else {
-		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
+		opts = isOptionsObject(aeroConfigOrOptions)
+			? aeroConfigOrOptions
+			: getDefaultOptions()
 		const loaded = loadAeroConfig(process.cwd())
 		aeroConfig = loaded ?? {}
 	}
@@ -67,7 +73,7 @@ export function createViteConfig(
 
 function createViteConfigFromAero(
 	aeroConfig: AeroConfig | AeroConfigFunction,
-	options: CreateViteConfigOptions,
+	options: CreateViteConfigOptions
 ): UserConfig {
 	const resolvedConfig =
 		typeof aeroConfig === 'function'
@@ -94,7 +100,9 @@ function createViteConfigFromAero(
 			redirects,
 			middleware,
 			staticServerPlugins:
-				contentOptions !== undefined ? [aeroContent(contentOptions)] : undefined,
+				contentOptions !== undefined
+					? [aeroContent(contentOptions)]
+					: undefined,
 		}),
 	]
 	if (contentOptions !== undefined) {

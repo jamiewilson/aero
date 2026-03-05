@@ -6,12 +6,12 @@ Aero uses file-based routing. HTML files inside your pages directory (e.g. `clie
 
 Every `.html` file in the pages directory becomes a route. The default pages directory is `client/pages/` (overridable via `dirs.client`).
 
-| File                         | URL         | Build output            |
-| ---------------------------- | ----------- | ----------------------- |
-| `client/pages/index.html`   | `/`         | `dist/index.html`       |
-| `client/pages/about.html`   | `/about`    | `dist/about/index.html` |
-| `client/pages/404.html`     | (404 page)  | `dist/404.html`         |
-| `client/pages/docs/index.html` | `/docs`  | `dist/docs/index.html`  |
+| File                           | URL        | Build output            |
+| ------------------------------ | ---------- | ----------------------- |
+| `client/pages/index.html`      | `/`        | `dist/index.html`       |
+| `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
+| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
+| `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
 
 ### Root and index
 
@@ -36,9 +36,9 @@ client/pages/
 
 Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.params.<name>`.
 
-| File                            | Pattern       | Example URLs         |
-| ------------------------------- | ------------- | -------------------- |
-| `client/pages/[id].html`       | `/:id`        | `/alpha`, `/beta`    |
+| File                            | Pattern       | Example URLs                |
+| ------------------------------- | ------------- | --------------------------- |
+| `client/pages/[id].html`        | `/:id`        | `/alpha`, `/beta`           |
 | `client/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`, `/docs/name` |
 
 ### Dev mode
@@ -49,22 +49,23 @@ During development (`pnpm dev`), dynamic routes are resolved at request time. Wh
 
 For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPaths()` function from their `<script is:build>` block. This tells the build which concrete paths to generate.
 
+<!-- prettier-ignore -->
 ```html
 <!-- client/pages/[id].html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export function getStaticPaths() {
-    return [
-      { params: { id: 'alpha' } },
-      { params: { id: 'beta' } },
-      { params: { id: 'gamma' } },
-    ]
-  }
+	export function getStaticPaths() {
+		return [
+			{ params: { id: 'alpha' } }, 
+			{ params: { id: 'beta' } }, 
+			{ params: { id: 'gamma' } }
+		]
+	}
 </script>
 
 <base-layout title="Page: {Aero.params.id}">
-  <h1>{Aero.params.id}</h1>
+	<h1>{Aero.params.id}</h1>
 </base-layout>
 ```
 
@@ -80,21 +81,22 @@ dist/gamma/index.html
 
 Dynamic segments work inside subdirectories:
 
+<!-- prettier-ignore -->
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export function getStaticPaths() {
-    return [
-      { params: { slug: 'intro' } },
-      { params: { slug: 'name' } },
-    ]
-  }
+	export function getStaticPaths() {
+		return [
+			{ params: { slug: 'intro' } }, 
+			{ params: { slug: 'name' } }
+		]
+	}
 </script>
 
 <base-layout title="{Aero.params.slug}">
-  <h1>{Aero.params.slug}</h1>
+	<h1>{Aero.params.slug}</h1>
 </base-layout>
 ```
 
@@ -111,13 +113,13 @@ dist/docs/name/index.html
 
 ```html
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export async function getStaticPaths() {
-    const res = await fetch('https://api.example.com/posts')
-    const posts = await res.json()
-    return posts.map(post => ({ params: { slug: post.slug } }))
-  }
+	export async function getStaticPaths() {
+		const res = await fetch('https://api.example.com/posts')
+		const posts = await res.json()
+		return posts.map(post => ({ params: { slug: post.slug } }))
+	}
 </script>
 ```
 
@@ -135,12 +137,12 @@ The page will still work in dev mode but will not produce output files in the st
 
 Every page has access to these routing-related values inside `<script is:build>` and template expressions:
 
-| Value                | Description                                    | Example                 |
-| -------------------- | ---------------------------------------------- | ----------------------- |
-| `Aero.params`        | Dynamic route parameters                       | `{ id: 'alpha' }`      |
-| `Aero.url`           | Full URL object for the current page           | `URL { pathname: '/alpha' }` |
-| `Aero.url.pathname`  | The URL path                                   | `'/alpha'`              |
-| `Aero.props`         | Props passed from a parent component/layout    | `{ title: 'Hello' }`   |
+| Value               | Description                                 | Example                      |
+| ------------------- | ------------------------------------------- | ---------------------------- |
+| `Aero.params`       | Dynamic route parameters                    | `{ id: 'alpha' }`            |
+| `Aero.url`          | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
+| `Aero.url.pathname` | The URL path                                | `'/alpha'`                   |
+| `Aero.props`        | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
 
 ## Linking Between Pages
 
@@ -156,13 +158,13 @@ During the build, absolute `href` values (starting with `/`) are automatically r
 
 ## Modes & Behaviour Summary
 
-| Behaviour               | `pnpm dev`                          | `pnpm build` + `preview`         | `pnpm build` + `preview:api`      |
-| ------------------------ | ----------------------------------- | --------------------------------- | ---------------------------------- |
-| Static pages             | Rendered on request                 | Pre-rendered to `dist/`           | Served from `dist/`                |
-| Dynamic routes           | Resolved at request time            | Expanded via `getStaticPaths`     | Served from `dist/`                |
-| Unknown routes           | Returns "Page not found" message    | 404 (no file on disk)             | Serves `dist/404.html` with 404   |
-| API routes (`/api/*`)    | Nitro dev server handles them       | Not available                     | Nitro server handles them          |
-| Links                    | Absolute paths (`/about`)           | Rewritten to relative (`./about`) | Rewritten to relative (`./about`)  |
+| Behaviour             | `pnpm dev`                       | `pnpm build` + `preview`          | `pnpm build` + `preview:api`      |
+| --------------------- | -------------------------------- | --------------------------------- | --------------------------------- |
+| Static pages          | Rendered on request              | Pre-rendered to `dist/`           | Served from `dist/`               |
+| Dynamic routes        | Resolved at request time         | Expanded via `getStaticPaths`     | Served from `dist/`               |
+| Unknown routes        | Returns "Page not found" message | 404 (no file on disk)             | Serves `dist/404.html` with 404   |
+| API routes (`/api/*`) | Nitro dev server handles them    | Not available                     | Nitro server handles them         |
+| Links                 | Absolute paths (`/about`)        | Rewritten to relative (`./about`) | Rewritten to relative (`./about`) |
 
 ### Trailing-slash redirects
 

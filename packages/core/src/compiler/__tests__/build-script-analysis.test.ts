@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { analyzeBuildScript, analyzeBuildScriptForEditor } from '../build-script-analysis'
+import {
+	analyzeBuildScript,
+	analyzeBuildScriptForEditor,
+} from '../build-script-analysis'
 
 describe('analyzeBuildScript', () => {
 	describe('imports', () => {
@@ -16,8 +19,12 @@ const x = logo`
 			expect(result.imports[0].defaultBinding).toBe('logo')
 			expect(result.imports[0].namedBindings).toEqual([])
 			expect(result.imports[0].namespaceBinding).toBeNull()
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = logo')
-			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('import')
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const x = logo'
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain(
+				'import'
+			)
 		})
 
 		it('should extract named imports', () => {
@@ -32,13 +39,17 @@ const x = foo + bar`
 				{ imported: 'bar', local: 'bar' },
 			])
 			expect(result.imports[0].namespaceBinding).toBeNull()
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = foo + bar')
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const x = foo + bar'
+			)
 		})
 
 		it('should extract named import with alias', () => {
 			const script = `import { foo as f } from './mod'`
 			const result = analyzeBuildScript(script)
-			expect(result.imports[0].namedBindings).toEqual([{ imported: 'foo', local: 'f' }])
+			expect(result.imports[0].namedBindings).toEqual([
+				{ imported: 'foo', local: 'f' },
+			])
 		})
 
 		it('should extract namespace import', () => {
@@ -48,7 +59,9 @@ const x = ns.default`
 			expect(result.imports[0].namespaceBinding).toBe('ns')
 			expect(result.imports[0].defaultBinding).toBeNull()
 			expect(result.imports[0].namedBindings).toEqual([])
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = ns.default')
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const x = ns.default'
+			)
 		})
 
 		it('should extract multiple imports', () => {
@@ -61,10 +74,14 @@ const x = a + b + c`
 			expect(result.imports[0].specifier).toBe('./a')
 			expect(result.imports[0].defaultBinding).toBe('a')
 			expect(result.imports[1].specifier).toBe('./b')
-			expect(result.imports[1].namedBindings).toEqual([{ imported: 'b', local: 'b' }])
+			expect(result.imports[1].namedBindings).toEqual([
+				{ imported: 'b', local: 'b' },
+			])
 			expect(result.imports[2].specifier).toBe('./c')
 			expect(result.imports[2].namespaceBinding).toBe('c')
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = a + b + c')
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const x = a + b + c'
+			)
 		})
 
 		it('should skip type-only imports for runtime bindings', () => {
@@ -75,7 +92,9 @@ const x = value`
 			expect(result.imports).toHaveLength(2)
 			expect(result.imports[0].namedBindings).toEqual([])
 			expect(result.imports[0].specifier).toBe('./types')
-			expect(result.imports[1].namedBindings).toEqual([{ imported: 'value', local: 'value' }])
+			expect(result.imports[1].namedBindings).toEqual([
+				{ imported: 'value', local: 'value' },
+			])
 		})
 	})
 
@@ -88,11 +107,21 @@ export function getStaticPaths() {
 const y = 2;`
 			const result = analyzeBuildScript(script)
 			expect(result.getStaticPathsFn).not.toBeNull()
-			expect(result.getStaticPathsFn).toContain('export function getStaticPaths()')
-			expect(result.getStaticPathsFn).toContain("return [{ params: { id: 'a' } }]")
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = 1;')
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const y = 2;')
-			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('getStaticPaths')
+			expect(result.getStaticPathsFn).toContain(
+				'export function getStaticPaths()'
+			)
+			expect(result.getStaticPathsFn).toContain(
+				"return [{ params: { id: 'a' } }]"
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const x = 1;'
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				'const y = 2;'
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain(
+				'getStaticPaths'
+			)
 		})
 
 		it('should extract async getStaticPaths', () => {
@@ -101,7 +130,9 @@ const y = 2;`
 	return data
 }`
 			const result = analyzeBuildScript(script)
-			expect(result.getStaticPathsFn).toContain('export async function getStaticPaths()')
+			expect(result.getStaticPathsFn).toContain(
+				'export async function getStaticPaths()'
+			)
 			expect(result.getStaticPathsFn).toContain('await fetch')
 			expect(result.scriptWithoutImportsAndGetStaticPaths).toBe('')
 		})
@@ -138,8 +169,12 @@ const y = 2;`
 			const result = analyzeBuildScript(script)
 			expect(result.getStaticPathsFn).not.toBeNull()
 			expect(result.getStaticPathsFn).toContain('// { brace in comment }')
-			expect(result.getStaticPathsFn).toContain('const a = "{ brace in string }"')
-			expect(result.getStaticPathsFn).toContain('const b = `{ brace in template }`')
+			expect(result.getStaticPathsFn).toContain(
+				'const a = "{ brace in string }"'
+			)
+			expect(result.getStaticPathsFn).toContain(
+				'const b = `{ brace in template }`'
+			)
 			expect(result.getStaticPathsFn).toContain("params: { slug: 'complex' }")
 		})
 	})
@@ -152,9 +187,15 @@ const title = 'Page'`
 			const result = analyzeBuildScript(script)
 			expect(result.imports).toHaveLength(1)
 			expect(result.getStaticPathsFn).not.toBeNull()
-			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain("const title = 'Page'")
-			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('import')
-			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('getStaticPaths')
+			expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
+				"const title = 'Page'"
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain(
+				'import'
+			)
+			expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain(
+				'getStaticPaths'
+			)
 		})
 	})
 
@@ -168,7 +209,9 @@ const title = 'Page'`
 		})
 
 		it('should throw on parse error', () => {
-			expect(() => analyzeBuildScript('import { from "./x"')).toThrow(/parse error/)
+			expect(() => analyzeBuildScript('import { from "./x"')).toThrow(
+				/parse error/
+			)
 		})
 	})
 })
@@ -184,7 +227,9 @@ const x = header`
 		expect(result.imports[0].defaultBinding).toBe('header')
 		expect(result.imports[0].range[0]).toBe(0)
 		expect(result.imports[0].range[1]).toBe(script.indexOf('\n'))
-		expect(result.imports[0].bindingRanges).toEqual({ header: expect.any(Array) })
+		expect(result.imports[0].bindingRanges).toEqual({
+			header: expect.any(Array),
+		})
 		expect(result.imports[0].bindingRanges!['header']).toHaveLength(2)
 
 		expect(result.imports[1].specifier).toBe('./mod')
@@ -202,6 +247,8 @@ const x = header`
 	})
 
 	it('should throw on parse error', () => {
-		expect(() => analyzeBuildScriptForEditor('import { from "./x"')).toThrow(/parse error/)
+		expect(() => analyzeBuildScriptForEditor('import { from "./x"')).toThrow(
+			/parse error/
+		)
 	})
 })

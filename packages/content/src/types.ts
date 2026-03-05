@@ -20,7 +20,9 @@ export interface ContentMeta {
 }
 
 /** A content document: id, validated frontmatter (`data`), raw body, and `_meta`. */
-export interface ContentDocument<TSchema extends Record<string, any> = Record<string, any>> {
+export interface ContentDocument<
+	TSchema extends Record<string, any> = Record<string, any>,
+> {
 	/** Unique identifier: collection-relative path without extension. */
 	id: string
 	/** Validated frontmatter fields. */
@@ -87,7 +89,7 @@ export function defineCollection<
 	TSchema extends Record<string, any> = Record<string, any>,
 	TOutput = ContentDocument<TSchema>,
 >(
-	config: ContentCollectionConfig<TSchema, TOutput>,
+	config: ContentCollectionConfig<TSchema, TOutput>
 ): ContentCollectionConfig<TSchema, TOutput> {
 	return config
 }

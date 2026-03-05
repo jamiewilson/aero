@@ -12,7 +12,12 @@ function makeDoc(body: string): ContentDocument {
 		id: 'test',
 		data: { title: 'Test' },
 		body,
-		_meta: { path: 'test', slug: 'test', filename: 'test.md', extension: '.md' },
+		_meta: {
+			path: 'test',
+			slug: 'test',
+			filename: 'test.md',
+			extension: '.md',
+		},
 	}
 }
 
@@ -65,13 +70,17 @@ describe('compileMarkdown', () => {
 	})
 
 	it('converts paragraphs (double newline separated)', async () => {
-		const html = await compileMarkdown(makeDoc('First paragraph\n\nSecond paragraph'))
+		const html = await compileMarkdown(
+			makeDoc('First paragraph\n\nSecond paragraph')
+		)
 		expect(html).toContain('<p>First paragraph</p>')
 		expect(html).toContain('<p>Second paragraph</p>')
 	})
 
 	it('does not output raw script tags (XSS regression)', async () => {
-		const html = await compileMarkdown(makeDoc('Text <script>alert(1)</script> more'))
+		const html = await compileMarkdown(
+			makeDoc('Text <script>alert(1)</script> more')
+		)
 		expect(html).not.toContain('<script>')
 		expect(html).not.toContain('</script>')
 	})

@@ -86,7 +86,7 @@ export function resolvePageName(url: string): string {
  */
 export function resolveDynamicPage(
 	pageName: string,
-	pagesMap: Record<string, any>,
+	pagesMap: Record<string, any>
 ): PageTargetResult | null {
 	for (const [key, mod] of Object.entries(pagesMap)) {
 		if (!key.includes('[') || !key.includes(']') || key.includes('.')) continue
@@ -109,10 +109,12 @@ export function resolveDynamicPage(
  */
 export function resolvePageTarget(
 	component: any,
-	pagesMap: Record<string, any>,
+	pagesMap: Record<string, any>
 ): PageTargetResult | null {
 	if (typeof component !== 'string') {
-		return component != null ? { module: component, pageName: 'index', params: {} } : null
+		return component != null
+			? { module: component, pageName: 'index', params: {} }
+			: null
 	}
 
 	const pageName = component
@@ -125,7 +127,9 @@ export function resolvePageTarget(
 		target = pagesMap['home']
 	}
 	if (!target) {
-		const dynamicMatch = resolveDynamicPage(pageName, pagesMap) ?? resolveDynamicPage(`${pageName}/index`, pagesMap)
+		const dynamicMatch =
+			resolveDynamicPage(pageName, pagesMap) ??
+			resolveDynamicPage(`${pageName}/index`, pagesMap)
 		if (dynamicMatch) return dynamicMatch
 	}
 

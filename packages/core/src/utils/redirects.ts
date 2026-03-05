@@ -14,14 +14,13 @@ type NitroRedirectRule = string | { to: string; statusCode: number }
  * @returns Record suitable for Nitro's routeRules.
  */
 export function redirectsToRouteRules(
-	redirects: RedirectRule[],
+	redirects: RedirectRule[]
 ): Record<string, { redirect: NitroRedirectRule }> {
 	const out: Record<string, { redirect: NitroRedirectRule }> = {}
 	for (const rule of redirects) {
 		const status = rule.status ?? 302
 		out[rule.from] = {
-			redirect:
-				status === 307 ? rule.to : { to: rule.to, statusCode: status },
+			redirect: status === 307 ? rule.to : { to: rule.to, statusCode: status },
 		}
 	}
 	return out

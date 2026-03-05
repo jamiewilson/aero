@@ -7,7 +7,11 @@
  */
 import type { UserConfig } from 'vite'
 import type { AeroContentOptions } from '@aerobuilt/content/vite'
-import type { AeroDirs, AeroMiddleware, RedirectRule } from '@aerobuilt/core/types'
+import type {
+	AeroDirs,
+	AeroMiddleware,
+	RedirectRule,
+} from '@aerobuilt/core/types'
 
 /** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {

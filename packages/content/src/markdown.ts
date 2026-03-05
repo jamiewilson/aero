@@ -14,7 +14,9 @@ import { getProcessor } from './processor'
  * @param document - Content document (body is compiled).
  * @returns HTML string.
  */
-export async function compileMarkdown(document: ContentDocument): Promise<string> {
+export async function compileMarkdown(
+	document: ContentDocument
+): Promise<string> {
 	const result = await getProcessor().process(document.body)
 	return String(result)
 }

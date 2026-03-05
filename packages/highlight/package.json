@@ -1,7 +1,8 @@
 {
 	"name": "@aerobuilt/highlight",
 	"version": "0.3.2",
-	"type": "module",
+	"private": false,
+	"homepage": "https://github.com/aerobuilt/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
@@ -9,18 +10,11 @@
 		"url": "https://github.com/aerobuilt/aero.git",
 		"directory": "packages/highlight"
 	},
-	"homepage": "https://github.com/aerobuilt/aero",
-	"private": false,
-	"types": "./dist/index.d.mts",
 	"files": [
 		"dist"
 	],
-	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
-		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
-		"prepack": "cp ../../LICENSE ."
-	},
+	"type": "module",
+	"types": "./dist/index.d.mts",
 	"exports": {
 		".": {
 			"types": "./dist/index.d.mts",
@@ -28,8 +22,21 @@
 		},
 		"./types": "./dist/index.d.mts"
 	},
+	"scripts": {
+		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
+	},
 	"dependencies": {
 		"shiki": "^3.0.0"
+	},
+	"devDependencies": {
+		"@shikijs/transformers": "^3.0.0",
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
 	},
 	"peerDependencies": {
 		"@shikijs/transformers": "^3.0.0"
@@ -38,12 +45,5 @@
 		"@shikijs/transformers": {
 			"optional": true
 		}
-	},
-	"devDependencies": {
-		"@shikijs/transformers": "^3.0.0",
-		"@types/node": "^25.3.0",
-		"tsdown": "^0.21.0-beta.2",
-		"typescript": "^5.9.3",
-		"vitest": "^4.0.18"
 	}
 }

@@ -61,7 +61,7 @@ function applyPlugins(pipeline: any, plugins: Pluggable[]): any {
 
 function createProcessor(
 	remarkPlugins: Pluggable[] = [],
-	rehypePlugins: Pluggable[] = [],
+	rehypePlugins: Pluggable[] = []
 ): Processor {
 	let pipeline = remark() as any
 
@@ -87,7 +87,7 @@ function createProcessor(
 export async function initProcessor(config?: ProcessorConfig): Promise<void> {
 	globalThis.__aeroProcessorState.processor = createProcessor(
 		config?.remarkPlugins ?? [],
-		config?.rehypePlugins ?? [],
+		config?.rehypePlugins ?? []
 	)
 	globalThis.__aeroProcessorState.initialized = true
 }

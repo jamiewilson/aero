@@ -12,12 +12,12 @@ Use the **`redirects`** config for path → URL redirects that should work in **
 import { defineConfig } from 'aerobuilt/config'
 
 export default defineConfig({
-  site: 'https://example.com',
-  redirects: [
-    { from: '/home', to: '/', status: 301 },
-    { from: '/old-page', to: '/new-page', status: 302 },
-  ],
-  server: true,
+	site: 'https://example.com',
+	redirects: [
+		{ from: '/home', to: '/', status: 301 },
+		{ from: '/old-page', to: '/new-page', status: 302 },
+	],
+	server: true,
 })
 ```
 
@@ -49,11 +49,11 @@ import { defineConfig } from 'aerobuilt/config'
 import type { AeroMiddleware } from '@aerobuilt/core/types'
 
 // Option A: block body — use explicit `return` so all code paths return (satisfies noImplicitReturns)
-const redirectHome: AeroMiddleware = (ctx) => {
-  if (ctx.routePath === '/home') {
-    return { redirect: { url: '/', status: 301 } }
-  }
-  return
+const redirectHome: AeroMiddleware = ctx => {
+	if (ctx.routePath === '/home') {
+		return { redirect: { url: '/', status: 301 } }
+	}
+	return
 }
 
 // Option B: expression body — no "not all code paths return" warning
@@ -61,8 +61,8 @@ const redirectHome: AeroMiddleware = (ctx) => {
 //   ctx.routePath === '/home' ? { redirect: { url: '/', status: 301 } } : undefined
 
 export default defineConfig({
-  site: 'https://example.com',
-  middleware: [redirectHome],
+	site: 'https://example.com',
+	middleware: [redirectHome],
 })
 ```
 
@@ -72,13 +72,13 @@ export default defineConfig({
 import { aero } from 'aerobuilt/vite'
 
 function redirectOldPath(ctx) {
-  if (ctx.routePath === '/old-page') {
-    return { redirect: { url: '/new-page', status: 302 } }
-  }
+	if (ctx.routePath === '/old-page') {
+		return { redirect: { url: '/new-page', status: 302 } }
+	}
 }
 
 export default {
-  plugins: [aero({ middleware: [redirectOldPath] })],
+	plugins: [aero({ middleware: [redirectOldPath] })],
 }
 ```
 
@@ -95,12 +95,12 @@ Each middleware function receives a single argument:
 
 Return value (sync or Promise):
 
-| Return | Effect |
-|--------|--------|
-| `undefined` / nothing | Continue to the next handler, then render as usual. |
-| `{ redirect: { url: string, status?: number } }` | Respond with `Location` and status (default 302). Stop. |
+| Return                                               | Effect                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `undefined` / nothing                                | Continue to the next handler, then render as usual.                                         |
+| `{ redirect: { url: string, status?: number } }`     | Respond with `Location` and status (default 302). Stop.                                     |
 | `{ rewrite: { pageName?: string, ...renderInput } }` | Render with the given page name and/or overridden `url`, `request`, `params`, `props`, etc. |
-| `{ response: Response }` | Send the given `Response` (status, headers, body). Stop. |
+| `{ response: Response }`                             | Send the given `Response` (status, headers, body). Stop.                                    |
 
 Handlers run in order. The first `redirect` or `response` wins and no further handlers or render run. Multiple `rewrite` results are merged (later handlers override earlier).
 
@@ -110,7 +110,7 @@ Handlers run in order. The first `redirect` or `response` wins and no further ha
 
 ```ts
 if (ctx.routePath === '/legacy') {
-  return { redirect: { url: '/new-page', status: 301 } }
+	return { redirect: { url: '/new-page', status: 301 } }
 }
 ```
 
@@ -118,7 +118,7 @@ if (ctx.routePath === '/legacy') {
 
 ```ts
 if (ctx.routePath === '/') {
-  return { rewrite: { pageName: 'landing-v2' } }
+	return { rewrite: { pageName: 'landing-v2' } }
 }
 ```
 
@@ -126,12 +126,12 @@ if (ctx.routePath === '/') {
 
 ```ts
 if (ctx.routePath === '/retired') {
-  return {
-    response: new Response('Gone', {
-      status: 410,
-      headers: { 'Content-Type': 'text/plain' },
-    }),
-  }
+	return {
+		response: new Response('Gone', {
+			status: 410,
+			headers: { 'Content-Type': 'text/plain' },
+		}),
+	}
 }
 ```
 
@@ -139,7 +139,9 @@ if (ctx.routePath === '/retired') {
 
 ```ts
 if (ctx.routePath !== '/' && ctx.routePath.endsWith('/')) {
-  return { redirect: { url: ctx.routePath.replace(/\/$/, '') || '/', status: 301 } }
+	return {
+		redirect: { url: ctx.routePath.replace(/\/$/, '') || '/', status: 301 },
+	}
 }
 ```
 

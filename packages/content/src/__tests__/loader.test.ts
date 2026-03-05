@@ -122,7 +122,9 @@ describe('loadAllCollections', () => {
 		const docs = loaded.get('invalid')!
 
 		expect(docs.length).toBe(0)
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping "bad.md"'))
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining('Skipping "bad.md"')
+		)
 
 		warnSpy.mockRestore()
 	})
@@ -236,7 +238,9 @@ describe('serializeContentModule', () => {
 
 		const output = serializeContentModule(loaded)
 
-		expect(output).toContain("export { render } from '@aerobuilt/content/render'")
+		expect(output).toContain(
+			"export { render } from '@aerobuilt/content/render'"
+		)
 	})
 
 	it('includes empty collection keys in __collections', () => {

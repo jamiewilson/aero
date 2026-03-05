@@ -18,7 +18,7 @@ import path from 'node:path'
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
-	root: string,
+	root: string
 ): Promise<TOutput[]> {
 	const dir = path.resolve(root, config.directory)
 	const pattern = config.include || '**/*.md'
@@ -47,10 +47,12 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			if (!result.success) {
 				const errors =
 					'error' in result
-						? (result as any).error?.issues?.map((i: any) => i.message).join(', ')
+						? (result as any).error?.issues
+								?.map((i: any) => i.message)
+								.join(', ')
 						: 'Validation failed'
 				console.warn(
-					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`,
+					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`
 				)
 				continue
 			}
@@ -86,7 +88,7 @@ export type LoadedContent = Map<string, any[]>
  */
 export async function loadAllCollections(
 	config: ContentConfig,
-	root: string,
+	root: string
 ): Promise<LoadedContent> {
 	const result: LoadedContent = new Map()
 
@@ -117,7 +119,10 @@ export function toExportName(collectionName: string): string {
  */
 export function serializeContentModule(loaded: LoadedContent): string {
 	const collectionsContent = Array.from(loaded.entries())
-		.map(([name, docs]) => `  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`)
+		.map(
+			([name, docs]) =>
+				`  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`
+		)
 		.join(',\n')
 
 	return `

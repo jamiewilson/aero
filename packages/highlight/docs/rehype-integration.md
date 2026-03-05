@@ -10,12 +10,12 @@ The content package always uses a rehype-based pipeline:
 remark → [remarkPlugins] → remark-rehype → [rehypePlugins] → rehype-stringify
 ```
 
-| Step | Role |
-| --- | --- |
-| `remark` | Parses markdown into mdast |
-| `remark-rehype` | Converts mdast to hast (HTML AST) |
-| `[rehypePlugins]` | User-supplied plugins (e.g. `@shikijs/rehype`, `rehype-pretty-code`) |
-| `rehype-stringify` | Serializes hast to HTML |
+| Step               | Role                                                                 |
+| ------------------ | -------------------------------------------------------------------- |
+| `remark`           | Parses markdown into mdast                                           |
+| `remark-rehype`    | Converts mdast to hast (HTML AST)                                    |
+| `[rehypePlugins]`  | User-supplied plugins (e.g. `@shikijs/rehype`, `rehype-pretty-code`) |
+| `rehype-stringify` | Serializes hast to HTML                                              |
 
 Without any rehype plugins, fenced code blocks render as plain `<pre><code>`. To get syntax highlighting, add `@shikijs/rehype` (or another Shiki-based plugin) to `markdown.rehypePlugins`.
 
@@ -36,19 +36,19 @@ import rehypeShiki from '@shikijs/rehype'
 import { preDataLangTransformer } from '@aerobuilt/highlight'
 
 export default defineConfig({
-  collections: [docs],
-  markdown: {
-    rehypePlugins: [
-      [
-        rehypeShiki,
-        {
-          themes: { light: 'github-light', dark: 'github-dark' },
-          defaultColor: 'light-dark()',
-          transformers: [preDataLangTransformer()],
-        },
-      ],
-    ],
-  },
+	collections: [docs],
+	markdown: {
+		rehypePlugins: [
+			[
+				rehypeShiki,
+				{
+					themes: { light: 'github-light', dark: 'github-dark' },
+					defaultColor: 'light-dark()',
+					transformers: [preDataLangTransformer()],
+				},
+			],
+		],
+	},
 })
 ```
 

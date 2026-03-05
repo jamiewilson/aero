@@ -1,8 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from 'fs'
+import {
+	mkdtempSync,
+	writeFileSync,
+	mkdirSync,
+	rmSync,
+	readFileSync,
+	existsSync,
+} from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '../lib.js'
+import {
+	parseArgs,
+	rewritePackageJson,
+	writeReadme,
+	findWorkspaceRoot,
+} from '../lib.js'
 
 describe('create-aerobuilt lib', () => {
 	describe('parseArgs', () => {
@@ -14,21 +26,28 @@ describe('create-aerobuilt lib', () => {
 		})
 
 		it('returns template when --template is given', () => {
-			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])).toEqual({
+			expect(
+				parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])
+			).toEqual({
 				target: 'my-app',
 				template: 'minimal',
 			})
 		})
 
 		it('allows template before target', () => {
-			expect(parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])).toEqual({
+			expect(
+				parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])
+			).toEqual({
 				target: 'my-app',
 				template: 'minimal',
 			})
 		})
 
 		it('returns null target when no positional given', () => {
-			expect(parseArgs(['node', 'index.js'])).toEqual({ target: null, template: 'minimal' })
+			expect(parseArgs(['node', 'index.js'])).toEqual({
+				target: null,
+				template: 'minimal',
+			})
 		})
 
 		it('ignores unknown flags and uses first positional as target', () => {
@@ -65,10 +84,12 @@ describe('create-aerobuilt lib', () => {
 					scripts: { dev: 'vite dev' },
 					dependencies: { aerobuilt: '<version>' },
 					devDependencies: { vite: '8.0.0-beta.15' },
-				}),
+				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', true)
-			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			const pkg = JSON.parse(
+				readFileSync(join(targetDir, 'package.json'), 'utf8')
+			)
 			expect(pkg.name).toBe('my-app')
 			expect(pkg.version).toBe('0.1.0')
 			expect(pkg.type).toBe('module')
@@ -81,10 +102,12 @@ describe('create-aerobuilt lib', () => {
 					name: '<name>',
 					version: '0.1.0',
 					dependencies: { aerobuilt: '<version>' },
-				}),
+				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', true)
-			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			const pkg = JSON.parse(
+				readFileSync(join(targetDir, 'package.json'), 'utf8')
+			)
 			expect(pkg.dependencies.aerobuilt).toBe('workspace:*')
 		})
 
@@ -96,10 +119,12 @@ describe('create-aerobuilt lib', () => {
 					version: '0.1.0',
 					dependencies: { aerobuilt: '<version>' },
 					devDependencies: { vite: '^1.0.0' },
-				}),
+				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', false)
-			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			const pkg = JSON.parse(
+				readFileSync(join(targetDir, 'package.json'), 'utf8')
+			)
 			expect(pkg.name).toBe('my-app')
 			expect(pkg.dependencies.aerobuilt).toBe('*')
 			expect(pkg.devDependencies.vite).toBe('^1.0.0')
@@ -112,22 +137,26 @@ describe('create-aerobuilt lib', () => {
 					name: '<name>',
 					version: '0.1.0',
 					dependencies: { aerobuilt: '<version>' },
-				}),
+				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', false, '0.2.9')
-			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
+			const pkg = JSON.parse(
+				readFileSync(join(targetDir, 'package.json'), 'utf8')
+			)
 			expect(pkg.dependencies.aerobuilt).toBe('^0.2.9')
 		})
 
 		it('exits when package-template.json is missing', () => {
 			const exit = process.exit
 			try {
-				process.exit = /** @type {typeof process.exit} */ (code => {
-					throw new Error(`exit(${code})`)
-				})
-				expect(() => rewritePackageJson(templateDir, targetDir, 'my-app', false)).toThrow(
-					'exit(1)',
+				process.exit = /** @type {typeof process.exit} */ (
+					code => {
+						throw new Error(`exit(${code})`)
+					}
 				)
+				expect(() =>
+					rewritePackageJson(templateDir, targetDir, 'my-app', false)
+				).toThrow('exit(1)')
 			} finally {
 				process.exit = exit
 			}

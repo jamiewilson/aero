@@ -78,7 +78,10 @@ class Lowerer {
 		const plainValue = node.getAttribute(attr)
 		if (plainValue !== null) {
 			return Helper.stripBraces(
-				Helper.validateSingleBracedExpression(plainValue, { directive: attr, tagName }),
+				Helper.validateSingleBracedExpression(plainValue, {
+					directive: attr,
+					tagName,
+				})
 			)
 		}
 
@@ -86,7 +89,10 @@ class Lowerer {
 		const dataValue = node.getAttribute(dataAttr)
 		if (dataValue !== null) {
 			return Helper.stripBraces(
-				Helper.validateSingleBracedExpression(dataValue, { directive: dataAttr, tagName }),
+				Helper.validateSingleBracedExpression(dataValue, {
+					directive: dataAttr,
+					tagName,
+				})
 			)
 		}
 
@@ -123,10 +129,13 @@ class Lowerer {
 			for (let i = 0; i < node.attributes.length; i++) {
 				const attr = node.attributes[i]
 				// Skip control flow attributes (handled by compileChildNodes)
-				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX))
+					continue
 				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX))
+					continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX))
+					continue
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
 					const value = attr.value?.trim() || ''
@@ -138,7 +147,7 @@ class Lowerer {
 							Helper.validateSingleBracedExpression(value, {
 								directive: attr.name,
 								tagName,
-							}),
+							})
 						)
 					}
 					continue
@@ -153,7 +162,9 @@ class Lowerer {
 				} else {
 					const compiled = Helper.compileAttributeInterpolation(rawValue)
 					const hasInterpolation =
-						compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
+						compiled.includes('${') ||
+						rawValue.includes('{{') ||
+						rawValue.includes('}}')
 					propVal = hasInterpolation ? `\`${compiled}\`` : `"${escapedLiteral}"`
 				}
 
@@ -161,7 +172,10 @@ class Lowerer {
 			}
 		}
 
-		const propsString = Helper.buildPropsString(propsEntries, dataPropsExpression)
+		const propsString = Helper.buildPropsString(
+			propsEntries,
+			dataPropsExpression
+		)
 		return { propsString }
 	}
 
@@ -180,13 +194,13 @@ class Lowerer {
 						Helper.validateSingleBracedExpression(attr.value || '', {
 							directive: attr.name,
 							tagName,
-						}),
+						})
 					)
 					const match = content.match(CONST.EACH_REGEX)
 					if (!match) {
 						const tagName = node?.tagName?.toLowerCase?.() || 'element'
 						throw new Error(
-							`Directive \`${attr.name}\` on <${tagName}> must match "{ item in items }".`,
+							`Directive \`${attr.name}\` on <${tagName}> must match "{ item in items }".`
 						)
 					}
 					loopData = { item: match[1], items: match[2] }
@@ -195,14 +209,19 @@ class Lowerer {
 
 				// Skip control flow attributes (handled by compileChildNodes)
 				if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
-				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX))
+					continue
+				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX))
+					continue
 
 				if (Helper.isAttr(attr.name, CONST.ATTR_PASS_DATA, CONST.ATTR_PREFIX)) {
-					passDataExpr = Helper.validateSingleBracedExpression(attr.value || '', {
-						directive: attr.name,
-						tagName: node?.tagName?.toLowerCase?.() || 'element',
-					})
+					passDataExpr = Helper.validateSingleBracedExpression(
+						attr.value || '',
+						{
+							directive: attr.name,
+							tagName: node?.tagName?.toLowerCase?.() || 'element',
+						}
+					)
 					continue
 				}
 
@@ -225,7 +244,11 @@ class Lowerer {
 	}
 
 	/** Dispatch by node type: text (3) → compileText, element (1) → compileElement; other types return []. */
-	compileNode(node: any, skipInterpolation = false, outVar = '__out'): IRNode[] {
+	compileNode(
+		node: any,
+		skipInterpolation = false,
+		outVar = '__out'
+	): IRNode[] {
 		switch (node.nodeType) {
 			case 3:
 				return this.compileText(node, skipInterpolation, outVar)
@@ -244,7 +267,7 @@ class Lowerer {
 	private compileChildNodes(
 		nodes: NodeList | undefined,
 		skipInterpolation: boolean,
-		outVar: string,
+		outVar: string
 	): IRNode[] {
 		if (!nodes) return []
 		const out: IRNode[] = []
@@ -258,7 +281,7 @@ class Lowerer {
 					nodes,
 					i,
 					skipInterpolation,
-					outVar,
+					outVar
 				)
 				out.push(...chainNodes)
 				i += consumed
@@ -279,7 +302,7 @@ class Lowerer {
 		nodes: NodeList,
 		startIndex: number,
 		skipInterpolation: boolean,
-		outVar: string,
+		outVar: string
 	): { nodes: IRNode[]; consumed: number } {
 		let i = startIndex
 		let condition: string | null = null
@@ -305,7 +328,10 @@ class Lowerer {
 				i++
 			} else if (this.hasElseIfAttr(node)) {
 				const elseIfCondition = this.getCondition(node, CONST.ATTR_ELSE_IF)!
-				elseIf.push({ condition: elseIfCondition, body: this.compileElement(node, skipInterpolation, outVar) })
+				elseIf.push({
+					condition: elseIfCondition,
+					body: this.compileElement(node, skipInterpolation, outVar),
+				})
 				i++
 			} else if (this.hasElseAttr(node)) {
 				elseBody = this.compileElement(node, skipInterpolation, outVar)
@@ -326,7 +352,11 @@ class Lowerer {
 		return { nodes: [ifNode], consumed: i - startIndex }
 	}
 
-	private compileText(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+	private compileText(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string
+	): IRNode[] {
 		const text = node.textContent || ''
 		if (!text) return []
 		const content = skipInterpolation
@@ -336,7 +366,11 @@ class Lowerer {
 	}
 
 	/** Lower one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
-	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+	private compileElement(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string
+	): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 
 		if (tagName === CONST.TAG_SLOT) {
@@ -347,16 +381,27 @@ class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, passDataExpr } = this.parseElementAttributes(node)
+		const { attrString, loopData, passDataExpr } =
+			this.parseElementAttributes(node)
 		const childSkip =
-			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
+			skipInterpolation ||
+			tagName === 'style' ||
+			(tagName === 'script' && !passDataExpr)
 
 		const inner: IRNode[] = []
 
 		if (CONST.VOID_TAGS.has(tagName)) {
-			inner.push({ kind: 'Append', content: `<${tagName}${attrString}>`, outVar })
+			inner.push({
+				kind: 'Append',
+				content: `<${tagName}${attrString}>`,
+				outVar,
+			})
 		} else {
-			inner.push({ kind: 'Append', content: `<${tagName}${attrString}>`, outVar })
+			inner.push({
+				kind: 'Append',
+				content: `<${tagName}${attrString}>`,
+				outVar,
+			})
 
 			const isScript = tagName === 'script'
 			const isStyle = tagName === 'style'
@@ -380,7 +425,14 @@ class Lowerer {
 		}
 
 		if (loopData) {
-			return [{ kind: 'For', item: loopData.item, items: loopData.items, body: inner }]
+			return [
+				{
+					kind: 'For',
+					item: loopData.item,
+					items: loopData.items,
+					body: inner,
+				},
+			]
 		}
 		return inner
 	}
@@ -392,23 +444,33 @@ class Lowerer {
 	private emitScriptPassDataIR(
 		passDataExpr: string,
 		node: any,
-		outVar: string,
+		outVar: string
 	): { nodes: IRNode[]; closeBlock: boolean } {
 		const isModule = node.getAttribute('type') === 'module'
-		const nodes: IRNode[] = [{ kind: 'ScriptPassData', passDataExpr, isModule, outVar }]
+		const nodes: IRNode[] = [
+			{ kind: 'ScriptPassData', passDataExpr, isModule, outVar },
+		]
 		return { nodes, closeBlock: !isModule }
 	}
 
-	private compileSlot(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
-		const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-		const defaultContent = this.compileSlotDefaultContent(node.childNodes, skipInterpolation)
+	private compileSlot(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string
+	): IRNode[] {
+		const slotName =
+			node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
+		const defaultContent = this.compileSlotDefaultContent(
+			node.childNodes,
+			skipInterpolation
+		)
 		return [{ kind: 'Slot', name: slotName, defaultContent, outVar }]
 	}
 
 	/** Compiles slot default content into template literal content (for simple fallbacks). */
 	private compileSlotDefaultContent(
 		nodes: NodeList | undefined,
-		skipInterpolation: boolean,
+		skipInterpolation: boolean
 	): string {
 		if (!nodes) return ''
 		let out = ''
@@ -432,13 +494,20 @@ class Lowerer {
 	}
 
 	/** Compiles an element for slot default content (template literal format). */
-	private compileElementDefaultContent(node: any, skipInterpolation: boolean): string {
+	private compileElementDefaultContent(
+		node: any,
+		skipInterpolation: boolean
+	): string {
 		const tagName = node.tagName.toLowerCase()
 
 		// For nested slots in default content, use inline fallback
 		if (tagName === CONST.TAG_SLOT) {
-			const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
-			const defaultContent = this.compileSlotDefaultContent(node.childNodes, skipInterpolation)
+			const slotName =
+				node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
+			const defaultContent = this.compileSlotDefaultContent(
+				node.childNodes,
+				skipInterpolation
+			)
 			// make this easier to read without string interpolation
 			return `\${ slots['${slotName}'] ?? ${defaultContent} }`
 		}
@@ -457,7 +526,8 @@ class Lowerer {
 			return `<${tagName}${attrString}>`
 		}
 
-		const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
+		const childSkip =
+			skipInterpolation || tagName === 'style' || tagName === 'script'
 		const children = this.compileSlotDefaultContent(node.childNodes, childSkip)
 		return `<${tagName}${attrString}>${children}</${tagName}>`
 	}
@@ -466,14 +536,16 @@ class Lowerer {
 		node: any,
 		tagName: string,
 		skipInterpolation: boolean,
-		outVar: string,
+		outVar: string
 	): IRNode[] {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = this.parseComponentAttributes(node)
 
 		const slotVarMap: Record<string, string> = {}
-		const slotContentMap: Record<string, any[]> = { [CONST.SLOT_NAME_DEFAULT]: [] }
+		const slotContentMap: Record<string, any[]> = {
+			[CONST.SLOT_NAME_DEFAULT]: [],
+		}
 
 		if (node.childNodes) {
 			for (let i = 0; i < node.childNodes.length; i++) {
@@ -505,7 +577,7 @@ class Lowerer {
 						const passthroughName = child.getAttribute(CONST.ATTR_NAME)
 						const defaultContent = this.compileSlotDefaultContent(
 							child.childNodes,
-							skipInterpolation,
+							skipInterpolation
 						)
 						slotIR.push({
 							kind: 'Slot',
@@ -567,7 +639,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			importsLines.push(`const ${imp.defaultBinding} = (${modExpr}).default`)
 		} else if (imp.namedBindings.length > 0) {
 			const names = imp.namedBindings
-				.map(b => (b.imported === b.local ? b.local : `${b.imported} as ${b.local}`))
+				.map(b =>
+					b.imported === b.local ? b.local : `${b.imported} as ${b.local}`
+				)
 				.join(', ')
 			importsLines.push(`const {${names}} = ${modExpr}`)
 		} else if (imp.namespaceBinding) {
@@ -585,7 +659,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				return match.replace(CONST.SELF_CLOSING_TAIL_REGEX, '>')
 			}
 			return `<${tagName}${attrs}></${tagName}>`
-		},
+		}
 	)
 
 	const { document } = parseHTML(`
@@ -614,7 +688,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
+	const bodyIR = document.body
+		? lowerer.compileFragment(document.body.childNodes)
+		: []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
 
 	const rootScripts: string[] = []
@@ -624,15 +700,19 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Virtual client URLs: use helper + string concatenation so no "${}" appears in script tag (vite:build-html would otherwise resolve it as a module).
 	const virtualPrefix = '/@aero/client/'
 	const hasVirtualClientScripts =
-		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
+		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ??
+		false
 	if (hasVirtualClientScripts) {
-		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
+		script =
+			`function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
 	}
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
 			const attrs = clientScript.attrs ?? ''
 			const hasType = attrs.includes('type=')
-			const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
+			const baseAttrs = hasType
+				? attrs
+				: `type="module"${attrs ? ' ' + attrs : ''}`
 			const urlExpr = clientScript.content.startsWith(virtualPrefix)
 				? `__aeroScriptUrl(${JSON.stringify(clientScript.content.slice(virtualPrefix.length))})`
 				: JSON.stringify(clientScript.content)
@@ -649,11 +729,11 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				const jsonExpr = `JSON.stringify(${clientScript.passDataExpr})`
 				if (isHead) {
 					headScripts.push(
-						`(function(){const __pid=Aero.nextPassDataId();\`<\`+'script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>';window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);})();${tagExpr}`,
+						`(function(){const __pid=Aero.nextPassDataId();\`<\`+'script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>';window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);})();${tagExpr}`
 					)
 				} else {
 					rootScripts.push(
-						`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`,
+						`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`
 					)
 				}
 			} else {
@@ -670,18 +750,21 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (options.blockingScripts) {
 		for (const blockingScript of options.blockingScripts) {
 			if (blockingScript.passDataExpr) {
-				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
-					directive: 'pass:data',
-					tagName: 'script',
-				})
+				const passDataExpr = Helper.validateSingleBracedExpression(
+					blockingScript.passDataExpr,
+					{
+						directive: 'pass:data',
+						tagName: 'script',
+					}
+				)
 				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
 				headScripts.push(
-					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${blockingScript.content.replace(/`/g, '\\`')}</script>\``,
+					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${blockingScript.content.replace(/`/g, '\\`')}</script>\``
 				)
 			} else {
 				const escapedContent = blockingScript.content.replace(/'/g, "\\'")
 				headScripts.push(
-					`'<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>'`,
+					`'<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>'`
 				)
 			}
 		}
@@ -709,7 +792,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 export function compileTemplate(
 	htmlSource: string,
 	options: CompileOptions,
-	parsed?: ParseResult,
+	parsed?: ParseResult
 ): string {
 	const p = parsed ?? parse(htmlSource)
 	return compile(p, {

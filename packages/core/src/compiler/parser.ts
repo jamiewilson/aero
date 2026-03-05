@@ -3,10 +3,7 @@ import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 
 /** Serialize element attributes to a string, excluding given names (case-insensitive). Values are XML-escaped. */
-function getAttrsString(
-	element: Element,
-	exclude: Set<string>,
-): string {
+function getAttrsString(element: Element, exclude: Set<string>): string {
 	const parts: string[] = []
 	const attrs = (element as any).attributes
 	if (!attrs) return ''
@@ -113,10 +110,17 @@ export function parse(html: string): ParseResult {
 		const src = scriptEl.getAttribute(CONST.ATTR_SRC) ?? ''
 		const passData = scriptEl.getAttribute(CONST.ATTR_PASS_DATA) ?? undefined
 
-		const attrsExcludeTaxonomy = new Set([CONST.ATTR_IS_BUILD, CONST.ATTR_IS_INLINE, CONST.ATTR_IS_BLOCKING])
+		const attrsExcludeTaxonomy = new Set([
+			CONST.ATTR_IS_BUILD,
+			CONST.ATTR_IS_INLINE,
+			CONST.ATTR_IS_BLOCKING,
+		])
 		let cleanedAttrs = getAttrsString(scriptEl, attrsExcludeTaxonomy)
 		if (!hasInline && !inHead) {
-			cleanedAttrs = getAttrsString(scriptEl, new Set([...attrsExcludeTaxonomy, CONST.ATTR_PASS_DATA]))
+			cleanedAttrs = getAttrsString(
+				scriptEl,
+				new Set([...attrsExcludeTaxonomy, CONST.ATTR_PASS_DATA])
+			)
 		}
 		cleanedAttrs = cleanedAttrs.replace(/\s+/g, ' ').trim()
 
@@ -170,7 +174,8 @@ export function parse(html: string): ParseResult {
 
 	for (const el of toRemove) el.remove()
 
-	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
+	const buildScript =
+		buildContent.length > 0 ? { content: buildContent.join('\n') } : null
 
 	let template: string
 	if (isFullDocument) {

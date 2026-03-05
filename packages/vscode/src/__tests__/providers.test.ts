@@ -109,13 +109,25 @@ vi.mock('../pathResolver', () => ({
 		root: '/workspace',
 		resolve: vi.fn((specifier: string) => {
 			if (specifier.startsWith('@components/')) {
-				return '/workspace/client/components/' + specifier.replace('@components/', '') + '.html'
+				return (
+					'/workspace/client/components/' +
+					specifier.replace('@components/', '') +
+					'.html'
+				)
 			}
 			if (specifier.startsWith('@layouts/')) {
-				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '') + '.html'
+				return (
+					'/workspace/client/layouts/' +
+					specifier.replace('@layouts/', '') +
+					'.html'
+				)
 			}
 			if (specifier.startsWith('@content/')) {
-				return '/workspace/client/content/' + specifier.replace('@content/', '') + '.ts'
+				return (
+					'/workspace/client/content/' +
+					specifier.replace('@content/', '') +
+					'.ts'
+				)
 			}
 			return '/workspace/' + specifier
 		}),
@@ -152,8 +164,13 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 1 } as any
 		const context = { triggerCharacter: '<', isIncomplete: false } as any
 
-		const result = provider.provideCompletionItems(doc, position, {} as any, context)
-		
+		const result = provider.provideCompletionItems(
+			doc,
+			position,
+			{} as any,
+			context
+		)
+
 		expect(result).not.toBeNull()
 	})
 
@@ -167,8 +184,13 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 5 } as any
 		const context = {} as any
 
-		const result = provider.provideCompletionItems(doc, position, {} as any, context)
-		
+		const result = provider.provideCompletionItems(
+			doc,
+			position,
+			{} as any,
+			context
+		)
+
 		expect(result).not.toBeNull()
 	})
 
@@ -182,8 +204,13 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 6 } as any
 		const context = {} as any
 
-		const result = provider.provideCompletionItems(doc, position, {} as any, context)
-		
+		const result = provider.provideCompletionItems(
+			doc,
+			position,
+			{} as any,
+			context
+		)
+
 		expect(result).not.toBeNull()
 		const items = result as any[]
 		const labels = items.map((i: any) => i.label)
@@ -200,8 +227,13 @@ describe('AeroCompletionProvider', () => {
 
 		const position = { line: 0, character: 17 } as any // after '@components'
 
-		const result = provider.provideCompletionItems(doc, position, {} as any, {} as any)
-		
+		const result = provider.provideCompletionItems(
+			doc,
+			position,
+			{} as any,
+			{} as any
+		)
+
 		expect(result).not.toBeNull()
 	})
 })
@@ -228,7 +260,7 @@ describe('AeroHoverProvider', () => {
 
 		const position = { line: 0, character: 2 } as any
 		const result = await provider.provideHover(doc, position, {} as any)
-		
+
 		expect(result).toBeNull()
 	})
 })
@@ -255,7 +287,7 @@ describe('AeroDefinitionProvider', () => {
 
 		const position = { line: 0, character: 2 } as any
 		const result = await provider.provideDefinition(doc, position, {} as any)
-		
+
 		expect(result).toBeNull()
 	})
 
@@ -270,7 +302,7 @@ describe('AeroDefinitionProvider', () => {
 
 		const position = { line: 0, character: 7 } as any // on 'site'
 		const result = await provider.provideDefinition(doc, position, {} as any)
-		
+
 		expect(result).not.toBeNull()
 		expect(Array.isArray(result) ? result.length : 0).toBeGreaterThan(0)
 	})
@@ -279,14 +311,16 @@ describe('AeroDefinitionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<header-component></header-component>',
-			lineAt: (line: number) => ({ text: '<header-component></header-component>' }),
+			lineAt: (line: number) => ({
+				text: '<header-component></header-component>',
+			}),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			offsetAt: (pos: any) => pos.character,
 		} as any
 
 		const position = { line: 0, character: 1 } as any // on 'header'
 		const result = await provider.provideDefinition(doc, position, {} as any)
-		
+
 		expect(result).not.toBeNull()
 		expect(Array.isArray(result) ? result.length : 0).toBeGreaterThan(0)
 	})

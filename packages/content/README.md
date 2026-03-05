@@ -27,7 +27,10 @@ const docs = defineCollection({
 	directory: 'content/docs',
 	include: '**/*.md',
 	schema: z.object({ title: z.string(), published: z.boolean().optional() }),
-	transform: async doc => ({ ...doc, data: { ...doc.data, slug: doc._meta.slug } }),
+	transform: async doc => ({
+		...doc,
+		data: { ...doc.data, slug: doc._meta.slug },
+	}),
 })
 
 export default defineConfig({ collections: [docs] })

@@ -1,7 +1,8 @@
 {
 	"name": "@aerobuilt/content",
 	"version": "0.3.2",
-	"type": "module",
+	"private": false,
+	"homepage": "https://github.com/aerobuilt/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
@@ -9,18 +10,11 @@
 		"url": "https://github.com/aerobuilt/aero.git",
 		"directory": "packages/content"
 	},
-	"homepage": "https://github.com/aerobuilt/aero",
-	"private": false,
-	"types": "./dist/index.d.mts",
 	"files": [
 		"dist"
 	],
-	"scripts": {
-		"build": "tsdown src/index.ts src/types.ts src/vite.ts src/markdown.ts src/render.ts src/processor.ts --format esm --dts --clean --out-dir dist",
-		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
-		"prepack": "cp ../../LICENSE ."
-	},
+	"type": "module",
+	"types": "./dist/index.d.mts",
 	"exports": {
 		".": {
 			"types": "./dist/index.d.mts",
@@ -47,13 +41,29 @@
 			"default": "./dist/types.mjs"
 		}
 	},
+	"scripts": {
+		"build": "tsdown src/index.ts src/types.ts src/vite.ts src/markdown.ts src/render.ts src/processor.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
+	},
 	"dependencies": {
 		"fast-glob": "^3.3.3",
 		"gray-matter": "^4.0.3",
+		"rehype-stringify": "^10.0.0",
 		"remark": "^15.0.1",
 		"remark-rehype": "^11.0.0",
-		"rehype-stringify": "^10.0.0",
 		"unified": "^11.0.0"
+	},
+	"devDependencies": {
+		"@shikijs/rehype": "^3.0.0",
+		"@shikijs/transformers": "^3.0.0",
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3",
+		"vite": "8.0.0-beta.15",
+		"vitest": "^4.0.18",
+		"zod": "^4.3.6"
 	},
 	"peerDependencies": {
 		"vite": "^8.0.0-0",
@@ -66,15 +76,5 @@
 		"zod": {
 			"optional": true
 		}
-	},
-	"devDependencies": {
-		"@shikijs/rehype": "^3.0.0",
-		"@shikijs/transformers": "^3.0.0",
-		"@types/node": "^25.3.0",
-		"tsdown": "^0.21.0-beta.2",
-		"typescript": "^5.9.3",
-		"vite": "8.0.0-beta.15",
-		"vitest": "^4.0.18",
-		"zod": "^4.3.6"
 	}
 }

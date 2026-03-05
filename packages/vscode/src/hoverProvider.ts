@@ -14,7 +14,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 	provideHover(
 		document: vscode.TextDocument,
 		position: vscode.Position,
-		_token: vscode.CancellationToken,
+		_token: vscode.CancellationToken
 	): vscode.ProviderResult<vscode.Hover> {
 		if (!isAeroDocument(document)) return null
 
@@ -26,39 +26,48 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 
 		switch (classification.kind) {
 			case 'import-path': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.specifier,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 				return new vscode.Hover(
 					new vscode.MarkdownString(
-						`**Import**: \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``,
+						`**Import**: \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``
 					),
-					classification.range,
+					classification.range
 				)
 			}
 
 			case 'import-name': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.specifier,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 				return new vscode.Hover(
 					new vscode.MarkdownString(
-						`**${classification.name}** imported from \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``,
+						`**${classification.name}** imported from \`${classification.specifier}\`\n\nResolved to: \`${resolved}\``
 					),
-					classification.range,
+					classification.range
 				)
 			}
 
 			case 'script-src':
 			case 'link-href': {
 				const value =
-					classification.kind === 'script-src' ? classification.value : classification.value
+					classification.kind === 'script-src'
+						? classification.value
+						: classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
-				const label = classification.kind === 'script-src' ? 'Script source' : 'Link href'
+				const label =
+					classification.kind === 'script-src' ? 'Script source' : 'Link href'
 				return new vscode.Hover(
 					new vscode.MarkdownString(
-						`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``,
+						`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``
 					),
-					classification.range,
+					classification.range
 				)
 			}
 
@@ -70,7 +79,8 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 
-				const typeLabel = classification.suffix === 'component' ? 'Component' : 'Layout'
+				const typeLabel =
+					classification.suffix === 'component' ? 'Component' : 'Layout'
 				const md = new vscode.MarkdownString()
 				md.appendMarkdown(`**${typeLabel}**: \`${classification.tagName}\`\n\n`)
 				md.appendMarkdown(`File: \`${resolved}\`\n\n`)
@@ -85,7 +95,10 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 			}
 
 			case 'content-global': {
-				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
+				const resolved = resolver.resolve(
+					classification.alias,
+					document.uri.fsPath
+				)
 				if (!resolved) return null
 
 				const md = new vscode.MarkdownString()

@@ -48,7 +48,8 @@ export function getScopeMode(): AeroScopeMode {
 
 /** True if document is considered an Aero template (used by providers/diagnostics). */
 export function isAeroDocument(document: vscode.TextDocument): boolean {
-	if (document.languageId !== 'html' || document.uri.scheme !== 'file') return false
+	if (document.languageId !== 'html' || document.uri.scheme !== 'file')
+		return false
 
 	const mode = getScopeMode()
 	if (mode === 'always') return true
@@ -66,8 +67,9 @@ function hasAeroMarkers(text: string): boolean {
 
 function isInAeroProject(filePath: string): boolean {
 	const dir = path.dirname(filePath)
-	const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath))?.uri
-		.fsPath
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(
+		vscode.Uri.file(filePath)
+	)?.uri.fsPath
 	const key = workspaceRoot ? `${workspaceRoot}::${dir}` : dir
 	const cached = cache.get(key)
 	if (cached !== undefined) return cached
@@ -77,7 +79,10 @@ function isInAeroProject(filePath: string): boolean {
 	return result
 }
 
-function scanUpForProjectMarkers(startDir: string, workspaceRoot?: string): boolean {
+function scanUpForProjectMarkers(
+	startDir: string,
+	workspaceRoot?: string
+): boolean {
 	let current = startDir
 	const fsRoot = path.parse(current).root
 	const stopAt = workspaceRoot ? path.resolve(workspaceRoot) : fsRoot
@@ -88,7 +93,11 @@ function scanUpForProjectMarkers(startDir: string, workspaceRoot?: string): bool
 		current = path.dirname(current)
 	}
 
-	if (workspaceRoot && workspaceRoot !== stopAt && directoryLooksLikeAero(workspaceRoot)) {
+	if (
+		workspaceRoot &&
+		workspaceRoot !== stopAt &&
+		directoryLooksLikeAero(workspaceRoot)
+	) {
 		return true
 	}
 
@@ -96,11 +105,16 @@ function scanUpForProjectMarkers(startDir: string, workspaceRoot?: string): bool
 }
 
 function directoryLooksLikeAero(dir: string): boolean {
-	for (const viteName of ['vite.config.ts', 'vite.config.js', 'vite.config.mts']) {
+	for (const viteName of [
+		'vite.config.ts',
+		'vite.config.js',
+		'vite.config.mts',
+	]) {
 		if (fileContains(path.join(dir, viteName), PROJECT_MARKERS)) return true
 	}
 
-	if (fileContains(path.join(dir, 'tsconfig.json'), PROJECT_MARKERS)) return true
+	if (fileContains(path.join(dir, 'tsconfig.json'), PROJECT_MARKERS))
+		return true
 	if (fileContains(path.join(dir, 'package.json'), PROJECT_MARKERS)) return true
 
 	return false

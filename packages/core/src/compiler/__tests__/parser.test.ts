@@ -38,7 +38,9 @@ describe('Parser (V2 Taxonomy)', () => {
 		// Check Client Script (default)
 		expect(result.clientScripts).toBeDefined()
 		expect(result.clientScripts).toHaveLength(1)
-		expect(result.clientScripts[0].content).toContain("console.log('client bundled default')")
+		expect(result.clientScripts[0].content).toContain(
+			"console.log('client bundled default')"
+		)
 
 		// Check Template (should NOT contain the extracted scripts)
 		expect(result.template).toContain('<h1>Title</h1>')
@@ -325,7 +327,9 @@ const x = 1;
 `
 		const result = parse(html)
 		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
-		const plainScript = result.clientScripts.find(s => s.content.includes('allCaps'))
+		const plainScript = result.clientScripts.find(s =>
+			s.content.includes('allCaps')
+		)
 		expect(plainScript).toBeDefined()
 		expect(plainScript!.content).toContain('PLAIN')
 		expect(result.template).not.toContain('import { allCaps }')
@@ -335,13 +339,15 @@ const x = 1;
 	it('should extract plain script when parsing home.html from file (if present)', () => {
 		const homePath = path.resolve(
 			__dirname,
-			'../../../../../examples/kitchen-sink/client/pages/home.html',
+			'../../../../../examples/kitchen-sink/client/pages/home.html'
 		)
 		if (!fs.existsSync(homePath)) return
 		const html = fs.readFileSync(homePath, 'utf-8')
 		const result = parse(html)
 		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
-		expect(result.clientScripts.some(s => s.content.includes('allCaps'))).toBe(true)
+		expect(result.clientScripts.some(s => s.content.includes('allCaps'))).toBe(
+			true
+		)
 	})
 
 	// Baseline for home.html-style page: is:build, is:inline, external src, is:blocking, script src= (no default client scripts)
@@ -364,7 +370,9 @@ const x = 1;
 		expect(result.buildScript?.content).toContain('const x = 1;')
 		expect(result.clientScripts).toHaveLength(0)
 		expect(result.blockingScripts).toHaveLength(1)
-		expect(result.blockingScripts[0].content).toContain("console.debug('blocking');")
+		expect(result.blockingScripts[0].content).toContain(
+			"console.debug('blocking');"
+		)
 		// is:inline and script src= remain in template
 		expect(result.template).toContain("console.debug('inline');")
 		expect(result.template).toContain('https://unpkg.com/something.js')

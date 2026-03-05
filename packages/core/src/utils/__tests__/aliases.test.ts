@@ -59,7 +59,7 @@ describe('loadTsconfigAliases', () => {
 		})
 
 		const result = loadTsconfigAliases('/project')
-		
+
 		expect(result.aliases).toHaveLength(2)
 		expect(result.aliases[0]).toEqual({
 			find: '@components',
@@ -108,13 +108,13 @@ describe('getDefaultAliases', () => {
 			'@pages',
 		])
 		expect(aliases.find(a => a.find === '@pages')!.replacement).toBe(
-			path.join(root, 'client', 'pages'),
+			path.join(root, 'client', 'pages')
 		)
 		expect(aliases.find(a => a.find === '@layouts')!.replacement).toBe(
-			path.join(root, 'client', 'layouts'),
+			path.join(root, 'client', 'layouts')
 		)
 		expect(aliases.find(a => a.find === '@components')!.replacement).toBe(
-			path.join(root, 'client', 'components'),
+			path.join(root, 'client', 'components')
 		)
 	})
 
@@ -125,7 +125,7 @@ describe('getDefaultAliases', () => {
 			client: 'frontend',
 		})
 		expect(aliases.find(a => a.find === '@pages')!.replacement).toBe(
-			path.join(root, 'frontend', 'pages'),
+			path.join(root, 'frontend', 'pages')
 		)
 	})
 })
@@ -148,9 +148,9 @@ describe('mergeWithDefaultAliases', () => {
 			'@layouts',
 			'@pages',
 		])
-		expect(merged.resolve('@components/header', '/project/client/pages/index.html')).toBe(
-			path.join('/project', 'client', 'components', 'header'),
-		)
+		expect(
+			merged.resolve('@components/header', '/project/client/pages/index.html')
+		).toBe(path.join('/project', 'client', 'components', 'header'))
 	})
 
 	it('lets tsconfig override default for same key', async () => {
@@ -171,7 +171,7 @@ describe('mergeWithDefaultAliases', () => {
 		const pagesAlias = merged.aliases.find(a => a.find === '@pages')
 		expect(pagesAlias!.replacement).toBe(path.resolve('/project', 'src/views'))
 		expect(merged.aliases.find(a => a.find === '@layouts')!.replacement).toBe(
-			path.join('/project', 'client', 'layouts'),
+			path.join('/project', 'client', 'layouts')
 		)
 	})
 
@@ -180,7 +180,12 @@ describe('mergeWithDefaultAliases', () => {
 		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue(null)
 		const raw = loadTsconfigAliases('/project')
 		const merged = mergeWithDefaultAliases(raw, '/project', defaultDirs)
-		const resolved = merged.resolve('@components/header', '/project/client/pages/index.html')
-		expect(resolved).toBe(path.join('/project', 'client', 'components', 'header'))
+		const resolved = merged.resolve(
+			'@components/header',
+			'/project/client/pages/index.html'
+		)
+		expect(resolved).toBe(
+			path.join('/project', 'client', 'components', 'header')
+		)
 	})
 })

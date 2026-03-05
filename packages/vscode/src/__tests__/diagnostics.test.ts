@@ -58,7 +58,9 @@ vi.mock('vscode', () => {
 		languages: {
 			createDiagnosticCollection: () => mockCollection,
 		},
-		Uri: { parse: (s: string) => ({ toString: () => s, fsPath: s, scheme: 'file' }) },
+		Uri: {
+			parse: (s: string) => ({ toString: () => s, fsPath: s, scheme: 'file' }),
+		},
 	}
 })
 
@@ -79,7 +81,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -95,7 +101,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 
 		const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'header' is declared but its value is never read"),
+			d.message.includes("'header' is declared but its value is never read")
 		)
 
 		expect(unusedHeaderDiag).toBeDefined()
@@ -109,7 +115,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 <header-component />
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -122,7 +132,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'header' is declared but its value is never read"),
+			d.message.includes("'header' is declared but its value is never read")
 		)
 		expect(unusedHeaderDiag).toBeUndefined()
 	})
@@ -143,7 +153,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 </script>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -157,7 +171,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedDiags = reportedDiagnostics.filter((d: any) =>
-			d.message.includes('is declared but its value is never read'),
+			d.message.includes('is declared but its value is never read')
 		)
 		// render is used inside is:build (render(doc)) — should NOT be flagged
 		// base is used as <base-layout> in template — should NOT be flagged
@@ -177,7 +191,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 </script>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -191,7 +209,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedBaseDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'base' is declared but its value is never read"),
+			d.message.includes("'base' is declared but its value is never read")
 		)
 		expect(unusedBaseDiag).toBeDefined()
 	})
@@ -206,7 +224,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 </section>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -220,7 +242,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'dismiss' is declared but its value is never read"),
+			d.message.includes("'dismiss' is declared but its value is never read")
 		)
 		expect(unusedDismissDiag).toBeUndefined()
 	})
@@ -233,7 +255,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 <span @htmx:after-swap="dismiss($el)"></span>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -247,7 +273,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'dismiss' is declared but its value is never read"),
+			d.message.includes("'dismiss' is declared but its value is never read")
 		)
 		expect(unusedDismissDiag).toBeUndefined()
 	})
@@ -265,7 +291,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -279,7 +309,9 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'getCollection' is declared but its value is never read"),
+			d.message.includes(
+				"'getCollection' is declared but its value is never read"
+			)
 		)
 		expect(unusedDiag).toBeUndefined()
 	})
@@ -295,13 +327,18 @@ describe('AeroDiagnostics Unused Variables', () => {
 </script>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
 			fileName: '/test.html',
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+			offsetAt: (pos: any) =>
+				typeof pos.character === 'number' ? pos.character : 0,
 		} as any
 
 		const context = { subscriptions: [] } as any
@@ -310,10 +347,10 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 		const unusedStorageKey = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'storageKey' is declared but its value is never read"),
+			d.message.includes("'storageKey' is declared but its value is never read")
 		)
 		const unusedAttribute = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'attribute' is declared but its value is never read"),
+			d.message.includes("'attribute' is declared but its value is never read")
 		)
 		expect(unusedStorageKey).toBeUndefined()
 		expect(unusedAttribute).toBeUndefined()
@@ -335,7 +372,11 @@ describe('AeroDiagnostics Unused Variables', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -349,10 +390,12 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedRenderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'render' is declared but its value is never read"),
+			d.message.includes("'render' is declared but its value is never read")
 		)
 		const unusedCollectionDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'getCollection' is declared but its value is never read"),
+			d.message.includes(
+				"'getCollection' is declared but its value is never read"
+			)
 		)
 
 		expect(unusedRenderDiag).toBeUndefined()
@@ -371,7 +414,11 @@ describe('AeroDiagnostics Undefined Variables', () => {
 <div>{undefinedVar}</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -385,7 +432,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'undefinedVar' is not defined"),
+			d.message.includes("'undefinedVar' is not defined")
 		)
 		expect(undefinedDiag).toBeDefined()
 	})
@@ -398,7 +445,11 @@ describe('AeroDiagnostics Undefined Variables', () => {
 <div>{myVar}</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -412,7 +463,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'myVar' is not defined"),
+			d.message.includes("'myVar' is not defined")
 		)
 		expect(undefinedDiag).toBeUndefined()
 	})
@@ -422,7 +473,11 @@ describe('AeroDiagnostics Undefined Variables', () => {
 <div>{site.title}</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -436,7 +491,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'site' is not defined"),
+			d.message.includes("'site' is not defined")
 		)
 		expect(undefinedDiag).toBeUndefined()
 	})
@@ -448,7 +503,11 @@ describe('AeroDiagnostics Undefined Variables', () => {
 </section>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -462,7 +521,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'input' is not defined"),
+			d.message.includes("'input' is not defined")
 		)
 		expect(undefinedDiag).toBeUndefined()
 	})
@@ -482,7 +541,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -496,7 +559,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('<script> without attribute'),
+			d.message.includes('<script> without attribute')
 		)
 		expect(scriptDiag).toBeUndefined()
 	})
@@ -509,7 +572,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -523,7 +590,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('<script> without attribute'),
+			d.message.includes('<script> without attribute')
 		)
 		expect(scriptDiag).toBeUndefined()
 	})
@@ -537,7 +604,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -551,7 +622,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline> require type="module"'),
+			d.message.includes('Imports in <script is:inline> require type="module"')
 		)
 		expect(importDiag).toBeDefined()
 	})
@@ -565,7 +636,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -579,7 +654,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline>'),
+			d.message.includes('Imports in <script is:inline>')
 		)
 		expect(importDiag).toBeUndefined()
 	})
@@ -593,7 +668,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -607,7 +686,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts'),
+			d.message.includes('Imports in bundled scripts')
 		)
 		expect(importDiag).toBeUndefined()
 	})
@@ -621,7 +700,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -635,7 +718,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts'),
+			d.message.includes('Imports in bundled scripts')
 		)
 		expect(importDiag).toBeUndefined()
 	})
@@ -649,7 +732,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -663,7 +750,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts'),
+			d.message.includes('Imports in bundled scripts')
 		)
 		expect(importDiag).toBeUndefined()
 	})
@@ -676,7 +763,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -691,7 +782,7 @@ describe('AeroDiagnostics Script Tags', () => {
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		// Should not flag duplicate imports from commented script
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times'),
+			d.message.includes('declared multiple times')
 		)
 		expect(dupDiag).toBeUndefined()
 	})
@@ -707,7 +798,11 @@ describe('AeroDiagnostics Script Tags', () => {
 <div></div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -721,7 +816,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times'),
+			d.message.includes('declared multiple times')
 		)
 		expect(dupDiag).toBeUndefined()
 	})
@@ -744,7 +839,11 @@ describe('AeroDiagnostics Script Tags', () => {
 </script>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -758,7 +857,7 @@ describe('AeroDiagnostics Script Tags', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline>'),
+			d.message.includes('Imports in <script is:inline>')
 		)
 		expect(importDiag).toBeDefined()
 	})
@@ -776,7 +875,11 @@ describe('AeroDiagnostics Conditional Chains', () => {
 <div data-else-if="{condition}">Else If</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -790,7 +893,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const elseIfDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('else-if must follow an element with if or else-if'),
+			d.message.includes('else-if must follow an element with if or else-if')
 		)
 		expect(elseIfDiag).toBeDefined()
 	})
@@ -801,7 +904,11 @@ describe('AeroDiagnostics Conditional Chains', () => {
 <div data-else>Else</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -815,7 +922,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const elseDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('else must follow an element with if or else-if'),
+			d.message.includes('else must follow an element with if or else-if')
 		)
 		expect(elseDiag).toBeDefined()
 	})
@@ -827,7 +934,11 @@ describe('AeroDiagnostics Conditional Chains', () => {
 <div data-else>C</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -841,7 +952,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const conditionalDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must follow an element with if or else-if'),
+			d.message.includes('must follow an element with if or else-if')
 		)
 		expect(conditionalDiag).toBeUndefined()
 	})
@@ -858,7 +969,11 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 <div data-if="condition">Content</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -872,7 +987,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const directiveDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must use a braced expression'),
+			d.message.includes('must use a braced expression')
 		)
 		expect(directiveDiag).toBeDefined()
 	})
@@ -882,7 +997,11 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 <div data-if="{condition}">Content</div>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -896,7 +1015,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const directiveDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must use a braced expression'),
+			d.message.includes('must use a braced expression')
 		)
 		expect(directiveDiag).toBeUndefined()
 	})
@@ -917,7 +1036,11 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 <header-component />
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -931,7 +1054,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times'),
+			d.message.includes('declared multiple times')
 		)
 		expect(dupDiag).toBeDefined()
 	})
@@ -945,7 +1068,11 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 <header-component />
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -959,7 +1086,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times'),
+			d.message.includes('declared multiple times')
 		)
 		expect(dupDiag).toBeUndefined()
 	})
@@ -983,13 +1110,18 @@ describe('AeroDiagnostics Component References', () => {
 </base-layout>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
 			fileName: '/test.html',
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+			offsetAt: (pos: any) =>
+				typeof pos.character === 'number' ? pos.character : 0,
 		} as any
 
 		const context = { subscriptions: [] } as any
@@ -998,7 +1130,7 @@ describe('AeroDiagnostics Component References', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 		const notImported = reportedDiagnostics.filter((d: any) =>
-			d.message.includes('is not imported'),
+			d.message.includes('is not imported')
 		)
 		expect(notImported).toHaveLength(0)
 	})
@@ -1010,7 +1142,11 @@ describe('AeroDiagnostics Component References', () => {
 </script>
 `
 		const doc = {
-			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
 			getText: () => text,
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			languageId: 'html',
@@ -1024,7 +1160,7 @@ describe('AeroDiagnostics Component References', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1] || []
 		const componentDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('is not imported'),
+			d.message.includes('is not imported')
 		)
 		expect(componentDiag).toBeUndefined()
 	})

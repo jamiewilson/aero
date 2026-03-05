@@ -86,7 +86,9 @@ describe('collectTemplateReferences', () => {
     `
 		const refs = collectTemplateReferences(mockDoc, text)
 
-		const variableRefs = refs.filter(r => !r.isComponent && r.content !== 'props')
+		const variableRefs = refs.filter(
+			r => !r.isComponent && r.content !== 'props'
+		)
 		expect(variableRefs.map(r => r.content)).not.toContain('disabled')
 		expect(variableRefs.map(r => r.content)).not.toContain('hidden')
 		expect(variableRefs.map(r => r.content)).not.toContain('readonly')
@@ -109,7 +111,9 @@ describe('collectTemplateReferences', () => {
     `
 		const refs = collectTemplateReferences(mockDoc, text)
 
-		const variableRefs = refs.filter(r => !r.isComponent && (r.content !== 'props' || !r.isAttribute))
+		const variableRefs = refs.filter(
+			r => !r.isComponent && (r.content !== 'props' || !r.isAttribute)
+		)
 		expect(variableRefs.map(r => r.content)).not.toContain('else')
 		// data-else is the attribute name; we don't add a ref for "else" or "data-else" as variable
 		expect(variableRefs.filter(r => r.content === 'data-else')).toHaveLength(0)

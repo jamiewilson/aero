@@ -68,7 +68,7 @@ export type AeroMiddlewareResult =
 
 /** Middleware handler: receives request context; returns redirect/rewrite/response or nothing to continue. */
 export type AeroMiddleware = (
-	ctx: AeroRequestContext,
+	ctx: AeroRequestContext
 ) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
 
 /** Options for the client-side `mount()` entry (see `core/src/entry-dev.ts`). */
@@ -207,7 +207,7 @@ export interface AeroTemplateContext {
 		component: any,
 		props?: Record<string, any>,
 		slots?: Record<string, string>,
-		context?: AeroRenderInput,
+		context?: AeroRenderInput
 	) => Promise<string>
 	request: Request
 	url: URL

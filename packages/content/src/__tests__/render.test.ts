@@ -16,7 +16,12 @@ describe('render', () => {
 			id: 'test',
 			body: '# Hello',
 			data: {},
-			_meta: { filename: 'test.md', slug: 'test', path: 'test', extension: '.md' },
+			_meta: {
+				filename: 'test.md',
+				slug: 'test',
+				path: 'test',
+				extension: '.md',
+			},
 		}
 		const result = await render(doc as any)
 		expect(result.html).toContain('<h1>Hello</h1>')
@@ -26,7 +31,9 @@ describe('render', () => {
 		const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const result = await render(null)
 		expect(result.html).toBe('')
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('render() received null'))
+		expect(consoleSpy).toHaveBeenCalledWith(
+			expect.stringContaining('render() received null')
+		)
 		consoleSpy.mockRestore()
 	})
 
@@ -34,7 +41,9 @@ describe('render', () => {
 		const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const result = await render(undefined)
 		expect(result.html).toBe('')
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('render() received null'))
+		expect(consoleSpy).toHaveBeenCalledWith(
+			expect.stringContaining('render() received null')
+		)
 		consoleSpy.mockRestore()
 	})
 
@@ -43,7 +52,12 @@ describe('render', () => {
 			id: 'test',
 			body: '',
 			data: {},
-			_meta: { filename: 'test.md', slug: 'test', path: 'test', extension: '.md' },
+			_meta: {
+				filename: 'test.md',
+				slug: 'test',
+				path: 'test',
+				extension: '.md',
+			},
 		}
 		const result = await render(doc as any)
 		expect(result).toEqual({ html: '' })
@@ -59,7 +73,12 @@ describe('render', () => {
 			id: 'test',
 			body: '```js\nconst x = 1\n```',
 			data: {},
-			_meta: { filename: 'test.md', slug: 'test', path: 'test', extension: '.md' },
+			_meta: {
+				filename: 'test.md',
+				slug: 'test',
+				path: 'test',
+				extension: '.md',
+			},
 		}
 		const result = await render(doc as any)
 		expect(result.html).toContain('class="shiki')

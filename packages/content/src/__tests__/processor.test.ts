@@ -41,9 +41,7 @@ describe('initProcessor', () => {
 		const rehypeShiki = (await import('@shikijs/rehype')).default
 
 		await initProcessor({
-			rehypePlugins: [
-				[rehypeShiki, { theme: 'github-light', langs: ['js'] }],
-			],
+			rehypePlugins: [[rehypeShiki, { theme: 'github-light', langs: ['js'] }]],
 		})
 		const proc = getProcessor()
 
@@ -77,7 +75,8 @@ describe('initProcessor', () => {
 
 	it('applies transformers via @shikijs/rehype', async () => {
 		const rehypeShiki = (await import('@shikijs/rehype')).default
-		const { transformerNotationHighlight } = await import('@shikijs/transformers')
+		const { transformerNotationHighlight } =
+			await import('@shikijs/transformers')
 
 		await initProcessor({
 			rehypePlugins: [
@@ -93,7 +92,9 @@ describe('initProcessor', () => {
 		})
 		const proc = getProcessor()
 
-		const result = await proc.process('```js\nconst x = 1 // [!code highlight]\n```')
+		const result = await proc.process(
+			'```js\nconst x = 1 // [!code highlight]\n```'
+		)
 		const html = String(result)
 		expect(html).toContain('highlighted')
 	})
@@ -200,7 +201,7 @@ describe('custom remark plugins', () => {
 
 describe('custom rehype plugins', () => {
 	it('applies rehype plugins to the pipeline', async () => {
-		const rehypeAddDataAttr: Plugin<[], Root> = () => (tree) => {
+		const rehypeAddDataAttr: Plugin<[], Root> = () => tree => {
 			const visit = (node: any) => {
 				if (node.type === 'element' && node.tagName === 'pre') {
 					node.properties ??= {}
@@ -224,7 +225,7 @@ describe('custom rehype plugins', () => {
 	it('applies multiple rehype plugins in order', async () => {
 		const rehypeShiki = (await import('@shikijs/rehype')).default
 
-		const rehypeAddDataAttr: Plugin<[], Root> = () => (tree) => {
+		const rehypeAddDataAttr: Plugin<[], Root> = () => tree => {
 			const visit = (node: any) => {
 				if (node.type === 'element' && node.tagName === 'pre') {
 					node.properties ??= {}

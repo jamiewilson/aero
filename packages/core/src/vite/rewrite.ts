@@ -29,7 +29,10 @@ export function toOutputFile(routePath: string): string {
 }
 
 /** Relative path from fromDir to targetPath, always starting with ./ when non-empty. */
-export function normalizeRelativeLink(fromDir: string, targetPath: string): string {
+export function normalizeRelativeLink(
+	fromDir: string,
+	targetPath: string
+): string {
 	const rel = path.posix.relative(fromDir, targetPath)
 	if (!rel) return './'
 	if (rel.startsWith('.')) return rel
@@ -37,7 +40,10 @@ export function normalizeRelativeLink(fromDir: string, targetPath: string): stri
 }
 
 /** Relative path to a route (directory index); appends trailing slash for non-root routes. */
-export function normalizeRelativeRouteLink(fromDir: string, routePath: string): string {
+export function normalizeRelativeRouteLink(
+	fromDir: string,
+	routePath: string
+): string {
 	const targetDir = routePath === '' ? '' : routePath
 	const rel = path.posix.relative(fromDir, targetDir)
 	let res = !rel ? './' : rel.startsWith('.') ? rel : `./${rel}`
@@ -66,7 +72,7 @@ export function rewriteAbsoluteUrl(
 	fromDir: string,
 	manifest: Manifest,
 	routeSet: Set<string>,
-	apiPrefix = DEFAULT_API_PREFIX,
+	apiPrefix = DEFAULT_API_PREFIX
 ): string {
 	if (value.startsWith(apiPrefix)) return value
 
@@ -77,15 +83,16 @@ export function rewriteAbsoluteUrl(
 
 	if (!manifestEntry && noQuery.startsWith('assets/')) {
 		const entry = Object.values(manifest).find(
-			(e: any) => e?.file === noQuery || e?.file === manifestKey,
+			(e: any) => e?.file === noQuery || e?.file === manifestKey
 		)
 		if (entry) manifestEntry = entry as typeof manifestEntry
 	}
 
 	if (manifestEntry?.file) {
 		const entryWithAssets = manifestEntry as { file: string; assets?: string[] }
-		const imageAsset =
-			entryWithAssets.assets?.find((a: string) => ASSET_IMAGE_EXT.test(a))
+		const imageAsset = entryWithAssets.assets?.find((a: string) =>
+			ASSET_IMAGE_EXT.test(a)
+		)
 		const fileToUse = imageAsset ?? manifestEntry.file
 		const rel = normalizeRelativeLink(fromDir, fileToUse)
 		return rel + suffix
@@ -115,7 +122,7 @@ export function rewriteRenderedHtml(
 	outputFile: string,
 	manifest: Manifest,
 	routeSet: Set<string>,
-	apiPrefix = DEFAULT_API_PREFIX,
+	apiPrefix = DEFAULT_API_PREFIX
 ): string {
 	const fromDir = path.posix.dirname(outputFile)
 	const { document } = parseHTML(html)
@@ -123,7 +130,13 @@ export function rewriteRenderedHtml(
 	for (const script of Array.from(document.querySelectorAll('script[src]'))) {
 		const src = script.getAttribute('src') || ''
 		if (src.startsWith(CLIENT_SCRIPT_PREFIX)) {
-			const newSrc = rewriteAbsoluteUrl(src, fromDir, manifest, routeSet, apiPrefix)
+			const newSrc = rewriteAbsoluteUrl(
+				src,
+				fromDir,
+				manifest,
+				routeSet,
+				apiPrefix
+			)
 			script.setAttribute('src', newSrc)
 			script.setAttribute('type', 'module')
 			script.removeAttribute('defer')
@@ -142,7 +155,7 @@ export function rewriteRenderedHtml(
 			if (!current.startsWith('/')) continue
 			el.setAttribute(
 				attrName,
-				rewriteAbsoluteUrl(current, fromDir, manifest, routeSet, apiPrefix),
+				rewriteAbsoluteUrl(current, fromDir, manifest, routeSet, apiPrefix)
 			)
 		}
 	}

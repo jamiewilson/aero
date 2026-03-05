@@ -39,7 +39,7 @@ export interface TokenizeOptions {
  */
 export function tokenizeCurlyInterpolation(
 	text: string,
-	options: TokenizeOptions = {},
+	options: TokenizeOptions = {}
 ): Segment[] {
 	const attributeMode = options.attributeMode ?? false
 	const segments: Segment[] = []
