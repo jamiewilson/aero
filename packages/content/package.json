@@ -58,6 +58,7 @@
 	"devDependencies": {
 		"@shikijs/rehype": "^3.0.0",
 		"@shikijs/transformers": "^3.0.0",
+		"@types/hast": "^3.0.4",
 		"@types/node": "^25.3.0",
 		"tsdown": "^0.21.0-beta.2",
 		"typescript": "^5.9.3",

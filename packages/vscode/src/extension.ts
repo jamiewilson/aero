@@ -24,26 +24,19 @@ import { AeroCompletionProvider } from './completionProvider'
 import { AeroHoverProvider } from './hoverProvider'
 import { AeroDiagnostics } from './diagnostics'
 import { clearResolverCache } from './pathResolver'
-import {
-	clearScopeCache,
-	getScopeMode,
-	isInAeroProjectPath,
-} from './scope'
+import { clearScopeCache, getScopeMode, isInAeroProjectPath } from './scope'
 import { HTML_SELECTOR } from './constants'
 
 let languageClient: LanguageClient | undefined
 
 function shouldSwitchToAero(document: vscode.TextDocument): boolean {
-	if (document.languageId !== 'html' || document.uri.scheme !== 'file')
-		return false
+	if (document.languageId !== 'html' || document.uri.scheme !== 'file') return false
 	const mode = getScopeMode()
 	if (mode === 'always') return true
 	return isInAeroProjectPath(document.uri.fsPath)
 }
 
-async function trySetAeroLanguage(
-	document: vscode.TextDocument
-): Promise<void> {
+async function trySetAeroLanguage(document: vscode.TextDocument): Promise<void> {
 	if (!shouldSwitchToAero(document)) return
 	try {
 		await vscode.languages.setTextDocumentLanguage(document, 'aero')
@@ -52,15 +45,9 @@ async function trySetAeroLanguage(
 	}
 }
 
-export async function activate(
-	context: vscode.ExtensionContext,
-): Promise<void> {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	// ---- Language Server (Volar) ----
-	const serverModule = vscode.Uri.joinPath(
-		context.extensionUri,
-		'dist',
-		'server.cjs',
-	)
+	const serverModule = vscode.Uri.joinPath(context.extensionUri, 'dist', 'server.cjs')
 	const serverOptions: ServerOptions = {
 		run: {
 			module: serverModule.fsPath,
@@ -81,13 +68,15 @@ export async function activate(
 		},
 		middleware: {
 			provideDocumentLinks(document, token, next) {
-				return next(document, token).then(links => {
-					if (!links) return links
-					return links.filter(link => {
-						if (link.target?.scheme !== 'file') return true
-						return fs.existsSync(link.target.fsPath)
-					})
-				})
+				return Promise.resolve(next(document, token)).then(
+					(links: vscode.DocumentLink[] | undefined | null) => {
+						if (!links) return links
+						return links.filter((link: vscode.DocumentLink) => {
+							if (link.target?.scheme !== 'file') return true
+							return fs.existsSync(link.target.fsPath)
+						})
+					},
+				)
 			},
 		},
 	}
@@ -127,10 +116,7 @@ export async function activate(
 
 	// ---- Hover Provider ----
 	context.subscriptions.push(
-		vscode.languages.registerHoverProvider(
-			HTML_SELECTOR,
-			new AeroHoverProvider(),
-		),
+		vscode.languages.registerHoverProvider(HTML_SELECTOR, new AeroHoverProvider()),
 	)
 
 	// ---- Diagnostics ----
@@ -139,15 +125,11 @@ export async function activate(
 
 	// ---- Definition Provider (register last so we win when selector scores tie) ----
 	context.subscriptions.push(
-		vscode.languages.registerDefinitionProvider(
-			HTML_SELECTOR,
-			new AeroDefinitionProvider(),
-		),
+		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider()),
 	)
 
 	// ---- Cache invalidation ----
-	const tsconfigWatcher =
-		vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
+	const tsconfigWatcher = vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
 	tsconfigWatcher.onDidChange(() => {
 		clearResolverCache()
 		clearScopeCache()
