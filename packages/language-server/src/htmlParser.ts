@@ -4,13 +4,25 @@
  * shape (roots, findNodeBefore, findNodeAt) for virtual code extraction.
  */
 import { HTMLParser } from 'vscode-html-languageservice/lib/esm/parser/htmlParser.js'
-import type { HTMLDocument, Node } from 'vscode-html-languageservice/lib/esm/htmlLanguageTypes.js'
+import type { HTMLDocument, Node } from 'vscode-html-languageservice'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 
 /** HTML5 void elements (sorted for binary search compatibility). */
 const VOID_ELEMENTS = [
-	'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-	'link', 'meta', 'param', 'source', 'track', 'wbr',
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr',
 ]
 
 const minimalDataManager = {
