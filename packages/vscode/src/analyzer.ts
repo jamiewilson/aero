@@ -141,13 +141,13 @@ export function collectDefinedVariables(
 		}
 
 		// Regex for top-level const/let/var
-		// Supports: const x = 1, { y } = obj, [z] = arr
+		// Supports: const x = 1, const x: Type = {...}, { y } = obj, [z] = arr
 		// Limitations: Regex is not a parser. Complex destructuring might be missed.
 		// For now, sticking to the existing robust regex for simple identifiers + destructuring support
 
-		// Simple identifier: const x = ...
+		// Simple identifier: const x = ... OR const x: Type = ...
 		const simpleDeclRegex =
-			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
+			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s\[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
 		let declMatch: RegExpExecArray | null
 		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
 			const name = declMatch[1]

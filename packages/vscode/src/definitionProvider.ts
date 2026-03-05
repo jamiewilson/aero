@@ -54,10 +54,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 
 			case 'script-src':
 			case 'link-href': {
-				const value =
-					classification.kind === 'script-src'
-						? classification.value
-						: classification.value
+				const value = classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
@@ -106,8 +103,6 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 }
 
 type ContentRef = { alias: string; propertyPath: string[] }
-
-// Redundant types removed
 
 function resolveExpressionIdentifierDefinition(
 	document: vscode.TextDocument,
@@ -233,10 +228,6 @@ function resolveGenericChainDefinition(
 	const line = findPropertyLine(resolved, propertyPath)
 	return [makeLink(originRange, resolved, line)]
 }
-
-// collectBuildVariables and collectEachScopes removed (moved to analyzer)
-
-// parseEachAttribute moved to analyzer
 
 function resolveContentRefFromExpression(
 	expression: string,

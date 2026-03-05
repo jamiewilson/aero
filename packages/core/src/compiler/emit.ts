@@ -46,9 +46,7 @@ function emitNode(node: IRNode, outVar: string): string {
 			return Helper.emitAppend(node.content, outVarFor(node, outVar))
 		case 'For':
 			return (
-				Helper.emitForOf(node.item, node.items) +
-				emitToJS(node.body, outVar) +
-				Helper.emitEnd()
+				Helper.emitForOf(node.item, node.items) + emitToJS(node.body, outVar) + Helper.emitEnd()
 			)
 		case 'If': {
 			let code = Helper.emitIf(node.condition) + emitToJS(node.body, outVar)
@@ -65,11 +63,7 @@ function emitNode(node: IRNode, outVar: string): string {
 			return code + Helper.emitEnd()
 		}
 		case 'Slot':
-			return Helper.emitSlotOutput(
-				node.name,
-				node.defaultContent,
-				outVarFor(node, outVar)
-			)
+			return Helper.emitSlotOutput(node.name, node.defaultContent, outVarFor(node, outVar))
 		case 'SlotVar':
 			return Helper.emitSlotVar(node.varName)
 		case 'Component': {

@@ -12,22 +12,18 @@ import type { AeroDirs } from '../types'
 export const CLIENT_SCRIPT_PREFIX = '/@aero/client/'
 
 /**
- * Virtual URL for one client script. Single script uses `.js`, multiple use `.0.js`, `.1.js`, etc.
+ * Virtual URL for one client script.
+ * Single script uses `.ts`, multiple use `.0.ts`, `.1.ts`, etc.
  * Use this in the Vite transform and static build so URL generation is consistent.
  */
-export function getClientScriptVirtualUrl(
-	baseName: string,
-	index: number,
-	total: number
-): string {
-	const suffix = total === 1 ? '.js' : `.${index}.js`
+export function getClientScriptVirtualUrl(baseName: string, index: number, total: number): string {
+	const suffix = total === 1 ? '.ts' : `.${index}.ts`
 	return CLIENT_SCRIPT_PREFIX + baseName + suffix
 }
 /** Virtual module ID requested by the app; resolved to `RESOLVED_*` so `load()` can re-export from the real runtime instance. */
-export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance'
+export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance.ts'
 /** Resolved ID (with `\0` prefix) so Vite treats it as an internal module. */
-export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID =
-	'\0virtual:aero/runtime-instance'
+export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:aero/runtime-instance.ts'
 
 /** Prefix for virtual empty-CSS modules used when Vite requests .html?html-proxy&inline-css (Aero .html are JS, not HTML with styles). */
 export const AERO_EMPTY_INLINE_CSS_PREFIX = '\0aero:empty-inline-css:'

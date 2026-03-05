@@ -122,9 +122,7 @@ async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
 				resolve()
 				return
 			}
-			reject(
-				new Error(`[aero] nitro build failed with exit code ${code ?? 'null'}`)
-			)
+			reject(new Error(`[aero] nitro build failed with exit code ${code ?? 'null'}`))
 		})
 	})
 }
@@ -170,20 +168,13 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			mkdirSync(dir, { recursive: true })
 			const filePath = path.join(dir, RUNTIME_INSTANCE_FILENAME)
 			// Use path relative to .aero/ so SSR (Node) can resolve the runtime when running the generated file.
-			const runtimeIndexPath = path.join(
-				path.dirname(state.runtimeInstancePath),
-				'index.mjs'
-			)
-			const runtimeImportPath = path
-				.relative(dir, runtimeIndexPath)
-				.replace(/\\/g, '/')
+			const runtimeIndexPath = path.join(path.dirname(state.runtimeInstancePath), 'index.mjs')
+			const runtimeImportPath = path.relative(dir, runtimeIndexPath).replace(/\\/g, '/')
 			writeFileSync(
 				filePath,
 				getRuntimeInstanceVirtualSource(
 					state.dirs.client,
-					runtimeImportPath.startsWith('.')
-						? runtimeImportPath
-						: './' + runtimeImportPath
+					runtimeImportPath.startsWith('.') ? runtimeImportPath : './' + runtimeImportPath
 				),
 				'utf-8'
 			)
@@ -225,7 +216,7 @@ function clientGlobPrefix(clientDir: string): string {
  */
 function getRuntimeInstanceVirtualSource(
 	clientDir: string,
-	runtimeImportPath: string = '@aerobuilt/core/runtime'
+	runtimeImportPath: string = 'aerobuilt/runtime'
 ): string {
 	const prefix = clientGlobPrefix(clientDir)
 	const componentsPattern = `${prefix}/components/**/*.html`
@@ -270,19 +261,18 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		buildStart() {
 			if (!state.config) return
-			const contentMap = discoverClientScriptContentMap(
-				state.config.root,
-				state.dirs.client
-			)
+			const contentMap = discoverClientScriptContentMap(state.config.root, state.dirs.client)
 			contentMap.forEach((entry, url) => state.clientScripts.set(url, entry))
 		},
 		async resolveId(id, importer) {
 			if (id === RUNTIME_INSTANCE_MODULE_ID) {
-				// Resolve to a real file under .aero so Vite's import-glob allows our patterns (virtual modules require leading '/').
-				return (
-					state.generatedRuntimeInstancePath ??
-					RESOLVED_RUNTIME_INSTANCE_MODULE_ID
-				)
+				// In dev: use virtual module so load() fires and Vite's SSR transform rewrites exports
+				// (Vite 8's AsyncFunction evaluator cannot parse raw ESM export syntax).
+				// In build: resolve to real file under .aero so Vite's import-glob has a file context for glob patterns.
+				if (state.config?.command === 'build' && state.generatedRuntimeInstancePath) {
+					return state.generatedRuntimeInstancePath
+				}
+				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
 			}
 
 			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
@@ -314,9 +304,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					state.aliasResult &&
 					isAeroTemplateHtml(resolved.id, state.config.root, state.dirs)
 				) {
-					return (
-						AERO_HTML_VIRTUAL_PREFIX + resolved.id.replace(/\.html$/i, '.aero')
-					)
+					return AERO_HTML_VIRTUAL_PREFIX + resolved.id.replace(/\.html$/i, '.aero')
 				}
 				return resolved
 			}
@@ -343,10 +331,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 						state.aliasResult &&
 						isAeroTemplateHtml(resolvedHtml.id, state.config.root, state.dirs)
 					) {
-						return (
-							AERO_HTML_VIRTUAL_PREFIX +
-							resolvedHtml.id.replace(/\.html$/i, '.aero')
-						)
+						return AERO_HTML_VIRTUAL_PREFIX + resolvedHtml.id.replace(/\.html$/i, '.aero')
 					}
 					return resolvedHtml
 				}
@@ -364,9 +349,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			}
 
 			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
-				const filePath = id
-					.slice(AERO_HTML_VIRTUAL_PREFIX.length)
-					.replace(/\.aero$/i, '.html')
+				const filePath = id.slice(AERO_HTML_VIRTUAL_PREFIX.length).replace(/\.aero$/i, '.html')
 				if (!state.config || !state.aliasResult) return null
 				// So Vite invalidates this virtual module when the source .html changes (HMR).
 				this.addWatchFile(filePath)
@@ -546,9 +529,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							site: state.options.site,
 						}
 						for (const handler of middleware) {
-							const result: AeroMiddlewareResult = await Promise.resolve(
-								handler(ctx)
-							)
+							const result: AeroMiddlewareResult = await Promise.resolve(handler(ctx))
 							if (result && 'redirect' in result) {
 								res.statusCode = result.redirect.status ?? 302
 								res.setHeader('Location', result.redirect.url)
@@ -557,16 +538,13 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							}
 							if (result && 'response' in result) {
 								res.statusCode = result.response.status
-								result.response.headers.forEach((v: string, k: string) =>
-									res.setHeader(k, v)
-								)
+								result.response.headers.forEach((v: string, k: string) => res.setHeader(k, v))
 								const body = await result.response.arrayBuffer()
 								res.end(Buffer.from(body))
 								return
 							}
 							if (result && 'rewrite' in result) {
-								if (result.rewrite.pageName !== undefined)
-									renderPageName = result.rewrite.pageName
+								if (result.rewrite.pageName !== undefined) renderPageName = result.rewrite.pageName
 								const { pageName: _pn, ...rest } = result.rewrite
 								renderInput = { ...renderInput, ...rest }
 							}
@@ -612,18 +590,11 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 export function aero(options: AeroOptions = {}): PluginOption[] {
 	const dirs = resolveDirs(options.dirs)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	const enableNitro =
-		options.server === true && process.env.AERO_SERVER !== 'false'
+	const enableNitro = options.server === true && process.env.AERO_SERVER !== 'false'
 
-	const runtimeInstanceMjsPath = fileURLToPath(
-		new URL('../runtime/instance.mjs', import.meta.url)
-	)
-	const runtimeInstanceJsPath = fileURLToPath(
-		new URL('../runtime/instance.js', import.meta.url)
-	)
-	const runtimeInstanceTsPath = fileURLToPath(
-		new URL('../runtime/instance.ts', import.meta.url)
-	)
+	const runtimeInstanceMjsPath = fileURLToPath(new URL('../runtime/instance.mjs', import.meta.url))
+	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
+	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
 	const runtimeInstancePath = existsSync(runtimeInstanceMjsPath)
 		? runtimeInstanceMjsPath
 		: existsSync(runtimeInstanceJsPath)
@@ -647,11 +618,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const aeroSsrPlugin = createAeroSsrPlugin(state)
 
 	/** Plugins needed for static build (resolve, load, transform); no SSR/HMR. */
-	const aeroCorePlugins: Plugin[] = [
-		aeroConfigPlugin,
-		aeroVirtualsPlugin,
-		aeroTransformPlugin,
-	]
+	const aeroCorePlugins: Plugin[] = [aeroConfigPlugin, aeroVirtualsPlugin, aeroTransformPlugin]
 
 	const staticBuildPlugin: Plugin = {
 		name: 'vite-plugin-aero-static',
@@ -681,12 +648,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				outDir
 			)
 			if (enableNitro) {
-				const configCwd = writeGeneratedNitroConfig(
-					root,
-					dirs.server,
-					options.redirects,
-					dirs.dist
-				)
+				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects, dirs.dist)
 				await runNitroBuild(root, configCwd)
 			}
 		},
@@ -734,9 +696,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 	if (enableNitro) {
 		const rawNitroPlugins = nitro({ serverDir: dirs.server })
-		const nitroPlugins = Array.isArray(rawNitroPlugins)
-			? rawNitroPlugins
-			: [rawNitroPlugins]
+		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
 		for (const nitroPlugin of nitroPlugins) {
 			if (!nitroPlugin || typeof nitroPlugin !== 'object') continue
 			const originalApply = nitroPlugin.apply

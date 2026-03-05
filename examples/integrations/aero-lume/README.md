@@ -40,7 +40,7 @@ This guide explains how to use [Lume.js](https://github.com/sathvikc/lume-js) fo
 | Concern          | Aero                                                                                                                       | Lume                                                                               |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **When**         | Build / SSR (and client re-render on HMR)                                                                                  | Browser only, after HTML is in the DOM                                             |
-| **Conditionals** | `if` / `data-if` with `{ expression }` — expression runs at **render time** (build context: `aero.props`, `site`, globals) | `data-show="key"` — show/hide based on **reactive store** in the browser           |
+| **Conditionals** | `if` / `data-if` with `{ expression }` — expression runs at **render time** (build context: `Aero.props`, `site`, globals) | `data-show="key"` — show/hide based on **reactive store** in the browser           |
 | **Data**         | Template context (props, content, globals)                                                                                 | `state({ ... })` + `bindDom(root, store)`                                          |
 | **Attributes**   | Directives like `if`, `each`, `props` are compiled away                                                                    | `data-bind`, `data-show`, etc. are left in HTML and interpreted by Lume at runtime |
 
@@ -282,7 +282,7 @@ Store: `state({ isSubmitting: false, isLoading: false })`.
 
 ## When to use Aero’s `if` vs Lume
 
-- **Use Aero’s `if` / `data-if`** when the condition depends only on **build-time or SSR context**: `aero.props`, content, globals, `site`. Example: “show a promo block only when `site.featureFlags.promo` is true.”
+- **Use Aero’s `if` / `data-if`** when the condition depends only on **build-time or SSR context**: `Aero.props`, content, globals, `site`. Example: “show a promo block only when `site.featureFlags.promo` is true.”
 - **Use Lume’s `data-show` (or similar)** when the condition depends on **client state** that changes after load: “show header when `store.name` is set,” “show panel when `store.menuOpen` is true.”
 
 You can combine both: e.g. Aero’s `if` to include a whole section only for certain routes or flags, and inside that section use Lume attributes for fine-grained reactivity.

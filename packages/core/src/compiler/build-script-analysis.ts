@@ -171,6 +171,107 @@ export interface BuildScriptAnalysisForEditorResult {
 	imports: BuildScriptImportForEditor[]
 }
 
+/** Result of getPropsTypeFromBuildScript: the type name used in `Aero.props as TypeName`. */
+export interface PropsTypeResult {
+	typeName: string
+	isFromDestructuring: boolean
+}
+
+/**
+ * Extract the props type name from a build script that uses `Aero.props as TypeName`
+ * or `const { ... } = Aero.props as TypeName`.
+ *
+ * @param script - Raw build script content (JS or TS).
+ * @returns The type name and whether it was from destructuring, or null if not found.
+ */
+export function getPropsTypeFromBuildScript(script: string): PropsTypeResult | null {
+	if (!script.trim()) return null
+
+	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
+		sourceType: 'module',
+		range: true,
+		lang: 'ts',
+	})
+
+	if (result.errors.length > 0) return null
+
+	const body = (result.program as { body?: unknown[] }).body
+	if (!body) return null
+
+	for (const stmt of body) {
+		const found = findPropsTypeInNode(stmt)
+		if (found) return found
+	}
+	return null
+}
+
+function findPropsTypeInNode(node: unknown): PropsTypeResult | null {
+	if (!node || typeof node !== 'object') return null
+	const n = node as Record<string, unknown>
+
+	if (n.type === 'TSAsExpression') {
+		const expr = n.expression as Record<string, unknown>
+		const typeAnnotation = n.typeAnnotation as Record<string, unknown>
+		if (isAeroProps(expr)) {
+			const typeName = getTypeNameFromAnnotation(typeAnnotation)
+			if (typeName) {
+				return { typeName, isFromDestructuring: false }
+			}
+		}
+		return null
+	}
+
+	if (n.type === 'VariableDeclaration') {
+		const declarations = n.declarations as unknown[]
+		for (const decl of declarations ?? []) {
+			const d = decl as Record<string, unknown>
+			const init = d.init
+			const id = d.id
+			const isDestructuring =
+				id && typeof id === 'object' && (id as Record<string, unknown>).type === 'ObjectPattern'
+			const found = findPropsTypeInNode(init)
+			if (found) {
+				return { ...found, isFromDestructuring: !!isDestructuring }
+			}
+		}
+		return null
+	}
+
+	// Recurse into expression/statement children
+	const childKeys = ['init', 'expression', 'argument', 'body', 'consequent', 'alternate']
+	for (const key of childKeys) {
+		const child = n[key]
+		if (Array.isArray(child)) {
+			for (const c of child) {
+				const found = findPropsTypeInNode(c)
+				if (found) return found
+			}
+		} else if (child) {
+			const found = findPropsTypeInNode(child)
+			if (found) return found
+		}
+	}
+	return null
+}
+
+function isAeroProps(expr: Record<string, unknown>): boolean {
+	if (expr?.type !== 'MemberExpression') return false
+	const obj = expr.object as Record<string, unknown>
+	const prop = expr.property as Record<string, unknown>
+	const objName = obj?.type === 'Identifier' ? obj.name : (obj as { name?: string })?.name
+	const propName = prop?.type === 'Identifier' ? prop.name : (prop as { name?: string })?.name
+	return objName === 'Aero' && propName === 'props'
+}
+
+function getTypeNameFromAnnotation(annotation: Record<string, unknown>): string | null {
+	if (!annotation) return null
+	if (annotation.type === 'TSTypeReference') {
+		const typeName = annotation.typeName as Record<string, unknown>
+		return typeName?.name as string
+	}
+	return null
+}
+
 /**
  * Analyze build script for editor use: same as analyzeBuildScript but returns imports with
  * source ranges (full statement and per-binding) so the extension can map to vscode.Range.
@@ -178,9 +279,7 @@ export interface BuildScriptAnalysisForEditorResult {
  * @param script - Raw build script content (JS or TS).
  * @returns Imports with range and bindingRanges. On parse error, throws.
  */
-export function analyzeBuildScriptForEditor(
-	script: string
-): BuildScriptAnalysisForEditorResult {
+export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysisForEditorResult {
 	if (!script.trim()) {
 		return { imports: [] }
 	}

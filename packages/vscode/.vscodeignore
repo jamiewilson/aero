@@ -9,6 +9,7 @@ webpack.config.js
 webpack.config.ts
 vsc-extension-quickstart.md
 tsconfig.json
+tsdown.config.ts
 vitest.config.ts
 **/*.map
 *.vsix

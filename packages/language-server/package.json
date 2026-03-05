@@ -1,0 +1,48 @@
+{
+	"name": "@aerobuilt/language-server",
+	"version": "0.3.2",
+	"private": false,
+	"description": "Volar-based language server for Aero templates",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aerobuilt/aero.git",
+		"directory": "packages/language-server"
+	},
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.mts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"default": "./dist/index.mjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"bin": {
+		"aero-language-server": "./bin/aero-language-server.js"
+	},
+	"scripts": {
+		"prebuild": "node scripts/generate-ambient-preamble.mjs",
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@volar/language-core": "~2.4.0",
+		"@volar/language-server": "~2.4.0",
+		"@volar/typescript": "~2.4.0",
+		"volar-service-css": "0.0.62",
+		"volar-service-html": "0.0.62",
+		"volar-service-typescript": "0.0.62",
+		"vscode-html-languageservice": "^5.3.1",
+		"vscode-languageserver-textdocument": "^1.0.12",
+		"vscode-uri": "^3.0.8"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3"
+	}
+}

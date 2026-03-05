@@ -57,10 +57,10 @@ describe('Vite Plugin Integration', () => {
 		const id = path.join(process.cwd(), 'client/pages/plain.html')
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('@aero/client')
-		expect(result.code).toContain('client/pages/plain.js')
+		expect(result.code).toContain('client/pages/plain.ts')
 		expect(result.code).toMatch(/scripts\?\.add\(.*script.*src/)
 		expect(result.code).not.toContain('import { allCaps }')
-		const virtualId = '\0/@aero/client/client/pages/plain.js'
+		const virtualId = '\0/@aero/client/client/pages/plain.ts'
 		const loadedContent = virtualsPlugin.load(virtualId)
 		expect(loadedContent).toContain('allCaps')
 		expect(loadedContent).toContain("console.log(allCaps('plain'))")
@@ -76,7 +76,7 @@ describe('Vite Plugin Integration', () => {
 		const id = path.join(process.cwd(), 'client/pages/home.html')
 		transformPlugin.transform.call(pluginCtx, html, id)
 
-		const virtualId = '\0/@aero/client/client/pages/home.js'
+		const virtualId = '\0/@aero/client/client/pages/home.ts'
 		const loadedContent = virtualsPlugin.load(virtualId)
 		expect(loadedContent).toContain('window.__aero_data_next')
 		expect(loadedContent).toContain('delete window.__aero_data_next')
@@ -177,7 +177,7 @@ describe('Vite Plugin Integration', () => {
 			configPlugin.config({ root: tmpDir })
 			configPlugin.configResolved({ root: tmpDir })
 			virtualsPlugin.buildStart?.()
-			const virtualId = '\0/@aero/client/client/pages/prefill-test.js'
+			const virtualId = '\0/@aero/client/client/pages/prefill-test.ts'
 			const loaded = virtualsPlugin.load(virtualId)
 			expect(loaded).toContain(unique)
 		} finally {
@@ -185,6 +185,26 @@ describe('Vite Plugin Integration', () => {
 			configPlugin.config({ root: process.cwd() })
 			configPlugin.configResolved({ root: process.cwd() })
 		}
+	})
+
+	it('should use .ts extension for virtual client script URLs so Vite transpiles TypeScript', async () => {
+		const html = `
+<script is:build>const x = 1;</script>
+<div>Content</div>
+<script>
+	const msg: string = 'typed';
+	console.log(msg);
+</script>
+`
+		const id = path.join(process.cwd(), 'client/pages/typed.html')
+		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
+
+		expect(result.code).toContain('client/pages/typed.ts')
+		expect(result.code).not.toContain('client/pages/typed.js')
+
+		const virtualId = '\0/@aero/client/client/pages/typed.ts'
+		const loadedContent = virtualsPlugin.load(virtualId)
+		expect(loadedContent).toContain("const msg: string = 'typed'")
 	})
 
 	it('does not register a custom HMR plugin (handleHotUpdate); HMR is dependency-driven via single client entry', () => {

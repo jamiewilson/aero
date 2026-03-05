@@ -8,6 +8,7 @@ export default defineConfig({
 			'packages/highlight/**/*.test.ts',
 			'packages/interpolation/**/*.test.ts',
 			'packages/vscode/**/*.test.ts',
+			'packages/language-server/**/*.test.ts',
 			'packages/create-aerobuilt/**/*.test.js',
 		],
 	},

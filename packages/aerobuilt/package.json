@@ -1,6 +1,6 @@
 {
 	"name": "aerobuilt",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"homepage": "https://github.com/aerobuilt/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -26,13 +26,17 @@
 			"types": "./dist/content.d.mts",
 			"default": "./dist/content.mjs"
 		},
+		"./runtime": {
+			"types": "./dist/runtime.d.mts",
+			"default": "./dist/runtime.mjs"
+		},
 		"./vite": {
 			"types": "./dist/vite.d.mts",
 			"default": "./dist/vite.mjs"
 		}
 	},
 	"scripts": {
-		"build": "tsdown src/client.ts src/config.ts src/content.ts src/vite.ts --format esm --dts --clean --out-dir dist --minify",
+		"build": "tsdown src/client.ts src/config.ts src/content.ts src/runtime.ts src/vite.ts --format esm --dts --clean --out-dir dist --minify",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {

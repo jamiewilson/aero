@@ -1,7 +1,14 @@
-<script is:build>
+<script is:build lang="ts">
 	import logo from '@components/logo'
 	const isHomepage = Aero.url.pathname === '/'
-	const props = Aero.props
+
+	export interface HeaderProps {
+		title: string
+		subtitle?: string
+		requiredProp: boolean
+	}
+
+	const props = Aero.props as HeaderProps
 </script>
 
 <header>

@@ -15,9 +15,9 @@ export type AeroScopeMode = 'auto' | 'strict' | 'always'
 const CONFIG_SECTION = 'aero'
 const CONFIG_SCOPE_MODE = 'scopeMode'
 
-/** Regexes that indicate Aero template content (script on:build/on:client, -component/-layout tags, data-* directives). */
+/** Regexes that indicate Aero template content (script is:build/is:inline/is:blocking, -component/-layout tags, data-* directives). */
 const AERO_MARKERS = [
-	/<script\b[^>]*\bon:(?:build|client)\b/i,
+	/<script\b[^>]*\bis:(?:build|inline|blocking)\b/i,
 	/<[a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout)\b/i,
 	/\bdata-(?:if|else-if|else|each|props)\b/,
 ]
@@ -27,7 +27,7 @@ const PROJECT_MARKERS: RegExp[] = [
 	/@aerobuilt/,
 	/@components\/\*/,
 	/@layouts\/\*/,
-	/on:(?:build|client)/,
+	/is:(?:build|inline|blocking)/,
 ]
 
 const cache = new Map<string, boolean>()
@@ -48,8 +48,9 @@ export function getScopeMode(): AeroScopeMode {
 
 /** True if document is considered an Aero template (used by providers/diagnostics). */
 export function isAeroDocument(document: vscode.TextDocument): boolean {
-	if (document.languageId !== 'html' || document.uri.scheme !== 'file')
-		return false
+	if (document.uri.scheme !== 'file') return false
+	if (document.languageId === 'aero') return true
+	if (document.languageId !== 'html') return false
 
 	const mode = getScopeMode()
 	if (mode === 'always') return true
@@ -59,6 +60,11 @@ export function isAeroDocument(document: vscode.TextDocument): boolean {
 	if (mode === 'strict') return false
 
 	return hasAeroMarkers(document.getText())
+}
+
+/** True if the file is inside a detected Aero project (exported for auto-language switching). */
+export function isInAeroProjectPath(filePath: string): boolean {
+	return isInAeroProject(filePath)
 }
 
 function hasAeroMarkers(text: string): boolean {

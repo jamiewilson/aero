@@ -55,10 +55,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 
 			case 'script-src':
 			case 'link-href': {
-				const value =
-					classification.kind === 'script-src'
-						? classification.value
-						: classification.value
+				const value = classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
 				const label =

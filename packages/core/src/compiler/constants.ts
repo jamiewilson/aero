@@ -4,6 +4,8 @@
  * @remarks
  * Attribute names are used with optional `data-` prefix (e.g. `data-each`). Script taxonomy uses
  * `is:build`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
+ * When changing script taxonomy (is:build, is:inline, etc.), update all consumers per
+ * _reference/script-taxonomy-sync.md.
  */
 
 /** Prefix for data attributes (e.g. `data-each` → ATTR_PREFIX + ATTR_EACH). */

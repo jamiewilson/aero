@@ -110,7 +110,7 @@ Components are reusable `.html` files in `client/components/`. Import them in `<
 ```html
 <!-- client/components/greeting.html -->
 <script is:build>
-	const { name } = aero.props
+	const { name } = Aero.props
 </script>
 
 <h2>Hello, { name }!</h2>
@@ -144,11 +144,11 @@ Pass data to components via attributes. Use `{ }` for expressions:
 <greeting-component props="{ ...myProps }" />
 ```
 
-Components receive props via `aero.props`:
+Components receive props via `Aero.props`:
 
 ```html
 <script is:build>
-	const { name, greeting = 'Hello' } = aero.props
+	const { name, greeting = 'Hello' } = Aero.props
 </script>
 
 <h2>{ greeting }, { name }!</h2>

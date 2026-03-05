@@ -14,9 +14,10 @@ The `is:build` attribute defines the "server-side render body" of your component
 - **Purpose:** Used to fetch data, import components, read configuration, and process properties before the template is converted into HTML.
 - **Syntax Limitation:** You can only have one `<script is:build>` tag per template file.
 - **Output:** This code **never** reaches the browser. It gets compiled into the hidden `export default async function(Aero) { ... }` module that powers the static site generator.
+- **TypeScript / IntelliSense:** Add `lang="ts"` (or `lang="typescript"`) so the language server extracts the block for TypeScript IntelliSense. This also enables Prettier and oxfmt to format the script content.
 
 ```html
-<script is:build>
+<script is:build lang="ts">
 	import Header from '@components/header'
 	const title = 'Welcome to Aero'
 </script>
@@ -89,3 +90,7 @@ If you had any `on:client` scripts that you intended to be completely externaliz
 ### pass:data and multiple instances
 
 When the same component is used multiple times with different `pass:data`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [pass-data-directive.md](pass-data-directive.md) for how to use `pass:data`.
+
+---
+
+**Implementation note:** For contributors changing this taxonomy, see [_reference/script-taxonomy-sync.md](../_reference/script-taxonomy-sync.md) for the implementation checklist.

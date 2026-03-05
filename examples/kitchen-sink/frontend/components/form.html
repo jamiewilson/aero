@@ -11,12 +11,8 @@
 		hx-on::after-request="if (event.detail.successful) this.reset()"
 		hx-target="[hx-toast]"
 		hx-swap="innerHTML">
-		<input
-			x-model="input"
-			type="text"
-			name="message"
-			placeholder="Enter a message" />
-		<button type="submit" :disabled="!input.length">{site.home.cta}</button>
+		<input x-model="input" type="text" name="message" placeholder="Enter a message" />
+		<button type="submit" :disabled="!input.length">{ site.home.cta }</button>
 	</form>
 
 	<!-- Needs to be hoisted to bottom of body if not inline -->

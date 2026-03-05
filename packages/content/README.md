@@ -47,7 +47,7 @@ export default defineConfig({ collections: [docs] })
 		return docs.map((doc) => ({ params: { slug: doc._meta.slug }, props: doc }))
 	}
 
-	const doc = aero.props
+	const doc = Aero.props
 	const { html } = await render(doc)
 </script>
 <article each="{ doc in [doc] }">

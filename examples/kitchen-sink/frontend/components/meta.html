@@ -1,6 +1,7 @@
-<script is:build>
+<script is:build lang="ts">
 	import site from '@content/site'
-	const { title, description, image } = Aero.props
+	import type { MetaProps } from '@content/types/props'
+	const { title, description, image } = Aero.props as MetaProps
 	const defaultImage = Aero.site + site.meta.ogImage
 </script>
 
@@ -20,15 +21,11 @@
 <!-- Open Graph metadata -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="{ title || site.meta.title }" />
-<meta
-	property="og:description"
-	content="{ description || site.meta.description }" />
+<meta property="og:description" content="{ description || site.meta.description }" />
 <meta property="og:image" content="{ image || defaultImage }" />
 
 <!-- Twitter Card metadata -->
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="{ title || site.meta.title }" />
-<meta
-	property="twitter:description"
-	content="{ description || site.meta.description }" />
+<meta property="twitter:description" content="{ description || site.meta.description }" />
 <meta property="twitter:image" content="{ image || defaultImage }" />

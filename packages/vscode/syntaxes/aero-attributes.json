@@ -8,8 +8,8 @@
 	],
 	"repository": {
 		"aero-script-type-attributes": {
-			"comment": "Highlight is:build and is:client as special script type attributes",
-			"match": "\\b(is:(build|client))\\b",
+			"comment": "Highlight is:build, is:inline, and is:blocking as special script type attributes",
+			"match": "\\b(is:(build|inline|blocking))\\b",
 			"captures": {
 				"1": { "name": "entity.other.attribute-name.html" }
 			}

@@ -36,7 +36,7 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ### Script Types
 
-- `<script is:build>` - Runs at build time; has access to `aero.props`, `Aero.site` (canonical URL from config), `site` globals (from content), imports. One per template.
+- `<script is:build>` - Runs at build time; has access to `Aero.props`, `Aero.site` (canonical URL from config), `site` globals (from content), imports. One per template.
 - Plain `<script>` (no `is:*`) - Bundled as virtual module, runs in browser (client).
 - `<script is:inline>` - Left in place in HTML; not bundled by Vite; runs in browser immediately.
 - `<script is:blocking>` - Extracted and emitted in `<head>` (e.g. blocking scripts).
@@ -56,11 +56,11 @@ Props passed via attributes or `props`:
 <!-- explicit spread -->
 ```
 
-Components receive via `aero.props`:
+Components receive via `Aero.props`:
 
 ```html
 <script is:build>
-	const { title, subtitle } = aero.props
+	const { title, subtitle } = Aero.props
 </script>
 ```
 

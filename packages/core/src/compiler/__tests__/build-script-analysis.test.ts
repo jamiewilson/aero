@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest'
 import {
 	analyzeBuildScript,
 	analyzeBuildScriptForEditor,
+	getPropsTypeFromBuildScript,
 } from '../build-script-analysis'
 
 describe('analyzeBuildScript', () => {
@@ -250,5 +251,30 @@ const x = header`
 		expect(() => analyzeBuildScriptForEditor('import { from "./x"')).toThrow(
 			/parse error/
 		)
+	})
+})
+
+describe('getPropsTypeFromBuildScript', () => {
+	it('extracts type from Aero.props as HeaderProps', () => {
+		const script = `const props = Aero.props as HeaderProps`
+		const result = getPropsTypeFromBuildScript(script)
+		expect(result).toEqual({ typeName: 'HeaderProps', isFromDestructuring: false })
+	})
+
+	it('extracts type from destructuring const { x } = Aero.props as MetaProps', () => {
+		const script = `const { title, description, image } = Aero.props as MetaProps`
+		const result = getPropsTypeFromBuildScript(script)
+		expect(result).toEqual({ typeName: 'MetaProps', isFromDestructuring: true })
+	})
+
+	it('returns null when no Aero.props as Type', () => {
+		const script = `const x = 1
+const props = Aero.props`
+		const result = getPropsTypeFromBuildScript(script)
+		expect(result).toBeNull()
+	})
+
+	it('returns null for empty script', () => {
+		expect(getPropsTypeFromBuildScript('   \n  ')).toBeNull()
 	})
 })

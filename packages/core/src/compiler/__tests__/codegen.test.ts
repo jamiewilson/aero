@@ -1217,6 +1217,107 @@ describe('Codegen', () => {
 			)
 		})
 	})
+
+	// =========================================================================
+	// TypeScript support (type stripping)
+	// =========================================================================
+
+	it('should strip TypeScript type annotations from build scripts', async () => {
+		const html = `<script is:build>
+			const title: string = 'Hello';
+			const count: number = 42;
+		</script>
+		<h1>{ title } - { count }</h1>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<h1>Hello - 42</h1>')
+	})
+
+	it('should strip TypeScript interfaces and type aliases from build scripts', async () => {
+		const html = `<script is:build>
+			interface PageProps {
+				title: string;
+				count: number;
+			}
+			type Status = 'active' | 'inactive';
+			const props: PageProps = { title: 'Typed', count: 7 };
+			const status: Status = 'active';
+		</script>
+		<p>{ props.title } ({ status })</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<p>Typed (active)</p>')
+	})
+
+	it('should strip TypeScript "as" type assertions from build scripts', async () => {
+		const html = `<script is:build>
+			const data = { name: 'Test' } as { name: string };
+			const label = (data as any).name as string;
+		</script>
+		<span>{ label }</span>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<span>Test</span>')
+	})
+
+	it('should strip TypeScript generics from build scripts', async () => {
+		const html = `<script is:build>
+			function identity<T>(val: T): T { return val; }
+			const result = identity<string>('generic');
+		</script>
+		<p>{ result }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<p>generic</p>')
+	})
+
+	it('should strip TypeScript satisfies operator from build scripts', async () => {
+		const html = `<script is:build>
+			const config = { theme: 'dark', debug: false } satisfies Record<string, unknown>;
+		</script>
+		<p>{ config.theme }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<p>dark</p>')
+	})
+
+	it('should strip TypeScript from blocking scripts', async () => {
+		const html = `<script is:build>
+			const config = { theme: 'dark' };
+		</script>
+		<script is:blocking>
+			const x: number = 1;
+			console.log(x);
+		</script>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, {
+			...mockOptions,
+			blockingScripts: parsed.blockingScripts,
+		})
+
+		const headScripts = new Set<string>()
+		await execute(code, { headScripts })
+		const out = Array.from(headScripts).join('\n')
+
+		expect(out).toContain('console.log(x)')
+		expect(out).not.toContain(': number')
+	})
 })
 
 // =========================================================================

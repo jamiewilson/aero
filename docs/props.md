@@ -4,7 +4,7 @@ Aero provides a flexible, Astro-inspired props system for component composition.
 
 ## Core Concept
 
-**All props are accessed via `aero.props`** (or `Aero.props`) — the single source of truth in build scripts. Components destructure what they need from `aero.props`.
+**All props are accessed via `Aero.props`** — the single source of truth in build scripts. Components destructure what they need from `Aero.props`.
 
 ## How attribute values work
 
@@ -95,11 +95,11 @@ Combine `props` with individual attributes:
 
 ## Receiving Props in Components
 
-Components access props by destructuring `aero.props` (or `Aero.props`):
+Components access props by destructuring `Aero.props`:
 
 ```html
 <script is:build>
-	const { title, subtitle } = aero.props
+	const { title, subtitle } = Aero.props
 </script>
 
 <header>
@@ -112,7 +112,7 @@ Components access props by destructuring `aero.props` (or `Aero.props`):
 
 ```html
 <script is:build>
-	const { title = 'Default Title', subtitle } = aero.props
+	const { title = 'Default Title', subtitle } = Aero.props
 </script>
 ```
 
@@ -120,7 +120,7 @@ Components access props by destructuring `aero.props` (or `Aero.props`):
 
 ```html
 <script is:build>
-	const { title, description } = aero.props
+	const { title, description } = Aero.props
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
@@ -133,7 +133,7 @@ Components access props by destructuring `aero.props` (or `Aero.props`):
 
 Inside `<script is:build>` you have access to:
 
-- **`aero.props`** (or **`Aero.props`**) — Props passed to this component
+- **`Aero.props`** — Props passed to this component
 - **`Aero.request`** - Current request object
 - **`Aero.url`** - Current page URL
 - **`Aero.params`** - Route params for dynamic routes
@@ -193,7 +193,7 @@ In a dynamic route file such as `client/pages/docs/[slug].html`:
 ```html
 <!-- client/components/greeting.html -->
 <script is:build>
-	const { name } = aero.props
+	const { name } = Aero.props
 </script>
 
 <h1>Hello, { name }!</h1>
