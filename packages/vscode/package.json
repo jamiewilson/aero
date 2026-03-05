@@ -32,7 +32,7 @@
 	"main": "./dist/extension.cjs",
 	"scripts": {
 		"dev": "tsdown --watch",
-		"build": "tsdown --minify",
+		"build": "pnpm --dir ../language-server exec npm run prebuild && tsdown --minify",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"vscode:prepublish": "cp ../../LICENSE ."

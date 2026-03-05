@@ -5,6 +5,10 @@
  * or via a triple-slash directive: `/// <reference types="@aerobuilt/core/env" />`
  *
  * These declarations type the globals available inside `<script is:build>` blocks.
+ *
+ * Single source of truth: the language server generates its preamble from this file.
+ * When changing globals (Aero, renderComponent, *.html, aero:content), run:
+ *   pnpm --dir packages/language-server exec npm run prebuild
  */
 
 /**
@@ -46,4 +50,17 @@ declare function renderComponent(
 declare module '*.html' {
 	const component: string
 	export default component
+}
+
+/** Content collections: getCollection, render. Used by the language server for IntelliSense. */
+declare module 'aero:content' {
+	interface CollectionEntry {
+		id: string
+		data: Record<string, any>
+		body?: string
+	}
+	export function getCollection(name: string): Promise<CollectionEntry[]>
+	export function render(
+		entry: CollectionEntry | Record<string, any>,
+	): Promise<{ html: string }>
 }

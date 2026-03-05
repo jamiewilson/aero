@@ -31,40 +31,6 @@ const BUILD_SCRIPT_FEATURES: CodeInformation = {
 	},
 }
 
-const AERO_CONTEXT_TYPE = [
-	'{',
-	'  props: Record<string, any>;',
-	'  slots: Record<string, string>;',
-	'  request: Request;',
-	'  url: URL;',
-	'  params: Record<string, string>;',
-	'  site?: string;',
-	'}',
-].join('\n')
-
-const BUILD_SCRIPT_PREAMBLE = [
-	`declare const Aero: ${AERO_CONTEXT_TYPE};`,
-	'declare function renderComponent(',
-	'  component: any,',
-	'  props?: Record<string, any>,',
-	'  slots?: Record<string, string>,',
-	'): Promise<string>;',
-	"declare module '*.html' {",
-	'  const component: string;',
-	'  export default component;',
-	'}',
-	'',
-].join('\n')
-
-const AMBIENT_DECLARATIONS = [
-	"declare module 'aero:content' {",
-	'  interface CollectionEntry { id: string; data: Record<string, any>; body?: string; }',
-	'  export function getCollection(name: string): Promise<CollectionEntry[]>;',
-	'  export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>;',
-	'}',
-	'',
-].join('\n')
-
 const ambientSnapshot: IScriptSnapshot = {
 	getText: (start, end) => AMBIENT_DECLARATIONS.substring(start, end),
 	getLength: () => AMBIENT_DECLARATIONS.length,

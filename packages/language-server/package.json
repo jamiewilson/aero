@@ -25,6 +25,7 @@
 		"aero-language-server": "./bin/aero-language-server.js"
 	},
 	"scripts": {
+		"prebuild": "node scripts/generate-ambient-preamble.mjs",
 		"build": "tsdown",
 		"typecheck": "tsc --noEmit"
 	},
