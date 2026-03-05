@@ -1,41 +1,139 @@
 /**
- * Aero VS Code extension entry: registers language providers and wires cache invalidation.
+ * Aero VS Code extension entry: registers language providers, starts the Volar-based
+ * language server, auto-applies the `aero` language to HTML files in Aero projects,
+ * and wires cache invalidation.
  *
  * @remarks
- * Registers definition, completion, hover, and diagnostics for HTML (Aero) files. Clears path and scope caches when tsconfig or aero.scopeMode changes.
+ * Starts a Volar language server for TypeScript IntelliSense inside script blocks, and
+ * registers definition, completion, hover, and diagnostics for HTML/Aero files. Auto-switches
+ * `.html` files to the `aero` language when they are in an Aero project so the custom grammar
+ * (TypeScript in script blocks) applies. Clears path and scope caches when tsconfig or
+ * aero.scopeMode changes.
  */
 import * as vscode from 'vscode'
+import * as fs from 'node:fs'
+import {
+	LanguageClient,
+	type LanguageClientOptions,
+	type ServerOptions,
+	TransportKind,
+} from '@volar/vscode/node'
+import { getTsdk } from '@volar/vscode'
 import { AeroDefinitionProvider } from './definitionProvider'
 import { AeroCompletionProvider } from './completionProvider'
 import { AeroHoverProvider } from './hoverProvider'
 import { AeroDiagnostics } from './diagnostics'
 import { clearResolverCache } from './pathResolver'
-import { clearScopeCache } from './scope'
+import {
+	clearScopeCache,
+	getScopeMode,
+	isInAeroProjectPath,
+} from './scope'
 import { HTML_SELECTOR } from './constants'
 
-export function activate(context: vscode.ExtensionContext): void {
-	// ---- Completion Provider (Phase 3) ----
+let languageClient: LanguageClient | undefined
+
+function shouldSwitchToAero(document: vscode.TextDocument): boolean {
+	if (document.languageId !== 'html' || document.uri.scheme !== 'file')
+		return false
+	const mode = getScopeMode()
+	if (mode === 'always') return true
+	return isInAeroProjectPath(document.uri.fsPath)
+}
+
+async function trySetAeroLanguage(
+	document: vscode.TextDocument
+): Promise<void> {
+	if (!shouldSwitchToAero(document)) return
+	try {
+		await vscode.languages.setTextDocumentLanguage(document, 'aero')
+	} catch {
+		// Document may have been closed between check and switch
+	}
+}
+
+export async function activate(
+	context: vscode.ExtensionContext,
+): Promise<void> {
+	// ---- Language Server (Volar) ----
+	const serverModule = vscode.Uri.joinPath(
+		context.extensionUri,
+		'dist',
+		'server.cjs',
+	)
+	const serverOptions: ServerOptions = {
+		run: {
+			module: serverModule.fsPath,
+			transport: TransportKind.ipc,
+		},
+		debug: {
+			module: serverModule.fsPath,
+			transport: TransportKind.ipc,
+			options: { execArgv: ['--nolazy', '--inspect=6009'] },
+		},
+	}
+
+	const tsdk = await getTsdk(context)
+	const clientOptions: LanguageClientOptions = {
+		documentSelector: [{ language: 'aero' }],
+		initializationOptions: {
+			typescript: { tsdk: tsdk?.tsdk },
+		},
+		middleware: {
+			provideDocumentLinks(document, token, next) {
+				return next(document, token).then(links => {
+					if (!links) return links
+					return links.filter(link => {
+						if (link.target?.scheme !== 'file') return true
+						return fs.existsSync(link.target.fsPath)
+					})
+				})
+			},
+		},
+	}
+
+	languageClient = new LanguageClient(
+		'aero-language-server',
+		'Aero Language Server',
+		serverOptions,
+		clientOptions,
+	)
+	await languageClient.start()
+	context.subscriptions.push({ dispose: () => languageClient?.stop() })
+
+	// ---- Auto-language switching ----
+	for (const doc of vscode.workspace.textDocuments) {
+		trySetAeroLanguage(doc)
+	}
+
+	context.subscriptions.push(
+		vscode.workspace.onDidOpenTextDocument(doc => {
+			trySetAeroLanguage(doc)
+		}),
+	)
+
+	// ---- Completion Provider ----
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider(
 			HTML_SELECTOR,
 			new AeroCompletionProvider(),
-			'<', // trigger on opening tag
-			'/', // trigger for path completions
-			'@', // trigger for alias completions
-			'"', // trigger inside attribute values
-			"'" // trigger inside attribute values
-		)
+			'<',
+			'/',
+			'@',
+			'"',
+			"'",
+		),
 	)
 
-	// ---- Hover Provider (Phase 3) ----
+	// ---- Hover Provider ----
 	context.subscriptions.push(
 		vscode.languages.registerHoverProvider(
 			HTML_SELECTOR,
-			new AeroHoverProvider()
-		)
+			new AeroHoverProvider(),
+		),
 	)
 
-	// ---- Diagnostics (Phase 3) ----
+	// ---- Diagnostics ----
 	const diagnostics = new AeroDiagnostics(context)
 	context.subscriptions.push(diagnostics)
 
@@ -43,12 +141,11 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.languages.registerDefinitionProvider(
 			HTML_SELECTOR,
-			new AeroDefinitionProvider()
-		)
+			new AeroDefinitionProvider(),
+		),
 	)
 
 	// ---- Cache invalidation ----
-	// Clear caches when tsconfig or workspace changes
 	const tsconfigWatcher =
 		vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
 	tsconfigWatcher.onDidChange(() => {
@@ -70,12 +167,14 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (event.affectsConfiguration('aero.scopeMode')) {
 				clearScopeCache()
 			}
-		})
+		}),
 	)
 }
 
-/** Called when the extension is deactivated; clears path and scope caches. */
-export function deactivate(): void {
+/** Called when the extension is deactivated; stops the language server and clears caches. */
+export async function deactivate(): Promise<void> {
+	await languageClient?.stop()
+	languageClient = undefined
 	clearResolverCache()
 	clearScopeCache()
 }

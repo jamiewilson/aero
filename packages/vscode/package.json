@@ -27,18 +27,20 @@
 		"url": "https://github.com/aerobuilt/aero.git",
 		"directory": "packages/vscode"
 	},
+	"type": "module",
 	"publisher": "aerobuilt",
 	"main": "./dist/extension.cjs",
 	"scripts": {
-		"dev": "tsdown src/extension.ts --format cjs --out-dir dist --external vscode --watch",
-		"build": "tsdown src/extension.ts --format cjs --out-dir dist --external vscode --minify",
+		"dev": "tsdown --watch",
+		"build": "tsdown --minify",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
 		"@aerobuilt/core": "workspace:*",
-		"@aerobuilt/interpolation": "workspace:*"
+		"@aerobuilt/interpolation": "workspace:*",
+		"@volar/vscode": "~2.4.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.0",
@@ -48,6 +50,20 @@
 		"vitest": "^4.0.18"
 	},
 	"contributes": {
+		"languages": [
+			{
+				"id": "aero",
+				"aliases": [
+					"Aero",
+					"Aero HTML"
+				],
+				"icon": {
+					"light": "./images/html-icon.svg",
+					"dark": "./images/html-icon.svg"
+				},
+				"configuration": "./language-configuration.json"
+			}
+		],
 		"configuration": {
 			"title": "Aero",
 			"properties": {
@@ -65,11 +81,23 @@
 		},
 		"grammars": [
 			{
+				"language": "aero",
+				"scopeName": "text.html.aero",
+				"path": "./syntaxes/aero.tmLanguage.json",
+				"embeddedLanguages": {
+					"source.css": "css",
+					"source.js": "javascript",
+					"source.ts": "typescript",
+					"meta.embedded.expression.aero source.ts": "typescript"
+				}
+			},
+			{
 				"path": "./syntaxes/aero-expressions.json",
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html.derivative"
+					"text.html.derivative",
+					"text.html.aero"
 				],
 				"embeddedLanguages": {
 					"meta.embedded.expression.aero source.ts": "typescript"
@@ -80,7 +108,8 @@
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html.derivative"
+					"text.html.derivative",
+					"text.html.aero"
 				]
 			},
 			{
@@ -88,13 +117,15 @@
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html.derivative"
+					"text.html.derivative",
+					"text.html.aero"
 				]
 			}
 		]
 	},
 	"activationEvents": [
-		"onLanguage:html"
+		"onLanguage:html",
+		"onLanguage:aero"
 	],
 	"icon": "images/logo.png",
 	"engines": {

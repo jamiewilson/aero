@@ -19,6 +19,14 @@ import { emitToJS, emitBodyAndStyle } from './emit'
 import { parse } from './parser'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
+import { transformSync } from 'oxc-transform'
+
+/** Strip TypeScript syntax from a script string, returning plain JavaScript. */
+function stripTypes(code: string, filename = 'script.ts'): string {
+	if (!code.trim()) return code
+	const result = transformSync(filename, code, { typescript: { onlyRemoveTypeImports: true } })
+	return result.code
+}
 
 /** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional pass:data expr. */
 interface ParsedElementAttrs {
@@ -627,7 +635,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
 	const analysis = analyzeBuildScript(script)
-	script = analysis.scriptWithoutImportsAndGetStaticPaths
+	script = stripTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const getStaticPathsFn = analysis.getStaticPathsFn
 
 	const importsLines: string[] = []
@@ -749,6 +757,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Process Blocking Scripts (Hoisted to Head)
 	if (options.blockingScripts) {
 		for (const blockingScript of options.blockingScripts) {
+			const strippedContent = stripTypes(blockingScript.content, 'blocking.ts')
 			if (blockingScript.passDataExpr) {
 				const passDataExpr = Helper.validateSingleBracedExpression(
 					blockingScript.passDataExpr,
@@ -759,12 +768,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				)
 				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
 				headScripts.push(
-					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${blockingScript.content.replace(/`/g, '\\`')}</script>\``
+					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${strippedContent.replace(/`/g, '\\`')}</script>\``
 				)
 			} else {
-				const escapedContent = blockingScript.content.replace(/'/g, "\\'")
+				const escapedContent = strippedContent.replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
 				headScripts.push(
-					`'<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>'`
+					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>\``
 				)
 			}
 		}

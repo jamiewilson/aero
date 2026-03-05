@@ -1,0 +1,53 @@
+{
+	"scopeName": "text.html.aero",
+	"name": "Aero HTML",
+	"comment": "Extends HTML with TypeScript in script blocks. Script patterns listed first preempt the base HTML grammar's source.js assignment.",
+	"patterns": [
+		{ "include": "#aero-script" },
+		{ "include": "text.html.basic" }
+	],
+	"repository": {
+		"aero-script": {
+			"patterns": [
+				{
+					"comment": "Match <script ...>...</script> and embed content as TypeScript",
+					"name": "meta.embedded.block.ts.aero",
+					"begin": "(?i)(<)(script)\\b",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" }
+					},
+					"end": "(?i)(</)(script)\\s*(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" },
+						"3": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"patterns": [
+						{
+							"comment": "Opening tag attributes (from right after <script to >)",
+							"begin": "\\G",
+							"end": "(>)",
+							"endCaptures": {
+								"1": { "name": "punctuation.definition.tag.end.html" }
+							},
+							"name": "meta.tag.metadata.script.start.html",
+							"patterns": [
+								{ "include": "text.html.basic#attribute" }
+							]
+						},
+						{
+							"comment": "Script body as TypeScript (after > until </script>)",
+							"begin": "(?!\\G)",
+							"end": "(?=</(?i:script))",
+							"contentName": "source.ts",
+							"patterns": [
+								{ "include": "source.ts" }
+							]
+						}
+					]
+				}
+			]
+		}
+	}
+}

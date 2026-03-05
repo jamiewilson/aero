@@ -11,7 +11,8 @@
 		"directory": "packages/core"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"env.d.ts"
 	],
 	"type": "module",
 	"types": "./dist/entry-dev.d.mts",
@@ -48,7 +49,8 @@
 		"./editor": {
 			"types": "./dist/entry-editor.d.mts",
 			"default": "./dist/entry-editor.mjs"
-		}
+		},
+		"./env": "./env.d.ts"
 	},
 	"scripts": {
 		"build": "tsdown",
@@ -64,6 +66,7 @@
 		"nitro": "^3.0.1-alpha.2",
 		"oxc-parser": "^0.115.0",
 		"oxc-resolver": "^11.19.0",
+		"oxc-transform": "^0.116.0",
 		"sharp": "^0.34.5",
 		"svgo": "^4.0.0",
 		"vite-plugin-image-optimizer": "^2.0.3"

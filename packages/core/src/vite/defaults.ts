@@ -20,7 +20,7 @@ export function getClientScriptVirtualUrl(
 	index: number,
 	total: number
 ): string {
-	const suffix = total === 1 ? '.js' : `.${index}.js`
+	const suffix = total === 1 ? '.ts' : `.${index}.ts`
 	return CLIENT_SCRIPT_PREFIX + baseName + suffix
 }
 /** Virtual module ID requested by the app; resolved to `RESOLVED_*` so `load()` can re-export from the real runtime instance. */
