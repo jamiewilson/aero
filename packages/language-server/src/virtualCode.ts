@@ -1,7 +1,11 @@
 import type { VirtualCode, IScriptSnapshot, CodeInformation, CodeMapping } from '@volar/language-core'
-import * as html from 'vscode-html-languageservice'
-
-const htmlLs = html.getLanguageService()
+import { TextDocument } from 'vscode-languageserver-textdocument'
+import {
+	parseHTMLDocument,
+	type HTMLDocument,
+	type Node,
+} from './htmlParser'
+import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
 	completion: true,
@@ -37,7 +41,7 @@ const ambientSnapshot: IScriptSnapshot = {
 	getChangeRange: () => undefined,
 }
 
-function getScriptType(node: html.Node): 'build' | 'client' | 'inline' | 'blocking' | 'external' | null {
+function getScriptType(node: Node): 'build' | 'client' | 'inline' | 'blocking' | 'external' | null {
 	if (node.tag !== 'script') return null
 	const attrs = node.attributes
 	if (!attrs) return 'client'
@@ -51,7 +55,7 @@ function getScriptType(node: html.Node): 'build' | 'client' | 'inline' | 'blocki
 }
 
 /** True if script has lang="ts" or lang="typescript" (required for TypeScript extraction). */
-function hasLangTs(node: html.Node, sourceText: string): boolean {
+function hasLangTs(node: Node, sourceText: string): boolean {
 	if (node.startTagEnd == null) return false
 	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
 	if (tagStart === -1) return false
@@ -72,7 +76,7 @@ function createSnapshot(text: string): IScriptSnapshot {
  * The vscode-html-languageservice parser only exposes `roots` and `children`,
  * so we recursively traverse to find nested script/style tags.
  */
-function* walkNodes(nodes: html.Node[]): Generator<html.Node> {
+function* walkNodes(nodes: Node[]): Generator<Node> {
 	for (const node of nodes) {
 		yield node
 		if (node.children) {
@@ -86,7 +90,7 @@ export class AeroVirtualCode implements VirtualCode {
 	languageId = 'html'
 	mappings: CodeMapping[]
 	embeddedCodes: VirtualCode[] = []
-	htmlDocument: html.HTMLDocument
+	htmlDocument: HTMLDocument
 
 	constructor(public snapshot: IScriptSnapshot) {
 		this.mappings = [{
@@ -104,8 +108,8 @@ export class AeroVirtualCode implements VirtualCode {
 		}]
 
 		const sourceText = snapshot.getText(0, snapshot.getLength())
-		const doc = html.TextDocument.create('', 'html', 0, sourceText)
-		this.htmlDocument = htmlLs.parseHTMLDocument(doc)
+		const doc = TextDocument.create('', 'html', 0, sourceText)
+		this.htmlDocument = parseHTMLDocument(doc)
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
 			{
