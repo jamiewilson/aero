@@ -72,10 +72,10 @@ describe('aeroLanguagePlugin', () => {
 		})
 
 		it('getExtraServiceScripts returns TS scripts for embedded codes', () => {
-			const html = `<script is:build>
-const { title } = aero.props
+			const html = `<script is:build lang="ts">
+const { title } = Aero.props
 </script>
-<script>
+<script lang="ts">
 console.log('client')
 </script>`
 

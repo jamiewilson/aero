@@ -14,9 +14,10 @@ The `is:build` attribute defines the "server-side render body" of your component
 - **Purpose:** Used to fetch data, import components, read configuration, and process properties before the template is converted into HTML.
 - **Syntax Limitation:** You can only have one `<script is:build>` tag per template file.
 - **Output:** This code **never** reaches the browser. It gets compiled into the hidden `export default async function(Aero) { ... }` module that powers the static site generator.
+- **TypeScript / IntelliSense:** Add `lang="ts"` (or `lang="typescript"`) so the language server extracts the block for TypeScript IntelliSense. This also enables Prettier and oxfmt to format the script content.
 
 ```html
-<script is:build>
+<script is:build lang="ts">
 	import Header from '@components/header'
 	const title = 'Welcome to Aero'
 </script>

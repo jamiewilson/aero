@@ -1,7 +1,7 @@
 {
 	"scopeName": "text.html.aero",
 	"name": "Aero HTML",
-	"comment": "Extends HTML with TypeScript in script blocks. Script patterns listed first preempt the base HTML grammar's source.js assignment.",
+	"comment": "Extends HTML with script highlighting. Scripts with lang=\"ts\" or lang=\"typescript\" use TypeScript; others use JavaScript. Matches language-server extraction.",
 	"patterns": [
 		{ "include": "#aero-script" },
 		{ "include": "text.html.basic" }
@@ -10,9 +10,9 @@
 		"aero-script": {
 			"patterns": [
 				{
-					"comment": "Match <script ...>...</script> and embed content as TypeScript",
+					"comment": "Script with lang=\"ts\" or lang=\"typescript\" → TypeScript",
 					"name": "meta.embedded.block.ts.aero",
-					"begin": "(?i)(<)(script)\\b",
+					"begin": "(?i)(<)(script)\\b(?=[^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'][^>]*>)",
 					"beginCaptures": {
 						"1": { "name": "punctuation.definition.tag.begin.html" },
 						"2": { "name": "entity.name.tag.html" }
@@ -25,7 +25,7 @@
 					},
 					"patterns": [
 						{
-							"comment": "Opening tag attributes (from right after <script to >)",
+							"comment": "Opening tag attributes",
 							"begin": "\\G",
 							"end": "(>)",
 							"endCaptures": {
@@ -37,12 +37,50 @@
 							]
 						},
 						{
-							"comment": "Script body as TypeScript (after > until </script>)",
+							"comment": "Script body as TypeScript",
 							"begin": "(?!\\G)",
 							"end": "(?=</(?i:script))",
 							"contentName": "source.ts",
 							"patterns": [
 								{ "include": "source.ts" }
+							]
+						}
+					]
+				},
+				{
+					"comment": "Script without lang=\"ts\" → JavaScript",
+					"name": "meta.embedded.block.js.aero",
+					"begin": "(?i)(<)(script)\\b(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" }
+					},
+					"end": "(?i)(</)(script)\\s*(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" },
+						"3": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"patterns": [
+						{
+							"comment": "Opening tag attributes",
+							"begin": "\\G",
+							"end": "(>)",
+							"endCaptures": {
+								"1": { "name": "punctuation.definition.tag.end.html" }
+							},
+							"name": "meta.tag.metadata.script.start.html",
+							"patterns": [
+								{ "include": "text.html.basic#attribute" }
+							]
+						},
+						{
+							"comment": "Script body as JavaScript",
+							"begin": "(?!\\G)",
+							"end": "(?=</(?i:script))",
+							"contentName": "source.js",
+							"patterns": [
+								{ "include": "source.js" }
 							]
 						}
 					]

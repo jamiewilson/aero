@@ -26,6 +26,8 @@ export { COMPONENT_SUFFIX_REGEX } from './compiler/constants'
 
 export {
 	analyzeBuildScriptForEditor,
+	getPropsTypeFromBuildScript,
 	type BuildScriptImportForEditor,
 	type BuildScriptAnalysisForEditorResult,
+	type PropsTypeResult,
 } from './compiler/build-script-analysis'

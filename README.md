@@ -6,7 +6,7 @@ Aero (`aerobuilt` on npm) is a static site generator and full-stack framework wi
 | -------------------------- | ---------------------------------------------------------------------------- |
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`         |
 | 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`         |
-| 📤 Props                   | Pass data via attributes or `props`; read with `aero.props` in the component |
+| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component |
 | 🔁 Loops & conditionals    | `each` and `if/else-if/else` right in your markup                            |
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes      |
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
@@ -49,7 +49,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ### Mostly just html, css and js/ts, with few things on top
 
-Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`aero.props`, `props`, `pass:data`). The source looks like HTML, the output is HTML.
+Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props`, `pass:data`). The source looks like HTML, the output is HTML.
 
 > Also check out: [What Makes Aero Different?](docs/what-makes-aero-different.md) and [Why Not Web Components?](docs/why-not-web-components.md)
 
@@ -103,7 +103,7 @@ Layouts wrap pages and expose `<slot>` for content; see [Slots](#-slots) below.
 
 ## Props
 
-Pass data into components via attributes (with `{ }` expressions) or via the `props` attribute. Inside the component, read from `aero.props` (or `Aero.props`).
+Pass data into components via attributes (with `{ }` expressions) or via the `props` attribute. Inside the component, read from `Aero.props`.
 
 ### 1. Props shorthand
 
@@ -146,7 +146,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `pass:data`
 
 ```html
 <script is:build>
-	const { title, subtitle, accent } = aero.props
+	const { title, subtitle, accent } = Aero.props
 	const theme = { fg: '#111', bg: '#fff', accent }
 </script>
 
@@ -342,7 +342,7 @@ Deploy the `.output/` bundle (see [Build output](#build-output)) for static + AP
 
 Aero compiles templates to static HTML. Build-time code in `<script is:build>` is stripped; only the markup and any client scripts remain. Script behavior:
 
-- **`<script is:build>`** — Runs at build (or request) time only. One per file. Import components, read `aero.props`, use `Aero.site`, `getCollection()`, etc. Not emitted in output.
+- **`<script is:build>`** — Runs at build (or request) time only. One per file. Import components, read `Aero.props`, use `Aero.site`, `getCollection()`, etc. Not emitted in output.
 - **`<script>` (no attribute)** — Client module: bundled by Vite, emitted and run in the browser. HMR in dev.
 - **`<script is:inline>`** — Left in the HTML as-is; runs in the browser immediately (e.g. theme FOUC fix, analytics).
 - **`<script is:blocking>`** — Moved into `<head>` for blocking scripts.

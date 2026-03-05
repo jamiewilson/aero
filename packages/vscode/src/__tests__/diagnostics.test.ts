@@ -6,6 +6,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import path from 'node:path'
+import fs from 'node:fs'
 
 const mockSet = vi.fn()
 const mockCollection = {
@@ -1163,5 +1165,109 @@ describe('AeroDiagnostics Component References', () => {
 			d.message.includes('is not imported')
 		)
 		expect(componentDiag).toBeUndefined()
+	})
+})
+
+/** Cross-file prop validation: report when required props are missing. */
+describe('AeroDiagnostics Component Props', () => {
+	beforeEach(() => {
+		mockSet.mockClear()
+	})
+
+	it('should report missing required prop when props="{ ...varName }" omits it', () => {
+		const kitchenSinkHome = path.resolve(
+			process.cwd(),
+			'..',
+			'..',
+			'examples',
+			'kitchen-sink',
+			'frontend',
+			'pages',
+			'home.html'
+		)
+		if (!fs.existsSync(kitchenSinkHome)) {
+			// Skip when kitchen-sink not present (e.g. in minimal checkout)
+			return
+		}
+		const text = fs.readFileSync(kitchenSinkHome, 'utf-8')
+		const doc = {
+			uri: {
+				toString: () => `file://${kitchenSinkHome}`,
+				fsPath: kitchenSinkHome,
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return {
+					line: lines.length - 1,
+					character: lines[lines.length - 1]?.length ?? 0,
+				}
+			},
+			languageId: 'html',
+			fileName: kitchenSinkHome,
+			lineAt: (line: number) => ({
+				text: text.split('\n')[line] ?? '',
+			}),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const extraPropDiag = reportedDiagnostics.find(
+			(d: any) =>
+				d.message.includes("Missing required prop 'extraProp'") &&
+				d.message.includes('header-component')
+		)
+		expect(extraPropDiag).toBeDefined()
+	})
+
+	it('should report missing required prop when layout attributes flow to meta-component', () => {
+		const kitchenSinkAbout = path.resolve(
+			process.cwd(),
+			'..',
+			'..',
+			'examples',
+			'kitchen-sink',
+			'frontend',
+			'pages',
+			'about.html'
+		)
+		if (!fs.existsSync(kitchenSinkAbout)) return
+		const text = fs.readFileSync(kitchenSinkAbout, 'utf-8')
+		const doc = {
+			uri: {
+				toString: () => `file://${kitchenSinkAbout}`,
+				fsPath: kitchenSinkAbout,
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return {
+					line: lines.length - 1,
+					character: lines[lines.length - 1]?.length ?? 0,
+				}
+			},
+			languageId: 'html',
+			fileName: kitchenSinkAbout,
+			lineAt: (line: number) => ({
+				text: text.split('\n')[line] ?? '',
+			}),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const subLayoutDiag = reportedDiagnostics.find(
+			(d: any) =>
+				d.message.includes("Missing required prop 'extraProp'") &&
+				d.message.includes('sub-layout')
+		)
+		expect(subLayoutDiag).toBeDefined()
 	})
 })

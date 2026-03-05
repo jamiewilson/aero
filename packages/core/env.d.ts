@@ -8,10 +8,12 @@
  */
 
 /**
- * The `aero` context object available in build scripts. Provides access to
+ * The `Aero` context object available in build scripts. Provides access to
  * component props, request data, and rendering utilities.
+ *
+ * Use `Aero.props` (capital A). The lowercase `aero` is not defined at runtime.
  */
-declare const aero: {
+declare const Aero: {
 	/** Props passed to the current component or page. */
 	props: Record<string, any>
 	/** Named slot content (key to HTML string). */

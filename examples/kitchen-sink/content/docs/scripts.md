@@ -11,7 +11,7 @@ Aero uses a clear script taxonomy so you always know when and where code runs. G
 Use `<script is:build>{:html}` for code that runs only at build time (or request time when using a server). This code never reaches the browser.
 
 - Runs in Node; one per template file.
-- Use it to import components, read `aero.props` or `Aero.params`, load content, and prepare data before the template becomes HTML.
+- Use it to import components, read `Aero.props` or `Aero.params`, load content, and prepare data before the template becomes HTML.
 - The compiler inlines it into the render module that powers the static build.
 
 Example:

@@ -4,11 +4,11 @@ title: Props
 subtitle: Pass and receive data in components with attributes and props.
 ---
 
-Aero’s props system lets you pass data into components and layouts via attributes or `props`, and read it in build scripts from `aero.props` (or `Aero.props`).
+Aero’s props system lets you pass data into components and layouts via attributes or `props`, and read it in build scripts from `Aero.props`.
 
 ## Core concept
 
-All props are read from **aero.props** (or **Aero.props**) in `<script is:build>{:html}`. Destructure what you need.
+All props are read from **Aero.props** in `<script is:build>{:html}`. Destructure what you need.
 
 ## How attribute values work
 
@@ -79,11 +79,11 @@ Use `props` with no value to spread a variable named `props` in scope:
 
 ## Receiving props
 
-Destructure from `aero.props` (or `Aero.props`):
+Destructure from `Aero.props`:
 
 ```html
 <script is:build>
-	const { title, subtitle } = aero.props
+	const { title, subtitle } = Aero.props
 </script>
 
 <header>
@@ -96,7 +96,7 @@ With defaults:
 
 ```html
 <script is:build>
-	const { title = 'Default Title', subtitle } = aero.props
+	const { title = 'Default Title', subtitle } = Aero.props
 </script>
 ```
 
@@ -104,7 +104,7 @@ With fallbacks to site data:
 
 ```html
 <script is:build>
-	const { title, description } = aero.props
+	const { title, description } = Aero.props
 </script>
 <meta property="og:title" content="{ title || site.meta.title }" />
 <meta
@@ -116,7 +116,7 @@ With fallbacks to site data:
 
 Inside `<script is:build>{:html}` you have:
 
-- **aero.props** (or **Aero.props**) — Props passed to this component
+- **Aero.props** — Props passed to this component
 - **Aero.request** — Current request object
 - **Aero.url** — Current page URL
 - **Aero.params** — Route params for dynamic routes
@@ -132,7 +132,7 @@ Inside `<script is:build>{:html}` you have:
 
 ```html
 <script is:build>
-	const { name } = aero.props
+	const { name } = Aero.props
 </script>
 
 <h1>Hello, { name }!</h1>

@@ -307,7 +307,7 @@ const y = 2
 <script is:build>
 	import { highlight } from '@aerobuilt/highlight'
 
-	const { code, language = 'js' } = aero.props
+	const { code, language = 'js' } = Aero.props
 
 	const html = await highlight(code, language, {
 		themes: { light: 'github-light', dark: 'github-dark' },

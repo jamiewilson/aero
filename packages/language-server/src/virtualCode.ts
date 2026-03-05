@@ -43,7 +43,6 @@ const AERO_CONTEXT_TYPE = [
 ].join('\n')
 
 const BUILD_SCRIPT_PREAMBLE = [
-	`declare const aero: ${AERO_CONTEXT_TYPE};`,
 	`declare const Aero: ${AERO_CONTEXT_TYPE};`,
 	'declare function renderComponent(',
 	'  component: any,',
@@ -83,6 +82,15 @@ function getScriptType(node: html.Node): 'build' | 'client' | 'inline' | 'blocki
 	if ('pass:data' in attrs) return 'inline'
 	if ('is:blocking' in attrs) return 'blocking'
 	return 'client'
+}
+
+/** True if script has lang="ts" or lang="typescript" (required for TypeScript extraction). */
+function hasLangTs(node: html.Node, sourceText: string): boolean {
+	if (node.startTagEnd == null) return false
+	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
+	if (tagStart === -1) return false
+	const openTag = sourceText.substring(tagStart, node.startTagEnd)
+	return /\blang\s*=\s*["'](ts|typescript)["']/i.test(openTag)
 }
 
 function createSnapshot(text: string): IScriptSnapshot {
@@ -178,24 +186,41 @@ export class AeroVirtualCode implements VirtualCode {
 			const scriptContent = sourceText.substring(node.startTagEnd, node.endTagStart)
 			if (!scriptContent.trim()) continue
 
+			const isTs = hasLangTs(node, sourceText)
+
 			if (scriptType === 'build') {
-				const virtualText = BUILD_SCRIPT_PREAMBLE + scriptContent
-				yield {
-					id: `build_${buildIdx++}`,
-					languageId: 'typescript',
-					snapshot: createSnapshot(virtualText),
-					mappings: [{
-						sourceOffsets: [node.startTagEnd],
-						generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length],
-						lengths: [scriptContent.length],
-						data: BUILD_SCRIPT_FEATURES,
-					}],
-					embeddedCodes: [],
+				if (isTs) {
+					const virtualText = BUILD_SCRIPT_PREAMBLE + scriptContent
+					yield {
+						id: `build_${buildIdx++}`,
+						languageId: 'typescript',
+						snapshot: createSnapshot(virtualText),
+						mappings: [{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length],
+							lengths: [scriptContent.length],
+							data: BUILD_SCRIPT_FEATURES,
+						}],
+						embeddedCodes: [],
+					}
+				} else {
+					yield {
+						id: `build_${buildIdx++}`,
+						languageId: 'javascript',
+						snapshot: createSnapshot(scriptContent),
+						mappings: [{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [0],
+							lengths: [scriptContent.length],
+							data: FULL_FEATURES,
+						}],
+						embeddedCodes: [],
+					}
 				}
 			} else if (scriptType === 'client') {
 				yield {
 					id: `client_${clientIdx++}`,
-					languageId: 'typescript',
+					languageId: isTs ? 'typescript' : 'javascript',
 					snapshot: createSnapshot(scriptContent),
 					mappings: [{
 						sourceOffsets: [node.startTagEnd],
@@ -208,7 +233,7 @@ export class AeroVirtualCode implements VirtualCode {
 			} else if (scriptType === 'blocking') {
 				yield {
 					id: `blocking_${blockingIdx++}`,
-					languageId: 'typescript',
+					languageId: isTs ? 'typescript' : 'javascript',
 					snapshot: createSnapshot(scriptContent),
 					mappings: [{
 						sourceOffsets: [node.startTagEnd],

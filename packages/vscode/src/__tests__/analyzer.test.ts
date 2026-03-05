@@ -187,6 +187,17 @@ const clientVar = 2
 		expect(vars.get('foo')?.range.start.character).toBe(22) // position of 'f' in "foo"
 		expect(vars.get('bar')?.range.start.character).toBe(27) // position of 'b' in "bar"
 	})
+
+	it('collects variables with type annotations (const x: Type = ...)', () => {
+		const text = `<script is:build>
+const meta: MetaProps = { title: 'x' }
+</script>
+<div>{ meta.title }</div>`
+		const [buildScopeVars] = collectDefinedVariables(mockDoc, text)
+
+		expect(buildScopeVars.has('meta')).toBe(true)
+		expect(buildScopeVars.get('meta')?.kind).toBe('declaration')
+	})
 })
 
 /** data-each / each scopes: item name and source expression; nested loops return inner-first. */

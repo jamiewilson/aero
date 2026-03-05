@@ -25,7 +25,7 @@ import { transformSync } from 'oxc-transform'
 function stripTypes(code: string, filename = 'script.ts'): string {
 	if (!code.trim()) return code
 	const result = transformSync(filename, code, { typescript: { onlyRemoveTypeImports: true } })
-	return result.code
+	return result.code.replace(/(?:^|\n)\s*export\s*\{\s*\}\s*;?/g, '')
 }
 
 /** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional pass:data expr. */

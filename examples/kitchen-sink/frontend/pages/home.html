@@ -4,23 +4,10 @@
 	import form from '@components/form'
 	import site from '@content/site'
 
-
-	type User = {
-		name: string
-		age: number
-	}
-
-	const user: User = {
-		name: 'John',
-		age: 30,
-	} satisfies User
-
-	console.log(user as User)
-
-
 	const headerProps = {
 		title: site.home.title,
 		subtitle: site.home.subtitle,
+		requiredProp: true,
 	}
 </script>
 
@@ -46,4 +33,4 @@
 
 <script src="@scripts/module.ts"></script>
 <script async src="@scripts/async.ts"></script>
-<script defer src="@scripts/defer.ts"></script>
+<script defer src="@scripts/defer.js"></script>
