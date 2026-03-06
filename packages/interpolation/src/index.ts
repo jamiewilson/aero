@@ -3,7 +3,7 @@
  * context so nested braces and content inside strings/comments are handled correctly.
  *
  * @remarks
- * Used by @aerobuilt/core (compileInterpolation, compileAttributeInterpolation) and
+ * Used by @aero-js/core (compileInterpolation, compileAttributeInterpolation) and
  * can be used by aero-vscode for consistent interpolation semantics.
  */
 

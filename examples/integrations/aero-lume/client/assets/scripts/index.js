@@ -1,4 +1,4 @@
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 import { state, bindDom } from 'lume-js'
 import { show } from 'lume-js/handlers'
 

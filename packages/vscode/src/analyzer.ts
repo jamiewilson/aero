@@ -5,8 +5,8 @@
  * Used by definition provider (go to def for variables), completion (scope-aware suggestions), and diagnostics (undefined refs, component resolution). Preserves ranges for navigation and diagnostics.
  */
 import * as vscode from 'vscode'
-import { tokenizeCurlyInterpolation } from '@aerobuilt/interpolation'
-import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 
 /**
  * Standalone (valueless) attributes that are treated as variable references in templates.

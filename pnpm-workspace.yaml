@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
   - 'packages/templates/*'
-  - 'packages/create-aerobuilt/dist/*'
+  - 'packages/create/dist/*'
   - 'examples/*'
   - 'examples/import-bundling/*'
+  - 'examples/integrations/*'

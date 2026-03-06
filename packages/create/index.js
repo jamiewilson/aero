@@ -26,13 +26,13 @@ const TEMPLATES = ['minimal']
 const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
-	const pkgName = `@aerobuilt/template-${templateName}`
+	const pkgName = `@aero-js/template-${templateName}`
 	try {
 		const pkgUrl = import.meta.resolve(`${pkgName}/package.json`)
 		const templatePath = dirname(fileURLToPath(pkgUrl))
 		return templatePath
 	} catch (e) {
-		console.error(`create-aerobuilt: template "${templateName}" not found.`)
+		console.error(`create-aero-js: template "${templateName}" not found.`)
 		console.error(`Please install with: npm install -g ${pkgName} (or locally)`)
 		process.exit(1)
 	}
@@ -75,7 +75,7 @@ function installInMonorepo(targetDir) {
 	const root = findWorkspaceRoot(targetDir)
 	if (!root) {
 		console.error(
-			'create-aerobuilt: could not find workspace root (pnpm-workspace.yaml).'
+			'create-aero-js: could not find workspace root (pnpm-workspace.yaml).'
 		)
 		process.exit(1)
 	}
@@ -86,7 +86,7 @@ function installInMonorepo(targetDir) {
 	})
 	if (r.status !== 0) {
 		console.error(
-			'create-aerobuilt: pnpm install failed. Run "pnpm install" from the repo root.'
+			'create-aero-js: pnpm install failed. Run "pnpm install" from the repo root.'
 		)
 		process.exit(1)
 	}
@@ -109,7 +109,7 @@ function installStandalone(targetDir) {
 	})
 	if (r.status !== 0) {
 		console.error(
-			`create-aerobuilt: ${cmd} install failed. Run "${cmd} install" in the project directory.`
+			`create-aero-js: ${cmd} install failed. Run "${cmd} install" in the project directory.`
 		)
 		process.exit(1)
 	}
@@ -119,20 +119,20 @@ function main() {
 	const { target, template } = parseArgs(process.argv)
 
 	if (!target) {
-		console.error('create-aerobuilt: missing target directory.')
-		console.error('Usage: pnpm run create-aerobuilt <dir>')
-		console.error('Example: pnpm run create-aerobuilt my-app')
+		console.error('create-aero-js: missing target directory.')
+		console.error('Usage: pnpm create @aero-js <dir>')
+		console.error('Example: pnpm create @aero-js my-app')
 		process.exit(1)
 	}
 
 	if (!TEMPLATES.includes(template)) {
 		console.error(
-			`create-aerobuilt: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`
+			`create-aero-js: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`
 		)
 		process.exit(1)
 	}
 
-	// Run from packages/create-aerobuilt: scaffold into packages/create-aerobuilt/dist/<target>
+	// Run from packages/create: scaffold into packages/create/dist/<target>
 	const inMonorepo = isInMonorepo()
 	const targetDir = inMonorepo
 		? join(startPkgDir, APPS_DIR, target)
@@ -146,27 +146,27 @@ function main() {
 		const stat = statSync(targetDir)
 		if (!stat.isDirectory()) {
 			console.error(
-				`create-aerobuilt: "${target}" exists and is not a directory.`
+				`create-aero-js: "${target}" exists and is not a directory.`
 			)
 			process.exit(1)
 		}
 		const files = readdirSync(targetDir)
 		if (files.length > 0) {
 			console.error(
-				`create-aerobuilt: directory "${target}" already exists and is not empty.`
+				`create-aero-js: directory "${target}" already exists and is not empty.`
 			)
 			process.exit(1)
 		}
 	}
 
 	const templatePath = resolveTemplatePath(template)
-	let aerobuiltVersion = null
+	let coreVersion = null
 	if (!inMonorepo) {
 		try {
 			const cliPkg = JSON.parse(
 				readFileSync(join(startPkgDir, 'package.json'), 'utf8')
 			)
-			aerobuiltVersion = cliPkg.version || null
+			coreVersion = cliPkg.version || null
 		} catch {
 			// ignore; lib will fall back to *
 		}
@@ -178,7 +178,7 @@ function main() {
 		targetDir,
 		target,
 		inMonorepo,
-		aerobuiltVersion
+		coreVersion
 	)
 	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')

@@ -1,4 +1,4 @@
-# @aerobuilt/config
+# @aero-js/config
 
 Typed Aero configuration and Vite config factory. Used by `aero.config.ts` and the dev/build entry to produce the final Vite config (Aero plugin, optional content plugin, and user overrides).
 
@@ -25,7 +25,7 @@ Typed Aero configuration and Vite config factory. Used by `aero.config.ts` and t
 **aero.config.ts**
 
 ```ts
-import { defineConfig } from 'aerobuilt/config'
+import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
 	content: true,
@@ -39,7 +39,7 @@ export default defineConfig({
 **Config as a function (env-aware)**
 
 ```ts
-import { defineConfig } from 'aerobuilt/config'
+import { defineConfig } from '@aero-js/config'
 
 export default defineConfig(({ command, mode }) => ({
 	content: true,
@@ -51,7 +51,7 @@ export default defineConfig(({ command, mode }) => ({
 **vite.config.ts (build entry)**
 
 ```ts
-import { createViteConfig } from 'aerobuilt/config'
+import { createViteConfig } from '@aero-js/config'
 import aeroConfig from './aero.config'
 
 export default createViteConfig(aeroConfig, {
@@ -62,10 +62,10 @@ export default createViteConfig(aeroConfig, {
 
 ## Defaults
 
-`createViteConfig` uses a base Vite config from the package: PostCSS (autoprefixer), `build.cssMinify: 'esbuild'`, and rolldown `checks.eval: false`. The Aero plugin (`aero()`) from `aerobuilt/vite` is always included; the content plugin (`aeroContent()`) from `@aerobuilt/content/vite` is added when `content` is enabled.
+`createViteConfig` uses a base Vite config from the package: PostCSS (autoprefixer), `build.cssMinify: 'esbuild'`, and rolldown `checks.eval: false`. The Aero plugin (`aero()`) from `@aero-js/vite` is always included; the content plugin (`aeroContent()`) from `@aero-js/content/vite` is added when `content` is enabled.
 
 ## Peer dependencies
 
 - `vite` ^8.0.0
-- `@aerobuilt/core` (workspace)
-- `@aerobuilt/content` (workspace)
+- `@aero-js/core` (workspace)
+- `@aero-js/content` (workspace)

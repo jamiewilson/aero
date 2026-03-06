@@ -9,13 +9,13 @@ aero/
 ├── package.json           # Workspace root; build script builds packages only
 ├── pnpm-workspace.yaml
 ├── packages/
-│   ├── core/              # Framework: compiler, runtime, Vite plugin (@aerobuilt/core; Vite plugin via aerobuilt/vite)
+│   ├── core/              # Framework: compiler, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
 │   ├── vscode/            # VS Code extension
-│   ├── create-aerobuilt/  # Project initializer (create-aerobuilt)
+│   ├── create/            # Project initializer (@aero-js/create)
 │   ├── templates/
-│   │   └── minimal/       # Starter template (@aerobuilt/template-minimal)
+│   │   └── minimal/       # Starter template (@aero-js/template-minimal)
 ├── examples/
-│   └── kitchen-sink/      # Full demo app (@aerobuilt/example-kitchen-sink)
+│   └── kitchen-sink/      # Full demo app (@aero-js/example-kitchen-sink)
 │       ├── frontend/      # Or client/; pages, components, layouts, assets (per aero.config dirs)
 │       ├── backend/       # Or server/; Nitro API and routes
 │       ├── content/       # Global data, content collections
@@ -30,12 +30,12 @@ aero/
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
 - **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `examples/kitchen-sink/vite.config.ts` (and templates/minimal) use `import { createViteConfig } from 'aerobuilt/config'` and depend on `@aerobuilt/core`. The `package.json` has `"@aerobuilt/core": "workspace:*"` (and config, content).
+- **Consumption:** `examples/kitchen-sink/vite.config.ts` (and templates/minimal) use `import { createViteConfig } from '@aero-js/config'` and depend on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
 - **Exports (package.json):**
-  - `@aerobuilt/core` → main entry and types
-  - `aerobuilt/vite` → Vite plugin (also re-exported as `@aerobuilt/vite`)
-  - `@aerobuilt/core/runtime`, `@aerobuilt/core/runtime/instance` → runtime
-  - `@aerobuilt/core/types` → TypeScript types
+  - `@aero-js/core` → main entry and types
+  - `@aero-js/vite` → Vite plugin (re-exports from core)
+  - `@aero-js/core/runtime`, `@aero-js/core/runtime/instance` → runtime
+  - `@aero-js/core/types` → TypeScript types
 - **Key directories:**
   - `compiler/` — parser, codegen, resolver, constants, helpers; tests in `compiler/__tests__/`
   - `vite/` — plugin entry, build orchestration, defaults; tests in `vite/__tests__/`
@@ -47,10 +47,10 @@ aero/
 - **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
 - **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.
 
-## packages/create-aerobuilt (create-aerobuilt)
+## packages/create (@aero-js/create)
 
-- **Purpose:** Project initializer. Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>` to scaffold a new app into `packages/create-aerobuilt/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aerobuilt/template-minimal`.
-- **No app source** in create-aerobuilt; templates live in `packages/templates/` and are copied from node_modules.
+- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aero-js/template-minimal`.
+- **No app source** in create; templates live in `packages/templates/` and are copied from node_modules.
 
 ## examples/kitchen-sink (demo app)
 
@@ -61,13 +61,13 @@ aero/
 
 ## packages/templates/minimal
 
-- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm run create-aerobuilt <name>` by default.
+- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm create @aero-js <name>` by default.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
 
 ## Build and test flow
 
 1. **Install:** `pnpm install` (pnpm workspace installs root + packages).
-2. **Build framework:** Root `pnpm build` builds packages (interpolation, highlight, core, content, config, aerobuilt) in order.
+2. **Build framework:** Root `pnpm build` builds packages (interpolation, highlight, core, content, config, vite) in order.
 3. **Dev:** Run from **examples/kitchen-sink** (e.g. `pnpm --dir examples/kitchen-sink dev` or `cd examples/kitchen-sink && pnpm dev`). Root has no dev script.
 4. **Build app:** Run from the app directory (e.g. `pnpm --dir examples/kitchen-sink build`). Output to that app's dist/ (or custom build dir) and `.output/` when server is enabled.
 5. **Tests:** `pnpm test` from repo root runs Vitest (packages/core compiler and vite tests).
@@ -97,7 +97,7 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 ## Summary
 
-- **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). No separate packages/vite; Vite plugin is in core and consumed as `aerobuilt/vite` or `@aerobuilt/core/vite`.
+- **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). `packages/vite` re-exports the plugin as `@aero-js/vite`; core also exports it as `@aero-js/core/vite`.
 - **Demo app** is `examples/kitchen-sink`; run dev/build/preview from that directory. Root has no app dev script.
-- **create-aerobuilt** lives in `packages/create-aerobuilt`; scaffolds from `packages/templates/minimal`.
+- **@aero-js/create** lives in `packages/create`; scaffolds from `packages/templates/minimal`.
 - **Path conventions** use `client/` and `content/` by default (or custom dirs via aero.config, e.g. frontend/, backend/).

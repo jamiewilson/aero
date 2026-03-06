@@ -1,6 +1,6 @@
 # aero-lume
 
-Built with [Aero](https://github.com/aerobuilt/aero) — an HTML-first static site generator powered by Vite.
+Built with [Aero](https://github.com/jamiewilson/aero) — an HTML-first static site generator powered by Vite.
 
 ## Commands
 
@@ -28,8 +28,8 @@ aero-lume/
 
 ## Learn More
 
-- [Aero on GitHub](https://github.com/aerobuilt/aero)
-- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)
+- [Aero on GitHub](https://github.com/jamiewilson/aero)
+- [@aero-js/core on npm](https://www.npmjs.com/package/@aero-js/core)
 
 # Using Lume.js with Aero
 
@@ -68,13 +68,13 @@ pnpm add lume-js
 
 ### 2. Create the store and bind in the client entry
 
-Your app has a single client entry (e.g. `client/assets/scripts/index.ts`) that imports `aerobuilt` and calls `aero.mount()`. Create the Lume store there and pass it to `bindDom` so it’s available after the initial paint and after every HMR re-render.
+Your app has a single client entry (e.g. `client/assets/scripts/index.ts`) that imports `@aero-js/core` and calls `aero.mount()`. Create the Lume store there and pass it to `bindDom` so it’s available after the initial paint and after every HMR re-render.
 
 **Example (minimal):**
 
 ```ts
 // e.g. client/assets/scripts/index.ts
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 import { state, bindDom } from 'lume-js'
 
 const store = state({ name: '' })
@@ -135,7 +135,7 @@ aero.mount({
 ```
 
 ```ts
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 import { state, bindDom, effect } from 'lume-js'
 
 const store = state({ name: '' })
@@ -186,7 +186,7 @@ You can seed the Lume store from build-time data so the first HTML and client st
 </div>
 
 <script pass:data="{ initialName }">
-	import aero from 'aerobuilt'
+	import aero from '@aero-js/core'
 	import { state, bindDom } from 'lume-js'
 
 	const store = state({ name: initialName })

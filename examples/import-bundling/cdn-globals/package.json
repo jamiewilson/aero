@@ -9,7 +9,8 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"aerobuilt": "workspace:*"
+		"@aero-js/core": "workspace:*",
+		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/alpinejs": "^3.13.11",

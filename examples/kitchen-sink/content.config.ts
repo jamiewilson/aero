@@ -1,5 +1,5 @@
-import { defineCollection, defineConfig } from 'aerobuilt/content'
-import { preDataLangTransformer } from '@aerobuilt/highlight'
+import { defineCollection, defineConfig } from '@aero-js/content'
+import { preDataLangTransformer } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
 import { z } from 'zod'
 

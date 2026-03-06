@@ -1,16 +1,16 @@
 {
-	"name": "create-aerobuilt",
+	"name": "@aero-js/create",
 	"version": "0.3.3",
-	"homepage": "https://github.com/aerobuilt/aero",
+	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
-		"directory": "packages/create-aerobuilt"
+		"url": "https://github.com/jamiewilson/aero.git",
+		"directory": "packages/create"
 	},
 	"bin": {
-		"create-aerobuilt": "index.js"
+		"create": "index.js"
 	},
 	"files": [
 		"index.js",
@@ -20,10 +20,10 @@
 	"type": "module",
 	"scripts": {
 		"create": "node .",
-		"create-aerobuilt": "node index.js",
+		"create-aero-js": "node index.js",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aerobuilt/template-minimal": "workspace:*"
+		"@aero-js/template-minimal": "workspace:*"
 	}
 }

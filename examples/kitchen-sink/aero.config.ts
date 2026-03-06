@@ -1,4 +1,4 @@
-import { defineConfig } from 'aerobuilt/config'
+import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
 	dirs: {

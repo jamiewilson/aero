@@ -27,24 +27,24 @@ export function parseArgs(argv) {
 const PACKAGE_TEMPLATE = 'package-template.json'
 
 /**
- * Write package.json in targetDir from the template's package-template.json, with name and aerobuilt version filled in.
+ * Write package.json in targetDir from the template's package-template.json, with name and @aero-js/core version filled in.
  * @param {string} templatePath - Path to the template directory (e.g. packages/templates/minimal)
  * @param {string} targetDir - Path to the scaffolded project directory
  * @param {string} projectName - Project name for package.json "name"
- * @param {boolean} inMonorepo - If true, use workspace:* for aerobuilt; otherwise use aerobuiltVersion
- * @param {string} [aerobuiltVersion] - When !inMonorepo, version range for aerobuilt (e.g. ^0.2.9). Omit to use '*'.
+ * @param {boolean} inMonorepo - If true, use workspace:* for @aero-js/core; otherwise use coreVersion
+ * @param {string} [coreVersion] - When !inMonorepo, version range for @aero-js/core (e.g. ^0.2.9). Omit to use '*'.
  */
 export function rewritePackageJson(
 	templatePath,
 	targetDir,
 	projectName,
 	inMonorepo,
-	aerobuiltVersion
+	coreVersion
 ) {
 	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
 	if (!existsSync(templatePkgPath)) {
 		console.error(
-			`create-aerobuilt: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`
+			`create-aero-js: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`
 		)
 		process.exit(1)
 	}
@@ -52,11 +52,16 @@ export function rewritePackageJson(
 	pkg.name = projectName
 	const depVersion = inMonorepo
 		? 'workspace:*'
-		: aerobuiltVersion
-			? `^${aerobuiltVersion}`
+		: coreVersion
+			? `^${coreVersion}`
 			: '*'
-	if (pkg.dependencies && pkg.dependencies.aerobuilt !== undefined) {
-		pkg.dependencies.aerobuilt = depVersion
+	if (pkg.dependencies) {
+		if (pkg.dependencies['@aero-js/core'] !== undefined) {
+			pkg.dependencies['@aero-js/core'] = depVersion
+		}
+		if (pkg.dependencies['@aero-js/vite'] !== undefined) {
+			pkg.dependencies['@aero-js/vite'] = depVersion
+		}
 	}
 	writeFileSync(
 		join(targetDir, 'package.json'),
@@ -89,7 +94,7 @@ export function writeReadme(targetDir, projectName, template) {
 	const lines = [
 		`# ${projectName}`,
 		'',
-		`Built with [Aero](https://github.com/aerobuilt/aero) — an HTML-first static site generator powered by Vite.`,
+		`Built with [Aero](https://github.com/jamiewilson/aero) — an HTML-first static site generator powered by Vite.`,
 		'',
 		'## Commands',
 		'',
@@ -123,8 +128,8 @@ export function writeReadme(targetDir, projectName, template) {
 		'',
 		'## Learn More',
 		'',
-		'- [Aero on GitHub](https://github.com/aerobuilt/aero)',
-		'- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)',
+		'- [Aero on GitHub](https://github.com/jamiewilson/aero)',
+		'- [@aero-js/core on npm](https://www.npmjs.com/package/@aero-js/core)',
 		''
 	)
 

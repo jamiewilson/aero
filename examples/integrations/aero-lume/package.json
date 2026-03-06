@@ -8,7 +8,8 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"aerobuilt": "^0.3.0",
+		"@aero-js/core": "workspace:*",
+		"@aero-js/vite": "workspace:*",
 		"lume-js": "2.0.0-beta.1"
 	},
 	"devDependencies": {

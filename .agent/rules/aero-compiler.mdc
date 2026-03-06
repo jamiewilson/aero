@@ -12,7 +12,7 @@ All of the following live in **packages/core** (the framework package).
 
 - **compiler/parser.ts** - Extract script blocks from HTML; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
 - **compiler/build-script-analysis.ts** - AST-based analysis of build script content (oxc-parser): extracts imports and `export function getStaticPaths`; used by codegen.
-- **compiler/tokenizer.ts** - Re-exports from `@aerobuilt/interpolation`; use for text/attribute compilation.
+- **compiler/tokenizer.ts** - Re-exports from `@aero-js/interpolation`; use for text/attribute compilation.
 - **compiler/codegen.ts** - Emit async render functions; uses build-script-analysis for build script imports and getStaticPaths; handle `{ }` interpolation via helpers, `data-each`, `data-if` / `data-else-if` / `data-else`
 - **compiler/resolver.ts** - Resolve component/layout paths against path aliases (from project tsconfig)
 - **compiler/helpers.ts** - Interpolation (compileInterpolation, compileAttributeInterpolation use tokenizer), attribute helpers

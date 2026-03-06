@@ -1,6 +1,6 @@
 # Aero Documentation
 
-This directory contains the main documentation for the [Aero](https://github.com/aerobuilt/aero) framework. The root [README](../README.md) gives a short overview and quick start.
+This directory contains the main documentation for the [Aero](https://github.com/jamiewilson/aero) framework. The root [README](../README.md) gives a short overview and quick start.
 
 ## Getting started
 

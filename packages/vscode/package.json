@@ -9,7 +9,7 @@
 	],
 	"keywords": [
 		"aero",
-		"aerobuilt",
+		"aero-js",
 		"completions",
 		"framework",
 		"highlight",
@@ -19,16 +19,16 @@
 		"template"
 	],
 	"bugs": {
-		"url": "https://github.com/aerobuilt/aero/issues"
+		"url": "https://github.com/jamiewilson/aero/issues"
 	},
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/vscode"
 	},
+	"publisher": "aero-js",
 	"type": "module",
-	"publisher": "aerobuilt",
 	"main": "./dist/extension.cjs",
 	"scripts": {
 		"dev": "tsdown --watch",
@@ -38,8 +38,8 @@
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aerobuilt/core": "workspace:*",
-		"@aerobuilt/interpolation": "workspace:*",
+		"@aero-js/core": "workspace:*",
+		"@aero-js/interpolation": "workspace:*",
 		"@volar/vscode": "~2.4.0"
 	},
 	"devDependencies": {
@@ -124,8 +124,8 @@
 		]
 	},
 	"activationEvents": [
-		"onLanguage:html",
-		"onLanguage:aero"
+		"onLanguage:aero",
+		"onLanguage:html"
 	],
 	"icon": "images/logo.png",
 	"engines": {

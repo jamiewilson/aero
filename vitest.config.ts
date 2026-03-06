@@ -9,7 +9,7 @@ export default defineConfig({
 			'packages/interpolation/**/*.test.ts',
 			'packages/vscode/**/*.test.ts',
 			'packages/language-server/**/*.test.ts',
-			'packages/create-aerobuilt/**/*.test.js',
+			'packages/create/**/*.test.js',
 		],
 	},
 })

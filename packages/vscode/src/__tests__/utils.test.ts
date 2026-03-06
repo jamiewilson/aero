@@ -38,7 +38,7 @@ vi.mock('node:fs', () => ({
 	}),
 	readFileSync: vi.fn((path: string) => {
 		if (path.includes('vite.config.ts')) {
-			return "import { aero } from '@aerobuilt/core'"
+			return "import { aero } from '@aero-js/core'"
 		}
 		if (path.includes('package.json')) {
 			return '{ "name": "test-project" }'

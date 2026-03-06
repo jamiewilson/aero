@@ -1,28 +1,28 @@
-# @aerobuilt/highlight
+# @aero-js/highlight
 
 Shared Shiki syntax highlighting utility for the Aero framework.
 
 Provides composable, reusable Shiki integration across the Aero ecosystem:
 
-- **Markdown code blocks** via `@aerobuilt/content` (opt-in)
+- **Markdown code blocks** via `@aero-js/content` (opt-in)
 - **Custom usage** in templates or CLI tools (direct import)
 
 ## Installation
 
 ```bash
-pnpm add @aerobuilt/highlight
+pnpm add @aero-js/highlight
 ```
 
 ## Usage
 
-### With @aerobuilt/content (Markdown Highlighting)
+### With @aero-js/content (Markdown Highlighting)
 
-When using `@aerobuilt/content`, enable Shiki highlighting by adding `@shikijs/rehype` to `markdown.rehypePlugins` in your `content.config.ts`. Use `@aerobuilt/highlight` for `preDataLangTransformer()` (adds `data-lang` on `<pre>`) and for shared config types:
+When using `@aero-js/content`, enable Shiki highlighting by adding `@shikijs/rehype` to `markdown.rehypePlugins` in your `content.config.ts`. Use `@aero-js/highlight` for `preDataLangTransformer()` (adds `data-lang` on `<pre>`) and for shared config types:
 
 ````typescript
 // content.config.ts
-import { defineCollection, defineConfig } from '@aerobuilt/content'
-import { preDataLangTransformer } from '@aerobuilt/highlight'
+import { defineCollection, defineConfig } from '@aero-js/content'
+import { preDataLangTransformer } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
 import {
 	transformerNotationHighlight,
@@ -81,10 +81,10 @@ Becomes:
 
 ### Standalone Usage (Direct Import)
 
-Use `@aerobuilt/highlight` directly for one-off highlighting in any context:
+Use `@aero-js/highlight` directly for one-off highlighting in any context:
 
 ```typescript
-import { highlight, preDataLangTransformer } from '@aerobuilt/highlight'
+import { highlight, preDataLangTransformer } from '@aero-js/highlight'
 
 const html = await highlight('const x = 1', 'js', {
 	themes: { light: 'github-light', dark: 'github-dark' },
@@ -110,7 +110,7 @@ const html = await highlight('const x = 1', 'js', {
 The highlighter is cached at the module level and reused across renders for performance:
 
 ```typescript
-import { getHighlighter } from '@aerobuilt/highlight'
+import { getHighlighter } from '@aero-js/highlight'
 
 const config = {
 	theme: 'github-light',
@@ -158,7 +158,7 @@ Clear the cached highlighter. Useful for testing to ensure a fresh instance betw
 The `ShikiConfig` type wraps Shiki's standard options with full `BundledTheme` and `BundledLanguage` autocomplete.
 
 ```typescript
-import type { ShikiConfig } from '@aerobuilt/highlight'
+import type { ShikiConfig } from '@aero-js/highlight'
 
 // Single theme
 const single: ShikiConfig = {
@@ -209,7 +209,7 @@ See [Shiki Languages](https://shiki.style/languages) for the full list. Common I
 Transformers post-process highlighted code to add features like line highlighting, line numbers, and diffs.
 
 ```typescript
-import { preDataLangTransformer } from '@aerobuilt/highlight'
+import { preDataLangTransformer } from '@aero-js/highlight'
 import {
 	transformerNotationHighlight,
 	transformerNotationFocus,
@@ -305,7 +305,7 @@ const y = 2
 ```html
 <!-- src/components/code-block.html -->
 <script is:build>
-	import { highlight } from '@aerobuilt/highlight'
+	import { highlight } from '@aero-js/highlight'
 
 	const { code, language = 'js' } = Aero.props
 

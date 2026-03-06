@@ -5,7 +5,7 @@
  * Used by definition, hover, and completion providers to decide what to resolve or suggest. classifyPosition runs the detection pipeline (imports, assets, component tags, expression identifiers).
  */
 import * as vscode from 'vscode'
-import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 
 /** Result of classifying a position: kind-specific data and range, or null. */

@@ -1,5 +1,5 @@
 /**
- * Unit tests for @aerobuilt/interpolation: tokenizeCurlyInterpolation and compileInterpolationFromSegments.
+ * Unit tests for @aero-js/interpolation: tokenizeCurlyInterpolation and compileInterpolationFromSegments.
  *
  * Covers: nested braces, strings containing } or ", comments containing braces,
  * attribute mode ({{ / }} as literal), and segment→compiled string output.

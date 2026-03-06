@@ -24,8 +24,8 @@ const packagePaths = [
 	'packages/config/package.json',
 	'packages/content/package.json',
 	'packages/highlight/package.json',
-	'packages/aerobuilt/package.json',
-	'packages/create-aerobuilt/package.json',
+	'packages/vite/package.json',
+	'packages/create/package.json',
 	'packages/templates/minimal/package.json',
 	'packages/vscode/package.json',
 ]

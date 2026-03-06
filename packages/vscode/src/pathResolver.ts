@@ -2,7 +2,7 @@
  * Resolve import specifiers and paths using tsconfig paths + framework defaults.
  *
  * @remarks
- * Uses loadTsconfigAliases and mergeWithDefaultAliases from @aerobuilt/core/utils/aliases so
+ * Uses loadTsconfigAliases and mergeWithDefaultAliases from @aero-js/core/utils/aliases so
  * @pages, @layouts, @components resolve even when tsconfig is missing or has no paths.
  * Caches a PathResolver per project root. Used by definition, hover, and completion providers.
  */
@@ -12,7 +12,7 @@ import * as fs from 'node:fs'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
-} from '@aerobuilt/core/utils/aliases'
+} from '@aero-js/core/utils/aliases'
 
 /** Default dirs when no aero/vite config is available (matches framework defaults). */
 const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }

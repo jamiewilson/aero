@@ -1,4 +1,4 @@
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 import htmx from 'htmx.org'
 import Alpine from './alpine'
 

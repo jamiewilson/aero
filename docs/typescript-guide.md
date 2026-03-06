@@ -146,7 +146,7 @@ The `aero:content` module provides `getCollection()` and `render()`. The languag
 
 ```typescript
 // content.config.ts
-import { defineConfig, defineCollection } from '@aerobuilt/content'
+import { defineConfig, defineCollection } from '@aero-js/content'
 import { z } from 'zod'
 
 const docsSchema = z.object({
@@ -227,14 +227,14 @@ For stronger typing of `doc.data`, you can define an interface and assert:
 
 ## Ambient Types and env.d.ts
 
-The framework ships ambient declarations in `@aerobuilt/core/env`. Include them so TypeScript knows about `Aero`, `renderComponent`, and `*.html` imports.
+The framework ships ambient declarations in `@aero-js/core/env`. Include them so TypeScript knows about `Aero`, `renderComponent`, and `*.html` imports.
 
 ### Option 1: tsconfig types
 
 ```json
 {
 	"compilerOptions": {
-		"types": ["@aerobuilt/core/env"]
+		"types": ["@aero-js/core/env"]
 	}
 }
 ```
@@ -244,7 +244,7 @@ The framework ships ambient declarations in `@aerobuilt/core/env`. Include them 
 At the top of a `.ts` file that needs the globals:
 
 ```typescript
-/// <reference types="@aerobuilt/core/env" />
+/// <reference types="@aero-js/core/env" />
 ```
 
 For `.html` build scripts, the VS Code extension and language server inject these declarations automatically. You don't need to add them for template files.
@@ -257,7 +257,7 @@ To add custom globals or refine existing ones, create an `env.d.ts` in your proj
 
 ```typescript
 // env.d.ts
-/// <reference types="@aerobuilt/core/env" />
+/// <reference types="@aero-js/core/env" />
 
 // Custom global
 declare const MY_CONFIG: {
@@ -301,7 +301,7 @@ Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) 
 | **Component props**     | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread and layout attributes (with limitations) |
 | **Content globals**     | Export typed objects from `content/*.ts`; use `satisfies` for validation                 |
 | **Content collections** | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data` |
-| **Ambient globals**     | Use `@aerobuilt/core/env`; extend via project `env.d.ts`                                 |
+| **Ambient globals**     | Use `@aero-js/core/env`; extend via project `env.d.ts`                                 |
 | **Path aliases**        | Configure in `tsconfig.json` and keep in sync with Aero `dirs`                           |
 
 The language server provides IntelliSense, diagnostics, and navigation for build scripts. Typing props and content data gives you better autocomplete and catches mistakes at edit time.

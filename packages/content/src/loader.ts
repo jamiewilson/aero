@@ -145,6 +145,6 @@ export function getCollection(name, filterFn) {
   return data;
 }
 
-export { render } from '@aerobuilt/content/render';
+export { render } from '@aero-js/content/render';
 `
 }

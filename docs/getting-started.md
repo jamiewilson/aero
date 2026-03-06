@@ -5,7 +5,7 @@ This guide walks you through creating your first Aero project — from installat
 ## Create a Project
 
 ```bash
-pnpm create aerobuilt my-app
+pnpm create @aero-js my-app
 cd my-app
 pnpm dev
 ```
@@ -72,7 +72,7 @@ Here's the layout from the minimal template (`client/layouts/base.html`):
 		<meta-component props="{...Aero.props}" />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script type="module">
-			import aero from 'aerobuilt'
+			import aero from '@aero-js/core'
 			aero.mount()
 		</script>
 	</head>

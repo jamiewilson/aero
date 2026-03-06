@@ -1,5 +1,5 @@
 /**
- * Re-export the shared interpolation tokenizer from @aerobuilt/interpolation.
+ * Re-export the shared interpolation tokenizer from @aero-js/interpolation.
  *
  * @remarks
  * Core uses this for compileInterpolation and compileAttributeInterpolation in helpers.ts.
@@ -14,4 +14,4 @@ export {
 	type LiteralSegment,
 	type InterpolationSegment,
 	type TokenizeOptions,
-} from '@aerobuilt/interpolation'
+} from '@aero-js/interpolation'

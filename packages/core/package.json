@@ -1,13 +1,13 @@
 {
-	"name": "@aerobuilt/core",
+	"name": "@aero-js/core",
 	"version": "0.3.3",
 	"private": false,
-	"homepage": "https://github.com/aerobuilt/aero",
+	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/core"
 	},
 	"files": [
@@ -59,7 +59,7 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aerobuilt/interpolation": "workspace:*",
+		"@aero-js/interpolation": "workspace:*",
 		"get-tsconfig": "^4.13.6",
 		"html-minifier-next": "^5.1.1",
 		"linkedom": "^0.18.12",

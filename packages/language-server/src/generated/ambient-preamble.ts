@@ -1,5 +1,5 @@
 /**
- * Generated from @aerobuilt/core/env.d.ts - do not edit manually.
+ * Generated from @aero-js/core/env.d.ts - do not edit manually.
  * Run: node scripts/generate-ambient-preamble.mjs
  */
 

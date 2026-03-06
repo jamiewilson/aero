@@ -232,14 +232,14 @@ describe('serializeContentModule', () => {
 		expect(output).not.toContain('export const allDocs')
 	})
 
-	it('re-exports render from @aerobuilt/content/render', () => {
+	it('re-exports render from @aero-js/content/render', () => {
 		const loaded = new Map<string, any[]>()
 		loaded.set('docs', [])
 
 		const output = serializeContentModule(loaded)
 
 		expect(output).toContain(
-			"export { render } from '@aerobuilt/content/render'"
+			"export { render } from '@aero-js/content/render'"
 		)
 	})
 

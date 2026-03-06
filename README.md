@@ -1,6 +1,6 @@
 # ⚡ Aero
 
-Aero (`aerobuilt` on npm) is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity. Links: [aerobuilt](https://www.npmjs.com/package/aerobuilt) — [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+Aero is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity. Links: [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 | Feature                    | Description                                                                  |
 | -------------------------- | ---------------------------------------------------------------------------- |
@@ -17,12 +17,12 @@ Aero (`aerobuilt` on npm) is a static site generator and full-stack framework wi
 ## Try it out
 
 ```bash
-# scaffold a new projet
-pnpm create aerobuilt my-app
+# scaffold a new project
+pnpm create @aero-js my-app
 # or use dlx (or npx)
-pnpm dlx create-aerobuilt@latest my-app
+pnpm dlx @aero-js/create@latest my-app
 # add to an existing project
-pnpm add aerobuilt
+pnpm add @aero-js/core @aero-js/vite
 ```
 
 ## The Basics
@@ -78,7 +78,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Pages** live in `client/pages/`; the path and filename determine the URL (`index.html` = that segment’s root).
 - **Layouts** live in `client/layouts/`; use `<name-layout>` in markup (e.g. `base.html` → `<base-layout>`).
 - **Components** live in `client/components/`; use `<name-component>` (e.g. `header.html` → `<header-component>`).
-- **Path aliases**: For convenience, `create-aerobuilt` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
+- **Path aliases**: For convenience, `@aero-js/create` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
 > [!NOTE]  
 > For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page’s build script so the build knows which paths to generate. See [Conventions](#conventions) and [docs/content-api.md](docs/content-api.md).
@@ -353,11 +353,11 @@ There is no hydration and no framework runtime in the output; you can deploy to 
 
 ## Configuration
 
-Aero is configured by passing options to the `aero()` Vite plugin. You can do that either directly in `vite.config.ts` or via a separate `aero.config.ts` when using `@aerobuilt/config`.
+Aero is configured by passing options to the `aero()` Vite plugin. You can do that either directly in `vite.config.ts` or via a separate `aero.config.ts` when using `@aero-js/config`.
 
 | Property         | Type                           | Description                                                                                                                                                  |
 | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`content`**    | `boolean \| object`            | Enable content collections. Default `false`. Pass `true` or options for `@aerobuilt/content`.                                                                |
+| **`content`**    | `boolean \| object`            | Enable content collections. Default `false`. Pass `true` or options for `@aero-js/content`.                                                                |
 | **`server`**     | `boolean`                      | Enable Nitro (API + optional server). Default `false`.                                                                                                       |
 | **`site`**       | `string`                       | Canonical site URL (e.g. `'https://example.com'`). Used for sitemap, RSS, canonical/OG tags. Exposed as `import.meta.env.SITE` and `Aero.site` in templates. |
 | **`redirects`**  | `Array<{ from, to, status? }>` | Applied in dev and passed to Nitro for production. For static-only deploys use host redirect config (\_redirects, vercel.json, etc.).                        |
@@ -372,7 +372,7 @@ Pass options to `aero()` in `vite.config.ts`. Use this when you want everything 
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { aero } from 'aerobuilt/vite'
+import { aero } from '@aero-js/vite'
 
 export default defineConfig({
 	plugins: [
@@ -388,7 +388,7 @@ export default defineConfig({
 
 ### Using aero.config
 
-Projects that use `createViteConfig()` from `@aerobuilt/config` (e.g. create-aerobuilt and the kitchen-sink example) can put Aero options in a separate **`aero.config.ts`**. The config package loads it, applies framework defaults, and passes the options into the plugin—so you keep `vite.config.ts` minimal and get typed, env-aware config in one place.
+Projects that use `createViteConfig()` from `@aero-js/config` (e.g. @aero-js/create and the kitchen-sink example) can put Aero options in a separate **`aero.config.ts`**. The config package loads it, applies framework defaults, and passes the options into the plugin—so you keep `vite.config.ts` minimal and get typed, env-aware config in one place.
 
 **Why use it:** Aero options live in a dedicated file with `defineConfig` for types and autocomplete; you can still override Vite settings via the `vite` key. Config can be a function `(env) => ({ ... })` for different behaviour in dev vs build. If you omit the config argument, `createViteConfig()` auto-loads `aero.config.ts` from the project root.
 
@@ -396,7 +396,7 @@ Projects that use `createViteConfig()` from `@aerobuilt/config` (e.g. create-aer
 
 ```ts
 // aero.config.ts
-import { defineConfig } from 'aerobuilt/config'
+import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
 	site: 'https://example.com',
@@ -414,7 +414,7 @@ export default defineConfig({
 
 ```ts
 // vite.config.ts
-import { createViteConfig } from 'aerobuilt/config'
+import { createViteConfig } from '@aero-js/config'
 import aeroConfig from './aero.config'
 
 export default createViteConfig(aeroConfig)
@@ -424,7 +424,7 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## Commands
 
-Commands in a `create-aerobuilt` project:
+Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
 
 - `pnpm dev` — Build and run dev server
 - `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
@@ -441,7 +441,7 @@ Commands in a `create-aerobuilt` project:
 
 Language support for Aero templates in HTML files: syntax highlighting, completions, hovers, definitions, and diagnostics for Aero expressions and components.
 
-[Install from VS Marketplace](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+[Install from VS Marketplace](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ## More Documentation
 
@@ -449,13 +449,13 @@ For more documentation, see the [`/docs`](/docs) directory, starting with the [T
 
 ## Links
 
-- [aerobuilt](https://www.npmjs.com/package/aerobuilt)
-- [create-aerobuilt](https://www.npmjs.com/package/create-aerobuilt)
-- [@aerobuilt/core](https://www.npmjs.com/package/@aerobuilt/core)
-- [@aerobuilt/content](https://www.npmjs.com/package/@aerobuilt/content)
-- [@aerobuilt/config](https://www.npmjs.com/package/@aerobuilt/config)
-- [@aerobuilt/template-minimal](https://www.npmjs.com/package/@aerobuilt/template-minimal)
-- [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aerobuilt.aero-vscode)
+- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
+- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
+- [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
+- [@aero-js/config](https://www.npmjs.com/package/@aero-js/config)
+- [@aero-js/vite](https://www.npmjs.com/package/@aero-js/vite)
+- [@aero-js/template-minimal](https://www.npmjs.com/package/@aero-js/template-minimal)
+- [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ## Inspiration
 

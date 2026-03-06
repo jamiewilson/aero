@@ -1,13 +1,13 @@
 {
-	"name": "@aerobuilt/content",
+	"name": "@aero-js/content",
 	"version": "0.3.3",
 	"private": false,
-	"homepage": "https://github.com/aerobuilt/aero",
+	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/content"
 	},
 	"files": [
