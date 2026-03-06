@@ -1,8 +1,8 @@
 /**
  * Ambient type declarations for Aero templates.
  *
- * Include in your project by adding `"types": ["@aerobuilt/core/env"]` to tsconfig.json,
- * or via a triple-slash directive: `/// <reference types="@aerobuilt/core/env" />`
+ * Include in your project by adding `"types": ["@aero-js/core/env"]` to tsconfig.json,
+ * or via a triple-slash directive: `/// <reference types="@aero-js/core/env" />`
  *
  * These declarations type the globals available inside `<script is:build>` blocks.
  *

@@ -1,11 +1,11 @@
-# create-aerobuilt
+# @aero-js/create
 
-Scaffold a new [Aero](https://github.com/aerobuilt/aero) project. Aero is an HTML-first static site generator powered by Vite.
+Scaffold a new [Aero](https://github.com/jamiewilson/aero) project. Aero is an HTML-first static site generator powered by Vite.
 
 ## Usage
 
 ```bash
-pnpm create aerobuilt my-app
+pnpm create @aero-js my-app
 cd my-app
 pnpm dev
 ```
@@ -13,9 +13,9 @@ pnpm dev
 Also works with npm, yarn, and `pnpm dlx`:
 
 ```bash
-npx create-aerobuilt@latest my-app
-yarn create aerobuilt my-app
-pnpm dlx create-aerobuilt my-app
+npx @aero-js/create@latest my-app
+yarn create @aero-js my-app
+pnpm dlx @aero-js/create@latest my-app
 ```
 
 ## Options
@@ -31,7 +31,7 @@ pnpm dlx create-aerobuilt my-app
 3. Auto-detects your package manager (pnpm > yarn > npm) and installs dependencies
 4. Prints next steps
 
-After scaffolding, the project has `aerobuilt` as its only framework dependency.
+After scaffolding, the project has `@aero-js/core` and `@aero-js/vite` as its framework dependencies.
 
 ## Project structure
 
@@ -53,8 +53,8 @@ If you change `dirs.client` (or other dirs) in `vite.config.ts` or `aero.config.
 
 ## Links
 
-- [GitHub](https://github.com/aerobuilt/aero)
-- [aerobuilt on npm](https://www.npmjs.com/package/aerobuilt)
+- [GitHub](https://github.com/jamiewilson/aero)
+- [@aero-js/core on npm](https://www.npmjs.com/package/@aero-js/core)
 
 ## License
 

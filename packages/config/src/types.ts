@@ -6,12 +6,12 @@
  * dirs shape matches the Vite plugin (aero()) so the same options work in aero.config and vite.config.
  */
 import type { UserConfig } from 'vite'
-import type { AeroContentOptions } from '@aerobuilt/content/vite'
+import type { AeroContentOptions } from '@aero-js/content/vite'
 import type {
 	AeroDirs,
 	AeroMiddleware,
 	RedirectRule,
-} from '@aerobuilt/core/types'
+} from '@aero-js/core/types'
 
 /** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {

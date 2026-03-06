@@ -20,9 +20,12 @@ importers:
 
   examples/import-bundling/cdn-externals:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../../packages/aerobuilt
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
     devDependencies:
       '@types/alpinejs':
         specifier: ^3.13.11
@@ -33,9 +36,12 @@ importers:
 
   examples/import-bundling/cdn-globals:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../../packages/aerobuilt
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
     devDependencies:
       '@types/alpinejs':
         specifier: ^3.13.11
@@ -46,9 +52,12 @@ importers:
 
   examples/import-bundling/dynamic-import:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../../packages/aerobuilt
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -65,9 +74,12 @@ importers:
 
   examples/import-bundling/esm-import-map:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../../packages/aerobuilt
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -84,9 +96,12 @@ importers:
 
   examples/import-bundling/single-bundle:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../../packages/aerobuilt
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -101,12 +116,34 @@ importers:
         specifier: 8.0.0-beta.15
         version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
+  examples/integrations/aero-lume:
+    dependencies:
+      '@aero-js/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../../../packages/vite
+      lume-js:
+        specifier: 2.0.0-beta.1
+        version: 2.0.0-beta.1
+    devDependencies:
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+
   examples/kitchen-sink:
     dependencies:
-      '@aerobuilt/content':
+      '@aero-js/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@aero-js/content':
         specifier: workspace:*
         version: link:../../packages/content
-      '@aerobuilt/highlight':
+      '@aero-js/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@aero-js/highlight':
         specifier: workspace:*
         version: link:../../packages/highlight
       '@alpinejs/persist':
@@ -115,9 +152,6 @@ importers:
       '@shikijs/rehype':
         specifier: ^3.0.0
         version: 3.23.0
-      aerobuilt:
-        specifier: workspace:*
-        version: link:../../packages/aerobuilt
       alpinejs:
         specifier: ^3.15.8
         version: 3.15.8
@@ -147,33 +181,17 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
 
-  packages/aerobuilt:
-    dependencies:
-      '@aerobuilt/config':
-        specifier: workspace:*
-        version: link:../config
-      '@aerobuilt/content':
-        specifier: workspace:*
-        version: link:../content
-      '@aerobuilt/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      tsdown:
-        specifier: ^0.21.0-beta.2
-        version: 0.21.0-beta.3(lightningcss@1.31.1)(oxc-resolver@11.19.1)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   packages/config:
     dependencies:
-      '@aerobuilt/content':
+      '@aero-js/content':
         specifier: workspace:*
         version: link:../content
-      '@aerobuilt/core':
+      '@aero-js/core':
         specifier: workspace:*
         version: link:../core
+      '@aero-js/vite':
+        specifier: workspace:*
+        version: link:../vite
       jiti:
         specifier: ^2.4.2
         version: 2.6.1
@@ -242,7 +260,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@aerobuilt/interpolation':
+      '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
       get-tsconfig:
@@ -292,9 +310,9 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
-  packages/create-aerobuilt:
+  packages/create:
     dependencies:
-      '@aerobuilt/template-minimal':
+      '@aero-js/template-minimal':
         specifier: workspace:*
         version: link:../templates/minimal
 
@@ -377,20 +395,33 @@ importers:
 
   packages/templates/minimal:
     dependencies:
-      aerobuilt:
+      '@aero-js/core':
         specifier: workspace:*
-        version: link:../../aerobuilt
+        version: link:../../core
     devDependencies:
       vite:
         specifier: 8.0.0-beta.15
         version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
-  packages/vscode:
+  packages/vite:
     dependencies:
-      '@aerobuilt/core':
+      '@aero-js/core':
         specifier: workspace:*
         version: link:../core
-      '@aerobuilt/interpolation':
+    devDependencies:
+      tsdown:
+        specifier: ^0.21.0-beta.2
+        version: 0.21.0-beta.3(lightningcss@1.31.1)(oxc-resolver@11.19.1)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/vscode:
+    dependencies:
+      '@aero-js/core':
+        specifier: workspace:*
+        version: link:../core
+      '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
       '@volar/vscode':
@@ -2470,6 +2501,10 @@ packages:
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
+
+  lume-js@2.0.0-beta.1:
+    resolution: {integrity: sha512-qNUg8UYxvXZjsdUbB0sMHJ456f1lqoIUJl1pjltMQbXIq54IWyzCQpSwMiajdO1k7/CiaEQ27tq8fZUYzAMsIw==}
+    engines: {node: '>=20.19.0'}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -4593,6 +4628,8 @@ snapshots:
       uhyphen: 0.2.0
 
   longest-streak@3.1.0: {}
+
+  lume-js@2.0.0-beta.1: {}
 
   magic-string@0.30.21:
     dependencies:

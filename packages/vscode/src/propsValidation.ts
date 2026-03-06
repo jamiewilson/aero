@@ -7,8 +7,8 @@
  * and `prop?: Type` are supported.
  */
 import * as fs from 'node:fs'
-import { getPropsTypeFromBuildScript } from '@aerobuilt/core/editor'
-import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { getPropsTypeFromBuildScript } from '@aero-js/core/editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import type { PathResolver } from './pathResolver'
 
 /** Match import type { ... } from 'spec' - captures braced content and specifier */

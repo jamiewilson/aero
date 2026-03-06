@@ -1,6 +1,6 @@
 # Rehype Integration
 
-`@aerobuilt/content` configures the markdown pipeline via `markdown.rehypePlugins` in `content.config.ts`. There is no separate `highlight` config key — you add a Shiki rehype plugin yourself. This document explains the pipeline and the two ways to plug in Shiki.
+`@aero-js/content` configures the markdown pipeline via `markdown.rehypePlugins` in `content.config.ts`. There is no separate `highlight` config key — you add a Shiki rehype plugin yourself. This document explains the pipeline and the two ways to plug in Shiki.
 
 ## The Rehype Pipeline
 
@@ -24,7 +24,7 @@ Without any rehype plugins, fenced code blocks render as plain `<pre><code>`. To
 Shiki offers two rehype plugins:
 
 1. **`rehypeShiki`** (from `@shikijs/rehype`) — Creates its own highlighter internally. Simple: pass the plugin and options (themes, transformers, etc.) in `rehypePlugins`. This is what most projects use (see the [highlight README](../README.md)).
-2. **`rehypeShikiFromHighlighter`** (from `@shikijs/rehype/core`) — Accepts a pre-created highlighter instance. Use this with `getHighlighter()` from `@aerobuilt/highlight` when you want a **cached highlighter** shared across the pipeline, which can improve dev and build performance by reusing the same Shiki instance.
+2. **`rehypeShikiFromHighlighter`** (from `@shikijs/rehype/core`) — Accepts a pre-created highlighter instance. Use this with `getHighlighter()` from `@aero-js/highlight` when you want a **cached highlighter** shared across the pipeline, which can improve dev and build performance by reusing the same Shiki instance.
 
 ## Configuring via content.config.ts
 
@@ -33,7 +33,7 @@ You pass the plugin (and options) in `markdown.rehypePlugins`:
 ```ts
 // content.config.ts
 import rehypeShiki from '@shikijs/rehype'
-import { preDataLangTransformer } from '@aerobuilt/highlight'
+import { preDataLangTransformer } from '@aero-js/highlight'
 
 export default defineConfig({
 	collections: [docs],
@@ -57,4 +57,4 @@ Options for `rehypeShiki` (and for `rehypeShikiFromHighlighter` when using the s
 ## See Also
 
 - [Shiki rehype integration](https://shiki.style/packages/rehype)
-- [`@aerobuilt/highlight` README](../README.md)
+- [`@aero-js/highlight` README](../README.md)

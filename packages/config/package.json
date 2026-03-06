@@ -1,13 +1,13 @@
 {
-	"name": "@aerobuilt/config",
+	"name": "@aero-js/config",
 	"version": "0.3.3",
 	"private": false,
-	"homepage": "https://github.com/aerobuilt/aero",
+	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/config"
 	},
 	"files": [
@@ -26,6 +26,7 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
+		"@aero-js/vite": "workspace:*",
 		"jiti": "^2.4.2"
 	},
 	"devDependencies": {
@@ -34,8 +35,8 @@
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {
-		"@aerobuilt/content": "workspace:*",
-		"@aerobuilt/core": "workspace:*",
+		"@aero-js/content": "workspace:*",
+		"@aero-js/core": "workspace:*",
 		"vite": "^8.0.0-0"
 	},
 	"peerDependenciesMeta": {

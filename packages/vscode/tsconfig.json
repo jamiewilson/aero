@@ -5,8 +5,8 @@
 		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
-			"@aerobuilt/core/editor": ["../core/dist/entry-editor.d.mts"],
-			"@aerobuilt/core/utils/aliases": ["../core/dist/utils/aliases.d.mts"]
+			"@aero-js/core/editor": ["../core/dist/entry-editor.d.mts"],
+			"@aero-js/core/utils/aliases": ["../core/dist/utils/aliases.d.mts"]
 		},
 		"lib": ["ES2020"],
 		"outDir": "dist",

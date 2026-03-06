@@ -72,7 +72,7 @@ const RUNTIME_INSTANCE_FILENAME = 'runtime-instance.mjs'
 
 /**
  * Generate Nitro config from Aero options and write to <projectRoot>/.aero/nitro.config.mjs.
- * root is the app/site directory (Vite config.root), e.g. examples/kitchen-sink or a create-aerobuilt project folder.
+ * root is the app/site directory (Vite config.root), e.g. examples/kitchen-sink or an @aero-js/create project folder.
  * distDir is the configured output dir (e.g. 'build') so the catch-all route serves from the same path at preview time.
  * Returns the absolute path to .aero (Nitro cwd so it loads this file).
  */
@@ -143,8 +143,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					? [
 							...state.aliasResult.aliases,
 							{
-								find: '@aerobuilt/core',
-								replacement: require.resolve('@aerobuilt/core/entry-prod'),
+								find: '@aero-js/core',
+								replacement: require.resolve('@aero-js/core/entry-prod'),
 							},
 						]
 					: state.aliasResult.aliases
@@ -212,11 +212,11 @@ function clientGlobPrefix(clientDir: string): string {
 /**
  * Virtual module source for the runtime instance with glob patterns using the app's client dir.
  * Ensures template resolution works for custom dirs (e.g. dirs.client === 'frontend').
- * runtimeImportPath: path that resolves to @aerobuilt/core/runtime from the generated file (e.g. relative to .aero/ for SSR).
+ * runtimeImportPath: path that resolves to @aero-js/core/runtime from the generated file (e.g. relative to .aero/ for SSR).
  */
 function getRuntimeInstanceVirtualSource(
 	clientDir: string,
-	runtimeImportPath: string = 'aerobuilt/runtime'
+	runtimeImportPath: string = '@aero-js/core/runtime'
 ): string {
 	const prefix = clientGlobPrefix(clientDir)
 	const componentsPattern = `${prefix}/components/**/*.html`
@@ -582,7 +582,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
  * Aero Vite plugin factory. Returns an array of plugins: config, virtuals, transform, SSR,
  * static-build, image optimizer, and optionally Nitro (serve only).
  * HMR for templates and content is handled by Vite's dependency graph when the app uses a single
- * client entry that imports @aerobuilt/core and calls aero.mount().
+ * client entry that imports @aero-js/core and calls aero.mount().
  *
  * @param options - AeroOptions (server, apiPrefix, dirs). Server can be disabled at runtime via AERO_SERVER=false.
  * @returns PluginOption[] to pass to Vite's plugins array.
@@ -624,7 +624,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		name: 'vite-plugin-aero-static',
 		apply: 'build',
 		async closeBundle() {
-			// Project root (site/app directory: e.g. examples/kitchen-sink or create-aerobuilt generated project), not monorepo root
+			// Project root (site/app directory: e.g. examples/kitchen-sink or @aero-js/create generated project), not monorepo root
 			const root = state.config!.root
 			const outDir = state.config!.build.outDir
 			const shouldMinifyHtml =

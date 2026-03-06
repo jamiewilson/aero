@@ -8,10 +8,10 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 
 ### Added
 
-- **Redirects:** `redirects` option in `aero.config.ts` or `aero({ redirects: [{ from, to, status? }] })`. Applied in dev and passed to Nitro for production; use `@aerobuilt/config`’s `redirectsToRouteRules()` in `nitro.config.ts` to emit route rules.
+- **Redirects:** `redirects` option in `aero.config.ts` or `aero({ redirects: [{ from, to, status? }] })`. Applied in dev and passed to Nitro for production; use `@aero-js/config`’s `redirectsToRouteRules()` in `nitro.config.ts` to emit route rules.
 - **Request-time middleware:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev) for redirects, rewrites, or custom responses.
-- **create-aerobuilt refactor:** Project initializer moved into `packages/create-aerobuilt` with CLI; minimal template in `packages/templates/minimal`, kitchen-sink example in `examples/kitchen-sink`. Scaffold with `pnpm run create-aerobuilt <name>` from `packages/create-aerobuilt` or `pnpm create aerobuilt <dir>` when published.
-- **pnpm workspace:** Monorepo uses pnpm workspaces; root `dev`/`build` run kitchen-sink example; `packages/create-aerobuilt` scaffolds into `packages/create-aerobuilt/dist/<name>` (gitignored).
+- **@aero-js/create refactor:** Project initializer in `packages/create` with CLI; minimal template in `packages/templates/minimal`, kitchen-sink example in `examples/kitchen-sink`. Scaffold with `pnpm create @aero-js <dir>`.
+- **pnpm workspace:** Monorepo uses pnpm workspaces; root `dev`/`build` run kitchen-sink example; `packages/create` scaffolds into `packages/create/dist/<name>` (gitignored).
 - Add `site` option for canonical site URL: set in `aero.config.ts` or `aero({ site: 'https://example.com' })`. Exposed as `import.meta.env.SITE` and `Aero.site` in templates for sitemap, RSS, and canonical links.
 - Add automatic **sitemap.xml** generation when `site` is set: written to `dist/sitemap.xml` after the static build, listing all pre-rendered routes as absolute URLs (404 excluded).
 - Document **environment variable** convention: Vite’s `import.meta.env`, `VITE_` prefix for client-exposed vars, `.env` loading, and optional `env.d.ts` for TypeScript. Add example `env.d.ts` in the start package.

@@ -9,7 +9,7 @@ import type { ShikiTransformer } from 'shiki'
  */
 export function preDataLangTransformer(): ShikiTransformer {
 	return {
-		name: 'aerobuilt:pre-data-lang-transformer',
+		name: 'aero-js:pre-data-lang-transformer',
 		pre(node) {
 			const lang = this.options.lang
 			if (!lang) return

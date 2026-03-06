@@ -7,8 +7,8 @@
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
 import { mergeConfig } from 'vite'
-import { aero } from '@aerobuilt/core/vite'
-import { aeroContent } from '@aerobuilt/content/vite'
+import { aero } from '@aero-js/vite'
+import { aeroContent } from '@aero-js/content/vite'
 import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'

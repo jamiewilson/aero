@@ -17,6 +17,14 @@
 			"path": "packages/core",
 		},
 		{
+			"name": "vite",
+			"path": "packages/vite",
+		},
+		{
+			"name": "create",
+			"path": "packages/create",
+		},
+		{
 			"name": "config",
 			"path": "packages/config",
 		},

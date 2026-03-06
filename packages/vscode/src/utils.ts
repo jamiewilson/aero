@@ -1,7 +1,7 @@
 /**
  * Shared utilities: kebab-case conversion, import extraction, and scope lookup.
  */
-import { analyzeBuildScriptForEditor } from '@aerobuilt/core/editor'
+import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import type { TemplateScope } from './analyzer'
 
 /** Convert kebab-case to camelCase (e.g. `my-component` → `myComponent`). */

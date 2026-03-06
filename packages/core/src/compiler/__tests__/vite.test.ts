@@ -3,7 +3,7 @@
  * virtual client scripts, pass:data preamble injection, rendering via Aero runtime,
  * resolveId for extensionless .html, and buildStart prefill.
  * HMR for templates and content is dependency-driven (no custom handleHotUpdate); the app uses
- * a single client entry that imports @aerobuilt/core and calls aero.mount().
+ * a single client entry that imports @aero-js/core and calls aero.mount().
  */
 
 import { describe, it, expect } from 'vitest'
@@ -156,7 +156,7 @@ describe('Vite Plugin Integration', () => {
 		}
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
-			'@aerobuilt/content/render',
+			'@aero-js/content/render',
 			undefined
 		)
 		expect(result).toBeNull()

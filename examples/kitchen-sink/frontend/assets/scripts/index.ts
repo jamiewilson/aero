@@ -1,4 +1,4 @@
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 
 const htmx = (await import('htmx.org')).default
 const Alpine = (await import('@scripts/alpine')).default

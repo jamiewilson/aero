@@ -38,7 +38,7 @@ Instead of building a custom dev server, HMR system, and bundler, Aero is essent
 
 - **Asset Resolution?** Vite handles it.
 - **HMR?** Vite handles it.
-- **Tailwind CSS?** You don't need an official `@aerobuilt/tailwind` integration. You just use standard Vite PostCSS plugins.
+- **Tailwind CSS?** You don't need an official `@aero-js/tailwind` integration. You just use standard Vite PostCSS plugins.
 
 ### 2. Nitro (The Server)
 

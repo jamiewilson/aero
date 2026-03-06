@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate ambient preamble from @aerobuilt/core/env.d.ts.
+ * Generate ambient preamble from @aero-js/core/env.d.ts.
  *
  * Single source of truth: env.d.ts. This script strips comments and splits
  * into BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, *.html) and AMBIENT_DECLARATIONS
@@ -44,7 +44,7 @@ if (!fs.existsSync(outDir)) {
 }
 
 const content = `/**
- * Generated from @aerobuilt/core/env.d.ts - do not edit manually.
+ * Generated from @aero-js/core/env.d.ts - do not edit manually.
  * Run: node scripts/generate-ambient-preamble.mjs
  */
 

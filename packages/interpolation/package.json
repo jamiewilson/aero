@@ -1,12 +1,12 @@
 {
-	"name": "@aerobuilt/interpolation",
+	"name": "@aero-js/interpolation",
 	"version": "0.3.3",
-	"homepage": "https://github.com/aerobuilt/aero",
+	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/interpolation"
 	},
 	"files": [

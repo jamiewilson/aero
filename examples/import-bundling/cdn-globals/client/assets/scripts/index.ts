@@ -1,4 +1,4 @@
-import aero from 'aerobuilt'
+import aero from '@aero-js/core'
 
 /** Minimal type for htmx loaded via script tag (CDN). */
 interface HtmxGlobal {

@@ -1,12 +1,12 @@
 {
-	"name": "@aerobuilt/language-server",
+	"name": "@aero-js/language-server",
 	"version": "0.3.2",
 	"private": false,
 	"description": "Volar-based language server for Aero templates",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aerobuilt/aero.git",
+		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/language-server"
 	},
 	"type": "module",

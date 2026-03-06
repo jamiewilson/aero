@@ -38,7 +38,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 ## Repository
 
-The source code for this extension is part of the [Aero Monorepo](https://github.com/aerobuilt/aero). Please file any issues or feature requests on the [GitHub Issues](https://github.com/aerobuilt/aero/issues) page.
+The source code for this extension is part of the [Aero Monorepo](https://github.com/jamiewilson/aero). Please file any issues or feature requests on the [GitHub Issues](https://github.com/jamiewilson/aero/issues) page.
 
 ## Usage
 
@@ -63,5 +63,5 @@ In VS Code settings, search for **Aero**:
 - Entry: `src/extension.ts`
 - Build: `pnpm run build` (tsup, CJS, `dist/`)
 - Test: `pnpm test` (Vitest)
-- **Dependencies:** The extension uses `@aerobuilt/core/editor` (directive attributes, build-script analysis with ranges) and `@aerobuilt/interpolation` (tokenizer). Only the `vscode` module is external; tsup bundles core/editor and interpolation into `dist/extension.js`.
+- **Dependencies:** The extension uses `@aero-js/core/editor` (directive attributes, build-script analysis with ranges) and `@aero-js/interpolation` (tokenizer). Only the `vscode` module is external; tsup bundles core/editor and interpolation into `dist/extension.js`.
 - **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix` (see `_reference/guides/publishing.md`). Or from the extension directory: `pnpm install`, `pnpm run build`, then `vsce package --no-dependencies`. Use `--no-dependencies` so vsce skips `npm list` (which fails in pnpm workspaces). The extension bundles deps into `dist/`; the `.vsix` contains only that and assets.

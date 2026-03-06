@@ -2,14 +2,14 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create-aerobuilt** is the create-aerobuilt project initializer (scaffolds from templates). Repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create** is the @aero-js/create project initializer (scaffolds from templates). Repo root is the workspace root.
 
 ### Monorepo
 
-- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aerobuilt/core` and `@aerobuilt/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
+- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aero-js/core` and `@aero-js/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/create-aerobuilt** - Project initializer (create-aerobuilt). Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>` (gitignored).
-- **packages/templates/** - Templates: **minimal** (starter template for create-aerobuilt).
+- **packages/create** - Project initializer (@aero-js/create). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
+- **packages/templates/** - Templates: **minimal** (starter template for @aero-js/create).
 - **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
 - **Root** - Workspace root. Scripts: `pnpm test` runs core tests; `pnpm build` builds packages only.
 
@@ -103,7 +103,7 @@ For bug fixes: start by adding or adjusting a test that fails in the current cod
 
 ## Client entry and HMR
 
-The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aerobuilt/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
+The recommended client setup is a **single entry** (e.g. `client/assets/scripts/index.ts`) that imports `@aero-js/core` and calls `aero.mount()`. Reference it from the layout with `<script type="module" src="@scripts/index.ts"></script>`. Mount attaches to a root element (default `#app`) and subscribes to updates so that on template or content changes the page re-renders in the browser. HMR for templates and content is **dependency-driven**: the client entry pulls in the runtime instance and its globbed pages/layouts/components, so Vite invalidates the right modules and no custom HMR plugin is needed.
 
 On content routes (e.g. `/docs/*`), HMR re-renders in dev use **fetch** to get HTML from the dev server instead of re-running the full markdown pipeline in the browser, which avoids crashes when DevTools is open. If you still see a tab crash on content pages with DevTools open, close DevTools or avoid having the Elements/Console panel focused during HMR; known browser/DevTools issues can cause memory growth or freezes with the tools open.
 
@@ -123,8 +123,8 @@ Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aer
 ## File Structure
 
 - **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
-- **packages/create-aerobuilt/** - create-aerobuilt initializer (no app source; scaffolds from templates)
-- **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aerobuilt/core and aerobuilt/vite)
+- **packages/create/** - @aero-js/create initializer (no app source; scaffolds from templates)
+- **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aero-js/core and @aero-js/vite)
 - **packages/vscode/** - VS Code extension
 
 For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md](_reference/guides/monorepo.md).

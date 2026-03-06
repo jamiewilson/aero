@@ -9,7 +9,7 @@ Use the **`redirects`** config for path → URL redirects that should work in **
 **aero.config.ts:**
 
 ```ts
-import { defineConfig } from 'aerobuilt/config'
+import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
 	site: 'https://example.com',
@@ -22,7 +22,7 @@ export default defineConfig({
 ```
 
 - **Dev:** The Vite plugin applies these before rendering; a matching path gets a `Location` response and no page render.
-- **Server (preview:api / production):** The plugin sets `AERO_REDIRECTS` before `nitro build`; the app's `nitro.config.ts` should merge them into `routeRules` (e.g. using `redirectsToRouteRules` from `aerobuilt/config`). The demo app's Nitro config (when server: true) is generated under `.aero/`.
+- **Server (preview:api / production):** The plugin sets `AERO_REDIRECTS` before `nitro build`; the app's `nitro.config.ts` should merge them into `routeRules` (e.g. using `redirectsToRouteRules` from `@aero-js/config`). The demo app's Nitro config (when server: true) is generated under `.aero/`.
 - **Static build:** Redirects are not run at build time. For static-only deploys (no Nitro), use your host's redirect config (Netlify `_redirects`, Vercel `redirects`, etc.).
 - **Matching:** Exact path only; `from` is compared to the request pathname. Add separate entries for `/path` and `/path/` if you need both.
 
@@ -42,11 +42,11 @@ During `pnpm run build`, the plugin discovers all pages and renders each once; n
 
 ## Configuration
 
-**With aerobuilt/config (aero.config.ts):**
+**With @aero-js/config (aero.config.ts):**
 
 ```ts
-import { defineConfig } from 'aerobuilt/config'
-import type { AeroMiddleware } from '@aerobuilt/core/types'
+import { defineConfig } from '@aero-js/config'
+import type { AeroMiddleware } from '@aero-js/core/types'
 
 // Option A: block body — use explicit `return` so all code paths return (satisfies noImplicitReturns)
 const redirectHome: AeroMiddleware = ctx => {
@@ -69,7 +69,7 @@ export default defineConfig({
 **With the Vite plugin directly:**
 
 ```ts
-import { aero } from 'aerobuilt/vite'
+import { aero } from '@aero-js/vite'
 
 function redirectOldPath(ctx) {
 	if (ctx.routePath === '/old-page') {
@@ -147,7 +147,7 @@ if (ctx.routePath !== '/' && ctx.routePath.endsWith('/')) {
 
 ## Types
 
-From `@aerobuilt/core/types`:
+From `@aero-js/core/types`:
 
 - `AeroRequestContext` — argument to each handler
 - `AeroMiddlewareResult` — redirect / rewrite / response / void

@@ -2,13 +2,13 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **demo app** is **examples/kitchen-sink**; **packages/create-aerobuilt** is the project initializer (scaffolds from templates). Root is the workspace.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **demo app** is **examples/kitchen-sink**; **packages/create** is the project initializer (scaffolds from templates). Root is the workspace.
 
 ### Monorepo
 
-- **packages/core** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `@aerobuilt/core` and `aerobuilt/vite`.
+- **packages/core** - Compiler, runtime, Vite plugin (parser, codegen, resolver, vite/, runtime/). Built with tsup; consumed as `@aero-js/core` and `@aero-js/vite`.
 - **packages/vscode** - VS Code extension.
-- **packages/create-aerobuilt** - Project initializer. Run from `packages/create-aerobuilt`: `pnpm run create-aerobuilt <name>`; scaffolds into `packages/create-aerobuilt/dist/<name>`. Root has no app dev script; run dev/build from **examples/kitchen-sink** or **packages/templates/minimal**.
+- **packages/create** - Project initializer. Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>`. Root has no app dev script; run dev/build from **examples/kitchen-sink** or **packages/templates/minimal**.
 
 ### Compilation pipeline (packages/core)
 
