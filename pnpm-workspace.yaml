@@ -5,3 +5,4 @@ packages:
   - 'examples/*'
   - 'examples/import-bundling/*'
   - 'examples/integrations/*'
+  - 'website'

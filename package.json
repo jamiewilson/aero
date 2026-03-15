@@ -15,6 +15,7 @@
 		"build:config": "pnpm --dir packages/config build",
 		"build:vite": "pnpm --dir packages/vite build",
 		"build:vscode": "pnpm --dir packages/vscode build",
+		"build:website": "pnpm build && pnpm --filter aero-website build",
 		"vscode:package": "pnpm build:vscode && pnpm --dir packages/vscode exec vsce package --no-dependencies",
 		"clean:all": "rm -rf node_modules && find packages examples -type d \\( -name node_modules -o -name dist -o -name build -o -name .output -o -name .aero \\) -prune -exec rm -rf {} +",
 		"version:bump": "node scripts/bump-versions.js",
