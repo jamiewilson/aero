@@ -21,8 +21,15 @@ describe('Vite Plugin Integration', () => {
 	const virtualsPlugin = plugins.find((p: any) => p.load)
 
 	// Simulate the real Vite lifecycle: config() → configResolved()
-	configPlugin.config({ root: process.cwd() })
+	const configResult = configPlugin.config({ root: process.cwd() }, { command: 'serve' })
 	configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
+
+	it('configures environments.ssr for Environment API parity with build', () => {
+		expect(configResult).toBeDefined()
+		expect(configResult?.environments).toBeDefined()
+		expect(configResult?.environments?.ssr).toBeDefined()
+		expect(configResult?.environments?.ssr).toEqual({})
+	})
 
 	const pluginCtx = {
 		error(msg: string) {

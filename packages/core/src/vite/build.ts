@@ -8,25 +8,17 @@
  * and optionally minifies HTML. Also provides createBuildConfig for Rollup inputs and discoverClientScriptContentMap for the plugin.
  */
 
-import type {
-	AeroDirs,
-	RedirectRule,
-	ScriptEntry,
-	StaticPathEntry,
-	ParseResult,
-} from '../types'
+import type { AeroDirs, RedirectRule, ScriptEntry, StaticPathEntry, ParseResult } from '../types'
 
-import type { Manifest, Plugin, UserConfig } from 'vite'
-import { minify as minifyHTML } from 'html-minifier-next'
+import type { Plugin, ResolvedConfig, UserConfig } from 'vite'
+import { isRunnableDevEnvironment } from 'vite'
+import { minify } from 'html-minifier-next'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import { pagePathToKey } from '../utils/routing'
-import {
-	expandRoutePattern,
-	isDynamicRoutePattern,
-} from '../utils/route-pattern'
+import { expandRoutePattern, isDynamicRoutePattern } from '../utils/route-pattern'
 import { createServer } from 'vite'
 
 import {
@@ -72,7 +64,7 @@ export function registerClientScriptsToMap(
 	}
 }
 
-/** Options for renderStaticPages: root, dirs, resolvePath, vitePlugins, optional minify, site, redirects. */
+/** Options for renderStaticPages: root, dirs, resolvePath, vitePlugins, optional minify, site, redirects, resolvedConfig. */
 interface StaticBuildOptions {
 	root: string
 	dirs?: AeroDirs
@@ -85,6 +77,8 @@ interface StaticBuildOptions {
 	site?: string
 	/** Redirect rules; pages whose path matches a redirect `from` are not built (so only the redirect handles that path). */
 	redirects?: RedirectRule[]
+	/** Resolved Vite config from the main build; merged into spawn server for config parity with dev. */
+	resolvedConfig?: ResolvedConfig
 }
 
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
@@ -103,10 +97,7 @@ function isDynamicPage(page: StaticPage): boolean {
 }
 
 /** Replace `[key]` in pattern with params[key]; throws if a key is missing. */
-function expandPattern(
-	pattern: string,
-	params: Record<string, string>
-): string {
+function expandPattern(pattern: string, params: Record<string, string>): string {
 	return expandRoutePattern(pattern, params)
 }
 
@@ -138,11 +129,7 @@ function toRouteFromPageName(pageName: string): string {
  * Generate sitemap.xml from route paths. Only called when site URL is set.
  * Excludes 404. Writes to distDir/sitemap.xml.
  */
-function writeSitemap(
-	routePaths: string[],
-	site: string,
-	distDir: string
-): void {
+function writeSitemap(routePaths: string[], site: string, distDir: string): void {
 	const base = site.replace(/\/$/, '')
 	const urls = routePaths
 		.filter(r => r !== '404')
@@ -189,9 +176,7 @@ function resolveTemplateAssetPath(
 	if (!rawValue || isSkippableUrl(rawValue)) return null
 	if (rawValue.startsWith('/')) return path.resolve(root, rawValue.slice(1))
 	if (rawValue.startsWith('@') || rawValue.startsWith('~')) {
-		const resolved = resolvePath
-			? resolvePath(rawValue, templateFile)
-			: rawValue
+		const resolved = resolvePath ? resolvePath(rawValue, templateFile) : rawValue
 		return path.isAbsolute(resolved) ? resolved : path.resolve(root, resolved)
 	}
 	if (rawValue.startsWith('./') || rawValue.startsWith('../')) {
@@ -211,9 +196,7 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pageFiles = walkHtmlFiles(pagesDir)
 
 	// Use same key derivation as runtime (pagePathToKey) so page names align.
-	const allPageNames = new Set(
-		pageFiles.map(f => pagePathToKey(toPosixRelative(f, root)))
-	)
+	const allPageNames = new Set(pageFiles.map(f => pagePathToKey(toPosixRelative(f, root))))
 
 	return pageFiles.map(file => {
 		const relFromRoot = toPosixRelative(file, root)
@@ -297,20 +280,13 @@ function discoverAssetInputs(
 		const source = fs.readFileSync(templateFile, 'utf-8')
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
-		const styles = Array.from(
-			document.querySelectorAll('link[rel="stylesheet"][href]')
-		)
+		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
 		const refs = [...scripts, ...styles]
 
 		for (const el of refs) {
 			const attr = el.hasAttribute('src') ? 'src' : 'href'
 			const raw = el.getAttribute(attr) || ''
-			const resolved = resolveTemplateAssetPath(
-				raw,
-				templateFile,
-				root,
-				resolvePath
-			)
+			const resolved = resolveTemplateAssetPath(raw, templateFile, root, resolvePath)
 			if (!resolved || !fs.existsSync(resolved)) continue
 			const ext = path.extname(resolved).toLowerCase()
 			if (!['.js', '.mjs', '.ts', '.tsx', '.css'].includes(ext)) continue
@@ -387,13 +363,22 @@ export async function renderStaticPages(
 	// Use a dedicated cache dir so the static server does not reuse the main build's
 	// transform cache (which would hand compiled .html→JS to import-analysis and fail).
 	const staticCacheDir = path.join(root, '.aero', 'vite-ssr')
+	const resolvedConfig = options.resolvedConfig
 	const server = await createServer({
 		configFile: false,
-		root,
+		root: resolvedConfig?.root ?? root,
 		cacheDir: staticCacheDir,
 		appType: 'custom',
 		logLevel: 'error',
+		resolve: resolvedConfig?.resolve
+			? {
+					alias: resolvedConfig.resolve.alias,
+					conditions: resolvedConfig.resolve.conditions,
+				}
+			: undefined,
+		define: resolvedConfig?.define,
 		plugins: options.vitePlugins ?? [],
+		environments: { ssr: {} },
 		server: {
 			middlewareMode: true,
 			hmr: false,
@@ -402,7 +387,11 @@ export async function renderStaticPages(
 	})
 
 	try {
-		const runtime = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
+		const ssrEnv = server.environments.ssr
+		if (!isRunnableDevEnvironment(ssrEnv)) {
+			throw new Error('[aero] SSR environment must be runnable')
+		}
+		const runtime = await ssrEnv.runner.import(RUNTIME_INSTANCE_MODULE_ID)
 
 		// Expand dynamic pages via getStaticPaths before rendering.
 		const pages: StaticPage[] = []
@@ -413,7 +402,7 @@ export async function renderStaticPages(
 			}
 
 			// Load the compiled module to check for getStaticPaths export
-			const mod = await server.ssrLoadModule(page.sourceFile)
+			const mod = await ssrEnv.runner.import(page.sourceFile)
 			if (typeof mod.getStaticPaths !== 'function') {
 				console.warn(
 					`[aero] ⚠ Skipping dynamic page "${path.relative(root, page.sourceFile)}" — ` +
@@ -447,9 +436,7 @@ export async function renderStaticPages(
 
 		// Skip building pages that are redirect sources so the Nitro routeRule is the only handler.
 		const redirectFromSet = new Set(
-			(options.redirects ?? []).map(
-				r => r.from.replace(/^\/+|\/+$/g, '').trim() || ''
-			)
+			(options.redirects ?? []).map(r => r.from.replace(/^\/+|\/+$/g, '').trim() || '')
 		)
 		const pathMatchesRedirect = (page: StaticPage): boolean => {
 			const pathSegment = page.routePath === '' ? '' : page.routePath
@@ -469,10 +456,10 @@ export async function renderStaticPages(
 			// dynamic page name (e.g. "[id]") so the runtime finds the module,
 			// while passing the concrete params so the template has real values.
 			const renderTarget = isDynamicPage(page)
-				? toPosixRelative(
-						page.sourceFile,
-						path.resolve(root, dirs.client, 'pages')
-					).replace(/\.html$/i, '')
+				? toPosixRelative(page.sourceFile, path.resolve(root, dirs.client, 'pages')).replace(
+						/\.html$/i,
+						''
+					)
 				: page.pageName
 
 			let rendered = await runtime.aero.render(renderTarget, {
@@ -494,7 +481,7 @@ export async function renderStaticPages(
 			// Minify HTML in production
 			const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
 			if (options.minify && isProd) {
-				rendered = await minifyHTML(rendered, {
+				rendered = await minify(rendered, {
 					collapseWhitespace: true,
 					removeComments: true,
 					minifyCSS: true,
@@ -538,15 +525,8 @@ export function createBuildConfig(
 	root = process.cwd()
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const assetInputs = discoverAssetInputs(
-		root,
-		options.resolvePath,
-		dirs.client
-	)
-	const virtualClientInputs = discoverClientScriptVirtualInputs(
-		root,
-		dirs.client
-	)
+	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
+	const virtualClientInputs = discoverClientScriptVirtualInputs(root, dirs.client)
 	const inputs = { ...assetInputs, ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,

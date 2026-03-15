@@ -13,17 +13,16 @@ import type {
 	AeroRenderInput,
 	ScriptEntry,
 } from '../types'
-import { extractObjectKeys } from '../utils/parse'
 import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
+import { extractObjectKeys } from '../utils/parse'
+import { isRunnableDevEnvironment } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { nitro } from 'nitro/vite'
-
 import {
 	AERO_EMPTY_INLINE_CSS_PREFIX,
 	AERO_HTML_VIRTUAL_PREFIX,
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
-	DEFAULT_DIRS,
 	getClientScriptVirtualUrl,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
 	resolveDirs,
@@ -34,6 +33,7 @@ import { parse } from '../compiler/parser'
 import { compileTemplate } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
+import { redirectsToRouteRules } from '../utils/redirects'
 import { toPosixRelative } from '../utils/path'
 import {
 	createBuildConfig,
@@ -49,8 +49,6 @@ import { fileURLToPath } from 'node:url'
 import path from 'path'
 
 const require = createRequire(import.meta.url)
-
-import { redirectsToRouteRules } from '../utils/redirects'
 
 /** Shared state used by the Aero sub-plugins (config, virtuals, transform, ssr, hmr). */
 interface AeroPluginState {
@@ -154,6 +152,9 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				resolve: { alias },
 				define: {
 					'import.meta.env.SITE': JSON.stringify(site),
+				},
+				environments: {
+					ssr: {},
 				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
@@ -492,7 +493,11 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 
 				try {
 					const pageName = resolvePageName(req.url)
-					const mod = await server.ssrLoadModule(RUNTIME_INSTANCE_MODULE_ID)
+					const ssrEnv = server.environments.ssr
+					if (!isRunnableDevEnvironment(ssrEnv)) {
+						throw new Error('[aero] SSR environment must be runnable')
+					}
+					const mod = await ssrEnv.runner.import(RUNTIME_INSTANCE_MODULE_ID)
 
 					const requestUrl = new URL(req.url, 'http://localhost')
 					const requestHeaders = new Headers()
@@ -644,6 +649,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					minify: shouldMinifyHtml,
 					site: options.site,
 					redirects: options.redirects,
+					resolvedConfig: state.config!,
 				},
 				outDir
 			)
