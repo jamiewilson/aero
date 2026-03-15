@@ -444,7 +444,34 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
+  website:
+    dependencies:
+      '@aero-js/core':
+        specifier: ^0.3.3
+        version: 0.3.3(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+      '@aero-js/vite':
+        specifier: ^0.3.3
+        version: 0.3.3(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+    devDependencies:
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+
 packages:
+
+  '@aero-js/core@0.3.3':
+    resolution: {integrity: sha512-D7E08A/tvhFcAFAH5h5r8HqhlgigCO8ASo5v8a8S7TEut/2DZ82b5C5bWDNICIFwK2zi0eZXED3pC4eH1fKmFA==}
+    peerDependencies:
+      vite: 8.0.0-beta.15
+    peerDependenciesMeta:
+      vite:
+        optional: true
+
+  '@aero-js/interpolation@0.3.3':
+    resolution: {integrity: sha512-Ihwguz/7lqWpoRpHAmm75HoLrLJlJQ+FlV+noSGpX/D1g0qpE9kZpFWwqHWFJ2mRDYpS+Qhx10wUrNS2RJrQXw==}
+
+  '@aero-js/vite@0.3.3':
+    resolution: {integrity: sha512-X8YHbCDsXx0WWVf7IQjvn17zaI14BVGXTEH65AYBtDxXM+evwWjIRnd4zuG+Ip8JJ3s2JvrVML7iFpz3fdP25Q==}
 
   '@alpinejs/persist@3.15.8':
     resolution: {integrity: sha512-xKJk0aa5p0QAquP9ivEuLnpzuBC2MyoWmiMRVzWiTR9/VLnbVgFM+6dE/D+NvfKOzhTSeht6FkYqOi/C27LBTg==}
@@ -3229,6 +3256,95 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@aero-js/core@0.3.3(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))':
+    dependencies:
+      '@aero-js/interpolation': 0.3.3
+      get-tsconfig: 4.13.6
+      html-minifier-next: 5.1.4
+      linkedom: 0.18.12
+      nitro: 3.0.1-alpha.2(chokidar@4.0.3)(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+      oxc-parser: 0.115.0
+      oxc-resolver: 11.19.1
+      oxc-transform: 0.116.0
+      sharp: 0.34.5
+      svgo: 4.0.0
+      vite-plugin-image-optimizer: 2.0.3(sharp@0.34.5)(svgo@4.0.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+    optionalDependencies:
+      vite: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@swc/core'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - better-sqlite3
+      - canvas
+      - chokidar
+      - drizzle-orm
+      - idb-keyval
+      - ioredis
+      - lru-cache
+      - mongodb
+      - mysql2
+      - rolldown
+      - rollup
+      - sqlite3
+      - uploadthing
+      - xml2js
+
+  '@aero-js/interpolation@0.3.3': {}
+
+  '@aero-js/vite@0.3.3(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))':
+    dependencies:
+      '@aero-js/core': 0.3.3(rolldown@1.0.0-rc.6)(rollup@4.59.0)(vite@8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0))
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@swc/core'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - better-sqlite3
+      - canvas
+      - chokidar
+      - drizzle-orm
+      - idb-keyval
+      - ioredis
+      - lru-cache
+      - mongodb
+      - mysql2
+      - rolldown
+      - rollup
+      - sqlite3
+      - uploadthing
+      - vite
+      - xml2js
 
   '@alpinejs/persist@3.15.8': {}
 
