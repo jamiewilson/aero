@@ -19,14 +19,15 @@ if (!newVersion || !/^\d+\.\d+\.\d+(-[a-z0-9.-]+)?$/i.test(newVersion)) {
 }
 
 const packagePaths = [
-	'packages/core/package.json',
-	'packages/interpolation/package.json',
 	'packages/config/package.json',
 	'packages/content/package.json',
-	'packages/highlight/package.json',
-	'packages/vite/package.json',
+	'packages/core/package.json',
 	'packages/create/package.json',
+	'packages/highlight/package.json',
+	'packages/interpolation/package.json',
+	'packages/language-server/package.json',
 	'packages/templates/minimal/package.json',
+	'packages/vite/package.json',
 	'packages/vscode/package.json',
 ]
 
@@ -68,10 +69,7 @@ if (distinct.length > 1) {
 for (const rel of packagePaths) {
 	const path = join(root, rel)
 	const content = readFileSync(path, 'utf8')
-	const updated = content.replace(
-		/^(\s*"version":\s*)"[^"]*"/m,
-		`$1"${newVersion}"`
-	)
+	const updated = content.replace(/^(\s*"version":\s*)"[^"]*"/m, `$1"${newVersion}"`)
 	if (updated === content) {
 		console.log(`✔︎ ${rel}: already ${newVersion}`)
 		continue
