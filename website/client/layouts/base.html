@@ -1,20 +1,24 @@
 <script is:build>
 	import meta from '@components/meta'
-	import footer from '@components/footer'
+	import nav from '@components/nav'
+	import site from '@content/site'
+	const { storageKey, attribute, default: defaultTheme } = site.theme
 </script>
 
 <html lang="en">
 	<head>
 		<meta-component props="{ ...Aero.props }" />
 		<link rel="stylesheet" href="@styles/global.css" />
-		<script type="module">
-			import aero from '@aero-js/core'
-			aero.mount()
+		<script src="@scripts/index.ts"></script>
+
+		<script pass:data="{ storageKey, attribute, defaultTheme }">
+			const theme = JSON.parse(localStorage.getItem(storageKey)) || defaultTheme
+			document.documentElement.setAttribute(attribute, theme)
 		</script>
 	</head>
 
 	<body id="app">
+		<nav-component />
 		<slot></slot>
-		<footer-component />
 	</body>
 </html>

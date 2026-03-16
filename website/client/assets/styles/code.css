@@ -1,0 +1,43 @@
+@layer base {
+	code:not(pre code),
+	pre:has(code) {
+		--tab-size: 2ch;
+		--padding: 2rem;
+		--line-height: 1.8;
+		font-family: var(--font-mono);
+		font-size: smaller;
+		tab-size: var(--tab-size);
+		border: 1px solid color-mix(in oklch, currentColor 20%, transparent);
+	}
+
+	code:not(pre code) {
+		padding: 0.1em 0.4em 0.2em;
+		color: color-mix(in oklch, currentColor 70%, transparent);
+		border-radius: var(--radius-sm);
+	}
+
+	pre:has(code) {
+		display: grid;
+		overflow: hidden;
+		border-radius: var(--radius-md);
+	}
+
+	pre:has(code) code {
+		font-family: var(--font-mono);
+		line-height: var(--line-height);
+		padding: var(--padding);
+		overflow-x: auto;
+	}
+
+	pre:has(code)[data-lang] {
+		position: relative;
+	}
+
+	pre:has(code)[data-lang]::before {
+		content: attr(data-lang);
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		font-size: small;
+	}
+}
