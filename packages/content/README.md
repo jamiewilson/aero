@@ -1,22 +1,22 @@
 # @aero-js/content
 
-Content collections for Aero: load Markdown (and other files) with frontmatter, validate with Zod, and render to HTML. Powers the `aero:content` virtual module and optional content plugin.
+Content collections for Aero: load Markdown (and other files) with frontmatter, validate with Standard Schema (Zod, ArkType, Valibot, etc.), and render to HTML. Powers the `aero:content` virtual module and optional content plugin.
 
 ## Exports
 
-| Export                        | Description                                                                                                                       |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `@aero-js/content`            | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
-| `@aero-js/content/vite`       | `aeroContent(options?)` Vite plugin.                                                                                              |
-| `@aero-js/content/markdown`   | Markdown/remark utilities (used internally).                                                                                      |
-| `@aero-js/content/render`     | `render(doc)` for markdown-to-HTML.                                                                                               |
-| `@aero-js/content/types`     | TypeScript types.                                                                                                                 |
+| Export                      | Description                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `@aero-js/content`          | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
+| `@aero-js/content/vite`     | `aeroContent(options?)` Vite plugin.                                                                                              |
+| `@aero-js/content/markdown` | Markdown/remark utilities (used internally).                                                                                      |
+| `@aero-js/content/render`   | `render(doc)` for markdown-to-HTML.                                                                                               |
+| `@aero-js/content/types`    | TypeScript types.                                                                                                                 |
 
 ## Usage in apps
 
 Enable content in `aero.config.ts` (`content: true` or `content: { config: 'content.config.ts' }`), then define collections in **content.config.ts** and import from `aero:content` in templates.
 
-**content.config.ts**
+**content.config.ts** (Zod example)
 
 ```ts
 import { defineConfig, defineCollection } from '@aero-js/content'
@@ -34,6 +34,23 @@ const docs = defineCollection({
 })
 
 export default defineConfig({ collections: [docs] })
+```
+
+The `schema` option accepts any [Standard Schema](https://standardschema.dev)-compliant validator. For example, with ArkType:
+
+```ts
+import { defineConfig, defineCollection } from '@aero-js/content'
+import { type } from 'arktype'
+
+const docs = defineCollection({
+	name: 'docs',
+	directory: 'content/docs',
+	include: '**/*.md',
+	schema: type({
+		title: 'string',
+		'published?': 'boolean',
+	}),
+})
 ```
 
 **In a page (e.g. getStaticPaths + render)**

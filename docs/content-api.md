@@ -4,10 +4,11 @@ Aero’s content layer (`@aero-js/content`) provides typed content collections, 
 
 ## Content Schema & Definitions
 
-Declare your content schema in `aero.content.ts` in your project root (or as configured). The API uses Zod so you get typed data in templates without custom Vite transformers.
+Declare your content schema in `aero.content.ts` in your project root (or as configured). The API uses [Standard Schema](https://standardschema.dev), so you can use Zod, ArkType, Valibot, or any spec-compliant validator for typed data in templates.
 
 ```typescript
-import { defineCollection, z } from '@aero-js/content'
+import { defineCollection, defineConfig } from '@aero-js/content'
+import { z } from 'zod'
 
 export const docs = defineCollection({
 	name: 'docs',

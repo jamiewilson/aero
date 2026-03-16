@@ -4,8 +4,8 @@
  * @remarks
  * Used by the loader (frontmatter + body → ContentDocument), by content.config.ts (defineCollection, defineConfig), and by the Vite plugin.
  */
+import type { StandardSchemaV1 } from '@standard-schema/spec'
 import type { Pluggable } from 'unified'
-import type { ZodType } from 'zod'
 
 /** Metadata attached to every content document (path, slug, filename, extension). */
 export interface ContentMeta {
@@ -44,8 +44,8 @@ export interface ContentCollectionConfig<
 	directory: string
 	/** Glob pattern for files to include (default: `**\/*.md`). */
 	include?: string
-	/** Zod schema for frontmatter validation; `body` is always present. */
-	schema?: ZodType<TSchema>
+	/** Standard Schema for frontmatter validation (Zod, ArkType, Valibot, etc.); `body` is always present. */
+	schema?: StandardSchemaV1<unknown, TSchema>
 	/** Optional async transform after validation; receives document, returns final shape. */
 	transform?: (document: ContentDocument<TSchema>) => TOutput | Promise<TOutput>
 }

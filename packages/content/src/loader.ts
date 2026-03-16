@@ -1,5 +1,5 @@
 /**
- * Content loader: discover files, parse frontmatter (gray-matter), validate with Zod, run transforms, and serialize to virtual module source.
+ * Content loader: discover files, parse frontmatter (gray-matter), validate with Standard Schema, run transforms, and serialize to virtual module source.
  *
  * @remarks
  * Used by the Vite plugin to load all collections and emit the `aero:content` virtual module (getCollection + serialized data).
@@ -40,23 +40,25 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			extension: parsed.ext,
 		}
 
-		// Schema validation (zod)
+		// Schema validation (Standard Schema)
 		let validated = frontmatter as TSchema
 		if (config.schema) {
-			const result = config.schema.safeParse(frontmatter)
-			if (!result.success) {
-				const errors =
-					'error' in result
-						? (result as any).error?.issues
-								?.map((i: any) => i.message)
-								.join(', ')
-						: 'Validation failed'
+			const std = config.schema['~standard']
+			if (!std?.validate) {
+				throw new Error(
+					`[aero:content] Schema must implement Standard Schema (e.g. Zod, ArkType, Valibot). See https://standardschema.dev`
+				)
+			}
+			const rawResult = std.validate(frontmatter)
+			const result = rawResult instanceof Promise ? await rawResult : rawResult
+			if (result.issues) {
+				const errors = result.issues.map((i) => i.message).join(', ')
 				console.warn(
 					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`
 				)
 				continue
 			}
-			validated = result.data as TSchema
+			validated = result.value as TSchema
 		}
 
 		const doc: ContentDocument<TSchema> = {
