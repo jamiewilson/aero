@@ -36,7 +36,7 @@ describe('loadAllCollections', () => {
 		expect(docs.length).toBe(3)
 	})
 
-	it('parses frontmatter (gray-matter) and applies Zod schema', async () => {
+	it('parses frontmatter (gray-matter) and applies Standard Schema (Zod)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const loaded = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
@@ -127,6 +127,44 @@ describe('loadAllCollections', () => {
 		)
 
 		warnSpy.mockRestore()
+	})
+
+	it('parses frontmatter with ArkType schema (Standard Schema)', async () => {
+		const { type } = await import('arktype')
+		const arktypeCollection = defineCollection({
+			name: 'arkdocs',
+			directory: path.resolve(FIXTURES_DIR, 'docs'),
+			include: '**/*.md',
+			schema: type({
+				title: 'string',
+				'subtitle?': 'string',
+				date: 'Date',
+			}),
+		})
+
+		const config = defineConfig({ collections: [arktypeCollection] })
+		const loaded = await loadAllCollections(config, '/')
+		const docs = loaded.get('arkdocs')!
+		const hello = docs.find((d: any) => d._meta.slug === 'hello')
+
+		expect(hello).toBeDefined()
+		expect(hello.data.title).toBe('Test Post')
+		expect(hello.data.subtitle).toBe('A test subtitle')
+		expect(hello.data.date).toBeInstanceOf(Date)
+	})
+
+	it('throws when schema does not implement Standard Schema', async () => {
+		const invalidSchemaCollection = defineCollection({
+			name: 'bad',
+			directory: path.resolve(FIXTURES_DIR, 'docs'),
+			include: '**/*.md',
+			schema: { foo: 'bar' } as any,
+		})
+
+		const config = defineConfig({ collections: [invalidSchemaCollection] })
+		await expect(loadAllCollections(config, '/')).rejects.toThrow(
+			/Schema must implement Standard Schema/
+		)
 	})
 
 	it('loads without schema validation when no schema is provided', async () => {

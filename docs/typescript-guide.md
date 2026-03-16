@@ -140,7 +140,7 @@ In build scripts, `site` is inferred from the default export. For stricter check
 
 ## Typing Content Collections
 
-The `aero:content` module provides `getCollection()` and `render()`. The language server declares `CollectionEntry` with `id`, `data`, and `body`. To type `data` per collection, use Zod schemas in `content.config.ts` and optionally extend the ambient types.
+The `aero:content` module provides `getCollection()` and `render()`. The language server declares `CollectionEntry` with `id`, `data`, and `body`. To type `data` per collection, use a [Standard Schema](https://standardschema.dev)-compliant validator (Zod, ArkType, Valibot, etc.) in `content.config.ts` and optionally extend the ambient types.
 
 ### Schema in content.config.ts
 
