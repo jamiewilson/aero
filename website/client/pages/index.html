@@ -1,12 +1,12 @@
 <script is:build>
 	import base from '@layouts/base'
-		import logo from '@components/logo'
-		import { getCollection, render } from 'aero:content'
+	import logo from '@components/logo'
+	import { getCollection, render } from 'aero:content'
 
-		const docs = await getCollection('docs')
-		const overview = docs.find(doc => doc.id === 'overview')
-		if (!overview) throw new Error('Overview doc not found')
-		const { html } = await render(overview)
+	const docs = await getCollection('docs')
+	const overview = docs.find(doc => doc.id === 'overview')
+	if (!overview) throw new Error('Overview doc not found')
+	const { html } = await render(overview)
 </script>
 
 <base-layout title="{ overview.data.title }" description="{ overview.data.subtitle }">
