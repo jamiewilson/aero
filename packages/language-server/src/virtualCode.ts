@@ -1,10 +1,11 @@
-import type { VirtualCode, IScriptSnapshot, CodeInformation, CodeMapping } from '@volar/language-core'
+import type {
+	VirtualCode,
+	IScriptSnapshot,
+	CodeInformation,
+	CodeMapping,
+} from '@volar/language-core'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import {
-	parseHTMLDocument,
-	type HTMLDocument,
-	type Node,
-} from './htmlParser'
+import { parseHTMLDocument, type HTMLDocument, type Node } from './htmlParser'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
@@ -30,8 +31,7 @@ const BUILD_SCRIPT_FEATURES: CodeInformation = {
 	semantic: true,
 	structure: true,
 	verification: {
-		shouldReport: (_source, code) =>
-			!SUPPRESSED_IN_BUILD.has(Number(code)),
+		shouldReport: (_source, code) => !SUPPRESSED_IN_BUILD.has(Number(code)),
 	},
 }
 
@@ -93,19 +93,21 @@ export class AeroVirtualCode implements VirtualCode {
 	htmlDocument: HTMLDocument
 
 	constructor(public snapshot: IScriptSnapshot) {
-		this.mappings = [{
-			sourceOffsets: [0],
-			generatedOffsets: [0],
-			lengths: [snapshot.getLength()],
-			data: {
-				completion: true,
-				format: true,
-				navigation: true,
-				semantic: true,
-				structure: true,
-				verification: true,
+		this.mappings = [
+			{
+				sourceOffsets: [0],
+				generatedOffsets: [0],
+				lengths: [snapshot.getLength()],
+				data: {
+					completion: true,
+					format: true,
+					navigation: true,
+					semantic: true,
+					structure: true,
+					verification: true,
+				},
 			},
-		}]
+		]
 
 		const sourceText = snapshot.getText(0, snapshot.getLength())
 		const doc = TextDocument.create('', 'html', 0, sourceText)
@@ -124,7 +126,7 @@ export class AeroVirtualCode implements VirtualCode {
 
 	private *extractEmbeddedCodes(
 		snapshot: IScriptSnapshot,
-		sourceText: string,
+		sourceText: string
 	): Generator<VirtualCode> {
 		let buildIdx = 0
 		let clientIdx = 0
@@ -138,12 +140,14 @@ export class AeroVirtualCode implements VirtualCode {
 					id: `style_${styleIdx++}`,
 					languageId: 'css',
 					snapshot: createSnapshot(styleText),
-					mappings: [{
-						sourceOffsets: [node.startTagEnd],
-						generatedOffsets: [0],
-						lengths: [styleText.length],
-						data: FULL_FEATURES,
-					}],
+					mappings: [
+						{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [0],
+							lengths: [styleText.length],
+							data: FULL_FEATURES,
+						},
+					],
 					embeddedCodes: [],
 				}
 				continue
@@ -165,12 +169,14 @@ export class AeroVirtualCode implements VirtualCode {
 						id: `build_${buildIdx++}`,
 						languageId: 'typescript',
 						snapshot: createSnapshot(virtualText),
-						mappings: [{
-							sourceOffsets: [node.startTagEnd],
-							generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length],
-							lengths: [scriptContent.length],
-							data: BUILD_SCRIPT_FEATURES,
-						}],
+						mappings: [
+							{
+								sourceOffsets: [node.startTagEnd],
+								generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length],
+								lengths: [scriptContent.length],
+								data: BUILD_SCRIPT_FEATURES,
+							},
+						],
 						embeddedCodes: [],
 					}
 				} else {
@@ -178,12 +184,14 @@ export class AeroVirtualCode implements VirtualCode {
 						id: `build_${buildIdx++}`,
 						languageId: 'javascript',
 						snapshot: createSnapshot(scriptContent),
-						mappings: [{
-							sourceOffsets: [node.startTagEnd],
-							generatedOffsets: [0],
-							lengths: [scriptContent.length],
-							data: FULL_FEATURES,
-						}],
+						mappings: [
+							{
+								sourceOffsets: [node.startTagEnd],
+								generatedOffsets: [0],
+								lengths: [scriptContent.length],
+								data: BUILD_SCRIPT_FEATURES,
+							},
+						],
 						embeddedCodes: [],
 					}
 				}
@@ -192,12 +200,14 @@ export class AeroVirtualCode implements VirtualCode {
 					id: `client_${clientIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
 					snapshot: createSnapshot(scriptContent),
-					mappings: [{
-						sourceOffsets: [node.startTagEnd],
-						generatedOffsets: [0],
-						lengths: [scriptContent.length],
-						data: FULL_FEATURES,
-					}],
+					mappings: [
+						{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [0],
+							lengths: [scriptContent.length],
+							data: FULL_FEATURES,
+						},
+					],
 					embeddedCodes: [],
 				}
 			} else if (scriptType === 'blocking') {
@@ -205,12 +215,14 @@ export class AeroVirtualCode implements VirtualCode {
 					id: `blocking_${blockingIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
 					snapshot: createSnapshot(scriptContent),
-					mappings: [{
-						sourceOffsets: [node.startTagEnd],
-						generatedOffsets: [0],
-						lengths: [scriptContent.length],
-						data: FULL_FEATURES,
-					}],
+					mappings: [
+						{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [0],
+							lengths: [scriptContent.length],
+							data: FULL_FEATURES,
+						},
+					],
 					embeddedCodes: [],
 				}
 			}
