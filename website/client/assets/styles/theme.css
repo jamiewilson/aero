@@ -1,0 +1,13 @@
+@layer theme {
+	[data-theme='system'] {
+		color-scheme: light dark;
+	}
+
+	[data-theme='light'] {
+		color-scheme: light only;
+	}
+
+	[data-theme='dark'] {
+		color-scheme: dark only;
+	}
+}

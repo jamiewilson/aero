@@ -1,14 +1,17 @@
 <script is:build>
 	import base from '@layouts/base'
-	import header from '@components/header'
-	import site from '@content/site'
+		import logo from '@components/logo'
+		import { getCollection, render } from 'aero:content'
 
-	const headerProps = {
-		title: site.home.title,
-		subtitle: site.home.subtitle,
-	}
+		const docs = await getCollection('docs')
+		const overview = docs.find(doc => doc.id === 'overview')
+		if (!overview) throw new Error('Overview doc not found')
+		const { html } = await render(overview)
 </script>
 
-<base-layout>
-	<header-component props="{ ...headerProps }" />
+<base-layout title="{ overview.data.title }" description="{ overview.data.subtitle }">
+	<article class="prose">
+		<logo-component />
+		{ html }
+	</article>
 </base-layout>

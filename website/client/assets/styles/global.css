@@ -1,18 +1,84 @@
-*,
-*::before,
-*::after {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
-}
+@layer reset, root, base, theme, utils;
 
-html,
-body {
-	font-family: system-ui, sans-serif;
-	height: 100%;
-}
+@import 'reset.css';
+@import 'fonts.css';
+@import 'colors.css';
+@import 'animation.css';
+@import 'theme.css';
+@import 'prose.css';
+@import 'code.css';
+@import 'utils.css';
 
-body {
-	place-content: center;
-	text-align: center;
+@layer base {
+	:root {
+		--font-sans: system-ui, sans-serif;
+		--font-mono: 'MonaspaceNeadon', monospace;
+		--page-padding: 1rem;
+		--vertical-spacing: 2rem;
+		--element-base-padding: 1rem;
+		--radius-sm: 0.25rem;
+		--radius-md: 0.5rem;
+		--radius-lg: 1rem;
+		--radius-xl: 2rem;
+		--round: calc(infinity * 1px);
+	}
+
+	html,
+	body {
+		height: 100%;
+		font-size: 18px;
+	}
+
+	body {
+		display: grid;
+		place-content: safe center;
+		padding: var(--page-padding);
+		color: var(--color-fg);
+		background: var(--color-bg);
+		font-family: var(--font-sans);
+		line-height: 1.5;
+		text-align: center;
+	}
+
+	a {
+		text-decoration: none;
+		color: var(--color-accent);
+	}
+
+	a:hover {
+		text-decoration: underline;
+	}
+
+	hr {
+		border: none;
+		border-top: 1px solid color-mix(in oklch, currentColor 30%, transparent);
+		margin: var(--vertical-spacing) 0;
+	}
+
+	button {
+		text-align: center;
+		font-family: var(--font-sans);
+		background: --opacity(currentColor, 0.05);
+		border: 1px solid --opacity(currentColor, 0.1);
+
+		padding: var(--element-base-padding) calc(var(--element-base-padding) * 2);
+		border-radius: var(--radius-xl);
+		corner-shape: squircle;
+		justify-self: center;
+	}
+
+	button {
+		transition-property: background, opacity;
+		transition-duration: var(--duration-fast);
+
+		&[disabled] {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
+	:focus-visible {
+		outline-offset: 2px;
+		outline: 2px solid var(--color-accent);
+	}
 }

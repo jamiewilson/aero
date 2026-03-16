@@ -1,7 +1,10 @@
+import { ThemeMode } from '@content/theme'
+
 export default {
 	meta: {
-		title: 'Minimal Template',
-		description: 'Site Meta Description',
+		title: 'Aero',
+		description:
+			'A static site generator and full-stack framework with an HTML-first template engine.',
 		ogImage: '/aero.png',
 		icon: {
 			ico: '/favicon.ico',
@@ -9,18 +12,13 @@ export default {
 			apple: '/apple-touch-icon.png',
 		},
 	},
-	home: {
-		title: 'Welcome to Aero',
-		subtitle: 'A minimal static site with HTML-first templates.',
-	},
-	about: {
-		title: 'About',
-		subtitle: 'A minimal about page.',
+	theme: {
+		options: Object.values(ThemeMode),
+		default: ThemeMode.System,
+		storageKey: 'theme',
+		attribute: 'data-theme',
 	},
 	footer: {
-		links: [
-			{ label: 'Home', path: '/' },
-			{ label: 'About', path: '/about' },
-		],
+		links: [{ label: 'Home', path: '/' }],
 	},
 }
