@@ -66,7 +66,7 @@ export interface IRComponent {
 	outVar?: string
 }
 
-/** Inject pass:data into a script tag. */
+/** Inject props into a script tag. */
 export interface IRScriptPassData {
 	kind: 'ScriptPassData'
 	passDataExpr: string
@@ -74,7 +74,7 @@ export interface IRScriptPassData {
 	outVar: string
 }
 
-/** Inject pass:data into a style tag (CSS custom properties). */
+/** Inject props into a style tag (CSS custom properties). */
 export interface IRStylePassData {
 	kind: 'StylePassData'
 	passDataExpr: string

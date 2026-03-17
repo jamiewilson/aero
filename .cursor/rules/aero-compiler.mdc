@@ -24,7 +24,7 @@ All of the following live in **packages/core** (the framework package).
 
 ## Constants (packages/core/compiler/constants.ts)
 
-Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_PASS_DATA`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`. For `{ }` interpolation use **compiler/tokenizer.ts** (not `CURLY_INTERPOLATION_REGEX`, which is deprecated). Script taxonomy: `is:build`, `is:inline`, `is:blocking`, plain `<script>` (client); see docs/script-taxonomy.md.
+Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`. For `{ }` interpolation use **compiler/tokenizer.ts** (not `CURLY_INTERPOLATION_REGEX`, which is deprecated). Script taxonomy: `is:build`, `is:inline`, `is:blocking`, plain `<script>` (client); see docs/script-taxonomy.md.
 
 ## TDD (red-to-green)
 

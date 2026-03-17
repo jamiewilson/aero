@@ -2,7 +2,7 @@
  * Unit tests for the Aero codegen (codegen.ts): compile(parse(html)) → async render function.
  *
  * Covers interpolation, data-each, components (props, data-props, slots), if/else-if/else,
- * getStaticPaths extraction, pass:data (client/inline/blocking/style), client script injection,
+ * getStaticPaths extraction, props (client/inline/blocking/style), client script injection,
  * Alpine/HTMX attribute preservation. Uses an execute()
  * helper that evals the generated module body with a mock Aero context.
  */
@@ -348,11 +348,11 @@ describe('Codegen', () => {
 		expect(output).toContain('<div>Content</div>')
 	})
 
-	it('should support pass:data on is:inline scripts', async () => {
+	it('should support props on is:inline scripts', async () => {
 		const html = `<script is:build>
 									const config = { theme: 'dark', id: 42 };
 								</script>
-								<script is:inline pass:data="{ config }">
+								<script is:inline props="{ config }">
 									console.log(config.theme);
 								</script>`
 
@@ -964,15 +964,15 @@ describe('Codegen', () => {
 		expect(output).toContain('<p>1</p>')
 	})
 	// =========================================================================
-	// pass:data
+	// props (script/style)
 	// =========================================================================
 
-	describe('pass:data', () => {
+	describe('props (script/style)', () => {
 		it('should pass data to client default scripts as global properties without block scoping them', async () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark', id: 42 };
 										</script>
-										<script pass:data="{ config }">
+										<script props="{ config }">
 											console.log(config.theme);
 										</script>`
 
@@ -1002,7 +1002,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
-										<script is:inline pass:data="{ config }">
+										<script is:inline props="{ config }">
 											console.log(config.theme);
 										</script>`
 
@@ -1021,7 +1021,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
-										<script is:blocking pass:data="{ config }">
+										<script is:blocking props="{ config }">
 											console.log(config.theme);
 										</script>`
 
@@ -1041,12 +1041,12 @@ describe('Codegen', () => {
 			expect(out).toContain('<script>')
 		})
 
-		/** pass:data="{ theme }" passes one key "theme" (whole object); use pass:data="{ ...theme }" for properties as CSS vars. */
+		/** props="{ theme }" passes one key "theme" (whole object); use props="{ ...theme }" for properties as CSS vars. */
 		it('should pass data to style tags as CSS variables', async () => {
 			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
-										<style pass:data="{ theme }">
+										<style props="{ theme }">
 											body { color: var(--theme); }
 										</style>`
 
@@ -1066,7 +1066,7 @@ describe('Codegen', () => {
 			const html = `<script is:build>
 											const theme = { fg: 'white', bg: 'black' };
 										</script>
-										<style pass:data="{ ...theme }">
+										<style props="{ ...theme }">
 											body { color: var(--fg); background: var(--bg); }
 										</style>`
 
@@ -1089,7 +1089,7 @@ describe('Codegen', () => {
 											const debug = true;
 											const version = 3;
 										</script>
-										<script is:inline pass:data="{ apiUrl, debug, version }">
+										<script is:inline props="{ apiUrl, debug, version }">
 											console.log(apiUrl, debug, version);
 										</script>`
 
@@ -1111,7 +1111,7 @@ describe('Codegen', () => {
 											const list = [1, 2, 3];
 											const nothing = null;
 										</script>
-										<script is:inline pass:data="{ str, num, flag, list, nothing }">
+										<script is:inline props="{ str, num, flag, list, nothing }">
 											console.log(str, num, flag, list, nothing);
 										</script>`
 
@@ -1127,11 +1127,11 @@ describe('Codegen', () => {
 			expect(output).toContain('const nothing = null;')
 		})
 
-		it('should strip pass:data attribute from rendered output when using default client bundling', async () => {
+		it('should strip props attribute from rendered output when using default client bundling', async () => {
 			const html = `<script is:build>
 											const val = 'test';
 										</script>
-										<script pass:data="{ val }">
+										<script props="{ val }">
 											console.log(val);
 										</script>`
 
@@ -1147,17 +1147,58 @@ describe('Codegen', () => {
 			await execute(code, { scripts })
 			const out = Array.from(scripts).join('\n')
 
-			expect(out).not.toContain('pass:data')
+			expect(out).not.toContain('props=')
 			expect(out).toContain('window.__aero_data_next')
 			expect(out).toContain('<script type="module" src="/virtual.js"></script>')
 		})
 
-		it('should throw when pass:data value is not brace-wrapped', async () => {
+		it('should pass data via props on script and style (canonical API)', async () => {
+			const html = `<script is:build>
+				const theme = { fg: '#333', bg: '#fff' };
+			</script>
+			<style props="{ ...theme }">
+				body { color: var(--fg); background: var(--bg); }
+			</style>
+			<script props="{ theme }">
+				console.log(theme);
+			</script>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
+
+			const styles = new Set<string>()
+			await execute(code, { styles })
+			const stylesOutput = Array.from(styles).join('\n')
+
+			expect(stylesOutput).toContain('--fg: #333;')
+			expect(stylesOutput).toContain('--bg: #fff;')
+		})
+
+		it('should support data-props on script and style (matches component syntax)', async () => {
+			const html = `<script is:build>
+				const theme = { fg: '#111', bg: '#eee' };
+			</script>
+			<style data-props="{ ...theme }">
+				body { color: var(--fg); background: var(--bg); }
+			</style>`
+
+			const parsed = parse(html)
+			const code = compile(parsed, mockOptions)
+
+			const styles = new Set<string>()
+			await execute(code, { styles })
+			const stylesOutput = Array.from(styles).join('\n')
+
+			expect(stylesOutput).toContain('--fg: #111;')
+			expect(stylesOutput).toContain('--bg: #eee;')
+		})
+
+		it('should throw when props value is not brace-wrapped', async () => {
 			const html = `<script is:build>
 											const config = { theme: 'dark' };
 										</script>
 										<head>
-											<script is:blocking pass:data="config">
+											<script is:blocking props="config">
 												console.log(config);
 											</script>
 										</head>`
@@ -1169,16 +1210,16 @@ describe('Codegen', () => {
 					blockingScripts: parsed.blockingScripts,
 				})
 			).toThrow(
-				'Directive `pass:data` on <script> must use a braced expression'
+				'Directive `props` on <script> must use a braced expression'
 			)
 		})
 
-		it('should throw when pass:data value is not a single braced expression (tokenizer validation)', () => {
+		it('should throw when props value is not a single braced expression (tokenizer validation)', () => {
 			// "{{ }}" is literal braces in attribute mode, so no interpolation segment
-			const html = `<script is:build></script><div pass:data="{{ literal }}">x</div>`
+			const html = `<script is:build></script><div props="{{ literal }}">x</div>`
 			const parsed = parse(html)
 			expect(() => compile(parsed, mockOptions)).toThrow(
-				'Directive `pass:data` on <div> must use a braced expression'
+				'Directive `props` on <div> must use a braced expression'
 			)
 		})
 

@@ -11,7 +11,7 @@
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
 
-		<script pass:data="{ storageKey, attribute, defaultTheme }">
+		<script props="{ storageKey, attribute, defaultTheme }">
 			const theme = JSON.parse(localStorage.getItem(storageKey)) || defaultTheme
 			document.documentElement.setAttribute(attribute, theme)
 		</script>

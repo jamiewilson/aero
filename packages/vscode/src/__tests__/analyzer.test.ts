@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Aero VS Code analyzer (analyzer.ts): template references (components,
  * attributes), defined variables (imports), template scopes (data-each), and variables by scope
- * (e.g. pass:data in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
+ * (e.g. props/data-props in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -120,7 +120,7 @@ describe('collectTemplateReferences', () => {
 	})
 })
 
-/** Build-scope defined variables (imports, etc.) and pass:data variable positions in client (bundled) scope. */
+/** Build-scope defined variables (imports, etc.) and props variable positions in client (bundled) scope. */
 describe('collectDefinedVariables', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
@@ -155,8 +155,8 @@ const clientVar = 2
 		expect(buildScopeVars.has('clientVar')).toBe(false)
 	})
 
-	it('should calculate correct position for pass:data variables', () => {
-		const text = `<script pass:data="{{ isHomepage }}">
+	it('should calculate correct position for props variables', () => {
+		const text = `<script props="{ isHomepage }">
 	import { debug } from '@scripts/utils/debug'
 </script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
@@ -164,28 +164,28 @@ const clientVar = 2
 		expect(vars.has('isHomepage')).toBe(true)
 		const varInfo = vars.get('isHomepage')
 		expect(varInfo?.kind).toBe('reference')
-		expect(varInfo?.range.start.character).toBe(22) // position of 'i' in "isHomepage"
-		expect(varInfo?.range.end.character).toBe(32) // end of "isHomepage" (22 + 10)
+		expect(varInfo?.range.start.character).toBe(17) // position of 'i' in "isHomepage" (props="{ isHomepage }")
+		expect(varInfo?.range.end.character).toBe(27) // end of "isHomepage" (17 + 10)
 	})
 
-	it('should calculate correct position for pass:data with no spaces', () => {
-		const text = `<script pass:data="{{isHomepage}}"></script>`
+	it('should calculate correct position for props with no spaces', () => {
+		const text = `<script props="{isHomepage}"></script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
 
 		expect(vars.has('isHomepage')).toBe(true)
 		const varInfo = vars.get('isHomepage')
-		expect(varInfo?.range.start.character).toBe(21) // position of 'i' in "isHomepage" (no spaces)
-		expect(varInfo?.range.end.character).toBe(31)
+		expect(varInfo?.range.start.character).toBe(16) // position of 'i' in "isHomepage" (props="{isHomepage}")
+		expect(varInfo?.range.end.character).toBe(26)
 	})
 
-	it('should calculate correct position for multiple pass:data variables', () => {
-		const text = `<script pass:data="{{ foo, bar }}"></script>`
+	it('should calculate correct position for multiple props variables', () => {
+		const text = `<script props="{ foo, bar }"></script>`
 		const vars = collectVariablesByScope(mockDoc, text, 'bundled')
 
 		expect(vars.has('foo')).toBe(true)
 		expect(vars.has('bar')).toBe(true)
-		expect(vars.get('foo')?.range.start.character).toBe(22) // position of 'f' in "foo"
-		expect(vars.get('bar')?.range.start.character).toBe(27) // position of 'b' in "bar"
+		expect(vars.get('foo')?.range.start.character).toBe(17) // position of 'f' in "foo" (props="{ foo, bar }")
+		expect(vars.get('bar')?.range.start.character).toBe(22) // position of 'b' in "bar"
 	})
 
 	it('collects variables with type annotations (const x: Type = ...)', () => {

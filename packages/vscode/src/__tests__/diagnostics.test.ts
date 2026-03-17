@@ -318,12 +318,12 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedDiag).toBeUndefined()
 	})
 
-	it('should NOT flag build-scope variables as unused when passed via pass:data', () => {
+	it('should NOT flag build-scope variables as unused when passed via props', () => {
 		const text = `
 <script is:build>
 	const { storageKey, attribute } = site.theme
 </script>
-<script pass:data="{ storageKey, attribute }">
+<script props="{ storageKey, attribute }">
 	const theme = JSON.parse(localStorage.getItem(storageKey))
 	document.documentElement.setAttribute(attribute, theme)
 </script>
@@ -693,9 +693,9 @@ describe('AeroDiagnostics Script Tags', () => {
 		expect(importDiag).toBeUndefined()
 	})
 
-	it('should NOT warn when pass:data script has import (Vite handles bundling)', () => {
+	it('should NOT warn when props script has import (Vite handles bundling)', () => {
 		const text = `
-<script pass:data="{ foo }">
+<script props="{ foo }">
 	import { bar } from 'baz'
 	console.log(bar)
 </script>

@@ -1,20 +1,20 @@
-# Built-in Data Passing (`pass:data`)
+# Built-in Data Passing (`props` / `data-props`)
 
 A common struggle in modern web frameworks is bridging data computed securely on the server down to the client-side JavaScript securely and easily.
 
-Aero simplifies context passing completely using the intuitive `pass:data` attribute available on both `<script>` and `<style>` tags.
+Aero simplifies context passing completely using the intuitive `props` (or `data-props`) attribute available on both `<script>` and `<style>` tags.
 
 ## Core Concepts
 
-The `pass:data` syntax accepts JavaScript object-literal interpolations evaluated inside the template compiler.
+The `props` syntax accepts JavaScript object-literal interpolations evaluated inside the template compiler.
 
-By utilizing double braces `pass:data="{ { variable } }"`, you instruct the compiler to extract the object literal `{ variable: variable }`, execute it in the server scope (`is:build`), serialize the result, and transparently make the destructured properties available as fully-typed constants in the browser.
+By utilizing braces `props="{ { variable } }"`, you instruct the compiler to extract the object literal `{ variable: variable }`, execute it in the server scope (`is:build`), serialize the result, and transparently make the destructured properties available as fully-typed constants in the browser.
 
-## Using `pass:data` in Client Scripts
+## Using `props` in Client Scripts
 
 ### Passing Data to `is:inline` Scripts
 
-Inline client scripts are directly embedded into the HTML. When interacting with `pass:data`, Aero safely wraps the inline script in an isolated block scope `{ ... }` so the variables don't leak onto the `window` object.
+Inline client scripts are directly embedded into the HTML. When interacting with `props`, Aero safely wraps the inline script in an isolated block scope `{ ... }` so the variables don't leak onto the `window` object.
 
 ```html
 <script is:build>
@@ -23,7 +23,7 @@ Inline client scripts are directly embedded into the HTML. When interacting with
 </script>
 
 <!-- The compiler safely block-scopes the passed properties -->
-<script is:inline pass:data="{ { systemConfig, key: API_KEY } }">
+<script is:inline props="{ { systemConfig, key: API_KEY } }">
 	console.log(systemConfig.theme) // "light"
 	console.log(key) // "1234abcd"
 
@@ -35,7 +35,7 @@ Inline client scripts are directly embedded into the HTML. When interacting with
 
 To prevent data serialization strings from congesting chunk sizes, plain `<script>` (client) elements use a **DOM JSON + Auto-Inject** architecture for data passing:
 
-1. **JSON Tag rendering**: Aero serializes the pass data locally into the HTML alongside the bundled request. E.g `<script type="application/json" id="__aero_data_xyz">{"systemConfig":{"timeout":5000}}</script>`
+1. **JSON Tag rendering**: Aero serializes the props data locally into the HTML alongside the bundled request. E.g `<script type="application/json" id="__aero_data_xyz">{"systemConfig":{"timeout":5000}}</script>`
 2. **Vite auto-injection**: Aero hooks into Vite to prepend a destructuring `JSON.parse` to the virtual module.
 
 ```html
@@ -43,7 +43,7 @@ To prevent data serialization strings from congesting chunk sizes, plain `<scrip
 	const envStatus = process.env.STATUS
 </script>
 
-<script pass:data="{ { envStatus } }">
+<script props="{ { envStatus } }">
 	// "envStatus" feels like magic here.
 	// Under the hood, Aero automatically prefixes the module with:
 	// const { envStatus } = JSON.parse(document.getElementById('__aero_data')?.textContent || '{}');
@@ -55,9 +55,9 @@ To prevent data serialization strings from congesting chunk sizes, plain `<scrip
 
 Because ES modules are strictly scoped by definition, global variable pollution isn't an issue.
 
-## Using `pass:data` in Styles
+## Using `props` in Styles
 
-You can dynamically bind component-level configuration natively into CSS by attaching `pass:data` dynamically onto `<style>` blocks.
+You can dynamically bind component-level configuration natively into CSS by attaching `props` onto `<style>` blocks.
 
 Behind the scenes, the variables get directly hoisted as root-level custom CSS elements (`--prop-name`) within a targeted scope isolation.
 
@@ -70,7 +70,7 @@ Behind the scenes, the variables get directly hoisted as root-level custom CSS e
 </script>
 
 <!-- Converts Javascript data mapping into CSS variables! -->
-<style pass:data="{ { ...designTokens } }">
+<style props="{ { ...designTokens } }">
 	.button {
 		background-color: var(--primaryBg);
 		color: var(--primaryFg);

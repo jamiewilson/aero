@@ -234,7 +234,7 @@ Left in the HTML exactly as-is. Not bundled by Vite. Useful for critical scripts
 </script>
 ```
 
-> For the full script guide (blocking scripts, `pass:data`, `src` handling), see [script-taxonomy.md](script-taxonomy.md).
+> For the full script guide (blocking scripts, `props`, `src` handling), see [script-taxonomy.md](script-taxonomy.md).
 
 ---
 
@@ -320,7 +320,7 @@ Now that you have the basics, explore the reference docs:
 
 - **[Routing](routing.md)** — Dynamic routes, `getStaticPaths`, nested directories
 - **[Props](props.md)** — All the ways to pass and receive data
-- **[Scripts](script-taxonomy.md)** — Script types, `pass:data`, bundling
+- **[Scripts](script-taxonomy.md)** — Script types, `props`, bundling
 - **[Content](content-api.md)** — Collections, Markdown, `getCollection()` / `render()`
 - **[Nitro](nitro-overview.md)** — API routes and server-side features
 - **[HTMX & Alpine](htmx-and-alpine.md)** — Client interactivity

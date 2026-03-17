@@ -15,15 +15,15 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Components and templating
 
-- **[Interpolation](interpolation.md)** — `{ }` expressions in text and attributes, `{{`/`}}` escapes, and `pass:data` semantics (spread for object properties as CSS vars).
+- **[Interpolation](interpolation.md)** — `{ }` expressions in text and attributes, `{{`/`}}` escapes, and `props` semantics (spread for object properties as CSS vars).
 - **[Props guide](props.md)** — Passing and receiving props, how attribute values work, `props`, and globals.
 - **[Slot passthrough](slot-passthrough.md)** — Passing named slots through layout hierarchies.
 - **[TypeScript guide](typescript-guide.md)** — Typing props, content globals, collections, and ambient types for type-safe build scripts.
 
 ## Scripts and data
 
-- **[Script taxonomy](script-taxonomy.md)** — Script types (`is:build`, plain `<script>`, `is:inline`, `is:blocking`, `src`), behavior, and `pass:data` with multiple instances.
-- **[pass:data directive](pass-data-directive.md)** — Threading build-time data into client scripts and `<style>`.
+- **[Script taxonomy](script-taxonomy.md)** — Script types (`is:build`, plain `<script>`, `is:inline`, `is:blocking`, `src`), behavior, and `props` with multiple instances.
+- **[props directive](props-directive.md)** — Threading build-time data into client scripts and `<style>`.
 - **[Importing and bundling](importing-and-bundling.md)** — How client scripts are bundled; options (single bundle, CDN + globals, externals, code-splitting) for htmx, Alpine, and other deps.
 
 ## Content and configuration

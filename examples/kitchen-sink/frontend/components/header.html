@@ -45,12 +45,12 @@
 	}
 </style>
 
-<script pass:data="{ isHomepage }">
+<script props="{ isHomepage }">
 	import { allCaps } from '@scripts/utils/transform'
 	// This comment will get stripped from build output
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
 
-<script is:inline pass:data="{ isHomepage }">
+<script is:inline props="{ isHomepage }">
 	console.debug('[aero] isHomepage', isHomepage)
 </script>

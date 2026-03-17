@@ -1,6 +1,6 @@
 /**
  * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
- * virtual client scripts, pass:data preamble injection, rendering via Aero runtime,
+ * virtual client scripts, props preamble injection, rendering via Aero runtime,
  * resolveId for extensionless .html, and buildStart prefill.
  * HMR for templates and content is dependency-driven (no custom handleHotUpdate); the app uses
  * a single client entry that imports @aero-js/core and calls aero.mount().
@@ -73,9 +73,9 @@ describe('Vite Plugin Integration', () => {
 		expect(loadedContent).toContain("console.log(allCaps('plain'))")
 	})
 
-	it('injects pass:data preamble that reads from window.__aero_data_next (set by inline bridge before module runs)', async () => {
+	it('injects props preamble that reads from window.__aero_data_next (set by inline bridge before module runs)', async () => {
 		const html = `
-            <script pass:data="{ { isHomepage } }">
+            <script props="{ { isHomepage } }">
                 console.log(isHomepage);
             </script>
             <div>Content</div>

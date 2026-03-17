@@ -31,12 +31,12 @@ A `<script>{:html}` tag with no `is:*` attribute is a client-side module. Aero p
 
 - Runs in the browser; gets HMR in development.
 - Use it for interactive logic and client-only imports.
-- Use the `pass:data` directive to inject build-time data into the module.
+- Use the `props` (or `data-props`) attribute to inject build-time data into the module.
 
 Example:
 
 ```html
-<script pass:data="{ apiToken }">
+<script props="{ { apiToken } }">
 	import { initAnalytics } from 'my-analytics'
 	initAnalytics(apiToken)
 </script>
@@ -72,7 +72,7 @@ Use `<script is:blocking>{:html}` when the script must run before the rest of th
 ## Summary
 
 - **Build-only:** `<script is:build>{:html}` — one per file; never in the browser.
-- **Client bundle:** plain `<script>{:html}` — Vite bundles it; use `pass:data` for server data.
+- **Client bundle:** plain `<script>{:html}` — Vite bundles it; use `props` for server data.
 - **Inline in place:** `<script is:inline>{:html}` — not bundled; runs immediately.
 - **In head:** `<script is:blocking>{:html}` — moved to `<head>{:html}`.
 - **External:** `<script src="https://...">{:html}` — unchanged. Local `src` — bundled and hashed.

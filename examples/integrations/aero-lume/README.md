@@ -52,7 +52,7 @@ This guide explains how to use [Lume.js](https://github.com/sathvikc/lume-js) fo
 
 1. **Aero** outputs HTML that includes Lume’s `data-*` attributes.
 2. **Client entry** creates the Lume store and calls `bindDom(appEl, store)` (and re-binds after HMR in `onRender`).
-3. **Initial state** can be seeded from Aero via `pass:data` so the first paint and Lume stay in sync.
+3. **Initial state** can be seeded from Aero via `props` so the first paint and Lume stay in sync.
 
 ---
 
@@ -164,7 +164,7 @@ In both cases, the `<span>` and `<input>` stay in sync with `store.name` via `da
 
 ---
 
-## Passing initial state from Aero to Lume (pass:data)
+## Passing initial state from Aero to Lume (props)
 
 You can seed the Lume store from build-time data so the first HTML and client state match (e.g. theme, user name from content).
 
@@ -185,7 +185,7 @@ You can seed the Lume store from build-time data so the first HTML and client st
 	<input data-bind="name" placeholder="Enter your name" />
 </div>
 
-<script pass:data="{ initialName }">
+<script props="{ { initialName } }">
 	import aero from '@aero-js/core'
 	import { state, bindDom } from 'lume-js'
 
@@ -199,7 +199,7 @@ You can seed the Lume store from build-time data so the first HTML and client st
 </script>
 ```
 
-Here the **client script is in the template** and uses `pass:data`. Alternatively, keep the client entry in a separate module and inject initial state via a JSON script tag (Aero’s standard pattern for pass:data with plain `<script>` modules); then in the entry, read that data and create `state({ name: initialName })` before `bindDom`.
+Here the **client script is in the template** and uses `props`. Alternatively, keep the client entry in a separate module and inject initial state via a JSON script tag (Aero’s standard pattern for props with plain `<script>` modules); then in the entry, read that data and create `state({ name: initialName })` before `bindDom`.
 
 ---
 
@@ -303,7 +303,7 @@ Aero’s client entry runs `onRender(el)` after each HMR-driven re-render. Becau
 | Conditional visibility from **build** context (props, content)   | Aero: `if="{ expression }"`                                                                     |
 | Two-way / one-way form binding                                   | Lume: `data-bind="key"`                                                                         |
 | Toggle classes, ARIA, string attrs                               | Lume handlers: `classToggle`, `ariaAttr`, `stringAttr`                                          |
-| Initial state from Aero → Lume                                   | `pass:data` (or JSON script tag) and create store with that data before `bindDom`               |
+| Initial state from Aero → Lume                                   | `props` (or JSON script tag) and create store with that data before `bindDom`               |
 | Re-binding after HMR                                             | Call `bindDom(el, store)` (and any other init) in `aero.mount({ onRender(el) { ... } })`        |
 
 This keeps Aero responsible for structure and build-time data, and Lume for browser-only reactivity, with a clear split and no conflict between the two.

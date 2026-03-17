@@ -4,7 +4,7 @@
  * @remarks
  * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
  * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
- * to lower to IR (elements, components, slots, data-each, data-if/else-if/else, script/style pass:data),
+ * to lower to IR (elements, components, slots, data-each, data-if/else-if/else, script/style props),
  * then a single emitter turns IR → JS. Output is a string of JavaScript (default async render function,
  * optionally preceded by getStaticPaths export).
  */
@@ -28,7 +28,7 @@ function stripTypes(code: string, filename = 'script.ts'): string {
 	return result.code.replace(/(?:^|\n)\s*export\s*\{\s*\}\s*;?/g, '')
 }
 
-/** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional pass:data expr. */
+/** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional props expr. */
 interface ParsedElementAttrs {
 	attrString: string
 	loopData: { item: string; items: string } | null
@@ -210,11 +210,15 @@ class Lowerer {
 				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
 				if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
 
-				if (Helper.isAttr(attr.name, CONST.ATTR_PASS_DATA, CONST.ATTR_PREFIX)) {
-					passDataExpr = Helper.validateSingleBracedExpression(attr.value || '', {
-						directive: attr.name,
-						tagName: node?.tagName?.toLowerCase?.() || 'element',
-					})
+				// props on script/style: pass data; bare props → { ...props }
+				if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+					const value = attr.value?.trim() || ''
+					passDataExpr = value
+						? Helper.validateSingleBracedExpression(value, {
+								directive: attr.name,
+								tagName: node?.tagName?.toLowerCase?.() || 'element',
+							})
+						: '{ ...props }'
 					continue
 				}
 
@@ -350,7 +354,7 @@ class Lowerer {
 		return [{ kind: 'Append', content, outVar }]
 	}
 
-	/** Lower one element: slot, component (-component/-layout), or regular HTML (with optional data-each, pass:data). */
+	/** Lower one element: slot, component (-component/-layout), or regular HTML (with optional data-each, props). */
 	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 
@@ -416,7 +420,7 @@ class Lowerer {
 	}
 
 	/**
-	 * Builds IR for injecting `pass:data` into a `<script>` tag.
+	 * Builds IR for injecting props into a `<script>` tag.
 	 * For non-module scripts, the emitter emits the opening `{\n`; caller must append closing `}\n` (Append IR).
 	 */
 	private emitScriptPassDataIR(
@@ -704,7 +708,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			const strippedContent = stripTypes(blockingScript.content, 'blocking.ts')
 			if (blockingScript.passDataExpr) {
 				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
-					directive: 'pass:data',
+					directive: 'props',
 					tagName: 'script',
 				})
 				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
