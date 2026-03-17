@@ -30,9 +30,9 @@ export interface AeroOptions {
 	dirs?: AeroDirs
 	/**
 	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
-	 * as `Aero.site` in templates. Used for sitemap, RSS, and canonical links.
+	 * as `Aero.site.url` in templates. Used for sitemap, RSS, and canonical links.
 	 */
-	site?: string
+	site?: { url: string }
 	/**
 	 * Redirect rules applied in dev (Vite) and when using the Nitro server (preview:api / production).
 	 * For static-only deploys use host redirect config (_redirects, vercel.json, etc.).
@@ -171,6 +171,7 @@ export interface StaticPathEntry {
  *
  * @remarks
  * Used by the runtime when calling the compiled render function and when rendering child components.
+ * Top-level request, url, params are normalized into page; site string is wrapped as site.url.
  */
 export interface AeroRenderInput {
 	props?: Record<string, any>
@@ -187,16 +188,35 @@ export interface AeroRenderInput {
 	scripts?: Set<string>
 	/** Scripts to inject in <head>. */
 	headScripts?: Set<string>
-	/** Canonical site URL from config (e.g. `'https://example.com'`). Exposed as Aero.site in templates. */
-	site?: string
+	/** Canonical site URL from config. String for backward compat; object when passed from Aero.site. */
+	site?: string | { url: string }
+	/** Page context (url, request, params). When provided, overrides individual request/url/params. */
+	page?: { url?: URL; request?: Request; params?: AeroRouteParams }
+}
+
+/**
+ * Page context: request URL, Request object, and route params.
+ */
+export interface AeroPageContext {
+	url: URL
+	request: Request
+	params: AeroRouteParams
+}
+
+/**
+ * Site context: canonical URL and future site-wide properties.
+ */
+export interface AeroSiteContext {
+	url: string
 }
 
 /**
  * Context object available inside compiled templates (`is:build`) and when rendering components.
  *
  * @remarks
- * Includes `props`, `slots`, `renderComponent`, `request`, `url`, `params`, and optional style/script sets.
- * The index signature allows extra keys (e.g. from content or page data).
+ * Includes `props`, `slots`, `renderComponent`, `page`, `site`, and optional style/script sets.
+ * Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params` for request-scoped data;
+ * use `Aero.site.url` for the canonical site URL.
  */
 export interface AeroTemplateContext {
 	[key: string]: any
@@ -209,11 +229,10 @@ export interface AeroTemplateContext {
 		slots?: Record<string, string>,
 		context?: AeroRenderInput
 	) => Promise<string>
-	request: Request
-	url: URL
-	params: AeroRouteParams
-	/** Canonical site URL from config (e.g. `'https://example.com'`). */
-	site?: string
+	/** Request-scoped: url, request, params. */
+	page: AeroPageContext
+	/** Site-scoped: canonical URL and future config. */
+	site: AeroSiteContext
 	styles?: Set<string>
 	scripts?: Set<string>
 	headScripts?: Set<string>

@@ -115,7 +115,7 @@ On content routes (e.g. `/docs/*`), HMR re-renders in dev use **fetch** to get H
 
 ## Configuration (site URL)
 
-Optional `site` (canonical URL, e.g. `'https://example.com'`) can be set in `aero.config.ts` (`site: '...'`) or passed to `aero({ site: '...' })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [docs/site-url.md](docs/site-url.md).
+Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be set in `aero.config.ts` or passed to `aero({ site: { url: '...' } })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site.url` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [docs/site-url.md](docs/site-url.md).
 
 - **Environment variables:** Vite’s `import.meta.env`; use `VITE_` prefix for client-exposed vars. Aero injects `SITE` when `site` is set. Optional `env.d.ts` for types. See [docs/environment-variables.md](docs/environment-variables.md).
 - **Middleware/hooks:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev only) for redirects, rewrites, or custom responses. See [\_reference/middleware.md](_reference/middleware.md).

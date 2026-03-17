@@ -151,9 +151,10 @@ describe('Aero class', () => {
 			await aero.render('index', { props: {}, params: { id: '1' } })
 
 			expect(capturedCtx).toBeDefined()
-			expect(capturedCtx.request).toBeInstanceOf(Request)
-			expect(capturedCtx.url).toBeInstanceOf(URL)
-			expect(capturedCtx.params).toEqual({ id: '1' })
+			expect(capturedCtx.page).toBeDefined()
+			expect(capturedCtx.page.request).toBeInstanceOf(Request)
+			expect(capturedCtx.page.url).toBeInstanceOf(URL)
+			expect(capturedCtx.page.params).toEqual({ id: '1' })
 		})
 
 		it('should pass slots in context when provided in input', async () => {
@@ -184,7 +185,7 @@ describe('Aero class', () => {
 				'pages/404.html': {
 					default: (ctx: any) => {
 						capturedCtx = ctx
-						return `<div>Not found: ${ctx.params?.path ?? 'unknown'}</div>`
+						return `<div>Not found: ${ctx.page?.params?.path ?? 'unknown'}</div>`
 					},
 				},
 			})
@@ -192,7 +193,7 @@ describe('Aero class', () => {
 			const html = await aero.render('404', { params: { path: '/missing' } })
 
 			expect(capturedCtx).toBeDefined()
-			expect(capturedCtx.params).toEqual({ path: '/missing' })
+			expect(capturedCtx.page.params).toEqual({ path: '/missing' })
 			expect(html).toContain('Not found: /missing')
 		})
 	})

@@ -9,6 +9,7 @@
 import {
 	tokenizeCurlyInterpolation,
 	compileInterpolationFromSegments,
+	type Segment,
 } from './tokenizer'
 
 /** Options for validateSingleBracedExpression (directive/tag for error message). */
@@ -48,8 +49,22 @@ export function validateSingleBracedExpression(
 	return trimmed
 }
 
+/** Map bare url/request/params in interpolation to Aero.page.* for migration. */
+function mapAeroPageShorthand(segments: Segment[]): Segment[] {
+	return segments.map(seg => {
+		if (seg.kind === 'interpolation') {
+			const expr = seg.expression.trim()
+			if (expr === 'url') return { ...seg, expression: 'Aero.page.url' }
+			if (expr === 'request') return { ...seg, expression: 'Aero.page.request' }
+			if (expr === 'params') return { ...seg, expression: 'Aero.page.params' }
+		}
+		return seg
+	})
+}
+
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
+ * Bare `{ url }`, `{ request }`, `{ params }` map to `Aero.page.url`, etc.
  *
  * @param text - Raw text (may contain `{...}` interpolation).
  * @returns String safe for embedding in a template literal (backticks escaped).
@@ -57,11 +72,12 @@ export function validateSingleBracedExpression(
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
-	return compileInterpolationFromSegments(segments)
+	return compileInterpolationFromSegments(mapAeroPageShorthand(segments))
 }
 
 /**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
+ * Bare `{ url }`, `{ request }`, `{ params }` map to `Aero.page.url`, etc.
  *
  * @param text - Attribute value string.
  * @returns String safe for template literal (backticks escaped, double-braces as literals).
@@ -69,7 +85,7 @@ export function compileInterpolation(text: string): string {
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
-	return compileInterpolationFromSegments(segments)
+	return compileInterpolationFromSegments(mapAeroPageShorthand(segments))
 }
 
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */
@@ -205,17 +221,15 @@ export function emitRenderFunction(
 /**
  * Pairs of [inputKey, destructuredVarName] for the 4th argument to Aero.renderComponent(..., input).
  * Must stay in sync with runtime createContext / AeroRenderInput fields used by renderComponent.
+ * site uses __aero_site alias so build scripts can declare `const site` for content globals.
  */
-export const RENDER_COMPONENT_CONTEXT_PAIRS: [key: string, varName: string][] =
-	[
-		['request', 'request'],
-		['url', 'url'],
-		['params', 'params'],
-		['site', '__aero_site'],
-		['styles', 'styles'],
-		['scripts', 'scripts'],
-		['headScripts', 'injectedHeadScripts'],
-	]
+export const RENDER_COMPONENT_CONTEXT_PAIRS: [key: string, varName: string][] = [
+	['page', 'page'],
+	['site', '__aero_site'],
+	['styles', 'styles'],
+	['scripts', 'scripts'],
+	['headScripts', 'injectedHeadScripts'],
+]
 
 /** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). Used by emit.ts and codegen.ts. */
 export function getRenderComponentContextArg(): string {
@@ -225,9 +239,21 @@ export function getRenderComponentContextArg(): string {
 	return `{ ${entries.join(', ')} }`
 }
 
-/** Build destructuring pattern for the render function: request, url, params, site: __aero_site, ... */
+/**
+ * Pairs of [inputKey, destructuredVarName] for the render function's initial destructuring from Aero.
+ * page and site are objects; site uses __aero_site so build scripts can declare `const site` for content.
+ */
+const RENDER_DESTRUCTURE_PAIRS: [key: string, varName: string][] = [
+	['page', 'page'],
+	['site', '__aero_site'],
+	['styles', 'styles'],
+	['scripts', 'scripts'],
+	['headScripts', 'injectedHeadScripts'],
+]
+
+/** Build destructuring pattern for the render function: slots, renderComponent, page, site, ... */
 export function getRenderContextDestructurePattern(): string {
-	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
+	const entries = RENDER_DESTRUCTURE_PAIRS.map(([key, varName]) =>
 		key === varName ? key : `${key}: ${varName}`
 	)
 	return `slots = {}, renderComponent, ${entries.join(', ')}`

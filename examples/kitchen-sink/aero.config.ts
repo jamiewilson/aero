@@ -6,7 +6,7 @@ export default defineConfig({
 		server: './backend',
 		dist: './build',
 	},
-	site: 'https://with.aero',
+	site: { url: 'https://with.aero' },
 	redirects: [{ from: '/home', to: '/' }],
 	content: true,
 	server: true,

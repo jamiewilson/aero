@@ -1,6 +1,6 @@
 <script is:build lang="ts">
 	import logo from '@components/logo'
-	const isHomepage = Aero.url.pathname === '/'
+	const isHomepage = Aero.page.url.pathname === '/'
 
 	export interface HeaderProps {
 		title: string

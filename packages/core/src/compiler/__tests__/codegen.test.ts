@@ -40,12 +40,14 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		styles: new Set<string>(),
 		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
-		request: new Request('http://localhost'),
-		url: new URL('http://localhost'),
-		params: {},
+		page: {
+			url: new URL('http://localhost'),
+			request: new Request('http://localhost'),
+			params: {},
+		},
+		site: { url: '' },
 		slots: {},
 		props: {},
-		site: '',
 		...context,
 	}
 	return await renderFn(aeroContext)
@@ -463,6 +465,45 @@ describe('Codegen', () => {
 		const output = await execute(code, { label: 'Click' })
 		expect(output).toContain(':disabled="!message.length"')
 		expect(output).toContain('Click')
+	})
+
+	it('should support Aero.page.url, Aero.page.params, Aero.site.url', async () => {
+		const html = `<script is:build></script>
+			<p>url: { Aero.page.url.href }</p>
+			<p>slug: { Aero.page.params.slug }</p>
+			<p>site: { Aero.site.url }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code, {
+			page: {
+				url: new URL('http://localhost/docs/intro'),
+				request: new Request('http://localhost/docs/intro'),
+				params: { slug: 'intro' },
+			},
+			site: { url: 'https://example.com' },
+		})
+		expect(output).toContain('url: http://localhost/docs/intro')
+		expect(output).toContain('slug: intro')
+		expect(output).toContain('site: https://example.com')
+	})
+
+	it('should map bare { url } to Aero.page.url (shorthand)', async () => {
+		const html = '<script is:build></script><a href="{ url }">Link</a>'
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code, {
+			page: {
+				url: new URL('http://localhost/about'),
+				request: new Request('http://localhost/about'),
+				params: {},
+			},
+			site: { url: '' },
+		})
+		expect(output).toContain('href="http://localhost/about"')
 	})
 
 	it('should not interpolate directive attributes (x-, @, :, .)', async () => {

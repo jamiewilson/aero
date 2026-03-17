@@ -699,6 +699,10 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const ALLOWED_GLOBALS = new Set([
 			...Object.keys(CONTENT_GLOBALS),
 			'Aero',
+			// Shorthand: { url }, { request }, { params } compile to Aero.page.*
+			'url',
+			'request',
+			'params',
 			'console',
 			'Math',
 			'JSON',

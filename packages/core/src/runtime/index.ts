@@ -81,7 +81,7 @@ export class Aero {
 		return new URL(routePath, 'http://localhost')
 	}
 
-	/** Build template context: globals, props, slots, request, url, params, site, and `renderComponent` / `nextPassDataId`. */
+	/** Build template context: globals, props, slots, page, site, and `renderComponent` / `nextPassDataId`. */
 	private createContext(input: {
 		props?: Record<string, any>
 		slots?: Record<string, string>
@@ -89,24 +89,39 @@ export class Aero {
 		url?: URL | string
 		params?: AeroRouteParams
 		routePath?: string
-		site?: string
+		site?: string | { url: string }
+		page?: { url?: URL; request?: Request; params?: AeroRouteParams }
 		styles?: Set<string>
 		scripts?: Set<string>
 		headScripts?: Set<string>
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
-		const url = this.toURL(routePath, input.url)
+		const pageInput = input.page
+		const url =
+			pageInput?.url ??
+			this.toURL(routePath, input.url)
+		const urlResolved =
+			url instanceof URL ? url : new URL(String(url), 'http://localhost')
 		const request =
-			input.request || new Request(url.toString(), { method: 'GET' })
+			pageInput?.request ??
+			input.request ??
+			new Request(urlResolved.toString(), { method: 'GET' })
+		const params = pageInput?.params ?? input.params ?? {}
+		const siteUrl =
+			typeof input.site === 'string'
+				? input.site
+				: (input.site?.url ?? '')
 		let _passDataId = 0
 		const context = {
 			...this.globals,
 			props: input.props || {},
 			slots: input.slots || {},
-			request,
-			url,
-			params: input.params || {},
-			site: input.site ?? '',
+			page: {
+				url: urlResolved,
+				request,
+				params,
+			},
+			site: { url: siteUrl },
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
@@ -278,6 +293,7 @@ export class Aero {
 		const context = this.createContext({
 			props,
 			slots,
+			page: input.page,
 			request: input.request,
 			url: input.url,
 			params: input.params,

@@ -33,18 +33,18 @@ Use `{ }` to evaluate JavaScript expressions:
 You can also compose strings with inline expressions:
 
 ```html
-<my-component title="Slug: { Aero.params.slug }" />
+<my-component title="Slug: { Aero.page.params.slug }" />
 ```
 
-If `Aero.params.slug === 'intro'`, `title` becomes `Slug: intro`.
+If `Aero.page.params.slug === 'intro'`, `title` becomes `Slug: intro`.
 
 To render literal braces in composed strings, use double braces:
 
 ```html
-<my-component title="{{ slug }} + { Aero.params.slug }" />
+<my-component title="{{ slug }} + { Aero.page.params.slug }" />
 ```
 
-If `Aero.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
+If `Aero.page.params.slug === 'intro'`, `title` becomes `{ slug } + intro`.
 
 ### 3. Spread Syntax
 
@@ -134,9 +134,9 @@ Components access props by destructuring `Aero.props`:
 Inside `<script is:build>` you have access to:
 
 - **`Aero.props`** — Props passed to this component
-- **`Aero.request`** - Current request object
-- **`Aero.url`** - Current page URL
-- **`Aero.params`** - Route params for dynamic routes
+- **`Aero.page.request`** — Current request object
+- **`Aero.page.url`** — Current page URL
+- **`Aero.page.params`** — Route params for dynamic routes
 - **`site`** — Global site data (from your content module, e.g. `content/site.ts`, imported via `@content/site`)
 - **`slots`** - Named and default slot content
 - **`renderComponent`** - Function to render child components
@@ -145,17 +145,17 @@ Inside `<script is:build>` you have access to:
 
 ### Dev vs Static behavior
 
-| Global         | Dev server / API runtime                               | Static build (`pnpm build` HTML output)                    |
-| -------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
-| `Aero.request` | Real incoming request (method + forwarded headers)     | Synthetic request; request-specific headers may be missing |
-| `Aero.url`     | URL for the current incoming route                     | URL derived from the generated page route                  |
-| `Aero.params`  | Populated for dynamic route files (e.g. `[slug].html`) | Only populated when rendering dynamic route pages          |
+| Global               | Dev server / API runtime                               | Static build (`pnpm build` HTML output)                    |
+| -------------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
+| `Aero.page.request`  | Real incoming request (method + forwarded headers)     | Synthetic request; request-specific headers may be missing |
+| `Aero.page.url`      | URL for the current incoming route                     | URL derived from the generated page route                  |
+| `Aero.page.params`   | Populated for dynamic route files (e.g. `[slug].html`) | Only populated when rendering dynamic route pages          |
 
 ### Read request metadata
 
 ```html
 <script is:build>
-	const userAgent = Aero.request.headers.get('user-agent') || 'unavailable'
+	const userAgent = Aero.page.request.headers.get('user-agent') || 'unavailable'
 </script>
 
 <p>User agent: { userAgent }</p>
@@ -168,7 +168,7 @@ In static builds, request-specific headers may be unavailable.
 
 ```html
 <script is:build>
-	const canonical = new URL(Aero.url.pathname, Aero.site || '').toString()
+	const canonical = new URL(Aero.page.url.pathname, Aero.site.url || '').toString()
 </script>
 
 <link rel="canonical" href="{ canonical }" />
@@ -180,7 +180,7 @@ In a dynamic route file such as `client/pages/docs/[slug].html`:
 
 ```html
 <script is:build>
-	const slug = Aero.params.slug || 'index'
+	const slug = Aero.page.params.slug || 'index'
 </script>
 
 <h1>Docs: { slug }</h1>
