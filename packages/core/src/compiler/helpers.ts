@@ -19,10 +19,10 @@ export interface ValidateSingleBracedExpressionOptions {
 
 /**
  * Validate that a value is a single well-formed braced expression using the same tokenizer as
- * attribute interpolation. Used for pass:data (and optionally other braced directives); emission
+ * attribute interpolation. Used for props (and optionally other braced directives); emission
  * stays expression-passthrough.
  *
- * @param value - Raw attribute value (e.g. pass:data value).
+ * @param value - Raw attribute value (e.g. props value).
  * @param options - Optional directive and tagName for error message.
  * @returns Trimmed value (including braces).
  * @throws If value is not exactly one interpolation segment spanning the whole trimmed string.
@@ -129,7 +129,7 @@ export interface EmitRenderFunctionOptions {
 	rootScripts?: string[]
 	/** Generated code for compiled <style> blocks (styles?.add(...)). */
 	styleCode?: string
-	/** Full statements that add client script tags to `scripts` (e.g. scripts?.add(...) or pass:data IIFE). */
+	/** Full statements that add client script tags to `scripts` (e.g. scripts?.add(...) or props IIFE). */
 	rootScriptsLines?: string[]
 	/** Expressions for blocking head scripts (emitted as injectedHeadScripts?.add(...)). */
 	headScriptsLines?: string[]

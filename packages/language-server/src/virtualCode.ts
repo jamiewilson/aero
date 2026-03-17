@@ -49,7 +49,7 @@ function getScriptType(node: Node): 'build' | 'client' | 'inline' | 'blocking' |
 	if ('src' in attrs) return 'external'
 	if ('is:build' in attrs) return 'build'
 	if ('is:inline' in attrs) return 'inline'
-	if ('pass:data' in attrs) return 'inline'
+	if ('props' in attrs || 'data-props' in attrs) return 'inline'
 	if ('is:blocking' in attrs) return 'blocking'
 	return 'client'
 }

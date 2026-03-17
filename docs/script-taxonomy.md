@@ -32,10 +32,10 @@ A `<script>` tag with no `is:*` attribute is treated as a client-side module scr
 - **Execution Context:** Runs in the client's browser.
 - **Purpose:** Interactive front-end logic, client-side imports, and Vite HMR during development.
 - **Bundling:** Aero hands the contents to Vite as a virtual module (`/@aero/client/...`). Vite minifies, chunks, and optimizes the code.
-- **Data Passing:** Use the `pass:data` directive to pass server context into the module.
+- **Data Passing:** Use the `props` (or `data-props`) attribute to pass server context into the module.
 
 ```html
-<script pass:data="{ { apiToken } }">
+<script props="{ { apiToken } }">
 	import { initAnalytics } from 'my-analytics'
 	initAnalytics(apiToken)
 </script>
@@ -87,9 +87,9 @@ If you had any `on:client` scripts that you intended to be completely externaliz
 
 **Local scripts** (`src="@scripts/..."`, `src="./..."`) stay in the template (not in the virtual client pipeline). The parser adds `type="module"` when missing. At build time they are discovered, resolved via path aliases, added as Rollup entry points, bundled, and get hashed filenames. The compiled HTML’s `src` is rewritten to the hashed asset path. So local `script[src]` uses the **asset pipeline**, not the virtual client script pipeline; deduping and ordering are per file.
 
-### pass:data and multiple instances
+### props and multiple instances
 
-When the same component is used multiple times with different `pass:data`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [pass-data-directive.md](pass-data-directive.md) for how to use `pass:data`.
+When the same component is used multiple times with different `props`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [props-directive.md](props-directive.md) for how to use `props`.
 
 ---
 

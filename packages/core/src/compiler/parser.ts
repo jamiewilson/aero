@@ -66,7 +66,7 @@ function collectScriptElements(doc: Document): Element[] {
  *
  * @remarks
  * DOM-first approach: parse full document with linkedom, walk script elements (skipping SVG/MathML),
- * classify by attributes (is:build, is:inline, is:blocking, src, pass:data), mutate DOM (remove/replace),
+ * classify by attributes (is:build, is:inline, is:blocking, src, props), mutate DOM (remove/replace),
  * then serialize to produce template. Scripts inside HTML comments are not in the DOM and are left in place.
  * BOM is stripped first.
  *
@@ -108,7 +108,16 @@ export function parse(html: string): ParseResult {
 		const hasInline = scriptEl.hasAttribute(CONST.ATTR_IS_INLINE)
 		const hasBlocking = scriptEl.hasAttribute(CONST.ATTR_IS_BLOCKING)
 		const src = scriptEl.getAttribute(CONST.ATTR_SRC) ?? ''
-		const passData = scriptEl.getAttribute(CONST.ATTR_PASS_DATA) ?? undefined
+		const dataProps = CONST.ATTR_PREFIX + CONST.ATTR_PROPS
+		let passData =
+			scriptEl.getAttribute(CONST.ATTR_PROPS) ??
+			scriptEl.getAttribute(dataProps) ??
+			undefined
+		// Bare props shorthand: no value → spread local props
+		const hasProps = scriptEl.hasAttribute(CONST.ATTR_PROPS) || scriptEl.hasAttribute(dataProps)
+		if (passData === '' && hasProps) {
+			passData = '{ ...props }'
+		}
 
 		const attrsExcludeTaxonomy = new Set([
 			CONST.ATTR_IS_BUILD,
@@ -119,7 +128,7 @@ export function parse(html: string): ParseResult {
 		if (!hasInline && !inHead) {
 			cleanedAttrs = getAttrsString(
 				scriptEl,
-				new Set([...attrsExcludeTaxonomy, CONST.ATTR_PASS_DATA])
+				new Set([...attrsExcludeTaxonomy, CONST.ATTR_PROPS, dataProps])
 			)
 		}
 		cleanedAttrs = cleanedAttrs.replace(/\s+/g, ' ').trim()
@@ -160,7 +169,7 @@ export function parse(html: string): ParseResult {
 			}
 			continue
 		}
-		// Script in head with attributes (e.g. pass:data) but not is:inline stays in place
+		// Script in head with attributes (e.g. props) but not is:inline stays in place
 		if (inHead && scriptEl.attributes.length > 0) continue
 		// Plain script (no attrs or body): extract as client
 		clientScripts.push({

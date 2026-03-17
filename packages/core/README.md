@@ -25,7 +25,7 @@ Script blocks are classified by attributes (see [docs/script-taxonomy.md](https:
 | Script type | Attribute              | When it runs      | Notes                                                                                     |
 | ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
 | Build       | `<script is:build>`    | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
-| Client      | Plain `<script>`       | Browser           | Bundled as a Vite virtual module; HMR. Use `pass:data` to inject build-time data.         |
+| Client      | Plain `<script>`       | Browser           | Bundled as a Vite virtual module; HMR. Use `props` to inject build-time data.         |
 | Inline      | `<script is:inline>`   | Browser           | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention).     |
 | Blocking    | `<script is:blocking>` | Browser           | Extracted and emitted in `<head>`.                                                        |
 
@@ -35,7 +35,7 @@ Script blocks are classified by attributes (see [docs/script-taxonomy.md](https:
 
 - Parses templates and extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks.
 - Lowers template DOM to an **IR** (intermediate representation), then emits a single async render function with `{ }` interpolation.
-- Supports components, slots, `each`, `if` / `else-if` / `else`, and `pass:data` on scripts and styles.
+- Supports components, slots, `each`, `if` / `else-if` / `else`, and `props` on scripts and styles.
 
 **Example**
 

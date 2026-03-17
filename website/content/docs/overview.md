@@ -55,7 +55,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ### Mostly just html, css and js/ts, with few things on top
 
-Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props`, `pass:data`). The source looks like HTML, the output is HTML.
+Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `each`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props` on components and script/style). The source looks like HTML, the output is HTML.
 
 > Also check out: [What Makes Aero Different?](https://github.com/jamiewilson/aero/blob/main/docs/what-makes-aero-different.md) and [Why Not Web Components?](https://github.com/jamiewilson/aero/blob/main/docs/why-not-web-components.md)
 
@@ -139,15 +139,15 @@ Use `props="{ ...obj }"` to pass any object as the component's props:
 
 ### 3. Passing data into script and style
 
-To use build-scope data inside a client `<script>` or `<style>`, add `pass:data` with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression.
+To use build-scope data inside a client `<script>` or `<style>`, add `props` with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression. Bare `props` (no value) spreads a local `props` variable, same as on components.
 
 #### Multiple variables in script:
 
-`pass:data="{ title, accent }"` — object literal, so `title` and `accent` become globals.
+`props="{ title, accent }"` — object literal, so `title` and `accent` become globals.
 
 #### Object's properties as CSS vars in style:
 
-`pass:data="{ ...theme }"` — spread so the theme's keys become `--fg`, `--bg`, `--accent`. Passing `{ theme }` would give a single key `--theme` (the whole object), not per-property vars.
+`props="{ ...theme }"` — spread so the theme's keys become `--fg`, `--bg`, `--accent`. Passing `{ theme }` would give a single key `--theme` (the whole object), not per-property vars.
 
 ```html
 <script is:build>
@@ -160,7 +160,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `pass:data`
 	<p>{ subtitle }</p>
 </div>
 
-<style pass:data="{ ...theme }">
+<style props="{ ...theme }">
 	.card {
 		color: var(--fg);
 		background: var(--bg);
@@ -168,7 +168,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `pass:data`
 	}
 </style>
 
-<script pass:data="{ title, accent }">
+<script props="{ title, accent }">
 	console.log('Card:', title, accent)
 </script>
 ```

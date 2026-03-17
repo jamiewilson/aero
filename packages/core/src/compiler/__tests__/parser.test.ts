@@ -2,7 +2,7 @@
  * Unit tests for the Aero HTML parser (parser.ts).
  *
  * Covers script taxonomy: is:build (extracted to build), default/plain script (client),
- * is:inline (left in place), is:blocking (hoisted to head), script[src]; pass:data extraction;
+ * is:inline (left in place), is:blocking (hoisted to head), script[src]; props extraction;
  * head vs body behavior; and removal by index (including when HTML comments appear inside script).
  */
 
@@ -117,22 +117,29 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).toContain('<div>Content</div>')
 	})
 
-	it('should extract pass:data expression from explicit and default scripts', () => {
-		const input = `
-            <script pass:data="{ { config } }">
+	it('should extract props/data-props expression from scripts (matches component syntax)', () => {
+		const inputWithProps = `
+            <script props="{ { config } }">
                 console.log(config);
             </script>
         `
-		const result = parse(input)
+		const resultProps = parse(inputWithProps)
+		expect(resultProps.clientScripts).toHaveLength(1)
+		expect(resultProps.clientScripts[0].passDataExpr).toBe('{ { config } }')
 
-		expect(result.clientScripts).toHaveLength(1)
-		expect(result.clientScripts[0].content).toContain('console.log(config);')
-		expect(result.clientScripts[0].passDataExpr).toBe('{ { config } }')
+		const inputWithDataProps = `
+            <script data-props="{ { theme } }">
+                console.log(theme);
+            </script>
+        `
+		const resultDataProps = parse(inputWithDataProps)
+		expect(resultDataProps.clientScripts).toHaveLength(1)
+		expect(resultDataProps.clientScripts[0].passDataExpr).toBe('{ { theme } }')
 	})
 
-	it('should extract pass:data expression from is:inline scripts', () => {
+	it('should extract props expression from is:inline scripts', () => {
 		const input = `
-            <script is:inline pass:data="{ { config } }">
+            <script is:inline props="{ { config } }">
                 console.log(config);
             </script>
         `
@@ -141,8 +148,8 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.inlineScripts).toHaveLength(1)
 		expect(result.inlineScripts[0].content).toContain('console.log(config);')
 		expect(result.inlineScripts[0].passDataExpr).toBe('{ { config } }')
-		// The retained tag should preserve pass:data for codegen to process interpolation
-		expect(result.template).toContain('pass:data')
+		// The retained tag should preserve props for codegen to process interpolation
+		expect(result.template).toContain('props')
 	})
 
 	it('should leave scripts in head in place and not extract them', () => {
@@ -150,7 +157,7 @@ describe('Parser (V2 Taxonomy)', () => {
 <html>
 <head>
 	<script src="external.js"></script>
-	<script pass:data="{ { theme } }">
+	<script props="{ { theme } }">
 		console.log(theme);
 	</script>
 </head>
@@ -163,8 +170,8 @@ describe('Parser (V2 Taxonomy)', () => {
 
 		// Script with src should stay in place
 		expect(result.template).toContain('src="external.js"')
-		// Script with pass:data in head should also stay in place (not extracted to clientScripts)
-		expect(result.template).toContain('pass:data')
+		// Script with props in head should also stay in place (not extracted to clientScripts)
+		expect(result.template).toContain('props')
 		expect(result.template).toContain('console.log(theme);')
 		// Should NOT be extracted to clientScripts
 		expect(result.clientScripts).toHaveLength(0)
@@ -177,7 +184,7 @@ describe('Parser (V2 Taxonomy)', () => {
 	<script src="external.js"></script>
 </head>
 <body>
-	<script pass:data="{ { theme } }">
+	<script props="{ { theme } }">
 		console.log(theme);
 	</script>
 </body>
@@ -449,7 +456,7 @@ const x = 1;
 <html lang="en">
 	<head>
 		<script src="@scripts/index.ts"></script>
-		<script pass:data="{{ key }}">const k = 1;</script>
+		<script props="{ key }">const k = 1;</script>
 		<script>
 			import { fn } from '@scripts/utils'
 			console.log(fn());
@@ -471,8 +478,8 @@ const x = 1;
 		expect(result.template).toContain('type="module"')
 		expect(result.template).toContain('@scripts/index.ts')
 
-		// pass:data script stays in template
-		expect(result.template).toContain('pass:data')
+		// props script stays in template
+		expect(result.template).toContain('props')
 		expect(result.template).toContain('const k = 1')
 
 		// Plain script content must not appear in template

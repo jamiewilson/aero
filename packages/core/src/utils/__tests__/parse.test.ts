@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest'
 import { extractObjectKeys } from '../parse'
 
-/** extractObjectKeys: parses object literal/shorthand to keys; used for pass:data preamble in client scripts. */
+/** extractObjectKeys: parses object literal/shorthand to keys; used for props preamble in client scripts. */
 describe('extractObjectKeys', () => {
 	it('should extract simple keys', () => {
 		expect(extractObjectKeys('{ a: 1, b: 2 }')).toEqual(['a', 'b'])

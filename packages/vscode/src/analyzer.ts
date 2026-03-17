@@ -241,8 +241,8 @@ export type ScriptScope = 'build' | 'inline' | 'bundled' | 'blocking'
 /**
  * Collects variables from script blocks filtered by scope type.
  * - build: is:build scripts (visible to template)
- * - bundled: plain <script> or scripts with type="module" (client scripts, with pass:data)
- * - inline: is:inline scripts (browser-only, with pass:data)
+ * - bundled: plain <script> or scripts with type="module" (client scripts, with props)
+ * - inline: is:inline scripts (browser-only, with props)
  * - blocking: is:blocking scripts (browser-only, in head)
  */
 export function collectVariablesByScope(
@@ -292,45 +292,28 @@ export function collectVariablesByScope(
 		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
 		const maskedContent = maskJsComments(content)
 
-		// For bundled scope, track pass:data variables as references
-		// Extract pass:data BEFORE lowercasing to preserve variable name case
+		// For bundled scope, track props variables as references
 		if (scope === 'bundled') {
-			// Match pass:data="{{ ... }}" or pass:data='{{ ... }}'
-			const passDataRegex = /pass:data\s*=\s*(['"])\{\{[\s\S]*?\}\}\1/gi
+			const propsRegex = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
 			let pdMatch: RegExpExecArray | null
-			while ((pdMatch = passDataRegex.exec(rawAttrs)) !== null) {
-				const passDataValue = pdMatch[0]
-				const passDataAttrStart = pdMatch.index
-
-				// Extract variable names from { { foo, bar } }
-				const varMatch = /\{\{\s*([\s\S]*?)\s*\}\}/.exec(passDataValue)
-				if (varMatch) {
-					const varNames = varMatch[1].split(',').map(v => v.trim())
-
-					for (const varName of varNames) {
-						if (/^[a-zA-Z_$][\w$]*$/.test(varName)) {
-							// Find position of variable in the full text
-							// rawAttrs starts at scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
-							// varMatch is relative to pdMatch[0], pdMatch is relative to rawAttrs
-							const rawAttrsStart =
-								scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
-							const varAbsStart =
-								rawAttrsStart +
-								passDataAttrStart +
-								varMatch.index +
-								varMatch[0].indexOf(varName)
-							const varAbsEnd = varAbsStart + varName.length
-
-							setVar(varName, {
-								name: varName,
-								range: new vscode.Range(
-									document.positionAt(varAbsStart),
-									document.positionAt(varAbsEnd)
-								),
-								kind: 'reference',
-							})
-						}
-					}
+			while ((pdMatch = propsRegex.exec(rawAttrs)) !== null) {
+				const value = pdMatch[2]
+				const valueStartInAttrs = pdMatch.index + pdMatch[0].indexOf(value)
+				const rawAttrsStart =
+					scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
+				const idRegex = /\b([a-zA-Z_$][\w$]*)\b/g
+				let idMatch: RegExpExecArray | null
+				while ((idMatch = idRegex.exec(value)) !== null) {
+					const varName = idMatch[1]
+					const varIndex = rawAttrsStart + valueStartInAttrs + idMatch.index
+					setVar(varName, {
+						name: varName,
+						range: new vscode.Range(
+							document.positionAt(varIndex),
+							document.positionAt(varIndex + varName.length)
+						),
+						kind: 'reference',
+					})
 				}
 			}
 		}

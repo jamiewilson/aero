@@ -109,8 +109,8 @@ alert('hello')
 		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
 	})
 
-	it('ignores pass:data scripts', () => {
-		const html = `<script pass:data="{ storageKey }">
+	it('ignores props scripts', () => {
+		const html = `<script props="{ storageKey }">
 const theme = JSON.parse(localStorage.getItem(storageKey))
 </script>`
 

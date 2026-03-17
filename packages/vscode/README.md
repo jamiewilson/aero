@@ -19,7 +19,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
   - Jump to component/layout/page definitions via path aliases and imports.
 
 - **Diagnostics**
-  - Warnings for invalid Aero expressions, missing props, and template errors (including `pass:data` and script-type scopes).
+  - Warnings for invalid Aero expressions, missing props, and template errors (including `props`/`data-props` and script-type scopes).
 
 - **Scope mode** (`aero.scopeMode`)
   - `auto` (default) — Features run in detected Aero projects and HTML files with Aero markers.

@@ -56,7 +56,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 ### Scripts and data
 
 - **Script types** — `is:build`, plain `<script>` (client), `is:inline`, `is:blocking`, `src`. [script-taxonomy.md](script-taxonomy.md)
-- **pass:data** — Thread build-time data into client scripts and `<style>`. [pass-data-directive.md](pass-data-directive.md)
+- **props** — Thread build-time data into client scripts and `<style>`. [props-directive.md](props-directive.md)
 - **Content** — `content/` modules (e.g. `site.ts`), collections with `getCollection()` and `render()`. [content-api.md](content-api.md)
 
 ### Configuration and environment

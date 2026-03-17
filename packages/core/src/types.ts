@@ -80,7 +80,7 @@ export interface MountOptions {
 }
 
 /**
- * Single script entry: attrs (optional), content (body or virtual URL), optional pass:data expression.
+ * Single script entry: attrs (optional), content (body or virtual URL), optional props expression.
  * Used by parser, codegen, Vite plugin, and static build for client/inline/blocking script arrays.
  */
 export interface ScriptEntry {
