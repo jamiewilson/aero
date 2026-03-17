@@ -17,12 +17,12 @@ pnpm add @aero-js/highlight
 
 ### With @aero-js/content (Markdown Highlighting)
 
-When using `@aero-js/content`, enable Shiki highlighting by adding `@shikijs/rehype` to `markdown.rehypePlugins` in your `content.config.ts`. Use `@aero-js/highlight` for `preDataLangTransformer()` (adds `data-lang` on `<pre>`) and for shared config types:
+When using `@aero-js/content`, enable Shiki highlighting by adding `@shikijs/rehype` to `markdown.rehypePlugins` in your `content.config.ts`. Use `@aero-js/highlight` for `addPreDataLang()` (adds `data-lang` on `<pre>`) and for shared config types:
 
 ````typescript
 // content.config.ts
 import { defineCollection, defineConfig } from '@aero-js/content'
-import { preDataLangTransformer } from '@aero-js/highlight'
+import { addPreDataLang } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
 import {
 	transformerNotationHighlight,
@@ -48,7 +48,7 @@ export default defineConfig({
 				{
 					themes: { light: 'github-light', dark: 'github-dark' },
 					transformers: [
-						preDataLangTransformer(), // Adds data-lang="..." on <pre>
+						addPreDataLang(), // Adds data-lang="..." on <pre>
 						transformerNotationHighlight(), // Highlight lines: ```js {1-3}
 						transformerNotationFocus(), // Focus lines: ```js /focus/
 					],
@@ -84,11 +84,11 @@ Becomes:
 Use `@aero-js/highlight` directly for one-off highlighting in any context:
 
 ```typescript
-import { highlight, preDataLangTransformer } from '@aero-js/highlight'
+import { highlight, addPreDataLang } from '@aero-js/highlight'
 
 const html = await highlight('const x = 1', 'js', {
 	themes: { light: 'github-light', dark: 'github-dark' },
-	transformers: [preDataLangTransformer()],
+	transformers: [addPreDataLang()],
 })
 
 console.log(html)
@@ -206,18 +206,20 @@ See [Shiki Languages](https://shiki.style/languages) for the full list. Common I
 
 ### Aero HTML (use `html`)
 
-The `aeroHtmlGrammar` extends HTML with highlighting for JavaScript/TypeScript inside `{ }` expressions in attribute values (e.g. `props="{ title: site.title }"`). It registers as an alias of `html`, so use standard ` ```html ` in markdown. Add `aeroHtmlGrammar` to `langs`:
+The `aeroHtml` extends HTML with highlighting for JavaScript/TypeScript inside `{ }` expressions in attribute values (e.g. `props="{ title: site.title }"`). It registers as an alias of `html`, so use standard ` ```html ` in markdown. Add `aeroHtml` to `langs` **at the end of the array**:
 
 ```typescript
-import { preDataLangTransformer, aeroHtmlGrammar } from '@aero-js/highlight'
+import { addPreDataLang, aeroHtml } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
 
 rehypeShiki({
 	themes: { light: 'github-light', dark: 'github-dark' },
-	langs: ['js', 'ts', aeroHtmlGrammar, 'css', 'json', 'bash'],
-	transformers: [preDataLangTransformer()],
+	langs: ['js', 'ts', 'html', 'css', 'json', 'bash', aeroHtml],
+	transformers: [addPreDataLang()],
 })
 ```
+
+**Order matters:** `aeroHtml` aliases to `html`, so when both are in `langs`, Shiki uses the last-registered handler for ` ```html ` blocks. Putting `aeroHtml` last ensures fenced blocks tagged ` ```html ` use the extended grammar (with `{ }` expression highlighting) instead of the base HTML grammar.
 
 Then use ` ```html ` in markdown (no need for `aero-html`):
 
@@ -232,7 +234,7 @@ Then use ` ```html ` in markdown (no need for `aero-html`):
 Transformers post-process highlighted code to add features like line highlighting, line numbers, and diffs.
 
 ```typescript
-import { preDataLangTransformer } from '@aero-js/highlight'
+import { addPreDataLang } from '@aero-js/highlight'
 import {
 	transformerNotationHighlight,
 	transformerNotationFocus,
@@ -243,7 +245,7 @@ import {
 const config = {
 	theme: 'github-light',
 	transformers: [
-		preDataLangTransformer(), // Adds data-lang="..." on <pre>
+		addPreDataLang(), // Adds data-lang="..." on <pre>
 		transformerNotationHighlight(), // Highlight lines: [!code highlight]
 		transformerNotationFocus(), // Focus code: [!code focus]
 		transformerRenderWhitespace(), // Render whitespace
@@ -252,7 +254,7 @@ const config = {
 }
 ```
 
-`preDataLangTransformer()` uses the raw requested language token (including aliases), so a fenced block tagged as `my-js` emits `data-lang="my-js"`.
+`addPreDataLang()` uses the raw requested language token (including aliases), so a fenced block tagged as `my-js` emits `data-lang="my-js"`.
 
 See [Shiki Transformers](https://shiki.style/guide/transformers) for all available transformers and usage.
 

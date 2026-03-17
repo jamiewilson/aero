@@ -39,5 +39,7 @@
 		top: 0.5rem;
 		right: 0.5rem;
 		font-size: small;
+		text-box-trim: trim-both;
+		opacity: 0.5;
 	}
 }

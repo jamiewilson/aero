@@ -4,5 +4,5 @@ export type {
 	ShikiConfigMultipleThemes,
 } from './types'
 export { highlight, getHighlighter, resetHighlighter } from './highlighter'
-export { preDataLangTransformer } from './transformers'
-export { aeroHtmlGrammar, AERO_HTML_LANG } from './grammars/aero-html'
+export { addPreDataLang } from './transformers'
+export { aeroHtml, AERO_HTML_LANG } from './grammars/aero-html'

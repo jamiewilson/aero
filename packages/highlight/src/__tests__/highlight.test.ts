@@ -3,8 +3,8 @@ import {
 	highlight,
 	getHighlighter,
 	resetHighlighter,
-	preDataLangTransformer,
-	aeroHtmlGrammar,
+	addPreDataLang,
+	aeroHtml,
 } from '../index'
 import type { ShikiConfig } from '../types'
 
@@ -160,10 +160,10 @@ describe('highlight', () => {
 		expect(html).toContain('--shiki-dark')
 	})
 
-	it('adds data-lang to pre when preDataLangTransformer is enabled', async () => {
+	it('adds data-lang to pre when addPreDataLang is enabled', async () => {
 		const html = await highlight('const x = 1', 'js', {
 			theme: 'github-light',
-			transformers: [preDataLangTransformer()],
+			transformers: [addPreDataLang()],
 		})
 
 		expect(html).toContain('data-lang="js"')
@@ -175,7 +175,7 @@ describe('highlight', () => {
 			theme: 'github-light',
 			langs: ['javascript'],
 			langAlias: { 'my-js': 'javascript' },
-			transformers: [preDataLangTransformer()],
+			transformers: [addPreDataLang()],
 		})
 
 		expect(html).toContain('data-lang="my-js"')
@@ -193,7 +193,7 @@ describe('highlight', () => {
 		const code = '<my-component props="{ title: site.title, subtitle: site.tagline }" />'
 		const html = await highlight(code, 'aero-html', {
 			theme: 'github-light',
-			langs: ['html', 'typescript', aeroHtmlGrammar],
+			langs: ['html', 'typescript', aeroHtml],
 		})
 
 		expect(html).toContain('class="shiki')
@@ -208,8 +208,8 @@ describe('highlight', () => {
 		const code = '<div props="{ x: 1 }" />'
 		const html = await highlight(code, 'html', {
 			theme: 'github-light',
-			langs: ['typescript', aeroHtmlGrammar],
-			transformers: [preDataLangTransformer()],
+			langs: ['typescript', aeroHtml],
+			transformers: [addPreDataLang()],
 		})
 
 		expect(html).toContain('data-lang="html"')
