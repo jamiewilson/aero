@@ -42,4 +42,16 @@
 		text-box-trim: trim-both;
 		opacity: 0.5;
 	}
+
+	pre.shiki span {
+		font-style: var(--shiki-dark-font-style);
+		font-style: var(--shiki-light-font-style);
+
+		font-feature-settings:
+			'liga' 1,
+			'clig' 1,
+			'dlig' 1,
+			'hlig' 1,
+			'calt' 1;
+	}
 }
