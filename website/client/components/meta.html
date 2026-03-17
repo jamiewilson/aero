@@ -1,19 +1,35 @@
 <script is:build>
 	import site from '@content/site'
-	const { title, description, image } = Aero.props
-	const defaultImage = Aero.site + site.meta.ogImage
+	const title = Aero.props.title || site.meta.title
+	const description = Aero.props.description || site.meta.description
+	const image = Aero.props.image || Aero.site.url + site.meta.ogImage
+	const favicon = site.meta.icon.svg
 </script>
 
+<!-- Display -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<title>{ title || site.meta.title }</title>
-<meta name="title" content="{ title || site.meta.title }" />
-<meta name="description" content="{ description || site.meta.description }" />
-<link rel="icon" type="image/svg+xml" href="{ site.meta.icon.svg }" />
-<link rel="canonical" href="{ Aero.site }" />
+<!-- Content -->
+<title>{ title }</title>
+<meta name="description" content="{ description }" />
+<link rel="icon" type="image/svg+xml" href="{ favicon }" />
+<link rel="canonical" href="{ Aero.page.url }" />
 
+<!-- Search -->
+<meta itemprop="name" content="{ title }" />
+<meta itemprop="description" content="{ description }" />
+<meta itemprop="image" content="{ image }" />
+
+<!-- Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="{ title || site.meta.title }" />
-<meta property="og:description" content="{ description || site.meta.description }" />
-<meta property="og:image" content="{ image || defaultImage }" />
+<meta property="og:title" content="{ title }" />
+<meta property="og:description" content="{ description }" />
+<meta property="og:image" content="{ image }" />
+<meta property="og:url" content="{ Aero.page.url }" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{ title }" />
+<meta name="twitter:description" content="{ description }" />
+<meta name="twitter:image" content="{ image }" />

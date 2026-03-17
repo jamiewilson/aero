@@ -133,7 +133,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			const root = userConfig.root || process.cwd()
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)
-			const site = state.options.site ?? ''
+			const site = state.options.site?.url ?? ''
 
 			// Production build: use minimal client entry (no instance/template chunks) so dist/assets stays small.
 			const alias =
@@ -520,7 +520,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 						url: requestUrl,
 						request,
 						routePath: pathname,
-						site: state.options.site,
+						site: state.options.site?.url,
 					}
 
 					// Run middleware (redirects, rewrites, custom response)
@@ -531,7 +531,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							request,
 							routePath: pathname,
 							pageName,
-							site: state.options.site,
+							site: state.options.site?.url,
 						}
 						for (const handler of middleware) {
 							const result: AeroMiddlewareResult = await Promise.resolve(handler(ctx))
@@ -647,7 +647,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					apiPrefix,
 					vitePlugins: staticPlugins,
 					minify: shouldMinifyHtml,
-					site: options.site,
+					site: options.site?.url,
 					redirects: options.redirects,
 					resolvedConfig: state.config!,
 				},

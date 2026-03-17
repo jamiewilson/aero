@@ -12,7 +12,7 @@ Use the **`redirects`** config for path → URL redirects that should work in **
 import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
-	site: 'https://example.com',
+	site: { url: 'https://example.com' },
 	redirects: [
 		{ from: '/home', to: '/', status: 301 },
 		{ from: '/old-page', to: '/new-page', status: 302 },
@@ -61,7 +61,7 @@ const redirectHome: AeroMiddleware = ctx => {
 //   ctx.routePath === '/home' ? { redirect: { url: '/', status: 301 } } : undefined
 
 export default defineConfig({
-	site: 'https://example.com',
+	site: { url: 'https://example.com' },
 	middleware: [redirectHome],
 })
 ```

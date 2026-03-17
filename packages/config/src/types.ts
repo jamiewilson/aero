@@ -23,9 +23,9 @@ export interface AeroConfig {
 
 	/**
 	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
-	 * `Aero.site` in templates; used for sitemap, RSS, and canonical links.
+	 * `Aero.site.url` in templates; used for sitemap, RSS, and canonical links.
 	 */
-	site?: string
+	site?: { url: string }
 
 	/** Directory overrides. Same shape as aero() plugin options. */
 	dirs?: Partial<AeroDirs>

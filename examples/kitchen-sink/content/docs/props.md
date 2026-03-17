@@ -35,10 +35,10 @@ Use `{ }` for JavaScript expressions:
 Compose strings with inline expressions:
 
 ```html
-<my-component title="Slug: { Aero.params.slug }" />
+<my-component title="Slug: { Aero.page.params.slug }" />
 ```
 
-Use double braces to output literal `{` and `}` in strings: `<my-component title="{{ slug }} + { Aero.params.slug }" />{:html}`.
+Use double braces to output literal `{` and `}` in strings: `<my-component title="{{ slug }} + { Aero.page.params.slug }" />{:html}`.
 
 **3. Spread with props**
 
@@ -117,14 +117,14 @@ With fallbacks to site data:
 Inside `<script is:build>{:html}` you have:
 
 - **Aero.props** — Props passed to this component
-- **Aero.request** — Current request object
-- **Aero.url** — Current page URL
-- **Aero.params** — Route params for dynamic routes
+- **Aero.page.request** — Current request object
+- **Aero.page.url** — Current page URL
+- **Aero.page.params** — Route params for dynamic routes
 - **site** — Global site data (from your content module, e.g. `content/site.ts` or `@content/site`)
 - **slots** — Named and default slot content
 - **renderComponent** — Function to render child components
 
-**Dev vs static:** In dev or API runtime, `Aero.request` is the real request and `Aero.url` / `Aero.params` reflect the current route. In a static build, the request is synthetic (headers may be missing), and `Aero.url` / `Aero.params` are set per generated page. Use them for canonical links and route-based content.
+**Dev vs static:** In dev or API runtime, `Aero.page.request` is the real request and `Aero.page.url` / `Aero.page.params` reflect the current route. In a static build, the request is synthetic (headers may be missing), and `Aero.page.url` / `Aero.page.params` are set per generated page. Use them for canonical links and route-based content.
 
 ## Examples
 

@@ -33,12 +33,12 @@ Every `.html` file in the pages directory becomes a route. Examples:
 
 ## Dynamic routes
 
-Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.params.<name>`.
+Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.page.params.<name>`.
 
 - `client/pages/[id].html` → `/:id` (e.g. `/alpha`, `/beta`)
 - `client/pages/docs/[slug].html` → `/docs/:slug` (e.g. `/docs/intro`, `/docs/name`)
 
-**Dev mode:** During `pnpm dev{:bash}`, dynamic routes are resolved at request time. Visiting `/alpha` matches `[id].html` and sets `Aero.params.id = 'alpha'{:ts}`. Any segment matches; no upfront list needed.
+**Dev mode:** During `pnpm dev{:bash}`, dynamic routes are resolved at request time. Visiting `/alpha` matches `[id].html` and sets `Aero.page.params.id = 'alpha'{:ts}`. Any segment matches; no upfront list needed.
 
 **Build mode:** For static builds (`pnpm build{:bash}`), dynamic pages must export `getStaticPaths(){:ts}` from their `<script is:build>{:html}` block so the build knows which paths to generate.
 
@@ -59,8 +59,8 @@ Pages with bracket-delimited filenames create dynamic routes. The bracket conten
 	}
 </script>
 
-<base-layout title="Page: { Aero.params.id }">
-	<h1>{Aero.params.id}</h1>
+<base-layout title="Page: { Aero.page.params.id }">
+	<h1>{Aero.page.params.id}</h1>
 </base-layout>
 ```
 
@@ -76,11 +76,11 @@ This produces `dist/alpha/index.html`, `dist/beta/index.html`, and `dist/gamma/i
 
 Inside `<script is:build>{:html}` and in template expressions you have:
 
-**`Aero.params`** — Dynamic route parameters (e.g. `{ id: 'alpha' }{:ts}`).
+**`Aero.page.params`** — Dynamic route parameters (e.g. `{ id: 'alpha' }{:ts}`).
 
-**`Aero.url`** — Full URL object for the current page.
+**`Aero.page.url`** — Full URL object for the current page.
 
-**`Aero.url.pathname`** — The path (e.g. `'/alpha'`).
+**`Aero.page.url.pathname`** — The path (e.g. `'/alpha'`).
 
 **`Aero.props`** — Props from a parent component or layout (e.g. `{ title: 'Hello' }{:ts}`).
 

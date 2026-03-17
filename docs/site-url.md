@@ -12,7 +12,7 @@ import { defineConfig } from '@aero-js/config'
 export default defineConfig({
 	content: true,
 	server: true,
-	site: 'https://example.com',
+	site: { url: 'https://example.com' },
 })
 ```
 
@@ -22,7 +22,7 @@ export default defineConfig({
 import { aero } from '@aero-js/vite'
 
 export default {
-	plugins: [aero({ server: true, site: 'https://example.com' })],
+	plugins: [aero({ server: true, site: { url: 'https://example.com' } })],
 }
 ```
 
@@ -32,22 +32,22 @@ export default {
 
 | Context                       | How to use it                                                                                                                                   |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Build scripts / templates** | `Aero.site` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags).                                                         |
+| **Build scripts / templates** | `Aero.site.url` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags).                                                         |
 | **Build-time JS (Vite)**      | `import.meta.env.SITE` — replaced at build time by the plugin. See [Environment variables](environment-variables.md) for `.env` and TypeScript. |
 
 Example in a layout:
 
 ```html
 <script is:build>
-	const base = Aero.site || ''
+	const base = Aero.site.url || ''
 </script>
-<link rel="canonical" href="{ base }{ Aero.url.pathname }" />
+<link rel="canonical" href="{ base }{ Aero.page.url.pathname }" />
 ```
 
 Or with a trailing slash and pathname:
 
 ```html
-<meta property="og:url" content="{ Aero.site }{ Aero.url.pathname }" />
+<meta property="og:url" content="{ Aero.site.url }{ Aero.page.url.pathname }" />
 ```
 
 ## Sitemap
@@ -58,7 +58,7 @@ To help crawlers and tools discover the sitemap, link to it from your layout (e.
 
 ```html
 <script is:build>
-	const base = Aero.site || ''
+	const base = Aero.site.url || ''
 </script>
 <!-- ... other head content ... -->
 <link rel="sitemap" type="application/xml" href="{ base }/sitemap.xml" />
@@ -70,11 +70,11 @@ If you only want the sitemap link when `site` is set (e.g. to avoid a broken lin
 <link
 	rel="sitemap"
 	type="application/xml"
-	href="{ Aero.site }/sitemap.xml"
-	if="{ Aero.site }" />
+	href="{ Aero.site.url }/sitemap.xml"
+	if="{ Aero.site.url }" />
 ```
 
 ## Notes
 
 - The **content global** `site` (from your content module, e.g. `content/site.ts` or `@content/site`) is separate: it holds your app’s content (title, nav, etc.). The **config** `site` is only the canonical origin URL.
-- RSS and other features can use `Aero.site` or `import.meta.env.SITE` to build absolute URLs.
+- RSS and other features can use `Aero.site.url` or `import.meta.env.SITE` to build absolute URLs.

@@ -34,7 +34,7 @@ client/pages/
 
 ## Dynamic Routes
 
-Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.params.<name>`.
+Pages with bracket-delimited filenames create dynamic routes. The bracket content is the parameter name, available as `Aero.page.params.<name>`.
 
 | File                            | Pattern       | Example URLs                |
 | ------------------------------- | ------------- | --------------------------- |
@@ -43,7 +43,7 @@ Pages with bracket-delimited filenames create dynamic routes. The bracket conten
 
 ### Dev mode
 
-During development (`pnpm dev`), dynamic routes are resolved at request time. When you visit `/alpha`, the runtime matches it against `[id].html` and sets `Aero.params.id = 'alpha'`. Any URL segment will match — no upfront enumeration needed.
+During development (`pnpm dev`), dynamic routes are resolved at request time. When you visit `/alpha`, the runtime matches it against `[id].html` and sets `Aero.page.params.id = 'alpha'`. Any URL segment will match — no upfront enumeration needed.
 
 ### Build mode
 
@@ -64,8 +64,8 @@ For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPath
 	}
 </script>
 
-<base-layout title="Page: {Aero.params.id}">
-	<h1>{Aero.params.id}</h1>
+<base-layout title="Page: {Aero.page.params.id}">
+	<h1>{Aero.page.params.id}</h1>
 </base-layout>
 ```
 
@@ -95,8 +95,8 @@ Dynamic segments work inside subdirectories:
 	}
 </script>
 
-<base-layout title="{Aero.params.slug}">
-	<h1>{Aero.params.slug}</h1>
+<base-layout title="{Aero.page.params.slug}">
+	<h1>{Aero.page.params.slug}</h1>
 </base-layout>
 ```
 
@@ -137,12 +137,12 @@ The page will still work in dev mode but will not produce output files in the st
 
 Every page has access to these routing-related values inside `<script is:build>` and template expressions:
 
-| Value               | Description                                 | Example                      |
-| ------------------- | ------------------------------------------- | ---------------------------- |
-| `Aero.params`       | Dynamic route parameters                    | `{ id: 'alpha' }`            |
-| `Aero.url`          | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
-| `Aero.url.pathname` | The URL path                                | `'/alpha'`                   |
-| `Aero.props`        | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
+| Value                     | Description                                 | Example                      |
+| ------------------------- | ------------------------------------------- | ---------------------------- |
+| `Aero.page.params`        | Dynamic route parameters                    | `{ id: 'alpha' }`            |
+| `Aero.page.url`           | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
+| `Aero.page.url.pathname`  | The URL path                                | `'/alpha'`                   |
+| `Aero.props`              | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
 
 ## Linking Between Pages
 

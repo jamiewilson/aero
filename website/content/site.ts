@@ -18,7 +18,4 @@ export default {
 		storageKey: 'theme',
 		attribute: 'data-theme',
 	},
-	footer: {
-		links: [{ label: 'Home', path: '/' }],
-	},
 }

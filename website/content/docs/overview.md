@@ -381,7 +381,7 @@ import { aero } from '@aero-js/vite'
 export default defineConfig({
 	plugins: [
 		aero({
-			site: 'https://example.com',
+			site: { url: 'https://example.com' },
 			redirects: [{ from: '/home', to: '/', status: 301 }],
 			content: true,
 			server: true,
@@ -403,7 +403,7 @@ Projects that use `createViteConfig()` from `@aero-js/config` (e.g. @aero-js/cre
 import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
-	site: 'https://example.com',
+	site: { url: 'https://example.com' },
 	redirects: [{ from: '/home', to: '/', status: 301 }],
 	content: true,
 	server: true,

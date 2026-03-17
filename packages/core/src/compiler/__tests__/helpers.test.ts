@@ -43,6 +43,12 @@ describe('compileInterpolation', () => {
 	it('should handle multiple interpolations', () => {
 		expect(compileInterpolation('{a} and {b}')).toBe('${a} and ${b}')
 	})
+
+	it('should map bare url/request/params to Aero.page.* (shorthand)', () => {
+		expect(compileInterpolation('{ url }')).toBe('${Aero.page.url}')
+		expect(compileInterpolation('{ request }')).toBe('${Aero.page.request}')
+		expect(compileInterpolation('{ params }')).toBe('${Aero.page.params}')
+	})
 })
 
 describe('compileAttributeInterpolation', () => {
@@ -64,6 +70,11 @@ describe('compileAttributeInterpolation', () => {
 
 	it('should handle mixed escaped and interpolation', () => {
 		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('{ ${expr} }')
+	})
+
+	it('should map bare url/request/params to Aero.page.* (shorthand)', () => {
+		expect(compileAttributeInterpolation('{ url }')).toBe('${Aero.page.url}')
+		expect(compileAttributeInterpolation('{ params }')).toBe('${Aero.page.params}')
 	})
 })
 
@@ -253,9 +264,7 @@ describe('emitSlotOutput', () => {
 describe('renderComponent context (single source of truth)', () => {
 	it('RENDER_COMPONENT_CONTEXT_PAIRS includes all pass-through keys', () => {
 		expect(RENDER_COMPONENT_CONTEXT_PAIRS).toEqual([
-			['request', 'request'],
-			['url', 'url'],
-			['params', 'params'],
+			['page', 'page'],
 			['site', '__aero_site'],
 			['styles', 'styles'],
 			['scripts', 'scripts'],
@@ -265,9 +274,7 @@ describe('renderComponent context (single source of truth)', () => {
 
 	it('getRenderComponentContextArg returns object literal string for 4th arg', () => {
 		const arg = getRenderComponentContextArg()
-		expect(arg).toContain('request')
-		expect(arg).toContain('url')
-		expect(arg).toContain('params')
+		expect(arg).toContain('page')
 		expect(arg).toContain('site: __aero_site')
 		expect(arg).toContain('styles')
 		expect(arg).toContain('scripts')
