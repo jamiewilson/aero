@@ -33,7 +33,7 @@ You pass the plugin (and options) in `markdown.rehypePlugins`:
 ```ts
 // content.config.ts
 import rehypeShiki from '@shikijs/rehype'
-import { preDataLangTransformer } from '@aero-js/highlight'
+import { addPreDataLang } from '@aero-js/highlight'
 
 export default defineConfig({
 	collections: [docs],
@@ -44,7 +44,7 @@ export default defineConfig({
 				{
 					themes: { light: 'github-light', dark: 'github-dark' },
 					defaultColor: 'light-dark()',
-					transformers: [preDataLangTransformer()],
+					transformers: [addPreDataLang()],
 				},
 			],
 		],

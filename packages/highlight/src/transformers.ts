@@ -7,7 +7,7 @@ import type { ShikiTransformer } from 'shiki'
  * This is opt-in and preserves existing output unless explicitly added to
  * `transformers`. The emitted value uses the raw requested language (including aliases).
  */
-export function preDataLangTransformer(): ShikiTransformer {
+export function addPreDataLang(): ShikiTransformer {
 	return {
 		name: 'aero-js:pre-data-lang-transformer',
 		pre(node) {

@@ -16,8 +16,7 @@ const aeroExpressionPattern = {
 	contentName: 'meta.embedded.expression.aero source.ts',
 	patterns: [
 		{
-			comment:
-				'Handle object literals that start with { so nested braces are parsed correctly',
+			comment: 'Handle object literals that start with { so nested braces are parsed correctly',
 			begin: '\\G\\s*(?=\\{)',
 			end: '(?<=\\})',
 			patterns: [{ include: 'source.ts#object-literal' }],
@@ -32,9 +31,12 @@ const aeroExpressionPattern = {
  * Extends HTML with injection rules that highlight JavaScript/TypeScript inside
  * `{ }` expressions in attribute values (e.g. `props="{ title: site.title }"`).
  *
- * Use with `langs: [aeroHtmlGrammar]` and fenced blocks tagged ` ```aero-html `.
+ * Use with `langs: [..., aeroHtml]` and fenced blocks tagged ` ```html`.
+ * Place aeroHtml at the end of the langs array: it aliases to `html`, and Shiki uses the
+ * last-registered handler for a given alias, so putting it last ensures ` ```html ` blocks
+ * use this extended grammar instead of the base HTML grammar.
  */
-export const aeroHtmlGrammar: LanguageInput = {
+export const aeroHtml: LanguageInput = {
 	name: 'aero-html',
 	aliases: ['html'],
 	scopeName: 'text.html.aero',
