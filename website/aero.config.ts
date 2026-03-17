@@ -1,6 +1,8 @@
 import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
-	site: { url: 'https://jamiewilson.github.io/aero' },
+	site: {
+		url: 'https://jamiewilson.github.io/aero',
+	},
 	content: true,
 })

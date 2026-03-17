@@ -22,14 +22,10 @@ declare const Aero: {
 	props: Record<string, any>
 	/** Named slot content (key to HTML string). */
 	slots: Record<string, string>
-	/** The incoming request (available during SSR). */
-	request: Request
-	/** The request URL. */
-	url: URL
-	/** Dynamic route parameters (e.g. `{ id: '42' }` for `/posts/[id]`). */
-	params: Record<string, string>
-	/** Canonical site URL from `aero.config` (e.g. `'https://example.com'`). */
-	site?: string
+	/** Request-scoped: url, request, params. Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params`. */
+	page: { url: URL; request: Request; params: Record<string, string> }
+	/** Site-scoped: canonical URL from config. Use `Aero.site.url`. Always defined (empty string when not configured). */
+	site: { url: string }
 }
 
 /**
