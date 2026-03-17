@@ -1,7 +1,19 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-	<path
-		fill="salmon"
-		fill-rule="evenodd"
-		clip-rule="evenodd"
-		d="M19.6667 1.99469H17.1813L7.84799 17.9947L7.84799 20H14.3333V30L16.8187 30.0054L26.152 14.0054V12H19.6667V1.99469Z" />
+<svg
+	class="favicon"
+	width="32"
+	height="32"
+	viewBox="0 0 32 32"
+	xmlns="http://www.w3.org/2000/svg">
+	<path 
+		fill-rule="evenodd" 
+		clip-rule="evenodd" 
+		d="M19 2H16L7 18V20.0053H13V30.0053H16L25 14.0053V12H19V2Z"/>
+
+	<style>
+		@media (prefers-color-scheme: dark) {
+			.favicon path {
+				fill: #fff;
+			}
+		}
+	</style>
 </svg>
