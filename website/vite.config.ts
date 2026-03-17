@@ -1,13 +1,4 @@
-import { aero } from '@aero-js/vite'
-import { aeroContent } from '@aero-js/content/vite'
-import { defineConfig } from 'vite'
+import { createViteConfig } from '@aero-js/config'
+import aeroConfig from './aero.config'
 
-export default defineConfig({
-	plugins: [
-		aero({
-			site: 'https://aerojs.dev',
-			staticServerPlugins: [aeroContent()],
-		}),
-		aeroContent(),
-	],
-})
+export default createViteConfig(aeroConfig)

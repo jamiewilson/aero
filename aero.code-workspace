@@ -1,8 +1,11 @@
 {
 	"folders": [
 		{
-			"name": "aero",
 			"path": ".",
+		},
+		{
+			"name": "website",
+			"path": "website",
 		},
 		{
 			"name": "examples",

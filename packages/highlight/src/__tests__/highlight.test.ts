@@ -4,6 +4,7 @@ import {
 	getHighlighter,
 	resetHighlighter,
 	preDataLangTransformer,
+	aeroHtmlGrammar,
 } from '../index'
 import type { ShikiConfig } from '../types'
 
@@ -186,6 +187,33 @@ describe('highlight', () => {
 		})
 
 		expect(html).not.toContain('data-lang=')
+	})
+
+	it('highlights aero-html with JS expressions in attribute values', async () => {
+		const code = '<my-component props="{ title: site.title, subtitle: site.tagline }" />'
+		const html = await highlight(code, 'aero-html', {
+			theme: 'github-light',
+			langs: ['html', 'typescript', aeroHtmlGrammar],
+		})
+
+		expect(html).toContain('class="shiki')
+		expect(html).toContain('my-component')
+		expect(html).toContain('props')
+		// Expression content should be tokenized (e.g. title, site as separate spans)
+		expect(html).toContain('title')
+		expect(html).toContain('site')
+	})
+
+	it('highlights via html alias and emits data-lang="html"', async () => {
+		const code = '<div props="{ x: 1 }" />'
+		const html = await highlight(code, 'html', {
+			theme: 'github-light',
+			langs: ['typescript', aeroHtmlGrammar],
+			transformers: [preDataLangTransformer()],
+		})
+
+		expect(html).toContain('data-lang="html"')
+		expect(html).toContain('class="shiki')
 	})
 })
 

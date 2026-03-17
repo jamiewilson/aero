@@ -1,5 +1,5 @@
 import { defineCollection, defineConfig } from '@aero-js/content'
-import { preDataLangTransformer } from '@aero-js/highlight'
+import { aeroHtmlGrammar as html, preDataLangTransformer } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
 import remarkGfm from 'remark-gfm'
 import { z } from 'zod'
@@ -29,6 +29,7 @@ export default defineConfig({
 					},
 					defaultColor: 'light-dark()',
 					inline: 'tailing-curly-colon',
+					langs: ['js', 'ts', 'html', 'css', 'json', 'bash', html],
 					transformers: [preDataLangTransformer()],
 				},
 			],

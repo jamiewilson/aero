@@ -204,6 +204,29 @@ See [Shiki Languages](https://shiki.style/languages) for the full list. Common I
 - `yaml`, `toml`, `xml`
 - ...and 100+ more
 
+### Aero HTML (use `html`)
+
+The `aeroHtmlGrammar` extends HTML with highlighting for JavaScript/TypeScript inside `{ }` expressions in attribute values (e.g. `props="{ title: site.title }"`). It registers as an alias of `html`, so use standard ` ```html ` in markdown. Add `aeroHtmlGrammar` to `langs`:
+
+```typescript
+import { preDataLangTransformer, aeroHtmlGrammar } from '@aero-js/highlight'
+import rehypeShiki from '@shikijs/rehype'
+
+rehypeShiki({
+	themes: { light: 'github-light', dark: 'github-dark' },
+	langs: ['js', 'ts', aeroHtmlGrammar, 'css', 'json', 'bash'],
+	transformers: [preDataLangTransformer()],
+})
+```
+
+Then use ` ```html ` in markdown (no need for `aero-html`):
+
+````markdown
+```html
+<my-component props="{ title: site.title, subtitle: site.tagline }" />
+```
+````
+
 ### Transformers
 
 Transformers post-process highlighted code to add features like line highlighting, line numbers, and diffs.
