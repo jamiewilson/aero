@@ -9,13 +9,9 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 	
 	slots: Record<string, string>
 	
-	request: Request
+	page: { url: URL; request: Request; params: Record<string, string> }
 	
-	url: URL
-	
-	params: Record<string, string>
-	
-	site?: string
+	site: { url: string }
 }
 
 declare function renderComponent(
