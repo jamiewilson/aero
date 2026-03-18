@@ -8,6 +8,7 @@
 @import 'prose.css';
 @import 'code.css';
 @import 'utils.css';
+/*@import 'debug.css';*/
 
 @layer base {
 	:root {
@@ -25,24 +26,21 @@
 
 	html,
 	body {
-		height: 100%;
 		font-size: 18px;
 	}
 
 	body {
-		display: grid;
-		place-content: safe center;
 		padding: var(--page-padding);
 		color: var(--color-fg);
 		background: var(--color-bg);
 		font-family: var(--font-sans);
-		line-height: 1.8;
-		text-align: center;
+		line-height: 1.6;
 	}
 
 	a {
 		text-decoration: none;
 		color: var(--color-accent);
+		white-space: wrap;
 	}
 
 	a:hover {

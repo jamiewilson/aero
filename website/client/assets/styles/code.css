@@ -8,6 +8,13 @@
 		font-size: smaller;
 		tab-size: var(--tab-size);
 		border: 1px solid color-mix(in oklch, currentColor 20%, transparent);
+
+		font-feature-settings:
+			'liga' 1,
+			'clig' 1,
+			'dlig' 1,
+			'hlig' 1,
+			'calt' 1;
 	}
 
 	code:not(pre code) {
@@ -46,12 +53,5 @@
 	pre.shiki span {
 		font-style: var(--shiki-dark-font-style);
 		font-style: var(--shiki-light-font-style);
-
-		font-feature-settings:
-			'liga' 1,
-			'clig' 1,
-			'dlig' 1,
-			'hlig' 1,
-			'calt' 1;
 	}
 }
