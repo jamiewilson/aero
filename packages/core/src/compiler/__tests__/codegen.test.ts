@@ -388,9 +388,7 @@ describe('Codegen', () => {
 		})
 		const scripts2 = new Set<string>()
 		await execute(code2, { scripts: scripts2 })
-		expect(
-			Array.from(scripts2).some(s => s.includes('src="/virtual.js"'))
-		).toBe(true)
+		expect(Array.from(scripts2).some(s => s.includes('src="/virtual.js"'))).toBe(true)
 	})
 
 	it('should inject clientScripts if provided', async () => {
@@ -404,9 +402,7 @@ describe('Codegen', () => {
 
 		const scripts = new Set<string>()
 		await execute(code, { scripts })
-		expect(scripts.has('<script type="module" src="/test.js"></script>')).toBe(
-			true
-		)
+		expect(scripts.has('<script type="module" src="/test.js"></script>')).toBe(true)
 	})
 
 	it('should inject clientScripts with injectInHead into headScripts', async () => {
@@ -422,9 +418,7 @@ describe('Codegen', () => {
 		const headScripts = new Set<string>()
 		await execute(code, { headScripts })
 
-		expect(
-			headScripts.has('<script type="module" src="/test.js"></script>')
-		).toBe(true)
+		expect(headScripts.has('<script type="module" src="/test.js"></script>')).toBe(true)
 	})
 
 	it('should inject plain script in head from component render', async () => {
@@ -676,7 +670,7 @@ describe('Codegen', () => {
 														const child = { name: 'child' };
 													</script>
 													<child-component>
-														<slot name="nav" slot="nav"></slot>
+														<slot name="nav" slot="nav"/>
 													</child-component>`
 
 		const parsed = parse(html)
@@ -696,9 +690,7 @@ describe('Codegen', () => {
 					const bodyStart = parentCode.indexOf('{')
 					const bodyEnd = parentCode.lastIndexOf('}')
 					const body = parentCode.substring(bodyStart + 1, bodyEnd)
-					const AsyncFunction = Object.getPrototypeOf(
-						async function () {}
-					).constructor
+					const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 					const renderFn = new AsyncFunction('Aero', body)
 					return await renderFn({ ...Aero, slots })
 				}
@@ -1020,9 +1012,7 @@ describe('Codegen', () => {
 			const parsed = parse(html)
 			const code = compile(parsed, {
 				...mockOptions,
-				clientScripts: [
-					{ attrs: '', content: '/auto.js', passDataExpr: '{ config }' },
-				],
+				clientScripts: [{ attrs: '', content: '/auto.js', passDataExpr: '{ config }' }],
 			})
 
 			const scripts = new Set<string>()
@@ -1033,9 +1023,7 @@ describe('Codegen', () => {
 			expect(out).toContain('type="application/json"')
 			expect(out).toContain('class="__aero_data"')
 			expect(out).toContain('{"config":{"theme":"dark","id":42}}')
-			expect(out).toContain(
-				'window.__aero_data_next=JSON.parse(document.getElementById'
-			)
+			expect(out).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
 			expect(out).toContain('<script type="module" src="/auto.js"></script>')
 		})
 
@@ -1179,9 +1167,7 @@ describe('Codegen', () => {
 			const parsed = parse(html)
 			const code = compile(parsed, {
 				...mockOptions,
-				clientScripts: [
-					{ attrs: '', content: '/virtual.js', passDataExpr: '{ val }' },
-				],
+				clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ val }' }],
 			})
 
 			const scripts = new Set<string>()
@@ -1250,9 +1236,7 @@ describe('Codegen', () => {
 					...mockOptions,
 					blockingScripts: parsed.blockingScripts,
 				})
-			).toThrow(
-				'Directive `props` on <script> must use a braced expression'
-			)
+			).toThrow('Directive `props` on <script> must use a braced expression')
 		})
 
 		it('should throw when props value is not a single braced expression (tokenizer validation)', () => {
@@ -1291,12 +1275,8 @@ describe('Codegen', () => {
 			expect(scriptArr[0]).toContain('type="application/json"')
 			expect(scriptArr[0]).toContain('class="__aero_data"')
 			expect(scriptArr[0]).toContain('{"theme":{"colors":{"primary":"blue"}}}')
-			expect(scriptArr[1]).toContain(
-				'window.__aero_data_next=JSON.parse(document.getElementById'
-			)
-			expect(scriptArr[2]).toBe(
-				'<script type="module" src="/test.js"></script>'
-			)
+			expect(scriptArr[1]).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
+			expect(scriptArr[2]).toBe('<script type="module" src="/test.js"></script>')
 		})
 	})
 
@@ -1416,21 +1396,11 @@ const y = 2;`
 
 		const result = analyzeBuildScript(script)
 
-		expect(result.getStaticPathsFn).toContain(
-			'export function getStaticPaths()'
-		)
-		expect(result.getStaticPathsFn).toContain(
-			"return [{ params: { id: 'a' } }]"
-		)
-		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
-			'const x = 1;'
-		)
-		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain(
-			'const y = 2;'
-		)
-		expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain(
-			'getStaticPaths'
-		)
+		expect(result.getStaticPathsFn).toContain('export function getStaticPaths()')
+		expect(result.getStaticPathsFn).toContain("return [{ params: { id: 'a' } }]")
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const x = 1;')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).toContain('const y = 2;')
+		expect(result.scriptWithoutImportsAndGetStaticPaths).not.toContain('getStaticPaths')
 	})
 
 	it('should extract async getStaticPaths with empty remaining', () => {
@@ -1441,9 +1411,7 @@ const y = 2;`
 
 		const result = analyzeBuildScript(script)
 
-		expect(result.getStaticPathsFn).toContain(
-			'export async function getStaticPaths()'
-		)
+		expect(result.getStaticPathsFn).toContain('export async function getStaticPaths()')
 		expect(result.getStaticPathsFn).toContain('await fetch')
 		expect(result.scriptWithoutImportsAndGetStaticPaths).toBe('')
 	})

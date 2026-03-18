@@ -4,6 +4,22 @@
 	"comment": "Extends HTML with script highlighting. Scripts with lang=\"ts\" or lang=\"typescript\" use TypeScript; others use JavaScript. Matches language-server extraction.",
 	"patterns": [
 		{ "include": "#aero-script" },
+		{
+			"comment": "Match <slot /> as self-closing so it gets void-tag scoping (ligature, bracket matching)",
+			"begin": "(?i)(<)(slot)\\b(?=[^>]*\\/>)",
+			"end": "(\\/>)",
+			"name": "meta.tag.structure.slot.void.html",
+			"beginCaptures": {
+				"1": { "name": "punctuation.definition.tag.begin.html" },
+				"2": { "name": "entity.name.tag.html" }
+			},
+			"endCaptures": {
+				"1": { "name": "punctuation.definition.tag.end.html" }
+			},
+			"patterns": [
+				{ "include": "text.html.basic#attribute" }
+			]
+		},
 		{ "include": "text.html.basic" }
 	],
 	"repository": {
@@ -48,9 +64,47 @@
 					]
 				},
 				{
+					"comment": "Script with type=\"importmap\" → JSON (not JS/TS)",
+					"name": "meta.embedded.block.importmap.aero",
+					"begin": "(?i)(<)(script)\\b(?=[^>]*\\btype\\s*=\\s*[\"']importmap[\"'])",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" }
+					},
+					"end": "(?i)(</)(script)\\s*(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" },
+						"3": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"patterns": [
+						{
+							"comment": "Opening tag attributes",
+							"begin": "\\G",
+							"end": "(>)",
+							"endCaptures": {
+								"1": { "name": "punctuation.definition.tag.end.html" }
+							},
+							"name": "meta.tag.metadata.script.start.html",
+							"patterns": [
+								{ "include": "text.html.basic#attribute" }
+							]
+						},
+						{
+							"comment": "Import map body as JSON",
+							"begin": "(?!\\G)",
+							"end": "(?=</(?i:script))",
+							"contentName": "source.json",
+							"patterns": [
+								{ "include": "source.json" }
+							]
+						}
+					]
+				},
+				{
 					"comment": "Script without lang=\"ts\" → JavaScript",
 					"name": "meta.embedded.block.js.aero",
-					"begin": "(?i)(<)(script)\\b(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])",
+					"begin": "(?i)(<)(script)\\b(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\btype\\s*=\\s*[\"']importmap[\"'])",
 					"beginCaptures": {
 						"1": { "name": "punctuation.definition.tag.begin.html" },
 						"2": { "name": "entity.name.tag.html" }

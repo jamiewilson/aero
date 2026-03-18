@@ -204,7 +204,7 @@ One layout, one `<slot>`. Whatever you put between the layout tags is rendered w
 	</head>
 	<body>
 		<header>Site header</header>
-		<slot></slot>
+		<slot />
 		<footer>Site footer</footer>
 	</body>
 </html>
@@ -251,7 +251,7 @@ The sub-layout uses the base layout and exposes its own default slot:
 </script>
 
 <base-layout>
-	<slot></slot>
+	<slot />
 </base-layout>
 ```
 
@@ -273,7 +273,7 @@ The sub layout slot passes incoming content to `thru-sub`, forwarding it to the 
 ```html
 <!-- layouts/sub.html -->
 <base-layout>
-	<slot name="thru-sub" slot="into-nav"></slot>
+	<slot name="thru-sub" slot="into-nav" />
 </base-layout>
 ```
 
@@ -282,7 +282,7 @@ The base layout accepts the incoming slot with the `name` attribute and passes i
 ```html
 <!-- layouts/base.html -->
 <nav-component>
-	<slot name="into-nav"></slot>
+	<slot name="into-nav" />
 	<a href="#">Link from Base</a>
 </nav-component>
 ```
@@ -292,7 +292,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 ```html
 <!-- components/nav.html -->
 <nav>
-	<slot></slot>
+	<slot />
 </nav>
 
 <!-- which will render as… -->
