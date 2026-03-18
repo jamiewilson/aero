@@ -41,7 +41,7 @@ const ambientSnapshot: IScriptSnapshot = {
 	getChangeRange: () => undefined,
 }
 
-function getScriptType(node: Node): 'build' | 'client' | 'inline' | 'blocking' | 'external' | null {
+function getScriptType(node: Node, sourceText: string): 'build' | 'client' | 'inline' | 'blocking' | 'external' | 'importmap' | null {
 	if (node.tag !== 'script') return null
 	const attrs = node.attributes
 	if (!attrs) return 'client'
@@ -51,6 +51,7 @@ function getScriptType(node: Node): 'build' | 'client' | 'inline' | 'blocking' |
 	if ('is:inline' in attrs) return 'inline'
 	if ('props' in attrs || 'data-props' in attrs) return 'inline'
 	if ('is:blocking' in attrs) return 'blocking'
+	if (hasTypeImportmap(node, sourceText)) return 'importmap'
 	return 'client'
 }
 
@@ -61,6 +62,15 @@ function hasLangTs(node: Node, sourceText: string): boolean {
 	if (tagStart === -1) return false
 	const openTag = sourceText.substring(tagStart, node.startTagEnd)
 	return /\blang\s*=\s*["'](ts|typescript)["']/i.test(openTag)
+}
+
+/** True if script has type="importmap" (JSON, not JS/TS). */
+function hasTypeImportmap(node: Node, sourceText: string): boolean {
+	if (node.startTagEnd == null) return false
+	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
+	if (tagStart === -1) return false
+	const openTag = sourceText.substring(tagStart, node.startTagEnd)
+	return /\btype\s*=\s*["']importmap["']/i.test(openTag)
 }
 
 function createSnapshot(text: string): IScriptSnapshot {
@@ -153,8 +163,8 @@ export class AeroVirtualCode implements VirtualCode {
 				continue
 			}
 
-			const scriptType = getScriptType(node)
-			if (!scriptType || scriptType === 'external' || scriptType === 'inline') continue
+			const scriptType = getScriptType(node, sourceText)
+			if (!scriptType || scriptType === 'external' || scriptType === 'inline' || scriptType === 'importmap') continue
 			if (node.startTagEnd == null || node.endTagStart == null) continue
 
 			const scriptContent = sourceText.substring(node.startTagEnd, node.endTagStart)

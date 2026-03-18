@@ -125,6 +125,15 @@ const theme = JSON.parse(localStorage.getItem(storageKey))
 		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
 	})
 
+	it('ignores importmap scripts', () => {
+		const html = `<script type="importmap">
+{"imports":{"htmx.org":"https://unpkg.com/htmx.org@2.0.8/dist/htmx.esm.js"}}
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
+	})
+
 	it('extracts style blocks as CSS virtual code', () => {
 		const html = `<style>
 body { margin: 0; }
