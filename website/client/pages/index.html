@@ -1,6 +1,8 @@
 <script is:build>
 	import base from '@layouts/base'
 	import logo from '@components/logo'
+	import toc from '@components/toc'
+
 	import { getCollection, render } from 'aero:content'
 
 	const docs = await getCollection('docs')
@@ -10,6 +12,8 @@
 </script>
 
 <base-layout title="{ overview.data.title }" description="{ overview.data.subtitle }">
+	<toc-component />
+
 	<article class="prose">
 		<logo-component />
 		{ html }

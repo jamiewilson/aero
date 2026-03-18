@@ -22,11 +22,14 @@
 		--radius-lg: 1rem;
 		--radius-xl: 2rem;
 		--round: calc(infinity * 1px);
+
+		--page-block-start: 10vh;
 	}
 
 	html,
 	body {
 		font-size: 18px;
+		scroll-behavior: smooth;
 	}
 
 	body {
@@ -35,6 +38,14 @@
 		background: var(--color-bg);
 		font-family: var(--font-sans);
 		line-height: 1.6;
+
+		display: grid;
+		gap: 2rem;
+		grid-auto-flow: column;
+
+		@media (width < 768px) {
+			display: block;
+		}
 	}
 
 	a {

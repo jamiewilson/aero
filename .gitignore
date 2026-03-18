@@ -3,6 +3,7 @@ _reference
 .config
 
 node_modules
+.pnpm-store
 dist
 build
 .data

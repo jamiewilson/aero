@@ -1,0 +1,58 @@
+<script is:build>
+	import site from '@content/site'
+</script>
+
+<aside>
+	<div class="sticky">
+		<p class="title">Table of Contents</p>
+		<ul class="toc">
+			<li each="{ item in site.toc }">
+				<a class="link" href="{ item.href }" data-toc-link>{ item.label }</a>
+			</li>
+		</ul>
+	</div>
+
+	<style>
+		@scope {
+			:scope {
+				font-size: smaller;
+				min-width: max-content;
+
+				@media (width < 768px) {
+					display: none;
+				}
+			}
+
+			.sticky {
+				top: var(--page-padding);
+				margin-top: var(--page-block-start);
+				position: sticky;
+				overflow-y: auto;
+				max-height: 100vh;
+				padding-bottom: 25vh;
+			}
+
+			.toc {
+				list-style: none;
+				display: grid;
+				gap: 0.5rem;
+			}
+
+			.title {
+				margin-block-end: 1rem;
+			}
+
+			.link {
+				transition: padding 0.2s;
+			}
+
+			.current {
+				display: inline-block;
+				border-left: 2px solid white;
+				padding-left: 0.5rem;
+			}
+		}
+	</style>
+</aside>
+
+<script src="@scripts/toc.js"></script>

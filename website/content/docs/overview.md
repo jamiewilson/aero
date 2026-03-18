@@ -6,8 +6,6 @@ published: true
 
 Aero is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
 
-Links: [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
-
 | Feature                    | Description                                                                  |
 | -------------------------- | ---------------------------------------------------------------------------- |
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`         |
@@ -104,7 +102,7 @@ Import `.html` templates without the extension; use `<name-component>` or `<name
 </base-layout>
 ```
 
-Layouts wrap pages and expose `<slot>` for content; see [Slots](#-slots) below.
+Layouts wrap pages and expose `<slot>` for content; see [Slots](#slots) below.
 
 ## Props
 
@@ -449,7 +447,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 ## More Documentation
 
-For more documentation, see the [`/docs`]((https://github.com/jamiewilson/aero/blob/main/docs) directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/README.md).
+For more documentation, see the `/docs` directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/README.md).
 
 ## Links
 

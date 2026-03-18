@@ -1,14 +1,22 @@
 @layer utils {
 	.prose {
 		max-width: 65ch;
-		margin-inline: auto;
-		margin-block-start: 10vh;
+		margin-block-start: var(--page-block-start);
 		padding-block-end: 25vh;
 		text-align: left;
 		text-wrap: pretty;
 
 		> * + * {
 			margin-block-start: var(--vertical-spacing);
+		}
+
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			scroll-margin-top: 2rem;
 		}
 
 		ul,

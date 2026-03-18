@@ -9,15 +9,6 @@ interface ShikiTheme {
 	[key: string]: unknown
 }
 
-const COMMENT_SCOPES = [
-	'comment',
-	'comment.line',
-	'comment.block',
-	'comment.block.documentation',
-	'punctuation.definition.comment',
-	'string.comment',
-]
-
 function scopeMatchesComment(scope: string | string[]): boolean {
 	const scopes = Array.isArray(scope) ? scope : [scope]
 	return scopes.some(s => s.startsWith('comment') || s.includes('comment'))
@@ -36,22 +27,11 @@ function withItalicComments(theme: ShikiTheme): ShikiTheme {
 			...entry,
 			settings: {
 				...entry.settings,
+				foreground: '#636e7b',
 				fontStyle: 'italic',
 			},
 		}
 	})
-
-	// Ensure we have a comment rule (in case the theme uses a different structure)
-	const hasCommentRule = updated.some(e => scopeMatchesComment(e.scope))
-	if (!hasCommentRule) {
-		updated.unshift({
-			scope: COMMENT_SCOPES,
-			settings: {
-				foreground: '#111',
-				fontStyle: 'italic',
-			},
-		})
-	}
 
 	return { ...base, tokenColors: updated }
 }
