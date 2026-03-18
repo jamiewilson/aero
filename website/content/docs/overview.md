@@ -18,7 +18,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                          |
 | 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
 
-## Try it out
+## [Try it out](#try-it-out)
 
 ```bash
 # scaffold a new project
@@ -29,7 +29,7 @@ pnpm dlx @aero-js/create@latest my-app
 pnpm add @aero-js/core @aero-js/vite
 ```
 
-## The Basics
+## [The Basics](#the-basics)
 
 A page is just HTML with a build script, a layout, and components. Data comes from `content/` and is interpolated with `{ }`. Build-time code lives in `<script is:build>` and is stripped from the output; plain `<script>` is bundled for the browser.
 
@@ -57,7 +57,7 @@ Aero tries to stay as close to the web platform as possible: you write HTML file
 
 > Also check out: [What Makes Aero Different?](https://github.com/jamiewilson/aero/blob/main/docs/what-makes-aero-different.md) and [Why Not Web Components?](https://github.com/jamiewilson/aero/blob/main/docs/why-not-web-components.md)
 
-## File-based routing
+## [File-based routing](#file-based-routing)
 
 File paths under `client/pages/` become routes. A minimal project scaffold:
 
@@ -86,7 +86,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 
 > For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/content-api.md).
 
-## Components & Layouts
+## [Components & Layouts](#components--layouts)
 
 Import `.html` templates without the extension; use `<name-component>` or `<name-layout>` in markup. The import resolves to the template file (e.g. `header` → `header.html`):
 
@@ -104,7 +104,7 @@ Import `.html` templates without the extension; use `<name-component>` or `<name
 
 Layouts wrap pages and expose `<slot>` for content; see [Slots](#slots) below.
 
-## Props
+## [Props](#props)
 
 Pass data into components via attributes (with `{ }` expressions) or via the `props` attribute. Inside the component, read from `Aero.props`.
 
@@ -173,7 +173,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `props` wit
 
 > All custom attributes (`props`, `each`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `data-props`, `data-each`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
 
-## Loops & conditionals
+## [Loops & conditionals](#loops--conditionals)
 
 Use `each` and `if` / `else-if` / `else` with `{ }` expressions:
 
@@ -186,7 +186,7 @@ Use `each` and `if` / `else-if` / `else` with `{ }` expressions:
 <p else>Not logged in.</p>
 ```
 
-## Slots
+## [Slots](#slots)
 
 Layouts expose `<slot>` to receive content from the page (or from a nested layout). Content between the layout's opening and closing tags fills the slot.
 
@@ -300,7 +300,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 </nav>
 ```
 
-## Content Collections
+## [Content Collections](#content-collections)
 
 Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/content-api.md).
 
@@ -317,7 +317,7 @@ Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in b
 <section>{ html }</section>
 ```
 
-## Server when you need it
+## [Server when you need it](#server-when-you-need-it)
 
 By default, `pnpm build` produces a static `dist/`. Enable Nitro in your Vite config for API routes and an optional server. Add handlers under `server/api/`; they are served at `/api/...`.
 
@@ -340,7 +340,7 @@ export default defineHandler(async event => {
 
 Deploy the `.output/` bundle (see [Build output](#build-output)) for static + API from one app.
 
-## Plain HTML output
+## [Plain HTML output](#plain-html-output)
 
 Aero compiles templates to static HTML. Build-time code in `<script is:build>` is stripped; only the markup and any client scripts remain. Script behavior:
 
@@ -353,7 +353,7 @@ There is no hydration and no framework runtime in the output; you can deploy to 
 
 ---
 
-## Configuration
+## [Configuration](#configuration)
 
 Aero is configured by passing options to the `aero()` Vite plugin. You can do that either directly in `vite.config.ts` or via a separate `aero.config.ts` when using `@aero-js/config`.
 
@@ -424,7 +424,7 @@ export default createViteConfig(aeroConfig)
 
 To auto-load `aero.config.ts` without importing it, use `createViteConfig()` with no arguments.
 
-## Commands
+## [Commands](#commands)
 
 Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
 
@@ -434,22 +434,22 @@ Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
 - `pnpm preview:api` — Preview with Nitro (static + API from one origin).
 - `pnpm test` — Run Vitest (packages/core).
 
-## Build output
+## [Build output](#build-output)
 
 - **Static only:** `pnpm build` → `dist/`. Deploy to any static host or open via `file://`.
 - **With Nitro:** Same build also produces `.output/` (e.g. `.output/public/` for static, `.output/server/` for the server). Deploy `.output/` for API + static from one app.
 
-## VS Code Extension
+## [VS Code Extension](#vs-code-extension)
 
 Language support for Aero templates in HTML files: syntax highlighting, completions, hovers, definitions, and diagnostics for Aero expressions and components.
 
 [Install from VS Marketplace](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
-## More Documentation
+## [More Documentation](#more-documentation)
 
 For more documentation, see the `/docs` directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/README.md).
 
-## Links
+### Links
 
 - [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
 - [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
@@ -459,7 +459,7 @@ For more documentation, see the `/docs` directory, starting with the [Table of C
 - [@aero-js/template-minimal](https://www.npmjs.com/package/@aero-js/template-minimal)
 - [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
-## Inspiration
+### Inspiration
 
 Aero draws inspiration from and shares ideas with the following projects:
 

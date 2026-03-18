@@ -17,6 +17,24 @@
 		h5,
 		h6 {
 			scroll-margin-top: 2rem;
+
+			a {
+				color: initial;
+				text-decoration: none;
+
+				@media (width >= 768px) {
+					margin-inline-start: -1.5ch;
+					&::before {
+						opacity: 0;
+						content: '#';
+						margin-inline-end: 0.5ch;
+					}
+
+					&:hover::before {
+						opacity: 1;
+					}
+				}
+			}
 		}
 
 		ul,

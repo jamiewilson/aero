@@ -34,7 +34,5 @@ export default {
 		{ label: 'Build output', href: '#build-output' },
 		{ label: 'VS Code Extension', href: '#vs-code-extension' },
 		{ label: 'More Documentation', href: '#more-documentation' },
-		{ label: 'Links', href: '#links' },
-		{ label: 'Inspiration', href: '#inspiration' },
 	],
 }
