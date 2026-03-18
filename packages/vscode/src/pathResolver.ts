@@ -16,6 +16,24 @@ import {
 
 /** Default dirs when no aero/vite config is available (matches framework defaults). */
 const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }
+
+/**
+ * Find the nearest Aero app root (directory containing client/) when no tsconfig is found.
+ * Used for nested apps (e.g. examples/import-bundling/dynamic-import) in a monorepo.
+ */
+function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | undefined {
+	let current = startDir
+	const fsRoot = path.parse(current).root
+	const stopAt = workspaceRoot ? path.resolve(workspaceRoot) : fsRoot
+
+	while (current !== stopAt && current !== fsRoot) {
+		if (fs.existsSync(path.join(current, DEFAULT_DIRS.client))) {
+			return current
+		}
+		current = path.dirname(current)
+	}
+	return undefined
+}
 const RESOLUTION_EXTENSIONS = [
 	'.html',
 	'.ts',
@@ -45,10 +63,11 @@ const resolverCache = new Map<string, PathResolver>()
 export function getResolver(document: vscode.TextDocument): PathResolver {
 	const docDir = path.dirname(document.uri.fsPath)
 	const rawAliases = loadTsconfigAliases(docDir)
-
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath
 	const projectRoot =
 		rawAliases.projectRoot ??
-		vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ??
+		findAeroAppRoot(docDir, workspaceRoot) ??
+		workspaceRoot ??
 		docDir
 
 	const cached = resolverCache.get(projectRoot)
