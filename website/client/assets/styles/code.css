@@ -8,13 +8,24 @@
 		font-size: smaller;
 		tab-size: var(--tab-size);
 		border: 1px solid color-mix(in oklch, currentColor 20%, transparent);
+	}
 
+	pre:has(code),
+	pre:has(code) code,
+	code:not(pre code) {
 		font-feature-settings:
+			'calt' 1,
 			'liga' 1,
-			'clig' 1,
-			'dlig' 1,
-			'hlig' 1,
-			'calt' 1;
+			'ss01' 1,
+			'ss02' 1,
+			'ss03' 1,
+			'ss04' 1,
+			'ss05' 1,
+			'ss06' 1,
+			'ss07' 1,
+			'ss08' 1,
+			'ss09' 1,
+			'ss10' 1;
 	}
 
 	code:not(pre code) {
