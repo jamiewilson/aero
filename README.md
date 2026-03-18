@@ -132,17 +132,17 @@ Use `props="{ ...obj }"` to pass any object as the component’s props:
 <card-component props="{ title: site.title, subtitle: site.tagline }" />
 ```
 
-### 3. Passing data into script and style\*\*
+### 3. Passing data into script and style
 
-To use build-scope data inside a client `<script>` or `<style>`, add `props` (or `data-props`) with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression.
+To use build-scope data inside a client `<script>` or `<style>`, add `props` (or `data-props`) with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression. Bare `props` (no value) spreads a local `props` variable, same as on components.
 
 #### Multiple variables in script:
 
-`props="{ { title, accent } }"` — object literal, so `title` and `accent` become globals.
+`props="{ title, accent }"` — object literal, so `title` and `accent` become globals.
 
 #### Object’s properties as CSS vars in style:
 
-`props="{ { ...theme } }"` — spread so the theme’s keys become `--fg`, `--bg`, `--accent`. Passing `{ theme }` would give a single key `--theme` (the whole object), not per-property vars.
+`props="{ ...theme }"` — spread so the theme’s keys become `--fg`, `--bg`, `--accent`. Passing `{ theme }` would give a single key `--theme` (the whole object), not per-property vars.
 
 ```html
 <script is:build>
@@ -155,7 +155,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `props` (or
 	<p>{ subtitle }</p>
 </div>
 
-<style props="{ { ...theme } }">
+<style props="{ ...theme }">
 	.card {
 		color: var(--fg);
 		background: var(--bg);
@@ -163,7 +163,7 @@ To use build-scope data inside a client `<script>` or `<style>`, add `props` (or
 	}
 </style>
 
-<script props="{ { title, accent } }">
+<script props="{ title, accent }">
 	console.log('Card:', title, accent)
 </script>
 ```
