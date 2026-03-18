@@ -66,6 +66,8 @@ Components receive via `Aero.props`:
 
 ### Path Aliases (templates use client/; tsconfig in kitchen-sink, minimal)
 
+The framework provides default aliases when tsconfig is missing; tsconfig is optional for path resolution.
+
 - `@components/*` → client/components/\*
 - `@layouts/*` → client/layouts/\*
 - `@pages/*` → client/pages/\*

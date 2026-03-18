@@ -40,7 +40,8 @@
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
-		"@volar/vscode": "~2.4.0"
+		"@volar/vscode": "~2.4.0",
+		"jiti": "^2.4.2"
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.0",

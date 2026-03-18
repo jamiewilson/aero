@@ -3,7 +3,7 @@
  *
  * Uses `get-tsconfig` to find tsconfig.json and extract paths for Vite resolve.alias.
  * Uses `oxc-resolver` for full module resolution (tsconfig paths, extends, package exports).
- * Framework defaults for @pages, @layouts, @components can be merged via mergeWithDefaultAliases.
+ * Framework defaults for @pages, @layouts, @components, @styles, @scripts, @images, @content can be merged via mergeWithDefaultAliases.
  *
  * @packageDocumentation
  */
@@ -24,20 +24,22 @@ const resolver = new ResolverFactory({
 })
 
 /**
- * Build default path aliases for @pages, @layouts, @components from project root and dirs.
- * Used when tsconfig is missing or does not define these keys so the runtime globs resolve.
+ * Build default path aliases for standard Aero paths from project root and dirs.
+ * Used when tsconfig is missing or does not define these keys so path resolution works without tsconfig.
  */
 export function getDefaultAliases(
 	root: string,
 	dirs: ResolvedAeroDirs
 ): UserAlias[] {
+	const client = dirs.client
 	return [
-		{ find: '@pages', replacement: path.join(root, dirs.client, 'pages') },
-		{ find: '@layouts', replacement: path.join(root, dirs.client, 'layouts') },
-		{
-			find: '@components',
-			replacement: path.join(root, dirs.client, 'components'),
-		},
+		{ find: '@pages', replacement: path.join(root, client, 'pages') },
+		{ find: '@layouts', replacement: path.join(root, client, 'layouts') },
+		{ find: '@components', replacement: path.join(root, client, 'components') },
+		{ find: '@styles', replacement: path.join(root, client, 'assets', 'styles') },
+		{ find: '@scripts', replacement: path.join(root, client, 'assets', 'scripts') },
+		{ find: '@images', replacement: path.join(root, client, 'assets', 'images') },
+		{ find: '@content', replacement: path.join(root, 'content') },
 	]
 }
 
@@ -94,7 +96,7 @@ export function loadTsconfigAliases(root: string): AliasResult {
  * Defaults are applied first; any alias from aliasResult with the same `find` overwrites.
  * Produces a resolve that tries merged aliases first, then falls back to the original resolver.
  *
- * Ensures @pages, @layouts, @components always exist so the runtime import.meta.glob patterns resolve.
+ * Ensures standard path aliases always exist so the runtime import.meta.glob patterns and asset resolution work.
  *
  * @param aliasResult - Result from loadTsconfigAliases (may have empty aliases when no tsconfig).
  * @param root - Project root.
@@ -138,3 +140,8 @@ export function mergeWithDefaultAliases(
 		projectRoot: aliasResult.projectRoot,
 	}
 }
+
+export {
+	resolveDirs,
+	type ResolvedAeroDirs,
+} from '../vite/defaults'

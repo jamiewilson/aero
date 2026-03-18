@@ -98,14 +98,18 @@ describe('loadTsconfigAliases', () => {
 })
 
 describe('getDefaultAliases', () => {
-	it('returns @pages, @layouts, @components from root and dirs', () => {
+	it('returns all standard aliases from root and dirs', () => {
 		const root = '/project'
 		const aliases = getDefaultAliases(root, defaultDirs)
-		expect(aliases).toHaveLength(3)
+		expect(aliases).toHaveLength(7)
 		expect(aliases.map(a => a.find).sort()).toEqual([
 			'@components',
+			'@content',
+			'@images',
 			'@layouts',
 			'@pages',
+			'@scripts',
+			'@styles',
 		])
 		expect(aliases.find(a => a.find === '@pages')!.replacement).toBe(
 			path.join(root, 'client', 'pages')
@@ -115,6 +119,12 @@ describe('getDefaultAliases', () => {
 		)
 		expect(aliases.find(a => a.find === '@components')!.replacement).toBe(
 			path.join(root, 'client', 'components')
+		)
+		expect(aliases.find(a => a.find === '@styles')!.replacement).toBe(
+			path.join(root, 'client', 'assets', 'styles')
+		)
+		expect(aliases.find(a => a.find === '@content')!.replacement).toBe(
+			path.join(root, 'content')
 		)
 	})
 
@@ -142,11 +152,15 @@ describe('mergeWithDefaultAliases', () => {
 		expect(raw.aliases).toEqual([])
 
 		const merged = mergeWithDefaultAliases(raw, '/project', defaultDirs)
-		expect(merged.aliases).toHaveLength(3)
+		expect(merged.aliases).toHaveLength(7)
 		expect(merged.aliases.map(a => a.find).sort()).toEqual([
 			'@components',
+			'@content',
+			'@images',
 			'@layouts',
 			'@pages',
+			'@scripts',
+			'@styles',
 		])
 		expect(
 			merged.resolve('@components/header', '/project/client/pages/index.html')
