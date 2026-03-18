@@ -51,10 +51,7 @@ function updateHead(headContent: string) {
 		headEl.removeChild(node)
 	}
 	const parser = new DOMParser()
-	const frag = parser.parseFromString(
-		`<head>${headContent}</head>`,
-		'text/html'
-	)
+	const frag = parser.parseFromString(`<head>${headContent}</head>`, 'text/html')
 	const nodes = Array.from(frag.head?.childNodes || [])
 
 	for (const node of nodes) {
@@ -62,8 +59,7 @@ function updateHead(headContent: string) {
 			const el = node as Element
 			if (el.matches(PERSISTENT_SELECTORS)) {
 				const devId = el.getAttribute('data-vite-dev-id')
-				if (devId && headEl.querySelector(`[data-vite-dev-id="${devId}"]`))
-					continue
+				if (devId && headEl.querySelector(`[data-vite-dev-id="${devId}"]`)) continue
 				if (
 					el instanceof HTMLScriptElement &&
 					el.src &&
@@ -79,15 +75,10 @@ function updateHead(headContent: string) {
 }
 
 /**
- * Path prefix for content/docs routes. When on such a route in dev, we fetch HTML from the
- * dev server instead of re-running the full render (including markdown) in the browser.
- */
-const DOCS_PATH_PREFIX = '/docs'
-
-/**
  * Re-render the current page in the browser (e.g. on HMR).
- * For content routes (e.g. `/docs/*`), fetches HTML from the dev server to avoid running the
- * full markdown pipeline in the browser. Otherwise resolves page name and uses `renderFn`.
+ * In dev (when import.meta.hot exists), fetches HTML from the dev server for all routes to avoid
+ * running the full markdown pipeline in the browser, which can cause crashes when DevTools is open.
+ * Otherwise resolves page name and uses `renderFn`.
  *
  * @param appEl - Root element to receive the new body content (e.g. `#app`).
  * @param renderFn - Async function that returns full document HTML for a given page name (e.g. `aero.render`).
@@ -103,11 +94,7 @@ export async function renderPage(
 
 	try {
 		let html: string
-		const useFetch =
-			typeof window !== 'undefined' &&
-			(pathname === DOCS_PATH_PREFIX ||
-				pathname.startsWith(DOCS_PATH_PREFIX + '/')) &&
-			import.meta.hot
+		const useFetch = typeof window !== 'undefined' && import.meta.hot
 		if (useFetch) {
 			const res = await fetch(pathname, { headers: { Accept: 'text/html' } })
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)

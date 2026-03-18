@@ -50,7 +50,7 @@ import path from 'path'
 
 const require = createRequire(import.meta.url)
 
-/** Shared state used by the Aero sub-plugins (config, virtuals, transform, ssr, hmr). */
+/** Shared state used by the Aero sub-plugins (config, virtuals, transform, ssr). */
 interface AeroPluginState {
 	config: ResolvedConfig | null
 	aliasResult: AliasResult | null
@@ -147,6 +147,9 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 						]
 					: state.aliasResult.aliases
 
+			// Ensure SSR environment exists so dev middleware can load the runtime via ssrEnv.runner.import.
+			// Required for non-server projects (Vite-only) where Nitro does not provide the env.
+			const userEnvs = (userConfig as { environments?: Record<string, unknown> }).environments
 			return {
 				base: './',
 				resolve: { alias },
@@ -154,7 +157,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
 				environments: {
-					ssr: {},
+					...(userEnvs ?? {}),
+					ssr: userEnvs?.ssr ?? {},
 				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
@@ -266,6 +270,33 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			contentMap.forEach((entry, url) => state.clientScripts.set(url, entry))
 		},
 		async resolveId(id, importer) {
+			// In dev: redirect client's runtime instance import to the virtual module.
+			// The built instance has empty globs (bundler strips import.meta.glob); the virtual
+			// module has app-specific globs so template changes invalidate the client and trigger HMR.
+			if (state.config?.command !== 'build') {
+				const isRelativeInstanceImport =
+					id === './runtime/instance' || id === '../runtime/instance'
+				const isFromCore =
+					importer &&
+					(importer.includes('entry-dev') ||
+						importer.includes('@aero-js/core') ||
+						importer.includes('/core/'))
+				if (isRelativeInstanceImport && isFromCore) {
+					return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
+				}
+				// Fallback: id might resolve to runtime instance (e.g. full path from pre-bundle)
+				if (importer && (id.includes('runtime') || id.includes('instance'))) {
+					const resolved = await this.resolve(id, importer, { skipSelf: true })
+					if (
+						resolved?.id &&
+						/runtime\/instance\.(m?js|ts)$/.test(resolved.id) &&
+						resolved.id.includes('aero')
+					) {
+						return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
+					}
+				}
+			}
+
 			if (id === RUNTIME_INSTANCE_MODULE_ID) {
 				// In dev: use virtual module so load() fires and Vite's SSR transform rewrites exports
 				// (Vite 8's AsyncFunction evaluator cannot parse raw ESM export syntax).
