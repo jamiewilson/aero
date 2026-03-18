@@ -2,8 +2,8 @@
  * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
  * virtual client scripts, props preamble injection, rendering via Aero runtime,
  * resolveId for extensionless .html, and buildStart prefill.
- * HMR for templates and content is dependency-driven (no custom handleHotUpdate); the app uses
- * a single client entry that imports @aero-js/core and calls aero.mount().
+ * HMR for templates/content is dependency-driven; plain in-template client scripts also register
+ * a focused handleHotUpdate path so script changes refresh without restarting dev server.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -99,9 +99,10 @@ describe('Vite Plugin Integration', () => {
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)
-		const renderFn = new (Object.getPrototypeOf(
-			async function () {}
-		).constructor)('Aero', body)
+		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)(
+			'Aero',
+			body,
+		)
 
 		const finalOutput = await aeroInstance.render(renderFn, {
 			props: { title: 'Dynamic Title' },
@@ -110,10 +111,7 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('should resolve path-like extensionless imports to .html via resolveId', async () => {
-		const resolvedHtmlPath = path.join(
-			process.cwd(),
-			'client/components/header.html'
-		)
+		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
 		const resolveCtx = {
 			...pluginCtx,
 			resolve: async (id: string) => {
@@ -126,7 +124,7 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@components/header',
-			undefined
+			undefined,
 		)
 		expect(result).toBeDefined()
 		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
@@ -134,10 +132,7 @@ describe('Vite Plugin Integration', () => {
 
 	it('should resolve Aero template .html to virtual id in build so vite:build-html never sees them', async () => {
 		configPlugin.configResolved({ root: process.cwd(), command: 'build' })
-		const resolvedHtmlPath = path.join(
-			process.cwd(),
-			'client/components/header.html'
-		)
+		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
 		const resolveCtx = {
 			...pluginCtx,
 			resolve: async (id: string) => {
@@ -148,10 +143,10 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@components/header.html',
-			undefined
+			undefined,
 		)
 		expect(result).toBe(
-			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero')
+			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'),
 		)
 		configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
 	})
@@ -164,7 +159,7 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@aero-js/content/render',
-			undefined
+			undefined,
 		)
 		expect(result).toBeNull()
 	})
@@ -178,7 +173,7 @@ describe('Vite Plugin Integration', () => {
 		fs.writeFileSync(
 			htmlPath,
 			`<script is:build>const x = 1;</script><div>Static</div><script>${unique}</script>`,
-			'utf-8'
+			'utf-8',
 		)
 		try {
 			configPlugin.config({ root: tmpDir })
@@ -214,10 +209,41 @@ describe('Vite Plugin Integration', () => {
 		expect(loadedContent).toContain("const msg: string = 'typed'")
 	})
 
-	it('does not register a custom HMR plugin (handleHotUpdate); HMR is dependency-driven via single client entry', () => {
+	it('registers handleHotUpdate and refreshes virtual client script entries for html edits', async () => {
 		const withHandleHotUpdate = plugins.some(
-			(p: any) => typeof p?.handleHotUpdate === 'function'
+			(p: any) => typeof p?.handleHotUpdate === 'function',
 		)
-		expect(withHandleHotUpdate).toBe(false)
+		expect(withHandleHotUpdate).toBe(true)
+
+		const id = path.join(process.cwd(), 'client/pages/hot-script.html')
+		transformPlugin.transform.call(
+			pluginCtx,
+			`<div>v1</div><script>console.log('V1')</script>`,
+			id,
+		)
+
+		const virtualId = '\0/@aero/client/client/pages/hot-script.ts'
+		expect(virtualsPlugin.load(virtualId)).toContain("console.log('V1')")
+
+		const moduleNode = { id: virtualId }
+		const sends: any[] = []
+		const invalidated: any[] = []
+		const result = await virtualsPlugin.handleHotUpdate({
+			file: id,
+			read: async () => `<div>v2</div><script>console.log('V2')</script>`,
+			server: {
+				ws: { send: (payload: any) => sends.push(payload) },
+				moduleGraph: {
+					getModuleById: (moduleId: string) => (moduleId === virtualId ? moduleNode : null),
+					invalidateModule: (mod: any) => invalidated.push(mod),
+				},
+			},
+			modules: [],
+		})
+
+		expect(result).toEqual([])
+		expect(virtualsPlugin.load(virtualId)).toContain("console.log('V2')")
+		expect(invalidated).toContain(moduleNode)
+		expect(sends).toContainEqual({ type: 'full-reload' })
 	})
 })
