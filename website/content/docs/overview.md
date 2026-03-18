@@ -86,7 +86,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Components** live in `client/components/`; use `<name-component>` (e.g. `header.html` → `<header-component>`).
 - **Path aliases**: For convenience, `@aero-js/create` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
-> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [https://github.com/jamiewilson/aero/blob/main/docs/content-api.md](https://github.com/jamiewilson/aero/blob/main/docs/content-api.md).
+> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/content-api.md).
 
 ## Components & Layouts
 
@@ -304,7 +304,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 
 ## Content Collections
 
-Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [https://github.com/jamiewilson/aero/blob/main/docs/content-api.md](docs/content-api.md).
+Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/content-api.md).
 
 ```html
 <script is:build>
@@ -449,7 +449,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 ## More Documentation
 
-For more documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/README.md).
+For more documentation, see the [`/docs`]((https://github.com/jamiewilson/aero/blob/main/docs) directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/README.md).
 
 ## Links
 

@@ -1,11 +1,8 @@
 {
 	"folders": [
 		{
+			"name": "aero",
 			"path": ".",
-		},
-		{
-			"name": "website",
-			"path": "website",
 		},
 		{
 			"name": "examples",
@@ -14,6 +11,10 @@
 		{
 			"name": "templates",
 			"path": "packages/templates",
+		},
+		{
+			"name": "website",
+			"path": "website",
 		},
 		{
 			"name": "core",
