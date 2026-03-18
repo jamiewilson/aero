@@ -87,6 +87,7 @@
 				"embeddedLanguages": {
 					"source.css": "css",
 					"source.js": "javascript",
+					"source.json": "json",
 					"source.ts": "typescript",
 					"meta.embedded.expression.aero source.ts": "typescript"
 				}
