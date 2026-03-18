@@ -290,7 +290,7 @@ Use `if`, `else-if`, and `else`:
 
 ## Path Aliases
 
-The `tsconfig.json` in your project defines path aliases so you don't need relative imports:
+Path aliases let you use `@components/header` instead of relative imports. The framework provides defaults for all standard aliases, so **tsconfig.json is optional** for path resolution. When present, tsconfig paths are merged with these defaults (tsconfig overrides for the same key).
 
 | Alias           | Resolves to               |
 | --------------- | ------------------------- |
@@ -301,6 +301,10 @@ The `tsconfig.json` in your project defines path aliases so you don't need relat
 | `@styles/*`     | `client/assets/styles/*`  |
 | `@scripts/*`    | `client/assets/scripts/*` |
 | `@images/*`     | `client/assets/images/*`  |
+
+For custom directory layouts (e.g. `frontend/` instead of `client/`), define paths in `tsconfig.json` or set `dirs` in `aero.config.ts`. See [Configuration](../README.md#configuration).
+
+**Manual setup without tsconfig:** You can create an Aero app without `tsconfig.json`. The framework provides all standard path aliases at build time. Add tsconfig when you need TypeScript compiler options, IDE type checking, or custom aliases.
 
 ---
 

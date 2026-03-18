@@ -4,21 +4,66 @@
  * @remarks
  * Uses loadTsconfigAliases and mergeWithDefaultAliases from @aero-js/core/utils/aliases so
  * @pages, @layouts, @components resolve even when tsconfig is missing or has no paths.
+ * When no tsconfig, tries to load aero.config.ts for custom dirs (e.g. frontend/).
  * Caches a PathResolver per project root. Used by definition, hover, and completion providers.
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { createRequire } from 'node:module'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
+	resolveDirs,
+	type ResolvedAeroDirs,
 } from '@aero-js/core/utils/aliases'
 
-/** Default dirs when no aero/vite config is available (matches framework defaults). */
-const DEFAULT_DIRS = { client: 'client', server: 'server', dist: 'dist' }
+const require = createRequire(import.meta.url)
+
+/** Default dirs when no aero config is available (matches framework defaults). */
+const DEFAULT_DIRS: ResolvedAeroDirs = {
+	client: 'client',
+	server: 'server',
+	dist: 'dist',
+}
+
+const AERO_CONFIG_NAMES = [
+	'aero.config.ts',
+	'aero.config.js',
+	'aero.config.mjs',
+] as const
 
 /**
- * Find the nearest Aero app root (directory containing client/) when no tsconfig is found.
+ * Load dirs from aero.config at root if present.
+ * Returns undefined if no config found or load fails.
+ */
+function loadAeroConfigDirs(root: string): ResolvedAeroDirs | undefined {
+	for (const name of AERO_CONFIG_NAMES) {
+		const filePath = path.join(root, name)
+		if (!fs.existsSync(filePath)) continue
+		try {
+			const jiti = require('jiti')(root, { esmResolve: true })
+			const mod = jiti('./' + name)
+			const config = mod?.default ?? mod
+			if (!config || (typeof config !== 'object' && typeof config !== 'function'))
+				continue
+			const resolved =
+				typeof config === 'function'
+					? config({ command: 'dev', mode: 'development' })
+					: config
+			const dirs = resolved?.dirs
+			if (dirs && typeof dirs === 'object') {
+				return resolveDirs(dirs)
+			}
+		} catch {
+			// Load failed; try next extension
+		}
+	}
+	return undefined
+}
+
+/**
+ * Find the nearest Aero app root: directory containing client/, frontend/, or aero.config.
  * Used for nested apps (e.g. examples/import-bundling/dynamic-import) in a monorepo.
  */
 function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | undefined {
@@ -27,8 +72,10 @@ function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | und
 	const stopAt = workspaceRoot ? path.resolve(workspaceRoot) : fsRoot
 
 	while (current !== stopAt && current !== fsRoot) {
-		if (fs.existsSync(path.join(current, DEFAULT_DIRS.client))) {
-			return current
+		if (fs.existsSync(path.join(current, 'client'))) return current
+		if (fs.existsSync(path.join(current, 'frontend'))) return current
+		for (const name of AERO_CONFIG_NAMES) {
+			if (fs.existsSync(path.join(current, name))) return current
 		}
 		current = path.dirname(current)
 	}
@@ -73,11 +120,10 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
 
-	const aliasResult = mergeWithDefaultAliases(
-		rawAliases,
-		projectRoot,
-		DEFAULT_DIRS
-	)
+	// Try aero.config for custom dirs (e.g. frontend/ instead of client/) when no tsconfig or for defaults
+	const dirs = loadAeroConfigDirs(projectRoot) ?? DEFAULT_DIRS
+
+	const aliasResult = mergeWithDefaultAliases(rawAliases, projectRoot, dirs)
 	const resolveFn = aliasResult.resolve
 
 	const resolver: PathResolver = {
