@@ -5,7 +5,7 @@
 You can now pass named slots through a component hierarchy using the following syntax:
 
 ```html
-<slot name="nav" slot="nav"></slot>
+<slot name="nav" slot="nav" />
 ```
 
 This allows a component to receive a named slot from its parent and forward it to its own child component.
@@ -32,10 +32,10 @@ This allows a component to receive a named slot from its parent and forward it t
 
 <child-component>
 	<!-- Receive 'nav' slot from grandparent and pass it to child -->
-	<slot name="nav" slot="nav"></slot>
+	<slot name="nav" slot="nav" />
 
 	<!-- Pass through default slot as well -->
-	<slot></slot>
+	<slot />
 </child-component>
 ```
 
@@ -69,7 +69,7 @@ This allows a component to receive a named slot from its parent and forward it t
 ### Slot Passthrough (receiving AND forwarding)
 
 ```html
-<slot name="nav" slot="nav"></slot>
+<slot name="nav" slot="nav" />
 ```
 
 - **`name="nav"`**: Receives content from **parent** component
@@ -95,8 +95,8 @@ In `client/layouts/sub.html`:
 
 ```html
 <base-layout props>
-	<slot name="nav" slot="nav"></slot>
-	<slot></slot>
+	<slot name="nav" slot="nav" />
+	<slot />
 </base-layout>
 ```
 

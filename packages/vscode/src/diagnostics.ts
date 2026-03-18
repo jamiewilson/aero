@@ -62,6 +62,7 @@ const VOID_ELEMENTS = new Set([
 	'link',
 	'meta',
 	'param',
+	'slot',
 	'source',
 	'track',
 	'wbr',

@@ -78,7 +78,7 @@ Here's the layout from the minimal template (`client/layouts/base.html`):
 	</head>
 
 	<body id="app">
-		<slot></slot>
+		<slot />
 		<footer-component />
 	</body>
 </html>
@@ -97,7 +97,7 @@ To use a layout, import it in your page's `<script is:build>` and wrap your cont
 </base-layout>
 ```
 
-The layout's `<slot></slot>` is replaced with your page content.
+The layout's `<slot />` is replaced with your page content.
 
 > For named slots and slot passthrough, see [slot-passthrough.md](slot-passthrough.md).
 

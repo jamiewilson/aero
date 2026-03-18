@@ -22,7 +22,7 @@ Slots let you pass content into a component and choose where it is rendered. You
 To receive a slot from the parent and forward it to your own child component, use both `name` and `slot` on the same `<slot>{:html}`:
 
 ```html
-<slot name="nav" slot="nav"></slot>
+<slot name="nav" slot="nav" />
 ```
 
 - **`name="nav"`** — Receive the `nav` slot from the parent.
@@ -49,8 +49,8 @@ You can put fallback content between the tags if you like.
 </script>
 
 <child-component>
-	<slot name="nav" slot="nav"></slot>
-	<slot></slot>
+	<slot name="nav" slot="nav" />
+	<slot />
 </child-component>
 ```
 
@@ -75,8 +75,8 @@ In `client/layouts/sub.html{:plaintext}` you can forward slots to a base layout:
 
 ```html
 <base-layout props>
-	<slot name="nav" slot="nav"></slot>
-	<slot></slot>
+	<slot name="nav" slot="nav" />
+	<slot />
 </base-layout>
 ```
 
