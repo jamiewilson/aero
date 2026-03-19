@@ -64,9 +64,10 @@ export interface MarkdownConfig {
 	rehypePlugins?: Pluggable[]
 }
 
-/** Top-level content config: array of collection definitions with optional markdown pipeline plugins. */
+/** Top-level content config: optional collections and markdown pipeline plugins. */
 export interface ContentConfig {
-	collections: ContentCollectionConfig<any, any>[]
+	/** Collection definitions. Omit when using only single-file imports and markdown plugins. */
+	collections?: ContentCollectionConfig<any, any>[]
 	/**
 	 * Custom remark and rehype plugins for the markdown pipeline.
 	 *

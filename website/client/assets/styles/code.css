@@ -1,4 +1,13 @@
 @layer base {
+	pre.shiki {
+		--shiki-comment: #636e7b;
+	}
+
+	pre.shiki span {
+		font-style: var(--shiki-dark-font-style);
+		font-style: var(--shiki-light-font-style);
+	}
+
 	code:not(pre code),
 	pre:has(code) {
 		--tab-size: 2ch;
@@ -59,10 +68,5 @@
 		font-size: small;
 		text-box-trim: trim-both;
 		opacity: 0.5;
-	}
-
-	pre.shiki span {
-		font-style: var(--shiki-dark-font-style);
-		font-style: var(--shiki-light-font-style);
 	}
 }
