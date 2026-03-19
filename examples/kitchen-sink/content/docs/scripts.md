@@ -36,7 +36,7 @@ A `<script>{:html}` tag with no `is:*` attribute is a client-side module. Aero p
 Example:
 
 ```html
-<script props="{ { apiToken } }">
+<script props="{ apiToken }">
 	import { initAnalytics } from 'my-analytics'
 	initAnalytics(apiToken)
 </script>

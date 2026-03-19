@@ -1,7 +1,6 @@
 @layer utils {
 	.prose {
 		max-width: 65ch;
-		margin-inline: auto;
 		margin-block-start: var(--page-block-start);
 		padding-block-end: 25vh;
 		text-align: left;

@@ -8,15 +8,18 @@
 		font-style: var(--shiki-light-font-style);
 	}
 
-	code:not(pre code),
-	pre:has(code) {
+	code {
 		--tab-size: 2ch;
 		--padding: 2rem;
-		--line-height: 1.8;
+		--line-height: 1.6;
+		tab-size: var(--tab-size);
 		font-family: var(--font-mono);
 		font-size: smaller;
-		tab-size: var(--tab-size);
-		border: 1px solid color-mix(in oklch, currentColor 20%, transparent);
+	}
+
+	code:not(pre code),
+	pre:has(code) {
+		border: 1px solid --opacity(currentColor, 20%);
 	}
 
 	pre:has(code),
