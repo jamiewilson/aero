@@ -6,14 +6,17 @@ import { describe, it, expect, vi } from 'vitest'
 import {
 	loadAllCollections,
 	getWatchedDirs,
+	getContentRoot,
 	toExportName,
 	serializeContentModule,
+	loadSingleFile,
 } from '../loader'
 import { defineCollection, defineConfig } from '../types'
 import { z } from 'zod'
 import path from 'node:path'
 
 const FIXTURES_DIR = path.resolve(__dirname, 'fixtures')
+const PROJECT_ROOT = path.resolve(FIXTURES_DIR, 'project-root')
 
 const docsCollection = defineCollection({
 	name: 'docs',
@@ -227,6 +230,90 @@ describe('toExportName', () => {
 	it('converts hyphenated names to camelCase', () => {
 		expect(toExportName('blog-posts')).toBe('allBlogPosts')
 		expect(toExportName('my-cool-collection')).toBe('allMyCoolCollection')
+	})
+})
+
+describe('loadSingleFile', () => {
+	it('loads a file in a collection dir and applies schema', async () => {
+		const config = defineConfig({
+			collections: [
+				defineCollection({
+					name: 'docs',
+					directory: 'content/docs',
+					include: '**/*.md',
+					schema: z.object({
+						title: z.string(),
+						subtitle: z.string(),
+					}),
+				}),
+			],
+		})
+		const overviewPath = path.join(
+			PROJECT_ROOT,
+			'content',
+			'docs',
+			'overview.md'
+		)
+		const doc = await loadSingleFile(overviewPath, config, PROJECT_ROOT)
+
+		expect(doc.id).toBe('docs/overview')
+		expect(doc.data.title).toBe('Overview')
+		expect(doc.data.subtitle).toBe('A single-file overview doc.')
+		expect(doc.body).toContain('# Overview')
+		expect(doc._meta.slug).toBe('overview')
+		expect(doc._meta.filename).toBe('overview.md')
+	})
+
+	it('loads a file under content/ but outside any collection (no schema)', async () => {
+		const config = defineConfig({
+			collections: [
+				defineCollection({
+					name: 'docs',
+					directory: 'content/docs',
+					include: '**/*.md',
+					schema: z.object({ title: z.string() }),
+				}),
+			],
+		})
+		const standalonePath = path.join(
+			PROJECT_ROOT,
+			'content',
+			'standalone.md'
+		)
+		const doc = await loadSingleFile(standalonePath, config, PROJECT_ROOT)
+
+		expect(doc.id).toBe('standalone')
+		expect(doc.data.title).toBe('Standalone')
+		expect(doc.data.custom).toBe(true)
+		expect(doc.body).toContain('# Standalone')
+	})
+
+	it('loads with config null (no schema, frontmatter passed through)', async () => {
+		const overviewPath = path.join(
+			PROJECT_ROOT,
+			'content',
+			'docs',
+			'overview.md'
+		)
+		const doc = await loadSingleFile(overviewPath, null, PROJECT_ROOT)
+
+		expect(doc.id).toBe('docs/overview')
+		expect(doc.data.title).toBe('Overview')
+		expect(doc.data.subtitle).toBe('A single-file overview doc.')
+	})
+
+	it('throws when file is outside content/', async () => {
+		const outsidePath = path.join(FIXTURES_DIR, 'docs', 'hello.md')
+
+		await expect(
+			loadSingleFile(outsidePath, null, PROJECT_ROOT)
+		).rejects.toThrow(/not under content directory/)
+	})
+})
+
+describe('getContentRoot', () => {
+	it('returns content dir relative to root', () => {
+		expect(getContentRoot('/project')).toBe('/project/content')
 	})
 })
 

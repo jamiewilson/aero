@@ -3,11 +3,8 @@
 	import logo from '@components/logo'
 	import toc from '@components/toc'
 
-	import { getCollection, render } from 'aero:content'
-
-	const docs = await getCollection('docs')
-	const overview = docs.find(doc => doc.id === 'overview')
-	if (!overview) throw new Error('Overview doc not found')
+	import { render } from 'aero:content'
+	import overview from '@content/overview.md'
 	const { html } = await render(overview)
 </script>
 

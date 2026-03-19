@@ -48,6 +48,27 @@ declare module '*.html' {
 	export default component
 }
 
+/**
+ * Content document from single-file .md imports (e.g. `import doc from '@content/docs/overview.md'`).
+ * Files must be under the project's `content/` directory.
+ */
+declare module '*.md' {
+	interface ContentMeta {
+		path: string
+		slug: string
+		filename: string
+		extension: string
+	}
+	interface ContentDocument {
+		id: string
+		data: Record<string, any>
+		body: string
+		_meta: ContentMeta
+	}
+	const doc: ContentDocument
+	export default doc
+}
+
 /** Content collections: getCollection, render. Used by the language server for IntelliSense. */
 declare module 'aero:content' {
 	interface CollectionEntry {

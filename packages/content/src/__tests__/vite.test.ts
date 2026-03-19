@@ -42,11 +42,13 @@ describe('aeroContent', () => {
 	})
 
 	describe('load', () => {
-		it('returns a comment stub when no config is loaded (e.g. missing content.config.ts)', async () => {
+		it('exports render and getCollection stub when no config is loaded', async () => {
 			const plugin = aeroContent()
 			const load = plugin.load as Function
 			const result = await load('\0aero:content')
-			expect(result).toContain('no collections configured')
+			expect(result).toContain("export { render } from '@aero-js/content/render'")
+			expect(result).toContain('export function getCollection')
+			expect(result).toContain('No content.config.ts found')
 		})
 
 		it('returns null for non-content module IDs', async () => {

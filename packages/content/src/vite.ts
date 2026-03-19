@@ -11,6 +11,8 @@ import {
 	loadAllCollections,
 	serializeContentModule,
 	getWatchedDirs,
+	getContentRoot,
+	loadSingleFile,
 } from './loader'
 import { initProcessor } from './processor'
 import path from 'node:path'
@@ -53,6 +55,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const mod = await import(/* @vite-ignore */ configUrl)
 				contentConfig = mod.default as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
+				watchedDirs.push(getContentRoot(root))
 
 				// Initialize the markdown processor early with user-supplied plugins.
 				// This ensures the processor is configured before any modules are loaded.
@@ -60,11 +63,12 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			} catch (err: any) {
 				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT') {
 					config.logger.warn(
-						`[aero:content] No config found at "${configPath}". Content collections disabled.`
+						`[aero:content] No config found at "${configPath}". Single-file imports and render() still work with defaults.`
 					)
-					return
+					watchedDirs = [getContentRoot(root)]
+				} else {
+					throw err
 				}
-				throw err
 			}
 		},
 
@@ -79,11 +83,45 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			return null
 		},
 
-		/** Load virtual module: loadAllCollections, serializeContentModule, return ESM source. */
+		/** Load virtual module and .md files under content/. */
 		async load(id) {
+			// Handle .md files under content/
+			const pathPart = id.split('?')[0]
+			if (pathPart.endsWith('.md')) {
+				const root = resolvedConfig.root
+				const contentDir = getContentRoot(root)
+				const idPath = id.split('?')[0]
+				const absolutePath = path.isAbsolute(idPath)
+					? idPath
+					: path.resolve(root, idPath)
+				const relToContent = path.relative(contentDir, absolutePath)
+				if (
+					!relToContent.startsWith('..') &&
+					!path.isAbsolute(relToContent)
+				) {
+					try {
+						const doc = await loadSingleFile(
+							absolutePath,
+							contentConfig,
+							root
+						)
+						this.addWatchFile(absolutePath)
+						return `export default ${JSON.stringify(doc)}`
+					} catch (err) {
+						throw err
+					}
+				}
+			}
+
 			if (id !== RESOLVED_CONTENT_MODULE_ID) return null
+
+			// When no config: still export render for single-file use
 			if (!contentConfig) {
-				return '// aero:content — no collections configured\n'
+				return `export { render } from '@aero-js/content/render';
+export function getCollection() {
+  throw new Error('[aero:content] No content.config.ts found. Add content.config.ts with collections to use getCollection().');
+}
+`
 			}
 
 			// Processor was already initialized in configResolved hook
@@ -96,12 +134,18 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			return serialized
 		},
 
-		/** Invalidate virtual module and full-reload when a file in a watched content dir changes. */
+		/** Invalidate virtual module and .md modules when a file in a watched content dir changes. */
 		handleHotUpdate({ file, server }) {
 			const isContent = watchedDirs.some(dir => file.startsWith(dir))
 			if (!isContent) return
 
-			// Invalidate the virtual module so it reloads
+			// Invalidate directly imported .md module so it reloads
+			const mdMod = server.moduleGraph.getModuleById(file)
+			if (mdMod) {
+				server.moduleGraph.invalidateModule(mdMod)
+			}
+
+			// Invalidate the virtual module so getCollection/render consumers reload
 			const mod = server.moduleGraph.getModuleById(RESOLVED_CONTENT_MODULE_ID)
 			if (mod) {
 				server.moduleGraph.invalidateModule(mod)
@@ -127,8 +171,10 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const mod = await import(/* @vite-ignore */ configUrl)
 				contentConfig = mod.default as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
+				watchedDirs.push(getContentRoot(root))
 			} catch {
-				// Silent — warning already issued in configResolved
+				// Silent — warning already issued in configResolved; ensure content dir is watched
+				watchedDirs = [getContentRoot(root)]
 			}
 		},
 	}

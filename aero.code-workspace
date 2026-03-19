@@ -5,16 +5,16 @@
 			"path": ".",
 		},
 		{
+			"name": "website",
+			"path": "website",
+		},
+		{
 			"name": "examples",
 			"path": "examples",
 		},
 		{
 			"name": "templates",
 			"path": "packages/templates",
-		},
-		{
-			"name": "website",
-			"path": "website",
 		},
 		{
 			"name": "core",
