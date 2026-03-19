@@ -16,6 +16,7 @@
 		"@aero-js/highlight": "workspace:*",
 		"@alpinejs/persist": "^3.15.8",
 		"@shikijs/rehype": "^3.0.0",
+		"@shikijs/themes": "^4.0.0",
 		"alpinejs": "^3.15.8",
 		"htmx.org": "^2.0.8"
 	},
