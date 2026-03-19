@@ -1,63 +1,74 @@
 @layer base {
-	code:not(pre code),
-	pre:has(code) {
+	pre.shiki {
+		--shiki-comment: #636e7b;
+	}
+
+	pre.shiki span {
+		font-style: var(--shiki-dark-font-style);
+		font-style: var(--shiki-light-font-style);
+	}
+
+	code {
 		--tab-size: 2ch;
 		--padding: 2rem;
-		--line-height: 1.8;
-		--outline: 1px solid --opacity(var(--color-fg), 0.2);
-
-		font-size: smaller;
-		font-family: var(--font-mono);
+		--line-height: 1.6;
 		tab-size: var(--tab-size);
-		border: var(--outline);
+		font-family: var(--font-mono);
+		font-size: smaller;
 	}
 
-	/* Inline code */
+	code:not(pre code),
+	pre:has(code) {
+		border: 1px solid --opacity(currentColor, 20%);
+	}
+
+	pre:has(code),
+	pre:has(code) code,
+	code:not(pre code) {
+		font-feature-settings:
+			'calt' 1,
+			'liga' 1,
+			'ss01' 1,
+			'ss02' 1,
+			'ss03' 1,
+			'ss04' 1,
+			'ss05' 1,
+			'ss06' 1,
+			'ss07' 1,
+			'ss08' 1,
+			'ss09' 1,
+			'ss10' 1;
+	}
+
 	code:not(pre code) {
 		padding: 0.1em 0.4em 0.2em;
-		color: --opacity(currentColor, 0.7);
-
+		color: color-mix(in oklch, currentColor 70%, transparent);
 		border-radius: var(--radius-sm);
-
-		@media (width > 768px) {
-			text-wrap: nowrap;
-		}
 	}
 
-	/* Code blocks */
 	pre:has(code) {
 		display: grid;
 		overflow: hidden;
-		border-radius: var(--radius-lg);
-		corner-shape: squircle;
-
-		code {
-			line-height: var(--line-height);
-			text-box: trim-both ex alphabetic;
-			padding: var(--padding);
-			scrollbar-width: none;
-			overflow-y: hidden;
-			overflow-x: auto;
-		}
+		border-radius: var(--radius-md);
 	}
 
-	/* Language labels */
-	pre:has(code) {
-		&[data-lang] {
-			position: relative;
+	pre:has(code) code {
+		line-height: var(--line-height);
+		padding: var(--padding);
+		overflow-x: auto;
+	}
 
-			&::before {
-				position: absolute;
-				top: 0.5rem;
-				right: 0.5rem;
-				text-box: trim-both cap alphabetic;
-				font-family: var(--font-sans);
-				font-size: small;
-			}
-		}
+	pre:has(code)[data-lang] {
+		position: relative;
+	}
 
-		&[data-lang]::before {
-			content: attr(data-lang);
-		}
+	pre:has(code)[data-lang]::before {
+		content: attr(data-lang);
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		font-size: small;
+		text-box-trim: trim-both;
+		opacity: 0.5;
 	}
 }

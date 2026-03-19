@@ -1,6 +1,5 @@
 import { defineCollection, defineConfig } from '@aero-js/content'
-import { aeroHtml, addPreDataLang } from '@aero-js/highlight'
-import rehypeShiki from '@shikijs/rehype'
+import { customTheme } from './lib/custom-theme'
 import { z } from 'zod'
 
 const docs = defineCollection({
@@ -17,20 +16,6 @@ const docs = defineCollection({
 export default defineConfig({
 	collections: [docs],
 	markdown: {
-		rehypePlugins: [
-			[
-				rehypeShiki,
-				{
-					themes: {
-						light: 'github-light',
-						dark: 'github-dark-high-contrast',
-					},
-					defaultColor: 'light-dark()',
-					inline: 'tailing-curly-colon',
-					langs: ['js', 'ts', 'html', 'css', 'json', 'bash', aeroHtml],
-					transformers: [addPreDataLang()],
-				},
-			],
-		],
+		rehypePlugins: [customTheme()],
 	},
 })
