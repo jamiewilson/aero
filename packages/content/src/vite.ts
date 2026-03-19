@@ -15,8 +15,11 @@ import {
 	loadSingleFile,
 } from './loader'
 import { initProcessor } from './processor'
+import { createRequire } from 'node:module'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+
+const require = createRequire(import.meta.url)
 
 const CONTENT_MODULE_ID = 'aero:content'
 const RESOLVED_CONTENT_MODULE_ID = '\0aero:content'
@@ -46,14 +49,18 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 		async configResolved(config) {
 			resolvedConfig = config
 			const root = config.root
-			const configPath = path.resolve(root, options.config || CONFIG_FILE)
+			const configFile = options.config || CONFIG_FILE
+			const configPath = path.resolve(root, configFile)
 
 			try {
-				// Use dynamic import with the file URL to load the config.
-				// Vite's SSR pipeline handles TS transpilation during dev.
-				const configUrl = pathToFileURL(configPath).href
-				const mod = await import(/* @vite-ignore */ configUrl)
-				contentConfig = mod.default as ContentConfig
+				if (!existsSync(configPath)) {
+					throw new Error('ENOENT')
+				}
+				// Use jiti to load TypeScript config (same as aero.config.ts); Node's native import cannot load .ts.
+				const jiti = require('jiti')(root, { esmResolve: true })
+				const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
+				const mod = jiti(relativePath)
+				contentConfig = (mod?.default ?? mod) as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
 				watchedDirs.push(getContentRoot(root))
 
@@ -61,7 +68,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				// This ensures the processor is configured before any modules are loaded.
 				await initProcessor(contentConfig.markdown)
 			} catch (err: any) {
-				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT') {
+				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT' || err.message === 'ENOENT') {
 					config.logger.warn(
 						`[aero:content] No config found at "${configPath}". Single-file imports and render() still work with defaults.`
 					)
@@ -159,17 +166,15 @@ export function getCollection() {
 			if (contentConfig) return // Already loaded in configResolved
 
 			const root = resolvedConfig.root
-			const configPath = path.resolve(root, options.config || CONFIG_FILE)
+			const configFile = options.config || CONFIG_FILE
+			const configPath = path.resolve(root, configFile)
 
 			try {
-				// In build mode we need to use Vite's module resolution which
-				// handles TypeScript transpilation. However, buildStart doesn't
-				// have access to ssrLoadModule, so we rely on the configResolved
-				// import having worked. If it didn't (e.g. TS without tsx loader),
-				// log a warning.
-				const configUrl = pathToFileURL(configPath).href
-				const mod = await import(/* @vite-ignore */ configUrl)
-				contentConfig = mod.default as ContentConfig
+				if (!existsSync(configPath)) throw new Error('ENOENT')
+				const jiti = require('jiti')(root, { esmResolve: true })
+				const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
+				const mod = jiti(relativePath)
+				contentConfig = (mod?.default ?? mod) as ContentConfig
 				watchedDirs = getWatchedDirs(contentConfig, root)
 				watchedDirs.push(getContentRoot(root))
 			} catch {
