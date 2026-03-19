@@ -46,6 +46,10 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 - `pnpm run preview` / `pnpm run preview:api` - From the app directory.
 - `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
 
+## Documentation and discoveries
+
+Document any discoveries made during code exploration (gaps, workarounds, implementation opportunities) in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+
 ## Path Aliases (templates: tsconfig in kitchen-sink, minimal)
 
 - `@components/*` → client/components/\*

@@ -135,6 +135,10 @@ For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md
 
 When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
 
+## Documentation and discoveries
+
+- **DISCOVERY.md** — Document any discoveries made during code exploration (gaps, workarounds, implementation opportunities) in [\_reference/DISCOVERY.md](_reference/DISCOVERY.md). Add entries for future reference when implementing planned changes.
+
 ## Gotchas
 
 - Virtual client scripts use `/@aero/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
