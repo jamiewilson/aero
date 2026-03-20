@@ -580,35 +580,6 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const resolvedAlias = state.aliasResult
 				// So Vite invalidates this virtual module when the source .html changes (HMR).
 				this.addWatchFile(filePath)
-				try {
-					const code = readFileSync(filePath, 'utf-8')
-					const parsed = parse(code)
-					const relativePath = toPosixRelative(filePath, state.config.root)
-					const baseName = relativePath.replace(/\.html$/i, '')
-					syncClientScriptsForTemplate(parsed, baseName, state.clientScripts)
-					for (let i = 0; i < parsed.clientScripts.length; i++) {
-						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
-							baseName,
-							i,
-							parsed.clientScripts.length
-						)
-					}
-					const generated = compileTemplate(
-						code,
-						{
-							root: state.config.root,
-							clientScripts: parsed.clientScripts,
-							blockingScripts: parsed.blockingScripts,
-							inlineScripts: parsed.inlineScripts,
-							resolvePath: state.aliasResult.resolve,
-							importer: filePath,
-						},
-						parsed
-					)
-					return { code: generated, map: null }
-				} catch {
-					return null
-				}
 				const exit = Effect.runSyncExit(
 					htmlCompileTry(filePath, () => {
 						const code = readFileSync(filePath, 'utf-8')

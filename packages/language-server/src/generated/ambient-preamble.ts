@@ -17,7 +17,7 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 declare function renderComponent(
 	component: any,
 	props?: Record<string, any>,
-	slots?: Record<string, string>,
+	slots?: Record<string, string>
 ): Promise<string>
 
 declare module '*.html' {
@@ -50,8 +50,6 @@ export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {
 		body?: string
 	}
 	export function getCollection(name: string): Promise<CollectionEntry[]>
-	export function render(
-		entry: CollectionEntry | Record<string, any>,
-	): Promise<{ html: string }>
+	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
 }
 `
