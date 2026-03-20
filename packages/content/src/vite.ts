@@ -50,34 +50,12 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			resolvedConfig = config
 			const root = config.root
 			const configFile = options.config || CONFIG_FILE
-			const configPath = path.resolve(root, configFile)
 			const loaded = loadContentConfigFileSync(root, configFile)
 
-			try {
-				if (!existsSync(configPath)) {
-					throw new Error('ENOENT')
-				}
-				// Use jiti to load TypeScript config (same as aero.config.ts); Node's native import cannot load .ts.
-				const jiti = require('jiti')(root, { esmResolve: true })
-				const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
-				const mod = jiti(relativePath)
-				contentConfig = (mod?.default ?? mod) as ContentConfig
-				watchedDirs = getWatchedDirs(contentConfig, root)
-				watchedDirs.push(getContentRoot(root))
-
-				// Initialize the markdown processor early with user-supplied plugins.
-				// This ensures the processor is configured before any modules are loaded.
-				await initProcessor(contentConfig.markdown)
-			} catch (err: any) {
-				if (
-					err.code === 'ERR_MODULE_NOT_FOUND' ||
-					err.code === 'ENOENT' ||
-					err.message === 'ENOENT'
-				) {
 			if (!loaded.ok) {
 				if (loaded.reason === 'missing') {
 					config.logger.warn(
-						`[aero:content] No config found at "${configPath}". Single-file imports and render() still work with defaults.`
+						`[aero:content] No config found at "${configFile}". Single-file imports and render() still work with defaults.`
 					)
 					watchedDirs = [getContentRoot(root)]
 				} else {
