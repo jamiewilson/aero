@@ -215,6 +215,36 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 	return walkHtmlFiles(path.resolve(root, templateRoot))
 }
 
+/**
+ * Walks template paths once and caches file contents so client-script and asset discovery
+ * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`).
+ */
+class TemplateDiscovery {
+	private readonly root: string
+	private readonly templateRoot: string
+	private _files: string[] | null = null
+	private readonly sourceByFile = new Map<string, string>()
+
+	constructor(root: string, templateRoot: string) {
+		this.root = root
+		this.templateRoot = templateRoot
+	}
+
+	get templateFiles(): string[] {
+		if (!this._files) this._files = discoverTemplates(this.root, this.templateRoot)
+		return this._files
+	}
+
+	readSource(file: string): string {
+		let s = this.sourceByFile.get(file)
+		if (!s) {
+			s = fs.readFileSync(file, 'utf-8')
+			this.sourceByFile.set(file, s)
+		}
+		return s
+	}
+}
+
 /** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. */
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
@@ -259,9 +289,10 @@ export function discoverClientScriptContentMap(
 	root: string,
 	templateRoot: string
 ): Map<string, ScriptEntry> {
+	const discovery = new TemplateDiscovery(root, templateRoot)
 	const map = new Map<string, ScriptEntry>()
-	for (const file of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(file, 'utf-8')
+	for (const file of discovery.templateFiles) {
+		const source = discovery.readSource(file)
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosixRelative(file, root)
@@ -274,11 +305,13 @@ export function discoverClientScriptContentMap(
 /** Rollup input entries for virtual client scripts (manifest key → virtual path); used by createBuildConfig. */
 function discoverClientScriptVirtualInputs(
 	root: string,
-	templateRoot: string
+	templateRoot: string,
+	discovery?: TemplateDiscovery
 ): Record<string, string> {
+	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
 	const entries: Record<string, string> = {}
-	for (const file of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(file, 'utf-8')
+	for (const file of d.templateFiles) {
+		const source = d.readSource(file)
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosixRelative(file, root)
@@ -298,11 +331,13 @@ function discoverClientScriptVirtualInputs(
 function discoverAssetInputs(
 	root: string,
 	resolvePath?: (specifier: string, importer: string) => string,
-	templateRoot = 'client'
+	templateRoot = 'client',
+	discovery?: TemplateDiscovery
 ): Record<string, string> {
+	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
 	const entries = new Map<string, string>()
-	for (const templateFile of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(templateFile, 'utf-8')
+	for (const templateFile of d.templateFiles) {
+		const source = d.readSource(templateFile)
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
 		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
@@ -590,8 +625,13 @@ export function createBuildConfig(
 	root = process.cwd()
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
-	const virtualClientInputs = discoverClientScriptVirtualInputs(root, dirs.client)
+	const templateDiscovery = new TemplateDiscovery(root, dirs.client)
+	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client, templateDiscovery)
+	const virtualClientInputs = discoverClientScriptVirtualInputs(
+		root,
+		dirs.client,
+		templateDiscovery
+	)
 	const inputs = { ...assetInputs, ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,

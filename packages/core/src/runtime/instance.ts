@@ -9,6 +9,7 @@
  * (e.g. the client `mount()` HMR callback) can re-render. Only used in a Vite app context.
  */
 
+import type { AeroPageModule } from '../types'
 import { Aero } from '.'
 
 /** Global slot for the singleton Aero instance; used so HMR re-execution reuses the same instance. */
@@ -57,9 +58,9 @@ const components = import.meta.glob('./client/components/**/*.html', {
 const layouts = import.meta.glob('./client/layouts/*.html', { eager: true })
 const pages = import.meta.glob('./client/pages/**/*.html', { eager: true })
 
-aero.registerPages(components)
-aero.registerPages(layouts)
-aero.registerPages(pages)
+aero.registerPages(components as Record<string, AeroPageModule>)
+aero.registerPages(layouts as Record<string, AeroPageModule>)
+aero.registerPages(pages as Record<string, AeroPageModule>)
 
 notify()
 

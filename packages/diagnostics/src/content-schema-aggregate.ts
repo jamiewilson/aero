@@ -12,9 +12,7 @@ export interface ContentSchemaIssuePayload {
 	readonly messages: readonly string[]
 }
 
-export function isContentSchemaAggregateError(
-	err: unknown
-): err is {
+export function isContentSchemaAggregateError(err: unknown): err is {
 	readonly _tag: 'ContentSchemaAggregateError'
 	readonly issues: readonly ContentSchemaIssuePayload[]
 } {

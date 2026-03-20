@@ -119,7 +119,7 @@ function updateHead(headContent: string) {
  */
 export async function renderPage(
 	appEl: HTMLElement,
-	renderFn: (pageName: string) => Promise<string>
+	renderFn: (pageName: string) => Promise<string | null>
 ) {
 	if (rendering) return
 	rendering = true
@@ -141,7 +141,11 @@ export async function renderPage(
 				throw new Error(`Fetch failed: ${res.status}`)
 			}
 		} else {
-			html = await renderFn(pageName)
+			const rendered = await renderFn(pageName)
+			if (rendered == null) {
+				throw new Error(`[aero] No HTML for page "${pageName}"`)
+			}
+			html = rendered
 		}
 		const { head, body } = extractDocumentParts(html)
 		if (head) updateHead(head)

@@ -248,21 +248,9 @@ export function getRenderComponentContextArg(): string {
 	return `{ ${entries.join(', ')} }`
 }
 
-/**
- * Pairs of [inputKey, destructuredVarName] for the render function's initial destructuring from Aero.
- * page and site are objects; site uses __aero_site so build scripts can declare `const site` for content.
- */
-const RENDER_DESTRUCTURE_PAIRS: [key: string, varName: string][] = [
-	['page', 'page'],
-	['site', '__aero_site'],
-	['styles', 'styles'],
-	['scripts', 'scripts'],
-	['headScripts', 'injectedHeadScripts'],
-]
-
 /** Build destructuring pattern for the render function: slots, renderComponent, page, site, ... */
 export function getRenderContextDestructurePattern(): string {
-	const entries = RENDER_DESTRUCTURE_PAIRS.map(([key, varName]) =>
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
 		key === varName ? key : `${key}: ${varName}`
 	)
 	return `slots = {}, renderComponent, ${entries.join(', ')}`
