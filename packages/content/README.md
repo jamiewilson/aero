@@ -6,7 +6,7 @@ Content collections for Aero: load Markdown (and other files) with frontmatter, 
 
 | Export                      | Description                                                                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `@aero-js/content`          | `defineCollection`, `defineConfig`, `render`; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`. |
+| `@aero-js/content`          | `defineCollection`, `defineConfig`, `render`, `loadAllCollections`, `loadContentConfigFileSync`, `contentSchemaIssuesToAeroDiagnostics`, content error helpers; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`, `LoadContentConfigResult`. |
 | `@aero-js/content/vite`     | `aeroContent(options?)` Vite plugin.                                                                                              |
 | `@aero-js/content/markdown` | Markdown/remark utilities (used internally).                                                                                      |
 | `@aero-js/content/render`   | `render(doc)` for markdown-to-HTML.                                                                                               |

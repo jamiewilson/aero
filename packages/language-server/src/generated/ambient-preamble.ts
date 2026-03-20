@@ -24,6 +24,23 @@ declare module '*.html' {
 	const component: string
 	export default component
 }
+
+declare module '*.md' {
+	interface ContentMeta {
+		path: string
+		slug: string
+		filename: string
+		extension: string
+	}
+	interface ContentDocument {
+		id: string
+		data: Record<string, any>
+		body: string
+		_meta: ContentMeta
+	}
+	const doc: ContentDocument
+	export default doc
+}
 `
 
 export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {

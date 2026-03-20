@@ -10,13 +10,16 @@ The core package of the Aero static site generator. It provides the compiler, ru
 
 ## Exports
 
-| Export                           | Description                                                          |
-| -------------------------------- | -------------------------------------------------------------------- |
-| `@aero-js/core`                  | Default: shared `aero` instance with `mount()` for the client entry. |
-| `@aero-js/vite`                  | `aero()` Vite plugin for build and dev. (Re-exported from core.)     |
-| `@aero-js/core/runtime`          | `Aero` class for programmatic rendering.                             |
-| `@aero-js/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR.                       |
-| `@aero-js/core/types`            | Shared TypeScript types.                                             |
+| Export                             | Description                                                          |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `@aero-js/core`                    | Default: shared `aero` instance with `mount()` for the client entry. |
+| `@aero-js/vite`                    | `aero()` Vite plugin for build and dev. (Re-exported from core.)     |
+| `@aero-js/core/runtime`            | `Aero` class for programmatic rendering.                             |
+| `@aero-js/core/runtime/instance`   | Shared `aero` instance and `onUpdate` for HMR.                       |
+| `@aero-js/core/types`              | Shared TypeScript types.                                             |
+| `@aero-js/core/diagnostics`       | Re-exports `@aero-js/diagnostics` (`AeroDiagnostic`, formatters, mappers). |
+| `@aero-js/core/compile-check`      | **Node-only:** `compileTemplate` for tooling (e.g. `aero check`). Do not use in browser bundles. |
+| `@aero-js/core/utils/aliases`      | `loadTsconfigAliases`, `mergeWithDefaultAliases`, `jitiAliasRecordFromProject`, `resolveDirs`. |
 
 ## Script taxonomy
 
@@ -78,7 +81,7 @@ export default {
 }
 ```
 
-Apps typically use `@aero-js/config` and `createViteConfig(aeroConfig)`, which wires the Aero plugin for them.
+Apps typically use `createViteConfig` from `@aero-js/config/vite` with `defineConfig` from `@aero-js/config` in `aero.config.ts`, which wires the Aero plugin for them.
 
 ### Client entry
 

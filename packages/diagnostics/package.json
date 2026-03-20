@@ -1,0 +1,56 @@
+{
+	"name": "@aero-js/diagnostics",
+	"version": "0.3.5",
+	"private": false,
+	"homepage": "https://github.com/jamiewilson/aero",
+	"license": "MIT",
+	"author": "Jamie Wilson",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jamiewilson/aero.git",
+		"directory": "packages/diagnostics"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"types": "./dist/index.d.mts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"default": "./dist/index.mjs"
+		},
+		"./browser": {
+			"types": "./dist/browser.d.mts",
+			"default": "./dist/browser.mjs"
+		},
+		"./ide-catalog": {
+			"types": "./dist/ide-catalog.d.mts",
+			"default": "./dist/ide-catalog.mjs"
+		}
+	},
+	"scripts": {
+		"build": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"prepack": "cp ../../LICENSE ."
+	},
+	"dependencies": {
+		"effect": "^3.20.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3",
+		"vite": "8.0.0-beta.15",
+		"vitest": "^4.0.18"
+	},
+	"peerDependencies": {
+		"vite": "^8.0.0-0"
+	},
+	"peerDependenciesMeta": {
+		"vite": {
+			"optional": true
+		}
+	}
+}

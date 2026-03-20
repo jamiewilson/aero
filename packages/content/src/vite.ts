@@ -7,6 +7,7 @@
  */
 import type { ContentConfig } from './types'
 import type { Plugin, ResolvedConfig } from 'vite'
+import { formatContentSchemaIssuesReport } from './content-issues'
 import {
 	loadAllCollections,
 	serializeContentModule,
@@ -15,11 +16,8 @@ import {
 	loadSingleFile,
 } from './loader'
 import { initProcessor } from './processor'
-import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
+import { loadContentConfigFileSync } from './load-content-config'
 import path from 'node:path'
-
-const require = createRequire(import.meta.url)
 
 const CONTENT_MODULE_ID = 'aero:content'
 const RESOLVED_CONTENT_MODULE_ID = '\0aero:content'
@@ -42,6 +40,8 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 	let contentConfig: ContentConfig | null = null
 	let serialized: string | null = null
 	let watchedDirs: string[] = []
+	/** Last virtual-module load: schema warnings count (for build-end recap). */
+	let lastContentSchemaIssueCount = 0
 
 	return {
 		name: 'vite-plugin-aero-content',
@@ -51,6 +51,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			const root = config.root
 			const configFile = options.config || CONFIG_FILE
 			const configPath = path.resolve(root, configFile)
+			const loaded = loadContentConfigFileSync(root, configFile)
 
 			try {
 				if (!existsSync(configPath)) {
@@ -73,13 +74,20 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 					err.code === 'ENOENT' ||
 					err.message === 'ENOENT'
 				) {
+			if (!loaded.ok) {
+				if (loaded.reason === 'missing') {
 					config.logger.warn(
 						`[aero:content] No config found at "${configPath}". Single-file imports and render() still work with defaults.`
 					)
 					watchedDirs = [getContentRoot(root)]
 				} else {
-					throw err
+					throw loaded.error
 				}
+			} else {
+				contentConfig = loaded.config
+				watchedDirs = getWatchedDirs(contentConfig, root)
+				watchedDirs.push(getContentRoot(root))
+				await initProcessor(contentConfig.markdown)
 			}
 		},
 
@@ -120,6 +128,7 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 			// When no config: still export render for single-file use
 			if (!contentConfig) {
 				return `export { render } from '@aero-js/content/render';
+export const __aeroContentSchemaIssues = [];
 export function getCollection() {
   throw new Error('[aero:content] No content.config.ts found. Add content.config.ts with collections to use getCollection().');
 }
@@ -128,9 +137,25 @@ export function getCollection() {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const loaded = await loadAllCollections(contentConfig, resolvedConfig.root)
-			serialized = serializeContentModule(loaded)
+			const { loaded, schemaIssues } = await loadAllCollections(
+				contentConfig,
+				resolvedConfig.root
+			)
+			if (schemaIssues.length > 0) {
+				resolvedConfig.logger.warn(formatContentSchemaIssuesReport(schemaIssues))
+			}
+			lastContentSchemaIssueCount = schemaIssues.length
+			serialized = serializeContentModule(loaded, { schemaIssues })
 			return serialized
+		},
+
+		/** One-line recap when the virtual module reported schema warnings (skipped files). */
+		closeBundle() {
+			if (lastContentSchemaIssueCount > 0 && resolvedConfig) {
+				resolvedConfig.logger.info(
+					`[aero:content] Build finished with ${lastContentSchemaIssueCount} schema warning(s) (skipped files; details were logged during load).`,
+				)
+			}
 		},
 
 		/** Invalidate virtual module and .md modules when a file in a watched content dir changes. */
@@ -159,20 +184,15 @@ export function getCollection() {
 
 			const root = resolvedConfig.root
 			const configFile = options.config || CONFIG_FILE
-			const configPath = path.resolve(root, configFile)
-
-			try {
-				if (!existsSync(configPath)) throw new Error('ENOENT')
-				const jiti = require('jiti')(root, { esmResolve: true })
-				const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
-				const mod = jiti(relativePath)
-				contentConfig = (mod?.default ?? mod) as ContentConfig
-				watchedDirs = getWatchedDirs(contentConfig, root)
-				watchedDirs.push(getContentRoot(root))
-			} catch {
-				// Silent — warning already issued in configResolved; ensure content dir is watched
+			const loaded = loadContentConfigFileSync(root, configFile)
+			if (!loaded.ok) {
 				watchedDirs = [getContentRoot(root)]
+				return
 			}
+			contentConfig = loaded.config
+			watchedDirs = getWatchedDirs(contentConfig, root)
+			watchedDirs.push(getContentRoot(root))
+			await initProcessor(contentConfig.markdown)
 		},
 	}
 }

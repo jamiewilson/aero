@@ -2,7 +2,7 @@
  * Tests for the content loader: collection discovery, frontmatter parsing,
  * schema validation, transforms, and virtual module serialization.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
 	loadAllCollections,
 	getWatchedDirs,
@@ -11,6 +11,7 @@ import {
 	serializeContentModule,
 	loadSingleFile,
 } from '../loader'
+import { ContentSchemaAggregateError } from '../content-issues'
 import { defineCollection, defineConfig } from '../types'
 import { z } from 'zod'
 import path from 'node:path'
@@ -32,7 +33,7 @@ const docsCollection = defineCollection({
 describe('loadAllCollections', () => {
 	it('discovers and loads all markdown files in the collection directory', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 
 		expect(docs).toBeDefined()
@@ -41,7 +42,7 @@ describe('loadAllCollections', () => {
 
 	it('parses frontmatter (gray-matter) and applies Standard Schema (Zod)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const hello = docs.find((d: any) => d._meta.slug === 'hello')
 
@@ -53,7 +54,7 @@ describe('loadAllCollections', () => {
 
 	it('sets id from collection-relative path (dir/name for nested files)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 
 		const hello = docs.find((d: any) => d.id === 'hello')
@@ -67,7 +68,7 @@ describe('loadAllCollections', () => {
 
 	it('generates _meta (path, slug, filename, extension) for root-level files', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const hello = docs.find((d: any) => d.id === 'hello')
 
@@ -79,7 +80,7 @@ describe('loadAllCollections', () => {
 
 	it('generates _meta for nested files (slug is basename only)', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const nested = docs.find((d: any) => d.id === 'guides/nested')
 
@@ -91,7 +92,7 @@ describe('loadAllCollections', () => {
 
 	it('includes raw markdown (post-frontmatter) as body', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const hello = docs.find((d: any) => d.id === 'hello')
 
@@ -101,7 +102,7 @@ describe('loadAllCollections', () => {
 
 	it('allows optional schema fields to be omitted in frontmatter', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const second = docs.find((d: any) => d.id === 'second')
 
@@ -110,9 +111,7 @@ describe('loadAllCollections', () => {
 		expect(second.data.subtitle).toBeUndefined()
 	})
 
-	it('skips files that fail schema validation and warns with file path', async () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
+	it('skips files that fail schema validation and returns every issue (no throw)', async () => {
 		const invalidCollection = defineCollection({
 			name: 'invalid',
 			directory: path.resolve(FIXTURES_DIR, 'invalid'),
@@ -121,13 +120,36 @@ describe('loadAllCollections', () => {
 		})
 
 		const config = defineConfig({ collections: [invalidCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded, schemaIssues } = await loadAllCollections(config, '/')
 		const docs = loaded.get('invalid')!
 
 		expect(docs.length).toBe(0)
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping "bad.md"'))
+		expect(schemaIssues).toHaveLength(2)
+		expect(schemaIssues.map(i => i.relPath).sort()).toEqual(['bad.md', 'bad2.md'])
+		expect(schemaIssues.every(i => i.messages.length > 0)).toBe(true)
+	})
 
-		warnSpy.mockRestore()
+	it('strictSchema throws ContentSchemaAggregateError listing all invalid files', async () => {
+		const invalidCollection = defineCollection({
+			name: 'invalid',
+			directory: path.resolve(FIXTURES_DIR, 'invalid'),
+			include: '**/*.md',
+			schema: z.object({ title: z.string() }),
+		})
+
+		const config = defineConfig({
+			collections: [invalidCollection],
+			strictSchema: true,
+		})
+		try {
+			await loadAllCollections(config, '/')
+			expect.fail('expected strictSchema to throw')
+		} catch (e) {
+			expect(e).toBeInstanceOf(ContentSchemaAggregateError)
+			const err = e as ContentSchemaAggregateError
+			expect(err.issues).toHaveLength(2)
+			expect(err.message).toContain('[AERO_CONTENT_SCHEMA]')
+		}
 	})
 
 	it('parses frontmatter with ArkType schema (Standard Schema)', async () => {
@@ -144,7 +166,7 @@ describe('loadAllCollections', () => {
 		})
 
 		const config = defineConfig({ collections: [arktypeCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('arkdocs')!
 		const hello = docs.find((d: any) => d._meta.slug === 'hello')
 
@@ -176,7 +198,7 @@ describe('loadAllCollections', () => {
 		})
 
 		const config = defineConfig({ collections: [noSchemaCollection] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('raw')!
 
 		expect(docs.length).toBe(3)
@@ -208,7 +230,7 @@ describe('loadAllCollections', () => {
 		})
 
 		const config = defineConfig({ collections: [transformed] })
-		const loaded = await loadAllCollections(config, '/')
+		const { loaded } = await loadAllCollections(config, '/')
 		const docs = loaded.get('docs')!
 		const hello = docs.find((d: any) => d.id === 'hello')
 
@@ -326,6 +348,7 @@ describe('serializeContentModule', () => {
 
 		const output = serializeContentModule(loaded)
 
+		expect(output).toContain('export const __aeroContentSchemaIssues = []')
 		expect(output).toContain('function getCollection(name, filterFn)')
 		expect(output).toContain('__collections[name]')
 		expect(output).toContain('"title": "Hello"')
@@ -358,6 +381,25 @@ describe('serializeContentModule', () => {
 		expect(output).toContain('"empty": []')
 	})
 
+	it('embeds __aeroContentSchemaIssues when schemaIssues option is passed', () => {
+		const loaded = new Map<string, any[]>()
+		loaded.set('docs', [])
+		const output = serializeContentModule(loaded, {
+			schemaIssues: [
+				{
+					collection: 'docs',
+					relPath: 'bad.md',
+					file: '/abs/bad.md',
+					messages: ['nope'],
+				},
+			],
+		})
+		expect(output).toContain('__aeroContentSchemaIssues')
+		expect(output).toContain('"collection":"docs"')
+		expect(output).toContain('"relPath":"bad.md"')
+		expect(output).toContain('nope')
+	})
+
 	/** Asserts emitted source contains PROD guard and published filter; does not run getCollection in PROD. */
 	it('emits PROD guard that filters by item.data.published === true', () => {
 		const loaded = new Map<string, any[]>()
@@ -378,6 +420,7 @@ describe('serializeContentModule', () => {
 		])
 
 		const emitted = serializeContentModule(loaded)
+			.replace(/export const __aeroContentSchemaIssues = [\s\S]*?;\s*\n/, '')
 			.replace('export function getCollection', 'function getCollection')
 			.replace(/export\s*\{\s*render\s*\}\s*from\s*['"][^'"]+['"];?\s*/g, '')
 			.replace(/import\.meta\.env\.PROD/g, 'true')

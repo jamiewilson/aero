@@ -13,7 +13,15 @@ import type {
 	AeroRenderInput,
 	ScriptEntry,
 } from '../types'
-import type { Plugin, PluginOption, ResolvedConfig } from 'vite'
+import type {
+	DevEnvironment,
+	Plugin,
+	PluginOption,
+	ResolvedConfig,
+	ViteDevServer,
+	WebSocketServer,
+} from 'vite'
+import { createLogger, createRunnableDevEnvironment } from 'vite'
 import { extractObjectKeys } from '../utils/parse'
 import { isRunnableDevEnvironment } from 'vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
@@ -29,6 +37,22 @@ import {
 	RUNTIME_INSTANCE_MODULE_ID,
 } from './defaults'
 
+import {
+	AERO_DIAGNOSTICS_HTTP_HEADER,
+	type AeroCompileError,
+	aeroDiagnosticToViteErrorFields,
+	buildDevSsrErrorHtml,
+	diagnosticsToSingleMessage,
+	encodeDiagnosticsHeaderValue,
+	AERO_EXIT_NITRO,
+	enrichDiagnosticsWithSourceFrames,
+	exitFailureToAeroDiagnostics,
+	exitCodeForThrown,
+	formatDiagnosticsTerminal,
+	unknownToAeroDiagnostics,
+} from '@aero-js/diagnostics'
+import { Effect, Exit } from 'effect'
+import { htmlCompileTry } from './compile-html-effect'
 import { parse } from '../compiler/parser'
 import { compileTemplate } from '../compiler/codegen'
 import { resolvePageName } from '../utils/routing'
@@ -47,6 +71,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
+
+import {
+	createAeroSsrHmrLogger,
+	mergeSsrRunnerOptionsWithHmrLogger,
+	wrapAeroViteLogger,
+} from './aero-vite-logger'
 
 const require = createRequire(import.meta.url)
 
@@ -160,15 +190,61 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			// Ensure SSR environment exists so dev middleware can load the runtime via ssrEnv.runner.import.
 			// Required for non-server projects (Vite-only) where Nitro does not provide the env.
 			const userEnvs = (userConfig as { environments?: Record<string, unknown> }).environments
+			const userSsr =
+				typeof userEnvs?.ssr === 'object' && userEnvs.ssr !== null && !Array.isArray(userEnvs.ssr)
+					? userEnvs.ssr
+					: {}
+			const userSsrDev =
+				'dev' in userSsr &&
+				typeof (userSsr as { dev?: unknown }).dev === 'object' &&
+				(userSsr as { dev?: unknown }).dev !== null &&
+				!Array.isArray((userSsr as { dev?: unknown }).dev)
+					? ((userSsr as { dev: Record<string, unknown> }).dev ?? {})
+					: {}
+
+			const baseViteLogger =
+				userConfig.customLogger ??
+				createLogger(userConfig.logLevel, { allowClearScreen: userConfig.clearScreen !== false })
+			const wrappedLogger = wrapAeroViteLogger(baseViteLogger)
+			const ssrHmrLogger = createAeroSsrHmrLogger()
+			const userSsrCreate = userSsrDev.createEnvironment as
+				| ((
+						name: string,
+						config: ResolvedConfig,
+						ctx: { ws: WebSocketServer },
+				  ) => DevEnvironment | Promise<DevEnvironment>)
+				| undefined
+
+			function ssrCreateEnvironment(
+				name: string,
+				config: ResolvedConfig,
+				context: { ws: WebSocketServer },
+			): DevEnvironment | Promise<DevEnvironment> {
+				if (userSsrCreate) {
+					return userSsrCreate(name, config, context)
+				}
+				return createRunnableDevEnvironment(name, config, {
+					...context,
+					runnerOptions: mergeSsrRunnerOptionsWithHmrLogger(undefined, ssrHmrLogger),
+				})
+			}
+
 			return {
 				base: './',
+				customLogger: wrappedLogger,
 				resolve: { alias },
 				define: {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
 				environments: {
 					...(userEnvs ?? {}),
-					ssr: userEnvs?.ssr ?? {},
+					ssr: {
+						...userSsr,
+						dev: {
+							...userSsrDev,
+							createEnvironment: ssrCreateEnvironment,
+						},
+					},
 				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
@@ -275,6 +351,27 @@ function syncClientScriptsForTemplate(
 		changed,
 		affectedIds: [...new Set([...previousIds, ...nextIds])],
 	}
+}
+
+/** Turn a compile Effect exit into JS source, or call Vite `error` on failure. */
+function compileExitToGeneratedOrReport(
+	ctx: { error(payload: unknown): never },
+	exit: Exit.Exit<string, AeroCompileError>,
+	filePath: string,
+	pluginName: string,
+): string {
+	if (Exit.isSuccess(exit)) return exit.value
+	const raw = exitFailureToAeroDiagnostics(exit)
+	const merged = enrichDiagnosticsWithSourceFrames(
+		raw.map(d => ({
+			...d,
+			file: d.file ?? d.span?.file ?? filePath,
+		})),
+	)
+	const fields = aeroDiagnosticToViteErrorFields(merged[0]!, pluginName)
+	const payload =
+		merged.length > 1 ? { ...fields, message: diagnosticsToSingleMessage(merged) } : fields
+	ctx.error(payload)
 }
 
 /**
@@ -479,6 +576,8 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
 				const filePath = id.slice(AERO_HTML_VIRTUAL_PREFIX.length).replace(/\.aero$/i, '.html')
 				if (!state.config || !state.aliasResult) return null
+				const resolvedConfig = state.config
+				const resolvedAlias = state.aliasResult
 				// So Vite invalidates this virtual module when the source .html changes (HMR).
 				this.addWatchFile(filePath)
 				try {
@@ -510,6 +609,41 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				} catch {
 					return null
 				}
+				const exit = Effect.runSyncExit(
+					htmlCompileTry(filePath, () => {
+						const code = readFileSync(filePath, 'utf-8')
+						const parsed = parse(code)
+						const relativePath = toPosixRelative(filePath, resolvedConfig.root)
+						const baseName = relativePath.replace(/\.html$/i, '')
+						syncClientScriptsForTemplate(parsed, baseName, state.clientScripts)
+						for (let i = 0; i < parsed.clientScripts.length; i++) {
+							parsed.clientScripts[i].content = getClientScriptVirtualUrl(
+								baseName,
+								i,
+								parsed.clientScripts.length,
+							)
+						}
+						return compileTemplate(
+							code,
+							{
+								root: resolvedConfig.root,
+								clientScripts: parsed.clientScripts,
+								blockingScripts: parsed.blockingScripts,
+								inlineScripts: parsed.inlineScripts,
+								resolvePath: resolvedAlias.resolve,
+								importer: filePath,
+							},
+							parsed,
+						)
+					}),
+				)
+				const generated = compileExitToGeneratedOrReport(
+					this,
+					exit,
+					filePath,
+					'vite-plugin-aero-virtuals',
+				)
+				return { code: generated, map: null }
 			}
 
 			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
@@ -540,43 +674,49 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) return null
 			if (!id.endsWith('.html')) return null
 			if (!state.config || !state.aliasResult) return null
+			const resolvedConfig = state.config
+			const resolvedAlias = state.aliasResult
 
-			try {
-				const parsed = parse(code)
+			const exit = Effect.runSyncExit(
+				htmlCompileTry(id, () => {
+					const parsed = parse(code)
 
-				const relativePath = toPosixRelative(id, state.config.root)
-				const baseName = relativePath.replace(/\.html$/i, '')
-				syncClientScriptsForTemplate(parsed, baseName, state.clientScripts)
-				if (parsed.clientScripts.length > 0) {
-					for (let i = 0; i < parsed.clientScripts.length; i++) {
-						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
-							baseName,
-							i,
-							parsed.clientScripts.length
-						)
+					const relativePath = toPosixRelative(id, resolvedConfig.root)
+					const baseName = relativePath.replace(/\.html$/i, '')
+					syncClientScriptsForTemplate(parsed, baseName, state.clientScripts)
+					if (parsed.clientScripts.length > 0) {
+						for (let i = 0; i < parsed.clientScripts.length; i++) {
+							parsed.clientScripts[i].content = getClientScriptVirtualUrl(
+								baseName,
+								i,
+								parsed.clientScripts.length,
+							)
+						}
 					}
-				}
 
-				const generated = compileTemplate(
-					code,
-					{
-						root: state.config.root,
-						clientScripts: parsed.clientScripts,
-						blockingScripts: parsed.blockingScripts,
-						inlineScripts: parsed.inlineScripts,
-						resolvePath: state.aliasResult.resolve,
-						importer: id,
-					},
-					parsed
-				)
-
-				return {
-					code: generated,
-					map: null,
-				}
-			} catch (err: any) {
-				const relativePath = path.relative(state.config.root, id)
-				this.error(`[aero] Error compiling ${relativePath}: ${err.message}`)
+					return compileTemplate(
+						code,
+						{
+							root: resolvedConfig.root,
+							clientScripts: parsed.clientScripts,
+							blockingScripts: parsed.blockingScripts,
+							inlineScripts: parsed.inlineScripts,
+							resolvePath: resolvedAlias.resolve,
+							importer: id,
+						},
+						parsed,
+					)
+				}),
+			)
+			const generated = compileExitToGeneratedOrReport(
+				this,
+				exit,
+				id,
+				'vite-plugin-aero-transform',
+			)
+			return {
+				code: generated,
+				map: null,
 			}
 		},
 	}
@@ -585,7 +725,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 	return {
 		name: 'vite-plugin-aero-ssr',
-		configureServer(server) {
+		configureServer(server: ViteDevServer) {
 			server.middlewares.use(async (req, res, next) => {
 				if (!req.url) return next()
 				if (req.method && req.method.toUpperCase() !== 'GET') return next()
@@ -618,8 +758,10 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 					}
 				}
 
+				let renderPageNameForDiag = resolvePageName(req.url)
 				try {
 					const pageName = resolvePageName(req.url)
+					renderPageNameForDiag = pageName
 					const ssrEnv = server.environments.ssr
 					if (!isRunnableDevEnvironment(ssrEnv)) {
 						throw new Error('[aero] SSR environment must be runnable')
@@ -676,7 +818,10 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 								return
 							}
 							if (result && 'rewrite' in result) {
-								if (result.rewrite.pageName !== undefined) renderPageName = result.rewrite.pageName
+								if (result.rewrite.pageName !== undefined) {
+									renderPageName = result.rewrite.pageName
+									renderPageNameForDiag = renderPageName
+								}
 								const { pageName: _pn, ...rest } = result.rewrite
 								renderInput = { ...renderInput, ...rest }
 							}
@@ -703,7 +848,33 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 					res.setHeader('Content-Type', 'text/html; charset=utf-8')
 					res.end(transformed)
 				} catch (err) {
-					next(err)
+					const root = state.config?.root
+					const pageTemplateHint =
+						root && renderPageNameForDiag
+							? path.join(root, state.dirs.client, 'pages', `${renderPageNameForDiag}.html`)
+							: undefined
+					const diagnostics = enrichDiagnosticsWithSourceFrames(
+						unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {}),
+					)
+					server.config.logger.error(
+						'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
+					)
+					const devDetails = server.config.mode === 'development'
+					if (devDetails) {
+						res.statusCode = 500
+						res.setHeader('Content-Type', 'text/html; charset=utf-8')
+						res.setHeader(
+							AERO_DIAGNOSTICS_HTTP_HEADER,
+							encodeDiagnosticsHeaderValue(diagnostics),
+						)
+						res.end(buildDevSsrErrorHtml(diagnostics))
+						return
+					}
+					res.statusCode = 500
+					res.setHeader('Content-Type', 'text/html; charset=utf-8')
+					res.end(
+						'<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body><h1>Internal Server Error</h1></body></html>',
+					)
 				}
 			})
 		},
@@ -766,23 +937,46 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const staticPlugins = options.staticServerPlugins?.length
 				? [...aeroCorePlugins, ...options.staticServerPlugins]
 				: aeroCorePlugins
-			await renderStaticPages(
-				{
-					root,
-					resolvePath: state.aliasResult!.resolve,
-					dirs: options.dirs,
-					apiPrefix,
-					vitePlugins: staticPlugins,
-					minify: shouldMinifyHtml,
-					site: options.site?.url,
-					redirects: options.redirects,
-					resolvedConfig: state.config!,
-				},
-				outDir
-			)
+			try {
+				await renderStaticPages(
+					{
+						root,
+						resolvePath: state.aliasResult!.resolve,
+						dirs: options.dirs,
+						apiPrefix,
+						vitePlugins: staticPlugins,
+						minify: shouldMinifyHtml,
+						site: options.site?.url,
+						redirects: options.redirects,
+						resolvedConfig: state.config!,
+					},
+					outDir,
+				)
+			} catch (err) {
+				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
+				state.config!.logger.error(
+					'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
+				)
+				process.exitCode = exitCodeForThrown(err)
+				throw err
+			}
 			if (enableNitro) {
-				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects, dirs.dist)
-				await runNitroBuild(root, configCwd)
+				const configCwd = writeGeneratedNitroConfig(
+					root,
+					dirs.server,
+					options.redirects,
+					dirs.dist,
+				)
+				try {
+					await runNitroBuild(root, configCwd)
+				} catch (err) {
+					const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
+					state.config!.logger.error(
+						'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
+					)
+					process.exitCode = AERO_EXIT_NITRO
+					throw err
+				}
 			}
 		},
 	}

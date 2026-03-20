@@ -18,14 +18,19 @@
 		".": {
 			"types": "./dist/index.d.mts",
 			"default": "./dist/index.mjs"
+		},
+		"./vite": {
+			"types": "./dist/vite.d.mts",
+			"default": "./dist/vite.mjs"
 		}
 	},
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "tsdown src/index.ts src/vite.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
+		"@aero-js/core": "workspace:*",
 		"@aero-js/vite": "workspace:*",
 		"jiti": "^2.4.2"
 	},

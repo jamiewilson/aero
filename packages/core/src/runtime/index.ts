@@ -9,6 +9,9 @@
 
 import type { AeroRenderInput, AeroRouteParams, AeroTemplateContext, MountOptions } from '../types'
 import { pagePathToKey, resolvePageTarget } from '../utils/routing'
+import { aeroDevLog } from './dev-log'
+
+export { aeroDevLog }
 
 export class Aero {
 	/** Global values merged into template context (e.g. from content modules). */
@@ -175,9 +178,10 @@ export class Aero {
 			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
 
 			if (!match) {
-				console.warn(
-					`[aero] 404: Route params ${JSON.stringify(combinedParams)} ` +
-						`not found in getStaticPaths for ${matchedPageName}`
+				aeroDevLog(
+					'warn',
+					'AERO_ROUTE',
+					`Route params ${JSON.stringify(combinedParams)} not found in getStaticPaths for ${matchedPageName}`,
 				)
 				return null
 			}
