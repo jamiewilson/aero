@@ -31,9 +31,7 @@ describe('render', () => {
 		const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const result = await render(null)
 		expect(result.html).toBe('')
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining('render() received null')
-		)
+		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('render() received null'))
 		consoleSpy.mockRestore()
 	})
 
@@ -41,9 +39,7 @@ describe('render', () => {
 		const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const result = await render(undefined)
 		expect(result.html).toBe('')
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining('render() received null')
-		)
+		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('render() received null'))
 		consoleSpy.mockRestore()
 	})
 

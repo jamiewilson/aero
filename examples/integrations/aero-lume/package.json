@@ -1,8 +1,8 @@
 {
 	"name": "aero-lume",
 	"version": "0.1.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",

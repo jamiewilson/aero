@@ -24,10 +24,7 @@ When using `@aero-js/content`, enable Shiki highlighting by adding `@shikijs/reh
 import { defineCollection, defineConfig } from '@aero-js/content'
 import { addPreDataLang } from '@aero-js/highlight'
 import rehypeShiki from '@shikijs/rehype'
-import {
-	transformerNotationHighlight,
-	transformerNotationFocus,
-} from '@shikijs/transformers'
+import { transformerNotationHighlight, transformerNotationFocus } from '@shikijs/transformers'
 import { z } from 'zod'
 
 const docs = defineCollection({

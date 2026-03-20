@@ -16,10 +16,7 @@ describe('extractObjectKeys', () => {
 	})
 
 	it('should handle mixed shorthand and full properties', () => {
-		expect(extractObjectKeys('{ debug, title: header.title }')).toEqual([
-			'debug',
-			'title',
-		])
+		expect(extractObjectKeys('{ debug, title: header.title }')).toEqual(['debug', 'title'])
 	})
 
 	it('should ignore spread syntax', () => {
@@ -27,9 +24,10 @@ describe('extractObjectKeys', () => {
 	})
 
 	it('should handle nested objects and arrays', () => {
-		expect(
-			extractObjectKeys('{ nested: { a: 1, b: 2 }, arr: [1, 2, 3] }')
-		).toEqual(['nested', 'arr'])
+		expect(extractObjectKeys('{ nested: { a: 1, b: 2 }, arr: [1, 2, 3] }')).toEqual([
+			'nested',
+			'arr',
+		])
 	})
 
 	it('should handle expressions with parentheses', () => {

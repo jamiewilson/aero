@@ -21,17 +21,14 @@ export class Resolver {
 		this.root = options.root
 		this.rootAbs = path.resolve(this.root)
 		this.importer = options.importer ?? options.root
-		this.resolvePathFn =
-			options.resolvePath || ((v: string, _importer: string) => v)
+		this.resolvePathFn = options.resolvePath || ((v: string, _importer: string) => v)
 	}
 
 	/** Normalize resolved path: root-relative with `/` if under root, else posix-normalized; always forward slashes. */
 	private normalizeResolved(next: string): string {
 		if (path.isAbsolute(next)) {
 			const absolute = path.resolve(next)
-			const isWithinRoot =
-				absolute === this.rootAbs ||
-				absolute.startsWith(this.rootAbs + path.sep)
+			const isWithinRoot = absolute === this.rootAbs || absolute.startsWith(this.rootAbs + path.sep)
 
 			if (isWithinRoot) {
 				next = '/' + path.relative(this.rootAbs, absolute)

@@ -75,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 							if (link.target?.scheme !== 'file') return true
 							return fs.existsSync(link.target.fsPath)
 						})
-					},
+					}
 				)
 			},
 		},
@@ -85,7 +85,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		'aero-language-server',
 		'Aero Language Server',
 		serverOptions,
-		clientOptions,
+		clientOptions
 	)
 	await languageClient.start()
 	context.subscriptions.push({ dispose: () => languageClient?.stop() })
@@ -98,7 +98,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	context.subscriptions.push(
 		vscode.workspace.onDidOpenTextDocument(doc => {
 			trySetAeroLanguage(doc)
-		}),
+		})
 	)
 
 	// ---- Completion Provider ----
@@ -110,13 +110,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			'/',
 			'@',
 			'"',
-			"'",
-		),
+			"'"
+		)
 	)
 
 	// ---- Hover Provider ----
 	context.subscriptions.push(
-		vscode.languages.registerHoverProvider(HTML_SELECTOR, new AeroHoverProvider()),
+		vscode.languages.registerHoverProvider(HTML_SELECTOR, new AeroHoverProvider())
 	)
 
 	// ---- Diagnostics ----
@@ -125,7 +125,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 	// ---- Definition Provider (register last so we win when selector scores tie) ----
 	context.subscriptions.push(
-		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider()),
+		vscode.languages.registerDefinitionProvider(HTML_SELECTOR, new AeroDefinitionProvider())
 	)
 
 	// ---- Cache invalidation ----
@@ -149,7 +149,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			if (event.affectsConfiguration('aero.scopeMode')) {
 				clearScopeCache()
 			}
-		}),
+		})
 	)
 }
 

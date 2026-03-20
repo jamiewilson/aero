@@ -73,9 +73,7 @@ function hasAeroMarkers(text: string): boolean {
 
 function isInAeroProject(filePath: string): boolean {
 	const dir = path.dirname(filePath)
-	const workspaceRoot = vscode.workspace.getWorkspaceFolder(
-		vscode.Uri.file(filePath)
-	)?.uri.fsPath
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath))?.uri.fsPath
 	const key = workspaceRoot ? `${workspaceRoot}::${dir}` : dir
 	const cached = cache.get(key)
 	if (cached !== undefined) return cached
@@ -85,10 +83,7 @@ function isInAeroProject(filePath: string): boolean {
 	return result
 }
 
-function scanUpForProjectMarkers(
-	startDir: string,
-	workspaceRoot?: string
-): boolean {
+function scanUpForProjectMarkers(startDir: string, workspaceRoot?: string): boolean {
 	let current = startDir
 	const fsRoot = path.parse(current).root
 	const stopAt = workspaceRoot ? path.resolve(workspaceRoot) : fsRoot
@@ -99,11 +94,7 @@ function scanUpForProjectMarkers(
 		current = path.dirname(current)
 	}
 
-	if (
-		workspaceRoot &&
-		workspaceRoot !== stopAt &&
-		directoryLooksLikeAero(workspaceRoot)
-	) {
+	if (workspaceRoot && workspaceRoot !== stopAt && directoryLooksLikeAero(workspaceRoot)) {
 		return true
 	}
 
@@ -111,16 +102,11 @@ function scanUpForProjectMarkers(
 }
 
 function directoryLooksLikeAero(dir: string): boolean {
-	for (const viteName of [
-		'vite.config.ts',
-		'vite.config.js',
-		'vite.config.mts',
-	]) {
+	for (const viteName of ['vite.config.ts', 'vite.config.js', 'vite.config.mts']) {
 		if (fileContains(path.join(dir, viteName), PROJECT_MARKERS)) return true
 	}
 
-	if (fileContains(path.join(dir, 'tsconfig.json'), PROJECT_MARKERS))
-		return true
+	if (fileContains(path.join(dir, 'tsconfig.json'), PROJECT_MARKERS)) return true
 	if (fileContains(path.join(dir, 'package.json'), PROJECT_MARKERS)) return true
 
 	return false

@@ -22,10 +22,7 @@ import {
 	collectImportedSpecifiersFromDocument,
 	findInnermostScope,
 } from './utils'
-import {
-	getRequiredPropsFromType,
-	getPropsTypeFromComponent,
-} from './propsValidation'
+import { getRequiredPropsFromType, getPropsTypeFromComponent } from './propsValidation'
 
 const DIAGNOSTIC_SOURCE = 'aero'
 
@@ -88,18 +85,10 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		// Run diagnostics on open and save
 		this.disposables.push(
-			vscode.workspace.onDidOpenTextDocument(doc =>
-				this.updateDiagnostics(doc)
-			),
-			vscode.workspace.onDidSaveTextDocument(doc =>
-				this.updateDiagnostics(doc)
-			),
-			vscode.workspace.onDidChangeTextDocument(e =>
-				this.updateDiagnostics(e.document)
-			),
-			vscode.workspace.onDidCloseTextDocument(doc =>
-				this.collection.delete(doc.uri)
-			)
+			vscode.workspace.onDidOpenTextDocument(doc => this.updateDiagnostics(doc)),
+			vscode.workspace.onDidSaveTextDocument(doc => this.updateDiagnostics(doc)),
+			vscode.workspace.onDidChangeTextDocument(e => this.updateDiagnostics(e.document)),
+			vscode.workspace.onDidCloseTextDocument(doc => this.collection.delete(doc.uri))
 		)
 
 		// Run on all currently open documents
@@ -170,10 +159,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				const end = start + attrMatch[0].length
 				const example = `${attrName}="{ expression }"`
 				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(
-						document.positionAt(start),
-						document.positionAt(end)
-					),
+					new vscode.Range(document.positionAt(start), document.positionAt(end)),
 					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
 					vscode.DiagnosticSeverity.Error
 				)
@@ -254,10 +240,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const importStart = contentStart + importMatch.index
 						const importEnd = importStart + 6
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(
-								document.positionAt(importStart),
-								document.positionAt(importEnd)
-							),
+							new vscode.Range(document.positionAt(importStart), document.positionAt(importEnd)),
 							'Imports in <script is:inline> require type="module" attribute.',
 							vscode.DiagnosticSeverity.Error
 						)
@@ -285,26 +268,18 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		diagnostics: vscode.Diagnostic[]
 	): void {
-		const lastConditionalTypeByDepth = new Map<
-			number,
-			'if' | 'else-if' | null
-		>()
+		const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
 		let depth = 0
 		const ignoredRanges = getIgnoredRanges(text)
 
 		ANY_TAG_REGEX.lastIndex = 0
 		let match: RegExpExecArray | null
 
-		const getLastConditionalType = (
-			currentDepth: number
-		): 'if' | 'else-if' | null => {
+		const getLastConditionalType = (currentDepth: number): 'if' | 'else-if' | null => {
 			return lastConditionalTypeByDepth.get(currentDepth) ?? null
 		}
 
-		const setLastConditionalType = (
-			currentDepth: number,
-			type: 'if' | 'else-if' | null
-		): void => {
+		const setLastConditionalType = (currentDepth: number, type: 'if' | 'else-if' | null): void => {
 			lastConditionalTypeByDepth.set(currentDepth, type)
 		}
 
@@ -315,8 +290,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const fullTag = match[0]
 			const tagName = (match[1] || '').toLowerCase()
 			const isClosingTag = fullTag.startsWith('</')
-			const isSelfClosingTag =
-				/\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
+			const isSelfClosingTag = /\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
 
 			if (isClosingTag) {
 				depth = Math.max(0, depth - 1)
@@ -347,10 +321,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const start = attrBase + attrMatch.index
 						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(
-								document.positionAt(start),
-								document.positionAt(end)
-							),
+							new vscode.Range(document.positionAt(start), document.positionAt(end)),
 							'else-if must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
@@ -371,10 +342,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 						const start = attrBase + attrMatch.index
 						const end = start + attrMatch[0].length
 						const diagnostic = new vscode.Diagnostic(
-							new vscode.Range(
-								document.positionAt(start),
-								document.positionAt(end)
-							),
+							new vscode.Range(document.positionAt(start), document.positionAt(end)),
 							'else must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
@@ -454,8 +422,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 
 	/** Matches props="{ ...varName }" to extract the variable name. */
-	private static readonly PROPS_SPREAD_REGEX =
-		/\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
+	private static readonly PROPS_SPREAD_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
 
 	// -----------------------------------------------------------------------
 	// 4b. Cross-file prop validation
@@ -488,16 +455,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 			const importedSpecifier = imports.get(importName)
 			if (!importedSpecifier) continue
 
-			const rawResolved = resolver.resolve(
-				importedSpecifier,
-				document.uri.fsPath
-			)
+			const rawResolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
 			const resolvedPath =
 				rawResolved &&
 				(fs.existsSync(rawResolved)
 					? rawResolved
-					: !rawResolved.endsWith('.html') &&
-							fs.existsSync(rawResolved + '.html')
+					: !rawResolved.endsWith('.html') && fs.existsSync(rawResolved + '.html')
 						? rawResolved + '.html'
 						: null)
 			if (!resolvedPath) continue
@@ -508,14 +471,9 @@ export class AeroDiagnostics implements vscode.Disposable {
 			if (suffix === 'layout') {
 				const attrKeys = this.getAttributeKeysFromTag(attrs)
 				if (attrKeys.length > 0) {
-					const sink = this.traceLayoutToSinkProps(
-						resolvedPath,
-						resolver
-					)
+					const sink = this.traceLayoutToSinkProps(resolvedPath, resolver)
 					if (sink?.requiredProps?.length) {
-						const missing = sink.requiredProps.filter(
-							req => !attrKeys.includes(req)
-						)
+						const missing = sink.requiredProps.filter(req => !attrKeys.includes(req))
 						if (missing.length > 0) {
 							this.pushPropDiagnostic(
 								document,
@@ -545,22 +503,14 @@ export class AeroDiagnostics implements vscode.Disposable {
 			)
 			if (!requiredProps || requiredProps.length === 0) continue
 
-			const propsSpreadMatch = attrs.match(
-				/(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/
-			)
+			const propsSpreadMatch = attrs.match(/(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/)
 			if (propsSpreadMatch) {
 				const value = propsSpreadMatch[1].trim()
-				const spreadVar = value.match(
-					AeroDiagnostics.PROPS_SPREAD_REGEX
-				)?.[1]
+				const spreadVar = value.match(AeroDiagnostics.PROPS_SPREAD_REGEX)?.[1]
 				if (spreadVar) {
 					const def = definedVars.get(spreadVar)
-					const passedKeys = def?.properties
-						? Array.from(def.properties)
-						: []
-					const missing = requiredProps.filter(
-						req => !passedKeys.includes(req)
-					)
+					const passedKeys = def?.properties ? Array.from(def.properties) : []
+					const missing = requiredProps.filter(req => !passedKeys.includes(req))
 					if (missing.length > 0) {
 						this.pushPropDiagnostic(
 							document,
@@ -659,8 +609,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				childResolved &&
 				(fs.existsSync(childResolved)
 					? childResolved
-					: !childResolved.endsWith('.html') &&
-							fs.existsSync(childResolved + '.html')
+					: !childResolved.endsWith('.html') && fs.existsSync(childResolved + '.html')
 						? childResolved + '.html'
 						: null)
 			if (!childPath) break
@@ -674,9 +623,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 					childPath,
 					resolver
 				)
-				return required?.length
-					? { requiredProps: required }
-					: null
+				return required?.length ? { requiredProps: required } : null
 			}
 			currentPath = childPath
 		}
@@ -804,11 +751,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				? `Component '${ref.content}' is not defined`
 				: `Variable '${ref.content}' is not defined`
 
-			const diagnostic = new vscode.Diagnostic(
-				ref.range,
-				message,
-				vscode.DiagnosticSeverity.Error
-			)
+			const diagnostic = new vscode.Diagnostic(ref.range, message, vscode.DiagnosticSeverity.Error)
 			diagnostic.source = DIAGNOSTIC_SOURCE
 			diagnostics.push(diagnostic)
 		}
@@ -819,8 +762,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 	// -----------------------------------------------------------------------
 
 	/** Match props="{ a, b }" or data-props="{ a, b }" (single braces per Aero spec) and capture the attribute value. */
-	private static readonly PROPS_VALUE_REGEX =
-		/(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
+	private static readonly PROPS_VALUE_REGEX = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
 
 	private checkUnusedVariables(
 		document: vscode.TextDocument,
@@ -835,9 +777,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		// Variables in props expressions are "used" from build scope (injected into client script)
 		AeroDiagnostics.PROPS_VALUE_REGEX.lastIndex = 0
 		let pdMatch: RegExpExecArray | null
-		while (
-			(pdMatch = AeroDiagnostics.PROPS_VALUE_REGEX.exec(text)) !== null
-		) {
+		while ((pdMatch = AeroDiagnostics.PROPS_VALUE_REGEX.exec(text)) !== null) {
 			const value = pdMatch[2]
 			const identifiers = value.match(/\b([a-zA-Z_$][\w$]*)\b/g)
 			if (identifiers) {
@@ -848,40 +788,16 @@ export class AeroDiagnostics implements vscode.Disposable {
 		}
 
 		// Check unused in is:build scope (template + build scripts)
-		this.checkUnusedInScope(
-			document,
-			text,
-			'build',
-			usedInTemplate,
-			diagnostics
-		)
+		this.checkUnusedInScope(document, text, 'build', usedInTemplate, diagnostics)
 
 		// Check unused in bundled scope (plain/client scripts)
-		this.checkUnusedInScope(
-			document,
-			text,
-			'bundled',
-			usedInTemplate,
-			diagnostics
-		)
+		this.checkUnusedInScope(document, text, 'bundled', usedInTemplate, diagnostics)
 
 		// Check unused in is:inline scope (inline scripts only)
-		this.checkUnusedInScope(
-			document,
-			text,
-			'inline',
-			usedInTemplate,
-			diagnostics
-		)
+		this.checkUnusedInScope(document, text, 'inline', usedInTemplate, diagnostics)
 
 		// Check unused in is:blocking scope (blocking scripts only)
-		this.checkUnusedInScope(
-			document,
-			text,
-			'blocking',
-			usedInTemplate,
-			diagnostics
-		)
+		this.checkUnusedInScope(document, text, 'blocking', usedInTemplate, diagnostics)
 	}
 
 	private checkUnusedInScope(
@@ -895,9 +811,8 @@ export class AeroDiagnostics implements vscode.Disposable {
 
 		// Get script content for this scope only
 		const scopeContent = this.getScriptContentByScope(text, scope)
-		const maskedContent = maskJsComments(scopeContent).replace(
-			/(['"])(?:(?=(\\?))\2.)*?\1/g,
-			() => ' '.repeat(20)
+		const maskedContent = maskJsComments(scopeContent).replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, () =>
+			' '.repeat(20)
 		)
 
 		for (const [name, def] of definedVars) {
@@ -947,10 +862,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 		text: string,
 		scope: 'build' | 'bundled' | 'inline' | 'blocking'
 	): string {
-		const scopeAttr: Record<
-			'build' | 'bundled' | 'inline' | 'blocking',
-			RegExp
-		> = {
+		const scopeAttr: Record<'build' | 'bundled' | 'inline' | 'blocking', RegExp> = {
 			build: /\bis:build\b/,
 			bundled: /(?!)/, // bundled = plain/client scripts; match via fallback below
 			inline: /\bis:inline\b/,
@@ -1007,17 +919,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 	}
 }
 
-function findParentScope(
-	scopes: TemplateScope[],
-	child: TemplateScope
-): TemplateScope | null {
+function findParentScope(scopes: TemplateScope[], child: TemplateScope): TemplateScope | null {
 	let best: TemplateScope | null = null
 	for (const scope of scopes) {
 		if (scope === child) continue
-		if (
-			child.startOffset >= scope.startOffset &&
-			child.endOffset <= scope.endOffset
-		) {
+		if (child.startOffset >= scope.startOffset && child.endOffset <= scope.endOffset) {
 			if (!best) {
 				best = scope
 				continue
@@ -1045,8 +951,7 @@ function getIgnoredRanges(text: string): Array<{ start: number; end: number }> {
 		const tagName = scriptMatch[1]
 		const closeTagLen = `</${tagName}>`.length
 		const contentLen = scriptMatch[2].length
-		const start =
-			scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
+		const start = scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
 		const end = start + contentLen
 		ranges.push({ start, end })
 	}
@@ -1054,10 +959,7 @@ function getIgnoredRanges(text: string): Array<{ start: number; end: number }> {
 	return ranges
 }
 
-function isInRanges(
-	offset: number,
-	ranges: Array<{ start: number; end: number }>
-): boolean {
+function isInRanges(offset: number, ranges: Array<{ start: number; end: number }>): boolean {
 	for (const range of ranges) {
 		if (offset >= range.start && offset < range.end) return true
 	}

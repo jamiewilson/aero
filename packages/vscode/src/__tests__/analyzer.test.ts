@@ -86,9 +86,7 @@ describe('collectTemplateReferences', () => {
     `
 		const refs = collectTemplateReferences(mockDoc, text)
 
-		const variableRefs = refs.filter(
-			r => !r.isComponent && r.content !== 'props'
-		)
+		const variableRefs = refs.filter(r => !r.isComponent && r.content !== 'props')
 		expect(variableRefs.map(r => r.content)).not.toContain('disabled')
 		expect(variableRefs.map(r => r.content)).not.toContain('hidden')
 		expect(variableRefs.map(r => r.content)).not.toContain('readonly')

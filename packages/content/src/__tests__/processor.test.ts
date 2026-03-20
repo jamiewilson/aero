@@ -75,8 +75,7 @@ describe('initProcessor', () => {
 
 	it('applies transformers via @shikijs/rehype', async () => {
 		const rehypeShiki = (await import('@shikijs/rehype')).default
-		const { transformerNotationHighlight } =
-			await import('@shikijs/transformers')
+		const { transformerNotationHighlight } = await import('@shikijs/transformers')
 
 		await initProcessor({
 			rehypePlugins: [
@@ -92,9 +91,7 @@ describe('initProcessor', () => {
 		})
 		const proc = getProcessor()
 
-		const result = await proc.process(
-			'```js\nconst x = 1 // [!code highlight]\n```'
-		)
+		const result = await proc.process('```js\nconst x = 1 // [!code highlight]\n```')
 		const html = String(result)
 		expect(html).toContain('highlighted')
 	})
@@ -237,10 +234,7 @@ describe('custom rehype plugins', () => {
 		}
 
 		await initProcessor({
-			rehypePlugins: [
-				[rehypeShiki, { theme: 'github-light', langs: ['js'] }],
-				rehypeAddDataAttr,
-			],
+			rehypePlugins: [[rehypeShiki, { theme: 'github-light', langs: ['js'] }], rehypeAddDataAttr],
 		})
 		const proc = getProcessor()
 

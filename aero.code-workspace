@@ -5,10 +5,6 @@
 			"path": ".",
 		},
 		{
-			"name": "website",
-			"path": "website",
-		},
-		{
 			"name": "examples",
 			"path": "examples",
 		},
@@ -17,32 +13,12 @@
 			"path": "packages/templates",
 		},
 		{
-			"name": "core",
-			"path": "packages/core",
+			"name": "website",
+			"path": "website",
 		},
 		{
-			"name": "vite",
-			"path": "packages/vite",
-		},
-		{
-			"name": "create",
-			"path": "packages/create",
-		},
-		{
-			"name": "config",
-			"path": "packages/config",
-		},
-		{
-			"name": "content",
-			"path": "packages/content",
-		},
-		{
-			"name": "highlight",
-			"path": "packages/highlight",
-		},
-		{
-			"name": "vscode",
-			"path": "packages/vscode",
+			"name": "packages",
+			"path": "packages",
 		},
 	],
 	"settings": {},

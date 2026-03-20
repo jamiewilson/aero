@@ -109,25 +109,13 @@ vi.mock('../pathResolver', () => ({
 		root: '/workspace',
 		resolve: vi.fn((specifier: string) => {
 			if (specifier.startsWith('@components/')) {
-				return (
-					'/workspace/client/components/' +
-					specifier.replace('@components/', '') +
-					'.html'
-				)
+				return '/workspace/client/components/' + specifier.replace('@components/', '') + '.html'
 			}
 			if (specifier.startsWith('@layouts/')) {
-				return (
-					'/workspace/client/layouts/' +
-					specifier.replace('@layouts/', '') +
-					'.html'
-				)
+				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '') + '.html'
 			}
 			if (specifier.startsWith('@content/')) {
-				return (
-					'/workspace/client/content/' +
-					specifier.replace('@content/', '') +
-					'.ts'
-				)
+				return '/workspace/client/content/' + specifier.replace('@content/', '') + '.ts'
 			}
 			return '/workspace/' + specifier
 		}),
@@ -164,12 +152,7 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 1 } as any
 		const context = { triggerCharacter: '<', isIncomplete: false } as any
 
-		const result = provider.provideCompletionItems(
-			doc,
-			position,
-			{} as any,
-			context
-		)
+		const result = provider.provideCompletionItems(doc, position, {} as any, context)
 
 		expect(result).not.toBeNull()
 	})
@@ -184,12 +167,7 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 5 } as any
 		const context = {} as any
 
-		const result = provider.provideCompletionItems(
-			doc,
-			position,
-			{} as any,
-			context
-		)
+		const result = provider.provideCompletionItems(doc, position, {} as any, context)
 
 		expect(result).not.toBeNull()
 	})
@@ -204,12 +182,7 @@ describe('AeroCompletionProvider', () => {
 		const position = { line: 0, character: 6 } as any
 		const context = {} as any
 
-		const result = provider.provideCompletionItems(
-			doc,
-			position,
-			{} as any,
-			context
-		)
+		const result = provider.provideCompletionItems(doc, position, {} as any, context)
 
 		expect(result).not.toBeNull()
 		const items = result as any[]
@@ -227,12 +200,7 @@ describe('AeroCompletionProvider', () => {
 
 		const position = { line: 0, character: 17 } as any // after '@components'
 
-		const result = provider.provideCompletionItems(
-			doc,
-			position,
-			{} as any,
-			{} as any
-		)
+		const result = provider.provideCompletionItems(doc, position, {} as any, {} as any)
 
 		expect(result).not.toBeNull()
 	})

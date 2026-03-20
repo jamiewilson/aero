@@ -110,9 +110,7 @@ export function parse(html: string): ParseResult {
 		const src = scriptEl.getAttribute(CONST.ATTR_SRC) ?? ''
 		const dataProps = CONST.ATTR_PREFIX + CONST.ATTR_PROPS
 		let passData =
-			scriptEl.getAttribute(CONST.ATTR_PROPS) ??
-			scriptEl.getAttribute(dataProps) ??
-			undefined
+			scriptEl.getAttribute(CONST.ATTR_PROPS) ?? scriptEl.getAttribute(dataProps) ?? undefined
 		// Bare props shorthand: no value → spread local props
 		const hasProps = scriptEl.hasAttribute(CONST.ATTR_PROPS) || scriptEl.hasAttribute(dataProps)
 		if (passData === '' && hasProps) {
@@ -183,8 +181,7 @@ export function parse(html: string): ParseResult {
 
 	for (const el of toRemove) el.remove()
 
-	const buildScript =
-		buildContent.length > 0 ? { content: buildContent.join('\n') } : null
+	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
 
 	let template: string
 	if (isFullDocument) {

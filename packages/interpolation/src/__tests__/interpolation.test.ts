@@ -17,9 +17,7 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 		const segments = tokenizeCurlyInterpolation('hello world', {
 			attributeMode: false,
 		})
-		expect(segments).toEqual([
-			{ kind: 'literal', start: 0, end: 11, value: 'hello world' },
-		])
+		expect(segments).toEqual([{ kind: 'literal', start: 0, end: 11, value: 'hello world' }])
 	})
 
 	it('parses simple interpolation', () => {
@@ -57,9 +55,7 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 		const segments = tokenizeCurlyInterpolation(input, { attributeMode: false })
 		expect(segments).toHaveLength(1)
 		expect(segments[0].kind).toBe('interpolation')
-		expect((segments[0] as { expression: string }).expression.trim()).toContain(
-			"'\"'"
-		)
+		expect((segments[0] as { expression: string }).expression.trim()).toContain("'\"'")
 	})
 
 	it('comment containing braces does not end interpolation', () => {
@@ -67,9 +63,7 @@ describe('tokenizeCurlyInterpolation (text mode)', () => {
 		const segments = tokenizeCurlyInterpolation(input, { attributeMode: false })
 		expect(segments).toHaveLength(1)
 		expect(segments[0].kind).toBe('interpolation')
-		expect((segments[0] as { expression: string }).expression).toContain(
-			'a /* } */'
-		)
+		expect((segments[0] as { expression: string }).expression).toContain('a /* } */')
 	})
 
 	it('line comment containing }', () => {
@@ -134,31 +128,23 @@ describe('tokenizeCurlyInterpolation (attribute mode)', () => {
 		const segments = tokenizeCurlyInterpolation('{name}', {
 			attributeMode: true,
 		})
-		expect(segments).toEqual([
-			{ kind: 'interpolation', start: 0, end: 6, expression: 'name' },
-		])
+		expect(segments).toEqual([{ kind: 'interpolation', start: 0, end: 6, expression: 'name' }])
 	})
 })
 
 describe('compileInterpolationFromSegments', () => {
 	it('literals only → unchanged (no backticks)', () => {
-		const segments: Segment[] = [
-			{ kind: 'literal', start: 0, end: 5, value: 'hello' },
-		]
+		const segments: Segment[] = [{ kind: 'literal', start: 0, end: 5, value: 'hello' }]
 		expect(compileInterpolationFromSegments(segments)).toBe('hello')
 	})
 
 	it('escapes backticks in literal segments', () => {
-		const segments: Segment[] = [
-			{ kind: 'literal', start: 0, end: 7, value: '`world`' },
-		]
+		const segments: Segment[] = [{ kind: 'literal', start: 0, end: 7, value: '`world`' }]
 		expect(compileInterpolationFromSegments(segments)).toBe('\\`world\\`')
 	})
 
 	it('interpolation segment → ${expression}', () => {
-		const segments: Segment[] = [
-			{ kind: 'interpolation', start: 0, end: 6, expression: 'name' },
-		]
+		const segments: Segment[] = [{ kind: 'interpolation', start: 0, end: 6, expression: 'name' }]
 		expect(compileInterpolationFromSegments(segments)).toBe('${name}')
 	})
 

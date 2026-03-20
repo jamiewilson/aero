@@ -296,12 +296,12 @@ Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) 
 
 ## Summary
 
-| Area                    | Approach                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
+| Area                    | Approach                                                                                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Component props**     | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread and layout attributes (with limitations) |
-| **Content globals**     | Export typed objects from `content/*.ts`; use `satisfies` for validation                 |
-| **Content collections** | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data` |
-| **Ambient globals**     | Use `@aero-js/core/env`; extend via project `env.d.ts`                                 |
-| **Path aliases**        | Configure in `tsconfig.json` and keep in sync with Aero `dirs`                           |
+| **Content globals**     | Export typed objects from `content/*.ts`; use `satisfies` for validation                                                                                             |
+| **Content collections** | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data`                                                                             |
+| **Ambient globals**     | Use `@aero-js/core/env`; extend via project `env.d.ts`                                                                                                               |
+| **Path aliases**        | Configure in `tsconfig.json` and keep in sync with Aero `dirs`                                                                                                       |
 
 The language server provides IntelliSense, diagnostics, and navigation for build scripts. Typing props and content data gives you better autocomplete and catches mistakes at edit time.

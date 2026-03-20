@@ -26,10 +26,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 
 		switch (classification.kind) {
 			case 'import-path': {
-				const resolved = resolver.resolve(
-					classification.specifier,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
 				return new vscode.Hover(
 					new vscode.MarkdownString(
@@ -40,10 +37,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 			}
 
 			case 'import-name': {
-				const resolved = resolver.resolve(
-					classification.specifier,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
 				return new vscode.Hover(
 					new vscode.MarkdownString(
@@ -58,12 +52,9 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 				const value = classification.value
 				const resolved = resolver.resolve(value, document.uri.fsPath)
 				if (!resolved) return null
-				const label =
-					classification.kind === 'script-src' ? 'Script source' : 'Link href'
+				const label = classification.kind === 'script-src' ? 'Script source' : 'Link href'
 				return new vscode.Hover(
-					new vscode.MarkdownString(
-						`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``
-					),
+					new vscode.MarkdownString(`**${label}**: \`${value}\`\n\nResolved to: \`${resolved}\``),
 					classification.range
 				)
 			}
@@ -76,8 +67,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 
-				const typeLabel =
-					classification.suffix === 'component' ? 'Component' : 'Layout'
+				const typeLabel = classification.suffix === 'component' ? 'Component' : 'Layout'
 				const md = new vscode.MarkdownString()
 				md.appendMarkdown(`**${typeLabel}**: \`${classification.tagName}\`\n\n`)
 				md.appendMarkdown(`File: \`${resolved}\`\n\n`)
@@ -92,10 +82,7 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 			}
 
 			case 'content-global': {
-				const resolved = resolver.resolve(
-					classification.alias,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
 				if (!resolved) return null
 
 				const md = new vscode.MarkdownString()

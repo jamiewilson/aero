@@ -3,11 +3,7 @@ import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 import { CONTENT_GLOBALS } from './constants'
-import {
-	collectDefinedVariables,
-	collectTemplateScopes,
-	VariableDefinition,
-} from './analyzer'
+import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from './analyzer'
 import {
 	kebabToCamelCase,
 	collectImportedSpecifiersFromDocument,
@@ -35,19 +31,13 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 
 		switch (classification.kind) {
 			case 'import-path': {
-				const resolved = resolver.resolve(
-					classification.specifier,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
 			}
 
 			case 'import-name': {
-				const resolved = resolver.resolve(
-					classification.specifier,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
 			}
@@ -61,9 +51,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'component-tag': {
-				const imports = collectImportedSpecifiersFromDocument(
-					document.getText()
-				)
+				const imports = collectImportedSpecifiersFromDocument(document.getText())
 				const importName = kebabToCamelCase(classification.baseName)
 				const importedSpecifier = imports.get(importName)
 				const alias =
@@ -77,10 +65,7 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'content-global': {
-				const resolved = resolver.resolve(
-					classification.alias,
-					document.uri.fsPath
-				)
+				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
 				if (!resolved) return null
 				const targetLine = classification.propertyPath
 					? findPropertyLine(resolved, classification.propertyPath)
@@ -122,9 +107,7 @@ function resolveExpressionIdentifierDefinition(
 	const currentScope = findInnermostScope(scopes, offset)
 	if (currentScope) {
 		if (identifier === currentScope.itemName) {
-			return [
-				makeDocumentLink(originRange, document.uri, currentScope.itemRange),
-			]
+			return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)]
 		}
 
 		if (identifier === currentScope.sourceRoot) {
@@ -132,34 +115,16 @@ function resolveExpressionIdentifierDefinition(
 			if (sourceDef) {
 				return [makeDocumentLink(originRange, document.uri, sourceDef.range)]
 			}
-			return [
-				makeDocumentLink(originRange, document.uri, currentScope.sourceRange),
-			]
+			return [makeDocumentLink(originRange, document.uri, currentScope.sourceRange)]
 		}
 
-		const chain = getDotChainAt(
-			document.lineAt(position.line).text,
-			position.character
-		)
-		if (
-			chain &&
-			chain.segments.length >= 2 &&
-			chain.segments[0] === currentScope.itemName
-		) {
-			const contentRef = resolveContentRefFromExpression(
-				currentScope.sourceExpr,
-				buildVars
-			)
+		const chain = getDotChainAt(document.lineAt(position.line).text, position.character)
+		if (chain && chain.segments.length >= 2 && chain.segments[0] === currentScope.itemName) {
+			const contentRef = resolveContentRefFromExpression(currentScope.sourceExpr, buildVars)
 			if (contentRef) {
-				const resolved = resolver?.resolve(
-					contentRef.alias,
-					document.uri.fsPath
-				)
+				const resolved = resolver?.resolve(contentRef.alias, document.uri.fsPath)
 				if (resolved) {
-					const propertyPath = [
-						...contentRef.propertyPath,
-						...chain.segments.slice(1),
-					]
+					const propertyPath = [...contentRef.propertyPath, ...chain.segments.slice(1)]
 					const line = findPropertyLine(resolved, propertyPath)
 					return [makeLink(originRange, resolved, line)]
 				}
@@ -206,10 +171,7 @@ function resolveGenericChainDefinition(
 	const uptoCursor = chainAtCursor.segments.slice(1, cursorSegmentIndex + 1)
 
 	if (root in CONTENT_GLOBALS) {
-		const resolved = resolver?.resolve(
-			CONTENT_GLOBALS[root],
-			document.uri.fsPath
-		)
+		const resolved = resolver?.resolve(CONTENT_GLOBALS[root], document.uri.fsPath)
 		if (!resolved) return null
 		const line = findPropertyLine(resolved, uptoCursor)
 		return [makeLink(originRange, resolved, line)]
@@ -218,10 +180,7 @@ function resolveGenericChainDefinition(
 	const rootDef = buildVars.get(root)
 	if (!rootDef?.contentRef) return null
 
-	const resolved = resolver?.resolve(
-		rootDef.contentRef.alias,
-		document.uri.fsPath
-	)
+	const resolved = resolver?.resolve(rootDef.contentRef.alias, document.uri.fsPath)
 	if (!resolved) return null
 
 	const propertyPath = [...rootDef.contentRef.propertyPath, ...uptoCursor]
@@ -233,10 +192,9 @@ function resolveContentRefFromExpression(
 	expression: string,
 	buildVars: Map<string, VariableDefinition>
 ): ContentRef | null {
-	const chainMatch =
-		/^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
-			expression.trim()
-		)
+	const chainMatch = /^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
+		expression.trim()
+	)
 	if (!chainMatch) return null
 
 	const root = chainMatch[1]
@@ -279,18 +237,12 @@ function getDotChainAt(
 	if (!isIdentChar(ch) && ch !== '.' && !isIdentChar(prevCh)) return null
 
 	let start = offset
-	while (
-		start > 0 &&
-		(isIdentChar(lineText[start - 1]) || lineText[start - 1] === '.')
-	) {
+	while (start > 0 && (isIdentChar(lineText[start - 1]) || lineText[start - 1] === '.')) {
 		start--
 	}
 
 	let end = offset
-	while (
-		end < lineText.length &&
-		(isIdentChar(lineText[end]) || lineText[end] === '.')
-	) {
+	while (end < lineText.length && (isIdentChar(lineText[end]) || lineText[end] === '.')) {
 		end++
 	}
 

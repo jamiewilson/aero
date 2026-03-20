@@ -52,9 +52,7 @@ export type TemplateReference = {
 
 /** Replace JS comments with spaces to preserve character indices for range calculations. */
 export function maskJsComments(text: string): string {
-	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match =>
-		' '.repeat(match.length)
-	)
+	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
 }
 
 function isInsideHtmlComment(text: string, position: number): boolean {
@@ -194,8 +192,7 @@ export function collectDefinedVariables(
 		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
 		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
 			const body = declMatch[1]
-			const bodyStart =
-				contentStart + declMatch.index + declMatch[0].indexOf(body)
+			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
 
 			// Split by comma, handle aliases
 			const parts = body.split(',')
@@ -299,8 +296,7 @@ export function collectVariablesByScope(
 			while ((pdMatch = propsRegex.exec(rawAttrs)) !== null) {
 				const value = pdMatch[2]
 				const valueStartInAttrs = pdMatch.index + pdMatch[0].indexOf(value)
-				const rawAttrsStart =
-					scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
+				const rawAttrsStart = scriptMatch.index + scriptMatch[0].indexOf(rawAttrs)
 				const idRegex = /\b([a-zA-Z_$][\w$]*)\b/g
 				let idMatch: RegExpExecArray | null
 				while ((idMatch = idRegex.exec(value)) !== null) {
@@ -343,8 +339,7 @@ export function collectVariablesByScope(
 
 		// Collect declarations for all scopes
 		// Simple identifier: const x = ...
-		const simpleDeclRegex =
-			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
+		const simpleDeclRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
 		let declMatch: RegExpExecArray | null
 		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
 			const name = declMatch[1]
@@ -383,8 +378,7 @@ export function collectVariablesByScope(
 		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
 		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
 			const body = declMatch[1]
-			const bodyStart =
-				contentStart + declMatch.index + declMatch[0].indexOf(body)
+			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
 
 			const parts = body.split(',')
 			let currentOffset = 0
@@ -508,10 +502,9 @@ function parseEachAttribute(
 	}
 
 	const expr = exprContent.trim()
-	const exprMatch =
-		/^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(
-			expr
-		)
+	const exprMatch = /^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(
+		expr
+	)
 	if (!exprMatch) return null
 
 	const itemName = exprMatch[1]
@@ -535,16 +528,10 @@ function parseEachAttribute(
 
 	return {
 		itemName,
-		itemRange: new vscode.Range(
-			document.positionAt(itemStart),
-			document.positionAt(itemEnd)
-		),
+		itemRange: new vscode.Range(document.positionAt(itemStart), document.positionAt(itemEnd)),
 		sourceExpr,
 		sourceRoot,
-		sourceRange: new vscode.Range(
-			document.positionAt(sourceStart),
-			document.positionAt(sourceEnd)
-		),
+		sourceRange: new vscode.Range(document.positionAt(sourceStart), document.positionAt(sourceEnd)),
 	}
 }
 
@@ -567,9 +554,7 @@ export function collectTemplateReferences(
 	)
 
 	// 1. Mask HTML comments
-	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match =>
-		' '.repeat(match.length)
-	)
+	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
 
 	// 2. Scan tags and attributes
 	// We scan for tags in the masked text to locate attributes reliably
@@ -609,15 +594,12 @@ export function collectTemplateReferences(
 		// Helper to mask value in global text
 		const maskRange = (start: number, length: number) => {
 			maskedText =
-				maskedText.substring(0, start) +
-				' '.repeat(length) +
-				maskedText.substring(start + length)
+				maskedText.substring(0, start) + ' '.repeat(length) + maskedText.substring(start + length)
 		}
 
 		// Regex for attributes: name="value" or name
 		// Supports: foo="bar", foo='bar', foo (standalone), @foo="bar", :foo="bar"
-		const attrRegex =
-			/(?:\s|^)([a-zA-Z0-9-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
+		const attrRegex = /(?:\s|^)([a-zA-Z0-9-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
 		let attrMatch: RegExpExecArray | null
 
 		while ((attrMatch = attrRegex.exec(attrsContent)) !== null) {
@@ -632,17 +614,13 @@ export function collectTemplateReferences(
 			const absNameStart = attrsStart + matchStartInAttrs + nameStartInMatch
 
 			// Check for Alpine/Special attributes
-			const isAlpine =
-				name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')
+			const isAlpine = name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')
 
 			if (hasValue) {
 				// Value exists
 				const quote = attrMatch[3]
 				// structure: [space]name [=] [quote] value [quote]
-				const quoteIndex = fullMatch.indexOf(
-					quote,
-					nameStartInMatch + name.length
-				)
+				const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
 				const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
 
 				if (isAlpine) {
@@ -659,13 +637,7 @@ export function collectTemplateReferences(
 					for (const seg of segments) {
 						if (seg.kind === 'interpolation') {
 							const contentStart = absValueStart + seg.start + 1 // +1 for opening {
-							extractIdentifiers(
-								seg.expression,
-								contentStart,
-								document,
-								refs,
-								true
-							)
+							extractIdentifiers(seg.expression, contentStart, document, refs, true)
 						}
 					}
 					// MASK value so global scan skips it
@@ -738,8 +710,7 @@ function extractIdentifiers(
 		if (charBefore === '.') {
 			// Check for spread operator (...)
 			const isSpread =
-				indexInContent >= 3 &&
-				content.slice(indexInContent - 3, indexInContent) === '...'
+				indexInContent >= 3 && content.slice(indexInContent - 3, indexInContent) === '...'
 			if (!isSpread) continue
 		}
 
@@ -770,8 +741,7 @@ function extractIdentifiers(
 			// propName is "bar"
 			const matchStartInAfter = propMatch.index
 			const nameStartInMatch = propMatch[0].lastIndexOf(propName)
-			const propAbsStart =
-				startOffset + currentOffsetRel + matchStartInAfter + nameStartInMatch
+			const propAbsStart = startOffset + currentOffsetRel + matchStartInAfter + nameStartInMatch
 
 			propertyRanges.push(
 				new vscode.Range(

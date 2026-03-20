@@ -55,9 +55,7 @@ export interface ShikiConfigMultipleThemes {
 	 *
 	 * @see https://shiki.style/guide/dual-themes
 	 */
-	themes: Partial<
-		Record<string, ThemeRegistrationAny | StringLiteralUnion<BundledTheme>>
-	>
+	themes: Partial<Record<string, ThemeRegistrationAny | StringLiteralUnion<BundledTheme>>>
 
 	/**
 	 * The default theme applied via inline `color` style.
@@ -119,10 +117,7 @@ export interface ShikiConfigMultipleThemes {
  * @see https://shiki.style/themes — Available themes
  * @see https://shiki.style/guide/transformers — Transformer plugins
  */
-export type ShikiConfig = (
-	| ShikiConfigSingleTheme
-	| ShikiConfigMultipleThemes
-) & {
+export type ShikiConfig = (ShikiConfigSingleTheme | ShikiConfigMultipleThemes) & {
 	/**
 	 * Languages to preload. Accepts bundled language IDs or custom `LanguageInput` registrations.
 	 * If omitted, a default set is loaded: `['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'bash']`.

@@ -68,7 +68,11 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				// This ensures the processor is configured before any modules are loaded.
 				await initProcessor(contentConfig.markdown)
 			} catch (err: any) {
-				if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ENOENT' || err.message === 'ENOENT') {
+				if (
+					err.code === 'ERR_MODULE_NOT_FOUND' ||
+					err.code === 'ENOENT' ||
+					err.message === 'ENOENT'
+				) {
 					config.logger.warn(
 						`[aero:content] No config found at "${configPath}". Single-file imports and render() still work with defaults.`
 					)
@@ -98,20 +102,11 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const root = resolvedConfig.root
 				const contentDir = getContentRoot(root)
 				const idPath = id.split('?')[0]
-				const absolutePath = path.isAbsolute(idPath)
-					? idPath
-					: path.resolve(root, idPath)
+				const absolutePath = path.isAbsolute(idPath) ? idPath : path.resolve(root, idPath)
 				const relToContent = path.relative(contentDir, absolutePath)
-				if (
-					!relToContent.startsWith('..') &&
-					!path.isAbsolute(relToContent)
-				) {
+				if (!relToContent.startsWith('..') && !path.isAbsolute(relToContent)) {
 					try {
-						const doc = await loadSingleFile(
-							absolutePath,
-							contentConfig,
-							root
-						)
+						const doc = await loadSingleFile(absolutePath, contentConfig, root)
 						this.addWatchFile(absolutePath)
 						return `export default ${JSON.stringify(doc)}`
 					} catch (err) {
@@ -133,10 +128,7 @@ export function getCollection() {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const loaded = await loadAllCollections(
-				contentConfig,
-				resolvedConfig.root
-			)
+			const loaded = await loadAllCollections(contentConfig, resolvedConfig.root)
 			serialized = serializeContentModule(loaded)
 			return serialized
 		},

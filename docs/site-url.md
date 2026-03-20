@@ -32,7 +32,7 @@ export default {
 
 | Context                       | How to use it                                                                                                                                   |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Build scripts / templates** | `Aero.site.url` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags).                                                         |
+| **Build scripts / templates** | `Aero.site.url` — the canonical URL string (e.g. in `<link rel="canonical">` or meta tags).                                                     |
 | **Build-time JS (Vite)**      | `import.meta.env.SITE` — replaced at build time by the plugin. See [Environment variables](environment-variables.md) for `.env` and TypeScript. |
 
 Example in a layout:

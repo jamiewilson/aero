@@ -16,9 +16,7 @@ const BUILD_SCRIPT_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
  * parsing each <script is:build> block and merging results. Use this when
  * you have the full document text (e.g. diagnostics, definition provider).
  */
-export function collectImportedSpecifiersFromDocument(
-	documentText: string
-): Map<string, string> {
+export function collectImportedSpecifiersFromDocument(documentText: string): Map<string, string> {
 	const merged = new Map<string, string>()
 	BUILD_SCRIPT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
@@ -55,10 +53,7 @@ export function collectImportedSpecifiers(text: string): Map<string, string> {
 }
 
 /** Return the smallest scope that contains the given offset (for nested scopes). */
-export function findInnermostScope(
-	scopes: TemplateScope[],
-	offset: number
-): TemplateScope | null {
+export function findInnermostScope(scopes: TemplateScope[], offset: number): TemplateScope | null {
 	let best: TemplateScope | null = null
 	for (const scope of scopes) {
 		if (offset < scope.startOffset || offset > scope.endOffset) continue

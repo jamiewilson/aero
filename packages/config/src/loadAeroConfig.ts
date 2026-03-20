@@ -9,11 +9,7 @@ import type { AeroConfig, AeroConfigFunction } from './types'
 
 const require = createRequire(import.meta.url)
 
-const CONFIG_NAMES = [
-	'aero.config.ts',
-	'aero.config.js',
-	'aero.config.mjs',
-] as const
+const CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 
 /**
  * Load aero config from project root if present.
@@ -21,9 +17,7 @@ const CONFIG_NAMES = [
  * @param root - Project root (e.g. process.cwd() when vite.config runs).
  * @returns Resolved AeroConfig or AeroConfigFunction, or null if no file found or load failed.
  */
-export function loadAeroConfig(
-	root: string
-): AeroConfig | AeroConfigFunction | null {
+export function loadAeroConfig(root: string): AeroConfig | AeroConfigFunction | null {
 	for (const name of CONFIG_NAMES) {
 		const filePath = path.join(root, name)
 		if (!existsSync(filePath)) continue
@@ -33,20 +27,13 @@ export function loadAeroConfig(
 			const relativePath = './' + name
 			const mod = jiti(relativePath)
 			const config = mod?.default ?? mod
-			if (
-				config &&
-				(typeof config === 'object' || typeof config === 'function')
-			) {
+			if (config && (typeof config === 'object' || typeof config === 'function')) {
 				return config as AeroConfig | AeroConfigFunction
 			}
 		} catch (err) {
 			// Load failed (e.g. resolve error); try next extension
 			if (process.env.DEBUG?.includes('aero')) {
-				console.error(
-					'[createViteConfig] loadAeroConfig failed for',
-					filePath,
-					err
-				)
+				console.error('[createViteConfig] loadAeroConfig failed for', filePath, err)
 			}
 		}
 	}

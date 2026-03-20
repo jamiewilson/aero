@@ -303,7 +303,7 @@ Aero’s client entry runs `onRender(el)` after each HMR-driven re-render. Becau
 | Conditional visibility from **build** context (props, content)   | Aero: `if="{ expression }"`                                                                     |
 | Two-way / one-way form binding                                   | Lume: `data-bind="key"`                                                                         |
 | Toggle classes, ARIA, string attrs                               | Lume handlers: `classToggle`, `ariaAttr`, `stringAttr`                                          |
-| Initial state from Aero → Lume                                   | `props` (or JSON script tag) and create store with that data before `bindDom`               |
+| Initial state from Aero → Lume                                   | `props` (or JSON script tag) and create store with that data before `bindDom`                   |
 | Re-binding after HMR                                             | Call `bindDom(el, store)` (and any other init) in `aero.mount({ onRender(el) { ... } })`        |
 
 This keeps Aero responsible for structure and build-time data, and Lume for browser-only reactivity, with a clear split and no conflict between the two.

@@ -51,11 +51,7 @@ Pages with bracket-delimited filenames create dynamic routes. The bracket conten
 	import base from '@layouts/base'
 
 	export function getStaticPaths() {
-		return [
-			{ params: { id: 'alpha' } },
-			{ params: { id: 'beta' } },
-			{ params: { id: 'gamma' } },
-		]
+		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }, { params: { id: 'gamma' } }]
 	}
 </script>
 

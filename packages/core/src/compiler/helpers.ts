@@ -108,14 +108,9 @@ export function kebabToCamelCase(s: string): string {
 }
 
 /** Build a props object code string from key-value entries and optional spread (e.g. `{ ...base, title }`). */
-export function buildPropsString(
-	entries: string[],
-	spreadExpr: string | null
-): string {
+export function buildPropsString(entries: string[], spreadExpr: string | null): string {
 	if (spreadExpr) {
-		return entries.length > 0
-			? `{ ${spreadExpr}, ${entries.join(', ')} }`
-			: `{ ${spreadExpr} }`
+		return entries.length > 0 ? `{ ${spreadExpr}, ${entries.join(', ')} }` : `{ ${spreadExpr} }`
 	}
 	return `{ ${entries.join(', ')} }`
 }
@@ -181,18 +176,13 @@ export function emitRenderFunction(
 
 	const scriptsCode =
 		rootScripts && rootScripts.length > 0
-			? rootScripts
-					.map(s => `scripts?.add(${JSON.stringify(s)});`)
-					.join('\n\t\t')
+			? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t')
 			: ''
 
-	const rootScriptsBlock =
-		rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
+	const rootScriptsBlock = rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
 	const headScriptsBlock =
 		headScriptsLines.length > 0
-			? headScriptsLines
-					.map(s => `injectedHeadScripts?.add(${s});`)
-					.join('\n\t\t')
+			? headScriptsLines.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t')
 			: ''
 
 	const renderFn = `export default async function(Aero) {
@@ -299,10 +289,6 @@ export function emitForOf(item: string, items: string): string {
 }
 
 /** Emit `outVar += slots['name'] ?? \`defaultContent\`;` (default `outVar` is `__out`). */
-export function emitSlotOutput(
-	name: string,
-	defaultContent: string,
-	outVar = '__out'
-): string {
+export function emitSlotOutput(name: string, defaultContent: string, outVar = '__out'): string {
 	return `${outVar} += slots['${name}'] ?? \`${defaultContent}\`;\n`
 }

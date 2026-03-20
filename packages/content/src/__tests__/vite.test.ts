@@ -79,9 +79,7 @@ describe('aeroContent', () => {
 
 				await configResolved(configWithTmpRoot as any)
 
-				expect(warnSpy).toHaveBeenCalledWith(
-					expect.stringContaining('No config found')
-				)
+				expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No config found'))
 			} finally {
 				fs.rmSync(tmp, { recursive: true, force: true })
 			}

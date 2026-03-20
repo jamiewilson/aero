@@ -49,9 +49,7 @@ describe('emitToJS', () => {
 				kind: 'If',
 				condition: 'x === 1',
 				body: [{ kind: 'Append', content: 'one' }],
-				elseIf: [
-					{ condition: 'x === 2', body: [{ kind: 'Append', content: 'two' }] },
-				],
+				elseIf: [{ condition: 'x === 2', body: [{ kind: 'Append', content: 'two' }] }],
 				else: [{ kind: 'Append', content: 'other' }],
 			},
 		]
@@ -63,9 +61,7 @@ describe('emitToJS', () => {
 	})
 
 	it('emits Slot node', () => {
-		const ir: IRNode[] = [
-			{ kind: 'Slot', name: 'default', defaultContent: 'fallback' },
-		]
+		const ir: IRNode[] = [{ kind: 'Slot', name: 'default', defaultContent: 'fallback' }]
 		const out = emitToJS(ir)
 		expect(out).toBe(Helper.emitSlotOutput('default', 'fallback', '__out'))
 	})

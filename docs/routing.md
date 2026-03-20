@@ -137,12 +137,12 @@ The page will still work in dev mode but will not produce output files in the st
 
 Every page has access to these routing-related values inside `<script is:build>` and template expressions:
 
-| Value                     | Description                                 | Example                      |
-| ------------------------- | ------------------------------------------- | ---------------------------- |
-| `Aero.page.params`        | Dynamic route parameters                    | `{ id: 'alpha' }`            |
-| `Aero.page.url`           | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
-| `Aero.page.url.pathname`  | The URL path                                | `'/alpha'`                   |
-| `Aero.props`              | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
+| Value                    | Description                                 | Example                      |
+| ------------------------ | ------------------------------------------- | ---------------------------- |
+| `Aero.page.params`       | Dynamic route parameters                    | `{ id: 'alpha' }`            |
+| `Aero.page.url`          | Full URL object for the current page        | `URL { pathname: '/alpha' }` |
+| `Aero.page.url.pathname` | The URL path                                | `'/alpha'`                   |
+| `Aero.props`             | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
 
 ## Linking Between Pages
 

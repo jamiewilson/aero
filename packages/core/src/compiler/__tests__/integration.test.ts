@@ -39,12 +39,8 @@ describe('Compiler Integration', () => {
 		// Ensure it is NOT inside the default export
 		// The default export starts with export default async function(Aero) {
 
-		const defaultExportIndex = code.indexOf(
-			'export default async function(Aero)'
-		)
-		const getStaticPathsIndex = code.indexOf(
-			'export async function getStaticPaths()'
-		)
+		const defaultExportIndex = code.indexOf('export default async function(Aero)')
+		const getStaticPathsIndex = code.indexOf('export async function getStaticPaths()')
 
 		expect(getStaticPathsIndex).toBeGreaterThan(-1)
 		expect(defaultExportIndex).toBeGreaterThan(-1)

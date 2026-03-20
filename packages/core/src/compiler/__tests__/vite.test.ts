@@ -99,10 +99,7 @@ describe('Vite Plugin Integration', () => {
 		const bodyStart = result.code.indexOf('{')
 		const bodyEnd = result.code.lastIndexOf('}')
 		const body = result.code.substring(bodyStart + 1, bodyEnd)
-		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)(
-			'Aero',
-			body,
-		)
+		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('Aero', body)
 
 		const finalOutput = await aeroInstance.render(renderFn, {
 			props: { title: 'Dynamic Title' },
@@ -121,11 +118,7 @@ describe('Vite Plugin Integration', () => {
 			},
 		}
 		// In dev (command: serve) we keep the real path so file watcher and transform work (HMR + fresh SSR)
-		const result = await virtualsPlugin.resolveId.call(
-			resolveCtx,
-			'@components/header',
-			undefined,
-		)
+		const result = await virtualsPlugin.resolveId.call(resolveCtx, '@components/header', undefined)
 		expect(result).toBeDefined()
 		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
 	})
@@ -143,11 +136,9 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@components/header.html',
-			undefined,
+			undefined
 		)
-		expect(result).toBe(
-			AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'),
-		)
+		expect(result).toBe(AERO_HTML_VIRTUAL_PREFIX + resolvedHtmlPath.replace(/\.html$/i, '.aero'))
 		configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
 	})
 
@@ -159,7 +150,7 @@ describe('Vite Plugin Integration', () => {
 		const result = await virtualsPlugin.resolveId.call(
 			resolveCtx,
 			'@aero-js/content/render',
-			undefined,
+			undefined
 		)
 		expect(result).toBeNull()
 	})
@@ -173,7 +164,7 @@ describe('Vite Plugin Integration', () => {
 		fs.writeFileSync(
 			htmlPath,
 			`<script is:build>const x = 1;</script><div>Static</div><script>${unique}</script>`,
-			'utf-8',
+			'utf-8'
 		)
 		try {
 			configPlugin.config({ root: tmpDir })
@@ -210,17 +201,11 @@ describe('Vite Plugin Integration', () => {
 	})
 
 	it('registers handleHotUpdate and refreshes virtual client script entries for html edits', async () => {
-		const withHandleHotUpdate = plugins.some(
-			(p: any) => typeof p?.handleHotUpdate === 'function',
-		)
+		const withHandleHotUpdate = plugins.some((p: any) => typeof p?.handleHotUpdate === 'function')
 		expect(withHandleHotUpdate).toBe(true)
 
 		const id = path.join(process.cwd(), 'client/pages/hot-script.html')
-		transformPlugin.transform.call(
-			pluginCtx,
-			`<div>v1</div><script>console.log('V1')</script>`,
-			id,
-		)
+		transformPlugin.transform.call(pluginCtx, `<div>v1</div><script>console.log('V1')</script>`, id)
 
 		const virtualId = '\0/@aero/client/client/pages/hot-script.ts'
 		expect(virtualsPlugin.load(virtualId)).toContain("console.log('V1')")

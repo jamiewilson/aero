@@ -16,9 +16,7 @@
 			"endCaptures": {
 				"1": { "name": "punctuation.definition.tag.end.html" }
 			},
-			"patterns": [
-				{ "include": "text.html.basic#attribute" }
-			]
+			"patterns": [{ "include": "text.html.basic#attribute" }]
 		},
 		{ "include": "text.html.basic" }
 	],
@@ -48,18 +46,14 @@
 								"1": { "name": "punctuation.definition.tag.end.html" }
 							},
 							"name": "meta.tag.metadata.script.start.html",
-							"patterns": [
-								{ "include": "text.html.basic#attribute" }
-							]
+							"patterns": [{ "include": "text.html.basic#attribute" }]
 						},
 						{
 							"comment": "Script body as TypeScript",
 							"begin": "(?!\\G)",
 							"end": "(?=</(?i:script))",
 							"contentName": "source.ts",
-							"patterns": [
-								{ "include": "source.ts" }
-							]
+							"patterns": [{ "include": "source.ts" }]
 						}
 					]
 				},
@@ -86,18 +80,14 @@
 								"1": { "name": "punctuation.definition.tag.end.html" }
 							},
 							"name": "meta.tag.metadata.script.start.html",
-							"patterns": [
-								{ "include": "text.html.basic#attribute" }
-							]
+							"patterns": [{ "include": "text.html.basic#attribute" }]
 						},
 						{
 							"comment": "Import map body as JSON",
 							"begin": "(?!\\G)",
 							"end": "(?=</(?i:script))",
 							"contentName": "source.json",
-							"patterns": [
-								{ "include": "source.json" }
-							]
+							"patterns": [{ "include": "source.json" }]
 						}
 					]
 				},
@@ -124,18 +114,14 @@
 								"1": { "name": "punctuation.definition.tag.end.html" }
 							},
 							"name": "meta.tag.metadata.script.start.html",
-							"patterns": [
-								{ "include": "text.html.basic#attribute" }
-							]
+							"patterns": [{ "include": "text.html.basic#attribute" }]
 						},
 						{
 							"comment": "Script body as JavaScript",
 							"begin": "(?!\\G)",
 							"end": "(?=</(?i:script))",
 							"contentName": "source.js",
-							"patterns": [
-								{ "include": "source.js" }
-							]
+							"patterns": [{ "include": "source.js" }]
 						}
 					]
 				}

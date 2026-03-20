@@ -6,9 +6,7 @@
  */
 
 /** Single segment of a route pattern: static literal or a named param. */
-export type RouteSegment =
-	| { type: 'static'; value: string }
-	| { type: 'param'; name: string }
+export type RouteSegment = { type: 'static'; value: string } | { type: 'param'; name: string }
 
 /** Parsed route pattern: ordered list of segments (e.g. `blog`, `[id]` for `blog/[id]`). */
 export interface RoutePattern {
@@ -82,10 +80,7 @@ export function matchRoutePattern(
  * @returns Expanded page name (e.g. `docs/intro`).
  * @throws If a required param is missing from params.
  */
-export function expandRoutePattern(
-	pattern: string,
-	params: Record<string, string>
-): string {
+export function expandRoutePattern(pattern: string, params: Record<string, string>): string {
 	const { segments } = parseRoutePattern(pattern)
 	const parts: string[] = []
 	for (const seg of segments) {

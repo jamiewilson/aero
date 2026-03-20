@@ -15,25 +15,14 @@ const server = createServer(connection)
 connection.listen()
 
 connection.onInitialize(params => {
-	const tsdk = loadTsdkByPath(
-		params.initializationOptions?.typescript?.tsdk ?? '',
-		params.locale,
-	)
+	const tsdk = loadTsdkByPath(params.initializationOptions?.typescript?.tsdk ?? '', params.locale)
 
 	return server.initialize(
 		params,
-		createTypeScriptProject(
-			tsdk.typescript,
-			tsdk.diagnosticMessages,
-			() => ({
-				languagePlugins: [aeroLanguagePlugin],
-			}),
-		),
-		[
-			createHtmlService(),
-			createCssService(),
-			...createTypeScriptServices(tsdk.typescript),
-		],
+		createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => ({
+			languagePlugins: [aeroLanguagePlugin],
+		})),
+		[createHtmlService(), createCssService(), ...createTypeScriptServices(tsdk.typescript)]
 	)
 })
 

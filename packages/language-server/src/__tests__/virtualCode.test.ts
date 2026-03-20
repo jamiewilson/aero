@@ -67,7 +67,7 @@ const x = 1
 		const virtualText = build.snapshot.getText(0, build.snapshot.getLength())
 		const mappedContent = virtualText.substring(
 			mapping.generatedOffsets[0],
-			mapping.generatedOffsets[0] + mapping.lengths[0],
+			mapping.generatedOffsets[0] + mapping.lengths[0]
 		)
 		expect(mappedContent).toBe(scriptContent)
 	})

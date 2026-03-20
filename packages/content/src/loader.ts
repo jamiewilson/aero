@@ -4,12 +4,7 @@
  * @remarks
  * Used by the Vite plugin to load all collections and emit the `aero:content` virtual module (getCollection + serialized data).
  */
-import type {
-	ContentCollectionConfig,
-	ContentConfig,
-	ContentDocument,
-	ContentMeta,
-} from './types'
+import type { ContentCollectionConfig, ContentConfig, ContentDocument, ContentMeta } from './types'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
@@ -52,7 +47,7 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			const rawResult = std.validate(frontmatter)
 			const result = rawResult instanceof Promise ? await rawResult : rawResult
 			if (result.issues) {
-				const errors = result.issues.map((i) => i.message).join(', ')
+				const errors = result.issues.map(i => i.message).join(', ')
 				console.warn(
 					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`
 				)
@@ -96,9 +91,7 @@ export async function loadSingleFile(
 	config: ContentConfig | null,
 	root: string
 ): Promise<ContentDocument> {
-	const absolutePath = path.isAbsolute(filePath)
-		? filePath
-		: path.resolve(root, filePath)
+	const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(root, filePath)
 	const contentDir = path.resolve(root, CONTENT_ROOT)
 	const relToContent = path.relative(contentDir, absolutePath)
 
@@ -141,9 +134,7 @@ export async function loadSingleFile(
 				const result = rawResult instanceof Promise ? await rawResult : rawResult
 				if (result.issues) {
 					const errors = result.issues.map((i: { message: string }) => i.message).join(', ')
-					throw new Error(
-						`[aero:content] Schema validation failed for "${relPath}": ${errors}`
-					)
+					throw new Error(`[aero:content] Schema validation failed for "${relPath}": ${errors}`)
 				}
 				validated = result.value as Record<string, any>
 			}
@@ -205,10 +196,7 @@ export function toExportName(collectionName: string): string {
  */
 export function serializeContentModule(loaded: LoadedContent): string {
 	const collectionsContent = Array.from(loaded.entries())
-		.map(
-			([name, docs]) =>
-				`  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`
-		)
+		.map(([name, docs]) => `  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`)
 		.join(',\n')
 
 	return `

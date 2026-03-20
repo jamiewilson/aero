@@ -32,7 +32,7 @@ const stripped = stripComments(raw)
 const aeroContentStart = "declare module 'aero:content'"
 const idx = stripped.indexOf(aeroContentStart)
 if (idx === -1) {
-	throw new Error("env.d.ts: expected 'declare module \"aero:content\"' not found")
+	throw new Error('env.d.ts: expected \'declare module "aero:content"\' not found')
 }
 
 const preamble = stripped.slice(0, idx).trim()

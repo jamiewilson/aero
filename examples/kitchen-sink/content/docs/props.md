@@ -107,9 +107,7 @@ With fallbacks to site data:
 	const { title, description } = Aero.props
 </script>
 <meta property="og:title" content="{ title || site.meta.title }" />
-<meta
-	property="og:description"
-	content="{ description || site.meta.description }" />
+<meta property="og:description" content="{ description || site.meta.description }" />
 ```
 
 ## Available globals

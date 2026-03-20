@@ -124,9 +124,7 @@ Components access props by destructuring `Aero.props`:
 </script>
 
 <meta property="og:title" content="{ title || site.meta.title }" />
-<meta
-	property="og:description"
-	content="{ description || site.meta.description }" />
+<meta property="og:description" content="{ description || site.meta.description }" />
 ```
 
 ## Available Globals
@@ -145,11 +143,11 @@ Inside `<script is:build>` you have access to:
 
 ### Dev vs Static behavior
 
-| Global               | Dev server / API runtime                               | Static build (`pnpm build` HTML output)                    |
-| -------------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
-| `Aero.page.request`  | Real incoming request (method + forwarded headers)     | Synthetic request; request-specific headers may be missing |
-| `Aero.page.url`      | URL for the current incoming route                     | URL derived from the generated page route                  |
-| `Aero.page.params`   | Populated for dynamic route files (e.g. `[slug].html`) | Only populated when rendering dynamic route pages          |
+| Global              | Dev server / API runtime                               | Static build (`pnpm build` HTML output)                    |
+| ------------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
+| `Aero.page.request` | Real incoming request (method + forwarded headers)     | Synthetic request; request-specific headers may be missing |
+| `Aero.page.url`     | URL for the current incoming route                     | URL derived from the generated page route                  |
+| `Aero.page.params`  | Populated for dynamic route files (e.g. `[slug].html`) | Only populated when rendering dynamic route pages          |
 
 ### Read request metadata
 

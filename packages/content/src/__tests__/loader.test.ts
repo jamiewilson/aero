@@ -125,9 +125,7 @@ describe('loadAllCollections', () => {
 		const docs = loaded.get('invalid')!
 
 		expect(docs.length).toBe(0)
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining('Skipping "bad.md"')
-		)
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping "bad.md"'))
 
 		warnSpy.mockRestore()
 	})
@@ -248,12 +246,7 @@ describe('loadSingleFile', () => {
 				}),
 			],
 		})
-		const overviewPath = path.join(
-			PROJECT_ROOT,
-			'content',
-			'docs',
-			'overview.md'
-		)
+		const overviewPath = path.join(PROJECT_ROOT, 'content', 'docs', 'overview.md')
 		const doc = await loadSingleFile(overviewPath, config, PROJECT_ROOT)
 
 		expect(doc.id).toBe('docs/overview')
@@ -275,11 +268,7 @@ describe('loadSingleFile', () => {
 				}),
 			],
 		})
-		const standalonePath = path.join(
-			PROJECT_ROOT,
-			'content',
-			'standalone.md'
-		)
+		const standalonePath = path.join(PROJECT_ROOT, 'content', 'standalone.md')
 		const doc = await loadSingleFile(standalonePath, config, PROJECT_ROOT)
 
 		expect(doc.id).toBe('standalone')
@@ -289,12 +278,7 @@ describe('loadSingleFile', () => {
 	})
 
 	it('loads with config null (no schema, frontmatter passed through)', async () => {
-		const overviewPath = path.join(
-			PROJECT_ROOT,
-			'content',
-			'docs',
-			'overview.md'
-		)
+		const overviewPath = path.join(PROJECT_ROOT, 'content', 'docs', 'overview.md')
 		const doc = await loadSingleFile(overviewPath, null, PROJECT_ROOT)
 
 		expect(doc.id).toBe('docs/overview')
@@ -305,9 +289,9 @@ describe('loadSingleFile', () => {
 	it('throws when file is outside content/', async () => {
 		const outsidePath = path.join(FIXTURES_DIR, 'docs', 'hello.md')
 
-		await expect(
-			loadSingleFile(outsidePath, null, PROJECT_ROOT)
-		).rejects.toThrow(/not under content directory/)
+		await expect(loadSingleFile(outsidePath, null, PROJECT_ROOT)).rejects.toThrow(
+			/not under content directory/
+		)
 	})
 })
 
@@ -363,9 +347,7 @@ describe('serializeContentModule', () => {
 
 		const output = serializeContentModule(loaded)
 
-		expect(output).toContain(
-			"export { render } from '@aero-js/content/render'"
-		)
+		expect(output).toContain("export { render } from '@aero-js/content/render'")
 	})
 
 	it('includes empty collection keys in __collections', () => {

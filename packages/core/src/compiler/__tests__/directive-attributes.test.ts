@@ -4,10 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-	isDirectiveAttr,
-	DEFAULT_DIRECTIVE_PREFIXES,
-} from '../directive-attributes'
+import { isDirectiveAttr, DEFAULT_DIRECTIVE_PREFIXES } from '../directive-attributes'
 
 describe('isDirectiveAttr with default config', () => {
 	it('returns true for Alpine x- prefix', () => {
@@ -60,20 +57,12 @@ describe('isDirectiveAttr with custom config', () => {
 	})
 
 	it('accepts multiple custom prefixes', () => {
-		expect(isDirectiveAttr('v-model', { prefixes: ['x-', 'hx-', 'v-'] })).toBe(
-			true
-		)
-		expect(isDirectiveAttr('hx-post', { prefixes: ['x-', 'hx-', 'v-'] })).toBe(
-			true
-		)
+		expect(isDirectiveAttr('v-model', { prefixes: ['x-', 'hx-', 'v-'] })).toBe(true)
+		expect(isDirectiveAttr('hx-post', { prefixes: ['x-', 'hx-', 'v-'] })).toBe(true)
 	})
 
 	it('accepts exactNames for full attribute names', () => {
-		expect(isDirectiveAttr('foo', { prefixes: [], exactNames: ['foo'] })).toBe(
-			true
-		)
-		expect(isDirectiveAttr('bar', { prefixes: [], exactNames: ['foo'] })).toBe(
-			false
-		)
+		expect(isDirectiveAttr('foo', { prefixes: [], exactNames: ['foo'] })).toBe(true)
+		expect(isDirectiveAttr('bar', { prefixes: [], exactNames: ['foo'] })).toBe(false)
 	})
 })

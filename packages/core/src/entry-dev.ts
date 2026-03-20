@@ -39,10 +39,7 @@ const hmrState: {
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
-	const el =
-		typeof target === 'string'
-			? (document.querySelector(target) as HTMLElement)
-			: target
+	const el = typeof target === 'string' ? (document.querySelector(target) as HTMLElement) : target
 
 	if (!el) throw new Error('Target element not found: ' + target)
 

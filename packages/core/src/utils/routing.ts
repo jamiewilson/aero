@@ -112,9 +112,7 @@ export function resolvePageTarget(
 	pagesMap: Record<string, any>
 ): PageTargetResult | null {
 	if (typeof component !== 'string') {
-		return component != null
-			? { module: component, pageName: 'index', params: {} }
-			: null
+		return component != null ? { module: component, pageName: 'index', params: {} } : null
 	}
 
 	const pageName = component
@@ -128,8 +126,7 @@ export function resolvePageTarget(
 	}
 	if (!target) {
 		const dynamicMatch =
-			resolveDynamicPage(pageName, pagesMap) ??
-			resolveDynamicPage(`${pageName}/index`, pagesMap)
+			resolveDynamicPage(pageName, pagesMap) ?? resolveDynamicPage(`${pageName}/index`, pagesMap)
 		if (dynamicMatch) return dynamicMatch
 	}
 

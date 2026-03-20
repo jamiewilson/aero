@@ -18,9 +18,7 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 		// Mock getStaticPaths
 		const getStaticPaths = vi
 			.fn()
-			.mockResolvedValue([
-				{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
-			])
+			.mockResolvedValue([{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } }])
 
 		// Simulate a real module namespace object
 		const pageModule = {
@@ -49,9 +47,7 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 
 		const getStaticPaths = vi
 			.fn()
-			.mockResolvedValue([
-				{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
-			])
+			.mockResolvedValue([{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } }])
 
 		const pageModule = {
 			getStaticPaths,

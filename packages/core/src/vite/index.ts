@@ -88,7 +88,7 @@ function writeGeneratedNitroConfig(
 	root: string,
 	serverDir: string,
 	redirects: AeroOptions['redirects'],
-	distDir: string,
+	distDir: string
 ): string {
 	const aeroDir = path.join(root, AERO_DIR)
 	mkdirSync(aeroDir, { recursive: true })
@@ -172,7 +172,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
-					root,
+					root
 				),
 			}
 		},
@@ -189,9 +189,9 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				filePath,
 				getRuntimeInstanceVirtualSource(
 					state.dirs.client,
-					runtimeImportPath.startsWith('.') ? runtimeImportPath : './' + runtimeImportPath,
+					runtimeImportPath.startsWith('.') ? runtimeImportPath : './' + runtimeImportPath
 				),
-				'utf-8',
+				'utf-8'
 			)
 			state.generatedRuntimeInstancePath = filePath
 		},
@@ -202,7 +202,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 function isAeroTemplateHtml(
 	filePath: string,
 	root: string,
-	dirs: AeroPluginState['dirs'],
+	dirs: AeroPluginState['dirs']
 ): boolean {
 	const clientBase = path.join(root, dirs.client)
 	const rel = path.relative(clientBase, filePath)
@@ -230,10 +230,7 @@ function clientScriptPrefixForBase(baseName: string): string {
 }
 
 /** All virtual client script ids belonging to the same template baseName. */
-function getClientScriptIdsForBase(
-	baseName: string,
-	target: Map<string, ScriptEntry>,
-): string[] {
+function getClientScriptIdsForBase(baseName: string, target: Map<string, ScriptEntry>): string[] {
 	const prefix = clientScriptPrefixForBase(baseName)
 	const ids: string[] = []
 	for (const id of target.keys()) {
@@ -249,7 +246,7 @@ function getClientScriptIdsForBase(
 function syncClientScriptsForTemplate(
 	parsed: ReturnType<typeof parse>,
 	baseName: string,
-	target: Map<string, ScriptEntry>,
+	target: Map<string, ScriptEntry>
 ): { changed: boolean; affectedIds: string[] } {
 	const previousIds = getClientScriptIdsForBase(baseName, target)
 	const previousEntries = new Map<string, ScriptEntry>()
@@ -287,7 +284,7 @@ function syncClientScriptsForTemplate(
  */
 function getRuntimeInstanceVirtualSource(
 	clientDir: string,
-	runtimeImportPath: string = '@aero-js/core/runtime',
+	runtimeImportPath: string = '@aero-js/core/runtime'
 ): string {
 	const prefix = clientGlobPrefix(clientDir)
 	const componentsPattern = `${prefix}/components/**/*.html`
@@ -349,7 +346,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			const { changed, affectedIds } = syncClientScriptsForTemplate(
 				parsed,
 				baseName,
-				state.clientScripts,
+				state.clientScripts
 			)
 			if (!changed || affectedIds.length === 0) return
 
@@ -374,8 +371,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			// The built instance has empty globs (bundler strips import.meta.glob); the virtual
 			// module has app-specific globs so template changes invalidate the client and trigger HMR.
 			if (state.config?.command !== 'build') {
-				const isRelativeInstanceImport =
-					id === './runtime/instance' || id === '../runtime/instance'
+				const isRelativeInstanceImport = id === './runtime/instance' || id === '../runtime/instance'
 				const isFromCore =
 					importer &&
 					(importer.includes('entry-dev') ||
@@ -495,7 +491,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
 							baseName,
 							i,
-							parsed.clientScripts.length,
+							parsed.clientScripts.length
 						)
 					}
 					const generated = compileTemplate(
@@ -508,7 +504,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 							resolvePath: state.aliasResult.resolve,
 							importer: filePath,
 						},
-						parsed,
+						parsed
 					)
 					return { code: generated, map: null }
 				} catch {
@@ -556,7 +552,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 						parsed.clientScripts[i].content = getClientScriptVirtualUrl(
 							baseName,
 							i,
-							parsed.clientScripts.length,
+							parsed.clientScripts.length
 						)
 					}
 				}
@@ -571,7 +567,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 						resolvePath: state.aliasResult.resolve,
 						importer: id,
 					},
-					parsed,
+					parsed
 				)
 
 				return {
@@ -680,8 +676,7 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 								return
 							}
 							if (result && 'rewrite' in result) {
-								if (result.rewrite.pageName !== undefined)
-									renderPageName = result.rewrite.pageName
+								if (result.rewrite.pageName !== undefined) renderPageName = result.rewrite.pageName
 								const { pageName: _pn, ...rest } = result.rewrite
 								renderInput = { ...renderInput, ...rest }
 							}
@@ -729,15 +724,9 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	const enableNitro = options.server === true && process.env.AERO_SERVER !== 'false'
 
-	const runtimeInstanceMjsPath = fileURLToPath(
-		new URL('../runtime/instance.mjs', import.meta.url),
-	)
-	const runtimeInstanceJsPath = fileURLToPath(
-		new URL('../runtime/instance.js', import.meta.url),
-	)
-	const runtimeInstanceTsPath = fileURLToPath(
-		new URL('../runtime/instance.ts', import.meta.url),
-	)
+	const runtimeInstanceMjsPath = fileURLToPath(new URL('../runtime/instance.mjs', import.meta.url))
+	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
+	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
 	const runtimeInstancePath = existsSync(runtimeInstanceMjsPath)
 		? runtimeInstanceMjsPath
 		: existsSync(runtimeInstanceJsPath)
@@ -789,15 +778,10 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					redirects: options.redirects,
 					resolvedConfig: state.config!,
 				},
-				outDir,
+				outDir
 			)
 			if (enableNitro) {
-				const configCwd = writeGeneratedNitroConfig(
-					root,
-					dirs.server,
-					options.redirects,
-					dirs.dist,
-				)
+				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects, dirs.dist)
 				await runNitroBuild(root, configCwd)
 			}
 		},

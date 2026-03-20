@@ -5,11 +5,7 @@
 
 import * as path from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-	getDefaultAliases,
-	loadTsconfigAliases,
-	mergeWithDefaultAliases,
-} from '../aliases'
+import { getDefaultAliases, loadTsconfigAliases, mergeWithDefaultAliases } from '../aliases'
 
 const defaultDirs = { client: 'client', server: 'server', dist: 'dist' }
 
@@ -123,9 +119,7 @@ describe('getDefaultAliases', () => {
 		expect(aliases.find(a => a.find === '@styles')!.replacement).toBe(
 			path.join(root, 'client', 'assets', 'styles')
 		)
-		expect(aliases.find(a => a.find === '@content')!.replacement).toBe(
-			path.join(root, 'content')
-		)
+		expect(aliases.find(a => a.find === '@content')!.replacement).toBe(path.join(root, 'content'))
 	})
 
 	it('uses custom client dir when provided', () => {
@@ -162,9 +156,9 @@ describe('mergeWithDefaultAliases', () => {
 			'@scripts',
 			'@styles',
 		])
-		expect(
-			merged.resolve('@components/header', '/project/client/pages/index.html')
-		).toBe(path.join('/project', 'client', 'components', 'header'))
+		expect(merged.resolve('@components/header', '/project/client/pages/index.html')).toBe(
+			path.join('/project', 'client', 'components', 'header')
+		)
 	})
 
 	it('lets tsconfig override default for same key', async () => {
@@ -194,12 +188,7 @@ describe('mergeWithDefaultAliases', () => {
 		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue(null)
 		const raw = loadTsconfigAliases('/project')
 		const merged = mergeWithDefaultAliases(raw, '/project', defaultDirs)
-		const resolved = merged.resolve(
-			'@components/header',
-			'/project/client/pages/index.html'
-		)
-		expect(resolved).toBe(
-			path.join('/project', 'client', 'components', 'header')
-		)
+		const resolved = merged.resolve('@components/header', '/project/client/pages/index.html')
+		expect(resolved).toBe(path.join('/project', 'client', 'components', 'header'))
 	})
 })

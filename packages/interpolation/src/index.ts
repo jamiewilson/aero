@@ -37,10 +37,7 @@ export interface TokenizeOptions {
  * @param options - `attributeMode: true` for attribute values ({{ / }} = literal braces).
  * @returns Array of segments in order.
  */
-export function tokenizeCurlyInterpolation(
-	text: string,
-	options: TokenizeOptions = {}
-): Segment[] {
+export function tokenizeCurlyInterpolation(text: string, options: TokenizeOptions = {}): Segment[] {
 	const attributeMode = options.attributeMode ?? false
 	const segments: Segment[] = []
 	let i = 0

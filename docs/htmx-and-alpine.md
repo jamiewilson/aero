@@ -9,9 +9,7 @@ htmx extends HTML with attributes that trigger HTTP requests.
 ### Basics
 
 ```html
-<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">
-	Load Message
-</button>
+<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">Load Message</button>
 <div id="result"></div>
 
 <form hx-post="/api/submit" hx-target="#response" hx-swap="outerHTML">
@@ -42,9 +40,7 @@ htmx extends HTML with attributes that trigger HTTP requests.
 	hx-trigger="keyup changed delay:500ms"
 	hx-target="#search-results"
 	placeholder="Search..." />
-<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">
-	Loading...
-</div>
+<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">Loading...</div>
 <div hx-get="/api/notifications" hx-trigger="every 5s">Notifications here</div>
 ```
 
@@ -174,9 +170,7 @@ Alpine.start()
 		hx-indicator="#search-loading"
 		name="q"
 		placeholder="Search..." />
-	<div id="search-loading" x-show="loading" class="htmx-indicator">
-		Searching...
-	</div>
+	<div id="search-loading" x-show="loading" class="htmx-indicator">Searching...</div>
 	<div id="results"></div>
 </div>
 ```

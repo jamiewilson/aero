@@ -27,11 +27,7 @@ const DEFAULT_DIRS: ResolvedAeroDirs = {
 	dist: 'dist',
 }
 
-const AERO_CONFIG_NAMES = [
-	'aero.config.ts',
-	'aero.config.js',
-	'aero.config.mjs',
-] as const
+const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 
 /**
  * Load dirs from aero.config at root if present.
@@ -45,12 +41,9 @@ function loadAeroConfigDirs(root: string): ResolvedAeroDirs | undefined {
 			const jiti = require('jiti')(root, { esmResolve: true })
 			const mod = jiti('./' + name)
 			const config = mod?.default ?? mod
-			if (!config || (typeof config !== 'object' && typeof config !== 'function'))
-				continue
+			if (!config || (typeof config !== 'object' && typeof config !== 'function')) continue
 			const resolved =
-				typeof config === 'function'
-					? config({ command: 'dev', mode: 'development' })
-					: config
+				typeof config === 'function' ? config({ command: 'dev', mode: 'development' }) : config
 			const dirs = resolved?.dirs
 			if (dirs && typeof dirs === 'object') {
 				return resolveDirs(dirs)
@@ -81,16 +74,7 @@ function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | und
 	}
 	return undefined
 }
-const RESOLUTION_EXTENSIONS = [
-	'.html',
-	'.ts',
-	'.tsx',
-	'.js',
-	'.jsx',
-	'.mjs',
-	'.cjs',
-	'.json',
-]
+const RESOLUTION_EXTENSIONS = ['.html', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json']
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
@@ -112,10 +96,7 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 	const rawAliases = loadTsconfigAliases(docDir)
 	const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath
 	const projectRoot =
-		rawAliases.projectRoot ??
-		findAeroAppRoot(docDir, workspaceRoot) ??
-		workspaceRoot ??
-		docDir
+		rawAliases.projectRoot ?? findAeroAppRoot(docDir, workspaceRoot) ?? workspaceRoot ?? docDir
 
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
@@ -134,9 +115,7 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 			const importer = fromFile ?? document.uri.fsPath
 			const rawResolved = resolveFn(specifier, importer)
 			const resolved = resolveToExistingPath(rawResolved)
-			return resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier)
-				? resolved
-				: undefined
+			return resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier) ? resolved : undefined
 		},
 	}
 

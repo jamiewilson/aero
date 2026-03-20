@@ -39,7 +39,7 @@ declare const Aero: {
 declare function renderComponent(
 	component: any,
 	props?: Record<string, any>,
-	slots?: Record<string, string>,
+	slots?: Record<string, string>
 ): Promise<string>
 
 /** Allows importing `.html` component files in build scripts. */
@@ -77,7 +77,5 @@ declare module 'aero:content' {
 		body?: string
 	}
 	export function getCollection(name: string): Promise<CollectionEntry[]>
-	export function render(
-		entry: CollectionEntry | Record<string, any>,
-	): Promise<{ html: string }>
+	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
 }

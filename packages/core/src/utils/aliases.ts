@@ -27,10 +27,7 @@ const resolver = new ResolverFactory({
  * Build default path aliases for standard Aero paths from project root and dirs.
  * Used when tsconfig is missing or does not define these keys so path resolution works without tsconfig.
  */
-export function getDefaultAliases(
-	root: string,
-	dirs: ResolvedAeroDirs
-): UserAlias[] {
+export function getDefaultAliases(root: string, dirs: ResolvedAeroDirs): UserAlias[] {
 	const client = dirs.client
 	return [
 		{ find: '@pages', replacement: path.join(root, client, 'pages') },
@@ -116,12 +113,10 @@ export function mergeWithDefaultAliases(
 	for (const a of aliasResult.aliases) {
 		byFind.set(a.find, a.replacement)
 	}
-	const aliases: UserAlias[] = Array.from(byFind.entries()).map(
-		([find, replacement]) => ({
-			find,
-			replacement,
-		})
-	)
+	const aliases: UserAlias[] = Array.from(byFind.entries()).map(([find, replacement]) => ({
+		find,
+		replacement,
+	}))
 
 	const resolve = (specifier: string, importer: string): string => {
 		for (const { find, replacement } of aliases) {
@@ -141,7 +136,4 @@ export function mergeWithDefaultAliases(
 	}
 }
 
-export {
-	resolveDirs,
-	type ResolvedAeroDirs,
-} from '../vite/defaults'
+export { resolveDirs, type ResolvedAeroDirs } from '../vite/defaults'

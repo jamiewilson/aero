@@ -311,9 +311,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
 		const unusedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes(
-				"'getCollection' is declared but its value is never read"
-			)
+			d.message.includes("'getCollection' is declared but its value is never read")
 		)
 		expect(unusedDiag).toBeUndefined()
 	})
@@ -339,8 +337,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 			languageId: 'html',
 			fileName: '/test.html',
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) =>
-				typeof pos.character === 'number' ? pos.character : 0,
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
 		} as any
 
 		const context = { subscriptions: [] } as any
@@ -395,9 +392,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 			d.message.includes("'render' is declared but its value is never read")
 		)
 		const unusedCollectionDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes(
-				"'getCollection' is declared but its value is never read"
-			)
+			d.message.includes("'getCollection' is declared but its value is never read")
 		)
 
 		expect(unusedRenderDiag).toBeUndefined()
@@ -1122,8 +1117,7 @@ describe('AeroDiagnostics Component References', () => {
 			languageId: 'html',
 			fileName: '/test.html',
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) =>
-				typeof pos.character === 'number' ? pos.character : 0,
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
 		} as any
 
 		const context = { subscriptions: [] } as any
@@ -1265,8 +1259,7 @@ describe('AeroDiagnostics Component Props', () => {
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 		const subLayoutDiag = reportedDiagnostics.find(
 			(d: any) =>
-				d.message.includes("Missing required prop 'extraProp'") &&
-				d.message.includes('sub-layout')
+				d.message.includes("Missing required prop 'extraProp'") && d.message.includes('sub-layout')
 		)
 		expect(subLayoutDiag).toBeDefined()
 	})

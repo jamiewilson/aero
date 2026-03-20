@@ -4,7 +4,7 @@ const linkSelector = '[data-toc-link]'
 const linksById = new Map(
 	[...document.querySelectorAll(linkSelector)]
 		.map(link => [link.hash.slice(1), link])
-		.filter(([id]) => id),
+		.filter(([id]) => id)
 )
 
 const headings = [...linksById.keys()].map(id => document.getElementById(id)).filter(Boolean)

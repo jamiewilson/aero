@@ -41,7 +41,10 @@ const ambientSnapshot: IScriptSnapshot = {
 	getChangeRange: () => undefined,
 }
 
-function getScriptType(node: Node, sourceText: string): 'build' | 'client' | 'inline' | 'blocking' | 'external' | 'importmap' | null {
+function getScriptType(
+	node: Node,
+	sourceText: string
+): 'build' | 'client' | 'inline' | 'blocking' | 'external' | 'importmap' | null {
 	if (node.tag !== 'script') return null
 	const attrs = node.attributes
 	if (!attrs) return 'client'
@@ -164,7 +167,13 @@ export class AeroVirtualCode implements VirtualCode {
 			}
 
 			const scriptType = getScriptType(node, sourceText)
-			if (!scriptType || scriptType === 'external' || scriptType === 'inline' || scriptType === 'importmap') continue
+			if (
+				!scriptType ||
+				scriptType === 'external' ||
+				scriptType === 'inline' ||
+				scriptType === 'importmap'
+			)
+				continue
 			if (node.startTagEnd == null || node.endTagStart == null) continue
 
 			const scriptContent = sourceText.substring(node.startTagEnd, node.endTagStart)

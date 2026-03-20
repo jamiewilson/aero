@@ -1,20 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-	mkdtempSync,
-	writeFileSync,
-	mkdirSync,
-	rmSync,
-	readFileSync,
-	existsSync,
-} from 'fs'
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import {
-	parseArgs,
-	rewritePackageJson,
-	writeReadme,
-	findWorkspaceRoot,
-} from '../lib.js'
+import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '../lib.js'
 
 describe('@aero-js/create lib', () => {
 	describe('parseArgs', () => {
@@ -26,18 +14,14 @@ describe('@aero-js/create lib', () => {
 		})
 
 		it('returns template when --template is given', () => {
-			expect(
-				parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])
-			).toEqual({
+			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
 			})
 		})
 
 		it('allows template before target', () => {
-			expect(
-				parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])
-			).toEqual({
+			expect(parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
 			})
@@ -87,9 +71,7 @@ describe('@aero-js/create lib', () => {
 				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', true)
-			const pkg = JSON.parse(
-				readFileSync(join(targetDir, 'package.json'), 'utf8')
-			)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
 			expect(pkg.name).toBe('my-app')
 			expect(pkg.version).toBe('0.1.0')
 			expect(pkg.type).toBe('module')
@@ -105,9 +87,7 @@ describe('@aero-js/create lib', () => {
 				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', true)
-			const pkg = JSON.parse(
-				readFileSync(join(targetDir, 'package.json'), 'utf8')
-			)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
 			expect(pkg.dependencies['@aero-js/core']).toBe('workspace:*')
 		})
 
@@ -122,9 +102,7 @@ describe('@aero-js/create lib', () => {
 				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', false)
-			const pkg = JSON.parse(
-				readFileSync(join(targetDir, 'package.json'), 'utf8')
-			)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
 			expect(pkg.name).toBe('my-app')
 			expect(pkg.dependencies['@aero-js/core']).toBe('*')
 			expect(pkg.devDependencies.vite).toBe('^1.0.0')
@@ -140,9 +118,7 @@ describe('@aero-js/create lib', () => {
 				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', false, '0.2.9')
-			const pkg = JSON.parse(
-				readFileSync(join(targetDir, 'package.json'), 'utf8')
-			)
+			const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8'))
 			expect(pkg.dependencies['@aero-js/core']).toBe('^0.2.9')
 		})
 
@@ -154,9 +130,7 @@ describe('@aero-js/create lib', () => {
 						throw new Error(`exit(${code})`)
 					}
 				)
-				expect(() =>
-					rewritePackageJson(templateDir, targetDir, 'my-app', false)
-				).toThrow('exit(1)')
+				expect(() => rewritePackageJson(templateDir, targetDir, 'my-app', false)).toThrow('exit(1)')
 			} finally {
 				process.exit = exit
 			}

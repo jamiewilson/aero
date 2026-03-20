@@ -34,13 +34,7 @@ const PACKAGE_TEMPLATE = 'package-template.json'
  * @param {boolean} inMonorepo - If true, use workspace:* for @aero-js/core; otherwise use coreVersion
  * @param {string} [coreVersion] - When !inMonorepo, version range for @aero-js/core (e.g. ^0.2.9). Omit to use '*'.
  */
-export function rewritePackageJson(
-	templatePath,
-	targetDir,
-	projectName,
-	inMonorepo,
-	coreVersion
-) {
+export function rewritePackageJson(templatePath, targetDir, projectName, inMonorepo, coreVersion) {
 	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
 	if (!existsSync(templatePkgPath)) {
 		console.error(
@@ -50,11 +44,7 @@ export function rewritePackageJson(
 	}
 	const pkg = JSON.parse(readFileSync(templatePkgPath, 'utf8'))
 	pkg.name = projectName
-	const depVersion = inMonorepo
-		? 'workspace:*'
-		: coreVersion
-			? `^${coreVersion}`
-			: '*'
+	const depVersion = inMonorepo ? 'workspace:*' : coreVersion ? `^${coreVersion}` : '*'
 	if (pkg.dependencies) {
 		if (pkg.dependencies['@aero-js/core'] !== undefined) {
 			pkg.dependencies['@aero-js/core'] = depVersion
@@ -63,10 +53,7 @@ export function rewritePackageJson(
 			pkg.dependencies['@aero-js/vite'] = depVersion
 		}
 	}
-	writeFileSync(
-		join(targetDir, 'package.json'),
-		JSON.stringify(pkg, null, 2) + '\n'
-	)
+	writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
 }
 
 /**

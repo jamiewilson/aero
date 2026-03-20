@@ -7,12 +7,7 @@
  * `mount` is optionally set by the client entry (`core/src/entry-dev.ts`).
  */
 
-import type {
-	AeroRenderInput,
-	AeroRouteParams,
-	AeroTemplateContext,
-	MountOptions,
-} from '../types'
+import type { AeroRenderInput, AeroRouteParams, AeroTemplateContext, MountOptions } from '../types'
 import { pagePathToKey, resolvePageTarget } from '../utils/routing'
 
 export class Aero {
@@ -50,9 +45,7 @@ export class Aero {
 	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath). */
 	private isRenderInput(value: any): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
-		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(
-			key => key in value
-		)
+		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(key => key in value)
 	}
 
 	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */
@@ -97,20 +90,12 @@ export class Aero {
 	}): AeroTemplateContext {
 		const routePath = input.routePath || '/'
 		const pageInput = input.page
-		const url =
-			pageInput?.url ??
-			this.toURL(routePath, input.url)
-		const urlResolved =
-			url instanceof URL ? url : new URL(String(url), 'http://localhost')
+		const url = pageInput?.url ?? this.toURL(routePath, input.url)
+		const urlResolved = url instanceof URL ? url : new URL(String(url), 'http://localhost')
 		const request =
-			pageInput?.request ??
-			input.request ??
-			new Request(urlResolved.toString(), { method: 'GET' })
+			pageInput?.request ?? input.request ?? new Request(urlResolved.toString(), { method: 'GET' })
 		const params = pageInput?.params ?? input.params ?? {}
-		const siteUrl =
-			typeof input.site === 'string'
-				? input.site
-				: (input.site?.url ?? '')
+		const siteUrl = typeof input.site === 'string' ? input.site : (input.site?.url ?? '')
 		let _passDataId = 0
 		const context = {
 			...this.globals,
@@ -133,10 +118,7 @@ export class Aero {
 	}
 
 	/** True if entry params and request params have the same keys and stringified values. */
-	private paramsMatch(
-		entryParams: AeroRouteParams,
-		requestParams: AeroRouteParams
-	): boolean {
+	private paramsMatch(entryParams: AeroRouteParams, requestParams: AeroRouteParams): boolean {
 		const entryKeys = Object.keys(entryParams)
 		if (entryKeys.length !== Object.keys(requestParams).length) return false
 		for (const key of entryKeys) {
@@ -190,9 +172,7 @@ export class Aero {
 			const staticPaths: any[] = await target.getStaticPaths()
 			const combinedParams = { ...dynamicParams, ...(renderInput.params || {}) }
 
-			const match = staticPaths.find(entry =>
-				this.paramsMatch(entry.params, combinedParams)
-			)
+			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
 
 			if (!match) {
 				console.warn(
@@ -250,10 +230,7 @@ export class Aero {
 					if (html.includes('</head>')) {
 						html = html.replace('</head>', `\n${headInjections}</head>`)
 					} else if (html.includes('<body')) {
-						html = html.replace(
-							/(<body[^>]*>)/i,
-							`<head>\n${headInjections}</head>\n$1`
-						)
+						html = html.replace(/(<body[^>]*>)/i, `<head>\n${headInjections}</head>\n$1`)
 					} else {
 						html = `${headInjections}${html}`
 					}

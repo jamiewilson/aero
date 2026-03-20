@@ -49,9 +49,9 @@
 	},
 	"dependencies": {
 		"@standard-schema/spec": "^1.1.0",
-		"jiti": "^2.4.2",
 		"fast-glob": "^3.3.3",
 		"gray-matter": "^4.0.3",
+		"jiti": "^2.4.2",
 		"rehype-stringify": "^10.0.0",
 		"remark": "^15.0.1",
 		"remark-rehype": "^11.0.0",

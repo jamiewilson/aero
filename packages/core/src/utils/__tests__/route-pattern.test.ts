@@ -113,18 +113,14 @@ describe('expandRoutePattern', () => {
 	})
 
 	it('expands multiple segments', () => {
-		expect(expandRoutePattern('docs/[slug]', { slug: 'intro' })).toBe(
-			'docs/intro'
+		expect(expandRoutePattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
+		expect(expandRoutePattern('[category]/[id]', { category: 'blog', id: 'post-1' })).toBe(
+			'blog/post-1'
 		)
-		expect(
-			expandRoutePattern('[category]/[id]', { category: 'blog', id: 'post-1' })
-		).toBe('blog/post-1')
 	})
 
 	it('throws when a required param is missing', () => {
 		expect(() => expandRoutePattern('[id]', {})).toThrow('missing param "id"')
-		expect(() => expandRoutePattern('docs/[slug]', { id: 'x' })).toThrow(
-			'missing param "slug"'
-		)
+		expect(() => expandRoutePattern('docs/[slug]', { id: 'x' })).toThrow('missing param "slug"')
 	})
 })

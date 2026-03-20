@@ -47,7 +47,7 @@ describe('aeroLanguagePlugin', () => {
 		it('has .html in extraFileExtensions', () => {
 			const tsConfig = aeroLanguagePlugin.typescript!
 			expect(tsConfig.extraFileExtensions).toContainEqual(
-				expect.objectContaining({ extension: 'html', isMixedContent: true }),
+				expect.objectContaining({ extension: 'html', isMixedContent: true })
 			)
 		})
 

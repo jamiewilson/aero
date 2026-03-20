@@ -59,16 +59,14 @@ describe('findInterfaceInSource', () => {
 
 describe('getKeysFromObjectLiteral', () => {
 	it('extracts keys from shorthand object', () => {
-		expect(getKeysFromObjectLiteral('{ title, subtitle }')).toEqual([
-			'title',
-			'subtitle',
-		])
+		expect(getKeysFromObjectLiteral('{ title, subtitle }')).toEqual(['title', 'subtitle'])
 	})
 
 	it('extracts keys from object with values', () => {
-		expect(
-			getKeysFromObjectLiteral("{ title: 'x', subtitle: site.about.subtitle }")
-		).toEqual(['title', 'subtitle'])
+		expect(getKeysFromObjectLiteral("{ title: 'x', subtitle: site.about.subtitle }")).toEqual([
+			'title',
+			'subtitle',
+		])
 	})
 })
 

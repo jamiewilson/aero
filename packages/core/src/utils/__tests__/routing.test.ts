@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-	pagePathToKey,
-	resolveDynamicPage,
-	resolvePageName,
-	resolvePageTarget,
-} from '../routing'
+import { pagePathToKey, resolveDynamicPage, resolvePageName, resolvePageTarget } from '../routing'
 
 describe('pagePathToKey', () => {
 	it('should use segment after pages/ for page paths', () => {

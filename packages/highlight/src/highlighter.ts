@@ -2,16 +2,7 @@ import type { HighlighterGeneric } from 'shiki'
 import type { ShikiConfig } from './types'
 import { createHighlighter as shikiCreateHighlighter } from 'shiki'
 
-const DEFAULT_LANGUAGES = [
-	'js',
-	'ts',
-	'jsx',
-	'tsx',
-	'html',
-	'css',
-	'json',
-	'bash',
-]
+const DEFAULT_LANGUAGES = ['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'bash']
 
 /** Cached highlighter instance (created once per config). */
 let cachedHighlighter: HighlighterGeneric<any, any> | null = null
@@ -74,9 +65,7 @@ function extractThemes(config: ShikiConfig): (string | object)[] {
  * @param config - Shiki highlighting configuration.
  * @returns Cached or newly created highlighter.
  */
-export async function getHighlighter(
-	config: ShikiConfig
-): Promise<HighlighterGeneric<any, any>> {
+export async function getHighlighter(config: ShikiConfig): Promise<HighlighterGeneric<any, any>> {
 	const configKey = buildCacheKey(config)
 
 	if (cachedHighlighter && cachedConfigKey === configKey) {
@@ -114,10 +103,7 @@ function extractThemeOptions(config: ShikiConfig): Record<string, any> {
 		if ('defaultColor' in config && config.defaultColor !== undefined) {
 			opts.defaultColor = config.defaultColor
 		}
-		if (
-			'cssVariablePrefix' in config &&
-			config.cssVariablePrefix !== undefined
-		) {
+		if ('cssVariablePrefix' in config && config.cssVariablePrefix !== undefined) {
 			opts.cssVariablePrefix = config.cssVariablePrefix
 		}
 		if ('colorsRendering' in config && config.colorsRendering !== undefined) {

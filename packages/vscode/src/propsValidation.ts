@@ -12,8 +12,7 @@ import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import type { PathResolver } from './pathResolver'
 
 /** Match import type { ... } from 'spec' - captures braced content and specifier */
-const TYPE_IMPORT_REGEX =
-	/import\s+type\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/g
+const TYPE_IMPORT_REGEX = /import\s+type\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/g
 
 /** Interface body parsing result: required and optional property names. */
 export interface ParsedInterface {
@@ -22,8 +21,7 @@ export interface ParsedInterface {
 }
 
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
-const INTERFACE_REGEX =
-	/\b(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)\s*\{([^}]*)\}/g
+const INTERFACE_REGEX = /\b(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)\s*\{([^}]*)\}/g
 const PROPERTY_REGEX = /([A-Za-z_$][\w$]*)\s*\??\s*:/g
 
 /**
@@ -95,7 +93,12 @@ export function getRequiredPropsFromType(
 	TYPE_IMPORT_REGEX.lastIndex = 0
 	let match: RegExpExecArray | null
 	while ((match = TYPE_IMPORT_REGEX.exec(buildScript)) !== null) {
-		const importedNames = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim())
+		const importedNames = match[1].split(',').map(s =>
+			s
+				.trim()
+				.split(/\s+as\s+/)[0]
+				.trim()
+		)
 		const specifier = match[2]
 		if (importedNames.includes(typeName)) {
 			const resolved = resolver.resolve(specifier, componentPath)

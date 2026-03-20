@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm --dir examples/kitchen-sink dev",
+		"format": "oxfmt",
 		"preview": "pnpm --dir examples/kitchen-sink preview",
 		"test": "pnpm typecheck && vitest run",
 		"typecheck": "pnpm -r typecheck",

@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 
-import {
-	cpSync,
-	mkdirSync,
-	existsSync,
-	statSync,
-	readdirSync,
-	readFileSync,
-} from 'fs'
+import { cpSync, mkdirSync, existsSync, statSync, readdirSync, readFileSync } from 'fs'
 import { dirname, join, basename } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
-import {
-	parseArgs,
-	rewritePackageJson,
-	writeReadme,
-	findWorkspaceRoot,
-} from './lib.js'
+import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from './lib.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
@@ -74,9 +62,7 @@ function isInMonorepo() {
 function installInMonorepo(targetDir) {
 	const root = findWorkspaceRoot(targetDir)
 	if (!root) {
-		console.error(
-			'create-aero-js: could not find workspace root (pnpm-workspace.yaml).'
-		)
+		console.error('create-aero-js: could not find workspace root (pnpm-workspace.yaml).')
 		process.exit(1)
 	}
 	const r = spawnSync('pnpm', ['install', '--no-frozen-lockfile'], {
@@ -85,9 +71,7 @@ function installInMonorepo(targetDir) {
 		shell: true,
 	})
 	if (r.status !== 0) {
-		console.error(
-			'create-aero-js: pnpm install failed. Run "pnpm install" from the repo root.'
-		)
+		console.error('create-aero-js: pnpm install failed. Run "pnpm install" from the repo root.')
 		process.exit(1)
 	}
 }
@@ -134,9 +118,7 @@ function main() {
 
 	// Run from packages/create: scaffold into packages/create/dist/<target>
 	const inMonorepo = isInMonorepo()
-	const targetDir = inMonorepo
-		? join(startPkgDir, APPS_DIR, target)
-		: join(process.cwd(), target)
+	const targetDir = inMonorepo ? join(startPkgDir, APPS_DIR, target) : join(process.cwd(), target)
 
 	if (inMonorepo) {
 		mkdirSync(join(startPkgDir, APPS_DIR), { recursive: true })
@@ -145,16 +127,12 @@ function main() {
 	if (existsSync(targetDir)) {
 		const stat = statSync(targetDir)
 		if (!stat.isDirectory()) {
-			console.error(
-				`create-aero-js: "${target}" exists and is not a directory.`
-			)
+			console.error(`create-aero-js: "${target}" exists and is not a directory.`)
 			process.exit(1)
 		}
 		const files = readdirSync(targetDir)
 		if (files.length > 0) {
-			console.error(
-				`create-aero-js: directory "${target}" already exists and is not empty.`
-			)
+			console.error(`create-aero-js: directory "${target}" already exists and is not empty.`)
 			process.exit(1)
 		}
 	}
@@ -163,9 +141,7 @@ function main() {
 	let coreVersion = null
 	if (!inMonorepo) {
 		try {
-			const cliPkg = JSON.parse(
-				readFileSync(join(startPkgDir, 'package.json'), 'utf8')
-			)
+			const cliPkg = JSON.parse(readFileSync(join(startPkgDir, 'package.json'), 'utf8'))
 			coreVersion = cliPkg.version || null
 		} catch {
 			// ignore; lib will fall back to *
@@ -173,13 +149,7 @@ function main() {
 	}
 	console.log(`Creating Aero app in ${target} from template "${template}"...`)
 	copyTemplate(templatePath, targetDir)
-	rewritePackageJson(
-		templatePath,
-		targetDir,
-		target,
-		inMonorepo,
-		coreVersion
-	)
+	rewritePackageJson(templatePath, targetDir, target, inMonorepo, coreVersion)
 	writeReadme(targetDir, target, template)
 	console.log('Installing dependencies...')
 	if (inMonorepo) {
