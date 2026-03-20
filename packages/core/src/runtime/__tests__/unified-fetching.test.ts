@@ -71,6 +71,9 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 
 		expect(getStaticPaths).toHaveBeenCalled()
 		expect(html).toBeNull()
+		expect(console.warn).toHaveBeenCalledWith(
+			expect.stringContaining('[AERO_ROUTE]'),
+		)
 	})
 
 	/** When props are supplied (e.g. by static build from getStaticPaths), runtime does not call getStaticPaths again. */

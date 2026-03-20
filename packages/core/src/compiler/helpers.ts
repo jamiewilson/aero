@@ -11,11 +11,18 @@ import {
 	compileInterpolationFromSegments,
 	type Segment,
 } from './tokenizer'
+import { AeroCompileError } from '@aero-js/diagnostics'
+import { lineColumnAtOffset } from '../utils/source-position'
 
 /** Options for validateSingleBracedExpression (directive/tag for error message). */
 export interface ValidateSingleBracedExpressionOptions {
 	directive?: string
 	tagName?: string
+	/** Original template source; used with {@link positionNeedle} for {@link AeroCompileError} location. */
+	diagnosticSource?: string
+	diagnosticFile?: string
+	/** First matching substring in `diagnosticSource` whose start offset is reported. */
+	positionNeedle?: string
 }
 
 /**
@@ -42,9 +49,21 @@ export function validateSingleBracedExpression(
 	if (!ok) {
 		const directive = options.directive ?? 'directive'
 		const tagName = options.tagName ?? 'element'
-		throw new Error(
-			`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`
-		)
+		const message = `Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`
+		const src = options.diagnosticSource
+		const needle = options.positionNeedle
+		const file = options.diagnosticFile
+		if (src !== undefined && needle !== undefined && needle.length > 0) {
+			const idx = src.indexOf(needle)
+			if (idx >= 0) {
+				const { line, column } = lineColumnAtOffset(src, idx)
+				throw new AeroCompileError({ message, file, line, column })
+			}
+		}
+		if (file !== undefined) {
+			throw new AeroCompileError({ message, file })
+		}
+		throw new Error(message)
 	}
 	return trimmed
 }

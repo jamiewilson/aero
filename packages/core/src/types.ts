@@ -109,6 +109,8 @@ export interface CompileOptions {
 	resolvePath?: (specifier: string, importer: string) => string
 	/** Importer file path (template) for resolution; required when resolvePath is used. */
 	importer?: string
+	/** Original HTML template source for directive diagnostics (line/column in Vite overlay). */
+	diagnosticTemplateSource?: string
 }
 
 /** Options for the path resolver (e.g. resolving `@components/foo` to a file path). */

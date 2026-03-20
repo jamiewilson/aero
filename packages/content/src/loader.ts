@@ -9,7 +9,9 @@ import type {
 	ContentConfig,
 	ContentDocument,
 	ContentMeta,
+	ContentSchemaIssue,
 } from './types'
+import { contentSchemaAggregateError } from './content-issues'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
@@ -19,12 +21,13 @@ import path from 'node:path'
 async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
 	root: string
-): Promise<TOutput[]> {
+): Promise<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }> {
 	const dir = path.resolve(root, config.directory)
 	const pattern = config.include || '**/*.md'
 	const files = await fg(pattern, { cwd: dir, absolute: true })
 
 	const documents: TOutput[] = []
+	const schemaIssues: ContentSchemaIssue[] = []
 
 	for (const file of files) {
 		const raw = fs.readFileSync(file, 'utf-8')
@@ -52,10 +55,12 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			const rawResult = std.validate(frontmatter)
 			const result = rawResult instanceof Promise ? await rawResult : rawResult
 			if (result.issues) {
-				const errors = result.issues.map((i) => i.message).join(', ')
-				console.warn(
-					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`
-				)
+				schemaIssues.push({
+					collection: config.name,
+					relPath,
+					file,
+					messages: result.issues.map(i => i.message),
+				})
 				continue
 			}
 			validated = result.value as TSchema
@@ -75,7 +80,7 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 		}
 	}
 
-	return documents
+	return { documents, schemaIssues }
 }
 
 /** Loaded content keyed by collection name. */
@@ -160,25 +165,33 @@ export async function loadSingleFile(
 }
 
 /**
- * Load all collections; returns a map from collection name to document array.
+ * Load all collections; returns a map from collection name to document array plus any schema issues.
  *
  * @param config - ContentConfig (collections array).
  * @param root - Project root.
- * @returns Map<collectionName, documents[]>.
+ * @returns Loaded collections and schema issues for invalid files (skipped unless `strictSchema` or `AERO_CONTENT_STRICT`).
  */
 export async function loadAllCollections(
 	config: ContentConfig,
 	root: string
-): Promise<LoadedContent> {
+): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
 	const result: LoadedContent = new Map()
 	const collections = config.collections ?? []
+	const schemaIssues: ContentSchemaIssue[] = []
 
 	for (const collection of collections) {
-		const docs = await loadCollection(collection, root)
-		result.set(collection.name, docs)
+		const { documents, schemaIssues: colIssues } = await loadCollection(collection, root)
+		result.set(collection.name, documents)
+		schemaIssues.push(...colIssues)
 	}
 
-	return result
+	const strict =
+		config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
+	if (strict && schemaIssues.length > 0) {
+		throw contentSchemaAggregateError(schemaIssues)
+	}
+
+	return { loaded: result, schemaIssues }
 }
 
 /** Absolute paths of all collection directories (for HMR watch and invalidation). */
@@ -197,13 +210,23 @@ export function toExportName(collectionName: string): string {
 	return `all${camel.charAt(0).toUpperCase()}${camel.slice(1)}`
 }
 
+/** Options for {@link serializeContentModule} (e.g. schema warnings for tooling / `aero check`). */
+export interface SerializeContentModuleOptions {
+	/** Non-strict loads: files that failed schema validation (embedded for static analysis). */
+	schemaIssues?: readonly ContentSchemaIssue[]
+}
+
 /**
  * Serialize loaded collections into ESM source: `__collections` object, `getCollection(name, filterFn)`, and re-export of `render`.
  *
  * @param loaded - Map of collection name → document array (from loadAllCollections).
+ * @param options - Optional `schemaIssues` exported as `__aeroContentSchemaIssues` (empty array when omitted).
  * @returns Full module source string for the virtual module.
  */
-export function serializeContentModule(loaded: LoadedContent): string {
+export function serializeContentModule(
+	loaded: LoadedContent,
+	options?: SerializeContentModuleOptions,
+): string {
 	const collectionsContent = Array.from(loaded.entries())
 		.map(
 			([name, docs]) =>
@@ -211,7 +234,12 @@ export function serializeContentModule(loaded: LoadedContent): string {
 		)
 		.join(',\n')
 
+	const schemaIssues = options?.schemaIssues ?? []
+	const issuesJson = JSON.stringify(schemaIssues)
+
 	return `
+export const __aeroContentSchemaIssues = ${issuesJson};
+
 const __collections = {
 ${collectionsContent}
 };

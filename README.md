@@ -414,7 +414,7 @@ export default defineConfig({
 
 ```ts
 // vite.config.ts
-import { createViteConfig } from '@aero-js/config'
+import { createViteConfig } from '@aero-js/config/vite'
 import aeroConfig from './aero.config'
 
 export default createViteConfig(aeroConfig)

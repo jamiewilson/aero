@@ -1,10 +1,11 @@
 /**
- * Aero config package: typed config shape, defineConfig helper, and Vite config factory.
+ * Aero config package: typed config shape, `defineConfig`, and `loadAeroConfig`.
  *
  * @remarks
- * Re-exports `defineConfig`, `createViteConfig`, and config types for use in `aero.config.ts` and the CLI/build entry.
+ * **Vite:** import `createViteConfig` / `getDefaultOptions` from **`@aero-js/config/vite`**
+ * in `vite.config.ts` so `aero.config.ts` can stay limited to this entry (jiti-safe, no Vite load).
  */
 export { defineConfig } from './defineConfig'
-export { createViteConfig, getDefaultOptions } from './createViteConfig'
+export { loadAeroConfig } from './loadAeroConfig'
 export { redirectsToRouteRules } from './redirects'
 export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'

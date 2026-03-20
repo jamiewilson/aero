@@ -2,6 +2,7 @@
  * Load aero.config.ts or aero.config.js from a project root (sync via jiti).
  * Used when createViteConfig() is called with no config so the app can use a single vite.config.
  */
+import { jitiAliasRecordFromProject } from '@aero-js/core/utils/aliases'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
@@ -29,7 +30,8 @@ export function loadAeroConfig(
 		if (!existsSync(filePath)) continue
 		try {
 			// jiti(projectRoot) uses projectRoot as base for resolving; pass relative path from root
-			const jiti = require('jiti')(root, { esmResolve: true })
+			const alias = jitiAliasRecordFromProject(root)
+			const jiti = require('jiti')(root, { esmResolve: true, alias })
 			const relativePath = './' + name
 			const mod = jiti(relativePath)
 			const config = mod?.default ?? mod
@@ -42,11 +44,7 @@ export function loadAeroConfig(
 		} catch (err) {
 			// Load failed (e.g. resolve error); try next extension
 			if (process.env.DEBUG?.includes('aero')) {
-				console.error(
-					'[createViteConfig] loadAeroConfig failed for',
-					filePath,
-					err
-				)
+				console.error('[aero] loadAeroConfig failed for', filePath, err)
 			}
 		}
 	}

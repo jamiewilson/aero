@@ -10,7 +10,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import type { Manifest } from 'vite'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { __internal, createBuildConfig } from '../build'
 import { resolveDirs } from '../defaults'
 
@@ -356,5 +356,28 @@ describe('vite build helpers', () => {
 		} finally {
 			fs.rmSync(tmp, { recursive: true, force: true })
 		}
+	})
+
+	describe('resolveStaticPrerenderConcurrency', () => {
+		afterEach(() => {
+			vi.unstubAllEnvs()
+		})
+
+		it('uses AERO_STATIC_PRERENDER_CONCURRENCY when set', () => {
+			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '3')
+			expect(__internal.resolveStaticPrerenderConcurrency()).toBe(3)
+		})
+
+		it('caps explicit concurrency at 64', () => {
+			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '200')
+			expect(__internal.resolveStaticPrerenderConcurrency()).toBe(64)
+		})
+
+		it('ignores invalid env and falls back to CPU-based default', () => {
+			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '0')
+			const n = __internal.resolveStaticPrerenderConcurrency()
+			expect(n).toBeGreaterThanOrEqual(1)
+			expect(n).toBeLessThanOrEqual(8)
+		})
 	})
 })

@@ -549,6 +549,36 @@ function parseEachAttribute(
 }
 
 /**
+ * Collects references in `<script is:build>` whose root identifier is a content-global name (`site`, `theme`, …).
+ *
+ * @remarks
+ * Template `{ }` interpolation treats those as implicit globals, but build scripts must `import` from `@content/*`. Used by diagnostics so missing imports are reported.
+ */
+export function collectBuildScriptContentGlobalReferences(
+	document: vscode.TextDocument,
+	text: string,
+	contentGlobalNames: ReadonlySet<string>
+): TemplateReference[] {
+	const refs: TemplateReference[] = []
+	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+	let scriptMatch: RegExpExecArray | null
+	while ((scriptMatch = scriptRegex.exec(text)) !== null) {
+		if (isInsideHtmlComment(text, scriptMatch.index)) continue
+		const attrs = (scriptMatch[1] || '').toLowerCase()
+		if (/\bsrc\s*=/.test(attrs)) continue
+		if (!/\bis:build\b/.test(attrs)) continue
+		if (/\bis:inline\b/.test(attrs)) continue
+		if (/\bis:blocking\b/.test(attrs)) continue
+
+		const content = scriptMatch[2]
+		const contentStart = scriptMatch.index + scriptMatch[0].indexOf(content)
+		const maskedContent = maskJsComments(content)
+		extractIdentifiers(maskedContent, contentStart, document, refs, false)
+	}
+	return refs.filter(r => contentGlobalNames.has(r.content))
+}
+
+/**
  * Collects all variable references in the template (attributes and content).
  */
 export function collectTemplateReferences(

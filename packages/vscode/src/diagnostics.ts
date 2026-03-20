@@ -11,6 +11,7 @@ import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
 import { isAeroDocument } from './scope'
 import {
 	collectDefinedVariables,
+	collectBuildScriptContentGlobalReferences,
 	collectVariablesByScope,
 	collectTemplateScopes,
 	collectTemplateReferences,
@@ -26,8 +27,7 @@ import {
 	getRequiredPropsFromType,
 	getPropsTypeFromComponent,
 } from './propsValidation'
-
-const DIAGNOSTIC_SOURCE = 'aero'
+import { applyAeroDiagnosticIdentity } from './diagnostic-metadata'
 
 /** Matches `<script ...>...</script>` tags with attributes and content. */
 const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
@@ -177,7 +177,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
 					vscode.DiagnosticSeverity.Error
 				)
-				diagnostic.source = DIAGNOSTIC_SOURCE
+				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 				diagnostics.push(diagnostic)
 			}
 		}
@@ -261,7 +261,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'Imports in <script is:inline> require type="module" attribute.',
 							vscode.DiagnosticSeverity.Error
 						)
-						diagnostic.source = DIAGNOSTIC_SOURCE
+						applyAeroDiagnosticIdentity(
+							diagnostic,
+							'AERO_BUILD_SCRIPT',
+							'script-taxonomy.md'
+						)
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -354,7 +358,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'else-if must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
-						diagnostic.source = DIAGNOSTIC_SOURCE
+						applyAeroDiagnosticIdentity(
+							diagnostic,
+							'AERO_COMPILE',
+							'interpolation.md'
+						)
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -378,7 +386,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'else must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
-						diagnostic.source = DIAGNOSTIC_SOURCE
+						applyAeroDiagnosticIdentity(
+							diagnostic,
+							'AERO_COMPILE',
+							'interpolation.md'
+						)
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -429,7 +441,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 					`Component '${baseName}' is not imported. Explicit imports are required.`,
 					vscode.DiagnosticSeverity.Error
 				)
-				diagnostic.source = DIAGNOSTIC_SOURCE
+				applyAeroDiagnosticIdentity(
+					diagnostic,
+					'AERO_RESOLVE',
+					'importing-and-bundling.md'
+				)
 				diagnostics.push(diagnostic)
 				continue
 			}
@@ -447,7 +463,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 					`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
 					vscode.DiagnosticSeverity.Warning
 				)
-				diagnostic.source = DIAGNOSTIC_SOURCE
+				applyAeroDiagnosticIdentity(
+					diagnostic,
+					'AERO_RESOLVE',
+					'tsconfig-aliases.md'
+				)
 				diagnostics.push(diagnostic)
 			}
 		}
@@ -597,7 +617,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			msg,
 			vscode.DiagnosticSeverity.Error
 		)
-		diagnostic.source = DIAGNOSTIC_SOURCE
+		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
 		diagnostics.push(diagnostic)
 	}
 
@@ -695,6 +715,12 @@ export class AeroDiagnostics implements vscode.Disposable {
 		const [definedVars] = collectDefinedVariables(document, text)
 		const templateScopes = collectTemplateScopes(document, text)
 		const references = collectTemplateReferences(document, text)
+		const contentGlobalNames = new Set(Object.keys(CONTENT_GLOBALS))
+		const buildContentGlobalRefs = collectBuildScriptContentGlobalReferences(
+			document,
+			text,
+			contentGlobalNames
+		)
 
 		// Allowed globals that are always available
 		const ALLOWED_GLOBALS = new Set([
@@ -773,7 +799,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 							`Property '${firstProp}' does not exist on type '${ref.content}'`,
 							vscode.DiagnosticSeverity.Error
 						)
-						diagnostic.source = DIAGNOSTIC_SOURCE
+						applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -809,7 +835,20 @@ export class AeroDiagnostics implements vscode.Disposable {
 				message,
 				vscode.DiagnosticSeverity.Error
 			)
-			diagnostic.source = DIAGNOSTIC_SOURCE
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
+			diagnostics.push(diagnostic)
+		}
+
+		for (const ref of buildContentGlobalRefs) {
+			if (definedVars.has(ref.content)) continue
+
+			const message = `Variable '${ref.content}' is not defined`
+			const diagnostic = new vscode.Diagnostic(
+				ref.range,
+				message,
+				vscode.DiagnosticSeverity.Error
+			)
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 			diagnostics.push(diagnostic)
 		}
 	}
@@ -938,7 +977,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				vscode.DiagnosticSeverity.Hint
 			)
 			diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
-			diagnostic.source = DIAGNOSTIC_SOURCE
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 			diagnostics.push(diagnostic)
 		}
 	}
@@ -1001,7 +1040,11 @@ export class AeroDiagnostics implements vscode.Disposable {
 				`'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`,
 				vscode.DiagnosticSeverity.Error
 			)
-			diagnostic.source = DIAGNOSTIC_SOURCE
+			applyAeroDiagnosticIdentity(
+				diagnostic,
+				'AERO_BUILD_SCRIPT',
+				'script-taxonomy.md'
+			)
 			diagnostics.push(diagnostic)
 		}
 	}
