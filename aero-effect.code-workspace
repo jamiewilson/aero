@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "aero-effect",
+			"path": ".",
+		},
+		{
+			"name": "examples",
+			"path": "examples",
+		},
+		{
+			"name": "templates",
+			"path": "packages/templates",
+		},
+		{
+			"name": "website",
+			"path": "website",
+		},
+		{
+			"name": "packages",
+			"path": "packages",
+		},
+	],
+	"settings": {},
+}
