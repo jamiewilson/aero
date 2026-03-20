@@ -15,10 +15,7 @@ describe('loadAeroConfig (integration)', () => {
 		}
 		const cfg = loadAeroConfig(root)
 		expect(cfg).not.toBeNull()
-		const obj =
-			typeof cfg === 'function'
-				? cfg({ command: 'build', mode: 'production' })
-				: cfg
+		const obj = typeof cfg === 'function' ? cfg({ command: 'build', mode: 'production' }) : cfg
 		expect(obj?.dirs?.client).toBe('./frontend')
 	})
 })

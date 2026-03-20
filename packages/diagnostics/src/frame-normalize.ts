@@ -3,8 +3,7 @@
  */
 
 /** Lines that embed template/CSS text with different indent than real JS — exclude from shared dedent. */
-const BOILERPLATE_SNIPPET_LINE =
-	/^\s*(__out\s*\+=|let\s+__out_style_\w+\s*=|return\s+__out\b)/
+const BOILERPLATE_SNIPPET_LINE = /^\s*(__out\s*\+=|let\s+__out_style_\w+\s*=|return\s+__out\b)/
 
 function leadingWhitespaceRunLength(s: string): number {
 	let i = 0
@@ -15,11 +14,7 @@ function leadingWhitespaceRunLength(s: string): number {
 function stripLeadingWhitespaceRun(s: string, chars: number): string {
 	let i = 0
 	let removed = 0
-	while (
-		i < s.length &&
-		removed < chars &&
-		(s[i] === ' ' || s[i] === '\t')
-	) {
+	while (i < s.length && removed < chars && (s[i] === ' ' || s[i] === '\t')) {
 		i++
 		removed++
 	}
@@ -36,10 +31,7 @@ function expandTabsForDisplay(s: string): string {
  *
  * @param errorLine - 1-based line index from the parser; shifts the `^` caret when dedenting.
  */
-export function normalizeParseErrorFrame(
-	frame: string,
-	errorLine?: number
-): string {
+export function normalizeParseErrorFrame(frame: string, errorLine?: number): string {
 	const lines = frame.split('\n')
 	const parsed: Array<
 		| { kind: 'num'; prefix: string; body: string; lineNum: number }
@@ -71,10 +63,9 @@ export function normalizeParseErrorFrame(
 		parsed.push({ kind: 'other', text: line })
 	}
 
-	const numbered = parsed.filter((p): p is Extract<
-		(typeof parsed)[number],
-		{ kind: 'num' }
-	> => p.kind === 'num')
+	const numbered = parsed.filter(
+		(p): p is Extract<(typeof parsed)[number], { kind: 'num' }> => p.kind === 'num'
+	)
 
 	const bodiesForMin = numbered
 		.map(r => r.body)
@@ -82,25 +73,20 @@ export function normalizeParseErrorFrame(
 		.filter(b => !BOILERPLATE_SNIPPET_LINE.test(b))
 
 	const minIndent =
-		bodiesForMin.length > 0
-			? Math.min(...bodiesForMin.map(leadingWhitespaceRunLength))
-			: 0
+		bodiesForMin.length > 0 ? Math.min(...bodiesForMin.map(leadingWhitespaceRunLength)) : 0
 
 	if (minIndent <= 0) {
 		return frame
 	}
 
 	const errorRow = numbered.find(r => r.lineNum === errorLine)
-	const caretShift =
-		errorRow && !BOILERPLATE_SNIPPET_LINE.test(errorRow.body) ? minIndent : 0
+	const caretShift = errorRow && !BOILERPLATE_SNIPPET_LINE.test(errorRow.body) ? minIndent : 0
 
 	const out: string[] = []
 	for (const p of parsed) {
 		if (p.kind === 'num') {
 			const strip = BOILERPLATE_SNIPPET_LINE.test(p.body) ? 0 : minIndent
-			const body = expandTabsForDisplay(
-				stripLeadingWhitespaceRun(p.body, strip),
-			)
+			const body = expandTabsForDisplay(stripLeadingWhitespaceRun(p.body, strip))
 			out.push(p.prefix + body)
 		} else if (p.kind === 'caret' && caretShift > 0) {
 			const m = p.marker

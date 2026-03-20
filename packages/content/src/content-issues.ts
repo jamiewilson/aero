@@ -17,30 +17,22 @@ const LENIENT_FOOTER =
 /**
  * Lenient load: format all skipped files for Vite / terminal (warnings + footer).
  */
-export function formatContentSchemaIssuesReport(
-	issues: readonly ContentSchemaIssue[],
-): string {
+export function formatContentSchemaIssuesReport(issues: readonly ContentSchemaIssue[]): string {
 	if (issues.length === 0) return ''
-	const body = formatDiagnosticsTerminal(
-		contentSchemaIssuesToAeroDiagnostics(issues, 'warning'),
-	)
+	const body = formatDiagnosticsTerminal(contentSchemaIssuesToAeroDiagnostics(issues, 'warning'))
 	return `${body}\n\n${LENIENT_FOOTER}`
 }
 
 /** All schema validation failures from a load run (strict mode throws this). */
-export class ContentSchemaAggregateError extends Data.TaggedError(
-	'ContentSchemaAggregateError',
-)<{
+export class ContentSchemaAggregateError extends Data.TaggedError('ContentSchemaAggregateError')<{
 	readonly issues: readonly ContentSchemaIssue[]
 	readonly message: string
 }> {}
 
 export function contentSchemaAggregateError(
-	issues: readonly ContentSchemaIssue[],
+	issues: readonly ContentSchemaIssue[]
 ): ContentSchemaAggregateError {
-	const message = formatDiagnosticsTerminal(
-		contentSchemaIssuesToAeroDiagnostics(issues, 'error'),
-	)
+	const message = formatDiagnosticsTerminal(contentSchemaIssuesToAeroDiagnostics(issues, 'error'))
 	return new ContentSchemaAggregateError({
 		issues,
 		message,

@@ -19,12 +19,12 @@ export const HTML_SSR_PARSE_HINT =
 function parseErrorSummary(message: string): string {
 	const noAnsi = stripAnsi(message)
 	const withoutAtFile = noAnsi.replace(/\nAt file:.*$/s, '').trim()
-	const lines = withoutAtFile.split('\n').map(l => l.trim()).filter(Boolean)
+	const lines = withoutAtFile
+		.split('\n')
+		.map(l => l.trim())
+		.filter(Boolean)
 	const unexpected = lines.find(
-		l =>
-			l.startsWith('Unexpected ') ||
-			l.startsWith('Expected ') ||
-			/^[\w\s]+ error:/i.test(l),
+		l => l.startsWith('Unexpected ') || l.startsWith('Expected ') || /^[\w\s]+ error:/i.test(l)
 	)
 	if (unexpected && !unexpected.startsWith('Parse failure:')) return unexpected
 	const m = withoutAtFile.match(/Parse failed with \d+ error[s]?:\s*\n\s*([^\n]+)/)
@@ -57,9 +57,7 @@ export type WithParseMeta = HtmlModuleSsrParseError
 /**
  * Whether {@link formatCondensedHtmlSsrParseError} should replace the default Vite message.
  */
-export function isCondensableHtmlSsrParseError(
-	err: unknown
-): err is HtmlModuleSsrParseError {
+export function isCondensableHtmlSsrParseError(err: unknown): err is HtmlModuleSsrParseError {
 	if (!(err instanceof Error)) return false
 	const e = err as HtmlModuleSsrParseError
 	if (e.code !== 'PARSE_ERROR') return false
@@ -70,23 +68,17 @@ export function isCondensableHtmlSsrParseError(
 /**
  * Build an {@link AeroDiagnostic} for an HTML SSR parse failure (unified with compile diagnostics).
  */
-export function htmlSsrParseErrorToAeroDiagnostic(
-	err: HtmlModuleSsrParseError
-): AeroDiagnostic {
+export function htmlSsrParseErrorToAeroDiagnostic(err: HtmlModuleSsrParseError): AeroDiagnostic {
 	const filePath = err.loc?.file ?? err.id
 	const line = err.loc?.line
 	const col = err.loc?.column
 	const summary = parseErrorSummary(err.message || String(err))
 	const frameRaw = err.frame ? stripAnsi(err.frame) : ''
-	const frame = frameRaw
-		? normalizeParseErrorFrame(frameRaw, line).trimEnd()
-		: undefined
+	const frame = frameRaw ? normalizeParseErrorFrame(frameRaw, line).trimEnd() : undefined
 
 	const file = filePath ?? undefined
 	const span =
-		file && line !== undefined && col !== undefined
-			? { file, line, column: col }
-			: undefined
+		file && line !== undefined && col !== undefined ? { file, line, column: col } : undefined
 
 	return {
 		code: 'AERO_COMPILE',
@@ -102,8 +94,6 @@ export function htmlSsrParseErrorToAeroDiagnostic(
 /**
  * Format an HTML-module SSR parse error using the same terminal layout as other Aero diagnostics.
  */
-export function formatCondensedHtmlSsrParseError(
-	err: HtmlModuleSsrParseError
-): string {
+export function formatCondensedHtmlSsrParseError(err: HtmlModuleSsrParseError): string {
 	return formatDiagnosticsTerminal([htmlSsrParseErrorToAeroDiagnostic(err)])
 }

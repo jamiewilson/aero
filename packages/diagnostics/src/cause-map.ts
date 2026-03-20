@@ -45,15 +45,15 @@ export function failureToAeroDiagnostics(value: unknown): AeroDiagnostic[] {
 				severity: 'error',
 				message: css?.message ?? (value.message || String(value)),
 				file: css?.file ?? stackSpan?.file,
-				span: css?.span ?? (
-					stackSpan
+				span:
+					css?.span ??
+					(stackSpan
 						? {
 								file: stackSpan.file,
 								line: stackSpan.line,
 								column: stackSpan.column,
 							}
-						: undefined
-				),
+						: undefined),
 				...(css?.frame ? { frame: css.frame } : {}),
 				...(css?.hint ? { hint: css.hint } : {}),
 			},

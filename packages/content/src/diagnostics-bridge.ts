@@ -14,7 +14,7 @@ import type { ContentSchemaIssue } from './types'
  */
 export function contentSchemaIssuesToAeroDiagnostics(
 	issues: readonly ContentSchemaIssue[],
-	severity: AeroDiagnosticSeverity = 'warning',
+	severity: AeroDiagnosticSeverity = 'warning'
 ): AeroDiagnostic[] {
 	return contentSchemaIssuePayloadsToDiagnostics(issues, severity)
 }

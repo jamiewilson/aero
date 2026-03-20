@@ -13,8 +13,11 @@ export interface ContentSchemaIssuePayload {
 }
 
 export function isContentSchemaAggregateError(
-	err: unknown,
-): err is { readonly _tag: 'ContentSchemaAggregateError'; readonly issues: readonly ContentSchemaIssuePayload[] } {
+	err: unknown
+): err is {
+	readonly _tag: 'ContentSchemaAggregateError'
+	readonly issues: readonly ContentSchemaIssuePayload[]
+} {
 	if (typeof err !== 'object' || err === null) return false
 	const r = err as Record<string, unknown>
 	return (
@@ -41,7 +44,7 @@ function isContentSchemaIssuePayload(v: unknown): v is ContentSchemaIssuePayload
  */
 export function contentSchemaIssuePayloadsToDiagnostics(
 	issues: readonly ContentSchemaIssuePayload[],
-	severity: AeroDiagnosticSeverity = 'error',
+	severity: AeroDiagnosticSeverity = 'error'
 ): AeroDiagnostic[] {
 	return issues.map(issue => ({
 		code: 'AERO_CONTENT_SCHEMA',

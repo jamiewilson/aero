@@ -42,7 +42,7 @@ describe('contentSchemaIssuesToAeroDiagnostics', () => {
 
 	it('formats through formatDiagnosticsTerminal with [aero] and code', () => {
 		const text = formatDiagnosticsTerminal(
-			contentSchemaIssuesToAeroDiagnostics(sampleIssues, 'warning'),
+			contentSchemaIssuesToAeroDiagnostics(sampleIssues, 'warning')
 		)
 		expect(text).toContain('[aero]')
 		expect(text).toContain('[AERO_CONTENT_SCHEMA]')

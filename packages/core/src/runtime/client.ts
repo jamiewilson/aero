@@ -51,17 +51,14 @@ function diagnosticsFromDevFetch(res: Response, html: string): AeroDiagnostic[] 
 function showRenderDiagnostics(
 	appEl: HTMLElement,
 	pageName: string,
-	diagnostics: AeroDiagnostic[],
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const title = escapeForBrowserPre(pageName)
 	const panel = formatDiagnosticsBrowserHtml(diagnostics)
 	appEl.innerHTML = `<h1>Error rendering page: ${title}</h1>${panel}`
 	console.groupCollapsed('[aero] Diagnostics')
 	for (const d of diagnostics) {
-		const loc =
-			d.file && d.span
-				? `${d.file}:${d.span.line}:${d.span.column}`
-				: d.file || ''
+		const loc = d.file && d.span ? `${d.file}:${d.span.line}:${d.span.column}` : d.file || ''
 		aeroDevLog('error', d.code, `${loc ? `${loc} ` : ''}${d.message}`)
 	}
 	console.groupEnd()
@@ -150,15 +147,9 @@ export async function renderPage(
 		if (head) updateHead(head)
 		appEl.innerHTML = body
 	} catch (err) {
-		const safe = escapeForBrowserPre(
-			err instanceof Error ? err.message : String(err),
-		)
+		const safe = escapeForBrowserPre(err instanceof Error ? err.message : String(err))
 		appEl.innerHTML = `<h1>Error rendering page: ${escapeForBrowserPre(pageName)}</h1><pre>${safe}</pre>`
-		aeroDevLog(
-			'error',
-			'AERO_INTERNAL',
-			err instanceof Error ? err.message : String(err),
-		)
+		aeroDevLog('error', 'AERO_INTERNAL', err instanceof Error ? err.message : String(err))
 	} finally {
 		rendering = false
 	}

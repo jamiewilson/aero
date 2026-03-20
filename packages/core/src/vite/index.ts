@@ -211,14 +211,14 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				| ((
 						name: string,
 						config: ResolvedConfig,
-						ctx: { ws: WebSocketServer },
+						ctx: { ws: WebSocketServer }
 				  ) => DevEnvironment | Promise<DevEnvironment>)
 				| undefined
 
 			function ssrCreateEnvironment(
 				name: string,
 				config: ResolvedConfig,
-				context: { ws: WebSocketServer },
+				context: { ws: WebSocketServer }
 			): DevEnvironment | Promise<DevEnvironment> {
 				if (userSsrCreate) {
 					return userSsrCreate(name, config, context)
@@ -358,7 +358,7 @@ function compileExitToGeneratedOrReport(
 	ctx: { error(payload: unknown): never },
 	exit: Exit.Exit<string, AeroCompileError>,
 	filePath: string,
-	pluginName: string,
+	pluginName: string
 ): string {
 	if (Exit.isSuccess(exit)) return exit.value
 	const raw = exitFailureToAeroDiagnostics(exit)
@@ -366,7 +366,7 @@ function compileExitToGeneratedOrReport(
 		raw.map(d => ({
 			...d,
 			file: d.file ?? d.span?.file ?? filePath,
-		})),
+		}))
 	)
 	const fields = aeroDiagnosticToViteErrorFields(merged[0]!, pluginName)
 	const payload =
@@ -620,7 +620,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 							parsed.clientScripts[i].content = getClientScriptVirtualUrl(
 								baseName,
 								i,
-								parsed.clientScripts.length,
+								parsed.clientScripts.length
 							)
 						}
 						return compileTemplate(
@@ -633,15 +633,15 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 								resolvePath: resolvedAlias.resolve,
 								importer: filePath,
 							},
-							parsed,
+							parsed
 						)
-					}),
+					})
 				)
 				const generated = compileExitToGeneratedOrReport(
 					this,
 					exit,
 					filePath,
-					'vite-plugin-aero-virtuals',
+					'vite-plugin-aero-virtuals'
 				)
 				return { code: generated, map: null }
 			}
@@ -689,7 +689,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 							parsed.clientScripts[i].content = getClientScriptVirtualUrl(
 								baseName,
 								i,
-								parsed.clientScripts.length,
+								parsed.clientScripts.length
 							)
 						}
 					}
@@ -704,16 +704,11 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 							resolvePath: resolvedAlias.resolve,
 							importer: id,
 						},
-						parsed,
+						parsed
 					)
-				}),
+				})
 			)
-			const generated = compileExitToGeneratedOrReport(
-				this,
-				exit,
-				id,
-				'vite-plugin-aero-transform',
-			)
+			const generated = compileExitToGeneratedOrReport(this, exit, id, 'vite-plugin-aero-transform')
 			return {
 				code: generated,
 				map: null,
@@ -854,26 +849,21 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
 							? path.join(root, state.dirs.client, 'pages', `${renderPageNameForDiag}.html`)
 							: undefined
 					const diagnostics = enrichDiagnosticsWithSourceFrames(
-						unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {}),
+						unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {})
 					)
-					server.config.logger.error(
-						'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
-					)
+					server.config.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 					const devDetails = server.config.mode === 'development'
 					if (devDetails) {
 						res.statusCode = 500
 						res.setHeader('Content-Type', 'text/html; charset=utf-8')
-						res.setHeader(
-							AERO_DIAGNOSTICS_HTTP_HEADER,
-							encodeDiagnosticsHeaderValue(diagnostics),
-						)
+						res.setHeader(AERO_DIAGNOSTICS_HTTP_HEADER, encodeDiagnosticsHeaderValue(diagnostics))
 						res.end(buildDevSsrErrorHtml(diagnostics))
 						return
 					}
 					res.statusCode = 500
 					res.setHeader('Content-Type', 'text/html; charset=utf-8')
 					res.end(
-						'<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body><h1>Internal Server Error</h1></body></html>',
+						'<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body><h1>Internal Server Error</h1></body></html>'
 					)
 				}
 			})
@@ -950,30 +940,21 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 						redirects: options.redirects,
 						resolvedConfig: state.config!,
 					},
-					outDir,
+					outDir
 				)
 			} catch (err) {
 				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-				state.config!.logger.error(
-					'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
-				)
+				state.config!.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 				process.exitCode = exitCodeForThrown(err)
 				throw err
 			}
 			if (enableNitro) {
-				const configCwd = writeGeneratedNitroConfig(
-					root,
-					dirs.server,
-					options.redirects,
-					dirs.dist,
-				)
+				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects, dirs.dist)
 				try {
 					await runNitroBuild(root, configCwd)
 				} catch (err) {
 					const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-					state.config!.logger.error(
-						'\n' + formatDiagnosticsTerminal(diagnostics) + '\n',
-					)
+					state.config!.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 					process.exitCode = AERO_EXIT_NITRO
 					throw err
 				}

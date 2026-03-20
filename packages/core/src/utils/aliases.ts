@@ -143,19 +143,10 @@ export function mergeWithDefaultAliases(
  * @param root - Project root (tsconfig discovery, `baseUrl`).
  * @param dirs - Optional Aero directory overrides; defaults match {@link resolveDirs}.
  */
-export function jitiAliasRecordFromProject(
-	root: string,
-	dirs?: AeroDirs
-): Record<string, string> {
+export function jitiAliasRecordFromProject(root: string, dirs?: AeroDirs): Record<string, string> {
 	const resolvedDirs = resolveDirs(dirs)
-	const merged = mergeWithDefaultAliases(
-		loadTsconfigAliases(root),
-		root,
-		resolvedDirs
-	)
-	return Object.fromEntries(
-		merged.aliases.map((a: UserAlias) => [a.find, a.replacement])
-	)
+	const merged = mergeWithDefaultAliases(loadTsconfigAliases(root), root, resolvedDirs)
+	return Object.fromEntries(merged.aliases.map((a: UserAlias) => [a.find, a.replacement]))
 }
 
 export { resolveDirs, type ResolvedAeroDirs }

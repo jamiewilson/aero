@@ -181,8 +181,7 @@ export async function loadAllCollections(
 		schemaIssues.push(...colIssues)
 	}
 
-	const strict =
-		config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
+	const strict = config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
 	if (strict && schemaIssues.length > 0) {
 		throw contentSchemaAggregateError(schemaIssues)
 	}
@@ -221,7 +220,7 @@ export interface SerializeContentModuleOptions {
  */
 export function serializeContentModule(
 	loaded: LoadedContent,
-	options?: SerializeContentModuleOptions,
+	options?: SerializeContentModuleOptions
 ): string {
 	const collectionsContent = Array.from(loaded.entries())
 		.map(([name, docs]) => `  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`)

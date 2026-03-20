@@ -9,15 +9,9 @@ export type {
 	AeroDiagnosticSeverity,
 	AeroDiagnosticSpan,
 } from './types'
-export {
-	aeroIdeDocHref,
-	aeroIdeDocsUrlForCode,
-} from './ide-catalog'
+export { aeroIdeDocHref, aeroIdeDocsUrlForCode } from './ide-catalog'
 export { unknownToAeroDiagnostics } from './from-unknown'
-export {
-	formatDiagnosticsTerminal,
-	type FormatDiagnosticsTerminalOptions,
-} from './format-terminal'
+export { formatDiagnosticsTerminal, type FormatDiagnosticsTerminalOptions } from './format-terminal'
 export { normalizeParseErrorFrame } from './frame-normalize'
 export {
 	formatCondensedHtmlSsrParseError,

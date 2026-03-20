@@ -39,14 +39,14 @@ describe('html-ssr-parse-error', () => {
 	it('formats like other terminal diagnostics (frame + [aero])', () => {
 		const err = Object.assign(
 			new Error(
-				'Parse failure: Parse failed with 1 error:\nUnexpected token\n\n23: x\nAt file: /frontend/nav.html:25:3',
+				'Parse failure: Parse failed with 1 error:\nUnexpected token\n\n23: x\nAt file: /frontend/nav.html:25:3'
 			),
 			{
 				code: 'PARSE_ERROR',
 				id: '/frontend/nav.html',
 				loc: { file: '/frontend/nav.html', line: 25, column: 3 },
 				frame: '23 | a\n24 | b\n25 | c\n   | ^',
-			},
+			}
 		)
 		const out = formatCondensedHtmlSsrParseError(err)
 		expect(out).toContain('[aero]')

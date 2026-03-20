@@ -23,10 +23,7 @@ import {
 	collectImportedSpecifiersFromDocument,
 	findInnermostScope,
 } from './utils'
-import {
-	getRequiredPropsFromType,
-	getPropsTypeFromComponent,
-} from './propsValidation'
+import { getRequiredPropsFromType, getPropsTypeFromComponent } from './propsValidation'
 import { applyAeroDiagnosticIdentity } from './diagnostic-metadata'
 
 /** Matches `<script ...>...</script>` tags with attributes and content. */
@@ -247,11 +244,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'Imports in <script is:inline> require type="module" attribute.',
 							vscode.DiagnosticSeverity.Error
 						)
-						applyAeroDiagnosticIdentity(
-							diagnostic,
-							'AERO_BUILD_SCRIPT',
-							'script-taxonomy.md'
-						)
+						applyAeroDiagnosticIdentity(diagnostic, 'AERO_BUILD_SCRIPT', 'script-taxonomy.md')
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -332,11 +325,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'else-if must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
-						applyAeroDiagnosticIdentity(
-							diagnostic,
-							'AERO_COMPILE',
-							'interpolation.md'
-						)
+						applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -357,11 +346,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 							'else must follow an element with if or else-if',
 							vscode.DiagnosticSeverity.Error
 						)
-						applyAeroDiagnosticIdentity(
-							diagnostic,
-							'AERO_COMPILE',
-							'interpolation.md'
-						)
+						applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 						diagnostics.push(diagnostic)
 					}
 				}
@@ -412,11 +397,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 					`Component '${baseName}' is not imported. Explicit imports are required.`,
 					vscode.DiagnosticSeverity.Error
 				)
-				applyAeroDiagnosticIdentity(
-					diagnostic,
-					'AERO_RESOLVE',
-					'importing-and-bundling.md'
-				)
+				applyAeroDiagnosticIdentity(diagnostic, 'AERO_RESOLVE', 'importing-and-bundling.md')
 				diagnostics.push(diagnostic)
 				continue
 			}
@@ -434,11 +415,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 					`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
 					vscode.DiagnosticSeverity.Warning
 				)
-				applyAeroDiagnosticIdentity(
-					diagnostic,
-					'AERO_RESOLVE',
-					'tsconfig-aliases.md'
-				)
+				applyAeroDiagnosticIdentity(diagnostic, 'AERO_RESOLVE', 'tsconfig-aliases.md')
 				diagnostics.push(diagnostic)
 			}
 		}
@@ -780,11 +757,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				? `Component '${ref.content}' is not defined`
 				: `Variable '${ref.content}' is not defined`
 
-			const diagnostic = new vscode.Diagnostic(
-				ref.range,
-				message,
-				vscode.DiagnosticSeverity.Error
-			)
+			const diagnostic = new vscode.Diagnostic(ref.range, message, vscode.DiagnosticSeverity.Error)
 			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 			diagnostics.push(diagnostic)
 		}
@@ -793,11 +766,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 			if (definedVars.has(ref.content)) continue
 
 			const message = `Variable '${ref.content}' is not defined`
-			const diagnostic = new vscode.Diagnostic(
-				ref.range,
-				message,
-				vscode.DiagnosticSeverity.Error
-			)
+			const diagnostic = new vscode.Diagnostic(ref.range, message, vscode.DiagnosticSeverity.Error)
 			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
 			diagnostics.push(diagnostic)
 		}
@@ -959,11 +928,7 @@ export class AeroDiagnostics implements vscode.Disposable {
 				`'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`,
 				vscode.DiagnosticSeverity.Error
 			)
-			applyAeroDiagnosticIdentity(
-				diagnostic,
-				'AERO_BUILD_SCRIPT',
-				'script-taxonomy.md'
-			)
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_BUILD_SCRIPT', 'script-taxonomy.md')
 			diagnostics.push(diagnostic)
 		}
 	}

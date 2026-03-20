@@ -10,9 +10,7 @@ export function registerRunAeroCheck(context: vscode.ExtensionContext): void {
 		vscode.commands.registerCommand('aero.runCheck', async () => {
 			const folder = vscode.workspace.workspaceFolders?.[0]
 			if (!folder) {
-				void vscode.window.showWarningMessage(
-					'Aero: Open a folder to run aero check.'
-				)
+				void vscode.window.showWarningMessage('Aero: Open a folder to run aero check.')
 				return
 			}
 			const root = folder.uri.fsPath

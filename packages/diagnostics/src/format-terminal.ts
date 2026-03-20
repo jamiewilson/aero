@@ -20,20 +20,14 @@ function wantsPretty(opts: FormatDiagnosticsTerminalOptions): boolean {
 	if (opts.pretty === true) return true
 	if (opts.pretty === false) return false
 	return (
-		typeof process !== 'undefined' &&
-		process.stdout !== undefined &&
-		process.stdout.isTTY === true
+		typeof process !== 'undefined' && process.stdout !== undefined && process.stdout.isTTY === true
 	)
 }
 
 function formatOne(d: AeroDiagnostic, index: number, total: number): string {
 	const prefix = total > 1 ? `${index + 1}/${total} ` : ''
 	const fileDisp = d.file ? diagnosticPathForDisplay(d.file) : ''
-	const where = fileDisp
-		? d.span
-			? `${fileDisp}:${d.span.line}:${d.span.column}`
-			: fileDisp
-		: ''
+	const where = fileDisp ? (d.span ? `${fileDisp}:${d.span.line}:${d.span.column}` : fileDisp) : ''
 	const loc = where ? ` ${where}` : ''
 	const hint = d.hint ? `\n  hint: ${d.hint}` : ''
 	const docs = d.docsUrl ? `\n  docs: ${d.docsUrl}` : ''
@@ -54,12 +48,10 @@ const RULE = '─'
  */
 export function formatDiagnosticsTerminal(
 	diagnostics: readonly AeroDiagnostic[],
-	options: FormatDiagnosticsTerminalOptions = {},
+	options: FormatDiagnosticsTerminalOptions = {}
 ): string {
 	if (diagnostics.length === 0) return ''
-	const body = diagnostics
-		.map((d, i) => formatOne(d, i, diagnostics.length))
-		.join('\n\n')
+	const body = diagnostics.map((d, i) => formatOne(d, i, diagnostics.length)).join('\n\n')
 	if (!wantsPretty(options)) return body
 
 	const title = ` aero (${diagnostics.length}) `

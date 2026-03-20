@@ -181,7 +181,7 @@ export class Aero {
 				aeroDevLog(
 					'warn',
 					'AERO_ROUTE',
-					`Route params ${JSON.stringify(combinedParams)} not found in getStaticPaths for ${matchedPageName}`,
+					`Route params ${JSON.stringify(combinedParams)} not found in getStaticPaths for ${matchedPageName}`
 				)
 				return null
 			}

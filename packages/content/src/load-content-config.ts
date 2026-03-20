@@ -27,17 +27,14 @@ export function loadContentConfigFileSync(
 	root: string,
 	configFile: string
 ): LoadContentConfigResult {
-	const configPath = path.isAbsolute(configFile)
-		? configFile
-		: path.resolve(root, configFile)
+	const configPath = path.isAbsolute(configFile) ? configFile : path.resolve(root, configFile)
 	if (!existsSync(configPath)) {
 		return { ok: false, reason: 'missing' }
 	}
 	try {
 		const alias = jitiAliasRecordFromProject(root)
 		const jiti = require('jiti')(root, { esmResolve: true, alias })
-		const relativePath =
-			'./' + path.relative(root, configPath).replace(/\\/g, '/')
+		const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
 		const mod = jiti(relativePath)
 		const config = (mod?.default ?? mod) as ContentConfig
 		return { ok: true, config }

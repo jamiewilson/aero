@@ -71,7 +71,7 @@ describe('diagnostics', () => {
 				file: 'client/pages/x.html',
 				span: { file: 'client/pages/x.html', line: 4, column: 1 },
 			},
-			'vite-plugin-aero-transform',
+			'vite-plugin-aero-transform'
 		)
 		expect(fields.loc).toEqual({
 			file: 'client/pages/x.html',
@@ -92,7 +92,7 @@ describe('diagnostics', () => {
 				file: 'client/pages/y.html',
 				span: { file: '', line: 2, column: 0 },
 			},
-			'vite-plugin-aero',
+			'vite-plugin-aero'
 		)
 		expect(fields.loc?.file).toBe('client/pages/y.html')
 	})
@@ -107,7 +107,7 @@ describe('diagnostics', () => {
 				span: { file: 'a.html', line: 1, column: 0 },
 				frame: '> 1 | oops\n  | ^',
 			},
-			'vite-plugin-aero',
+			'vite-plugin-aero'
 		)
 		expect(fields.frame).toBe('> 1 | oops\n  | ^')
 	})
@@ -155,22 +155,16 @@ describe('diagnostics', () => {
 					severity: 'error',
 					message: 'x',
 				},
-			]),
+			])
 		).toBe(AERO_EXIT_CONTENT)
+		expect(exitCodeForDiagnostics([{ code: 'AERO_PARSE', severity: 'error', message: 'x' }])).toBe(
+			AERO_EXIT_COMPILE
+		)
 		expect(
-			exitCodeForDiagnostics([
-				{ code: 'AERO_PARSE', severity: 'error', message: 'x' },
-			]),
-		).toBe(AERO_EXIT_COMPILE)
-		expect(
-			exitCodeForDiagnostics([
-				{ code: 'AERO_INTERNAL', severity: 'error', message: 'x' },
-			]),
+			exitCodeForDiagnostics([{ code: 'AERO_INTERNAL', severity: 'error', message: 'x' }])
 		).toBe(AERO_EXIT_BUILD_GENERIC)
 		expect(
-			exitCodeForDiagnostics([
-				{ code: 'AERO_ROUTE', severity: 'warning', message: 'no match' },
-			]),
+			exitCodeForDiagnostics([{ code: 'AERO_ROUTE', severity: 'warning', message: 'no match' }])
 		).toBe(AERO_EXIT_ROUTE)
 	})
 

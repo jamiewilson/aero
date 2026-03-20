@@ -4,7 +4,10 @@
  */
 
 /** @param offset - Start index of the span (0-based); clamped to `[0, source.length]`. */
-export function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
+export function lineColumnAtOffset(
+	source: string,
+	offset: number
+): { line: number; column: number } {
 	const o = Math.max(0, Math.min(offset, source.length))
 	let line = 1
 	let lineStart = 0

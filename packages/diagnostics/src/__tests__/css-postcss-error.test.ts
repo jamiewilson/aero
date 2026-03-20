@@ -5,7 +5,7 @@ import { unknownToAeroDiagnostics } from '../from-unknown'
 describe('css-postcss-error', () => {
 	it('normalizePostcssDisplayPath strips query and notes style extract', () => {
 		const { displayFile, styleExtractHint } = normalizePostcssDisplayPath(
-			'/proj/pages/index.html?html-proxy&index=3.css',
+			'/proj/pages/index.html?html-proxy&index=3.css'
 		)
 		expect(displayFile).toBe('/proj/pages/index.html')
 		expect(styleExtractHint).toContain('#3')

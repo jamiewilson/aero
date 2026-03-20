@@ -20,7 +20,7 @@ export interface AeroViteErrorFields {
  */
 export function aeroDiagnosticToViteErrorFields(
 	d: AeroDiagnostic,
-	plugin?: string,
+	plugin?: string
 ): AeroViteErrorFields {
 	const id = d.span?.file ?? d.file
 	const prefix = `[${d.code}] `
@@ -33,8 +33,7 @@ export function aeroDiagnosticToViteErrorFields(
 				: ''
 	const message = `${prefix}${where}${d.message}`
 
-	const spanFile =
-		d.span?.file && d.span.file.length > 0 ? d.span.file : undefined
+	const spanFile = d.span?.file && d.span.file.length > 0 ? d.span.file : undefined
 	const loc =
 		d.span && d.span.line > 0
 			? {
@@ -55,17 +54,13 @@ export function aeroDiagnosticToViteErrorFields(
 
 export function diagnosticsToSingleMessage(
 	diagnostics: readonly AeroDiagnostic[],
-	opts: { includeCodePrefix?: boolean } = {},
+	opts: { includeCodePrefix?: boolean } = {}
 ): string {
 	const parts = diagnostics.map(d => {
 		const prefix = opts.includeCodePrefix !== false ? `[${d.code}] ` : ''
 		const base = d.file ? diagnosticPathForDisplay(d.file) : ''
 		const where =
-			d.span && base
-				? `${base}:${d.span.line}:${d.span.column}: `
-				: base
-					? `${base}: `
-					: ''
+			d.span && base ? `${base}:${d.span.line}:${d.span.column}: ` : base ? `${base}: ` : ''
 		return `${prefix}${where}${d.message}`
 	})
 	return parts.join('\n')

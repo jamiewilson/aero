@@ -206,15 +206,9 @@ describe('jitiAliasRecordFromProject', () => {
 	it('matches mergeWithDefaultAliases as a flat prefix → dir map for jiti', async () => {
 		const { getTsconfig } = await import('get-tsconfig')
 		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue(null)
-		const merged = mergeWithDefaultAliases(
-			loadTsconfigAliases('/project'),
-			'/project',
-			defaultDirs
-		)
+		const merged = mergeWithDefaultAliases(loadTsconfigAliases('/project'), '/project', defaultDirs)
 		const jitiMap = jitiAliasRecordFromProject('/project')
-		expect(jitiMap).toEqual(
-			Object.fromEntries(merged.aliases.map(a => [a.find, a.replacement]))
-		)
+		expect(jitiMap).toEqual(Object.fromEntries(merged.aliases.map(a => [a.find, a.replacement])))
 		expect(jitiMap['@pages']).toBe(path.join('/project', 'client', 'pages'))
 	})
 })

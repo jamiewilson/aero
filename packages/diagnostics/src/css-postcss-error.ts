@@ -41,12 +41,14 @@ function stripPostcssNoise(message: string): string {
 }
 
 /** Drop leading `path:line:col:` Vite/PostCSS often embeds in the message when we already have span. */
-function stripDuplicateLocationFromMessage(message: string, file: string, line: number, column: number): string {
+function stripDuplicateLocationFromMessage(
+	message: string,
+	file: string,
+	line: number,
+	column: number
+): string {
 	const escaped = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-	const re = new RegExp(
-		`^${escaped}:${line}:${column}:\\s*`,
-		'i',
-	)
+	const re = new RegExp(`^${escaped}:${line}:${column}:\\s*`, 'i')
 	let m = message.replace(re, '').trim()
 	const reAnyPath = /^(?:\/|[A-Za-z]:\\).*?:\d+:\d+:\s*/
 	if (m === message && reAnyPath.test(message)) {

@@ -24,9 +24,7 @@ import {
 import fs from 'node:fs'
 import path from 'node:path'
 
-function resolveAeroConfigObject(
-	loaded: AeroConfig | AeroConfigFunction | null
-): AeroConfig {
+function resolveAeroConfigObject(loaded: AeroConfig | AeroConfigFunction | null): AeroConfig {
 	if (!loaded) return {}
 	if (typeof loaded === 'function') {
 		return loaded({ command: 'build', mode: 'production' })
@@ -42,11 +40,7 @@ function contentConfigPathFromAero(root: string, aero: AeroConfig): string {
 	return c.config ?? 'content.config.ts'
 }
 
-function shouldRunContentCheck(
-	aero: AeroConfig,
-	root: string,
-	relPath: string
-): boolean {
+function shouldRunContentCheck(aero: AeroConfig, root: string, relPath: string): boolean {
 	if (aero.content === true) return true
 	if (typeof aero.content === 'object' && aero.content) return true
 	const abs = path.resolve(root, relPath)
@@ -71,11 +65,7 @@ function walkHtmlFiles(dir: string): string[] {
 
 function templateDirs(root: string, clientRel: string): string[] {
 	const base = path.join(root, clientRel)
-	return [
-		path.join(base, 'pages'),
-		path.join(base, 'components'),
-		path.join(base, 'layouts'),
-	]
+	return [path.join(base, 'pages'), path.join(base, 'components'), path.join(base, 'layouts')]
 }
 
 /**
@@ -94,11 +84,7 @@ export async function runAeroCheck(root: string): Promise<number> {
 	const aero = resolveAeroConfigObject(loadedRaw)
 
 	const dirs = resolveDirs(aero.dirs)
-	const mergedAliases = mergeWithDefaultAliases(
-		loadTsconfigAliases(root),
-		root,
-		dirs
-	)
+	const mergedAliases = mergeWithDefaultAliases(loadTsconfigAliases(root), root, dirs)
 	const resolvePath = mergedAliases.resolve
 
 	const contentRel = contentConfigPathFromAero(root, aero)
@@ -118,14 +104,9 @@ export async function runAeroCheck(root: string): Promise<number> {
 		} else {
 			try {
 				await initProcessor(contentLoad.config.markdown)
-				const { schemaIssues } = await loadAllCollections(
-					contentLoad.config,
-					root
-				)
+				const { schemaIssues } = await loadAllCollections(contentLoad.config, root)
 				if (schemaIssues.length > 0) {
-					diagnostics.push(
-						...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error')
-					)
+					diagnostics.push(...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error'))
 				}
 			} catch (err) {
 				diagnostics.push(...unknownToAeroDiagnostics(err))

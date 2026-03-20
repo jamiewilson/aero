@@ -53,7 +53,7 @@ export function createAeroSsrHmrLogger(): HMRLoggerLike {
  */
 export function mergeSsrRunnerOptionsWithHmrLogger(
 	base: ServerModuleRunnerOptions | undefined,
-	hmrLogger: HMRLoggerLike,
+	hmrLogger: HMRLoggerLike
 ): ServerModuleRunnerOptions {
 	if (base?.hmr === false) {
 		return { ...base }

@@ -10,11 +10,13 @@
 		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/cli"
 	},
-	"files": ["dist"],
-	"type": "module",
 	"bin": {
 		"aero": "./dist/index.mjs"
 	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",

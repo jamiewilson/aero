@@ -6,21 +6,21 @@ Typed Aero configuration and Vite config factory. Used by `aero.config.ts` and t
 
 ### `@aero-js/config` (main)
 
-| Export                                               | Description                                                                                                                                                                                   |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defineConfig(config)`                               | Typed helper for `aero.config.ts`. Accepts a static `AeroConfig` or `AeroConfigFunction`. Returns the config unchanged (for IDE/type inference).                                              |
+| Export                                               | Description                                                                                                                                                                                                                                          |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineConfig(config)`                               | Typed helper for `aero.config.ts`. Accepts a static `AeroConfig` or `AeroConfigFunction`. Returns the config unchanged (for IDE/type inference).                                                                                                     |
 | `loadAeroConfig(root)`                               | Loads `aero.config.ts` / `.js` / `.mjs` from `root` via jiti + the same path aliases as Vite (`jitiAliasRecordFromProject`). Returns `AeroConfig \| AeroConfigFunction \| null`. Used by **`@aero-js/cli`** **`aero check`** and optional fallbacks. |
-| `redirectsToRouteRules`                               | Convert redirect entries for Nitro.                                                                                                                                                             |
-| `AeroConfig`, `AeroConfigFunction`, `AeroUserConfig` | TypeScript types for config shape and env-aware function.                                                                                                                                     |
+| `redirectsToRouteRules`                              | Convert redirect entries for Nitro.                                                                                                                                                                                                                  |
+| `AeroConfig`, `AeroConfigFunction`, `AeroUserConfig` | TypeScript types for config shape and env-aware function.                                                                                                                                                                                            |
 
 ### `@aero-js/config/vite`
 
 Import **only** from `vite.config.ts` (pulls in Vite). Do **not** import this entry from `aero.config.ts` — jiti would load Vite in a CJS eval context and fail.
 
-| Export                                   | Description                                                                                                                                                                                   |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Export                                  | Description                                                                                                                                                                                   |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `createViteConfig(aeroConfig, options)` | Builds the Vite `UserConfig` from Aero config and env (`command`, `mode`). Merges defaults, Aero + content plugins, and user `vite`; preserves base `minify`/`cssMinify` when user sets them. |
-| `getDefaultOptions()`                   | Derive `command` / `mode` from argv and `NODE_ENV`.                                                                                                                                            |
+| `getDefaultOptions()`                   | Derive `command` / `mode` from argv and `NODE_ENV`.                                                                                                                                           |
 
 ## Config shape (`AeroConfig`)
 

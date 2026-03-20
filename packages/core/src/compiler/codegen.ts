@@ -628,7 +628,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		resolver,
 		options.diagnosticTemplateSource !== undefined
 			? { source: options.diagnosticTemplateSource, file: options.importer }
-			: undefined,
+			: undefined
 	)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''

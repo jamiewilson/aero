@@ -23,21 +23,19 @@ function isRecord(v: unknown): v is Record<string, unknown> {
  */
 export function unknownToAeroDiagnostics(
 	err: unknown,
-	base: { file?: string; code?: AeroDiagnosticCode } = {},
+	base: { file?: string; code?: AeroDiagnosticCode } = {}
 ): AeroDiagnostic[] {
 	const code: AeroDiagnosticCode = base.code ?? 'AERO_COMPILE'
 	const file = base.file
 
 	if (err instanceof AeroCompileError) {
 		const fromTagged = failureToAeroDiagnostics(err)
-		return fromTagged.map(d =>
-			file && !d.file ? { ...d, file } : d,
-		)
+		return fromTagged.map(d => (file && !d.file ? { ...d, file } : d))
 	}
 
 	if (isContentSchemaAggregateError(err)) {
 		return contentSchemaIssuePayloadsToDiagnostics(err.issues).map(d =>
-			file && !d.file ? { ...d, file } : d,
+			file && !d.file ? { ...d, file } : d
 		)
 	}
 
@@ -74,19 +72,14 @@ export function unknownToAeroDiagnostics(
 			} else {
 				const parts: string[] = []
 				if (css.hint) parts.push(css.hint)
-				if (
-					contextFile &&
-					path.normalize(contextFile) !== path.normalize(css.file)
-				) {
+				if (contextFile && path.normalize(contextFile) !== path.normalize(css.file)) {
 					parts.push(`while rendering ${diagnosticPathForDisplay(contextFile)}`)
 				}
 				hint = parts.length > 0 ? parts.join('\n') : undefined
 			}
 		} else {
 			hint =
-				contextFile &&
-				stackSpan &&
-				path.normalize(contextFile) !== path.normalize(stackSpan.file)
+				contextFile && stackSpan && path.normalize(contextFile) !== path.normalize(stackSpan.file)
 					? `while rendering ${diagnosticPathForDisplay(contextFile)}`
 					: undefined
 		}

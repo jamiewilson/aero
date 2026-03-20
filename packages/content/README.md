@@ -4,13 +4,13 @@ Content collections for Aero: load Markdown (and other files) with frontmatter, 
 
 ## Exports
 
-| Export                      | Description                                                                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Export                      | Description                                                                                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@aero-js/content`          | `defineCollection`, `defineConfig`, `render`, `loadAllCollections`, `loadContentConfigFileSync`, `contentSchemaIssuesToAeroDiagnostics`, content error helpers; types `ContentDocument`, `ContentMeta`, `ContentCollectionConfig`, `ContentConfig`, `LoadContentConfigResult`. |
-| `@aero-js/content/vite`     | `aeroContent(options?)` Vite plugin.                                                                                              |
-| `@aero-js/content/markdown` | Markdown/remark utilities (used internally).                                                                                      |
-| `@aero-js/content/render`   | `render(doc)` for markdown-to-HTML.                                                                                               |
-| `@aero-js/content/types`    | TypeScript types.                                                                                                                 |
+| `@aero-js/content/vite`     | `aeroContent(options?)` Vite plugin.                                                                                                                                                                                                                                           |
+| `@aero-js/content/markdown` | Markdown/remark utilities (used internally).                                                                                                                                                                                                                                   |
+| `@aero-js/content/render`   | `render(doc)` for markdown-to-HTML.                                                                                                                                                                                                                                            |
+| `@aero-js/content/types`    | TypeScript types.                                                                                                                                                                                                                                                              |
 
 ## Usage in apps
 

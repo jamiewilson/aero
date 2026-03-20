@@ -29,9 +29,7 @@ export const AERO_EXIT_NITRO = 15
  *
  * @param diagnostics - Non-empty list from {@link unknownToAeroDiagnostics} or similar.
  */
-export function exitCodeForDiagnostics(
-	diagnostics: readonly AeroDiagnostic[],
-): number {
+export function exitCodeForDiagnostics(diagnostics: readonly AeroDiagnostic[]): number {
 	const code = diagnostics[0]?.code
 	switch (code) {
 		case 'AERO_CONFIG':

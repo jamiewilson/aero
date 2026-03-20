@@ -48,10 +48,7 @@ export { addDoctype } from './rewrite'
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
 function aeroStaticBuildDebug(message: string): void {
 	const v = process.env.AERO_LOG
-	if (
-		v === 'debug' ||
-		(typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))
-	) {
+	if (v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))) {
 		console.info(`[aero] ${message}`)
 	}
 }
@@ -67,9 +64,7 @@ function resolveStaticPrerenderConcurrency(): number {
 		if (Number.isFinite(n) && n >= 1) return Math.min(n, 64)
 	}
 	const cpus =
-		typeof os.availableParallelism === 'function'
-			? os.availableParallelism()
-			: os.cpus().length
+		typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length
 	return Math.max(1, Math.min(8, cpus))
 }
 
@@ -503,9 +498,7 @@ export async function renderStaticPages(
 					page =>
 						Effect.tryPromise({
 							try: async () => {
-								const routePath = page.routePath
-									? `/${page.routePath}`
-									: '/'
+								const routePath = page.routePath ? `/${page.routePath}` : '/'
 								const pageUrl = new URL(routePath, 'http://localhost')
 
 								// For expanded dynamic pages we must render via the original
@@ -534,8 +527,7 @@ export async function renderStaticPages(
 									apiPrefix
 								)
 
-								const isProd =
-									typeof import.meta !== 'undefined' && import.meta.env?.PROD
+								const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
 								if (options.minify && isProd) {
 									rendered = await minify(rendered, {
 										collapseWhitespace: true,

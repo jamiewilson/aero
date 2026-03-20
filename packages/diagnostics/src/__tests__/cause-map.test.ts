@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit } from 'effect'
 import { AeroCompileError } from '../tagged-errors'
-import {
-	exitFailureToAeroDiagnostics,
-	mapCauseToAeroDiagnostics,
-} from '../cause-map'
+import { exitFailureToAeroDiagnostics, mapCauseToAeroDiagnostics } from '../cause-map'
 
 describe('mapCauseToAeroDiagnostics', () => {
 	it('maps AeroCompileError to AERO_COMPILE with span', () => {
@@ -45,9 +42,7 @@ describe('mapCauseToAeroDiagnostics', () => {
 
 describe('exitFailureToAeroDiagnostics', () => {
 	it('returns diagnostics for failed Exit', () => {
-		const program = Effect.fail(
-			new AeroCompileError({ message: 'oops', file: 'f.html' }),
-		)
+		const program = Effect.fail(new AeroCompileError({ message: 'oops', file: 'f.html' }))
 		const exit = Effect.runSyncExit(program)
 		expect(Exit.isFailure(exit)).toBe(true)
 		const d = exitFailureToAeroDiagnostics(exit)

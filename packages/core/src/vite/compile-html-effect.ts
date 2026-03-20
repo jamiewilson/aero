@@ -14,7 +14,7 @@ import { AeroCompileError } from '@aero-js/diagnostics'
  */
 export function htmlCompileTry<A>(
 	importer: string,
-	tryFn: () => A,
+	tryFn: () => A
 ): Effect.Effect<A, AeroCompileError, never> {
 	return Effect.try({
 		try: tryFn,

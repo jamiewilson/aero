@@ -18,11 +18,7 @@ function escapeHtml(s: string): string {
  */
 export function formatDiagnosticPlainText(d: AeroDiagnostic): string {
 	const fileDisp = d.file ? diagnosticPathForDisplay(d.file) : ''
-	const where = fileDisp
-		? d.span
-			? `${fileDisp}:${d.span.line}:${d.span.column}`
-			: fileDisp
-		: ''
+	const where = fileDisp ? (d.span ? `${fileDisp}:${d.span.line}:${d.span.column}` : fileDisp) : ''
 	return where ? `[${d.code}] ${where}\n${d.message}` : `[${d.code}] ${d.message}`
 }
 
@@ -42,9 +38,7 @@ export function formatDiagnosticsBrowserHtml(diagnostics: readonly AeroDiagnosti
 			const docs = d.docsUrl
 				? `<p class="aero-diag-docs"><a href="${escapeHtml(d.docsUrl)}">Documentation</a></p>`
 				: ''
-			const frame = d.frame
-				? `<pre class="aero-diag-frame">${escapeHtml(d.frame)}</pre>`
-				: ''
+			const frame = d.frame ? `<pre class="aero-diag-frame">${escapeHtml(d.frame)}</pre>` : ''
 			return `<li class="aero-diag-item"><strong>${escapeHtml(meta)}</strong><pre class="aero-diag-msg">${escapeHtml(d.message)}</pre>${frame}${hint}${docs}</li>`
 		})
 		.join('')

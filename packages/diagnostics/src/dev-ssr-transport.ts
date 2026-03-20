@@ -38,11 +38,7 @@ export function parseDiagnosticsJson(value: unknown): AeroDiagnostic[] | null {
 			const line = span.line
 			const column = span.column
 			const sfile = span.file
-			if (
-				typeof line !== 'number' ||
-				typeof column !== 'number' ||
-				typeof sfile !== 'string'
-			) {
+			if (typeof line !== 'number' || typeof column !== 'number' || typeof sfile !== 'string') {
 				return null
 			}
 			;(d as AeroDiagnostic & { span?: typeof d.span }).span = {
@@ -136,7 +132,7 @@ export function buildDevSsrErrorHtml(diagnostics: readonly AeroDiagnostic[]): st
 export function extractDiagnosticsFromDevErrorHtml(html: string): AeroDiagnostic[] | null {
 	const re = new RegExp(
 		`<script\\s+type=["']text/plain["']\\s+id=["']${AERO_DIAGNOSTICS_SCRIPT_ID}["'][^>]*>([\\s\\S]*?)</script>`,
-		'i',
+		'i'
 	)
 	const m = re.exec(html)
 	if (!m?.[1]) return null

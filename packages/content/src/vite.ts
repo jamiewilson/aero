@@ -137,10 +137,7 @@ export function getCollection() {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const { loaded, schemaIssues } = await loadAllCollections(
-				contentConfig,
-				resolvedConfig.root
-			)
+			const { loaded, schemaIssues } = await loadAllCollections(contentConfig, resolvedConfig.root)
 			if (schemaIssues.length > 0) {
 				resolvedConfig.logger.warn(formatContentSchemaIssuesReport(schemaIssues))
 			}
@@ -153,7 +150,7 @@ export function getCollection() {
 		closeBundle() {
 			if (lastContentSchemaIssueCount > 0 && resolvedConfig) {
 				resolvedConfig.logger.info(
-					`[aero:content] Build finished with ${lastContentSchemaIssueCount} schema warning(s) (skipped files; details were logged during load).`,
+					`[aero:content] Build finished with ${lastContentSchemaIssueCount} schema warning(s) (skipped files; details were logged during load).`
 				)
 			}
 		},

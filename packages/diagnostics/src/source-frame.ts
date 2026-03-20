@@ -31,7 +31,11 @@ export function expandTabsToSpacesForFrame(line: string, tabWidth = FRAME_TAB_WI
 }
 
 /** Visual column in a monospace frame after `index` code units (tabs expanded, 0-based). */
-export function visualColumnBeforeIndex(line: string, index: number, tabWidth = FRAME_TAB_WIDTH): number {
+export function visualColumnBeforeIndex(
+	line: string,
+	index: number,
+	tabWidth = FRAME_TAB_WIDTH
+): number {
 	const i = Math.min(Math.max(0, index), line.length)
 	let col = 0
 	for (let c = 0; c < i; c++) {
@@ -52,7 +56,7 @@ export function formatSourceFrameFromSource(
 	source: string,
 	line1Based: number,
 	column0Based: number,
-	context = DEFAULT_CONTEXT,
+	context = DEFAULT_CONTEXT
 ): string {
 	if (line1Based < 1) return ''
 	const lines = source.split(/\r?\n/)
@@ -103,7 +107,11 @@ export function tryReadSourceFrameForDiagnostic(d: AeroDiagnostic): string | und
 
 	const col = d.span?.column ?? 0
 	const filePath =
-		d.span?.file && d.span.file.length > 0 ? d.span.file : d.file && d.file.length > 0 ? d.file : undefined
+		d.span?.file && d.span.file.length > 0
+			? d.span.file
+			: d.file && d.file.length > 0
+				? d.file
+				: undefined
 	if (!filePath) return undefined
 
 	const resolved = resolveFsPath(filePath)
@@ -121,7 +129,7 @@ export function tryReadSourceFrameForDiagnostic(d: AeroDiagnostic): string | und
  * Attach {@link AeroDiagnostic.frame} when missing and the source file is readable.
  */
 export function enrichDiagnosticsWithSourceFrames(
-	diagnostics: readonly AeroDiagnostic[],
+	diagnostics: readonly AeroDiagnostic[]
 ): AeroDiagnostic[] {
 	return diagnostics.map(d => {
 		const frame = tryReadSourceFrameForDiagnostic(d)

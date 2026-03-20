@@ -22,7 +22,4 @@ export {
 export { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
 export { loadAllCollections } from './loader'
 export { render } from './render'
-export {
-	loadContentConfigFileSync,
-	type LoadContentConfigResult,
-} from './load-content-config'
+export { loadContentConfigFileSync, type LoadContentConfigResult } from './load-content-config'

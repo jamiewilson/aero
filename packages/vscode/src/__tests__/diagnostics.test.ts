@@ -1297,9 +1297,7 @@ const spread = { title: 'hello' }
 	})
 
 	it('should report missing required prop when layout attributes flow to sink component', () => {
-		const dir = fs.mkdtempSync(
-			path.join(os.tmpdir(), 'aero-vscode-layout-props-')
-		)
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-layout-props-'))
 		try {
 			const sinkPath = path.join(dir, 'sink.html')
 			const midPath = path.join(dir, 'mid.html')
@@ -1357,8 +1355,7 @@ import mid from './mid.html'
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 			const layoutDiag = reportedDiagnostics.find(
 				(d: any) =>
-					d.message.includes("Missing required prop 'beta'") &&
-					d.message.includes('mid-layout')
+					d.message.includes("Missing required prop 'beta'") && d.message.includes('mid-layout')
 			)
 			expect(layoutDiag).toBeDefined()
 		} finally {
