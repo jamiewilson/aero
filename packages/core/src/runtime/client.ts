@@ -8,7 +8,16 @@
  */
 
 import type { PageFragments } from '../types'
+import type { AeroDiagnostic } from '@aero-js/diagnostics/browser'
+import {
+	AERO_DIAGNOSTICS_HTTP_HEADER,
+	decodeDiagnosticsHeaderValue,
+	escapeForBrowserPre,
+	extractDiagnosticsFromDevErrorHtml,
+	formatDiagnosticsBrowserHtml,
+} from '@aero-js/diagnostics/browser'
 import { resolvePageName } from '../utils/routing'
+import { aeroDevLog } from './dev-log'
 
 /**
  * Parse a full HTML string into head and body fragments.
@@ -29,6 +38,31 @@ function extractDocumentParts(html: string): PageFragments {
 
 /** Guard: skip starting a new render while one is in progress (avoids overlapping HMR runs). */
 let rendering = false
+
+function diagnosticsFromDevFetch(res: Response, html: string): AeroDiagnostic[] | null {
+	const raw = res.headers.get(AERO_DIAGNOSTICS_HTTP_HEADER)
+	if (raw) {
+		const fromHeader = decodeDiagnosticsHeaderValue(raw)
+		if (fromHeader !== null && fromHeader.length > 0) return fromHeader
+	}
+	return extractDiagnosticsFromDevErrorHtml(html)
+}
+
+function showRenderDiagnostics(
+	appEl: HTMLElement,
+	pageName: string,
+	diagnostics: AeroDiagnostic[]
+): void {
+	const title = escapeForBrowserPre(pageName)
+	const panel = formatDiagnosticsBrowserHtml(diagnostics)
+	appEl.innerHTML = `<h1>Error rendering page: ${title}</h1>${panel}`
+	console.groupCollapsed('[aero] Diagnostics')
+	for (const d of diagnostics) {
+		const loc = d.file && d.span ? `${d.file}:${d.span.line}:${d.span.column}` : d.file || ''
+		aeroDevLog('error', d.code, `${loc ? `${loc} ` : ''}${d.message}`)
+	}
+	console.groupEnd()
+}
 
 /** CSS selectors for nodes that must be kept in <head> during HMR (Vite dev client and dev-injected modules). */
 // prettier-ignore
@@ -97,8 +131,15 @@ export async function renderPage(
 		const useFetch = typeof window !== 'undefined' && import.meta.hot
 		if (useFetch) {
 			const res = await fetch(pathname, { headers: { Accept: 'text/html' } })
-			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
 			html = await res.text()
+			if (!res.ok) {
+				const diagnostics = diagnosticsFromDevFetch(res, html)
+				if (diagnostics !== null && diagnostics.length > 0) {
+					showRenderDiagnostics(appEl, pageName, diagnostics)
+					return
+				}
+				throw new Error(`Fetch failed: ${res.status}`)
+			}
 		} else {
 			html = await renderFn(pageName)
 		}
@@ -106,8 +147,9 @@ export async function renderPage(
 		if (head) updateHead(head)
 		appEl.innerHTML = body
 	} catch (err) {
-		appEl.innerHTML = `<h1>Error rendering page: ${pageName}</h1><pre>${String(err)}</pre>`
-		console.error('[aero] Render Error:', err)
+		const safe = escapeForBrowserPre(err instanceof Error ? err.message : String(err))
+		appEl.innerHTML = `<h1>Error rendering page: ${escapeForBrowserPre(pageName)}</h1><pre>${safe}</pre>`
+		aeroDevLog('error', 'AERO_INTERNAL', err instanceof Error ? err.message : String(err))
 	} finally {
 		rendering = false
 	}

@@ -20,6 +20,8 @@ import { parse } from './parser'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 import { transformSync } from 'oxc-transform'
+import { AeroCompileError } from '@aero-js/diagnostics'
+import { lineColumnAtOffset } from '../utils/source-position'
 
 /** Strip TypeScript syntax from a script string, returning plain JavaScript. */
 function stripTypes(code: string, filename = 'script.ts'): string {
@@ -44,9 +46,12 @@ interface ParsedComponentAttrs {
 class Lowerer {
 	private resolver: Resolver
 	private slotCounter = 0
+	/** Original template source + file for directive error spans (optional). */
+	private readonly diag: { source: string; file?: string } | undefined
 
-	constructor(resolver: Resolver) {
+	constructor(resolver: Resolver, diag?: { source: string; file?: string }) {
 		this.resolver = resolver
+		this.diag = diag
 	}
 
 	// =========================================================================
@@ -83,10 +88,14 @@ class Lowerer {
 		const tagName = node?.tagName?.toLowerCase?.() || 'element'
 		const plainValue = node.getAttribute(attr)
 		if (plainValue !== null) {
+			const needle = `${attr}="${plainValue}"`
 			return Helper.stripBraces(
 				Helper.validateSingleBracedExpression(plainValue, {
 					directive: attr,
 					tagName,
+					diagnosticSource: this.diag?.source,
+					diagnosticFile: this.diag?.file,
+					positionNeedle: this.diag ? needle : undefined,
 				})
 			)
 		}
@@ -94,10 +103,14 @@ class Lowerer {
 		const dataAttr = CONST.ATTR_PREFIX + attr
 		const dataValue = node.getAttribute(dataAttr)
 		if (dataValue !== null) {
+			const needle = `${dataAttr}="${dataValue}"`
 			return Helper.stripBraces(
 				Helper.validateSingleBracedExpression(dataValue, {
 					directive: dataAttr,
 					tagName,
+					diagnosticSource: this.diag?.source,
+					diagnosticFile: this.diag?.file,
+					positionNeedle: this.diag ? needle : undefined,
 				})
 			)
 		}
@@ -146,10 +159,14 @@ class Lowerer {
 						dataPropsExpression = '...props'
 					} else {
 						const tagName = node?.tagName?.toLowerCase?.() || 'element'
+						const needle = `${attr.name}="${value}"`
 						dataPropsExpression = Helper.stripBraces(
 							Helper.validateSingleBracedExpression(value, {
 								directive: attr.name,
 								tagName,
+								diagnosticSource: this.diag?.source,
+								diagnosticFile: this.diag?.file,
+								positionNeedle: this.diag ? needle : undefined,
 							})
 						)
 					}
@@ -188,18 +205,36 @@ class Lowerer {
 				const attr = node.attributes[i]
 				if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
 					const tagName = node?.tagName?.toLowerCase?.() || 'element'
+					const needle = `${attr.name}="${attr.value ?? ''}"`
 					const content = Helper.stripBraces(
 						Helper.validateSingleBracedExpression(attr.value || '', {
 							directive: attr.name,
 							tagName,
+							diagnosticSource: this.diag?.source,
+							diagnosticFile: this.diag?.file,
+							positionNeedle: this.diag ? needle : undefined,
 						})
 					)
 					const match = content.match(CONST.EACH_REGEX)
 					if (!match) {
 						const tagName = node?.tagName?.toLowerCase?.() || 'element'
-						throw new Error(
-							`Directive \`${attr.name}\` on <${tagName}> must match "{ item in items }".`
-						)
+						const msg = `Directive \`${attr.name}\` on <${tagName}> must match "{ item in items }".`
+						if (this.diag?.source && needle.length > 0) {
+							const idx = this.diag.source.indexOf(needle)
+							if (idx >= 0) {
+								const { line, column } = lineColumnAtOffset(this.diag.source, idx)
+								throw new AeroCompileError({
+									message: msg,
+									file: this.diag.file,
+									line,
+									column,
+								})
+							}
+						}
+						if (this.diag?.file) {
+							throw new AeroCompileError({ message: msg, file: this.diag.file })
+						}
+						throw new Error(msg)
 					}
 					loopData = { item: match[1], items: match[2] }
 					continue
@@ -217,6 +252,9 @@ class Lowerer {
 						? Helper.validateSingleBracedExpression(value, {
 								directive: attr.name,
 								tagName: node?.tagName?.toLowerCase?.() || 'element',
+								diagnosticSource: this.diag?.source,
+								diagnosticFile: this.diag?.file,
+								positionNeedle: this.diag ? `${attr.name}="${value}"` : undefined,
 							})
 						: '{ ...props }'
 					continue
@@ -586,7 +624,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		importer: options.importer,
 	})
 
-	const lowerer = new Lowerer(resolver)
+	const lowerer = new Lowerer(
+		resolver,
+		options.diagnosticTemplateSource !== undefined
+			? { source: options.diagnosticTemplateSource, file: options.importer }
+			: undefined
+	)
 
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
@@ -707,9 +750,23 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		for (const blockingScript of options.blockingScripts) {
 			const strippedContent = stripTypes(blockingScript.content, 'blocking.ts')
 			if (blockingScript.passDataExpr) {
+				let blockingPropsNeedle: string | undefined
+				if (options.diagnosticTemplateSource && blockingScript.passDataExpr) {
+					const src = options.diagnosticTemplateSource
+					const expr = blockingScript.passDataExpr
+					for (const n of [`props="${expr}"`, `data-props="${expr}"`]) {
+						if (src.includes(n)) {
+							blockingPropsNeedle = n
+							break
+						}
+					}
+				}
 				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
 					directive: 'props',
 					tagName: 'script',
+					diagnosticSource: options.diagnosticTemplateSource,
+					diagnosticFile: options.importer,
+					positionNeedle: blockingPropsNeedle,
 				})
 				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
 				headScripts.push(
@@ -751,6 +808,7 @@ export function compileTemplate(
 	const p = parsed ?? parse(htmlSource)
 	return compile(p, {
 		...options,
+		diagnosticTemplateSource: options.diagnosticTemplateSource ?? htmlSource,
 		clientScripts: options.clientScripts ?? p.clientScripts,
 		inlineScripts: options.inlineScripts ?? p.inlineScripts,
 		blockingScripts: options.blockingScripts ?? p.blockingScripts,

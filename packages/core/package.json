@@ -50,6 +50,14 @@
 			"types": "./dist/entry-editor.d.mts",
 			"default": "./dist/entry-editor.mjs"
 		},
+		"./diagnostics": {
+			"types": "./dist/diagnostics.d.mts",
+			"default": "./dist/diagnostics.mjs"
+		},
+		"./compile-check": {
+			"types": "./dist/compile-check-api.d.mts",
+			"default": "./dist/compile-check-api.mjs"
+		},
 		"./env": "./env.d.ts"
 	},
 	"scripts": {
@@ -59,7 +67,9 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
+		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
+		"effect": "^3.20.0",
 		"get-tsconfig": "^4.13.6",
 		"html-minifier-next": "^5.1.1",
 		"linkedom": "^0.18.12",

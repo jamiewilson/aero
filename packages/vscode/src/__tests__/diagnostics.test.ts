@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import path from 'node:path'
 import fs from 'node:fs'
+import os from 'node:os'
 
 const mockSet = vi.fn()
 const mockCollection = {
@@ -463,6 +464,70 @@ describe('AeroDiagnostics Undefined Variables', () => {
 			d.message.includes("'myVar' is not defined")
 		)
 		expect(undefinedDiag).toBeUndefined()
+	})
+
+	it('should flag content global in build script when import is commented out', () => {
+		const text = `
+<script is:build>
+	//import site from '@content/site'
+	const headerProps = { title: site.home.title, subtitle: site.home.subtitle }
+</script>
+<div/>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const siteDiag = reportedDiagnostics.filter((d: any) =>
+			d.message.includes("'site' is not defined")
+		)
+		expect(siteDiag.length).toBeGreaterThan(0)
+	})
+
+	it('should NOT flag content global in build script when imported', () => {
+		const text = `
+<script is:build>
+	import site from '@content/site'
+	const headerProps = { title: site.home.title }
+</script>
+<div/>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		const context = { subscriptions: [] } as any
+		const diagnostics = new AeroDiagnostics(context)
+		;(diagnostics as any).updateDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const siteDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'site' is not defined")
+		)
+		expect(siteDiag).toBeUndefined()
 	})
 
 	it('should NOT flag content globals as undefined', () => {
@@ -987,6 +1052,8 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 			d.message.includes('must use a braced expression')
 		)
 		expect(directiveDiag).toBeDefined()
+		expect(directiveDiag.code.value).toBe('AERO_COMPILE')
+		expect(String(directiveDiag.code.target)).toContain('interpolation.md')
 	})
 
 	it('should NOT flag directive with braced expression', () => {
@@ -1169,98 +1236,130 @@ describe('AeroDiagnostics Component Props', () => {
 	})
 
 	it('should report missing required prop when props="{ ...varName }" omits it', () => {
-		const kitchenSinkHome = path.resolve(
-			process.cwd(),
-			'..',
-			'..',
-			'examples',
-			'kitchen-sink',
-			'frontend',
-			'pages',
-			'home.html'
-		)
-		if (!fs.existsSync(kitchenSinkHome)) {
-			// Skip when kitchen-sink not present (e.g. in minimal checkout)
-			return
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-props-'))
+		try {
+			const compPath = path.join(dir, 'req-field.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:build lang="ts">
+export interface ReqFieldProps { title: string; reqFlag: boolean }
+const _p = Aero.props as ReqFieldProps
+</script>
+<p>{ _p.title }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build lang="ts">
+import reqField from './req-field.html'
+const spread = { title: 'hello' }
+</script>
+<req-field-component props="{ ...spread }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			const context = { subscriptions: [] } as any
+			const diagnostics = new AeroDiagnostics(context)
+			;(diagnostics as any).updateDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const missing = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes("Missing required prop 'reqFlag'") &&
+					d.message.includes('req-field-component')
+			)
+			expect(missing).toBeDefined()
+			expect(missing.code.value).toBe('AERO_COMPILE')
+			expect(String(missing.code.target)).toContain('props.md')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
 		}
-		const text = fs.readFileSync(kitchenSinkHome, 'utf-8')
-		const doc = {
-			uri: {
-				toString: () => `file://${kitchenSinkHome}`,
-				fsPath: kitchenSinkHome,
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => {
-				const lines = text.slice(0, offset).split('\n')
-				return {
-					line: lines.length - 1,
-					character: lines[lines.length - 1]?.length ?? 0,
-				}
-			},
-			languageId: 'html',
-			fileName: kitchenSinkHome,
-			lineAt: (line: number) => ({
-				text: text.split('\n')[line] ?? '',
-			}),
-		} as any
-
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
-
-		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const extraPropDiag = reportedDiagnostics.find(
-			(d: any) =>
-				d.message.includes("Missing required prop 'extraProp'") &&
-				d.message.includes('header-component')
-		)
-		expect(extraPropDiag).toBeDefined()
 	})
 
-	it('should report missing required prop when layout attributes flow to meta-component', () => {
-		const kitchenSinkAbout = path.resolve(
-			process.cwd(),
-			'..',
-			'..',
-			'examples',
-			'kitchen-sink',
-			'frontend',
-			'pages',
-			'about.html'
-		)
-		if (!fs.existsSync(kitchenSinkAbout)) return
-		const text = fs.readFileSync(kitchenSinkAbout, 'utf-8')
-		const doc = {
-			uri: {
-				toString: () => `file://${kitchenSinkAbout}`,
-				fsPath: kitchenSinkAbout,
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => {
-				const lines = text.slice(0, offset).split('\n')
-				return {
-					line: lines.length - 1,
-					character: lines[lines.length - 1]?.length ?? 0,
-				}
-			},
-			languageId: 'html',
-			fileName: kitchenSinkAbout,
-			lineAt: (line: number) => ({
-				text: text.split('\n')[line] ?? '',
-			}),
-		} as any
+	it('should report missing required prop when layout attributes flow to sink component', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-layout-props-'))
+		try {
+			const sinkPath = path.join(dir, 'sink.html')
+			const midPath = path.join(dir, 'mid.html')
+			const pagePath = path.join(dir, 'nest.html')
+			fs.writeFileSync(
+				sinkPath,
+				`<script is:build lang="ts">
+export interface SinkProps { alpha: string; beta: string }
+const _ = Aero.props as SinkProps
+</script>
+<div/>
+`,
+				'utf-8'
+			)
+			fs.writeFileSync(
+				midPath,
+				`<script is:build>
+import sink from './sink.html'
+</script>
+<sink-component props="{ ...Aero.props }" />
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import mid from './mid.html'
+</script>
+<mid-layout alpha="x" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+			const context = { subscriptions: [] } as any
+			const diagnostics = new AeroDiagnostics(context)
+			;(diagnostics as any).updateDiagnostics(doc)
 
-		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const subLayoutDiag = reportedDiagnostics.find(
-			(d: any) =>
-				d.message.includes("Missing required prop 'extraProp'") && d.message.includes('sub-layout')
-		)
-		expect(subLayoutDiag).toBeDefined()
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const layoutDiag = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes("Missing required prop 'beta'") && d.message.includes('mid-layout')
+			)
+			expect(layoutDiag).toBeDefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
 	})
 })
