@@ -21,5 +21,9 @@
 			"path": "packages",
 		},
 	],
-	"settings": {},
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"pnpm": true,
+		},
+	},
 }

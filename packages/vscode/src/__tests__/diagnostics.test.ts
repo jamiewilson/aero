@@ -1,147 +1,181 @@
 /**
- * Unit tests for AeroDiagnostics (diagnostics.ts): unused/undefined variable reporting,
+ * Unit tests for diagnostics orchestrator: unused/undefined variable reporting,
  * script tag validation (is:build, is:inline, type="module"), conditional chains
  * (data-if/else-if/else), directive brace requirements, duplicate declarations, and component
  * reference checks. Uses mocked vscode APIs and calls updateDiagnostics(doc) to assert reported diagnostics.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import path from 'node:path'
-import fs from 'node:fs'
-import os from 'node:os'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+import * as documentAnalysis from "../document-analysis";
 
-const mockSet = vi.fn()
+const mockSet = vi.fn();
 const mockCollection = {
-	set: mockSet,
-	delete: vi.fn(),
-	dispose: vi.fn(),
+  set: mockSet,
+  delete: vi.fn(),
+  dispose: vi.fn(),
+};
+
+vi.mock("vscode", () => {
+  return {
+    Range: class {
+      start: any;
+      end: any;
+      constructor(start: any, end: any) {
+        this.start = start;
+        this.end = end;
+      }
+    },
+    Position: class {
+      line: any;
+      character: any;
+      constructor(line: any, character: any) {
+        this.line = line;
+        this.character = character;
+      }
+    },
+    Diagnostic: class {
+      range: any;
+      message: any;
+      severity: any;
+      tags: any[];
+      constructor(range: any, message: any, severity: any) {
+        this.range = range;
+        this.message = message;
+        this.severity = severity;
+        this.tags = [];
+      }
+    },
+    DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+    DiagnosticTag: { Unnecessary: 1 },
+    workspace: {
+      onDidOpenTextDocument: vi.fn(),
+      onDidSaveTextDocument: vi.fn(),
+      onDidChangeTextDocument: vi.fn(),
+      onDidCloseTextDocument: vi.fn(),
+      textDocuments: [],
+      getWorkspaceFolder: vi.fn(),
+      getConfiguration: () => ({ get: () => "always" }),
+    },
+    languages: {
+      createDiagnosticCollection: () => mockCollection,
+    },
+    Uri: {
+      parse: (s: string) => ({ toString: () => s, fsPath: s, scheme: "file" }),
+    },
+  };
+});
+
+import { collectDiagnosticsForDocument } from "../diagnostics/index";
+
+function runDiagnostics(doc: any): void {
+  const diagnostics = collectDiagnosticsForDocument(doc);
+  mockSet(doc.uri, diagnostics);
 }
 
-vi.mock('vscode', () => {
-	return {
-		Range: class {
-			start: any
-			end: any
-			constructor(start: any, end: any) {
-				this.start = start
-				this.end = end
-			}
-		},
-		Position: class {
-			line: any
-			character: any
-			constructor(line: any, character: any) {
-				this.line = line
-				this.character = character
-			}
-		},
-		Diagnostic: class {
-			range: any
-			message: any
-			severity: any
-			tags: any[]
-			constructor(range: any, message: any, severity: any) {
-				this.range = range
-				this.message = message
-				this.severity = severity
-				this.tags = []
-			}
-		},
-		DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
-		DiagnosticTag: { Unnecessary: 1 },
-		workspace: {
-			onDidOpenTextDocument: vi.fn(),
-			onDidSaveTextDocument: vi.fn(),
-			onDidChangeTextDocument: vi.fn(),
-			onDidCloseTextDocument: vi.fn(),
-			textDocuments: [],
-			getWorkspaceFolder: vi.fn(),
-			getConfiguration: () => ({ get: () => 'always' }),
-		},
-		languages: {
-			createDiagnosticCollection: () => mockCollection,
-		},
-		Uri: {
-			parse: (s: string) => ({ toString: () => s, fsPath: s, scheme: 'file' }),
-		},
-	}
-})
+describe("AeroDiagnostics orchestration", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-import { AeroDiagnostics } from '../diagnostics'
+  it("parses document once per diagnostics update", () => {
+    const text = `
+<script is:build>
+	const title = 'hello'
+</script>
+<h1>{title}</h1>
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] ?? "" }),
+    } as any;
+
+    const parseSpy = vi.spyOn(documentAnalysis, "parseDocument");
+    runDiagnostics(doc);
+
+    expect(parseSpy).toHaveBeenCalledTimes(1);
+  });
+});
 
 /** Unused imports/vars: build scope vs bundled scope are separate; usage in template/Alpine/HTMX/getStaticPaths must count. */
-describe('AeroDiagnostics Unused Variables', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Unused Variables", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should flag unused component import even if name exists in import path', () => {
-		const text = `
+  it("should flag unused component import even if name exists in import path", () => {
+    const text = `
 <script is:build>
     import header from './header'
     // header is NOT used in template
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		expect(mockSet).toHaveBeenCalled()
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
+    expect(mockSet).toHaveBeenCalled();
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
 
-		const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'header' is declared but its value is never read")
-		)
+    const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'header' is declared but its value is never read"),
+    );
 
-		expect(unusedHeaderDiag).toBeDefined()
-	})
+    expect(unusedHeaderDiag).toBeDefined();
+  });
 
-	it('should NOT flag used component import', () => {
-		const text = `
+  it("should NOT flag used component import", () => {
+    const text = `
 <script is:build>
     import header from './header'
 </script>
 <header-component />
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'header' is declared but its value is never read")
-		)
-		expect(unusedHeaderDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedHeaderDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'header' is declared but its value is never read"),
+    );
+    expect(unusedHeaderDiag).toBeUndefined();
+  });
 
-	it('should NOT flag imports from is:build as unused when a client script block is also present', () => {
-		const text = `
+  it("should NOT flag imports from is:build as unused when a client script block is also present", () => {
+    const text = `
 <script is:build>
   import base from '@layouts/base'
   import { render } from 'aero:content'
@@ -154,36 +188,34 @@ describe('AeroDiagnostics Unused Variables', () => {
 <script>
   console.log('client side')
 </script>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedDiags = reportedDiagnostics.filter((d: any) =>
-			d.message.includes('is declared but its value is never read')
-		)
-		// render is used inside is:build (render(doc)) — should NOT be flagged
-		// base is used as <base-layout> in template — should NOT be flagged
-		// doc/html are used in template expressions
-		expect(unusedDiags).toHaveLength(0)
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedDiags = reportedDiagnostics.filter((d: any) =>
+      d.message.includes("is declared but its value is never read"),
+    );
+    // render is used inside is:build (render(doc)) — should NOT be flagged
+    // base is used as <base-layout> in template — should NOT be flagged
+    // doc/html are used in template expressions
+    expect(unusedDiags).toHaveLength(0);
+  });
 
-	it('should flag is:build import as unused even if the same name is declared in client script', () => {
-		const text = `
+  it("should flag is:build import as unused even if the same name is declared in client script", () => {
+    const text = `
 <script is:build>
   import base from '@layouts/base'
 </script>
@@ -192,97 +224,91 @@ describe('AeroDiagnostics Unused Variables', () => {
   const base = 'test'
   console.log(base)
 </script>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedBaseDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'base' is declared but its value is never read")
-		)
-		expect(unusedBaseDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedBaseDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'base' is declared but its value is never read"),
+    );
+    expect(unusedBaseDiag).toBeDefined();
+  });
 
-	it('should NOT flag variable as unused when used in Alpine x-data attribute', () => {
-		const text = `
+  it("should NOT flag variable as unused when used in Alpine x-data attribute", () => {
+    const text = `
 <script is:build>
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 <section x-data="{input: '', dismiss: dismiss}">
 	<span @click="dismiss($el)">Click me</span>
 </section>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'dismiss' is declared but its value is never read")
-		)
-		expect(unusedDismissDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'dismiss' is declared but its value is never read"),
+    );
+    expect(unusedDismissDiag).toBeUndefined();
+  });
 
-	it('should NOT flag variable as unused when used in HTMX event handler', () => {
-		const text = `
+  it("should NOT flag variable as unused when used in HTMX event handler", () => {
+    const text = `
 <script is:build>
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 <span @htmx:after-swap="dismiss($el)"></span>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'dismiss' is declared but its value is never read")
-		)
-		expect(unusedDismissDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedDismissDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'dismiss' is declared but its value is never read"),
+    );
+    expect(unusedDismissDiag).toBeUndefined();
+  });
 
-	it('should NOT flag getCollection when used in getStaticPaths', () => {
-		const text = `
+  it("should NOT flag getCollection when used in getStaticPaths", () => {
+    const text = `
 <script is:build>
     import { getCollection } from 'aero:content'
     
@@ -292,33 +318,31 @@ describe('AeroDiagnostics Unused Variables', () => {
     }
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'getCollection' is declared but its value is never read")
-		)
-		expect(unusedDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'getCollection' is declared but its value is never read"),
+    );
+    expect(unusedDiag).toBeUndefined();
+  });
 
-	it('should NOT flag build-scope variables as unused when passed via props', () => {
-		const text = `
+  it("should NOT flag build-scope variables as unused when passed via props", () => {
+    const text = `
 <script is:build>
 	const { storageKey, attribute } = site.theme
 </script>
@@ -326,38 +350,36 @@ describe('AeroDiagnostics Unused Variables', () => {
 	const theme = JSON.parse(localStorage.getItem(storageKey))
 	document.documentElement.setAttribute(attribute, theme)
 </script>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] ?? "" }),
+      offsetAt: (pos: any) => (typeof pos.character === "number" ? pos.character : 0),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const unusedStorageKey = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'storageKey' is declared but its value is never read")
-		)
-		const unusedAttribute = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'attribute' is declared but its value is never read")
-		)
-		expect(unusedStorageKey).toBeUndefined()
-		expect(unusedAttribute).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? [];
+    const unusedStorageKey = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'storageKey' is declared but its value is never read"),
+    );
+    const unusedAttribute = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'attribute' is declared but its value is never read"),
+    );
+    expect(unusedStorageKey).toBeUndefined();
+    expect(unusedAttribute).toBeUndefined();
+  });
 
-	it('should NOT flag render when used in getStaticPaths', () => {
-		const text = `
+  it("should NOT flag render when used in getStaticPaths", () => {
+    const text = `
 <script is:build>
     import { getCollection, render } from 'aero:content'
     
@@ -370,487 +392,483 @@ describe('AeroDiagnostics Unused Variables', () => {
     }
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const unusedRenderDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'render' is declared but its value is never read")
-		)
-		const unusedCollectionDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'getCollection' is declared but its value is never read")
-		)
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const unusedRenderDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'render' is declared but its value is never read"),
+    );
+    const unusedCollectionDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'getCollection' is declared but its value is never read"),
+    );
 
-		expect(unusedRenderDiag).toBeUndefined()
-		expect(unusedCollectionDiag).toBeUndefined()
-	})
-})
+    expect(unusedRenderDiag).toBeUndefined();
+    expect(unusedCollectionDiag).toBeUndefined();
+  });
+});
 
 /** Undefined refs in template expressions; content globals (e.g. site) and Alpine x-data are excluded. */
-describe('AeroDiagnostics Undefined Variables', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Undefined Variables", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should flag undefined variable in template expression', () => {
-		const text = `
+  it("should flag undefined variable in template expression", () => {
+    const text = `
 <div>{undefinedVar}</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'undefinedVar' is not defined")
-		)
-		expect(undefinedDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const undefinedDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'undefinedVar' is not defined"),
+    );
+    expect(undefinedDiag).toBeDefined();
+  });
 
-	it('should NOT flag defined variable in template expression', () => {
-		const text = `
+  it("should NOT flag false keyword as undefined", () => {
+    const text = `
+<div>{ false }</div>
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
+
+    runDiagnostics(doc);
+
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const falseDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'false' is not defined"),
+    );
+    expect(falseDiag).toBeUndefined();
+  });
+
+  it("should NOT flag defined variable in template expression", () => {
+    const text = `
 <script is:build>
 	const myVar = 'hello'
 </script>
 <div>{myVar}</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'myVar' is not defined")
-		)
-		expect(undefinedDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const undefinedDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'myVar' is not defined"),
+    );
+    expect(undefinedDiag).toBeUndefined();
+  });
 
-	it('should flag content global in build script when import is commented out', () => {
-		const text = `
+  it("should flag content global in build script when import is commented out", () => {
+    const text = `
 <script is:build>
 	//import site from '@content/site'
 	const headerProps = { title: site.home.title, subtitle: site.home.subtitle }
 </script>
 <div/>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const siteDiag = reportedDiagnostics.filter((d: any) =>
-			d.message.includes("'site' is not defined")
-		)
-		expect(siteDiag.length).toBeGreaterThan(0)
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const siteDiag = reportedDiagnostics.filter((d: any) =>
+      d.message.includes("'site' is not defined"),
+    );
+    expect(siteDiag.length).toBeGreaterThan(0);
+  });
 
-	it('should NOT flag content global in build script when imported', () => {
-		const text = `
+  it("should NOT flag content global in build script when imported", () => {
+    const text = `
 <script is:build>
 	import site from '@content/site'
 	const headerProps = { title: site.home.title }
 </script>
 <div/>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const siteDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'site' is not defined")
-		)
-		expect(siteDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const siteDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'site' is not defined"),
+    );
+    expect(siteDiag).toBeUndefined();
+  });
 
-	it('should NOT flag content globals as undefined', () => {
-		const text = `
+  it("should NOT flag content globals as undefined", () => {
+    const text = `
 <div>{site.title}</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'site' is not defined")
-		)
-		expect(undefinedDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const undefinedDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'site' is not defined"),
+    );
+    expect(undefinedDiag).toBeUndefined();
+  });
 
-	it('should NOT flag undefined variable in Alpine x-data', () => {
-		const text = `
+  it("should NOT flag undefined variable in Alpine x-data", () => {
+    const text = `
 <section x-data="{ input: '' }">
 	<input x-model="input" />
 </section>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const undefinedDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'input' is not defined")
-		)
-		expect(undefinedDiag).toBeUndefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const undefinedDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("'input' is not defined"),
+    );
+    expect(undefinedDiag).toBeUndefined();
+  });
+});
 
 /** Script tag rules: plain/is:build valid; is:inline import requires type="module"; comments ignored. */
-describe('AeroDiagnostics Script Tags', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Script Tags", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should NOT warn when plain script tag (no attribute) — bundled as module by default', () => {
-		const text = `
+  it("should NOT warn when plain script tag (no attribute) — bundled as module by default", () => {
+    const text = `
 <script>
 	const foo = 'bar'
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('<script> without attribute')
-		)
-		expect(scriptDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const scriptDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("<script> without attribute"),
+    );
+    expect(scriptDiag).toBeUndefined();
+  });
 
-	it('should NOT warn when script has is:build', () => {
-		const text = `
+  it("should NOT warn when script has is:build", () => {
+    const text = `
 <script is:build>
 	const foo = 'bar'
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const scriptDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('<script> without attribute')
-		)
-		expect(scriptDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const scriptDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("<script> without attribute"),
+    );
+    expect(scriptDiag).toBeUndefined();
+  });
 
-	it('should warn when is:inline script has import without type="module"', () => {
-		const text = `
+  it('should warn when is:inline script has import without type="module"', () => {
+    const text = `
 <script is:inline>
 	import { foo } from 'bar'
 	console.log(foo)
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline> require type="module"')
-		)
-		expect(importDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes('Imports in <script is:inline> require type="module"'),
+    );
+    expect(importDiag).toBeDefined();
+  });
 
-	it('should NOT warn when is:inline script has import WITH type="module"', () => {
-		const text = `
+  it('should NOT warn when is:inline script has import WITH type="module"', () => {
+    const text = `
 <script is:inline type="module">
 	import { foo } from 'bar'
 	console.log(foo)
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline>')
-		)
-		expect(importDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in <script is:inline>"),
+    );
+    expect(importDiag).toBeUndefined();
+  });
 
-	it('should NOT warn when plain script has import — bundled as module by default', () => {
-		const text = `
+  it("should NOT warn when plain script has import — bundled as module by default", () => {
+    const text = `
 <script>
 	import { foo } from 'bar'
 	console.log(foo)
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts')
-		)
-		expect(importDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in bundled scripts"),
+    );
+    expect(importDiag).toBeUndefined();
+  });
 
-	it('should NOT warn when props script has import (Vite handles bundling)', () => {
-		const text = `
+  it("should NOT warn when props script has import (Vite handles bundling)", () => {
+    const text = `
 <script props="{ foo }">
 	import { bar } from 'baz'
 	console.log(bar)
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts')
-		)
-		expect(importDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in bundled scripts"),
+    );
+    expect(importDiag).toBeUndefined();
+  });
 
-	it('should NOT warn when bundled script has import WITH type="module"', () => {
-		const text = `
+  it('should NOT warn when bundled script has import WITH type="module"', () => {
+    const text = `
 <script type="module">
 	import { foo } from 'bar'
 	console.log(foo)
 </script>
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in bundled scripts')
-		)
-		expect(importDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in bundled scripts"),
+    );
+    expect(importDiag).toBeUndefined();
+  });
 
-	it('should NOT flag scripts inside HTML comments', () => {
-		const text = `
+  it("should NOT flag scripts inside HTML comments", () => {
+    const text = `
 <!--<script>
 	import { foo } from 'bar'
 </script>-->
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		// Should not flag duplicate imports from commented script
-		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times')
-		)
-		expect(dupDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    // Should not flag duplicate imports from commented script
+    const dupDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("declared multiple times"),
+    );
+    expect(dupDiag).toBeUndefined();
+  });
 
-	it('should NOT flag duplicate when commented script has same import as real script', () => {
-		const text = `
+  it("should NOT flag duplicate when commented script has same import as real script", () => {
+    const text = `
 <script is:build>
 	import { allCaps } from '@scripts/utils'
 </script>
@@ -858,33 +876,31 @@ describe('AeroDiagnostics Script Tags', () => {
 	import { allCaps } from '@scripts/utils'
 </script>-->
 <div></div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times')
-		)
-		expect(dupDiag).toBeUndefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const dupDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("declared multiple times"),
+    );
+    expect(dupDiag).toBeUndefined();
+  });
 
-	it('should warn when is:inline has import in multi-script file structure', () => {
-		const text = `
+  it("should warn when is:inline has import in multi-script file structure", () => {
+    const text = `
 <script is:build>
 	import base from '@layouts/base'
 	import header from '@components/header'
@@ -899,271 +915,255 @@ describe('AeroDiagnostics Script Tags', () => {
 	import { allCaps } from '@scripts/utils'
 	console.log(allCaps('test'))
 </script>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const importDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('Imports in <script is:inline>')
-		)
-		expect(importDiag).toBeDefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in <script is:inline>"),
+    );
+    expect(importDiag).toBeDefined();
+  });
+});
 
 /** data-else-if and data-else must follow an element with data-if or data-else-if. */
-describe('AeroDiagnostics Conditional Chains', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Conditional Chains", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should flag orphaned else-if without preceding if', () => {
-		const text = `
+  it("should flag orphaned else-if without preceding if", () => {
+    const text = `
 <div>Before</div>
 <div data-else-if="{condition}">Else If</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const elseIfDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('else-if must follow an element with if or else-if')
-		)
-		expect(elseIfDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const elseIfDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("else-if must follow an element with if or else-if"),
+    );
+    expect(elseIfDiag).toBeDefined();
+  });
 
-	it('should flag orphaned else without preceding if', () => {
-		const text = `
+  it("should flag orphaned else without preceding if", () => {
+    const text = `
 <div>Before</div>
 <div data-else>Else</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const elseDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('else must follow an element with if or else-if')
-		)
-		expect(elseDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const elseDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("else must follow an element with if or else-if"),
+    );
+    expect(elseDiag).toBeDefined();
+  });
 
-	it('should NOT flag valid if-else-if-else chain', () => {
-		const text = `
+  it("should NOT flag valid if-else-if-else chain", () => {
+    const text = `
 <div data-if="{a}">A</div>
 <div data-else-if="{b}">B</div>
 <div data-else>C</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const conditionalDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must follow an element with if or else-if')
-		)
-		expect(conditionalDiag).toBeUndefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const conditionalDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("must follow an element with if or else-if"),
+    );
+    expect(conditionalDiag).toBeUndefined();
+  });
+});
 
 /** Directives (data-if, data-each, etc.) must use braced expressions (e.g. data-if="{ cond }"). */
-describe('AeroDiagnostics Directive Expression Braces', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Directive Expression Braces", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should flag directive without braced expression', () => {
-		const text = `
+  it("should flag directive without braced expression", () => {
+    const text = `
 <div data-if="condition">Content</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const directiveDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must use a braced expression')
-		)
-		expect(directiveDiag).toBeDefined()
-		expect(directiveDiag.code.value).toBe('AERO_COMPILE')
-		expect(String(directiveDiag.code.target)).toContain('interpolation.md')
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const directiveDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("must use a braced expression"),
+    );
+    expect(directiveDiag).toBeDefined();
+    expect(directiveDiag.code.value).toBe("AERO_COMPILE");
+    expect(String(directiveDiag.code.target)).toContain("interpolation.md");
+  });
 
-	it('should NOT flag directive with braced expression', () => {
-		const text = `
+  it("should NOT flag directive with braced expression", () => {
+    const text = `
 <div data-if="{condition}">Content</div>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const directiveDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('must use a braced expression')
-		)
-		expect(directiveDiag).toBeUndefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const directiveDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("must use a braced expression"),
+    );
+    expect(directiveDiag).toBeUndefined();
+  });
+});
 
 /** Same name declared in same scope (e.g. import + const) → "declared multiple times". */
-describe('AeroDiagnostics Duplicate Declarations', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Duplicate Declarations", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should flag import conflicting with local declaration', () => {
-		const text = `
+  it("should flag import conflicting with local declaration", () => {
+    const text = `
 <script is:build>
 	import header from '@components/header'
 	const header = { title: 'Test' }
 </script>
 <header-component />
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times')
-		)
-		expect(dupDiag).toBeDefined()
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const dupDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("declared multiple times"),
+    );
+    expect(dupDiag).toBeDefined();
+  });
 
-	it('should NOT flag when no duplicate', () => {
-		const text = `
+  it("should NOT flag when no duplicate", () => {
+    const text = `
 <script is:build>
 	import header from '@components/header'
 	const props = { title: 'Test' }
 </script>
 <header-component />
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('declared multiple times')
-		)
-		expect(dupDiag).toBeUndefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const dupDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("declared multiple times"),
+    );
+    expect(dupDiag).toBeUndefined();
+  });
+});
 
 /** Component usage in template must have matching import; strings inside client scripts are ignored. */
-describe('AeroDiagnostics Component References', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Component References", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should NOT flag layout/component tags as "not imported" when they are imported in <script is:build>', () => {
-		const text = `<script is:build>
+  it('should NOT flag layout/component tags as "not imported" when they are imported in <script is:build>', () => {
+    const text = `<script is:build>
 	import base from '@layouts/base'
 	import header from '@components/header'
 	import form from '@components/form'
@@ -1172,194 +1172,186 @@ describe('AeroDiagnostics Component References', () => {
 	<header-component />
 	<form-component />
 </base-layout>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
-			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] ?? "" }),
+      offsetAt: (pos: any) => (typeof pos.character === "number" ? pos.character : 0),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const notImported = reportedDiagnostics.filter((d: any) =>
-			d.message.includes('is not imported')
-		)
-		expect(notImported).toHaveLength(0)
-	})
+    const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? [];
+    const notImported = reportedDiagnostics.filter((d: any) =>
+      d.message.includes("is not imported"),
+    );
+    expect(notImported).toHaveLength(0);
+  });
 
-	it('should ignore components inside client scripts', () => {
-		const text = `
+  it("should ignore components inside client scripts", () => {
+    const text = `
 <script>
 	const tag = "<header-component>"
 </script>
-`
-		const doc = {
-			uri: {
-				toString: () => 'file:///test.html',
-				fsPath: '/test.html',
-				scheme: 'file',
-			},
-			getText: () => text,
-			positionAt: (offset: number) => ({ line: 0, character: offset }),
-			languageId: 'html',
-			fileName: '/test.html',
-			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
-		} as any
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
 
-		const context = { subscriptions: [] } as any
-		const diagnostics = new AeroDiagnostics(context)
-		;(diagnostics as any).updateDiagnostics(doc)
+    runDiagnostics(doc);
 
-		const reportedDiagnostics = mockSet.mock.calls[0][1] || []
-		const componentDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('is not imported')
-		)
-		expect(componentDiag).toBeUndefined()
-	})
-})
+    const reportedDiagnostics = mockSet.mock.calls[0][1] || [];
+    const componentDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("is not imported"),
+    );
+    expect(componentDiag).toBeUndefined();
+  });
+});
 
 /** Cross-file prop validation: report when required props are missing. */
-describe('AeroDiagnostics Component Props', () => {
-	beforeEach(() => {
-		mockSet.mockClear()
-	})
+describe("AeroDiagnostics Component Props", () => {
+  beforeEach(() => {
+    mockSet.mockClear();
+  });
 
-	it('should report missing required prop when props="{ ...varName }" omits it', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-props-'))
-		try {
-			const compPath = path.join(dir, 'req-field.html')
-			const pagePath = path.join(dir, 'page.html')
-			fs.writeFileSync(
-				compPath,
-				`<script is:build lang="ts">
+  it('should report missing required prop when props="{ ...varName }" omits it', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aero-vscode-props-"));
+    try {
+      const compPath = path.join(dir, "req-field.html");
+      const pagePath = path.join(dir, "page.html");
+      fs.writeFileSync(
+        compPath,
+        `<script is:build lang="ts">
 export interface ReqFieldProps { title: string; reqFlag: boolean }
 const _p = Aero.props as ReqFieldProps
 </script>
 <p>{ _p.title }</p>
 `,
-				'utf-8'
-			)
-			const pageText = `<script is:build lang="ts">
+        "utf-8",
+      );
+      const pageText = `<script is:build lang="ts">
 import reqField from './req-field.html'
 const spread = { title: 'hello' }
 </script>
 <req-field-component props="{ ...spread }" />
-`
-			fs.writeFileSync(pagePath, pageText, 'utf-8')
-			const doc = {
-				uri: {
-					toString: () => `file://${pagePath}`,
-					fsPath: pagePath,
-					scheme: 'file',
-				},
-				getText: () => pageText,
-				positionAt: (offset: number) => {
-					const lines = pageText.slice(0, offset).split('\n')
-					return {
-						line: lines.length - 1,
-						character: lines[lines.length - 1]?.length ?? 0,
-					}
-				},
-				languageId: 'html',
-				fileName: pagePath,
-				lineAt: (line: number) => ({
-					text: pageText.split('\n')[line] ?? '',
-				}),
-			} as any
+`;
+      fs.writeFileSync(pagePath, pageText, "utf-8");
+      const doc = {
+        uri: {
+          toString: () => `file://${pagePath}`,
+          fsPath: pagePath,
+          scheme: "file",
+        },
+        getText: () => pageText,
+        positionAt: (offset: number) => {
+          const lines = pageText.slice(0, offset).split("\n");
+          return {
+            line: lines.length - 1,
+            character: lines[lines.length - 1]?.length ?? 0,
+          };
+        },
+        languageId: "html",
+        fileName: pagePath,
+        lineAt: (line: number) => ({
+          text: pageText.split("\n")[line] ?? "",
+        }),
+      } as any;
 
-			const context = { subscriptions: [] } as any
-			const diagnostics = new AeroDiagnostics(context)
-			;(diagnostics as any).updateDiagnostics(doc)
+      runDiagnostics(doc);
 
-			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-			const missing = reportedDiagnostics.find(
-				(d: any) =>
-					d.message.includes("Missing required prop 'reqFlag'") &&
-					d.message.includes('req-field-component')
-			)
-			expect(missing).toBeDefined()
-			expect(missing.code.value).toBe('AERO_COMPILE')
-			expect(String(missing.code.target)).toContain('props.md')
-		} finally {
-			fs.rmSync(dir, { recursive: true, force: true })
-		}
-	})
+      const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? [];
+      const missing = reportedDiagnostics.find(
+        (d: any) =>
+          d.message.includes("Missing required prop 'reqFlag'") &&
+          d.message.includes("req-field-component"),
+      );
+      expect(missing).toBeDefined();
+      expect(missing.code.value).toBe("AERO_COMPILE");
+      expect(String(missing.code.target)).toContain("props.md");
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 
-	it('should report missing required prop when layout attributes flow to sink component', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-layout-props-'))
-		try {
-			const sinkPath = path.join(dir, 'sink.html')
-			const midPath = path.join(dir, 'mid.html')
-			const pagePath = path.join(dir, 'nest.html')
-			fs.writeFileSync(
-				sinkPath,
-				`<script is:build lang="ts">
+  it("should report missing required prop when layout attributes flow to sink component", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aero-vscode-layout-props-"));
+    try {
+      const sinkPath = path.join(dir, "sink.html");
+      const midPath = path.join(dir, "mid.html");
+      const pagePath = path.join(dir, "nest.html");
+      fs.writeFileSync(
+        sinkPath,
+        `<script is:build lang="ts">
 export interface SinkProps { alpha: string; beta: string }
 const _ = Aero.props as SinkProps
 </script>
 <div/>
 `,
-				'utf-8'
-			)
-			fs.writeFileSync(
-				midPath,
-				`<script is:build>
+        "utf-8",
+      );
+      fs.writeFileSync(
+        midPath,
+        `<script is:build>
 import sink from './sink.html'
 </script>
 <sink-component props="{ ...Aero.props }" />
 `,
-				'utf-8'
-			)
-			const pageText = `<script is:build>
+        "utf-8",
+      );
+      const pageText = `<script is:build>
 import mid from './mid.html'
 </script>
 <mid-layout alpha="x" />
-`
-			fs.writeFileSync(pagePath, pageText, 'utf-8')
-			const doc = {
-				uri: {
-					toString: () => `file://${pagePath}`,
-					fsPath: pagePath,
-					scheme: 'file',
-				},
-				getText: () => pageText,
-				positionAt: (offset: number) => {
-					const lines = pageText.slice(0, offset).split('\n')
-					return {
-						line: lines.length - 1,
-						character: lines[lines.length - 1]?.length ?? 0,
-					}
-				},
-				languageId: 'html',
-				fileName: pagePath,
-				lineAt: (line: number) => ({
-					text: pageText.split('\n')[line] ?? '',
-				}),
-			} as any
+`;
+      fs.writeFileSync(pagePath, pageText, "utf-8");
+      const doc = {
+        uri: {
+          toString: () => `file://${pagePath}`,
+          fsPath: pagePath,
+          scheme: "file",
+        },
+        getText: () => pageText,
+        positionAt: (offset: number) => {
+          const lines = pageText.slice(0, offset).split("\n");
+          return {
+            line: lines.length - 1,
+            character: lines[lines.length - 1]?.length ?? 0,
+          };
+        },
+        languageId: "html",
+        fileName: pagePath,
+        lineAt: (line: number) => ({
+          text: pageText.split("\n")[line] ?? "",
+        }),
+      } as any;
 
-			const context = { subscriptions: [] } as any
-			const diagnostics = new AeroDiagnostics(context)
-			;(diagnostics as any).updateDiagnostics(doc)
+      runDiagnostics(doc);
 
-			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-			const layoutDiag = reportedDiagnostics.find(
-				(d: any) =>
-					d.message.includes("Missing required prop 'beta'") && d.message.includes('mid-layout')
-			)
-			expect(layoutDiag).toBeDefined()
-		} finally {
-			fs.rmSync(dir, { recursive: true, force: true })
-		}
-	})
-})
+      const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? [];
+      const layoutDiag = reportedDiagnostics.find(
+        (d: any) =>
+          d.message.includes("Missing required prop 'beta'") && d.message.includes("mid-layout"),
+      );
+      expect(layoutDiag).toBeDefined();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
