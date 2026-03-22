@@ -9,6 +9,55 @@
 
 import { parseSync, ImportNameKind } from 'oxc-parser'
 
+/** Core binding extraction shared by `analyzeBuildScript` and `analyzeBuildScriptForEditor`. */
+function extractBindingsFromStaticImport(
+	imp: {
+		entries: Iterable<{
+			isType: boolean
+			localName: { value: string; start: number; end: number }
+			importName: { kind: ImportNameKind; name?: string | null }
+		}>
+	},
+	includeRanges: boolean
+): Pick<BuildScriptImport, 'defaultBinding' | 'namedBindings' | 'namespaceBinding'> & {
+	bindingRanges?: Record<string, [number, number]>
+} {
+	let defaultBinding: string | null = null
+	const namedBindings: Array<{ imported: string; local: string }> = []
+	let namespaceBinding: string | null = null
+	const bindingRanges: Record<string, [number, number]> | undefined = includeRanges ? {} : undefined
+
+	for (const entry of imp.entries) {
+		if (entry.isType) continue
+		const local = entry.localName.value
+		if (bindingRanges) {
+			bindingRanges[local] = [entry.localName.start, entry.localName.end]
+		}
+		switch (entry.importName.kind) {
+			case ImportNameKind.Default:
+				defaultBinding = local
+				break
+			case ImportNameKind.NamespaceObject:
+				namespaceBinding = local
+				break
+			case ImportNameKind.Name: {
+				const imported = entry.importName.name ?? local
+				namedBindings.push({ imported, local })
+				break
+			}
+			default:
+				break
+		}
+	}
+
+	return {
+		defaultBinding,
+		namedBindings,
+		namespaceBinding,
+		...(bindingRanges ? { bindingRanges } : {}),
+	}
+}
+
 /** Single import entry for codegen: specifier and bindings. */
 export interface BuildScriptImport {
 	specifier: string
@@ -63,30 +112,10 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 	const imports: BuildScriptImport[] = []
 	for (const imp of mod.staticImports) {
 		const specifier = imp.moduleRequest.value
-		let defaultBinding: string | null = null
-		const namedBindings: Array<{ imported: string; local: string }> = []
-		let namespaceBinding: string | null = null
-
-		for (const entry of imp.entries) {
-			if (entry.isType) continue
-			const local = entry.localName.value
-			switch (entry.importName.kind) {
-				case ImportNameKind.Default:
-					defaultBinding = local
-					break
-				case ImportNameKind.NamespaceObject:
-					namespaceBinding = local
-					break
-				case ImportNameKind.Name: {
-					const imported = entry.importName.name ?? local
-					namedBindings.push({ imported, local })
-					break
-				}
-				default:
-					break
-			}
-		}
-
+		const { defaultBinding, namedBindings, namespaceBinding } = extractBindingsFromStaticImport(
+			imp,
+			false
+		)
 		imports.push({
 			specifier,
 			defaultBinding,
@@ -303,41 +332,14 @@ export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysis
 
 	for (const imp of mod.staticImports) {
 		const specifier = imp.moduleRequest.value
-		let defaultBinding: string | null = null
-		const namedBindings: Array<{ imported: string; local: string }> = []
-		let namespaceBinding: string | null = null
-		const bindingRanges: Record<string, [number, number]> = {}
-
-		for (const entry of imp.entries) {
-			if (entry.isType) continue
-			const local = entry.localName.value
-			// Per-binding range from oxc ValueSpan
-			bindingRanges[local] = [entry.localName.start, entry.localName.end]
-			switch (entry.importName.kind) {
-				case ImportNameKind.Default:
-					defaultBinding = local
-					break
-				case ImportNameKind.NamespaceObject:
-					namespaceBinding = local
-					break
-				case ImportNameKind.Name: {
-					const imported = entry.importName.name ?? local
-					namedBindings.push({ imported, local })
-					break
-				}
-				default:
-					break
-			}
-		}
-
+		const extracted = extractBindingsFromStaticImport(imp, true)
+		const { bindingRanges, ...bindings } = extracted
 		imports.push({
 			specifier,
-			defaultBinding,
-			namedBindings,
-			namespaceBinding,
+			...bindings,
 			range: [imp.start, imp.end],
 			specifierRange: [imp.moduleRequest.start, imp.moduleRequest.end],
-			bindingRanges,
+			bindingRanges: bindingRanges ?? {},
 		})
 	}
 

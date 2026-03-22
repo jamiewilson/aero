@@ -6,6 +6,8 @@ const entry = [
 	'src/entry-editor.ts',
 	'src/types.ts',
 	'src/vite/index.ts',
+	'src/diagnostics.ts',
+	'src/compile-check-api.ts',
 	'src/utils/aliases.ts',
 	'src/utils/redirects.ts',
 	'src/runtime/index.ts',
@@ -19,6 +21,6 @@ export default defineConfig({
 	clean: true,
 	outDir: 'dist',
 	deps: {
-		neverBundle: ['@content/site'],
+		neverBundle: ['@content/site', '@aero-js/diagnostics'],
 	},
 })

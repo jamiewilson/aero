@@ -7,14 +7,24 @@
  * `mount` is optionally set by the client entry (`core/src/entry-dev.ts`).
  */
 
-import type { AeroRenderInput, AeroRouteParams, AeroTemplateContext, MountOptions } from '../types'
+import type {
+	AeroPageModule,
+	AeroRenderFn,
+	AeroRenderInput,
+	AeroRouteParams,
+	AeroTemplateContext,
+	MountOptions,
+} from '../types'
 import { pagePathToKey, resolvePageTarget } from '../utils/routing'
+import { aeroDevLog } from './dev-log'
+
+export { aeroDevLog }
 
 export class Aero {
 	/** Global values merged into template context (e.g. from content modules). */
-	private globals: Record<string, any> = {}
+	private globals: Record<string, unknown> = {}
 	/** Map from page name (or path) to module. Keys include both canonical name and full path for lookup. */
-	private pagesMap: Record<string, any> = {}
+	private pagesMap: Record<string, AeroPageModule> = {}
 	/** Set by client entry when running in the browser; used to attach the app to a DOM root. */
 	mount?: (options?: MountOptions) => Promise<void>
 
@@ -24,7 +34,7 @@ export class Aero {
 	 * @param name - Key used in templates (e.g. `site`).
 	 * @param value - Any value (object, string, etc.).
 	 */
-	global(name: string, value: any) {
+	global(name: string, value: unknown) {
 		this.globals[name] = value
 	}
 
@@ -34,7 +44,7 @@ export class Aero {
 	 *
 	 * @param pages - Record of resolved path → module (default export is the render function).
 	 */
-	registerPages(pages: Record<string, any>) {
+	registerPages(pages: Record<string, AeroPageModule>) {
 		for (const [path, mod] of Object.entries(pages)) {
 			const key = pagePathToKey(path)
 			this.pagesMap[key] = mod
@@ -43,13 +53,13 @@ export class Aero {
 	}
 
 	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath). */
-	private isRenderInput(value: any): value is AeroRenderInput {
+	private isRenderInput(value: unknown): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
 		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(key => key in value)
 	}
 
 	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */
-	private normalizeRenderInput(input: any): AeroRenderInput {
+	private normalizeRenderInput(input: unknown): AeroRenderInput {
 		if (!input) return {}
 		if (this.isRenderInput(input)) return input
 		if (typeof input === 'object') return { props: input }
@@ -76,7 +86,7 @@ export class Aero {
 
 	/** Build template context: globals, props, slots, page, site, and `renderComponent` / `nextPassDataId`. */
 	private createContext(input: {
-		props?: Record<string, any>
+		props?: Record<string, unknown>
 		slots?: Record<string, string>
 		request?: Request
 		url?: URL | string
@@ -141,7 +151,10 @@ export class Aero {
 	 * @param input - Render input (props, request, url, params, etc.). Can be a plain object (treated as props).
 	 * @returns HTML string, or `null` if the page is not found or no static path match.
 	 */
-	async render(component: any, input: any = {}) {
+	async render(
+		component: string | AeroPageModule,
+		input: AeroRenderInput | Record<string, unknown> = {}
+	) {
 		const renderInput = this.normalizeRenderInput(input)
 		const isRootRender = !renderInput.styles
 		if (isRootRender) {
@@ -153,7 +166,8 @@ export class Aero {
 		const resolved = resolvePageTarget(component, this.pagesMap)
 		if (!resolved) return null
 
-		let target = resolved.module
+		// Dynamic import(), `getStaticPaths`, and `default` export shape vary; keep a loose handle here.
+		let target: any = resolved.module
 		const matchedPageName = resolved.pageName
 		const dynamicParams = resolved.params
 
@@ -175,9 +189,10 @@ export class Aero {
 			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
 
 			if (!match) {
-				console.warn(
-					`[aero] 404: Route params ${JSON.stringify(combinedParams)} ` +
-						`not found in getStaticPaths for ${matchedPageName}`
+				aeroDevLog(
+					'warn',
+					'AERO_ROUTE',
+					`Route params ${JSON.stringify(combinedParams)} not found in getStaticPaths for ${matchedPageName}`
 				)
 				return null
 			}
@@ -202,11 +217,11 @@ export class Aero {
 		})
 
 		// Handle module objects
-		let renderFn = target
+		let renderFn: any = target
 		if (target.default) renderFn = target.default
 
 		if (typeof renderFn === 'function') {
-			let html = await renderFn(context)
+			let html: string = await renderFn(context)
 			if (isRootRender) {
 				// Layout returns full document; page's trailing nodes (e.g. inline scripts) can end up after </html>.
 				// Move that content into the body so it isn't lost.
@@ -262,8 +277,8 @@ export class Aero {
 	 * @returns HTML string from the component's render function, or empty string if not invokable.
 	 */
 	async renderComponent(
-		component: any,
-		props: any = {},
+		component: AeroRenderFn | { default?: AeroRenderFn } | Record<string, unknown>,
+		props: Record<string, unknown> = {},
 		slots: Record<string, string> = {},
 		input: AeroRenderInput = {}
 	) {

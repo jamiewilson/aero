@@ -5,7 +5,12 @@
 
 import * as path from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getDefaultAliases, loadTsconfigAliases, mergeWithDefaultAliases } from '../aliases'
+import {
+	getDefaultAliases,
+	jitiAliasRecordFromProject,
+	loadTsconfigAliases,
+	mergeWithDefaultAliases,
+} from '../aliases'
 
 const defaultDirs = { client: 'client', server: 'server', dist: 'dist' }
 
@@ -190,5 +195,20 @@ describe('mergeWithDefaultAliases', () => {
 		const merged = mergeWithDefaultAliases(raw, '/project', defaultDirs)
 		const resolved = merged.resolve('@components/header', '/project/client/pages/index.html')
 		expect(resolved).toBe(path.join('/project', 'client', 'components', 'header'))
+	})
+})
+
+describe('jitiAliasRecordFromProject', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it('matches mergeWithDefaultAliases as a flat prefix → dir map for jiti', async () => {
+		const { getTsconfig } = await import('get-tsconfig')
+		;(getTsconfig as ReturnType<typeof vi.fn>).mockReturnValue(null)
+		const merged = mergeWithDefaultAliases(loadTsconfigAliases('/project'), '/project', defaultDirs)
+		const jitiMap = jitiAliasRecordFromProject('/project')
+		expect(jitiMap).toEqual(Object.fromEntries(merged.aliases.map(a => [a.find, a.replacement])))
+		expect(jitiMap['@pages']).toBe(path.join('/project', 'client', 'pages'))
 	})
 })

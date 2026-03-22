@@ -1,14 +1,15 @@
-import * as vscode from 'vscode'
-import { classifyPosition } from './positionAt'
-import { getResolver } from './pathResolver'
-import { isAeroDocument } from './scope'
-import { CONTENT_GLOBALS } from './constants'
-import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from './analyzer'
+import * as vscode from "vscode";
+import * as fs from "node:fs";
+import { classifyPosition } from "./positionAt";
+import { getResolver, type PathResolver } from "./pathResolver";
+import { isAeroDocument } from "./scope";
+import { CONTENT_GLOBALS } from "./constants";
+import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from "./analyzer";
 import {
-	kebabToCamelCase,
-	collectImportedSpecifiersFromDocument,
-	findInnermostScope,
-} from './utils'
+  kebabToCamelCase,
+  collectImportedSpecifiersFromDocument,
+  findInnermostScope,
+} from "./utils";
 
 /**
  * Go to Definition for Aero template references in HTML files.
@@ -17,262 +18,262 @@ import {
  * Returns LocationLink[] so `originSelectionRange` keeps the full path as one link. Supports: import paths/names, script-src/link-href, component/layout tags, content globals (with property range). Uses classifyPosition, getResolver, and analyzer (defined variables, scopes).
  */
 export class AeroDefinitionProvider implements vscode.DefinitionProvider {
-	provideDefinition(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-		_token: vscode.CancellationToken
-	): vscode.ProviderResult<vscode.LocationLink[]> {
-		if (!isAeroDocument(document)) return null
+  provideDefinition(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    _token: vscode.CancellationToken,
+  ): vscode.ProviderResult<vscode.LocationLink[]> {
+    if (!isAeroDocument(document)) return null;
 
-		const classification = classifyPosition(document, position)
-		if (!classification) return null
-		const resolver = getResolver(document)
-		if (!resolver) return null
+    const classification = classifyPosition(document, position);
+    if (!classification) return null;
+    const resolver = getResolver(document);
+    if (!resolver) return null;
 
-		switch (classification.kind) {
-			case 'import-path': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
-				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
-			}
+    switch (classification.kind) {
+      case "import-path": {
+        const resolved = resolver.resolve(classification.specifier, document.uri.fsPath);
+        if (!resolved) return null;
+        return [makeLink(classification.range, resolved)];
+      }
 
-			case 'import-name': {
-				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
-				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
-			}
+      case "import-name": {
+        const resolved = resolver.resolve(classification.specifier, document.uri.fsPath);
+        if (!resolved) return null;
+        return [makeLink(classification.range, resolved)];
+      }
 
-			case 'script-src':
-			case 'link-href': {
-				const value = classification.value
-				const resolved = resolver.resolve(value, document.uri.fsPath)
-				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
-			}
+      case "script-src":
+      case "link-href": {
+        const value = classification.value;
+        const resolved = resolver.resolve(value, document.uri.fsPath);
+        if (!resolved) return null;
+        return [makeLink(classification.range, resolved)];
+      }
 
-			case 'component-tag': {
-				const imports = collectImportedSpecifiersFromDocument(document.getText())
-				const importName = kebabToCamelCase(classification.baseName)
-				const importedSpecifier = imports.get(importName)
-				const alias =
-					importedSpecifier ||
-					(classification.suffix === 'component'
-						? `@components/${classification.baseName}`
-						: `@layouts/${classification.baseName}`)
-				const resolved = resolver.resolve(alias, document.uri.fsPath)
-				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
-			}
+      case "component-tag": {
+        const imports = collectImportedSpecifiersFromDocument(document.getText());
+        const importName = kebabToCamelCase(classification.baseName);
+        const importedSpecifier = imports.get(importName);
+        const alias =
+          importedSpecifier ||
+          (classification.suffix === "component"
+            ? `@components/${classification.baseName}`
+            : `@layouts/${classification.baseName}`);
+        const resolved = resolver.resolve(alias, document.uri.fsPath);
+        if (!resolved) return null;
+        return [makeLink(classification.range, resolved)];
+      }
 
-			case 'content-global': {
-				const resolved = resolver.resolve(classification.alias, document.uri.fsPath)
-				if (!resolved) return null
-				const targetLine = classification.propertyPath
-					? findPropertyLine(resolved, classification.propertyPath)
-					: 0
-				return [makeLink(classification.range, resolved, targetLine)]
-			}
+      case "content-global": {
+        const resolved = resolver.resolve(classification.alias, document.uri.fsPath);
+        if (!resolved) return null;
+        const targetLine = classification.propertyPath
+          ? findPropertyLine(resolved, classification.propertyPath)
+          : 0;
+        return [makeLink(classification.range, resolved, targetLine)];
+      }
 
-			case 'expression-identifier': {
-				const result = resolveExpressionIdentifierDefinition(
-					document,
-					position,
-					classification.identifier,
-					classification.range,
-					resolver
-				)
-				return result ?? null
-			}
-		}
-	}
+      case "expression-identifier": {
+        const result = resolveExpressionIdentifierDefinition(
+          document,
+          position,
+          classification.identifier,
+          classification.range,
+          resolver,
+        );
+        return result ?? null;
+      }
+    }
+  }
 }
 
-type ContentRef = { alias: string; propertyPath: string[] }
+type ContentRef = { alias: string; propertyPath: string[] };
 
 function resolveExpressionIdentifierDefinition(
-	document: vscode.TextDocument,
-	position: vscode.Position,
-	identifier: string,
-	originRange: vscode.Range,
-	resolver: ReturnType<typeof getResolver>
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  identifier: string,
+  originRange: vscode.Range,
+  resolver: PathResolver,
 ): vscode.LocationLink[] | null {
-	const text = document.getText()
-	const offset = document.offsetAt(position)
-	const lineText = document.lineAt(position.line).text
-	const chainAtCursor = getDotChainAt(lineText, position.character)
+  const text = document.getText();
+  const offset = document.offsetAt(position);
+  const lineText = document.lineAt(position.line).text;
+  const chainAtCursor = getDotChainAt(lineText, position.character);
 
-	const [buildVars] = collectDefinedVariables(document, text)
-	const scopes = collectTemplateScopes(document, text)
+  const [buildVars] = collectDefinedVariables(document, text);
+  const scopes = collectTemplateScopes(document, text);
 
-	const currentScope = findInnermostScope(scopes, offset)
-	if (currentScope) {
-		if (identifier === currentScope.itemName) {
-			return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)]
-		}
+  const currentScope = findInnermostScope(scopes, offset);
+  if (currentScope) {
+    if (identifier === currentScope.itemName) {
+      return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)];
+    }
 
-		if (identifier === currentScope.sourceRoot) {
-			const sourceDef = buildVars.get(currentScope.sourceRoot)
-			if (sourceDef) {
-				return [makeDocumentLink(originRange, document.uri, sourceDef.range)]
-			}
-			return [makeDocumentLink(originRange, document.uri, currentScope.sourceRange)]
-		}
+    if (identifier === currentScope.sourceRoot) {
+      const sourceDef = buildVars.get(currentScope.sourceRoot);
+      if (sourceDef) {
+        return [makeDocumentLink(originRange, document.uri, sourceDef.range)];
+      }
+      return [makeDocumentLink(originRange, document.uri, currentScope.sourceRange)];
+    }
 
-		const chain = getDotChainAt(document.lineAt(position.line).text, position.character)
-		if (chain && chain.segments.length >= 2 && chain.segments[0] === currentScope.itemName) {
-			const contentRef = resolveContentRefFromExpression(currentScope.sourceExpr, buildVars)
-			if (contentRef) {
-				const resolved = resolver?.resolve(contentRef.alias, document.uri.fsPath)
-				if (resolved) {
-					const propertyPath = [...contentRef.propertyPath, ...chain.segments.slice(1)]
-					const line = findPropertyLine(resolved, propertyPath)
-					return [makeLink(originRange, resolved, line)]
-				}
-			}
-		}
-	}
+    const chain = getDotChainAt(document.lineAt(position.line).text, position.character);
+    if (chain && chain.segments.length >= 2 && chain.segments[0] === currentScope.itemName) {
+      const contentRef = resolveContentRefFromExpression(currentScope.sourceExpr, buildVars);
+      if (contentRef) {
+        const resolved = resolver?.resolve(contentRef.alias, document.uri.fsPath);
+        if (resolved) {
+          const propertyPath = [...contentRef.propertyPath, ...chain.segments.slice(1)];
+          const line = findPropertyLine(resolved, propertyPath);
+          return [makeLink(originRange, resolved, line)];
+        }
+      }
+    }
+  }
 
-	const varDef = buildVars.get(identifier)
-	if (varDef) {
-		return [makeDocumentLink(originRange, document.uri, varDef.range)]
-	}
+  const varDef = buildVars.get(identifier);
+  if (varDef) {
+    return [makeDocumentLink(originRange, document.uri, varDef.range)];
+  }
 
-	const chainResult = resolveGenericChainDefinition(
-		document,
-		position,
-		originRange,
-		resolver,
-		buildVars,
-		chainAtCursor
-	)
-	if (chainResult) return chainResult
+  const chainResult = resolveGenericChainDefinition(
+    document,
+    position,
+    originRange,
+    resolver,
+    buildVars,
+    chainAtCursor,
+  );
+  if (chainResult) return chainResult;
 
-	return null
+  return null;
 }
 
 function resolveGenericChainDefinition(
-	document: vscode.TextDocument,
-	position: vscode.Position,
-	originRange: vscode.Range,
-	resolver: ReturnType<typeof getResolver>,
-	buildVars: Map<string, VariableDefinition>,
-	chainAtCursor: { segments: string[]; start: number; end: number } | null
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  originRange: vscode.Range,
+  resolver: PathResolver,
+  buildVars: Map<string, VariableDefinition>,
+  chainAtCursor: { segments: string[]; start: number; end: number } | null,
 ): vscode.LocationLink[] | null {
-	if (!chainAtCursor || chainAtCursor.segments.length < 2) return null
+  if (!chainAtCursor || chainAtCursor.segments.length < 2) return null;
 
-	const cursorSegmentIndex = getCursorSegmentIndex(
-		chainAtCursor.segments,
-		chainAtCursor.start,
-		position.character
-	)
-	if (cursorSegmentIndex <= 0) return null
+  const cursorSegmentIndex = getCursorSegmentIndex(
+    chainAtCursor.segments,
+    chainAtCursor.start,
+    position.character,
+  );
+  if (cursorSegmentIndex <= 0) return null;
 
-	const root = chainAtCursor.segments[0]
-	const uptoCursor = chainAtCursor.segments.slice(1, cursorSegmentIndex + 1)
+  const root = chainAtCursor.segments[0];
+  const uptoCursor = chainAtCursor.segments.slice(1, cursorSegmentIndex + 1);
 
-	if (root in CONTENT_GLOBALS) {
-		const resolved = resolver?.resolve(CONTENT_GLOBALS[root], document.uri.fsPath)
-		if (!resolved) return null
-		const line = findPropertyLine(resolved, uptoCursor)
-		return [makeLink(originRange, resolved, line)]
-	}
+  if (root in CONTENT_GLOBALS) {
+    const resolved = resolver?.resolve(CONTENT_GLOBALS[root], document.uri.fsPath);
+    if (!resolved) return null;
+    const line = findPropertyLine(resolved, uptoCursor);
+    return [makeLink(originRange, resolved, line)];
+  }
 
-	const rootDef = buildVars.get(root)
-	if (!rootDef?.contentRef) return null
+  const rootDef = buildVars.get(root);
+  if (!rootDef?.contentRef) return null;
 
-	const resolved = resolver?.resolve(rootDef.contentRef.alias, document.uri.fsPath)
-	if (!resolved) return null
+  const resolved = resolver?.resolve(rootDef.contentRef.alias, document.uri.fsPath);
+  if (!resolved) return null;
 
-	const propertyPath = [...rootDef.contentRef.propertyPath, ...uptoCursor]
-	const line = findPropertyLine(resolved, propertyPath)
-	return [makeLink(originRange, resolved, line)]
+  const propertyPath = [...rootDef.contentRef.propertyPath, ...uptoCursor];
+  const line = findPropertyLine(resolved, propertyPath);
+  return [makeLink(originRange, resolved, line)];
 }
 
 function resolveContentRefFromExpression(
-	expression: string,
-	buildVars: Map<string, VariableDefinition>
+  expression: string,
+  buildVars: Map<string, VariableDefinition>,
 ): ContentRef | null {
-	const chainMatch = /^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
-		expression.trim()
-	)
-	if (!chainMatch) return null
+  const chainMatch = /^([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*))?$/.exec(
+    expression.trim(),
+  );
+  if (!chainMatch) return null;
 
-	const root = chainMatch[1]
-	const rest = chainMatch[2] ? chainMatch[2].split('.') : []
+  const root = chainMatch[1];
+  const rest = chainMatch[2] ? chainMatch[2].split(".") : [];
 
-	if (root in CONTENT_GLOBALS) {
-		return { alias: CONTENT_GLOBALS[root], propertyPath: rest }
-	}
+  if (root in CONTENT_GLOBALS) {
+    return { alias: CONTENT_GLOBALS[root], propertyPath: rest };
+  }
 
-	const varDef = buildVars.get(root)
-	if (varDef?.contentRef) {
-		return {
-			alias: varDef.contentRef.alias,
-			propertyPath: [...varDef.contentRef.propertyPath, ...rest],
-		}
-	}
+  const varDef = buildVars.get(root);
+  if (varDef?.contentRef) {
+    return {
+      alias: varDef.contentRef.alias,
+      propertyPath: [...varDef.contentRef.propertyPath, ...rest],
+    };
+  }
 
-	return null
+  return null;
 }
 
 function makeDocumentLink(
-	originRange: vscode.Range,
-	targetUri: vscode.Uri,
-	targetSelectionRange: vscode.Range
+  originRange: vscode.Range,
+  targetUri: vscode.Uri,
+  targetSelectionRange: vscode.Range,
 ): vscode.LocationLink {
-	return {
-		originSelectionRange: originRange,
-		targetUri,
-		targetRange: targetSelectionRange,
-		targetSelectionRange,
-	}
+  return {
+    originSelectionRange: originRange,
+    targetUri,
+    targetRange: targetSelectionRange,
+    targetSelectionRange,
+  };
 }
 
 function getDotChainAt(
-	lineText: string,
-	offset: number
+  lineText: string,
+  offset: number,
 ): { segments: string[]; start: number; end: number } | null {
-	const ch = lineText[offset]
-	const prevCh = offset > 0 ? lineText[offset - 1] : ''
-	if (!isIdentChar(ch) && ch !== '.' && !isIdentChar(prevCh)) return null
+  const ch = lineText[offset];
+  const prevCh = offset > 0 ? lineText[offset - 1] : "";
+  if (!isIdentChar(ch) && ch !== "." && !isIdentChar(prevCh)) return null;
 
-	let start = offset
-	while (start > 0 && (isIdentChar(lineText[start - 1]) || lineText[start - 1] === '.')) {
-		start--
-	}
+  let start = offset;
+  while (start > 0 && (isIdentChar(lineText[start - 1]) || lineText[start - 1] === ".")) {
+    start--;
+  }
 
-	let end = offset
-	while (end < lineText.length && (isIdentChar(lineText[end]) || lineText[end] === '.')) {
-		end++
-	}
+  let end = offset;
+  while (end < lineText.length && (isIdentChar(lineText[end]) || lineText[end] === ".")) {
+    end++;
+  }
 
-	const raw = lineText.slice(start, end).replace(/^\.+|\.+$/g, '')
-	if (!raw) return null
-	const segments = raw.split('.').filter(Boolean)
-	if (!segments.length) return null
+  const raw = lineText.slice(start, end).replace(/^\.+|\.+$/g, "");
+  if (!raw) return null;
+  const segments = raw.split(".").filter(Boolean);
+  if (!segments.length) return null;
 
-	const normalizedStart = start + lineText.slice(start, end).indexOf(raw)
-	return { segments, start: normalizedStart, end: normalizedStart + raw.length }
+  const normalizedStart = start + lineText.slice(start, end).indexOf(raw);
+  return { segments, start: normalizedStart, end: normalizedStart + raw.length };
 }
 
 function isIdentChar(ch: string | undefined): boolean {
-	if (!ch) return false
-	return /[a-zA-Z0-9_$]/.test(ch)
+  if (!ch) return false;
+  return /[a-zA-Z0-9_$]/.test(ch);
 }
 
 function getCursorSegmentIndex(
-	segments: string[],
-	chainStart: number,
-	cursorOffset: number
+  segments: string[],
+  chainStart: number,
+  cursorOffset: number,
 ): number {
-	let running = chainStart
-	for (let i = 0; i < segments.length; i++) {
-		const segStart = running
-		const segEnd = segStart + segments[i].length
-		if (cursorOffset <= segEnd) return i
-		running = segEnd + 1
-	}
-	return segments.length - 1
+  let running = chainStart;
+  for (let i = 0; i < segments.length; i++) {
+    const segStart = running;
+    const segEnd = segStart + segments[i].length;
+    if (cursorOffset <= segEnd) return i;
+    running = segEnd + 1;
+  }
+  return segments.length - 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -284,19 +285,19 @@ function getCursorSegmentIndex(
  * exactly the range we specify (instead of splitting on word boundaries).
  */
 function makeLink(
-	originRange: vscode.Range,
-	targetPath: string,
-	targetLine: number = 0
+  originRange: vscode.Range,
+  targetPath: string,
+  targetLine: number = 0,
 ): vscode.LocationLink {
-	const targetStart = new vscode.Position(targetLine, 0)
-	// Use a non-zero-length range so the editor reveals and highlights the definition (zero-length can be ignored).
-	const targetEnd = new vscode.Position(targetLine, 1)
-	return {
-		originSelectionRange: originRange,
-		targetUri: vscode.Uri.file(targetPath),
-		targetRange: new vscode.Range(targetStart, targetEnd),
-		targetSelectionRange: new vscode.Range(targetStart, targetEnd),
-	}
+  const targetStart = new vscode.Position(targetLine, 0);
+  // Use a non-zero-length range so the editor reveals and highlights the definition (zero-length can be ignored).
+  const targetEnd = new vscode.Position(targetLine, 1);
+  return {
+    originSelectionRange: originRange,
+    targetUri: vscode.Uri.file(targetPath),
+    targetRange: new vscode.Range(targetStart, targetEnd),
+    targetSelectionRange: new vscode.Range(targetStart, targetEnd),
+  };
 }
 
 /**
@@ -305,60 +306,59 @@ function makeLink(
  * Walks the file looking for each property key in sequence.
  */
 function findPropertyLine(filePath: string, propertyPath: string[]): number {
-	try {
-		const fs = require('node:fs') as typeof import('node:fs')
-		if (!fs.existsSync(filePath)) return 0
-		const content = fs.readFileSync(filePath, 'utf-8')
-		const lines = content.split('\n')
+  try {
+    if (!fs.existsSync(filePath)) return 0;
+    const content = fs.readFileSync(filePath, "utf-8");
+    const lines = content.split("\n");
 
-		let currentLine = 0
-		let minDepth = 0
-		for (const prop of propertyPath) {
-			const found = findPropertyAtDepth(lines, prop, currentLine, minDepth)
-			if (!found) break
+    let currentLine = 0;
+    let minDepth = 0;
+    for (const prop of propertyPath) {
+      const found = findPropertyAtDepth(lines, prop, currentLine, minDepth);
+      if (!found) break;
 
-			currentLine = found.line
-			minDepth = found.depth + 1
-		}
+      currentLine = found.line;
+      minDepth = found.depth + 1;
+    }
 
-		return currentLine
-	} catch {
-		return 0
-	}
+    return currentLine;
+  } catch {
+    return 0;
+  }
 }
 
 function findPropertyAtDepth(
-	lines: string[],
-	property: string,
-	startLine: number,
-	minDepth: number
+  lines: string[],
+  property: string,
+  startLine: number,
+  minDepth: number,
 ): { line: number; depth: number } | null {
-	const keyPattern = new RegExp(
-		`(?:^|\\s|,)(?:${escapeRegex(property)}|'${escapeRegex(property)}'|"${escapeRegex(property)}")\\s*:`
-	)
+  const keyPattern = new RegExp(
+    `(?:^|\\s|,)(?:${escapeRegex(property)}|'${escapeRegex(property)}'|"${escapeRegex(property)}")\\s*:`,
+  );
 
-	for (let i = startLine; i < lines.length; i++) {
-		const depth = getBraceDepthBeforeLine(lines, i)
-		if (depth < minDepth) continue
-		if (keyPattern.test(lines[i])) {
-			return { line: i, depth }
-		}
-	}
+  for (let i = startLine; i < lines.length; i++) {
+    const depth = getBraceDepthBeforeLine(lines, i);
+    if (depth < minDepth) continue;
+    if (keyPattern.test(lines[i])) {
+      return { line: i, depth };
+    }
+  }
 
-	return null
+  return null;
 }
 
 function getBraceDepthBeforeLine(lines: string[], lineIndex: number): number {
-	let depth = 0
-	for (let i = 0; i < lineIndex; i++) {
-		for (const ch of lines[i]) {
-			if (ch === '{') depth++
-			if (ch === '}') depth = Math.max(0, depth - 1)
-		}
-	}
-	return depth
+  let depth = 0;
+  for (let i = 0; i < lineIndex; i++) {
+    for (const ch of lines[i]) {
+      if (ch === "{") depth++;
+      if (ch === "}") depth = Math.max(0, depth - 1);
+    }
+  }
+  return depth;
 }
 
 function escapeRegex(str: string): string {
-	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
