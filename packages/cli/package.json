@@ -1,0 +1,36 @@
+{
+	"name": "@aero-js/cli",
+	"version": "0.3.5",
+	"private": false,
+	"homepage": "https://github.com/jamiewilson/aero",
+	"license": "MIT",
+	"author": "Jamie Wilson",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jamiewilson/aero.git",
+		"directory": "packages/cli"
+	},
+	"bin": {
+		"aero": "./dist/index.mjs"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"scripts": {
+		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"prepack": "cp ../../LICENSE ."
+	},
+	"dependencies": {
+		"@aero-js/config": "workspace:*",
+		"@aero-js/content": "workspace:*",
+		"@aero-js/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.0",
+		"tsdown": "^0.21.0-beta.2",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.18"
+	}
+}

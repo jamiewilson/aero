@@ -30,7 +30,7 @@ aero/
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
 - **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `examples/kitchen-sink/vite.config.ts` (and templates/minimal) use `import { createViteConfig } from '@aero-js/config'` and depend on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
+- **Consumption:** `examples/kitchen-sink/vite.config.ts` imports `createViteConfig` from `@aero-js/config/vite` and depends on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
 - **Exports (package.json):**
   - `@aero-js/core` → main entry and types
   - `@aero-js/vite` → Vite plugin (re-exports from core)

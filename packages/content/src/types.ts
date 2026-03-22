@@ -62,10 +62,27 @@ export interface MarkdownConfig {
 	rehypePlugins?: Pluggable[]
 }
 
+/** One file in a collection that failed Standard Schema validation (non-strict: skipped; strict: aggregated error). */
+export interface ContentSchemaIssue {
+	/** Collection name from config. */
+	collection: string
+	/** Path relative to the collection directory (e.g. `posts/foo.md`). */
+	relPath: string
+	/** Absolute path on disk. */
+	file: string
+	/** Messages from Standard Schema `issues[].message`. */
+	messages: readonly string[]
+}
+
 /** Top-level content config: optional collections and markdown pipeline plugins. */
 export interface ContentConfig {
 	/** Collection definitions. Omit when using only single-file imports and markdown plugins. */
 	collections?: ContentCollectionConfig<any, any>[]
+	/**
+	 * When true, schema validation errors fail the load (and Vite build) with every issue listed.
+	 * Default false: invalid files are skipped and a single report is logged.
+	 */
+	strictSchema?: boolean
 	/**
 	 * Custom remark and rehype plugins for the markdown pipeline.
 	 *

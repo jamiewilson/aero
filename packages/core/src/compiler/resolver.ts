@@ -41,6 +41,17 @@ export class Resolver {
 	}
 
 	/**
+	 * Resolve a string that may be a path (import specifier or attribute value).
+	 * Returns the original input if the resolved value does not look like a path.
+	 */
+	private resolvePathLike(input: string): string {
+		let next = this.resolvePathFn(input, this.importer)
+		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
+		if (!looksPath) return input
+		return this.normalizeResolved(next)
+	}
+
+	/**
 	 * Resolve an import specifier (e.g. `@components/header`) to a path.
 	 * Returns the original specifier if the resolved value does not look like a path.
 	 *
@@ -48,12 +59,7 @@ export class Resolver {
 	 * @returns Resolved path or unchanged specifier.
 	 */
 	resolveImport(specifier: string): string {
-		let next = this.resolvePathFn(specifier, this.importer)
-		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
-		if (!looksPath) return specifier
-
-		next = this.normalizeResolved(next)
-		return next
+		return this.resolvePathLike(specifier)
 	}
 
 	/**
@@ -64,10 +70,6 @@ export class Resolver {
 	 * @returns Resolved path or unchanged value.
 	 */
 	resolveAttrValue(value: string): string {
-		let next = this.resolvePathFn(value, this.importer)
-		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
-		if (!looksPath) return value
-		next = this.normalizeResolved(next)
-		return next
+		return this.resolvePathLike(value)
 	}
 }

@@ -109,6 +109,8 @@ export interface CompileOptions {
 	resolvePath?: (specifier: string, importer: string) => string
 	/** Importer file path (template) for resolution; required when resolvePath is used. */
 	importer?: string
+	/** Original HTML template source for directive diagnostics (line/column in Vite overlay). */
+	diagnosticTemplateSource?: string
 }
 
 /** Options for the path resolver (e.g. resolving `@components/foo` to a file path). */
@@ -237,3 +239,18 @@ export interface AeroTemplateContext {
 	scripts?: Set<string>
 	headScripts?: Set<string>
 }
+
+/** Compiled template render function signature (`export default async function (Aero) { ... }`). */
+export type AeroRenderFn = (ctx: AeroTemplateContext) => Promise<string> | string
+
+/**
+ * Page/layout module from `import.meta.glob` or a direct import: a render function, a lazy loader,
+ * or an object with `default` and optional `getStaticPaths`.
+ */
+export type AeroPageModule =
+	| AeroRenderFn
+	| (() => Promise<unknown>)
+	| {
+			default?: AeroRenderFn
+			getStaticPaths?: () => Promise<StaticPathEntry[] | unknown[]>
+	  }
