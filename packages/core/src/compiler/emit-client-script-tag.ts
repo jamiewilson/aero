@@ -6,6 +6,11 @@ import type { ScriptEntry } from '../types'
 
 const VIRTUAL_PREFIX = '/@aero/client/'
 
+/** HTML `type` attribute is case-insensitive; avoid duplicating `type="module"` when author used e.g. `TYPE="module"`. */
+function hasTypeAttribute(attrs: string): boolean {
+	return /\btype\s*=/i.test(attrs)
+}
+
 /**
  * Returns lines to push onto `headScripts` / `rootScripts` in `compile()` for one client script entry.
  */
@@ -17,7 +22,7 @@ export function emitClientScriptTag(
 	const root: string[] = []
 
 	const attrs = clientScript.attrs ?? ''
-	const hasType = attrs.includes('type=')
+	const hasType = hasTypeAttribute(attrs)
 	const baseAttrs = hasType ? attrs : `type="module"${attrs ? ' ' + attrs : ''}`
 	const urlExpr = clientScript.content.startsWith(virtualPrefix)
 		? `__aeroScriptUrl(${JSON.stringify(clientScript.content.slice(virtualPrefix.length))})`
@@ -29,8 +34,9 @@ export function emitClientScriptTag(
 	if (clientScript.passDataExpr) {
 		const jsonExpr = `JSON.stringify(${clientScript.passDataExpr})`
 		if (isHead) {
+			// Single expression for `injectedHeadScripts?.add(expr)` — concat JSON script, assignment script, module script.
 			head.push(
-				`(function(){const __pid=Aero.nextPassDataId();\`<\`+'script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>';window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);})();${tagExpr}`
+				`(function(){const __pid=Aero.nextPassDataId();return '<script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>'+'<script>window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);</'+'script>'+(${tagExpr});})()`
 			)
 		} else {
 			root.push(

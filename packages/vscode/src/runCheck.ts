@@ -2,8 +2,7 @@
  * Command: run `aero check` in the workspace folder (pnpm/npm/npx fallback).
  */
 import * as vscode from 'vscode'
-import * as fs from 'node:fs'
-import * as path from 'node:path'
+import { resolveAeroCheckCommand } from './resolve-aero-check-command'
 
 export function registerRunAeroCheck(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
@@ -14,7 +13,7 @@ export function registerRunAeroCheck(context: vscode.ExtensionContext): void {
 				return
 			}
 			const root = folder.uri.fsPath
-			const commandLine = resolveCheckCommand(root)
+			const commandLine = resolveAeroCheckCommand(root)
 			const task = new vscode.Task(
 				{ type: 'shell', task: 'aero-check' },
 				folder,
@@ -34,24 +33,4 @@ export function registerRunAeroCheck(context: vscode.ExtensionContext): void {
 			await vscode.tasks.executeTask(task)
 		})
 	)
-}
-
-function resolveCheckCommand(root: string): string {
-	const nodeModulesBin = (name: string) => path.join(root, 'node_modules', '.bin', name)
-	// Prefer the locally installed CLI binary, so we don't accidentally download an unrelated `aero` package.
-	const localAeroBin =
-		(fs.existsSync(nodeModulesBin('aero')) && nodeModulesBin('aero')) ||
-		(fs.existsSync(nodeModulesBin('aero.cmd')) && nodeModulesBin('aero.cmd')) ||
-		(fs.existsSync(nodeModulesBin('aero.ps1')) && nodeModulesBin('aero.ps1')) ||
-		null
-
-	if (localAeroBin) {
-		if (fs.existsSync(path.join(root, 'pnpm-lock.yaml'))) return 'pnpm exec aero check'
-		if (fs.existsSync(path.join(root, 'yarn.lock'))) return 'yarn exec aero check'
-		if (fs.existsSync(path.join(root, 'package-lock.json'))) return 'npm exec aero check'
-		return `"${localAeroBin}" check`
-	}
-
-	// No local binary: fall back to executing the known CLI package.
-	return 'npx --yes @aero-js/cli check'
 }

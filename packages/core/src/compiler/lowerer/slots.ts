@@ -48,7 +48,8 @@ export function compileElementDefaultContent(
 	if (tagName === CONST.TAG_SLOT) {
 		const slotName = node.getAttribute(CONST.ATTR_NAME) || CONST.SLOT_NAME_DEFAULT
 		const defaultContent = compileSlotDefaultContentBound(node.childNodes, skipInterpolation)
-		return `\${ slots['${slotName}'] ?? ${defaultContent} }`
+		// Mirror {@link Helper.emitSlotOutput}: fallback must be a template-literal string, not raw markup tokens.
+		return `\${ slots['${slotName}'] ?? \`${Helper.escapeBackticks(defaultContent)}\` }`
 	}
 
 	if (CONST.COMPONENT_SUFFIX_REGEX.test(tagName)) {

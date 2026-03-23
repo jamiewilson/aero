@@ -2,9 +2,11 @@ import {
 	AERO_EXIT_NITRO,
 	AeroBuildCancelledError,
 	type AeroDiagnostic,
+	type DiagnosticsSurface,
 	enrichDiagnosticsWithSourceFrames,
 	exitCodeForThrown,
 	formatDiagnosticsTerminal,
+	recordDiagnosticsMetrics,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 
@@ -13,35 +15,7 @@ interface BuildLogger {
 	error(msg: string): void
 }
 
-type MetricsSurface = 'static-prerender' | 'static-nitro'
-const metricsByCode = new Map<string, number>()
-const metricsBySurface = new Map<MetricsSurface, number>()
-let metricsTotal = 0
-
-function isDebugEnabled(): boolean {
-	const v = process.env.AERO_LOG
-	return v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))
-}
-
-function recordDiagnosticsMetrics(surface: MetricsSurface, diagnostics: readonly AeroDiagnostic[]): void {
-	if (diagnostics.length === 0) return
-	metricsTotal += diagnostics.length
-	metricsBySurface.set(surface, (metricsBySurface.get(surface) ?? 0) + diagnostics.length)
-	for (const d of diagnostics) {
-		metricsByCode.set(d.code, (metricsByCode.get(d.code) ?? 0) + 1)
-	}
-	if (isDebugEnabled()) {
-		loggerDebug(
-			`metrics[${surface}] +${diagnostics.length} diagnostics (total=${metricsTotal}) ` +
-				`codes=${diagnostics.map(d => d.code).join(',')}`
-		)
-	}
-}
-
-function loggerDebug(message: string): void {
-	if (!isDebugEnabled()) return
-	console.error(`[aero] ${message}`)
-}
+type MetricsSurface = Extract<DiagnosticsSurface, 'static-prerender' | 'static-nitro'>
 
 export interface StaticBuildReportingService {
 	reportPrerenderFailure(err: unknown, logger: BuildLogger): never
@@ -78,4 +52,3 @@ export function createStaticBuildReportingService(
 		},
 	}
 }
-

@@ -1,7 +1,8 @@
 /**
- * Contributes a workspace task to run `aero check` via npx (CLI may be a devDependency).
+ * Contributes a workspace task to run `aero check` (local binary / package-manager exec when possible).
  */
 import * as vscode from "vscode";
+import { resolveAeroCheckCommand } from "./resolve-aero-check-command";
 
 const TASK_TYPE = "aero";
 
@@ -14,14 +15,10 @@ export function registerAeroTasks(context: vscode.ExtensionContext): void {
       const folder = vscode.workspace.workspaceFolders?.[0];
       if (!folder) return [];
       const def: vscode.TaskDefinition = { type: TASK_TYPE, task: "check" };
-      const exec =
-        process.platform === "win32"
-          ? new vscode.ShellExecution("npx --yes aero check", {
-              cwd: folder.uri.fsPath,
-            })
-          : new vscode.ShellExecution("npx --yes aero check", {
-              cwd: folder.uri.fsPath,
-            });
+      const commandLine = resolveAeroCheckCommand(folder.uri.fsPath);
+      const exec = new vscode.ShellExecution(commandLine, {
+        cwd: folder.uri.fsPath,
+      });
       const task = new vscode.Task(def, folder, "check", "aero", exec);
       task.presentationOptions = {
         reveal: vscode.TaskRevealKind.Always,

@@ -36,4 +36,32 @@ describe('emitClientScriptTag', () => {
 		expect(root[0]).toContain('nextPassDataId')
 		expect(root[0]).toContain('JSON.stringify')
 	})
+
+	it('emits pass-data head as one expression that returns concatenated HTML strings', () => {
+		const script: ScriptEntry = {
+			content: `${vp}p.0.1`,
+			passDataExpr: 'props',
+			injectInHead: true,
+		}
+		const { head, root } = emitClientScriptTag(script, vp)
+		expect(root).toEqual([])
+		expect(head.length).toBe(1)
+		const line = head[0] ?? ''
+		// Single IIFE whose return concatenates JSON + assignment + module tag (valid inside injectedHeadScripts?.add(...)).
+		expect(line).toContain("return '<script type=\"application/json\"")
+		expect(line).toContain('__aeroScriptUrl')
+		expect(line).toContain('+(')
+		expect(line.endsWith('})()')).toBe(true)
+	})
+
+	it('does not add a second type="module" when attrs already have TYPE=', () => {
+		const script: ScriptEntry = {
+			content: `${vp}x.0.1`,
+			attrs: 'TYPE="module" defer',
+			injectInHead: false,
+		}
+		const { root } = emitClientScriptTag(script, vp)
+		const line = root[0] ?? ''
+		expect(line.match(/type=/gi)?.length).toBe(1)
+	})
 })
