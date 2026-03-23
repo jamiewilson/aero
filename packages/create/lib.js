@@ -4,24 +4,29 @@ import { dirname, join } from 'path'
 const DEFAULT_TEMPLATE = 'minimal'
 
 /**
- * Parse CLI argv into { target, template }.
+ * Parse CLI argv into { target, template, strict }.
  * @param {string[]} argv - process.argv
- * @returns {{ target: string | null, template: string }}
+ * @returns {{ target: string | null, template: string, strict: boolean }}
  */
 export function parseArgs(argv) {
 	const args = argv.slice(2)
 	let target = null
 	let template = DEFAULT_TEMPLATE
+	let strict = false
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === '--template' && args[i + 1]) {
 			template = args[++i]
+			continue
+		}
+		if (args[i] === '--strict') {
+			strict = true
 			continue
 		}
 		if (!args[i].startsWith('-') && !target) {
 			target = args[i]
 		}
 	}
-	return { target, template }
+	return { target, template, strict }
 }
 
 const PACKAGE_TEMPLATE = 'package-template.json'
@@ -38,7 +43,7 @@ export function rewritePackageJson(templatePath, targetDir, projectName, inMonor
 	const templatePkgPath = join(templatePath, PACKAGE_TEMPLATE)
 	if (!existsSync(templatePkgPath)) {
 		console.error(
-			`create-aero-js: template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`
+			`[create-aero] template is missing ${PACKAGE_TEMPLATE}. Each template must provide this file.`
 		)
 		process.exit(1)
 	}

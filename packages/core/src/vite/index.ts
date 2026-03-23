@@ -31,6 +31,7 @@ import {
 
 import {
 	type AeroCompileError,
+	AeroBuildCancelledError,
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
 	AERO_EXIT_NITRO,
@@ -657,6 +658,11 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					outDir
 				)
 			} catch (err) {
+				if (err instanceof AeroBuildCancelledError) {
+					resolvedConfig.logger.warn(`[aero] ${err.message ?? 'Static build cancelled'}`)
+					process.exitCode = exitCodeForThrown(err)
+					throw err
+				}
 				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
 				resolvedConfig.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 				process.exitCode = exitCodeForThrown(err)

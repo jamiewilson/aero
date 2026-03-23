@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { cpSync, mkdirSync, existsSync, statSync, readdirSync, readFileSync } from 'fs'
-import { dirname, join, basename } from 'path'
+import { dirname, join, basename, relative } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
 import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from './lib.js'
@@ -20,7 +20,7 @@ function resolveTemplatePath(templateName) {
 		const templatePath = dirname(fileURLToPath(pkgUrl))
 		return templatePath
 	} catch (e) {
-		console.error(`create-aero-js: template "${templateName}" not found.`)
+		console.error(`[create-aero] template "${templateName}" not found.`)
 		console.error(`Please install with: npm install -g ${pkgName} (or locally)`)
 		process.exit(1)
 	}
@@ -62,7 +62,7 @@ function isInMonorepo() {
 function installInMonorepo(targetDir) {
 	const root = findWorkspaceRoot(targetDir)
 	if (!root) {
-		console.error('create-aero-js: could not find workspace root (pnpm-workspace.yaml).')
+		console.error('[create-aero] could not find workspace root (pnpm-workspace.yaml).')
 		process.exit(1)
 	}
 	const r = spawnSync('pnpm', ['install', '--no-frozen-lockfile'], {
@@ -71,7 +71,7 @@ function installInMonorepo(targetDir) {
 		shell: true,
 	})
 	if (r.status !== 0) {
-		console.error('create-aero-js: pnpm install failed. Run "pnpm install" from the repo root.')
+		console.error('[create-aero] pnpm install failed. Run "pnpm install" from the repo root.')
 		process.exit(1)
 	}
 }
@@ -93,25 +93,61 @@ function installStandalone(targetDir) {
 	})
 	if (r.status !== 0) {
 		console.error(
-			`create-aero-js: ${cmd} install failed. Run "${cmd} install" in the project directory.`
+			`[create-aero] ${cmd} install failed. Run "${cmd} install" in the project directory.`
 		)
 		process.exit(1)
 	}
 }
 
+/**
+ * After scaffold, optionally run `aero doctor` and `aero check` when `--strict` is set (best-effort).
+ * @param {string} targetDir
+ * @param {boolean} inMonorepo
+ */
+function runOptionalStrictChecks(targetDir, inMonorepo) {
+	const rDoctor = inMonorepo
+		? spawnSync('pnpm', ['exec', 'aero', 'doctor'], {
+				stdio: 'inherit',
+				cwd: targetDir,
+				shell: true,
+			})
+		: spawnSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['--yes', 'aero', 'doctor'], {
+				stdio: 'inherit',
+				cwd: targetDir,
+				shell: true,
+			})
+	if (rDoctor.status !== 0) {
+		console.error('[create-aero] aero doctor reported issues (see above). Continuing.')
+	}
+	const rCheck = inMonorepo
+		? spawnSync('pnpm', ['exec', 'aero', 'check'], {
+				stdio: 'inherit',
+				cwd: targetDir,
+				shell: true,
+			})
+		: spawnSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['--yes', 'aero', 'check'], {
+				stdio: 'inherit',
+				cwd: targetDir,
+				shell: true,
+			})
+	if (rCheck.status !== 0) {
+		console.error('[create-aero] aero check reported issues (see above). Fix before shipping.')
+	}
+}
+
 function main() {
-	const { target, template } = parseArgs(process.argv)
+	const { target, template, strict } = parseArgs(process.argv)
 
 	if (!target) {
-		console.error('create-aero-js: missing target directory.')
-		console.error('Usage: pnpm create @aero-js <dir>')
+		console.error('[create-aero] missing target directory.')
+		console.error('Usage: pnpm create @aero-js <dir> [--template minimal] [--strict]')
 		console.error('Example: pnpm create @aero-js my-app')
 		process.exit(1)
 	}
 
 	if (!TEMPLATES.includes(template)) {
 		console.error(
-			`create-aero-js: unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`
+			`[create-aero] unknown template "${template}". Use one of: ${TEMPLATES.join(', ')}`
 		)
 		process.exit(1)
 	}
@@ -127,12 +163,12 @@ function main() {
 	if (existsSync(targetDir)) {
 		const stat = statSync(targetDir)
 		if (!stat.isDirectory()) {
-			console.error(`create-aero-js: "${target}" exists and is not a directory.`)
+			console.error(`[create-aero] "${target}" exists and is not a directory.`)
 			process.exit(1)
 		}
 		const files = readdirSync(targetDir)
 		if (files.length > 0) {
-			console.error(`create-aero-js: directory "${target}" already exists and is not empty.`)
+			console.error(`[create-aero] directory "${target}" already exists and is not empty.`)
 			process.exit(1)
 		}
 	}
@@ -147,20 +183,36 @@ function main() {
 			// ignore; lib will fall back to *
 		}
 	}
-	console.log(`Creating Aero app in ${target} from template "${template}"...`)
+	console.log('')
+	console.log('┌─────────────────────────────────────────────┐')
+	console.log('│  Aero — HTML-first static sites with Vite  │')
+	console.log('└─────────────────────────────────────────────┘')
+	console.log('')
+	console.log(`[create-aero] Scaffolding "${target}" from template "${template}"…`)
 	copyTemplate(templatePath, targetDir)
 	rewritePackageJson(templatePath, targetDir, target, inMonorepo, coreVersion)
 	writeReadme(targetDir, target, template)
-	console.log('Installing dependencies...')
+	console.log('[create-aero] Installing dependencies…')
 	if (inMonorepo) {
 		installInMonorepo(targetDir)
 	} else {
 		installStandalone(targetDir)
 	}
 	console.log('')
-	console.log('Done. Next steps:')
-	console.log(`  cd ${targetDir}`)
-	console.log('  pnpm dev')
+	console.log('[create-aero] Done. Next steps:')
+	console.log(
+		`  1. cd ${inMonorepo ? relative(process.cwd(), targetDir) || targetDir : target}`
+	)
+	console.log('  2. pnpm dev          # start the dev server')
+	console.log('  3. pnpm build        # production build')
+	console.log('  4. Install the "Aero" VS Code extension for template diagnostics')
+	console.log('')
+	console.log('  Docs: https://github.com/jamiewilson/aero')
+	if (strict) {
+		console.log('')
+		console.log('[create-aero] Running optional checks (--strict)…')
+		runOptionalStrictChecks(targetDir, inMonorepo)
+	}
 	console.log('')
 }
 

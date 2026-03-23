@@ -8,13 +8,23 @@ import * as Exit from 'effect/Exit'
 import * as Option from 'effect/Option'
 import type { AeroDiagnostic } from './types'
 import { augmentFromCssSyntaxError } from './css-postcss-error'
-import { AeroCompileError } from './tagged-errors'
+import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 import { firstStackSpan } from './stack-frame'
 
 /**
  * Convert an Effect failure value from Cause.fail into diagnostics (single or multiple per parallel Cause).
  */
 export function failureToAeroDiagnostics(value: unknown): AeroDiagnostic[] {
+	if (value instanceof AeroBuildCancelledError) {
+		return [
+			{
+				code: 'AERO_INTERNAL',
+				severity: 'warning',
+				message: value.message ?? 'Static build cancelled',
+			},
+		]
+	}
+
 	if (value instanceof AeroCompileError) {
 		const span =
 			value.file !== undefined && value.line !== undefined

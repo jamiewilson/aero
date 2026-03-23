@@ -37,7 +37,7 @@ export {
 	tryReadSourceFrameForDiagnostic,
 } from './source-frame'
 export { collapsePathSlashes, diagnosticPathForDisplay } from './path-display'
-export { AeroCompileError } from './tagged-errors'
+export { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 export {
 	exitFailureToAeroDiagnostics,
 	failureToAeroDiagnostics,
@@ -58,6 +58,7 @@ export {
 	parseDiagnosticsJson,
 } from './dev-ssr-transport'
 export {
+	AERO_EXIT_BUILD_CANCELLED,
 	AERO_EXIT_BUILD_GENERIC,
 	AERO_EXIT_COMPILE,
 	AERO_EXIT_CONFIG,

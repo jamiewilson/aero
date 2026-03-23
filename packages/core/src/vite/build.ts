@@ -16,6 +16,7 @@ import { minify } from 'html-minifier-next'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { Effect } from 'effect'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
@@ -49,7 +50,7 @@ export { addDoctype } from './rewrite'
 function aeroStaticBuildDebug(message: string): void {
 	const v = process.env.AERO_LOG
 	if (v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))) {
-		console.info(`[aero] ${message}`)
+		void Effect.runPromise(Effect.log(`[aero] ${message}`))
 	}
 }
 
@@ -527,61 +528,70 @@ export async function renderStaticPages(
 		process.once('SIGINT', onSigint)
 		const tPrerender = Date.now()
 		try {
-			await Effect.runPromise(
-				Effect.forEach(
-					pagesToRender,
-					page =>
-						Effect.tryPromise({
-							try: async () => {
-								const routePath = page.routePath ? `/${page.routePath}` : '/'
-								const pageUrl = new URL(routePath, 'http://localhost')
+			try {
+				await Effect.runPromise(
+					Effect.forEach(
+						pagesToRender,
+						page =>
+							Effect.tryPromise({
+								try: async () => {
+									const routePath = page.routePath ? `/${page.routePath}` : '/'
+									const pageUrl = new URL(routePath, 'http://localhost')
 
-								// For expanded dynamic pages we must render via the original
-								// dynamic page name (e.g. "[id]") so the runtime finds the module,
-								// while passing the concrete params so the template has real values.
-								const renderTarget = isDynamicPage(page)
-									? toPosixRelative(
-											page.sourceFile,
-											path.resolve(root, dirs.client, 'pages')
-										).replace(/\.html$/i, '')
-									: page.pageName
+									// For expanded dynamic pages we must render via the original
+									// dynamic page name (e.g. "[id]") so the runtime finds the module,
+									// while passing the concrete params so the template has real values.
+									const renderTarget = isDynamicPage(page)
+										? toPosixRelative(
+												page.sourceFile,
+												path.resolve(root, dirs.client, 'pages')
+											).replace(/\.html$/i, '')
+										: page.pageName
 
-								let rendered = await runtime.aero.render(renderTarget, {
-									url: pageUrl,
-									request: new Request(pageUrl.toString(), { method: 'GET' }),
-									routePath,
-									params: page.params || {},
-									props: page.props || {},
-									site: options.site,
-								})
-								rendered = rewriteRenderedHtml(
-									addDoctype(rendered),
-									page.outputFile,
-									manifest,
-									routeSet,
-									apiPrefix
-								)
-
-								const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-								if (options.minify && isProd) {
-									rendered = await minify(rendered, {
-										collapseWhitespace: true,
-										removeComments: true,
-										minifyCSS: true,
-										minifyJS: true,
+									let rendered = await runtime.aero.render(renderTarget, {
+										url: pageUrl,
+										request: new Request(pageUrl.toString(), { method: 'GET' }),
+										routePath,
+										params: page.params || {},
+										props: page.props || {},
+										site: options.site,
 									})
-								}
+									rendered = rewriteRenderedHtml(
+										addDoctype(rendered),
+										page.outputFile,
+										manifest,
+										routeSet,
+										apiPrefix
+									)
 
-								const outPath = path.join(distDir, page.outputFile)
-								fs.mkdirSync(path.dirname(outPath), { recursive: true })
-								fs.writeFileSync(outPath, rendered, 'utf-8')
-							},
-							catch: e => (e instanceof Error ? e : new Error(String(e))),
-						}),
-					{ concurrency, discard: true }
-				),
-				{ signal: prerenderAbort.signal }
-			)
+									const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+									if (options.minify && isProd) {
+										rendered = await minify(rendered, {
+											collapseWhitespace: true,
+											removeComments: true,
+											minifyCSS: true,
+											minifyJS: true,
+										})
+									}
+
+									const outPath = path.join(distDir, page.outputFile)
+									fs.mkdirSync(path.dirname(outPath), { recursive: true })
+									fs.writeFileSync(outPath, rendered, 'utf-8')
+								},
+								catch: e => (e instanceof Error ? e : new Error(String(e))),
+							}),
+						{ concurrency, discard: true }
+					),
+					{ signal: prerenderAbort.signal }
+				)
+			} catch (prerenderErr) {
+				if (prerenderAbort.signal.aborted) {
+					throw new AeroBuildCancelledError({
+						message: 'Static prerender cancelled (SIGINT)',
+					})
+				}
+				throw prerenderErr
+			}
 		} finally {
 			process.removeListener('SIGINT', onSigint)
 		}

@@ -10,6 +10,7 @@ describe('@aero-js/create lib', () => {
 			expect(parseArgs(['node', 'index.js', 'my-app'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
+				strict: false,
 			})
 		})
 
@@ -17,6 +18,7 @@ describe('@aero-js/create lib', () => {
 			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'minimal'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
+				strict: false,
 			})
 		})
 
@@ -24,6 +26,15 @@ describe('@aero-js/create lib', () => {
 			expect(parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
+				strict: false,
+			})
+		})
+
+		it('sets strict when --strict is passed', () => {
+			expect(parseArgs(['node', 'index.js', '--strict', 'my-app'])).toEqual({
+				target: 'my-app',
+				template: 'minimal',
+				strict: true,
 			})
 		})
 
@@ -31,6 +42,7 @@ describe('@aero-js/create lib', () => {
 			expect(parseArgs(['node', 'index.js'])).toEqual({
 				target: null,
 				template: 'minimal',
+				strict: false,
 			})
 		})
 
@@ -38,6 +50,7 @@ describe('@aero-js/create lib', () => {
 			expect(parseArgs(['node', 'index.js', '--foo', 'my-app'])).toEqual({
 				target: 'my-app',
 				template: 'minimal',
+				strict: false,
 			})
 		})
 	})

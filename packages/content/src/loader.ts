@@ -16,9 +16,10 @@ import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
+import { Effect } from 'effect'
 
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
-async function loadCollection<TSchema extends Record<string, any>, TOutput>(
+async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
 	root: string
 ): Promise<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }> {
@@ -81,6 +82,20 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 	}
 
 	return { documents, schemaIssues }
+}
+
+/**
+ * Effect program for one collection (maps to {@link loadCollectionAsync}).
+ * Composed by {@link loadAllCollectionsEffect}; keeps a single Node boundary for tests and future services.
+ */
+export function loadCollectionEffect<TSchema extends Record<string, any>, TOutput>(
+	config: ContentCollectionConfig<TSchema, TOutput>,
+	root: string
+): Effect.Effect<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }, Error, never> {
+	return Effect.tryPromise({
+		try: () => loadCollectionAsync(config, root),
+		catch: e => (e instanceof Error ? e : new Error(String(e))),
+	})
 }
 
 /** Loaded content keyed by collection name. */
@@ -167,7 +182,7 @@ export async function loadSingleFile(
  * @param root - Project root.
  * @returns Loaded collections and schema issues for invalid files (skipped unless `strictSchema` or `AERO_CONTENT_STRICT`).
  */
-export async function loadAllCollections(
+async function loadAllCollectionsAsync(
 	config: ContentConfig,
 	root: string
 ): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
@@ -176,7 +191,9 @@ export async function loadAllCollections(
 	const schemaIssues: ContentSchemaIssue[] = []
 
 	for (const collection of collections) {
-		const { documents, schemaIssues: colIssues } = await loadCollection(collection, root)
+		const { documents, schemaIssues: colIssues } = await Effect.runPromise(
+			loadCollectionEffect(collection, root)
+		)
 		result.set(collection.name, documents)
 		schemaIssues.push(...colIssues)
 	}
@@ -187,6 +204,30 @@ export async function loadAllCollections(
 	}
 
 	return { loaded: result, schemaIssues }
+}
+
+/**
+ * Effect program for loading all collections; {@link loadAllCollections} runs this with `Effect.runPromise`.
+ */
+export function loadAllCollectionsEffect(
+	config: ContentConfig,
+	root: string
+): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
+	return Effect.tryPromise({
+		try: () => loadAllCollectionsAsync(config, root),
+		catch: e => (e instanceof Error ? e : new Error(String(e))),
+	})
+}
+
+/**
+ * Load all collections. Uses the same logic as {@link loadAllCollectionsEffect} without `Effect.runPromise`
+ * so strict-mode {@link ContentSchemaAggregateError} propagates to callers unchanged.
+ */
+export async function loadAllCollections(
+	config: ContentConfig,
+	root: string
+): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
+	return loadAllCollectionsAsync(config, root)
 }
 
 /** Absolute paths of all collection directories (for HMR watch and invalidation). */

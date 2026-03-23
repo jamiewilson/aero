@@ -3,8 +3,10 @@ import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+	AeroBuildCancelledError,
 	AeroCompileError,
 	aeroDiagnosticToViteErrorFields,
+	AERO_EXIT_BUILD_CANCELLED,
 	AERO_EXIT_COMPILE,
 	AERO_EXIT_CONTENT,
 	AERO_EXIT_BUILD_GENERIC,
@@ -12,6 +14,7 @@ import {
 	diagnosticsToSingleMessage,
 	enrichDiagnosticsWithSourceFrames,
 	exitCodeForDiagnostics,
+	exitCodeForThrown,
 	formatDiagnosticsBrowserHtml,
 	formatDiagnosticsTerminal,
 	formatSourceFrameFromSource,
@@ -166,6 +169,12 @@ describe('diagnostics', () => {
 		expect(
 			exitCodeForDiagnostics([{ code: 'AERO_ROUTE', severity: 'warning', message: 'no match' }])
 		).toBe(AERO_EXIT_ROUTE)
+	})
+
+	it('exitCodeForThrown maps AeroBuildCancelledError to AERO_EXIT_BUILD_CANCELLED', () => {
+		expect(exitCodeForThrown(new AeroBuildCancelledError({ message: 'cancelled' }))).toBe(
+			AERO_EXIT_BUILD_CANCELLED
+		)
 	})
 
 	it('diagnosticsToSingleMessage joins multiple', () => {

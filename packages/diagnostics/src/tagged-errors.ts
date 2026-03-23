@@ -11,3 +11,8 @@ export class AeroCompileError extends Data.TaggedError('AeroCompileError')<{
 	readonly line?: number
 	readonly column?: number
 }> {}
+
+/** Static prerender was cooperatively cancelled (e.g. SIGINT during Effect prerender). */
+export class AeroBuildCancelledError extends Data.TaggedError('AeroBuildCancelledError')<{
+	readonly message?: string
+}> {}

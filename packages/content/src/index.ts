@@ -20,6 +20,6 @@ export {
 	formatContentSchemaIssuesReport,
 } from './content-issues'
 export { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
-export { loadAllCollections } from './loader'
+export { loadAllCollections, loadAllCollectionsEffect, loadCollectionEffect } from './loader'
 export { render } from './render'
 export { loadContentConfigFileSync, type LoadContentConfigResult } from './load-content-config'

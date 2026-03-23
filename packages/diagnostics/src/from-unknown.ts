@@ -5,7 +5,7 @@
 import path from 'node:path'
 import type { AeroDiagnostic, AeroDiagnosticCode } from './types'
 import { failureToAeroDiagnostics } from './cause-map'
-import { AeroCompileError } from './tagged-errors'
+import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 import {
 	contentSchemaIssuePayloadsToDiagnostics,
 	isContentSchemaAggregateError,
@@ -27,6 +27,10 @@ export function unknownToAeroDiagnostics(
 ): AeroDiagnostic[] {
 	const code: AeroDiagnosticCode = base.code ?? 'AERO_COMPILE'
 	const file = base.file
+
+	if (err instanceof AeroBuildCancelledError) {
+		return failureToAeroDiagnostics(err)
+	}
 
 	if (err instanceof AeroCompileError) {
 		const fromTagged = failureToAeroDiagnostics(err)

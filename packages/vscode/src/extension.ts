@@ -23,6 +23,8 @@ import { AeroDefinitionProvider } from "./definitionProvider";
 import { AeroCompletionProvider } from "./completionProvider";
 import { AeroHoverProvider } from "./hoverProvider";
 import { registerDiagnostics } from "./diagnostics/index";
+import { registerAeroCodeActions } from "./aero-code-actions";
+import { registerAeroTasks } from "./aero-tasks";
 import { registerRunAeroCheck } from "./runCheck";
 import { clearResolverCache } from "./pathResolver";
 import { clearScopeCache, getScopeMode, isInAeroProjectPath } from "./scope";
@@ -124,6 +126,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerDiagnostics(context);
 
   registerRunAeroCheck(context);
+  registerAeroCodeActions(context);
+  registerAeroTasks(context);
 
   // ---- Definition Provider (register last so we win when selector scores tie) ----
   context.subscriptions.push(

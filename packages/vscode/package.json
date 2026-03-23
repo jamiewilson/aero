@@ -59,6 +59,23 @@
 				"category": "Aero"
 			}
 		],
+		"taskDefinitions": [
+			{
+				"type": "aero",
+				"required": [
+					"task"
+				],
+				"properties": {
+					"task": {
+						"type": "string",
+						"enum": [
+							"check"
+						],
+						"description": "Aero CLI task (e.g. check templates and content)"
+					}
+				}
+			}
+		],
 		"languages": [
 			{
 				"id": "aero",

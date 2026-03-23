@@ -5,6 +5,7 @@
 
 import type { AeroDiagnostic } from './types'
 import { unknownToAeroDiagnostics } from './from-unknown'
+import { AeroBuildCancelledError } from './tagged-errors'
 
 /** Config load or validation (reserved — use when errors map to `AERO_CONFIG`). */
 export const AERO_EXIT_CONFIG = 10
@@ -23,6 +24,9 @@ export const AERO_EXIT_ROUTE = 14
 
 /** Nitro server bundle step failed after static HTML. */
 export const AERO_EXIT_NITRO = 15
+
+/** User interrupted static prerender (e.g. Ctrl+C); distinct from compile failures for CI. */
+export const AERO_EXIT_BUILD_CANCELLED = 16
 
 /**
  * Map the primary diagnostic code to an exit code bucket.
@@ -50,5 +54,6 @@ export function exitCodeForDiagnostics(diagnostics: readonly AeroDiagnostic[]): 
 
 /** Convenience: normalize any thrown value, then derive exit code. */
 export function exitCodeForThrown(err: unknown): number {
+	if (err instanceof AeroBuildCancelledError) return AERO_EXIT_BUILD_CANCELLED
 	return exitCodeForDiagnostics(unknownToAeroDiagnostics(err))
 }
