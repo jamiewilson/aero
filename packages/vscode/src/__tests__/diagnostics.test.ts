@@ -747,6 +747,36 @@ describe("AeroDiagnostics Script Tags", () => {
     expect(importDiag).toBeUndefined();
   });
 
+  it('should NOT warn when is:inline script has import with TYPE="module" (attribute case-insensitive)', () => {
+    const text = `
+<script is:inline TYPE="module">
+	import { foo } from 'bar'
+	console.log(foo)
+</script>
+<div></div>
+`;
+    const doc = {
+      uri: {
+        toString: () => "file:///test.html",
+        fsPath: "/test.html",
+        scheme: "file",
+      },
+      getText: () => text,
+      positionAt: (offset: number) => ({ line: 0, character: offset }),
+      languageId: "html",
+      fileName: "/test.html",
+      lineAt: (line: number) => ({ text: text.split("\n")[line] }),
+    } as any;
+
+    runDiagnostics(doc);
+
+    const reportedDiagnostics = mockSet.mock.calls[0][1];
+    const importDiag = reportedDiagnostics.find((d: any) =>
+      d.message.includes("Imports in <script is:inline>"),
+    );
+    expect(importDiag).toBeUndefined();
+  });
+
   it("should NOT warn when plain script has import — bundled as module by default", () => {
     const text = `
 <script>

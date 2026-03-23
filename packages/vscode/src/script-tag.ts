@@ -59,7 +59,12 @@ export function parseScriptBlocks(text: string): ParsedScriptBlock[] {
 		const attrs = match[1] || ''
 		const content = match[2]
 		const tagStart = match.index
-		const contentStart = tagStart + match[0].indexOf(content)
+		// `content` can be empty (`<script ...></script>`). Using `indexOf(content)`
+		// would return 0 for empty strings and incorrectly point `contentStart` at `tagStart`.
+		// The regex guarantees `match[0]` contains the full opening tag ending `>` and
+		// the content capture group begins immediately after that.
+		const openingTagEndInMatch = match[0].indexOf('>') + 1
+		const contentStart = tagStart + openingTagEndInMatch
 
 		blocks.push({
 			kind: classifyScriptTag(attrs),

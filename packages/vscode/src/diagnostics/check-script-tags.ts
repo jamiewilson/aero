@@ -24,7 +24,9 @@ export function checkScriptTags(
     // Check for imports in is:inline scripts (in body) without type="module"
     if (block.kind === "inline") {
       const hasImport = /\bimport\b/.test(block.content);
-      const hasModuleType = /\btype\s*=\s*["']?module["']?\b/.test(block.attrs);
+      // HTML attribute names are case-insensitive, so use a case-insensitive match.
+      // We also treat `module` value as case-insensitive to avoid surprising casing mismatches.
+      const hasModuleType = /\btype\s*=\s*["']?module["']?\b/i.test(block.attrs);
 
       if (hasImport && !hasModuleType) {
         const importMatch = /\bimport\b/.exec(block.content);
