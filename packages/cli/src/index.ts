@@ -4,7 +4,7 @@
  */
 import { runAeroCheck } from './check'
 import { runAeroDoctor } from './doctor'
-import path from 'node:path'
+import { parseRootArgs } from './parse-cli-args'
 
 function printHelp(): void {
 	process.stdout.write(`Aero — HTML-first static sites
@@ -19,27 +19,19 @@ Usage:
 `)
 }
 
-function parseRoot(args: string[]): { root: string; rest: string[] } {
-	let root = process.cwd()
-	const rest: string[] = []
-	for (let i = 0; i < args.length; i++) {
-		const a = args[i]
-		if (a === '--root' && args[i + 1]) {
-			root = path.resolve(args[++i])
-		} else {
-			rest.push(a)
-		}
-	}
-	return { root, rest }
-}
-
 async function main(): Promise<void> {
 	const argv = process.argv.slice(2)
 	if (argv[0] === '--help' || argv[0] === '-h') {
 		printHelp()
 		process.exit(0)
 	}
-	const { root, rest } = parseRoot(argv)
+	const parsed = parseRootArgs(argv)
+	if (!parsed.ok) {
+		process.stderr.write(parsed.message + '\n\n')
+		printHelp()
+		process.exit(1)
+	}
+	const { root, rest } = parsed
 	const cmd = rest[0]
 	if (cmd === 'check') {
 		const code = await runAeroCheck(root)

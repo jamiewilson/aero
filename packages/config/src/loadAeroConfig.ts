@@ -23,11 +23,10 @@ export type LoadAeroConfigDetailedResult =
  * Preserves file path and underlying load error when loading fails.
  */
 export function loadAeroConfigDetailed(root: string): LoadAeroConfigDetailedResult {
-	let sawFile = false
+	let lastFailure: Extract<LoadAeroConfigDetailedResult, { ok: false }> | null = null
 	for (const name of CONFIG_NAMES) {
 		const filePath = path.join(root, name)
 		if (!existsSync(filePath)) continue
-		sawFile = true
 		try {
 			// jiti(projectRoot) uses projectRoot as base for resolving; pass relative path from root
 			const alias = jitiAliasRecordFromProject(root)
@@ -38,14 +37,12 @@ export function loadAeroConfigDetailed(root: string): LoadAeroConfigDetailedResu
 			if (config && (typeof config === 'object' || typeof config === 'function')) {
 				return { ok: true, filePath, config: config as AeroConfig | AeroConfigFunction }
 			}
-			return { ok: false, reason: 'invalid-export', filePath }
+			lastFailure = { ok: false, reason: 'invalid-export', filePath }
 		} catch (error) {
-			return { ok: false, reason: 'load-error', filePath, error }
+			lastFailure = { ok: false, reason: 'load-error', filePath, error }
 		}
 	}
-	if (!sawFile) {
-		return { ok: false, reason: 'not-found' }
-	}
+	if (lastFailure) return lastFailure
 	return { ok: false, reason: 'not-found' }
 }
 

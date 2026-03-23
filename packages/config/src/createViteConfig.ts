@@ -7,14 +7,12 @@
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
 import { mergeConfig } from 'vite'
-import { Effect } from 'effect'
 import { aero } from '@aero-js/vite'
 import { aeroContent } from '@aero-js/content/vite'
 import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'
 import { loadAeroConfig } from './loadAeroConfig'
-import { loadResolvedAeroConfigEffect } from './load-aero-config-effect'
 
 /** Environment passed to createViteConfig (command and mode). */
 export interface CreateViteConfigOptions {
@@ -60,17 +58,9 @@ export function createViteConfig(
 		opts = options ?? getDefaultOptions()
 	} else {
 		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
-		// Keep no-arg createViteConfig compatible, while centralizing optional env-policy/defaulting
-		// in the Effect-based config pipeline.
+		// Same as historical behavior: one sync load; null → empty config (no second load / Effect on hot path).
 		const loaded = loadAeroConfig(process.cwd())
-		aeroConfig =
-			loaded ??
-			Effect.runSync(
-				loadResolvedAeroConfigEffect(process.cwd(), {
-					command: opts.command,
-					mode: opts.mode,
-				})
-			)
+		aeroConfig = loaded ?? {}
 	}
 
 	return createViteConfigFromAero(aeroConfig, opts)
