@@ -37,7 +37,7 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Documentation and discoveries
 
-Document **follow-up gaps** from exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md); record **shipped** diagnostics/Effect work in [_reference/effect-implementation-progress.md](_reference/effect-implementation-progress.md).
+Document **follow-up gaps** from exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md); record **shipped** diagnostics/Effect work in [_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md).
 
 ## Gotchas
 

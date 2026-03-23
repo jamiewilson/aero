@@ -137,9 +137,10 @@ When adding or refactoring comments in TypeScript files, use **block-style TSDoc
 
 ## Documentation: implementation progress vs discoveries
 
-- **[\_reference/effect-implementation-progress.md](_reference/effect-implementation-progress.md)** — Shipped Effect / `AeroDiagnostic` work (phases 0–4), gains, code pointers.
+- **[\_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md)** — Shipped Effect / `AeroDiagnostic` work (phases 0–4), gains, code pointers.
 - **[\_reference/DISCOVERY.md](_reference/DISCOVERY.md)** — **Follow-up gaps only** from exploration; not changelogs or env catalogs.
-- **Roadmap:** [\_reference/plans/effect_implementation_phased_plan.md](_reference/plans/effect_implementation_phased_plan.md).
+- **Roadmap:** [\_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
+- **[\_reference/effect-opportunities.md](_reference/effect-opportunities.md)** — Effect adoption opportunities and phased roadmap (framework packages).
 
 ## Gotchas
 

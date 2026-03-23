@@ -50,10 +50,11 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Documentation
 
-- **Shipped diagnostics/Effect work:** [_reference/effect-implementation-progress.md](_reference/effect-implementation-progress.md).
+- **Shipped diagnostics/Effect work:** [_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md).
 - **CLI (`aero check`) and tooling APIs:** [_reference/aero-cli-and-check.md](_reference/aero-cli-and-check.md).
 - **Exploration follow-ups only** (gaps, quirks, tech debt): [_reference/DISCOVERY.md](_reference/DISCOVERY.md) — not changelogs or feature specs.
-- **Roadmap:** [_reference/plans/effect_implementation_phased_plan.md](_reference/plans/effect_implementation_phased_plan.md).
+- **Roadmap:** [_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
+- **Effect adoption roadmap:** [_reference/effect-opportunities.md](_reference/effect-opportunities.md).
 
 ## Path Aliases (templates: tsconfig in kitchen-sink, minimal)
 

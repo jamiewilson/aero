@@ -139,10 +139,11 @@ When adding or refactoring comments in TypeScript files, use **block-style TSDoc
 
 ## Documentation: implementation progress vs discoveries
 
-- **[\_reference/effect-implementation-progress.md](_reference/effect-implementation-progress.md)** — What **shipped** in the Effect / `AeroDiagnostic` initiative (phases 0–5 partial), user-visible gains, and file pointers. Update this when you **complete** a planned diagnostics/Effect slice.
+- **[\_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md)** — What **shipped** in the Effect / `AeroDiagnostic` initiative (phases 0–5 partial), user-visible gains, and file pointers. Update this when you **complete** a planned diagnostics/Effect slice.
 - **[\_reference/aero-cli-and-check.md](_reference/aero-cli-and-check.md)** — **`@aero-js/cli`**, **`aero check`**, and tooling APIs (`loadAeroConfig`, `loadContentConfigFileSync`, `@aero-js/core/compile-check`), CI usage, limitations.
 - **[\_reference/DISCOVERY.md](_reference/DISCOVERY.md)** — **Follow-up gaps only**: things you uncover during unrelated work (quirks, tech debt, “callers must pass X”) that someone should fix later. **Do not** paste phase changelogs, env var lists, or full feature writeups here; use the progress doc or a dedicated `_reference/*.md`.
-- **Roadmap** — Ordered future work: [\_reference/plans/effect_implementation_phased_plan.md](_reference/plans/effect_implementation_phased_plan.md).
+- **Roadmap** — Ordered future work: [\_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
+- **[\_reference/effect-opportunities.md](_reference/effect-opportunities.md)** — Effect adoption opportunities and phased roadmap (framework packages); complements the progress doc and plan.
 
 ## Gotchas
 

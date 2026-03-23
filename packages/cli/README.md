@@ -23,4 +23,4 @@ Full behavior, exit codes, limitations, and related package APIs (**`loadAeroCon
 
 **[\_reference/aero-cli-and-check.md](../../_reference/aero-cli-and-check.md)**
 
-Further CLI UX (e.g. **`@aero-js/create`** post-scaffold) is tracked in **[\_reference/plans/effect_implementation_phased_plan.md](../../_reference/plans/effect_implementation_phased_plan.md)**.
+Further CLI UX (e.g. **`@aero-js/create`** post-scaffold) is tracked in **[\_reference/refactors/effect/effect_implementation_phased_plan.md](../../_reference/refactors/effect/effect_implementation_phased_plan.md)**.
