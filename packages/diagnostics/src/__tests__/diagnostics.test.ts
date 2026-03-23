@@ -18,6 +18,8 @@ import {
 	formatDiagnosticsBrowserHtml,
 	formatDiagnosticsTerminal,
 	formatSourceFrameFromSource,
+	buildDevSsrErrorHtml,
+	extractDiagnosticsFromDevErrorHtml,
 	unknownToAeroDiagnostics,
 } from '../index'
 
@@ -256,5 +258,33 @@ describe('diagnostics', () => {
 		])
 		expect(html).toContain('aero-diag-frame')
 		expect(html).toContain('&lt;tag&gt;')
+	})
+
+	it('preserves code/message across terminal, vite, browser, and SSR transport', () => {
+		const d = {
+			code: 'AERO_COMPILE' as const,
+			severity: 'error' as const,
+			message: 'Directive props must be braced',
+			file: 'client/pages/bad.html',
+			span: { file: 'client/pages/bad.html', line: 1, column: 31 },
+			frame: '> 1 | <div props="x">\n  |                               ^',
+		}
+
+		const terminal = formatDiagnosticsTerminal([d], { plain: true })
+		expect(terminal).toContain('[AERO_COMPILE]')
+		expect(terminal).toContain('Directive props must be braced')
+
+		const vite = aeroDiagnosticToViteErrorFields(d, 'vite-plugin-aero-transform')
+		expect(vite.message).toContain('[AERO_COMPILE]')
+		expect(vite.message).toContain('Directive props must be braced')
+		expect(vite.loc).toEqual({ file: 'client/pages/bad.html', line: 1, column: 31 })
+
+		const browser = formatDiagnosticsBrowserHtml([d])
+		expect(browser).toContain('AERO_COMPILE')
+		expect(browser).toContain('Directive props must be braced')
+
+		const ssrHtml = buildDevSsrErrorHtml([d])
+		const parsed = extractDiagnosticsFromDevErrorHtml(ssrHtml)
+		expect(parsed).toEqual([d])
 	})
 })

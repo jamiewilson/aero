@@ -3,8 +3,10 @@
  * schema validation, transforms, and virtual module serialization.
  */
 import { describe, it, expect } from 'vitest'
+import { Effect } from 'effect'
 import {
 	loadAllCollections,
+	loadAllCollectionsEffect,
 	getWatchedDirs,
 	getContentRoot,
 	toExportName,
@@ -150,6 +152,34 @@ describe('loadAllCollections', () => {
 			expect(err.issues).toHaveLength(2)
 			expect(err.message).toContain('[AERO_CONTENT_SCHEMA]')
 		}
+	})
+
+	it('strict mode via AERO_CONTENT_STRICT env throws aggregate error', async () => {
+		const previous = process.env.AERO_CONTENT_STRICT
+		process.env.AERO_CONTENT_STRICT = '1'
+		const invalidCollection = defineCollection({
+			name: 'invalid',
+			directory: path.resolve(FIXTURES_DIR, 'invalid'),
+			include: '**/*.md',
+			schema: z.object({ title: z.string() }),
+		})
+		const config = defineConfig({ collections: [invalidCollection] })
+		try {
+			await expect(loadAllCollections(config, '/')).rejects.toBeInstanceOf(ContentSchemaAggregateError)
+		} finally {
+			if (previous === undefined) delete process.env.AERO_CONTENT_STRICT
+			else process.env.AERO_CONTENT_STRICT = previous
+		}
+	})
+
+	it('loadAllCollectionsEffect matches loadAllCollections results', async () => {
+		const config = defineConfig({ collections: [docsCollection] })
+		const fromPromise = await loadAllCollections(config, '/')
+		const fromEffect = await Effect.runPromise(loadAllCollectionsEffect(config, '/'))
+
+		expect(Array.from(fromEffect.loaded.keys())).toEqual(Array.from(fromPromise.loaded.keys()))
+		expect(fromEffect.schemaIssues).toEqual(fromPromise.schemaIssues)
+		expect(fromEffect.loaded.get('docs')?.length).toBe(fromPromise.loaded.get('docs')?.length)
 	})
 
 	it('parses frontmatter with ArkType schema (Standard Schema)', async () => {

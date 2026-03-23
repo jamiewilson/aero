@@ -198,6 +198,9 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
     devDependencies:
       '@types/node':
         specifier: ^25.3.0

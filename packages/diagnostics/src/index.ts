@@ -68,3 +68,12 @@ export {
 	exitCodeForDiagnostics,
 	exitCodeForThrown,
 } from './exit-codes'
+export {
+	getDiagnosticsMetricsSnapshot,
+	recordDiagnosticsMetrics,
+	resetDiagnosticsMetrics,
+	startDebugSpan,
+	type DiagnosticsMetricsSnapshot,
+	type DiagnosticsSurface,
+	type DebugSpan,
+} from './observability'

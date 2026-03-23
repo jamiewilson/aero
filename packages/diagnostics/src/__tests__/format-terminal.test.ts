@@ -26,6 +26,10 @@ describe('formatDiagnosticsTerminal', () => {
 		})
 		expect(text).not.toContain('─')
 		expect(text).toContain('[AERO_COMPILE]')
+		expect(text).toMatchInlineSnapshot(`
+			"[aero] [AERO_COMPILE] pages/a.html:1:0
+			  error: broken"
+		`)
 	})
 
 	it('pretty: true wraps in rule lines', () => {

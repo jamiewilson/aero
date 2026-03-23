@@ -107,6 +107,80 @@ interface StaticBuildOptions {
 	resolvedConfig?: ResolvedConfig
 }
 
+/**
+ * Internal service boundary for prerender scheduling + interruption.
+ * Keeps Effect orchestration behind a small adapter so call sites stay declarative.
+ */
+interface StaticPrerenderServices {
+	runForEach<T>(args: {
+		items: readonly T[]
+		concurrency: number
+		signal: AbortSignal
+		worker: (item: T) => Promise<void>
+	}): Promise<void>
+}
+
+function createStaticPrerenderServices(): StaticPrerenderServices {
+	return {
+		runForEach: async <T>({
+			items,
+			concurrency,
+			signal,
+			worker,
+		}: {
+			items: readonly T[]
+			concurrency: number
+			signal: AbortSignal
+			worker: (item: T) => Promise<void>
+		}): Promise<void> => {
+			await Effect.runPromise(
+				Effect.forEach(
+					items,
+					item =>
+						Effect.tryPromise({
+							try: () => worker(item),
+							catch: e => (e instanceof Error ? e : new Error(String(e))),
+						}),
+					{ concurrency, discard: true }
+				),
+				{ signal }
+			)
+		},
+	}
+}
+
+interface RunPrerenderWithCancellationArgs<T> {
+	services: StaticPrerenderServices
+	items: readonly T[]
+	concurrency: number
+	signal: AbortSignal
+	worker: (item: T) => Promise<void>
+}
+
+async function runPrerenderWithCancellation<T>({
+	services,
+	items,
+	concurrency,
+	signal,
+	worker,
+}: RunPrerenderWithCancellationArgs<T>): Promise<void> {
+	try {
+		await services.runForEach({
+			items,
+			concurrency,
+			signal,
+			worker,
+		})
+	} catch (prerenderErr) {
+		if (signal.aborted) {
+			throw new AeroBuildCancelledError({
+				message: 'Static prerender cancelled (SIGINT)',
+			})
+		}
+		throw prerenderErr
+	}
+}
+
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
 interface StaticPage {
 	pageName: string
@@ -517,6 +591,7 @@ export async function renderStaticPages(
 
 		const routeSet = new Set(pagesToRender.map(p => p.routePath))
 		const concurrency = resolveStaticPrerenderConcurrency()
+		const prerenderServices = createStaticPrerenderServices()
 		aeroStaticBuildDebug(
 			`static prerender: using concurrency ${concurrency} (set AERO_STATIC_PRERENDER_CONCURRENCY to override)`
 		)
@@ -528,70 +603,56 @@ export async function renderStaticPages(
 		process.once('SIGINT', onSigint)
 		const tPrerender = Date.now()
 		try {
-			try {
-				await Effect.runPromise(
-					Effect.forEach(
-						pagesToRender,
-						page =>
-							Effect.tryPromise({
-								try: async () => {
-									const routePath = page.routePath ? `/${page.routePath}` : '/'
-									const pageUrl = new URL(routePath, 'http://localhost')
+			await runPrerenderWithCancellation({
+				services: prerenderServices,
+				items: pagesToRender,
+				concurrency,
+				signal: prerenderAbort.signal,
+				worker: async page => {
+					const routePath = page.routePath ? `/${page.routePath}` : '/'
+					const pageUrl = new URL(routePath, 'http://localhost')
 
-									// For expanded dynamic pages we must render via the original
-									// dynamic page name (e.g. "[id]") so the runtime finds the module,
-									// while passing the concrete params so the template has real values.
-									const renderTarget = isDynamicPage(page)
-										? toPosixRelative(
-												page.sourceFile,
-												path.resolve(root, dirs.client, 'pages')
-											).replace(/\.html$/i, '')
-										: page.pageName
+					// For expanded dynamic pages we must render via the original
+					// dynamic page name (e.g. "[id]") so the runtime finds the module,
+					// while passing the concrete params so the template has real values.
+					const renderTarget = isDynamicPage(page)
+						? toPosixRelative(path.resolve(page.sourceFile), path.resolve(root, dirs.client, 'pages')).replace(
+								/\.html$/i,
+								''
+							)
+						: page.pageName
 
-									let rendered = await runtime.aero.render(renderTarget, {
-										url: pageUrl,
-										request: new Request(pageUrl.toString(), { method: 'GET' }),
-										routePath,
-										params: page.params || {},
-										props: page.props || {},
-										site: options.site,
-									})
-									rendered = rewriteRenderedHtml(
-										addDoctype(rendered),
-										page.outputFile,
-										manifest,
-										routeSet,
-										apiPrefix
-									)
-
-									const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-									if (options.minify && isProd) {
-										rendered = await minify(rendered, {
-											collapseWhitespace: true,
-											removeComments: true,
-											minifyCSS: true,
-											minifyJS: true,
-										})
-									}
-
-									const outPath = path.join(distDir, page.outputFile)
-									fs.mkdirSync(path.dirname(outPath), { recursive: true })
-									fs.writeFileSync(outPath, rendered, 'utf-8')
-								},
-								catch: e => (e instanceof Error ? e : new Error(String(e))),
-							}),
-						{ concurrency, discard: true }
-					),
-					{ signal: prerenderAbort.signal }
-				)
-			} catch (prerenderErr) {
-				if (prerenderAbort.signal.aborted) {
-					throw new AeroBuildCancelledError({
-						message: 'Static prerender cancelled (SIGINT)',
+					let rendered = await runtime.aero.render(renderTarget, {
+						url: pageUrl,
+						request: new Request(pageUrl.toString(), { method: 'GET' }),
+						routePath,
+						params: page.params || {},
+						props: page.props || {},
+						site: options.site,
 					})
-				}
-				throw prerenderErr
-			}
+					rendered = rewriteRenderedHtml(
+						addDoctype(rendered),
+						page.outputFile,
+						manifest,
+						routeSet,
+						apiPrefix
+					)
+
+					const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+					if (options.minify && isProd) {
+						rendered = await minify(rendered, {
+							collapseWhitespace: true,
+							removeComments: true,
+							minifyCSS: true,
+							minifyJS: true,
+						})
+					}
+
+					const outPath = path.join(distDir, page.outputFile)
+					fs.mkdirSync(path.dirname(outPath), { recursive: true })
+					fs.writeFileSync(outPath, rendered, 'utf-8')
+				},
+			})
 		} finally {
 			process.removeListener('SIGINT', onSigint)
 		}
@@ -684,4 +745,6 @@ export const __internal = {
 	discoverPages,
 	writeSitemap,
 	resolveStaticPrerenderConcurrency,
+	createStaticPrerenderServices,
+	runPrerenderWithCancellation,
 }

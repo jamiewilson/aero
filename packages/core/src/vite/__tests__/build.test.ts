@@ -10,6 +10,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import type { Manifest } from 'vite'
+import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { __internal, createBuildConfig } from '../build'
 import { resolveDirs } from '../defaults'
@@ -322,6 +323,75 @@ describe('vite build helpers', () => {
 			const n = __internal.resolveStaticPrerenderConcurrency()
 			expect(n).toBeGreaterThanOrEqual(1)
 			expect(n).toBeLessThanOrEqual(8)
+		})
+	})
+
+	describe('createStaticPrerenderServices', () => {
+		it('runs worker for each item', async () => {
+			const services = __internal.createStaticPrerenderServices()
+			const seen: number[] = []
+			const abort = new AbortController()
+			await services.runForEach({
+				items: [1, 2, 3],
+				concurrency: 2,
+				signal: abort.signal,
+				worker: async n => {
+					seen.push(n)
+				},
+			})
+			expect(seen.sort()).toEqual([1, 2, 3])
+		})
+
+		it('propagates worker failures', async () => {
+			const services = __internal.createStaticPrerenderServices()
+			const abort = new AbortController()
+			await expect(
+				services.runForEach({
+					items: [1, 2, 3],
+					concurrency: 2,
+					signal: abort.signal,
+					worker: async n => {
+						if (n === 2) throw new Error('boom')
+					},
+				})
+			).rejects.toThrow('boom')
+		})
+	})
+
+	describe('runPrerenderWithCancellation', () => {
+		it('maps aborted prerender failure to AeroBuildCancelledError', async () => {
+			const abort = new AbortController()
+			abort.abort()
+			await expect(
+				__internal.runPrerenderWithCancellation({
+					services: {
+						runForEach: async () => {
+							throw new Error('interrupted')
+						},
+					},
+					items: [1],
+					concurrency: 1,
+					signal: abort.signal,
+					worker: async () => {},
+				})
+			).rejects.toBeInstanceOf(AeroBuildCancelledError)
+		})
+
+		it('rethrows non-abort failures unchanged', async () => {
+			const abort = new AbortController()
+			await expect(
+				__internal.runPrerenderWithCancellation({
+					services: {
+						runForEach: async () => {
+							throw new Error('boom')
+						},
+					},
+					items: [1],
+					concurrency: 1,
+					signal: abort.signal,
+					worker: async () => {},
+				})
+			).rejects.toThrow('boom')
 		})
 	})
 })

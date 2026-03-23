@@ -7,6 +7,13 @@
  */
 export { defineConfig } from './defineConfig'
 export { loadAeroConfig } from './loadAeroConfig'
-export { loadAeroConfigEffect } from './load-aero-config-effect'
+export {
+	AeroConfigLoadError,
+	configLoadErrorToDiagnostics,
+	loadAeroConfigEffect,
+	loadAeroConfigStrictEffect,
+	loadResolvedAeroConfigEffect,
+	resolveAeroConfigEffect,
+} from './load-aero-config-effect'
 export { redirectsToRouteRules } from './redirects'
 export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'

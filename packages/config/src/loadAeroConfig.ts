@@ -10,18 +10,24 @@ import type { AeroConfig, AeroConfigFunction } from './types'
 
 const require = createRequire(import.meta.url)
 
-const CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
+export const CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
+
+export type LoadAeroConfigDetailedResult =
+	| { ok: true; filePath: string; config: AeroConfig | AeroConfigFunction }
+	| { ok: false; reason: 'not-found' }
+	| { ok: false; reason: 'invalid-export'; filePath: string }
+	| { ok: false; reason: 'load-error'; filePath: string; error: unknown }
 
 /**
- * Load aero config from project root if present.
- *
- * @param root - Project root (e.g. process.cwd() when vite.config runs).
- * @returns Resolved AeroConfig or AeroConfigFunction, or null if no file found or load failed.
+ * Detailed config-load result used by strict/effect pipelines.
+ * Preserves file path and underlying load error when loading fails.
  */
-export function loadAeroConfig(root: string): AeroConfig | AeroConfigFunction | null {
+export function loadAeroConfigDetailed(root: string): LoadAeroConfigDetailedResult {
+	let sawFile = false
 	for (const name of CONFIG_NAMES) {
 		const filePath = path.join(root, name)
 		if (!existsSync(filePath)) continue
+		sawFile = true
 		try {
 			// jiti(projectRoot) uses projectRoot as base for resolving; pass relative path from root
 			const alias = jitiAliasRecordFromProject(root)
@@ -30,13 +36,37 @@ export function loadAeroConfig(root: string): AeroConfig | AeroConfigFunction | 
 			const mod = jiti(relativePath)
 			const config = mod?.default ?? mod
 			if (config && (typeof config === 'object' || typeof config === 'function')) {
-				return config as AeroConfig | AeroConfigFunction
+				return { ok: true, filePath, config: config as AeroConfig | AeroConfigFunction }
 			}
-		} catch (err) {
-			// Load failed (e.g. resolve error); try next extension
-			if (process.env.DEBUG?.includes('aero')) {
-				console.error('[aero] loadAeroConfig failed for', filePath, err)
-			}
+			return { ok: false, reason: 'invalid-export', filePath }
+		} catch (error) {
+			return { ok: false, reason: 'load-error', filePath, error }
+		}
+	}
+	if (!sawFile) {
+		return { ok: false, reason: 'not-found' }
+	}
+	return { ok: false, reason: 'not-found' }
+}
+
+/**
+ * Load aero config from project root if present.
+ *
+ * @param root - Project root (e.g. process.cwd() when vite.config runs).
+ * @returns Resolved AeroConfig or AeroConfigFunction, or null if no file found or load failed.
+ */
+export function loadAeroConfig(root: string): AeroConfig | AeroConfigFunction | null {
+	const detailed = loadAeroConfigDetailed(root)
+	if (detailed.ok) return detailed.config
+	if (process.env.DEBUG?.includes('aero') && detailed.reason !== 'not-found') {
+		if (detailed.reason === 'load-error') {
+			console.error('[aero] loadAeroConfig failed for', detailed.filePath, detailed.error)
+		} else {
+			console.error(
+				'[aero] loadAeroConfig invalid export for',
+				detailed.filePath,
+				'(expected object or function)'
+			)
 		}
 	}
 	return null

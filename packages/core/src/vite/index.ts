@@ -31,13 +31,10 @@ import {
 
 import {
 	type AeroCompileError,
-	AeroBuildCancelledError,
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
-	AERO_EXIT_NITRO,
 	enrichDiagnosticsWithSourceFrames,
 	exitFailureToAeroDiagnostics,
-	exitCodeForThrown,
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
@@ -63,6 +60,7 @@ import {
 	mergeSsrRunnerOptionsWithHmrLogger,
 	wrapAeroViteLogger,
 } from './aero-vite-logger'
+import { createStaticBuildReportingService } from './static-build-reporting'
 
 const require = createRequire(import.meta.url)
 
@@ -642,6 +640,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 			const staticPlugins = options.staticServerPlugins?.length
 				? [...aeroCorePlugins, ...options.staticServerPlugins]
 				: aeroCorePlugins
+			const reporting = createStaticBuildReportingService()
 			try {
 				await renderStaticPages(
 					{
@@ -658,25 +657,14 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					outDir
 				)
 			} catch (err) {
-				if (err instanceof AeroBuildCancelledError) {
-					resolvedConfig.logger.warn(`[aero] ${err.message ?? 'Static build cancelled'}`)
-					process.exitCode = exitCodeForThrown(err)
-					throw err
-				}
-				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-				resolvedConfig.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
-				process.exitCode = exitCodeForThrown(err)
-				throw err
+				reporting.reportPrerenderFailure(err, resolvedConfig.logger)
 			}
 			if (enableNitro) {
 				const configCwd = writeGeneratedNitroConfig(root, dirs.server, options.redirects, dirs.dist)
 				try {
 					await runNitroBuild(root, configCwd)
 				} catch (err) {
-					const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-					resolvedConfig.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
-					process.exitCode = AERO_EXIT_NITRO
-					throw err
+					reporting.reportNitroFailure(err, resolvedConfig.logger)
 				}
 			}
 		},

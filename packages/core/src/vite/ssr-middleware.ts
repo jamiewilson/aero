@@ -8,6 +8,7 @@ import { isRunnableDevEnvironment } from 'vite'
 import path from 'node:path'
 import {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
+	type AeroDiagnostic,
 	buildDevSsrErrorHtml,
 	encodeDiagnosticsHeaderValue,
 	enrichDiagnosticsWithSourceFrames,
@@ -24,6 +25,28 @@ export interface AeroSsrMiddlewareState {
 	dirs: ReturnType<typeof resolveDirs>
 	apiPrefix: string
 	options: AeroOptions
+}
+
+function isDebugEnabled(): boolean {
+	const v = process.env.AERO_LOG
+	return v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))
+}
+
+const ssrMetricsByCode = new Map<string, number>()
+let ssrDiagnosticsTotal = 0
+
+function recordSsrDiagnosticsMetrics(diagnostics: readonly AeroDiagnostic[]): void {
+	if (diagnostics.length === 0) return
+	ssrDiagnosticsTotal += diagnostics.length
+	for (const d of diagnostics) {
+		ssrMetricsByCode.set(d.code, (ssrMetricsByCode.get(d.code) ?? 0) + 1)
+	}
+	if (isDebugEnabled()) {
+		console.error(
+			`[aero] metrics[dev-ssr] +${diagnostics.length} diagnostics (total=${ssrDiagnosticsTotal}) ` +
+				`codes=${diagnostics.map(d => d.code).join(',')}`
+		)
+	}
 }
 
 /**
@@ -165,6 +188,7 @@ export async function handleSsrRequest(
 		const diagnostics = enrichDiagnosticsWithSourceFrames(
 			unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {})
 		)
+		recordSsrDiagnosticsMetrics(diagnostics)
 		server.config.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 		const devDetails = server.config.mode === 'development'
 		if (devDetails) {

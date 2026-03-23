@@ -16,7 +16,7 @@ import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Effect } from 'effect'
+import { Cause, Effect, Exit, Option } from 'effect'
 
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
@@ -182,28 +182,8 @@ export async function loadSingleFile(
  * @param root - Project root.
  * @returns Loaded collections and schema issues for invalid files (skipped unless `strictSchema` or `AERO_CONTENT_STRICT`).
  */
-async function loadAllCollectionsAsync(
-	config: ContentConfig,
-	root: string
-): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
-	const result: LoadedContent = new Map()
-	const collections = config.collections ?? []
-	const schemaIssues: ContentSchemaIssue[] = []
-
-	for (const collection of collections) {
-		const { documents, schemaIssues: colIssues } = await Effect.runPromise(
-			loadCollectionEffect(collection, root)
-		)
-		result.set(collection.name, documents)
-		schemaIssues.push(...colIssues)
-	}
-
-	const strict = config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
-	if (strict && schemaIssues.length > 0) {
-		throw contentSchemaAggregateError(schemaIssues)
-	}
-
-	return { loaded: result, schemaIssues }
+function isStrictSchemaEnabled(config: ContentConfig): boolean {
+	return config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
 }
 
 /**
@@ -213,10 +193,26 @@ export function loadAllCollectionsEffect(
 	config: ContentConfig,
 	root: string
 ): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
-	return Effect.tryPromise({
-		try: () => loadAllCollectionsAsync(config, root),
-		catch: e => (e instanceof Error ? e : new Error(String(e))),
-	})
+	const collections = config.collections ?? []
+	return Effect.forEach(collections, collection => loadCollectionEffect(collection, root)).pipe(
+		Effect.map(results => {
+			const loaded: LoadedContent = new Map()
+			const schemaIssues: ContentSchemaIssue[] = []
+			for (let i = 0; i < collections.length; i++) {
+				const collection = collections[i]!
+				const result = results[i]!
+				loaded.set(collection.name, result.documents)
+				schemaIssues.push(...result.schemaIssues)
+			}
+			return { loaded, schemaIssues }
+		}),
+		Effect.flatMap(({ loaded, schemaIssues }) => {
+			if (isStrictSchemaEnabled(config) && schemaIssues.length > 0) {
+				return Effect.fail(contentSchemaAggregateError(schemaIssues))
+			}
+			return Effect.succeed({ loaded, schemaIssues })
+		})
+	)
 }
 
 /**
@@ -227,7 +223,17 @@ export async function loadAllCollections(
 	config: ContentConfig,
 	root: string
 ): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
-	return loadAllCollectionsAsync(config, root)
+	const exit = await Effect.runPromiseExit(loadAllCollectionsEffect(config, root))
+	return Exit.match(exit, {
+		onSuccess: value => value,
+		onFailure: cause => {
+			const failure = Cause.failureOption(cause)
+			if (Option.isSome(failure)) {
+				throw failure.value
+			}
+			throw new Error(Cause.pretty(cause))
+		},
+	})
 }
 
 /** Absolute paths of all collection directories (for HMR watch and invalidation). */

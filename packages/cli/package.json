@@ -25,7 +25,8 @@
 	"dependencies": {
 		"@aero-js/config": "workspace:*",
 		"@aero-js/content": "workspace:*",
-		"@aero-js/core": "workspace:*"
+		"@aero-js/core": "workspace:*",
+		"effect": "^3.20.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.0",
