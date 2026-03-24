@@ -21,6 +21,4 @@ pnpm exec aero --help
 
 Full behavior, exit codes, limitations, and related package APIs (**`loadAeroConfig`**, **`loadContentConfigFileSync`**, **`@aero-js/core/compile-check`**) are documented in the repo:
 
-**[\_reference/aero-cli-and-check.md](../../_reference/aero-cli-and-check.md)**
-
-Further CLI UX (e.g. **`@aero-js/create`** post-scaffold) is tracked in **[\_reference/refactors/effect/effect_implementation_phased_plan.md](../../_reference/refactors/effect/effect_implementation_phased_plan.md)**.
+**[docs/aero-cli-and-check.md](../../docs/aero-cli-and-check.md)**

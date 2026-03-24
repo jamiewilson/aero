@@ -93,4 +93,4 @@ When the same component is used multiple times with different `props`, each inst
 
 ---
 
-**Implementation note:** For contributors changing this taxonomy, see [\_reference/script-taxonomy-sync.md](../_reference/script-taxonomy-sync.md) for the implementation checklist.
+**Implementation note:** Contributors changing this taxonomy should keep the parser, compiler constants, and documentation aligned.
