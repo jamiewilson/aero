@@ -12,7 +12,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create** - Project initializer (@aero-js/create). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **minimal** (starter template for @aero-js/create).
-- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
+- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (`pnpm dev` runs `vp dev`), or from the repo root with `pnpm run dev` / `pnpm --dir examples/kitchen-sink dev`.
 - **Root** - Workspace root. Scripts: `pnpm test` runs workspace Vitest; `pnpm build` builds packages only.
 
 ### Compilation pipeline (packages/core)
@@ -83,12 +83,16 @@ The framework provides default aliases when tsconfig is missing; tsconfig is opt
 
 ## Development Commands
 
+Workspace root uses **Vite+** (`vp` from the `vite-plus` package). Use a global `vp` install ([vite.plus](https://vite.plus)) or `pnpm exec vp <cmd>` when needed.
+
 ```bash
-pnpm run dev          # Vite dev server with HMR (Nitro when aero({ server: true }))
-pnpm run build        # Static build to dist/; with Nitro also .output/
-pnpm run preview      # Static preview only
-pnpm run preview:api  # Full server preview (static + API)
-pnpm test             # Run Vitest (packages/core compiler + vite tests)
+pnpm run dev          # Kitchen-sink: vp dev (HMR; Nitro when aero({ server: true }))
+pnpm run build        # Package chain: vp run build:packages
+pnpm run preview      # Kitchen-sink: vp preview
+pnpm run preview:api  # From kitchen-sink: full server preview (see example package.json)
+pnpm test             # pnpm typecheck && vp test (workspace Vitest)
+pnpm run fmt          # vp fmt (optional; root still has pnpm format / oxfmt)
+pnpm run lint         # vp lint
 ```
 
 ## Testing

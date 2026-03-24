@@ -4,10 +4,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "AERO_SERVER=false vite build && vite preview",
-		"preview:api": "vite build && node .output/server/index.mjs"
+		"dev": "vp dev",
+		"build": "vp build",
+		"preview": "AERO_SERVER=false vp build && vp preview",
+		"preview:api": "vp build && node .output/server/index.mjs"
 	},
 	"dependencies": {
 		"@aero-js/cli": "workspace:*",
@@ -28,6 +28,7 @@
 		"nitro": "3.0.1-alpha.2",
 		"shiki": "^4.0.2",
 		"vite": "8.0.2",
+		"vite-plus": "0.1.14",
 		"zod": "^4.3.6"
 	}
 }

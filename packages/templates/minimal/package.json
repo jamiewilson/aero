@@ -11,14 +11,16 @@
 	},
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"dev": "vp dev",
+		"build": "vp build",
+		"preview": "vp build && vp preview"
 	},
 	"dependencies": {
-		"@aero-js/core": "workspace:*"
+		"@aero-js/core": "workspace:*",
+		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
-		"vite": "8.0.2"
+		"vite": "8.0.2",
+		"vite-plus": "0.1.14"
 	}
 }

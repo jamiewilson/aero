@@ -30,6 +30,11 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

@@ -3,15 +3,16 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"dev": "vp dev",
+		"build": "vp build",
+		"preview": "vp build && vp preview"
 	},
 	"dependencies": {
 		"@aero-js/core": "<version>",
 		"@aero-js/vite": "<version>"
 	},
 	"devDependencies": {
-		"vite": "8.0.2"
+		"vite": "8.0.2",
+		"vite-plus": "0.1.14"
 	}
 }
