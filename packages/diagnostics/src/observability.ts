@@ -72,4 +72,3 @@ export function startDebugSpan(name: string): DebugSpan {
 		},
 	}
 }
-

@@ -3,8 +3,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"format": "oxfmt",
+		"format": "pnpm exec vp fmt",
 		"fmt": "pnpm exec vp fmt",
+		"check": "pnpm exec vp check",
 		"lint": "pnpm exec vp lint",
 		"dev": "pnpm --dir examples/kitchen-sink exec vp dev",
 		"preview": "pnpm --dir examples/kitchen-sink exec vp preview",

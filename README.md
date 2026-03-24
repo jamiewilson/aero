@@ -431,6 +431,7 @@ Commands in an Aero project (e.g. scaffolded with `@aero-js/create`). Apps use *
 - `pnpm preview` — Static preview (`vp preview`).
 - `pnpm preview:api` — Preview with Nitro (static + API from one origin), where the template provides it.
 - `pnpm test` — In the monorepo: typecheck plus `vp test` at the workspace root.
+- `pnpm check` — Format + Oxlint via `vp check` (same as CI; use `vp check --fix` when formatting drifts).
 
 ## Build output
 

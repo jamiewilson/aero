@@ -29,6 +29,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Check (format + lint)
+        run: pnpm exec vp check
+
       - name: Test
         run: pnpm exec vp test
 

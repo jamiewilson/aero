@@ -75,4 +75,3 @@ describe('resolveAeroConfigEffect', () => {
 		fs.rmSync(root, { recursive: true, force: true })
 	})
 })
-

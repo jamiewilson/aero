@@ -14,7 +14,7 @@ export interface RoutePattern {
 }
 
 /** Matches a single [param] segment; capture is param name (no leading . or ..., no ]). */
-const PARAM_SEGMENT_REGEX = /^\[([^.\]\[]+)\]$/
+const PARAM_SEGMENT_REGEX = /^\[([^.\][]+)\]$/
 
 /**
  * Parses a route pattern (page name) into segments.

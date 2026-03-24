@@ -200,9 +200,7 @@ function main() {
 	}
 	console.log('')
 	console.log('[create-aero] Done. Next steps:')
-	console.log(
-		`  1. cd ${inMonorepo ? relative(process.cwd(), targetDir) || targetDir : target}`
-	)
+	console.log(`  1. cd ${inMonorepo ? relative(process.cwd(), targetDir) || targetDir : target}`)
 	console.log('  2. pnpm dev          # start the dev server')
 	console.log('  3. pnpm build        # production build')
 	console.log('  4. Install the "Aero" VS Code extension for template diagnostics')

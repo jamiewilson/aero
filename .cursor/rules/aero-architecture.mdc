@@ -46,7 +46,8 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 - Run app dev/build/preview from **examples/kitchen-sink** or **packages/templates/minimal** (e.g. `pnpm run dev` from root or `pnpm --dir examples/kitchen-sink dev`; apps use **Vite+** `vp dev` / `vp build` / `vp preview`).
 - `pnpm run build` (at root) - Builds packages only. Run app build from the app directory.
 - `pnpm run preview` / `pnpm run preview:api` - From the app directory.
-- `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
+- `pnpm test` - Typecheck + `vp test` from root; package-scoped runs use `vitest run --root ../.. packages/<name>`.
+- `pnpm run check` - `vp check` (format + Oxlint; matches CI).
 
 ## Documentation
 

@@ -184,7 +184,7 @@ export class Aero {
 			Object.keys(renderInput.props || {}).length === 0
 		) {
 			const staticPaths: any[] = await target.getStaticPaths()
-			const combinedParams = { ...dynamicParams, ...(renderInput.params || {}) }
+			const combinedParams = { ...dynamicParams, ...renderInput.params }
 
 			const match = staticPaths.find(entry => this.paramsMatch(entry.params, combinedParams))
 
@@ -208,7 +208,7 @@ export class Aero {
 			slots: renderInput.slots || {},
 			request: renderInput.request,
 			url: renderInput.url,
-			params: { ...dynamicParams, ...(renderInput.params || {}) },
+			params: { ...dynamicParams, ...renderInput.params },
 			routePath,
 			site: renderInput.site,
 			styles: renderInput.styles,

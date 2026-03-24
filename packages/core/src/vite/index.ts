@@ -211,7 +211,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
 				environments: {
-					...(userEnvs ?? {}),
+					...userEnvs,
 					ssr: {
 						...userSsr,
 						dev: {

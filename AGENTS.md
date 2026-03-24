@@ -91,7 +91,8 @@ pnpm run build        # Package chain: vp run build:packages
 pnpm run preview      # Kitchen-sink: vp preview
 pnpm run preview:api  # From kitchen-sink: full server preview (see example package.json)
 pnpm test             # pnpm typecheck && vp test (workspace Vitest)
-pnpm run fmt          # vp fmt (optional; root still has pnpm format / oxfmt)
+pnpm run check        # vp check (format + lint; CI)
+pnpm run fmt          # vp fmt (same as pnpm format; formatter config in .oxfmtrc.json)
 pnpm run lint         # vp lint
 ```
 

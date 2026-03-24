@@ -51,7 +51,7 @@ function applyEnvPolicy(config: AeroConfig, env: NodeJS.ProcessEnv): AeroConfig 
 	}
 	if (dirClient || dirServer || dirDist) {
 		next.dirs = {
-			...(next.dirs ?? {}),
+			...next.dirs,
 			...(dirClient ? { client: dirClient } : {}),
 			...(dirServer ? { server: dirServer } : {}),
 			...(dirDist ? { dist: dirDist } : {}),
@@ -63,7 +63,9 @@ function applyEnvPolicy(config: AeroConfig, env: NodeJS.ProcessEnv): AeroConfig 
 /**
  * Same as {@link loadAeroConfig} wrapped in `Effect.sync` for composition with Layers and tests.
  */
-export function loadAeroConfigEffect(root: string): Effect.Effect<AeroConfig | AeroConfigFunction | null, Error, never> {
+export function loadAeroConfigEffect(
+	root: string
+): Effect.Effect<AeroConfig | AeroConfigFunction | null, Error, never> {
 	return Effect.try({
 		try: () => loadAeroConfig(root),
 		catch: e => (e instanceof Error ? e : new Error(String(e))),
@@ -116,8 +118,7 @@ export function resolveAeroConfigEffect(
 ): Effect.Effect<AeroConfig, Error, never> {
 	return Effect.try({
 		try: () => {
-			const base =
-				loaded === null ? {} : typeof loaded === 'function' ? loaded(env) : loaded
+			const base = loaded === null ? {} : typeof loaded === 'function' ? loaded(env) : loaded
 			if (base === null || typeof base !== 'object' || Array.isArray(base)) {
 				throw new Error('[aero] aero.config must export an object or function returning an object.')
 			}

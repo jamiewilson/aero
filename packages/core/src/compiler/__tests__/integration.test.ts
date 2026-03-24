@@ -69,6 +69,6 @@ describe('Compiler Integration', () => {
 
 		expect(code).toContain('export async function getStaticPaths() {')
 		expect(code).toContain('const a = "{ brace in string }"')
-		expect(code).toContain('const b = \`{ brace in template }\`')
+		expect(code).toContain('const b = `{ brace in template }`')
 	})
 })

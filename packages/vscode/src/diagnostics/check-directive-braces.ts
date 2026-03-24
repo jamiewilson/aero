@@ -13,8 +13,14 @@ const DIRECTIVE_ATTR_VALUE_REGEX =
 	/\b(data-if|if|data-else-if|else-if|data-each|each|data-props|props)\s*=\s*(['"])(.*?)\2/gi
 
 const BRACED_DIRECTIVES = new Set([
-	'if', 'data-if', 'else-if', 'data-else-if',
-	'each', 'data-each', 'props', 'data-props',
+	'if',
+	'data-if',
+	'else-if',
+	'data-else-if',
+	'each',
+	'data-each',
+	'props',
+	'data-props',
 ])
 
 export function checkDirectiveExpressionBraces(

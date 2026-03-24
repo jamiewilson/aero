@@ -9,5 +9,5 @@
 	"bracketSpacing": true,
 	"singleAttributePerLine": false,
 	"trailingComma": "es5",
-	"ignorePatterns": ["Base.astro"]
+	"ignorePatterns": ["Base.astro", "**/.cursor/**"]
 }
