@@ -34,7 +34,7 @@
 		"dev": "tsdown --watch",
 		"build": "pnpm --dir ../language-server exec npm run prebuild && tsdown --minify",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "vitest run --root ../.. packages/vscode",
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {

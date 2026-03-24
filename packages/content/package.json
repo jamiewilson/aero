@@ -44,7 +44,7 @@
 	"scripts": {
 		"build": "tsdown src/index.ts src/types.ts src/vite.ts src/markdown.ts src/render.ts src/processor.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "vitest run --root ../.. packages/content",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
