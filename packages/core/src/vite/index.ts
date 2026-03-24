@@ -118,9 +118,27 @@ export default ${JSON.stringify(nitroConfig, null, 2)}
 	return aeroDir
 }
 
+/**
+ * Resolve the Nitro CLI shim under the app `projectRoot` (where `nitro` is a devDependency).
+ * Spawning the bare command `nitro` relies on PATH; `cwd` for the Nitro build is often `.aero`, so
+ * relative `./node_modules/.bin` on PATH resolves under `.aero` and misses the real binary.
+ */
+function resolveNitroCliPath(projectRoot: string): string {
+	const binDir = path.join(projectRoot, 'node_modules', '.bin')
+	const unix = path.join(binDir, 'nitro')
+	const win = path.join(binDir, 'nitro.cmd')
+	if (process.platform === 'win32') {
+		if (existsSync(win)) return win
+		if (existsSync(unix)) return unix
+	} else {
+		if (existsSync(unix)) return unix
+	}
+	return process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+}
+
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
-async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
-	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+async function runNitroBuild(projectRoot: string, configCwd: string): Promise<void> {
+	const nitroBin = resolveNitroCliPath(projectRoot)
 	await new Promise<void>((resolve, reject) => {
 		const child = spawn(nitroBin, ['build'], {
 			cwd: configCwd,
