@@ -58,6 +58,7 @@ export function createViteConfig(
 		opts = options ?? getDefaultOptions()
 	} else {
 		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
+		// Same as historical behavior: one sync load; null → empty config (no second load / Effect on hot path).
 		const loaded = loadAeroConfig(process.cwd())
 		aeroConfig = loaded ?? {}
 	}

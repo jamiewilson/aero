@@ -134,6 +134,9 @@ importers:
 
   examples/kitchen-sink:
     dependencies:
+      '@aero-js/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
       '@aero-js/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -184,6 +187,34 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
 
+  packages/cli:
+    dependencies:
+      '@aero-js/config':
+        specifier: workspace:*
+        version: link:../config
+      '@aero-js/content':
+        specifier: workspace:*
+        version: link:../content
+      '@aero-js/core':
+        specifier: workspace:*
+        version: link:../core
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.3.0
+      tsdown:
+        specifier: ^0.21.0-beta.2
+        version: 0.21.0-beta.3(lightningcss@1.31.1)(oxc-resolver@11.19.1)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+
   packages/config:
     dependencies:
       '@aero-js/content':
@@ -195,6 +226,9 @@ importers:
       '@aero-js/vite':
         specifier: workspace:*
         version: link:../vite
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
       jiti:
         specifier: ^2.4.2
         version: 2.6.1
@@ -214,9 +248,18 @@ importers:
 
   packages/content:
     dependencies:
+      '@aero-js/core':
+        specifier: workspace:*
+        version: link:../core
+      '@aero-js/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -272,9 +315,15 @@ importers:
 
   packages/core:
     dependencies:
+      '@aero-js/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
       get-tsconfig:
         specifier: ^4.13.6
         version: 4.13.6
@@ -327,6 +376,28 @@ importers:
       '@aero-js/template-minimal':
         specifier: workspace:*
         version: link:../templates/minimal
+
+  packages/diagnostics:
+    dependencies:
+      effect:
+        specifier: ^3.20.0
+        version: 3.20.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.3.0
+      tsdown:
+        specifier: ^0.21.0-beta.2
+        version: 0.21.0-beta.3(lightningcss@1.31.1)(oxc-resolver@11.19.1)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: 8.0.0-beta.15
+        version: 8.0.0-beta.15(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.3.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)
 
   packages/highlight:
     dependencies:
@@ -433,6 +504,9 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core
+      '@aero-js/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
@@ -2320,6 +2394,9 @@ packages:
       oxc-resolver:
         optional: true
 
+  effect@3.20.0:
+    resolution: {integrity: sha512-qMLfDJscrNG8p/aw+IkT9W7fgj50Z4wG5bLBy0Txsxz8iUHjDIkOgO3SV0WZfnQbNG2VJYb0b+rDLMrhM4+Krw==}
+
   electron-to-chromium@1.5.302:
     resolution: {integrity: sha512-sM6HAN2LyK82IyPBpznDRqlTQAtuSaO+ShzFiWTvoMJLHyZ+Y39r8VMfHzwbU8MVBzQ4Wdn85+wlZl2TLGIlwg==}
 
@@ -2369,6 +2446,10 @@ packages:
 
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
+
+  fast-check@3.23.2:
+    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
+    engines: {node: '>=8.0.0'}
 
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
@@ -2834,6 +2915,9 @@ packages:
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
+
+  pure-rand@6.1.0:
+    resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
   quansync@1.0.0:
     resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
@@ -4547,6 +4631,11 @@ snapshots:
     optionalDependencies:
       oxc-resolver: 11.19.1
 
+  effect@3.20.0:
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      fast-check: 3.23.2
+
   electron-to-chromium@1.5.302: {}
 
   empathic@2.0.0: {}
@@ -4604,6 +4693,10 @@ snapshots:
       is-extendable: 0.1.1
 
   extend@3.0.2: {}
+
+  fast-check@3.23.2:
+    dependencies:
+      pure-rand: 6.1.0
 
   fast-glob@3.3.3:
     dependencies:
@@ -5350,6 +5443,8 @@ snapshots:
       source-map-js: 1.2.1
 
   property-information@7.1.0: {}
+
+  pure-rand@6.1.0: {}
 
   quansync@1.0.0: {}
 

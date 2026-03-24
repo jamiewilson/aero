@@ -10,13 +10,15 @@ Aero is a static site generator with an HTML-first template engine.
 ## Monorepo Layout
 
 - **Root** - Workspace root. Root `build` builds packages only; app dev/build/preview are run from **examples/kitchen-sink** or **packages/templates/minimal**.
-- **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsup; consumed as `@aero-js/core` and `@aero-js/vite`.
+- **packages/diagnostics** - Shared `AeroDiagnostic` contract, formatters, Effect cause mapping, SSR error transport. Published as `@aero-js/diagnostics`; also re-exported from `@aero-js/core/diagnostics`.
+- **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsdown; consumed as `@aero-js/core` and `@aero-js/vite`.
 - **packages/vscode** - VS Code extension (syntaxes, etc.).
 - **packages/create** - Project initializer (@aero-js/create). Scaffolds into packages/create/dist/<name> from templates (dist is gitignored).
+- **packages/cli** - `@aero-js/cli`: `aero check` (config, content collections, template compile; no dev server).
 - **packages/templates/minimal** - Minimal template (client/, content/, no server). Used by @aero-js/create.
 - **examples/kitchen-sink** - Full demo app. Uses custom dirs when configured (e.g. frontend/, backend/, build/ via aero.config); otherwise client/, content/, server/. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`).
 
-Build order: root `pnpm build` runs package builds (interpolation, highlight, core, content, config, vite) so the app uses the built framework.
+Build order: root `pnpm build` runs package builds (interpolation, highlight, diagnostics, core, vite, content, config, cli, create) so the app uses the built framework.
 
 ## Pipeline (packages/core)
 
@@ -46,9 +48,13 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 - `pnpm run preview` / `pnpm run preview:api` - From the app directory.
 - `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
 
-## Documentation and discoveries
+## Documentation
 
-Document any discoveries made during code exploration (gaps, workarounds, implementation opportunities) in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+- **Shipped diagnostics/Effect work:** [_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md).
+- **CLI (`aero check`) and tooling APIs:** [_reference/aero-cli-and-check.md](_reference/aero-cli-and-check.md).
+- **Exploration follow-ups only** (gaps, quirks, tech debt): [_reference/DISCOVERY.md](_reference/DISCOVERY.md) — not changelogs or feature specs.
+- **Roadmap:** [_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
+- **Effect adoption roadmap:** [_reference/effect-opportunities.md](_reference/effect-opportunities.md).
 
 ## Path Aliases (templates: tsconfig in kitchen-sink, minimal)
 

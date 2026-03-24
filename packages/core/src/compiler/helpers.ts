@@ -11,11 +11,18 @@ import {
 	compileInterpolationFromSegments,
 	type Segment,
 } from './tokenizer'
+import { AeroCompileError } from '@aero-js/diagnostics'
+import { lineColumnAtOffset } from '../utils/source-position'
 
 /** Options for validateSingleBracedExpression (directive/tag for error message). */
 export interface ValidateSingleBracedExpressionOptions {
 	directive?: string
 	tagName?: string
+	/** Original template source; used with {@link positionNeedle} for {@link AeroCompileError} location. */
+	diagnosticSource?: string
+	diagnosticFile?: string
+	/** First matching substring in `diagnosticSource` whose start offset is reported. */
+	positionNeedle?: string
 }
 
 /**
@@ -42,9 +49,21 @@ export function validateSingleBracedExpression(
 	if (!ok) {
 		const directive = options.directive ?? 'directive'
 		const tagName = options.tagName ?? 'element'
-		throw new Error(
-			`Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`
-		)
+		const message = `Directive \`${directive}\` on <${tagName}> must use a braced expression, e.g. ${directive}="{ expression }".`
+		const src = options.diagnosticSource
+		const needle = options.positionNeedle
+		const file = options.diagnosticFile
+		if (src !== undefined && needle !== undefined && needle.length > 0) {
+			const idx = src.indexOf(needle)
+			if (idx >= 0) {
+				const { line, column } = lineColumnAtOffset(src, idx)
+				throw new AeroCompileError({ message, file, line, column })
+			}
+		}
+		if (file !== undefined) {
+			throw new AeroCompileError({ message, file })
+		}
+		throw new Error(message)
 	}
 	return trimmed
 }
@@ -229,21 +248,9 @@ export function getRenderComponentContextArg(): string {
 	return `{ ${entries.join(', ')} }`
 }
 
-/**
- * Pairs of [inputKey, destructuredVarName] for the render function's initial destructuring from Aero.
- * page and site are objects; site uses __aero_site so build scripts can declare `const site` for content.
- */
-const RENDER_DESTRUCTURE_PAIRS: [key: string, varName: string][] = [
-	['page', 'page'],
-	['site', '__aero_site'],
-	['styles', 'styles'],
-	['scripts', 'scripts'],
-	['headScripts', 'injectedHeadScripts'],
-]
-
 /** Build destructuring pattern for the render function: slots, renderComponent, page, site, ... */
 export function getRenderContextDestructurePattern(): string {
-	const entries = RENDER_DESTRUCTURE_PAIRS.map(([key, varName]) =>
+	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
 		key === varName ? key : `${key}: ${varName}`
 	)
 	return `slots = {}, renderComponent, ${entries.join(', ')}`

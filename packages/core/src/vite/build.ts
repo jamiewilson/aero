@@ -14,7 +14,10 @@ import type { Plugin, ResolvedConfig, UserConfig } from 'vite'
 import { isRunnableDevEnvironment } from 'vite'
 import { minify } from 'html-minifier-next'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
+import { AeroBuildCancelledError } from '@aero-js/diagnostics'
+import { Effect } from 'effect'
 import { parseHTML } from 'linkedom'
 import { parse } from '../compiler/parser'
 import { pagePathToKey } from '../utils/routing'
@@ -42,6 +45,29 @@ import {
 import { toPosix, toPosixRelative } from '../utils/path'
 
 export { addDoctype } from './rewrite'
+
+/** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
+function aeroStaticBuildDebug(message: string): void {
+	const v = process.env.AERO_LOG
+	if (v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))) {
+		void Effect.runPromise(Effect.log(`[aero] ${message}`))
+	}
+}
+
+/**
+ * Bounded parallelism for static prerender. Override with `AERO_STATIC_PRERENDER_CONCURRENCY` (1–64);
+ * default is `min(8, availableParallelism)` (at least 1).
+ */
+function resolveStaticPrerenderConcurrency(): number {
+	const raw = process.env.AERO_STATIC_PRERENDER_CONCURRENCY?.trim()
+	if (raw) {
+		const n = Number.parseInt(raw, 10)
+		if (Number.isFinite(n) && n >= 1) return Math.min(n, 64)
+	}
+	const cpus =
+		typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length
+	return Math.max(1, Math.min(8, cpus))
+}
 
 /**
  * Register client scripts from parsed template into a Map.
@@ -79,6 +105,80 @@ interface StaticBuildOptions {
 	redirects?: RedirectRule[]
 	/** Resolved Vite config from the main build; merged into spawn server for config parity with dev. */
 	resolvedConfig?: ResolvedConfig
+}
+
+/**
+ * Internal service boundary for prerender scheduling + interruption.
+ * Keeps Effect orchestration behind a small adapter so call sites stay declarative.
+ */
+interface StaticPrerenderServices {
+	runForEach<T>(args: {
+		items: readonly T[]
+		concurrency: number
+		signal: AbortSignal
+		worker: (item: T) => Promise<void>
+	}): Promise<void>
+}
+
+function createStaticPrerenderServices(): StaticPrerenderServices {
+	return {
+		runForEach: async <T>({
+			items,
+			concurrency,
+			signal,
+			worker,
+		}: {
+			items: readonly T[]
+			concurrency: number
+			signal: AbortSignal
+			worker: (item: T) => Promise<void>
+		}): Promise<void> => {
+			await Effect.runPromise(
+				Effect.forEach(
+					items,
+					item =>
+						Effect.tryPromise({
+							try: () => worker(item),
+							catch: e => (e instanceof Error ? e : new Error(String(e))),
+						}),
+					{ concurrency, discard: true }
+				),
+				{ signal }
+			)
+		},
+	}
+}
+
+interface RunPrerenderWithCancellationArgs<T> {
+	services: StaticPrerenderServices
+	items: readonly T[]
+	concurrency: number
+	signal: AbortSignal
+	worker: (item: T) => Promise<void>
+}
+
+async function runPrerenderWithCancellation<T>({
+	services,
+	items,
+	concurrency,
+	signal,
+	worker,
+}: RunPrerenderWithCancellationArgs<T>): Promise<void> {
+	try {
+		await services.runForEach({
+			items,
+			concurrency,
+			signal,
+			worker,
+		})
+	} catch (prerenderErr) {
+		if (signal.aborted) {
+			throw new AeroBuildCancelledError({
+				message: 'Static prerender cancelled (SIGINT)',
+			})
+		}
+		throw prerenderErr
+	}
 }
 
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
@@ -190,6 +290,36 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 	return walkHtmlFiles(path.resolve(root, templateRoot))
 }
 
+/**
+ * Walks template paths once and caches file contents so client-script and asset discovery
+ * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`).
+ */
+class TemplateDiscovery {
+	private readonly root: string
+	private readonly templateRoot: string
+	private _files: string[] | null = null
+	private readonly sourceByFile = new Map<string, string>()
+
+	constructor(root: string, templateRoot: string) {
+		this.root = root
+		this.templateRoot = templateRoot
+	}
+
+	get templateFiles(): string[] {
+		if (!this._files) this._files = discoverTemplates(this.root, this.templateRoot)
+		return this._files
+	}
+
+	readSource(file: string): string {
+		let s = this.sourceByFile.get(file)
+		if (!s) {
+			s = fs.readFileSync(file, 'utf-8')
+			this.sourceByFile.set(file, s)
+		}
+		return s
+	}
+}
+
 /** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. */
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
@@ -234,9 +364,10 @@ export function discoverClientScriptContentMap(
 	root: string,
 	templateRoot: string
 ): Map<string, ScriptEntry> {
+	const discovery = new TemplateDiscovery(root, templateRoot)
 	const map = new Map<string, ScriptEntry>()
-	for (const file of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(file, 'utf-8')
+	for (const file of discovery.templateFiles) {
+		const source = discovery.readSource(file)
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosixRelative(file, root)
@@ -249,11 +380,13 @@ export function discoverClientScriptContentMap(
 /** Rollup input entries for virtual client scripts (manifest key → virtual path); used by createBuildConfig. */
 function discoverClientScriptVirtualInputs(
 	root: string,
-	templateRoot: string
+	templateRoot: string,
+	discovery?: TemplateDiscovery
 ): Record<string, string> {
+	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
 	const entries: Record<string, string> = {}
-	for (const file of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(file, 'utf-8')
+	for (const file of d.templateFiles) {
+		const source = d.readSource(file)
 		const parsed = parse(source)
 		if (parsed.clientScripts.length === 0) continue
 		const rel = toPosixRelative(file, root)
@@ -273,11 +406,13 @@ function discoverClientScriptVirtualInputs(
 function discoverAssetInputs(
 	root: string,
 	resolvePath?: (specifier: string, importer: string) => string,
-	templateRoot = 'client'
+	templateRoot = 'client',
+	discovery?: TemplateDiscovery
 ): Record<string, string> {
+	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
 	const entries = new Map<string, string>()
-	for (const templateFile of discoverTemplates(root, templateRoot)) {
-		const source = fs.readFileSync(templateFile, 'utf-8')
+	for (const templateFile of d.templateFiles) {
+		const source = d.readSource(templateFile)
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
 		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
@@ -387,11 +522,15 @@ export async function renderStaticPages(
 	})
 
 	try {
+		const tBuildStart = Date.now()
 		const ssrEnv = server.environments.ssr
 		if (!isRunnableDevEnvironment(ssrEnv)) {
 			throw new Error('[aero] SSR environment must be runnable')
 		}
 		const runtime = await ssrEnv.runner.import(RUNTIME_INSTANCE_MODULE_ID)
+		aeroStaticBuildDebug(
+			`static prerender: runtime loaded (${Date.now() - tBuildStart}ms since build step start)`
+		)
 
 		// Expand dynamic pages via getStaticPaths before rendering.
 		const pages: StaticPage[] = []
@@ -446,58 +585,90 @@ export async function renderStaticPages(
 			? pages.filter(p => !pathMatchesRedirect(p))
 			: pages
 
+		aeroStaticBuildDebug(
+			`static prerender: ${pagesToRender.length} page(s) to render after route expansion (${Date.now() - tBuildStart}ms)`
+		)
+
 		const routeSet = new Set(pagesToRender.map(p => p.routePath))
+		const concurrency = resolveStaticPrerenderConcurrency()
+		const prerenderServices = createStaticPrerenderServices()
+		aeroStaticBuildDebug(
+			`static prerender: using concurrency ${concurrency} (set AERO_STATIC_PRERENDER_CONCURRENCY to override)`
+		)
 
-		for (const page of pagesToRender) {
-			const routePath = page.routePath ? `/${page.routePath}` : '/'
-			const pageUrl = new URL(routePath, 'http://localhost')
-
-			// For expanded dynamic pages we must render via the original
-			// dynamic page name (e.g. "[id]") so the runtime finds the module,
-			// while passing the concrete params so the template has real values.
-			const renderTarget = isDynamicPage(page)
-				? toPosixRelative(page.sourceFile, path.resolve(root, dirs.client, 'pages')).replace(
-						/\.html$/i,
-						''
-					)
-				: page.pageName
-
-			let rendered = await runtime.aero.render(renderTarget, {
-				url: pageUrl,
-				request: new Request(pageUrl.toString(), { method: 'GET' }),
-				routePath,
-				params: page.params || {},
-				props: page.props || {},
-				site: options.site,
-			})
-			rendered = rewriteRenderedHtml(
-				addDoctype(rendered),
-				page.outputFile,
-				manifest,
-				routeSet,
-				apiPrefix
-			)
-
-			// Minify HTML in production
-			const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-			if (options.minify && isProd) {
-				rendered = await minify(rendered, {
-					collapseWhitespace: true,
-					removeComments: true,
-					minifyCSS: true,
-					minifyJS: true,
-				})
-			}
-
-			const outPath = path.join(distDir, page.outputFile)
-			fs.mkdirSync(path.dirname(outPath), { recursive: true })
-			fs.writeFileSync(outPath, rendered, 'utf-8')
+		const prerenderAbort = new AbortController()
+		const onSigint = (): void => {
+			prerenderAbort.abort()
 		}
+		process.once('SIGINT', onSigint)
+		const tPrerender = Date.now()
+		try {
+			await runPrerenderWithCancellation({
+				services: prerenderServices,
+				items: pagesToRender,
+				concurrency,
+				signal: prerenderAbort.signal,
+				worker: async page => {
+					const routePath = page.routePath ? `/${page.routePath}` : '/'
+					const pageUrl = new URL(routePath, 'http://localhost')
+
+					// For expanded dynamic pages we must render via the original
+					// dynamic page name (e.g. "[id]") so the runtime finds the module,
+					// while passing the concrete params so the template has real values.
+					const renderTarget = isDynamicPage(page)
+						? toPosixRelative(path.resolve(page.sourceFile), path.resolve(root, dirs.client, 'pages')).replace(
+								/\.html$/i,
+								''
+							)
+						: page.pageName
+
+					let rendered = await runtime.aero.render(renderTarget, {
+						url: pageUrl,
+						request: new Request(pageUrl.toString(), { method: 'GET' }),
+						routePath,
+						params: page.params || {},
+						props: page.props || {},
+						site: options.site,
+					})
+					rendered = rewriteRenderedHtml(
+						addDoctype(rendered),
+						page.outputFile,
+						manifest,
+						routeSet,
+						apiPrefix
+					)
+
+					const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+					if (options.minify && isProd) {
+						rendered = await minify(rendered, {
+							collapseWhitespace: true,
+							removeComments: true,
+							minifyCSS: true,
+							minifyJS: true,
+						})
+					}
+
+					const outPath = path.join(distDir, page.outputFile)
+					fs.mkdirSync(path.dirname(outPath), { recursive: true })
+					fs.writeFileSync(outPath, rendered, 'utf-8')
+				},
+			})
+		} finally {
+			process.removeListener('SIGINT', onSigint)
+		}
+
+		aeroStaticBuildDebug(
+			`static prerender: wrote HTML in ${Date.now() - tPrerender}ms (${pagesToRender.length} page(s))`
+		)
 
 		if (options.site && options.site.trim() !== '') {
+			const tSite = Date.now()
 			const routePaths = [...new Set(pagesToRender.map(p => p.routePath))]
 			writeSitemap(routePaths, options.site.trim(), distDir)
+			aeroStaticBuildDebug(`static prerender: sitemap in ${Date.now() - tSite}ms`)
 		}
+
+		aeroStaticBuildDebug(`static prerender: total ${Date.now() - tBuildStart}ms`)
 	} finally {
 		await server.close()
 		if (previousAeroServer === undefined) {
@@ -525,8 +696,13 @@ export function createBuildConfig(
 	root = process.cwd()
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client)
-	const virtualClientInputs = discoverClientScriptVirtualInputs(root, dirs.client)
+	const templateDiscovery = new TemplateDiscovery(root, dirs.client)
+	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client, templateDiscovery)
+	const virtualClientInputs = discoverClientScriptVirtualInputs(
+		root,
+		dirs.client,
+		templateDiscovery
+	)
 	const inputs = { ...assetInputs, ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,
@@ -568,4 +744,7 @@ export const __internal = {
 	expandPattern,
 	discoverPages,
 	writeSitemap,
+	resolveStaticPrerenderConcurrency,
+	createStaticPrerenderServices,
+	runPrerenderWithCancellation,
 }

@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-import type { AeroRouteParams } from '../types'
+import type { AeroPageModule, AeroRouteParams } from '../types'
 import { toPosix } from './path'
 import { matchRoutePattern } from './route-pattern'
 
@@ -17,7 +17,7 @@ import { matchRoutePattern } from './route-pattern'
  * Result of resolving a page: the module (or lazy loader), canonical page name, and route params.
  */
 export interface PageTargetResult {
-	module: any
+	module: AeroPageModule
 	pageName: string
 	params: AeroRouteParams
 }
@@ -108,8 +108,8 @@ export function resolveDynamicPage(
  * @returns PageTargetResult or null if not found.
  */
 export function resolvePageTarget(
-	component: any,
-	pagesMap: Record<string, any>
+	component: string | AeroPageModule | null | undefined,
+	pagesMap: Record<string, AeroPageModule>
 ): PageTargetResult | null {
 	if (typeof component !== 'string') {
 		return component != null ? { module: component, pageName: 'index', params: {} } : null

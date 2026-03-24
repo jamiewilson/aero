@@ -32,12 +32,12 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 
 ## Tests
 
-- Vitest in **packages/core**: `compiler/__tests__/` (parser.test.ts, codegen.test.ts, build-script-analysis.test.ts, vite-plugin.test.ts), `vite/__tests__/` (build.test.ts)
+- Vitest: **packages/core** `compiler/__tests__/`, `vite/__tests__/`; **packages/diagnostics** `src/__tests__/`
 - Run from repo root: `pnpm test` or from packages/core: `pnpm test`
 
 ## Documentation and discoveries
 
-Document any discoveries made during code exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+Document **follow-up gaps** from exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md); record **shipped** diagnostics/Effect work in [_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md).
 
 ## Gotchas
 

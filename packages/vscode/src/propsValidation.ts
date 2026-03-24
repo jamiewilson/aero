@@ -10,6 +10,7 @@ import * as fs from 'node:fs'
 import { getPropsTypeFromBuildScript } from '@aero-js/core/editor'
 import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import type { PathResolver } from './pathResolver'
+import { parseScriptBlocks } from './script-tag'
 
 /** Match import type { ... } from 'spec' - captures braced content and specifier */
 const TYPE_IMPORT_REGEX = /import\s+type\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/g
@@ -20,7 +21,6 @@ export interface ParsedInterface {
 	optional: string[]
 }
 
-const SCRIPT_TAG_REGEX = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 const INTERFACE_REGEX = /\b(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)\s*\{([^}]*)\}/g
 const PROPERTY_REGEX = /([A-Za-z_$][\w$]*)\s*\??\s*:/g
 
@@ -156,13 +156,6 @@ export function getPropsTypeFromComponent(
 }
 
 function getBuildScriptContent(htmlContent: string): string | null {
-	SCRIPT_TAG_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = SCRIPT_TAG_REGEX.exec(htmlContent)) !== null) {
-		const attrs = (match[1] || '').toLowerCase()
-		if (/\bsrc\s*=/.test(attrs)) continue
-		if (!/\bis:build\b/.test(attrs)) continue
-		return match[2]
-	}
-	return null
+	const buildBlocks = parseScriptBlocks(htmlContent).filter(b => b.kind === 'build')
+	return buildBlocks.length > 0 ? buildBlocks[0].content : null
 }

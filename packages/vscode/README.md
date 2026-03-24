@@ -19,7 +19,11 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
   - Jump to component/layout/page definitions via path aliases and imports.
 
 - **Diagnostics**
-  - Warnings for invalid Aero expressions, missing props, and template errors (including `props`/`data-props` and script-type scopes).
+  - Issues use the same **stable codes** as the compiler / CLI (`AERO_COMPILE`, `AERO_RESOLVE`, …) with **links to docs** in the Problems panel.
+  - Invalid expressions, missing props, script scopes (`is:build` / client / `is:inline`), and similar template rules.
+
+- **Command palette**
+  - **Aero: Run check (config, content, templates)** — runs `aero check` in the workspace (pnpm / yarn / npx depending on lockfiles).
 
 - **Scope mode** (`aero.scopeMode`)
   - `auto` (default) — Features run in detected Aero projects and HTML files with Aero markers.
@@ -63,5 +67,5 @@ In VS Code settings, search for **Aero**:
 - Entry: `src/extension.ts`
 - Build: `pnpm run build` (tsup, CJS, `dist/`)
 - Test: `pnpm test` (Vitest)
-- **Dependencies:** The extension uses `@aero-js/core/editor` (directive attributes, build-script analysis with ranges) and `@aero-js/interpolation` (tokenizer). Only the `vscode` module is external; tsup bundles core/editor and interpolation into `dist/extension.js`.
-- **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix` (see `_reference/guides/publishing.md`). Or from the extension directory: `pnpm install`, `pnpm run build`, then `vsce package --no-dependencies`. Use `--no-dependencies` so vsce skips `npm list` (which fails in pnpm workspaces). The extension bundles deps into `dist/`; the `.vsix` contains only that and assets.
+- **Dependencies:** `@aero-js/core/editor`, `@aero-js/interpolation`, and **`@aero-js/diagnostics`** (`ide-catalog` only for doc URLs; no Effect in the client bundle beyond what core/editor already pulls). Only the `vscode` module is external; the build bundles workspace deps into `dist/`.
+- **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix`. Or from the extension directory: `pnpm install`, `pnpm run build`, then `vsce package --no-dependencies`. Use `--no-dependencies` so vsce skips `npm list` (which fails in pnpm workspaces). The extension bundles deps into `dist/`; the `.vsix` contains only that and assets.

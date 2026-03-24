@@ -6,12 +6,14 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 
 ### Monorepo
 
-- **packages/core** - Compiler, runtime, Vite plugin. Built with tsup; used as `@aero-js/core` and `@aero-js/vite`. Run tests from root with `pnpm test` (Vitest in packages/core).
+- **packages/diagnostics** - `AeroDiagnostic` contract, formatters, Effect cause mapping, dev SSR transport. Published as `@aero-js/diagnostics`; re-exported from `@aero-js/core/diagnostics`.
+- **packages/core** - Compiler, runtime, Vite plugin. Built with tsdown; used as `@aero-js/core` and `@aero-js/vite`. Run tests from root with `pnpm test` (Vitest includes `packages/core` and `packages/diagnostics`).
+- **packages/cli** - `@aero-js/cli`: `aero check` (no server — config, content, template compile; bucketed exit codes), `aero doctor` (env checklist). Depends on core, config, and content; avoids a core↔config dependency cycle.
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create** - Project initializer (@aero-js/create). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
 - **packages/templates/** - Templates: **minimal** (starter template for @aero-js/create).
 - **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
-- **Root** - Workspace root. Scripts: `pnpm test` runs core tests; `pnpm build` builds packages only.
+- **Root** - Workspace root. Scripts: `pnpm test` runs workspace Vitest; `pnpm build` builds packages only.
 
 ### Compilation pipeline (packages/core)
 
@@ -135,9 +137,13 @@ For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md
 
 When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
 
-## Documentation and discoveries
+## Documentation: implementation progress vs discoveries
 
-- **DISCOVERY.md** — Document any discoveries made during code exploration (gaps, workarounds, implementation opportunities) in [\_reference/DISCOVERY.md](_reference/DISCOVERY.md). Add entries for future reference when implementing planned changes.
+- **[\_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md)** — What **shipped** in the Effect / `AeroDiagnostic` initiative (phases 0–5 partial), user-visible gains, and file pointers. Update this when you **complete** a planned diagnostics/Effect slice.
+- **[\_reference/aero-cli-and-check.md](_reference/aero-cli-and-check.md)** — **`@aero-js/cli`**, **`aero check`**, and tooling APIs (`loadAeroConfig`, `loadContentConfigFileSync`, `@aero-js/core/compile-check`), CI usage, limitations.
+- **[\_reference/DISCOVERY.md](_reference/DISCOVERY.md)** — **Follow-up gaps only**: things you uncover during unrelated work (quirks, tech debt, “callers must pass X”) that someone should fix later. **Do not** paste phase changelogs, env var lists, or full feature writeups here; use the progress doc or a dedicated `_reference/*.md`.
+- **Roadmap** — Ordered future work: [\_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
+- **[\_reference/effect-opportunities.md](_reference/effect-opportunities.md)** — Effect adoption opportunities and phased roadmap (framework packages); complements the progress doc and plan.
 
 ## Gotchas
 

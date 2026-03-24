@@ -28,12 +28,22 @@ describe('Vite Plugin Integration', () => {
 		expect(configResult).toBeDefined()
 		expect(configResult?.environments).toBeDefined()
 		expect(configResult?.environments?.ssr).toBeDefined()
-		expect(configResult?.environments?.ssr).toEqual({})
+		const ssr = configResult?.environments?.ssr as { dev?: { createEnvironment?: unknown } }
+		expect(typeof ssr.dev?.createEnvironment).toBe('function')
+		expect(configResult?.customLogger).toBeDefined()
 	})
 
+	const viteErrorRef: {
+		current: { message: string; loc?: { line: number; column: number } } | null
+	} = { current: null }
 	const pluginCtx = {
-		error(msg: string) {
-			throw new Error(msg)
+		error(msg: string | { message: string; loc?: { line: number; column: number } }) {
+			if (typeof msg === 'string') {
+				viteErrorRef.current = { message: msg }
+				throw new Error(msg)
+			}
+			viteErrorRef.current = { message: msg.message, loc: msg.loc }
+			throw new Error(msg.message)
 		},
 		resolve: async () => null,
 	}
@@ -230,5 +240,27 @@ describe('Vite Plugin Integration', () => {
 		expect(virtualsPlugin.load(virtualId)).toContain("console.log('V2')")
 		expect(invalidated).toContain(moduleNode)
 		expect(sends).toContainEqual({ type: 'full-reload' })
+	})
+
+	it('transform surfaces [AERO_COMPILE] when compile throws', () => {
+		viteErrorRef.current = null
+		const html = `<script is:build>
+	const items = ['a', 'b'];
+</script>
+<ul>
+	<li each="item in items">{ item }</li>
+</ul>`
+		const id = path.join(process.cwd(), 'client/pages/bad-each.html')
+		expect(() => transformPlugin.transform.call(pluginCtx, html, id)).toThrow()
+		type ViteErr = { message: string; loc?: { line: number; column: number } }
+		const recorded = viteErrorRef.current as ViteErr | null
+		expect(recorded).not.toBeNull()
+		expect(recorded!.message).toContain('[AERO_COMPILE]')
+		expect(recorded!.message).toMatch(/each|brace/i)
+		expect(recorded!.loc).toMatchObject({
+			file: id,
+			line: 5,
+			column: '\t<li each="item in items"'.indexOf('each'),
+		})
 	})
 })

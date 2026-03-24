@@ -19,9 +19,11 @@ if (!newVersion || !/^\d+\.\d+\.\d+(-[a-z0-9.-]+)?$/i.test(newVersion)) {
 }
 
 const packagePaths = [
+	'packages/cli/package.json',
 	'packages/config/package.json',
 	'packages/content/package.json',
 	'packages/core/package.json',
+	'packages/diagnostics/package.json',
 	'packages/create/package.json',
 	'packages/highlight/package.json',
 	'packages/interpolation/package.json',

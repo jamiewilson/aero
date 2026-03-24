@@ -8,8 +8,8 @@
  * @packageDocumentation
  */
 
-import type { UserAlias, AliasResult } from '../types'
-import type { ResolvedAeroDirs } from '../vite/defaults'
+import type { AeroDirs, UserAlias, AliasResult } from '../types'
+import { resolveDirs, type ResolvedAeroDirs } from '../vite/defaults'
 import path from 'node:path'
 import { getTsconfig } from 'get-tsconfig'
 import { ResolverFactory } from 'oxc-resolver'
@@ -136,4 +136,17 @@ export function mergeWithDefaultAliases(
 	}
 }
 
-export { resolveDirs, type ResolvedAeroDirs } from '../vite/defaults'
+/**
+ * Build the `alias` option for jiti when loading project config files (`aero.config.ts`, `content.config.ts`).
+ * Uses the same merged tsconfig paths + Aero defaults as Vite {@link mergeWithDefaultAliases}.
+ *
+ * @param root - Project root (tsconfig discovery, `baseUrl`).
+ * @param dirs - Optional Aero directory overrides; defaults match {@link resolveDirs}.
+ */
+export function jitiAliasRecordFromProject(root: string, dirs?: AeroDirs): Record<string, string> {
+	const resolvedDirs = resolveDirs(dirs)
+	const merged = mergeWithDefaultAliases(loadTsconfigAliases(root), root, resolvedDirs)
+	return Object.fromEntries(merged.aliases.map((a: UserAlias) => [a.find, a.replacement]))
+}
+
+export { resolveDirs, type ResolvedAeroDirs }

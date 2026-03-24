@@ -4,22 +4,31 @@
  * @remarks
  * Used by the Vite plugin to load all collections and emit the `aero:content` virtual module (getCollection + serialized data).
  */
-import type { ContentCollectionConfig, ContentConfig, ContentDocument, ContentMeta } from './types'
+import type {
+	ContentCollectionConfig,
+	ContentConfig,
+	ContentDocument,
+	ContentMeta,
+	ContentSchemaIssue,
+} from './types'
+import { contentSchemaAggregateError } from './content-issues'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
+import { Cause, Effect, Exit, Option } from 'effect'
 
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
-async function loadCollection<TSchema extends Record<string, any>, TOutput>(
+async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
 	root: string
-): Promise<TOutput[]> {
+): Promise<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }> {
 	const dir = path.resolve(root, config.directory)
 	const pattern = config.include || '**/*.md'
 	const files = await fg(pattern, { cwd: dir, absolute: true })
 
 	const documents: TOutput[] = []
+	const schemaIssues: ContentSchemaIssue[] = []
 
 	for (const file of files) {
 		const raw = fs.readFileSync(file, 'utf-8')
@@ -47,10 +56,12 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 			const rawResult = std.validate(frontmatter)
 			const result = rawResult instanceof Promise ? await rawResult : rawResult
 			if (result.issues) {
-				const errors = result.issues.map(i => i.message).join(', ')
-				console.warn(
-					`[aero:content] ⚠ Skipping "${relPath}" in collection "${config.name}": ${errors}`
-				)
+				schemaIssues.push({
+					collection: config.name,
+					relPath,
+					file,
+					messages: result.issues.map(i => i.message),
+				})
 				continue
 			}
 			validated = result.value as TSchema
@@ -70,7 +81,21 @@ async function loadCollection<TSchema extends Record<string, any>, TOutput>(
 		}
 	}
 
-	return documents
+	return { documents, schemaIssues }
+}
+
+/**
+ * Effect program for one collection (maps to {@link loadCollectionAsync}).
+ * Composed by {@link loadAllCollectionsEffect}; keeps a single Node boundary for tests and future services.
+ */
+export function loadCollectionEffect<TSchema extends Record<string, any>, TOutput>(
+	config: ContentCollectionConfig<TSchema, TOutput>,
+	root: string
+): Effect.Effect<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }, Error, never> {
+	return Effect.tryPromise({
+		try: () => loadCollectionAsync(config, root),
+		catch: e => (e instanceof Error ? e : new Error(String(e))),
+	})
 }
 
 /** Loaded content keyed by collection name. */
@@ -151,25 +176,64 @@ export async function loadSingleFile(
 }
 
 /**
- * Load all collections; returns a map from collection name to document array.
+ * Load all collections; returns a map from collection name to document array plus any schema issues.
  *
  * @param config - ContentConfig (collections array).
  * @param root - Project root.
- * @returns Map<collectionName, documents[]>.
+ * @returns Loaded collections and schema issues for invalid files (skipped unless `strictSchema` or `AERO_CONTENT_STRICT`).
+ */
+function isStrictSchemaEnabled(config: ContentConfig): boolean {
+	return config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
+}
+
+/**
+ * Effect program for loading all collections; {@link loadAllCollections} runs this with `Effect.runPromise`.
+ */
+export function loadAllCollectionsEffect(
+	config: ContentConfig,
+	root: string
+): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
+	const collections = config.collections ?? []
+	return Effect.forEach(collections, collection => loadCollectionEffect(collection, root)).pipe(
+		Effect.map(results => {
+			const loaded: LoadedContent = new Map()
+			const schemaIssues: ContentSchemaIssue[] = []
+			for (let i = 0; i < collections.length; i++) {
+				const collection = collections[i]!
+				const result = results[i]!
+				loaded.set(collection.name, result.documents)
+				schemaIssues.push(...result.schemaIssues)
+			}
+			return { loaded, schemaIssues }
+		}),
+		Effect.flatMap(({ loaded, schemaIssues }) => {
+			if (isStrictSchemaEnabled(config) && schemaIssues.length > 0) {
+				return Effect.fail(contentSchemaAggregateError(schemaIssues))
+			}
+			return Effect.succeed({ loaded, schemaIssues })
+		})
+	)
+}
+
+/**
+ * Load all collections. Uses the same logic as {@link loadAllCollectionsEffect} without `Effect.runPromise`
+ * so strict-mode {@link ContentSchemaAggregateError} propagates to callers unchanged.
  */
 export async function loadAllCollections(
 	config: ContentConfig,
 	root: string
-): Promise<LoadedContent> {
-	const result: LoadedContent = new Map()
-	const collections = config.collections ?? []
-
-	for (const collection of collections) {
-		const docs = await loadCollection(collection, root)
-		result.set(collection.name, docs)
-	}
-
-	return result
+): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
+	const exit = await Effect.runPromiseExit(loadAllCollectionsEffect(config, root))
+	return Exit.match(exit, {
+		onSuccess: value => value,
+		onFailure: cause => {
+			const failure = Cause.failureOption(cause)
+			if (Option.isSome(failure)) {
+				throw failure.value
+			}
+			throw new Error(Cause.pretty(cause))
+		},
+	})
 }
 
 /** Absolute paths of all collection directories (for HMR watch and invalidation). */
@@ -188,18 +252,33 @@ export function toExportName(collectionName: string): string {
 	return `all${camel.charAt(0).toUpperCase()}${camel.slice(1)}`
 }
 
+/** Options for {@link serializeContentModule} (e.g. schema warnings for tooling / `aero check`). */
+export interface SerializeContentModuleOptions {
+	/** Non-strict loads: files that failed schema validation (embedded for static analysis). */
+	schemaIssues?: readonly ContentSchemaIssue[]
+}
+
 /**
  * Serialize loaded collections into ESM source: `__collections` object, `getCollection(name, filterFn)`, and re-export of `render`.
  *
  * @param loaded - Map of collection name → document array (from loadAllCollections).
+ * @param options - Optional `schemaIssues` exported as `__aeroContentSchemaIssues` (empty array when omitted).
  * @returns Full module source string for the virtual module.
  */
-export function serializeContentModule(loaded: LoadedContent): string {
+export function serializeContentModule(
+	loaded: LoadedContent,
+	options?: SerializeContentModuleOptions
+): string {
 	const collectionsContent = Array.from(loaded.entries())
 		.map(([name, docs]) => `  ${JSON.stringify(name)}: ${JSON.stringify(docs, null, 2)}`)
 		.join(',\n')
 
+	const schemaIssues = options?.schemaIssues ?? []
+	const issuesJson = JSON.stringify(schemaIssues)
+
 	return `
+export const __aeroContentSchemaIssues = ${issuesJson};
+
 const __collections = {
 ${collectionsContent}
 };

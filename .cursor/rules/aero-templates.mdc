@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Aero Templates
 
-Document discoveries from code exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+**Follow-up gaps** → [_reference/DISCOVERY.md](_reference/DISCOVERY.md). **Shipped** diagnostics tooling → [_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md).
 
 ## TDD (red-to-green)
 

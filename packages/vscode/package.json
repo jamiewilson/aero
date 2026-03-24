@@ -39,6 +39,7 @@
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
+		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@volar/vscode": "~2.4.0",
 		"jiti": "^2.4.2"
@@ -51,6 +52,30 @@
 		"vitest": "^4.0.18"
 	},
 	"contributes": {
+		"commands": [
+			{
+				"command": "aero.runCheck",
+				"title": "Run check (config, content, templates)",
+				"category": "Aero"
+			}
+		],
+		"taskDefinitions": [
+			{
+				"type": "aero",
+				"required": [
+					"task"
+				],
+				"properties": {
+					"task": {
+						"type": "string",
+						"enum": [
+							"check"
+						],
+						"description": "Aero CLI task (e.g. check templates and content)"
+					}
+				}
+			}
+		],
 		"languages": [
 			{
 				"id": "aero",
