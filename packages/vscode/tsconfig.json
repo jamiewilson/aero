@@ -1,8 +1,8 @@
 {
-	"extends": "../../tsconfig.lib.json",
 	"compilerOptions": {
 		"target": "ES2020",
 		"module": "ES2020",
+		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
 			"@aero-js/core/editor": ["../core/dist/entry-editor.d.mts"],
@@ -11,7 +11,11 @@
 		"lib": ["ES2020"],
 		"outDir": "dist",
 		"rootDir": "src",
+		"strict": true,
 		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
 		"declaration": false,
 		"sourceMap": true,
 		"types": ["node", "vscode"]

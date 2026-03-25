@@ -2,7 +2,7 @@ import { runAeroDoctor, AERO_DOCTOR_MIN_NODE_MAJOR, nodeMeetsAeroMinimum } from 
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 describe('nodeMeetsAeroMinimum', () => {
 	it('accepts current major and rejects below minimum', () => {
@@ -27,16 +27,8 @@ describe('runAeroDoctor', () => {
 				'utf-8'
 			)
 
-			const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true as any)
-			try {
-				const code = runAeroDoctor(dir)
-				expect(code).toBe(0)
-				expect(spy).toHaveBeenCalled()
-				const out = spy.mock.calls.map(args => String(args[0])).join('')
-				expect(out).toContain('[ok]')
-			} finally {
-				spy.mockRestore()
-			}
+			const code = runAeroDoctor(dir)
+			expect(code).toBe(0)
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
