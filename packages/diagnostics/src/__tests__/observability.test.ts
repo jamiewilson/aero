@@ -49,4 +49,3 @@ describe('observability', () => {
 		expect(spy.mock.calls.map(c => String(c[0])).join('\n')).toContain('span:start unit-test')
 	})
 })
-

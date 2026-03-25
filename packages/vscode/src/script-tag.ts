@@ -86,6 +86,9 @@ export function parseScriptBlocks(text: string): ParsedScriptBlock[] {
  * @param kind - The kind to filter for.
  * @returns Blocks matching the given kind.
  */
-export function filterBlocksByKind(blocks: ParsedScriptBlock[], kind: ScriptTagKind): ParsedScriptBlock[] {
+export function filterBlocksByKind(
+	blocks: ParsedScriptBlock[],
+	kind: ScriptTagKind
+): ParsedScriptBlock[] {
 	return blocks.filter(b => b.kind === kind)
 }

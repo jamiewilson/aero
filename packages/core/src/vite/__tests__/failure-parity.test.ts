@@ -40,4 +40,3 @@ describe('failure parity across entry points', () => {
 		expect(process.exitCode).toBe(AERO_EXIT_COMPILE)
 	})
 })
-

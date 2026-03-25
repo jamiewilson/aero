@@ -56,11 +56,11 @@ Important:
 
 Content validation runs when any of these is true:
 
-| Condition | Behavior |
-| --- | --- |
-| `aero.content === true` | Always run; if the resolved content config file is missing, `aero check` emits `AERO_CONFIG`. |
-| `aero.content` is an object such as `{ config: 'my-content.config.ts' }` | Always run; path defaults to `content.config.ts` or the configured path. |
-| `content.config.ts` or the configured path exists on disk | Run even if `content` is omitted in `aero.config`, so repos that only wire content via Vite still get schema validation in CI. |
+| Condition                                                                | Behavior                                                                                                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `aero.content === true`                                                  | Always run; if the resolved content config file is missing, `aero check` emits `AERO_CONFIG`.                                  |
+| `aero.content` is an object such as `{ config: 'my-content.config.ts' }` | Always run; path defaults to `content.config.ts` or the configured path.                                                       |
+| `content.config.ts` or the configured path exists on disk                | Run even if `content` is omitted in `aero.config`, so repos that only wire content via Vite still get schema validation in CI. |
 
 Loading uses `loadContentConfigFileSync(root, configFile)` from `@aero-js/content`. On success:
 
@@ -111,44 +111,44 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 
 ### `aero doctor`
 
-| Exit code | Meaning |
-| --- | --- |
-| `0` | Node meets the minimum; output may still include warnings or info messages. |
-| `1` | Node is below the CLI minimum. |
+| Exit code | Meaning                                                                     |
+| --------- | --------------------------------------------------------------------------- |
+| `0`       | Node meets the minimum; output may still include warnings or info messages. |
+| `1`       | Node is below the CLI minimum.                                              |
 
 ## Public APIs for tooling
 
 ### `@aero-js/cli`
 
-| Surface | Description |
-| --- | --- |
-| Binary `aero` | Entry: `packages/cli/dist/index.mjs` with a Node shebang. |
-| `runAeroCheck(root)` | Implemented in `packages/cli/src/check.ts`. Consumed by the CLI binary and not currently exported as a package subpath. |
-| `runAeroDoctor(root)` | Implemented in `packages/cli/src/doctor.ts`; returns `0` or `1`. |
+| Surface               | Description                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Binary `aero`         | Entry: `packages/cli/dist/index.mjs` with a Node shebang.                                                               |
+| `runAeroCheck(root)`  | Implemented in `packages/cli/src/check.ts`. Consumed by the CLI binary and not currently exported as a package subpath. |
+| `runAeroDoctor(root)` | Implemented in `packages/cli/src/doctor.ts`; returns `0` or `1`.                                                        |
 
 ### `@aero-js/config`
 
-| Export | Description |
-| --- | --- |
-| `loadAeroConfig(root)` | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroConfig | AeroConfigFunction | null`. |
-| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling. |
+| Export                                                  | Description                                                                                           |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| `loadAeroConfig(root)`                                  | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroConfig | AeroConfigFunction | null`. |
+| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling.        |
 
 ### `@aero-js/content`
 
-| Export | Description |
-| --- | --- |
-| `loadContentConfigFileSync(root, configFile)` | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
-| `loadAllCollections(config, root)` | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode. |
-| `loadAllCollectionsEffect(config, root)` | Effect-based counterpart for callers that want failure-channel composition. |
-| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`. |
-| `LoadContentConfigResult` | Type for `loadContentConfigFileSync` results. |
+| Export                                                   | Description                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------- |
+| `loadContentConfigFileSync(root, configFile)`            | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
+| `loadAllCollections(config, root)`                       | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode.  |
+| `loadAllCollectionsEffect(config, root)`                 | Effect-based counterpart for callers that want failure-channel composition.                      |
+| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`.                                                        |
+| `LoadContentConfigResult`                                | Type for `loadContentConfigFileSync` results.                                                    |
 
 See [docs/content-api.md](content-api.md) for the broader content API.
 
 ### `@aero-js/core/compile-check`
 
-| Export | Description |
-| --- | --- |
+| Export            | Description                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
 | `compileTemplate` | Node-only compile entry for tooling so callers do not pull codegen through browser-oriented entrypoints. |
 
 ### `@aero-js/core/diagnostics`
