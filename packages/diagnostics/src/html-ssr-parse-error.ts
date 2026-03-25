@@ -6,7 +6,8 @@ import { formatDiagnosticsTerminal } from './format-terminal'
 import { normalizeParseErrorFrame } from './frame-normalize'
 import type { AeroDiagnostic } from './types'
 
-const STRIP_ANSI = /\u001b\[[0-9;]*m/g
+/** ESC + CSI SGR — built at runtime so the pattern is not flagged as matching a control char in a regex literal. */
+const STRIP_ANSI = new RegExp(`${String.fromCharCode(0x1b)}\\[[0-9;]*m`, 'g')
 
 function stripAnsi(s: string): string {
 	return s.replace(STRIP_ANSI, '')

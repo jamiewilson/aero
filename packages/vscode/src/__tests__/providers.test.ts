@@ -146,7 +146,7 @@ describe('AeroCompletionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<',
-			lineAt: (line: number) => ({ text: '<' }),
+			lineAt: (_line: number) => ({ text: '<' }),
 		} as any
 
 		const position = { line: 0, character: 1 } as any
@@ -161,7 +161,7 @@ describe('AeroCompletionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<div ',
-			lineAt: (line: number) => ({ text: '<div ' }),
+			lineAt: (_line: number) => ({ text: '<div ' }),
 		} as any
 
 		const position = { line: 0, character: 5 } as any
@@ -176,7 +176,7 @@ describe('AeroCompletionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<div>{',
-			lineAt: (line: number) => ({ text: '<div>{|' }),
+			lineAt: (_line: number) => ({ text: '<div>{|' }),
 		} as any
 
 		const position = { line: 0, character: 6 } as any
@@ -195,7 +195,7 @@ describe('AeroCompletionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => "import foo from '@components",
-			lineAt: (line: number) => ({ text: "import foo from '@components" }),
+			lineAt: (_line: number) => ({ text: "import foo from '@components" }),
 		} as any
 
 		const position = { line: 0, character: 17 } as any // after '@components'
@@ -222,7 +222,7 @@ describe('AeroHoverProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<div></div>',
-			lineAt: (line: number) => ({ text: '<div></div>' }),
+			lineAt: (_line: number) => ({ text: '<div></div>' }),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 		} as any
 
@@ -249,7 +249,7 @@ describe('AeroDefinitionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<div></div>',
-			lineAt: (line: number) => ({ text: '<div></div>' }),
+			lineAt: (_line: number) => ({ text: '<div></div>' }),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 		} as any
 
@@ -263,7 +263,7 @@ describe('AeroDefinitionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<div>{site.title}</div>',
-			lineAt: (line: number) => ({ text: '<div>{site.title}</div>' }),
+			lineAt: (_line: number) => ({ text: '<div>{site.title}</div>' }),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),
 			offsetAt: (pos: any) => pos.character,
 		} as any
@@ -279,7 +279,7 @@ describe('AeroDefinitionProvider', () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
 			getText: () => '<header-component></header-component>',
-			lineAt: (line: number) => ({
+			lineAt: (_line: number) => ({
 				text: '<header-component></header-component>',
 			}),
 			positionAt: (offset: number) => ({ line: 0, character: offset }),

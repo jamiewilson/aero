@@ -22,7 +22,11 @@ Alpine.store(site.theme.storageKey, {
 		const update = () => {
 			if (next) this.current = next
 		}
-		document.startViewTransition ? document.startViewTransition(update) : update()
+		if (document.startViewTransition) {
+			document.startViewTransition(update)
+		} else {
+			update()
+		}
 	},
 })
 

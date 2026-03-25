@@ -91,13 +91,9 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const absolutePath = path.isAbsolute(idPath) ? idPath : path.resolve(root, idPath)
 				const relToContent = path.relative(contentDir, absolutePath)
 				if (!relToContent.startsWith('..') && !path.isAbsolute(relToContent)) {
-					try {
-						const doc = await loadSingleFile(absolutePath, contentConfig, root)
-						this.addWatchFile(absolutePath)
-						return `export default ${JSON.stringify(doc)}`
-					} catch (err) {
-						throw err
-					}
+					const doc = await loadSingleFile(absolutePath, contentConfig, root)
+					this.addWatchFile(absolutePath)
+					return `export default ${JSON.stringify(doc)}`
 				}
 			}
 

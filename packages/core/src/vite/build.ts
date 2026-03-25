@@ -42,7 +42,7 @@ import {
 	toOutputFile,
 } from './rewrite'
 
-import { toPosix, toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path'
 
 export { addDoctype } from './rewrite'
 

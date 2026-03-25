@@ -82,7 +82,7 @@ export function findWorkspaceRoot(fromDir) {
  * @param {string} projectName
  * @param {string} template
  */
-export function writeReadme(targetDir, projectName, template) {
+export function writeReadme(targetDir, projectName) {
 	const lines = [
 		`# ${projectName}`,
 		'',

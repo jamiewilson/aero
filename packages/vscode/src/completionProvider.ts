@@ -89,7 +89,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		document: vscode.TextDocument,
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
-		context: vscode.CompletionContext
+		_context: vscode.CompletionContext
 	): vscode.ProviderResult<vscode.CompletionItem[]> {
 		if (!isAeroDocument(document)) return null
 

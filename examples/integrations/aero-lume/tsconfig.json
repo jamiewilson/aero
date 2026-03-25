@@ -4,10 +4,11 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"types": ["vite/client"],
+		"baseUrl": "./",
 		"paths": {
-			"@styles/*": ["./client/assets/styles/*"],
-			"@scripts/*": ["./client/assets/scripts/*"],
-			"@content/*": ["./content/*"]
+			"@styles/*": ["client/assets/styles/*"],
+			"@scripts/*": ["client/assets/scripts/*"],
+			"@content/*": ["content/*"]
 		}
 	}
 }

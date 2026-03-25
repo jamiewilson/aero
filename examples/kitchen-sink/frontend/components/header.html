@@ -8,10 +8,15 @@
 		requiredProp: boolean
 	}
 
+	// FIXME: unused props is not flagged
 	const props = Aero.props as HeaderProps
+
+	// FIXME: Diagnostics should catch unused typed variables
+	const count: number = 10
 </script>
 
 <header>
+	<!--<p>{ count }</p>-->
 	<logo-component if="{ isHomepage }" class="logo" />
 	<h1 else-if="{ props.title }">{ props.title }</h1>
 	<h2 else>Fallback Title</h2>
@@ -45,7 +50,7 @@
 	}
 </style>
 
-<!-- TODO: Flag usage a is:build symbols without props passing it in -->
+<!-- TODO: Flag is:build symbols trying to be used without props passing it in -->
 <script props="{ isHomepage }">
 	import { allCaps } from '@scripts/utils/transform'
 	// This comment will get stripped from build output

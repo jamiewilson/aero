@@ -39,7 +39,7 @@ function stripTypes(code: string, filename = 'script.ts'): string {
  * @returns Module source: optional getStaticPaths export and default async function(Aero) that returns HTML string.
  */
 export function compile(parsed: ParseResult, options: CompileOptions): string {
-	const inlineScripts = options.inlineScripts ?? parsed.inlineScripts
+	const _inlineScripts = options.inlineScripts ?? parsed.inlineScripts
 
 	const resolver = new Resolver({
 		root: options.root,

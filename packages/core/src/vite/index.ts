@@ -35,8 +35,6 @@ import {
 	diagnosticsToSingleMessage,
 	enrichDiagnosticsWithSourceFrames,
 	exitFailureToAeroDiagnostics,
-	formatDiagnosticsTerminal,
-	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { Effect, Exit } from 'effect'
 import { htmlCompileTry } from './compile-html-effect'
