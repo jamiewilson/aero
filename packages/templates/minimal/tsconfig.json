@@ -1,6 +1,9 @@
 {
-	"extends": "../../../tsconfig.app.json",
 	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["vite/client"],
 		"baseUrl": "./",
 		"paths": {
 			"@pages/*": ["client/pages/*"],

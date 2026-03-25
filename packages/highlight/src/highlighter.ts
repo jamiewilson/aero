@@ -8,14 +8,6 @@ const DEFAULT_LANGUAGES = ['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'bas
 let cachedHighlighter: HighlighterGeneric<any, any> | null = null
 let cachedConfigKey: string | null = null
 
-function disposeCachedHighlighter(): void {
-	if (cachedHighlighter) {
-		cachedHighlighter.dispose()
-		cachedHighlighter = null
-		cachedConfigKey = null
-	}
-}
-
 /**
  * Build a stable cache key from config (theme names + lang names only).
  *
@@ -79,8 +71,6 @@ export async function getHighlighter(config: ShikiConfig): Promise<HighlighterGe
 	if (cachedHighlighter && cachedConfigKey === configKey) {
 		return cachedHighlighter
 	}
-
-	disposeCachedHighlighter()
 
 	const themes = extractThemes(config)
 	const langs = config.langs ?? DEFAULT_LANGUAGES
@@ -155,5 +145,6 @@ export async function highlight(
  * Useful for testing or when config changes between processes.
  */
 export function resetHighlighter(): void {
-	disposeCachedHighlighter()
+	cachedHighlighter = null
+	cachedConfigKey = null
 }

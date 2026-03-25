@@ -26,13 +26,8 @@ describe('runAeroCheck', () => {
 			'<script is:build></script><div props="not-braced">x</div>\n',
 			'utf-8'
 		)
-		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
-		try {
-			const code = await runAeroCheck(dir)
-			expect(code).toBe(AERO_EXIT_COMPILE)
-		} finally {
-			spy.mockRestore()
-		}
+		const code = await runAeroCheck(dir)
+		expect(code).toBe(AERO_EXIT_COMPILE)
 	})
 
 	it('prints AERO code/message and returns matching compile exit bucket', async () => {
