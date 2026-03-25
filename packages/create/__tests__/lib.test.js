@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
@@ -137,6 +137,7 @@ describe('@aero-js/create lib', () => {
 
 		it('exits when package-template.json is missing', () => {
 			const exit = process.exit
+			const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 			try {
 				process.exit = /** @type {typeof process.exit} */ (
 					code => {
@@ -144,8 +145,11 @@ describe('@aero-js/create lib', () => {
 					}
 				)
 				expect(() => rewritePackageJson(templateDir, targetDir, 'my-app', false)).toThrow('exit(1)')
+				expect(errSpy).toHaveBeenCalledOnce()
+				expect(String(errSpy.mock.calls[0][0])).toContain('package-template.json')
 			} finally {
 				process.exit = exit
+				errSpy.mockRestore()
 			}
 		})
 	})
