@@ -48,7 +48,7 @@ describe('emitClientScriptTag', () => {
 		expect(head.length).toBe(1)
 		const line = head[0] ?? ''
 		// Single IIFE whose return concatenates JSON + assignment + module tag (valid inside injectedHeadScripts?.add(...)).
-		expect(line).toContain("return '<script type=\"application/json\"")
+		expect(line).toContain('return \'<script type="application/json"')
 		expect(line).toContain('__aeroScriptUrl')
 		expect(line).toContain('+(')
 		expect(line.endsWith('})()')).toBe(true)

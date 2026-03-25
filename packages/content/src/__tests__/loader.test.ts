@@ -165,7 +165,9 @@ describe('loadAllCollections', () => {
 		})
 		const config = defineConfig({ collections: [invalidCollection] })
 		try {
-			await expect(loadAllCollections(config, '/')).rejects.toBeInstanceOf(ContentSchemaAggregateError)
+			await expect(loadAllCollections(config, '/')).rejects.toBeInstanceOf(
+				ContentSchemaAggregateError
+			)
 		} finally {
 			if (previous === undefined) delete process.env.AERO_CONTENT_STRICT
 			else process.env.AERO_CONTENT_STRICT = previous

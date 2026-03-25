@@ -616,10 +616,10 @@ export async function renderStaticPages(
 					// dynamic page name (e.g. "[id]") so the runtime finds the module,
 					// while passing the concrete params so the template has real values.
 					const renderTarget = isDynamicPage(page)
-						? toPosixRelative(path.resolve(page.sourceFile), path.resolve(root, dirs.client, 'pages')).replace(
-								/\.html$/i,
-								''
-							)
+						? toPosixRelative(
+								path.resolve(page.sourceFile),
+								path.resolve(root, dirs.client, 'pages')
+							).replace(/\.html$/i, '')
 						: page.pageName
 
 					let rendered = await runtime.aero.render(renderTarget, {

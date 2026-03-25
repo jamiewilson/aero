@@ -17,4 +17,3 @@ describe('parseScriptBlocks', () => {
 		expect(block.contentStart).not.toBe(block.tagStart)
 	})
 })
-
