@@ -1,8 +1,6 @@
 {
-	"extends": ["nitro/tsconfig"],
+	"extends": ["../../tsconfig.app.json", "nitro/tsconfig"],
 	"compilerOptions": {
-		"types": ["vite/client"],
-		"moduleResolution": "bundler",
 		"baseUrl": "./",
 		"paths": {
 			"@pages/*": ["frontend/pages/*"],
