@@ -1,3 +1,7 @@
+# Hoist transitive oxfmt (from vite-plus) so `.oxfmtrc.json` $schema resolves to `./node_modules/oxfmt/...`.
+publicHoistPattern:
+  - '*oxfmt*'
+
 packages:
   - 'packages/*'
   - 'packages/templates/*'

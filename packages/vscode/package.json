@@ -34,7 +34,7 @@
 		"dev": "tsdown --watch",
 		"build": "pnpm --dir ../language-server run prebuild && tsdown --minify",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run --root ../.. packages/vscode",
+		"test": "pnpm exec vp test packages/vscode",
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -48,8 +48,7 @@
 		"@types/node": "^25.5.0",
 		"@types/vscode": "^1.110.0",
 		"tsdown": "^0.21.4",
-		"typescript": "^5.9.3",
-		"vitest": "^4.1.1"
+		"typescript": "^5.9.3"
 	},
 	"contributes": {
 		"commands": [

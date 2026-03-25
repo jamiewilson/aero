@@ -2,7 +2,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite-plus'
 
-// Formatter options live in `.oxfmtrc.json`: a `fmt` block here makes `vp fmt` hand this file to oxfmt as config, which fails to parse it (vite-plus 0.1.14).
+// Formatter options live in `.oxfmtrc.json` (oxfmt is hoisted so `$schema` resolves to the same transitive deps as vite-plus). A `fmt` block here makes `vp fmt` hand this file to oxfmt as config, which fails to parse it (vite-plus 0.1.14).
 const workspaceRoot = dirname(fileURLToPath(import.meta.url))
 
 /** In CI, disable Vite Task replay: it only caches terminal output, not dist/; a cache hit would skip real lint/test/build. Local dev keeps default task caching. */
@@ -29,11 +29,9 @@ export default defineConfig({
 	run: {
 		...(isCI ? { cache: false as const } : {}),
 		tasks: {
-			// Name must differ from root package.json `typecheck` script (vite-plus: task and script names cannot overlap).
 			'typecheck:workspace': {
 				command: 'pnpm -r typecheck',
 			},
-			// Ordered package chain (not fully implied by workspace:* deps). Each task is one `pnpm --filter … run build` so Vite+ Run can cache and schedule them separately.
 			'build:pkg:interpolation': {
 				command: 'pnpm --filter @aero-js/interpolation run build',
 			},
@@ -65,7 +63,6 @@ export default defineConfig({
 				command: 'pnpm --filter @aero-js/cli run build',
 				dependsOn: ['build:pkg:config'],
 			},
-			// Meta-task: `@aero-js/create` has no `build` script (JS-only package); the old `pnpm -r --filter … run build` skipped it. Entry point for CI / `pnpm build`.
 			'build:packages': {
 				command: 'node -e "void 0"',
 				dependsOn: ['build:pkg:cli'],

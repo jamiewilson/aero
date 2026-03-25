@@ -18,12 +18,11 @@
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run --root ../.. packages/interpolation"
+		"test": "pnpm exec vp test packages/interpolation"
 	},
 	"devDependencies": {
 		"@types/node": "^25.5.0",
 		"tsdown": "^0.21.4",
-		"typescript": "^5.9.3",
-		"vitest": "^4.1.1"
+		"typescript": "^5.9.3"
 	}
 }
