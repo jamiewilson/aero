@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from 'fs'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { parseArgs, rewritePackageJson, writeReadme, findWorkspaceRoot } from '../lib.js'
@@ -137,6 +137,7 @@ describe('@aero-js/create lib', () => {
 
 		it('exits when package-template.json is missing', () => {
 			const exit = process.exit
+			const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 			try {
 				process.exit = /** @type {typeof process.exit} */ (
 					code => {
@@ -144,8 +145,11 @@ describe('@aero-js/create lib', () => {
 					}
 				)
 				expect(() => rewritePackageJson(templateDir, targetDir, 'my-app', false)).toThrow('exit(1)')
+				expect(errSpy).toHaveBeenCalledOnce()
+				expect(String(errSpy.mock.calls[0][0])).toContain('package-template.json')
 			} finally {
 				process.exit = exit
+				errSpy.mockRestore()
 			}
 		})
 	})
@@ -192,7 +196,7 @@ describe('@aero-js/create lib', () => {
 		})
 
 		it('writes README with project name as title', () => {
-			writeReadme(tmpDir, 'my-app', 'minimal')
+			writeReadme(tmpDir, 'my-app')
 			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
 			expect(readme).toMatch(/^# my-app/)
 			expect(readme).toContain('pnpm dev')
@@ -200,7 +204,7 @@ describe('@aero-js/create lib', () => {
 		})
 
 		it('does not include Nitro commands for minimal template', () => {
-			writeReadme(tmpDir, 'my-app', 'minimal')
+			writeReadme(tmpDir, 'my-app')
 			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
 			expect(readme).not.toContain('preview:api')
 			expect(readme).not.toContain('server/api')
