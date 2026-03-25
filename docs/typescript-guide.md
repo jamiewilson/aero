@@ -40,7 +40,7 @@ The VS Code extension and language server provide IntelliSense, diagnostics, and
 
 ### Shared types file
 
-For components that share prop shapes, define types in a `.ts` file and import them. Add a path alias (e.g. `@project-types/*` → `types/*`) to `tsconfig.json`, or use `types/props` directly (with `baseUrl: "./"`). Avoid `@types/*`—that prefix is reserved for DefinitelyTyped packages.
+For components that share prop shapes, define types in a `.ts` file and import them. Add a path alias (e.g. `@project-types/*` → `types/*`) to `tsconfig.json`, or use a relative path such as `../types/props` from your page/component file. Avoid `@types/*`—that prefix is reserved for DefinitelyTyped packages.
 
 ```typescript
 // client/types/props.ts
@@ -285,7 +285,7 @@ See [Tsconfig path aliases](tsconfig-aliases.md) for details.
 If you edit a shared types file (e.g. `types/props.ts`) and the new definitions don't appear in hover or autocomplete in your templates:
 
 1. **Restart the TypeScript server** — Run `TypeScript: Restart TS Server` from the command palette (Cmd+Shift+P). Volar's virtual file system can cache type resolution; a restart forces a full re-check.
-2. **Path aliases** — You can use `@project-types/props` (if configured in tsconfig `paths`) or `types/props` (with `baseUrl: "./"`); both should resolve when the TS server has the correct project context.
+2. **Path aliases** — You can use `@project-types/props` (if configured in tsconfig `paths`) or a relative path such as `../types/props`; both should resolve when the TS server has the correct project context.
 3. **Workspace root** — Open the folder that contains your `tsconfig.json` (e.g. `examples/kitchen-sink`) as the workspace root, or ensure it's included in a multi-root workspace.
 
 ### Prop validation when using components
