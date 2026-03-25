@@ -13,6 +13,8 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # pnpm store cache (see setup-vp below). We do not persist node_modules/.vite/task-cache here:
+      # Vite+ task cache replays stdout only; restoring it could skip real vp check/vp test/vp run work and does not restore dist/ (vite-plus cache guide).
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
