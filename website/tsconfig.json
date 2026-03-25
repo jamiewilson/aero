@@ -6,13 +6,12 @@
 		"noEmit": true,
 		"allowImportingTsExtensions": true,
 		"types": ["vite/client"],
-		"baseUrl": "./",
 		"paths": {
-			"@layouts/*": ["client/layouts/*"],
-			"@components/*": ["client/components/*"],
-			"@styles/*": ["client/assets/styles/*"],
-			"@scripts/*": ["client/assets/scripts/*"],
-			"@content/*": ["content/*"]
+			"@layouts/*": ["./client/layouts/*"],
+			"@components/*": ["./client/components/*"],
+			"@styles/*": ["./client/assets/styles/*"],
+			"@scripts/*": ["./client/assets/scripts/*"],
+			"@content/*": ["./content/*"]
 		}
 	}
 }

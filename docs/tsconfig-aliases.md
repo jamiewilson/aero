@@ -27,7 +27,6 @@ Any path you define in `tsconfig.json` under `compilerOptions.paths` **overrides
 ```json
 {
 	"compilerOptions": {
-		"baseUrl": ".",
 		"paths": {
 			"@pages/*": ["./src/views/*"]
 		}

@@ -50,7 +50,6 @@ describe('loadTsconfigAliases', () => {
 			path: '/project/tsconfig.json',
 			config: {
 				compilerOptions: {
-					baseUrl: '.',
 					paths: {
 						'@components/*': ['src/components/*'],
 						'@layouts/*': ['src/layouts/*'],
@@ -172,7 +171,6 @@ describe('mergeWithDefaultAliases', () => {
 			path: '/project/tsconfig.json',
 			config: {
 				compilerOptions: {
-					baseUrl: '.',
 					paths: {
 						'@pages/*': ['src/views/*'],
 					},

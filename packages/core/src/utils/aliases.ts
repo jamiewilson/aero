@@ -62,9 +62,7 @@ export function loadTsconfigAliases(root: string): AliasResult {
 	const config = result.config
 	const options = config.compilerOptions
 	const paths = options?.paths || {}
-	const baseUrl = options?.baseUrl || '.'
 	const configDir = path.dirname(result.path || root)
-	const baseDir = path.resolve(configDir, baseUrl)
 	const projectRoot = configDir
 	const aliases: UserAlias[] = []
 
@@ -75,7 +73,7 @@ export function loadTsconfigAliases(root: string): AliasResult {
 
 		const find = key.replace(/\/*$/, '').replace('/*', '')
 		const target = first.replace(/\/*$/, '').replace('/*', '')
-		const replacement = path.resolve(baseDir, target)
+		const replacement = path.resolve(configDir, target)
 		aliases.push({ find, replacement })
 	}
 
@@ -140,7 +138,7 @@ export function mergeWithDefaultAliases(
  * Build the `alias` option for jiti when loading project config files (`aero.config.ts`, `content.config.ts`).
  * Uses the same merged tsconfig paths + Aero defaults as Vite {@link mergeWithDefaultAliases}.
  *
- * @param root - Project root (tsconfig discovery, `baseUrl`).
+ * @param root - Project root (tsconfig discovery).
  * @param dirs - Optional Aero directory overrides; defaults match {@link resolveDirs}.
  */
 export function jitiAliasRecordFromProject(root: string, dirs?: AeroDirs): Record<string, string> {
