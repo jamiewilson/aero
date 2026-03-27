@@ -36,7 +36,6 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const aeroContext = {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
-		injectedHeadScripts: new Set<string>(),
 		styles: new Set<string>(),
 		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
@@ -414,7 +413,7 @@ describe('Codegen', () => {
 			clientScripts: [{ attrs: '', content: '/test.js', injectInHead: true }],
 		})
 
-		// The generated code uses "headScripts: injectedHeadScripts" so we pass headScripts in context
+		// The generated code destructures headScripts directly, so we pass headScripts in context
 		const headScripts = new Set<string>()
 		await execute(code, { headScripts })
 
@@ -437,7 +436,7 @@ describe('Codegen', () => {
 			clientScripts: parsed.clientScripts,
 		})
 
-		// The generated code uses "headScripts: injectedHeadScripts" so we pass headScripts in context
+		// The generated code destructures headScripts directly, so we pass headScripts in context
 		const scripts = new Set<string>()
 		const headScripts = new Set<string>()
 		await execute(code, { scripts, headScripts })
@@ -481,23 +480,6 @@ describe('Codegen', () => {
 		expect(output).toContain('url: http://localhost/docs/intro')
 		expect(output).toContain('slug: intro')
 		expect(output).toContain('site: https://example.com')
-	})
-
-	it('should map bare { url } to Aero.page.url (shorthand)', async () => {
-		const html = '<script is:build></script><a href="{ url }">Link</a>'
-
-		const parsed = parse(html)
-		const code = compile(parsed, mockOptions)
-
-		const output = await execute(code, {
-			page: {
-				url: new URL('http://localhost/about'),
-				request: new Request('http://localhost/about'),
-				params: {},
-			},
-			site: { url: '' },
-		})
-		expect(output).toContain('href="http://localhost/about"')
 	})
 
 	it('should not interpolate directive attributes (x-, @, :, .)', async () => {

@@ -22,7 +22,7 @@ import {
 	emitEnd,
 	emitForOf,
 	emitSlotOutput,
-	RENDER_COMPONENT_CONTEXT_PAIRS,
+	RENDER_INTERNAL_CONTEXT_KEYS,
 	getRenderComponentContextArg,
 	getRenderContextDestructurePattern,
 } from '../helpers'
@@ -44,11 +44,6 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('{a} and {b}')).toBe('${a} and ${b}')
 	})
 
-	it('should map bare url/request/params to Aero.page.* (shorthand)', () => {
-		expect(compileInterpolation('{ url }')).toBe('${Aero.page.url}')
-		expect(compileInterpolation('{ request }')).toBe('${Aero.page.request}')
-		expect(compileInterpolation('{ params }')).toBe('${Aero.page.params}')
-	})
 })
 
 describe('compileAttributeInterpolation', () => {
@@ -72,10 +67,6 @@ describe('compileAttributeInterpolation', () => {
 		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('{ ${expr} }')
 	})
 
-	it('should map bare url/request/params to Aero.page.* (shorthand)', () => {
-		expect(compileAttributeInterpolation('{ url }')).toBe('${Aero.page.url}')
-		expect(compileAttributeInterpolation('{ params }')).toBe('${Aero.page.params}')
-	})
 })
 
 describe('isAttr', () => {
@@ -188,7 +179,7 @@ describe('emitRenderFunction', () => {
 		})
 		expect(result).toContain('styles?.add("<style>");')
 		expect(result).toContain('scripts?.add("<script src=a>");')
-		expect(result).toContain('injectedHeadScripts')
+		expect(result).toContain('headScripts')
 	})
 })
 
@@ -249,33 +240,35 @@ describe('emitSlotOutput', () => {
 })
 
 describe('renderComponent context (single source of truth)', () => {
-	it('RENDER_COMPONENT_CONTEXT_PAIRS includes all pass-through keys', () => {
-		expect(RENDER_COMPONENT_CONTEXT_PAIRS).toEqual([
-			['page', 'page'],
-			['site', '__aero_site'],
-			['styles', 'styles'],
-			['scripts', 'scripts'],
-			['headScripts', 'injectedHeadScripts'],
-		])
+	it('RENDER_INTERNAL_CONTEXT_KEYS includes only internal plumbing keys', () => {
+		expect(RENDER_INTERNAL_CONTEXT_KEYS).toEqual(['styles', 'scripts', 'headScripts'])
 	})
 
-	it('getRenderComponentContextArg returns object literal string for 4th arg', () => {
+	it('getRenderComponentContextArg forwards page/site from Aero and internal keys', () => {
 		const arg = getRenderComponentContextArg()
-		expect(arg).toContain('page')
-		expect(arg).toContain('site: __aero_site')
+		expect(arg).toContain('page: Aero.page')
+		expect(arg).toContain('site: Aero.site')
 		expect(arg).toContain('styles')
 		expect(arg).toContain('scripts')
-		expect(arg).toContain('headScripts: injectedHeadScripts')
+		expect(arg).toContain('headScripts')
+		// Must NOT contain old aliases
+		expect(arg).not.toContain('__aero_site')
+		expect(arg).not.toContain('injectedHeadScripts')
 	})
 
-	it('getRenderContextDestructurePattern includes slots, renderComponent, and context keys', () => {
+	it('getRenderContextDestructurePattern includes slots, renderComponent, and internal keys only', () => {
 		const pattern = getRenderContextDestructurePattern()
 		expect(pattern).toContain('slots = {}')
 		expect(pattern).toContain('renderComponent')
-		expect(pattern).toContain('headScripts: injectedHeadScripts')
+		expect(pattern).toContain('headScripts')
+		// Must NOT destructure page or site (they stay on Aero)
+		expect(pattern).not.toContain('page')
+		expect(pattern).not.toContain('site')
+		// Must NOT contain old aliases
+		expect(pattern).not.toContain('injectedHeadScripts')
 	})
 
-	it('emitRenderFunction destructuring matches getRenderComponentContextArg keys', () => {
+	it('emitRenderFunction destructuring matches getRenderContextDestructurePattern', () => {
 		const fn = emitRenderFunction('', '')
 		expect(fn).toContain(getRenderContextDestructurePattern())
 	})

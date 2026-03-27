@@ -94,7 +94,7 @@ describe('emitToJS', () => {
 		)
 	})
 
-	it('emits Component with full context from single source (request, url, params, site, styles, scripts, headScripts)', () => {
+	it('emits Component with full context from single source (page, site from Aero, internal keys)', () => {
 		const ir: IRNode[] = [
 			{
 				kind: 'Component',

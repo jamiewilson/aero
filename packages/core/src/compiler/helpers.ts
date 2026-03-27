@@ -6,11 +6,7 @@
  * the top-level render wrapper.
  */
 
-import {
-	tokenizeCurlyInterpolation,
-	compileInterpolationFromSegments,
-	type Segment,
-} from './tokenizer'
+import { tokenizeCurlyInterpolation, compileInterpolationFromSegments } from './tokenizer'
 import { AeroCompileError } from '@aero-js/diagnostics'
 import { lineColumnAtOffset } from '../utils/source-position'
 
@@ -68,22 +64,8 @@ export function validateSingleBracedExpression(
 	return trimmed
 }
 
-/** Map bare url/request/params in interpolation to Aero.page.* for migration. */
-function mapAeroPageShorthand(segments: Segment[]): Segment[] {
-	return segments.map(seg => {
-		if (seg.kind === 'interpolation') {
-			const expr = seg.expression.trim()
-			if (expr === 'url') return { ...seg, expression: 'Aero.page.url' }
-			if (expr === 'request') return { ...seg, expression: 'Aero.page.request' }
-			if (expr === 'params') return { ...seg, expression: 'Aero.page.params' }
-		}
-		return seg
-	})
-}
-
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
- * Bare `{ url }`, `{ request }`, `{ params }` map to `Aero.page.url`, etc.
  *
  * @param text - Raw text (may contain `{...}` interpolation).
  * @returns String safe for embedding in a template literal (backticks escaped).
@@ -91,12 +73,11 @@ function mapAeroPageShorthand(segments: Segment[]): Segment[] {
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
-	return compileInterpolationFromSegments(mapAeroPageShorthand(segments))
+	return compileInterpolationFromSegments(segments)
 }
 
 /**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
- * Bare `{ url }`, `{ request }`, `{ params }` map to `Aero.page.url`, etc.
  *
  * @param text - Attribute value string.
  * @returns String safe for template literal (backticks escaped, double-braces as literals).
@@ -104,7 +85,7 @@ export function compileInterpolation(text: string): string {
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
-	return compileInterpolationFromSegments(mapAeroPageShorthand(segments))
+	return compileInterpolationFromSegments(segments)
 }
 
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */
@@ -161,7 +142,7 @@ export interface EmitRenderFunctionOptions {
 	styleCode?: string
 	/** Full statements that add client script tags to `scripts` (e.g. scripts?.add(...) or props IIFE). */
 	rootScriptsLines?: string[]
-	/** Expressions for blocking head scripts (emitted as injectedHeadScripts?.add(...)). */
+	/** Expressions for blocking head scripts (emitted as headScripts?.add(...)). */
 	headScriptsLines?: string[]
 }
 
@@ -201,7 +182,7 @@ export function emitRenderFunction(
 	const rootScriptsBlock = rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
 	const headScriptsBlock =
 		headScriptsLines.length > 0
-			? headScriptsLines.map(s => `injectedHeadScripts?.add(${s});`).join('\n\t\t')
+			? headScriptsLines.map(s => `headScripts?.add(${s});`).join('\n\t\t')
 			: ''
 
 	const renderFn = `export default async function(Aero) {
@@ -228,32 +209,26 @@ export function emitRenderFunction(
 // ============================================================================
 
 /**
- * Pairs of [inputKey, destructuredVarName] for the 4th argument to Aero.renderComponent(..., input).
- * Must stay in sync with runtime createContext / AeroRenderInput fields used by renderComponent.
- * site uses __aero_site alias so build scripts can declare `const site` for content globals.
+ * Internal context keys destructured from `Aero` and forwarded to child components.
+ * User-facing data (`page`, `site`, `props`) is NOT destructured — templates access
+ * these via `Aero.page`, `Aero.site`, `Aero.props` to avoid namespace pollution and
+ * collisions with user-declared variables (e.g. `const site = ...` from content imports).
  */
-export const RENDER_COMPONENT_CONTEXT_PAIRS: [key: string, varName: string][] = [
-	['page', 'page'],
-	['site', '__aero_site'],
-	['styles', 'styles'],
-	['scripts', 'scripts'],
-	['headScripts', 'injectedHeadScripts'],
+export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = [
+	'styles',
+	'scripts',
+	'headScripts',
 ]
 
 /** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). Used by emit.ts and codegen.ts. */
 export function getRenderComponentContextArg(): string {
-	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
-		key === varName ? key : `${key}: ${varName}`
-	)
-	return `{ ${entries.join(', ')} }`
+	const internalEntries = RENDER_INTERNAL_CONTEXT_KEYS.join(', ')
+	return `{ page: Aero.page, site: Aero.site, ${internalEntries} }`
 }
 
-/** Build destructuring pattern for the render function: slots, renderComponent, page, site, ... */
+/** Build destructuring pattern for the render function: only internal plumbing, not user-facing data. */
 export function getRenderContextDestructurePattern(): string {
-	const entries = RENDER_COMPONENT_CONTEXT_PAIRS.map(([key, varName]) =>
-		key === varName ? key : `${key}: ${varName}`
-	)
-	return `slots = {}, renderComponent, ${entries.join(', ')}`
+	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId`
 }
 
 // ============================================================================
