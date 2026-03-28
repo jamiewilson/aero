@@ -21,9 +21,15 @@
 			"path": "packages",
 		},
 	],
+	"extensions": {
+		"recommendations": ["oxc.oxc-vscode"],
+	},
 	"settings": {
 		"chat.tools.terminal.autoApprove": {
 			"pnpm": true,
 		},
+		"oxc.fmt.configPath": null,
+		"editor.defaultFormatter": "oxc.oxc-vscode",
+		"editor.formatOnSave": true,
 	},
 }
