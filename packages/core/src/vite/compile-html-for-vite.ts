@@ -4,8 +4,8 @@
 
 import type { ResolvedConfig } from 'vite'
 import type { ScriptEntry } from '../types'
-import { parse } from '@aero-js/template'
-import { compileTemplate } from '../compiler/codegen'
+import { parse } from '@aero-js/compiler'
+import { compileTemplate } from '../codegen'
 import { getClientScriptVirtualUrl } from './defaults'
 import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'

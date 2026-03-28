@@ -1,5 +1,5 @@
 /**
- * Shared type definitions for the @aero-js/template compiler.
+ * Shared type definitions for the @aero-js/compiler.
  */
 
 /**

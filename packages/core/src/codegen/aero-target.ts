@@ -6,8 +6,8 @@
  * that use the Aero runtime (Aero class with page, site, props, etc.).
  */
 
-import * as Helper from '@aero-js/template/helpers'
-import type { CodegenTarget } from '@aero-js/template'
+import * as Helper from '@aero-js/compiler/helpers'
+import type { CodegenTarget } from '@aero-js/compiler'
 
 /**
  * Default codegen target for the Aero framework.

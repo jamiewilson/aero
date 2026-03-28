@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { parse } from '@aero-js/template/parser'
-import { compile } from '../codegen'
+import { parse } from '@aero-js/compiler/parser'
+import { compile } from '..'
 
 const mockOptions = {
 	root: '/',

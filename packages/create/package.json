@@ -24,6 +24,6 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
-		"@aero-js/template-minimal": "workspace:*"
+		"@aero-js/starter-minimal": "workspace:*"
 	}
 }

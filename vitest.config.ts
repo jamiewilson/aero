@@ -10,7 +10,7 @@ export default defineConfig({
 			'packages/content/**/*.test.ts',
 			'packages/highlight/**/*.test.ts',
 			'packages/interpolation/**/*.test.ts',
-			'packages/template/**/*.test.ts',
+			'packages/compiler/**/*.test.ts',
 			'packages/vscode/**/*.test.ts',
 			'packages/language-server/**/*.test.ts',
 			'packages/create/**/*.test.js',

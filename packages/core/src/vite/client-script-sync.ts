@@ -3,7 +3,7 @@
  */
 
 import type { ScriptEntry } from '../types'
-import { parse } from '@aero-js/template'
+import { parse } from '@aero-js/compiler'
 import { registerClientScriptsToMap } from './build'
 import { CLIENT_SCRIPT_PREFIX } from './defaults'
 

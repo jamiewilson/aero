@@ -1,5 +1,5 @@
 {
-	"name": "@aero-js/template-minimal",
+	"name": "@aero-js/starter-minimal",
 	"version": "0.3.5",
 	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/jamiewilson/aero.git",
-		"directory": "packages/templates/minimal"
+		"directory": "packages/starters/minimal"
 	},
 	"type": "module",
 	"scripts": {

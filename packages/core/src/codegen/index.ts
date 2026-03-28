@@ -7,16 +7,16 @@
  */
 
 import type { ParseResult, CompileOptions } from '../types'
-import * as Helper from '@aero-js/template/helpers'
-import * as CONST from '@aero-js/template/constants'
-import { emitToJS, emitBodyAndStyle } from '@aero-js/template/emit'
-import { Lowerer } from '@aero-js/template/lowerer/lowerer'
-import { Resolver } from '@aero-js/template/resolver'
+import * as Helper from '@aero-js/compiler/helpers'
+import * as CONST from '@aero-js/compiler/constants'
+import { emitToJS, emitBodyAndStyle } from '@aero-js/compiler/emit'
+import { Lowerer } from '@aero-js/compiler/lowerer/lowerer'
+import { Resolver } from '@aero-js/compiler/resolver'
 import {
 	analyzeBuildScript,
 	stripBuildScriptTypes,
-} from '@aero-js/template/build-script-analysis'
-import { parse } from '@aero-js/template/parser'
+} from '@aero-js/compiler/build-script-analysis'
+import { parse } from '@aero-js/compiler/parser'
 import { parseHTML } from 'linkedom'
 import {
 	emitClientScriptTag,

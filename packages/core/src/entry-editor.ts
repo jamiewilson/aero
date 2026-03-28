@@ -20,9 +20,9 @@ export {
 	isDirectiveAttr,
 	DEFAULT_DIRECTIVE_PREFIXES,
 	type DirectiveAttrConfig,
-} from '@aero-js/template/directive-attributes'
+} from '@aero-js/compiler/directive-attributes'
 
-export { COMPONENT_SUFFIX_REGEX } from '@aero-js/template/constants'
+export { COMPONENT_SUFFIX_REGEX } from '@aero-js/compiler/constants'
 
 export {
 	analyzeBuildScriptForEditor,
@@ -30,4 +30,4 @@ export {
 	type BuildScriptImportForEditor,
 	type BuildScriptAnalysisForEditorResult,
 	type PropsTypeResult,
-} from '@aero-js/template/build-script-analysis'
+} from '@aero-js/compiler/build-script-analysis'

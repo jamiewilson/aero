@@ -1,5 +1,5 @@
 /**
- * @aero-js/template - Standalone HTML template compiler
+ * @aero-js/compiler - Standalone HTML template compiler
  *
  * A fast, HTML-first template engine that compiles templates to JavaScript render functions.
  * No custom file extensions, no framework lock-in.
