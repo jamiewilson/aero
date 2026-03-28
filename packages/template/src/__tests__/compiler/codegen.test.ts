@@ -30,7 +30,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 
 	// Create an actual AsyncFunction
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-	const renderFn = new AsyncFunction('Aero', 'escapeHtml', 'raw', body)
+	const renderFn = new AsyncFunction('Aero', body)
 
 	let _passDataId = 0
 	const aeroContext = {
@@ -48,9 +48,10 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		slots: {},
 		props: {},
 		escapeHtml,
+		raw,
 		...context,
 	}
-	return await renderFn(aeroContext, escapeHtml, raw)
+	return await renderFn(aeroContext)
 }
 
 const mockOptions = {

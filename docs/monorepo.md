@@ -9,8 +9,9 @@ aero/
 ├── package.json           # Workspace root; build script builds packages only
 ├── pnpm-workspace.yaml
 ├── packages/
-│   ├── core/              # Framework: compiler, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
-│   ├── vscode/            # VS Code extension
+│   ├── template/          # Standalone template compiler (@aero-js/template)
+│   ├── core/             # Framework: compiler, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
+│   ├── vscode/           # VS Code extension
 │   ├── create/            # Project initializer (@aero-js/create)
 │   ├── templates/
 │   │   └── minimal/       # Starter template (@aero-js/template-minimal)
@@ -25,6 +26,22 @@ aero/
 ├── docs/
 └── .github/
 ```
+
+## packages/template (@aero-js/template)
+
+- **Purpose:** Standalone HTML template compiler. Can be used independently of the Aero framework.
+- **Build:** `tsdown` builds from source into `packages/template/dist/`.
+- **Consumption:** `@aero-js/core` depends on this package; the compiler is extracted for reuse.
+- **Exports:**
+  - `@aero-js/template` → main entry: `parse()`, `compile()`
+  - `@aero-js/template/parser` → `parse()` only
+  - `@aero-js/template/codegen` → `compile()` only
+  - `@aero-js/template/helpers` → `escapeHtml()`, `raw()`, `compileInterpolation()`, etc.
+  - `@aero-js/template/types` → TypeScript types
+- **Features:**
+  - Auto-escaping: `{ expr }` outputs HTML-escaped text
+  - Raw output: `{ raw(expr) }` bypasses escaping
+  - Loop metadata: `{ item, index in items }` provides `index`, `first`, `last`, `length`
 
 ## packages/core (framework)
 

@@ -260,7 +260,7 @@ describe('Vite Plugin Integration', () => {
 		expect(recorded!.loc).toMatchObject({
 			file: id,
 			line: 5,
-			column: 6,
+			column: 5,
 		})
 	})
 })

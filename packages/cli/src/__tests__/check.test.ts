@@ -55,7 +55,7 @@ describe('runAeroCheck', () => {
 				'<TMP>'
 			)
 			expect(normalized).toMatchInlineSnapshot(`
-				"[aero] [AERO_COMPILE] <TMP>/client/pages/bad.html:1:32
+				"[aero] [AERO_COMPILE] <TMP>/client/pages/bad.html:1:31
 				  error: Directive \`props\` on <div> must use a braced expression, e.g. props="{ expression }".
 				"
 			`)
