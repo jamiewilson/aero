@@ -33,8 +33,8 @@ export const TAG_SLOT = 'slot'
 /** Default slot name when no name is given. */
 export const SLOT_NAME_DEFAULT = 'default'
 
-/** Matches `item in items` for data-each (captures: loop variable, iterable expression). */
-export const EACH_REGEX = /^(\w+)\s+in\s+(.+)$/
+/** Matches `item in items` or `item, index in items` for data-each (captures: loop variable, optional index, iterable expression). */
+export const EACH_REGEX = /^(\w+)(?:,\s*(\w+))?\s+in\s+(.+)$/
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 /** Self-closing tag: `<tag ... />`. */

@@ -32,8 +32,8 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('')).toBe('')
 	})
 
-	it('should convert {expr} to ${expr}', () => {
-		expect(compileInterpolation('hello {name}')).toBe('hello ${name}')
+	it('should convert {expr} to ${escapeHtml(expr)} with auto-escaping', () => {
+		expect(compileInterpolation('hello {name}')).toBe('hello ${escapeHtml(name)}')
 	})
 
 	it('should escape backticks', () => {
@@ -41,7 +41,7 @@ describe('compileInterpolation', () => {
 	})
 
 	it('should handle multiple interpolations', () => {
-		expect(compileInterpolation('{a} and {b}')).toBe('${a} and ${b}')
+		expect(compileInterpolation('{a} and {b}')).toBe('${escapeHtml(a)} and ${escapeHtml(b)}')
 	})
 
 })

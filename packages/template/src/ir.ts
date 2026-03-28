@@ -25,10 +25,11 @@ export interface IRAppend {
 	outVar?: string
 }
 
-/** Loop: for (const item of items) { body }. */
+/** Loop: for (const item of items) { body }. Optionally includes index variable. */
 export interface IRFor {
 	kind: 'For'
 	item: string
+	index?: string
 	items: string
 	body: IRNode[]
 }

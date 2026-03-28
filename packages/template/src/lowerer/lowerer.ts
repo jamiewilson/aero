@@ -168,6 +168,7 @@ export class Lowerer {
 				{
 					kind: 'For',
 					item: loopData.item,
+					index: loopData.index,
 					items: loopData.items,
 					body: inner,
 				},

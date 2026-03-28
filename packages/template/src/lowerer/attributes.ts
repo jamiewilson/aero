@@ -104,7 +104,7 @@ export function parseElementAttributes(
 	node: any
 ): ParsedElementAttrs {
 	const attributes: string[] = []
-	let loopData: { item: string; items: string } | null = null
+	let loopData: { item: string; index?: string; items: string } | null = null
 	let passDataExpr: string | null = null
 
 	if (node.attributes) {
@@ -125,7 +125,7 @@ export function parseElementAttributes(
 				const match = content.match(CONST.EACH_REGEX)
 				if (!match) {
 					const tagNameInner = node?.tagName?.toLowerCase?.() || 'element'
-					const msg = `Directive \`${attr.name}\` on <${tagNameInner}> must match "{ item in items }".`
+					const msg = `Directive \`${attr.name}\` on <${tagNameInner}> must match "{ item in items }" or "{ item, index in items }".`
 					if (diag?.source && needle.length > 0) {
 						const idx = diag.source.indexOf(needle)
 						if (idx >= 0) {
@@ -143,7 +143,7 @@ export function parseElementAttributes(
 					}
 					throw new Error(msg)
 				}
-				loopData = { item: match[1], items: match[2] }
+				loopData = { item: match[1], index: match[2], items: match[3] }
 				continue
 			}
 

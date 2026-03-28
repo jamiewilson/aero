@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
-import { getRenderComponentContextArg } from '../../helpers'
+import { getRenderComponentContextArg, escapeHtml, raw } from '../../helpers'
 import { analyzeBuildScript } from '../../build-script-analysis'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
@@ -30,7 +30,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 
 	// Create an actual AsyncFunction
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-	const renderFn = new AsyncFunction('Aero', body)
+	const renderFn = new AsyncFunction('Aero', 'escapeHtml', 'raw', body)
 
 	let _passDataId = 0
 	const aeroContext = {
@@ -47,9 +47,10 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		site: { url: '' },
 		slots: {},
 		props: {},
+		escapeHtml,
 		...context,
 	}
-	return await renderFn(aeroContext)
+	return await renderFn(aeroContext, escapeHtml, raw)
 }
 
 const mockOptions = {
@@ -59,6 +60,51 @@ const mockOptions = {
 }
 
 describe('Codegen', () => {
+	it('should auto-escape HTML in interpolations', async () => {
+		const html = `<script is:build>
+										const name = '<b>bold</b>';
+									</script>
+									<h1>{ name }</h1>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<h1>&lt;b&gt;bold&lt;/b&gt;</h1>')
+	})
+
+	it('should support raw() to bypass escaping', async () => {
+		const html = `<script is:build>
+										const html = '<b>bold</b>';
+									</script>
+									<h1>{ raw(html) }</h1>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<h1><b>bold</b></h1>')
+	})
+
+	it('should provide loop metadata (index, first, last, length)', async () => {
+		const html = `<script is:build>
+										const items = ['a', 'b', 'c'];
+									</script>
+									<ul>
+										<li data-each="{ item, index in items }">
+											{ item }-{ index }-{ first }-{ last }-{ length }
+										</li>
+									</ul>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('a-0-true-false-3')
+		expect(output).toContain('b-1-false-false-3')
+		expect(output).toContain('c-2-false-true-3')
+	})
+
 	it('should compile simple interpolation', async () => {
 		const html = `<script is:build>
 										title = 'Hello World';

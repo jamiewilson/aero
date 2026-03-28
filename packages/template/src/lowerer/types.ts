@@ -8,7 +8,7 @@ export type LowererDiag = { source: string; file?: string } | undefined
 /** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional props expr. */
 export interface ParsedElementAttrs {
 	attrString: string
-	loopData: { item: string; items: string } | null
+	loopData: { item: string; index?: string; items: string } | null
 	passDataExpr: string | null
 }
 

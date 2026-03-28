@@ -67,21 +67,42 @@ export function validateSingleBracedExpression(
 }
 
 /**
- * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
+ * Compile text for use inside a template literal; replaces `{ expr }` with `${ escapeHtml(expr) }`.
+ * Auto-escapes HTML to prevent XSS attacks. Use `raw(expr)` to bypass escaping.
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
-	return compileInterpolationFromSegments(segments)
+	return segments
+		.map(seg => {
+			if (seg.kind === 'literal') {
+				return seg.value.replace(/`/g, '\\`')
+			}
+			// raw(...) bypasses escaping - check with trimmed expression
+			const expr = seg.expression.trim()
+			if (/^raw\s*\(/.test(expr)) {
+				return `\${${seg.expression}}`
+			}
+			return `\${escapeHtml(${seg.expression})}`
+		})
+		.join('')
 }
 
 /**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
+ * Attributes are NOT auto-escaped (browser handles XML escaping).
  */
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
 	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
-	return compileInterpolationFromSegments(segments)
+	return segments
+		.map(seg => {
+			if (seg.kind === 'literal') {
+				return seg.value.replace(/`/g, '\\`')
+			}
+			return `\${${seg.expression}}`
+		})
+		.join('')
 }
 
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */
@@ -114,6 +135,23 @@ export function buildPropsString(entries: string[], spreadExpr: string | null): 
 /** Escape backticks for safe embedding in generated template literals. */
 export function escapeBackticks(s: string): string {
 	return s.replace(/`/g, '\\`')
+}
+
+/** Escape HTML special characters for safe output. */
+export function escapeHtml(s: unknown): string {
+	if (s == null) return ''
+	return String(s)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+}
+
+/** Bypass auto-escaping for raw HTML output. */
+export function raw(s: unknown): string {
+	if (s == null) return ''
+	return String(s)
 }
 
 /** Emit code for a slots object whose values are variable names (e.g. `{ "default": __slot0 }`). */
@@ -246,8 +284,11 @@ export function emitEnd(): string {
 	return `}\n`
 }
 
-/** Emit `for (const item of items) {`. */
-export function emitForOf(item: string, items: string): string {
+/** Emit `for (const item of items) {` with optional index variable. */
+export function emitForOf(item: string, items: string, index?: string): string {
+	if (index) {
+		return `for (const [${index}, ${item}] of ${items}.entries()) {\n`
+	}
 	return `for (const ${item} of ${items}) {\n`
 }
 

@@ -11,6 +11,14 @@ import * as Helper from './helpers'
 
 const DEFAULT_OUT = '__out'
 
+function emitLoopMetadata(item: string, index: string, items: string): string {
+	return `const ${item} = ${items}[${index}];
+const first = ${index} === 0;
+const last = ${index} === ${items}.length - 1;
+const length = ${items}.length;
+`
+}
+
 function outVarFor(node: IRNode, defaultVar: string): string {
 	switch (node.kind) {
 		case 'Append':
@@ -44,10 +52,15 @@ function emitNode(node: IRNode, outVar: string): string {
 	switch (node.kind) {
 		case 'Append':
 			return Helper.emitAppend(node.content, outVarFor(node, outVar))
-		case 'For':
+		case 'For': {
+			const loopMeta = node.index ? emitLoopMetadata(node.item, node.index, node.items) : ''
 			return (
-				Helper.emitForOf(node.item, node.items) + emitToJS(node.body, outVar) + Helper.emitEnd()
+				Helper.emitForOf(node.item, node.items, node.index) +
+				loopMeta +
+				emitToJS(node.body, outVar) +
+				Helper.emitEnd()
 			)
+		}
 		case 'If': {
 			let code = Helper.emitIf(node.condition) + emitToJS(node.body, outVar)
 			if (node.elseIf?.length) {
