@@ -111,6 +111,14 @@ function resolveExpressionIdentifierDefinition(
 			return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)]
 		}
 
+		if (
+			currentScope.indexName &&
+			identifier === currentScope.indexName &&
+			currentScope.indexRange
+		) {
+			return [makeDocumentLink(originRange, document.uri, currentScope.indexRange)]
+		}
+
 		if (identifier === currentScope.sourceRoot) {
 			const sourceDef = buildVars.get(currentScope.sourceRoot)
 			if (sourceDef) {

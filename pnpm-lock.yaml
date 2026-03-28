@@ -532,6 +532,9 @@ importers:
 
   packages/vscode:
     dependencies:
+      '@aero-js/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core

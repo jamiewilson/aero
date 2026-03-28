@@ -508,6 +508,68 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		expect(undefinedDiag).toBeUndefined()
 	})
 
+	it('should NOT flag each two-binding loop item, index, and loop metadata', () => {
+		const text = `
+<script is:build>
+	const links = [{ path: '/', label: 'Home' }]
+</script>
+<ul>
+	<li each="{ link, index in links }" class="{ first ? 'is-first' : '' }">
+		{ link.path } { index } { last } { length }
+	</li>
+</ul>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedVarDiags = reportedDiagnostics.filter(
+			(d: any) => d.message.includes('is not defined') && d.message.includes('Variable')
+		)
+		expect(undefinedVarDiags).toHaveLength(0)
+	})
+
+	it('should NOT flag raw() when argument is defined in build script', () => {
+		const text = `
+<script is:build>
+	const html = '<strong>x</strong>'
+</script>
+<p>{ raw(html) }</p>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const undefinedVarDiags = reportedDiagnostics.filter(
+			(d: any) => d.message.includes('is not defined') && d.message.includes('Variable')
+		)
+		expect(undefinedVarDiags).toHaveLength(0)
+	})
+
 	it('should flag content global in build script when import is commented out', () => {
 		const text = `
 <script is:build>

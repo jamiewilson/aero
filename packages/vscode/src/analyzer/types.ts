@@ -13,6 +13,9 @@ export type VariableDefinition = {
 export type TemplateScope = {
 	itemName: string
 	itemRange: vscode.Range
+	/** Present when using `{ item, index in items }`; enables loop metadata (`first`, `last`, `length`). */
+	indexName?: string
+	indexRange?: vscode.Range
 	sourceExpr: string
 	sourceRoot: string
 	sourceRange: vscode.Range

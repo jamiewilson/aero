@@ -15,6 +15,7 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'params',
 	'console',
 	'Math',
+	'raw',
 	'JSON',
 	'Object',
 	'Array',
@@ -59,6 +60,13 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'$response',
 ])
 
+function isBoundByEachScope(scope: TemplateScope, id: string): boolean {
+	if (scope.itemName === id) return true
+	if (scope.indexName && scope.indexName === id) return true
+	if (scope.indexName && (id === 'first' || id === 'last' || id === 'length')) return true
+	return false
+}
+
 export function checkUndefinedVariables(
 	parsed: ParsedDocument,
 	diagnostics: vscode.Diagnostic[]
@@ -92,12 +100,12 @@ export function checkUndefinedVariables(
 		}
 
 		const scope = findInnermostScope(templateScopes, ref.offset)
-		if (scope && scope.itemName === ref.content) continue
+		if (scope && isBoundByEachScope(scope, ref.content)) continue
 
 		let parentScope = scope
 		let foundInScope = false
 		while (parentScope) {
-			if (parentScope.itemName === ref.content) {
+			if (isBoundByEachScope(parentScope, ref.content)) {
 				foundInScope = true
 				break
 			}

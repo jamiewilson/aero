@@ -244,6 +244,20 @@ describe('collectTemplateScopes', () => {
 		expect(scopes[1].itemName).toBe('category')
 	})
 
+	it('should parse each with index variable (item, index in items)', () => {
+		const text = `
+<ul>
+	<li each="{ item, idx in items }">{item.name}</li>
+</ul>
+`
+		const scopes = collectTemplateScopes(mockDoc, text)
+
+		expect(scopes).toHaveLength(1)
+		expect(scopes[0].itemName).toBe('item')
+		expect(scopes[0].indexName).toBe('idx')
+		expect(scopes[0].sourceExpr).toBe('items')
+	})
+
 	it('should return empty array for no data-each', () => {
 		const text = `
 <div>No loop here</div>
