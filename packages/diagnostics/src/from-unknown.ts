@@ -14,6 +14,10 @@ import { augmentFromCssSyntaxError } from './css-postcss-error'
 import { diagnosticPathForDisplay } from './path-display'
 import { firstStackSpan } from './stack-frame'
 
+function isCompileError(err: unknown): err is { message: string; file?: string; line?: number; column?: number } {
+	return err instanceof Error && err.name === 'CompileError'
+}
+
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === 'object' && v !== null
 }
@@ -41,6 +45,26 @@ export function unknownToAeroDiagnostics(
 		return contentSchemaIssuePayloadsToDiagnostics(err.issues).map(d =>
 			file && !d.file ? { ...d, file } : d
 		)
+	}
+
+	if (isCompileError(err)) {
+		const span =
+			err.file !== undefined && err.line !== undefined
+				? {
+						file: err.file,
+						line: err.line,
+						column: err.column ?? 0,
+					}
+				: undefined
+		return [
+			{
+				code: 'AERO_COMPILE',
+				severity: 'error',
+				message: err.message,
+				file: err.file,
+				span,
+			},
+		]
 	}
 
 	if (err instanceof Error) {

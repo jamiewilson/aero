@@ -9,8 +9,8 @@
 			"path": "examples",
 		},
 		{
-			"name": "templates",
-			"path": "packages/templates",
+			"name": "starters",
+			"path": "packages/starters",
 		},
 		{
 			"name": "website",

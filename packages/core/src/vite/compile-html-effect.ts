@@ -5,6 +5,7 @@
 
 import { Effect } from 'effect'
 import { AeroCompileError } from '@aero-js/diagnostics'
+import { CompileError } from '@aero-js/compiler'
 
 /**
  * Run a synchronous compile thunk; thrown values become `AeroCompileError` on the failure channel.
@@ -20,6 +21,15 @@ export function htmlCompileTry<A>(
 		try: tryFn,
 		catch: unknown => {
 			if (unknown instanceof AeroCompileError) return unknown
+			// Handle CompileError from @aero-js/compiler with line/column info
+			if (unknown instanceof CompileError) {
+				return new AeroCompileError({
+					message: unknown.message,
+					file: unknown.file ?? importer,
+					line: unknown.line,
+					column: unknown.column,
+				})
+			}
 			if (unknown instanceof Error) {
 				return new AeroCompileError({
 					message: unknown.message || String(unknown),

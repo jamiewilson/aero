@@ -69,6 +69,7 @@
 	"dependencies": {
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
+		"@aero-js/compiler": "workspace:*",
 		"effect": "^3.21.0",
 		"get-tsconfig": "^4.13.7",
 		"html-minifier-next": "^5.2.2",

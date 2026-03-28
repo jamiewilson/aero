@@ -1,3 +1,4 @@
+import { EACH_REGEX } from '@aero-js/compiler/constants'
 import * as vscode from 'vscode'
 import type { TemplateScope } from './types'
 
@@ -80,14 +81,13 @@ function parseEachAttribute(
 	}
 
 	const expr = exprContent.trim()
-	const exprMatch = /^([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)$/.exec(
-		expr
-	)
+	const exprMatch = EACH_REGEX.exec(expr)
 	if (!exprMatch) return null
 
 	const itemName = exprMatch[1]
-	const sourceExpr = exprMatch[2]
-	const sourceRoot = sourceExpr.split('.')[0]
+	const indexName = exprMatch[2] || undefined
+	const sourceExpr = exprMatch[3].trim()
+	const sourceRoot = sourceExpr.split(/[.\[]/)[0]
 
 	const attrsOffsetInTag = fullTag.indexOf(attrs)
 	const attrBase = tagStart + (attrsOffsetInTag >= 0 ? attrsOffsetInTag : 0)
@@ -99,14 +99,35 @@ function parseEachAttribute(
 
 	const itemStart = exprStart + expr.indexOf(itemName)
 	const itemEnd = itemStart + itemName.length
-	const sourceStart = exprStart + expr.lastIndexOf(sourceExpr)
+
+	const afterIn = /\s+in\s+/.exec(expr)
+	const sourceInnerStart = afterIn ? exprStart + afterIn.index + afterIn[0].length : exprStart
+	const trimmedFromInner = expr.slice(afterIn ? afterIn.index + afterIn[0].length : 0)
+	const leadingPad = trimmedFromInner.length - trimmedFromInner.trimStart().length
+	const sourceStart = sourceInnerStart + leadingPad
 	const sourceEnd = sourceStart + sourceExpr.length
 
-	return {
+	let indexRange: vscode.Range | undefined
+	if (indexName) {
+		const commaIdx = expr.indexOf(',')
+		const idxInExpr = commaIdx >= 0 ? expr.indexOf(indexName, commaIdx) : expr.indexOf(indexName)
+		if (idxInExpr >= 0) {
+			const idxStart = exprStart + idxInExpr
+			const idxEnd = idxStart + indexName.length
+			indexRange = new vscode.Range(document.positionAt(idxStart), document.positionAt(idxEnd))
+		}
+	}
+
+	const result: Omit<TemplateScope, 'startOffset' | 'endOffset'> = {
 		itemName,
 		itemRange: new vscode.Range(document.positionAt(itemStart), document.positionAt(itemEnd)),
 		sourceExpr,
 		sourceRoot,
 		sourceRange: new vscode.Range(document.positionAt(sourceStart), document.positionAt(sourceEnd)),
 	}
+	if (indexName) {
+		result.indexName = indexName
+		if (indexRange) result.indexRange = indexRange
+	}
+	return result
 }

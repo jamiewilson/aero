@@ -9,11 +9,12 @@ aero/
 ├── package.json           # Workspace root; build script builds packages only
 ├── pnpm-workspace.yaml
 ├── packages/
-│   ├── core/              # Framework: compiler, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
-│   ├── vscode/            # VS Code extension
+│   ├── compiler/          # Standalone template compiler (@aero-js/compiler)
+│   ├── core/             # Framework: codegen, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
+│   ├── vscode/           # VS Code extension
 │   ├── create/            # Project initializer (@aero-js/create)
-│   ├── templates/
-│   │   └── minimal/       # Starter template (@aero-js/template-minimal)
+│   ├── starters/
+│   │   └── minimal/       # Starter template (@aero-js/starter-minimal)
 ├── examples/
 │   └── kitchen-sink/      # Full demo app (@aero-js/example-kitchen-sink)
 │       ├── frontend/      # Or client/; pages, components, layouts, assets (per aero.config dirs)
@@ -26,6 +27,22 @@ aero/
 └── .github/
 ```
 
+## packages/compiler (@aero-js/compiler)
+
+- **Purpose:** Standalone HTML template compiler. Can be used independently of the Aero framework.
+- **Build:** `tsdown` builds from source into `packages/compiler/dist/`.
+- **Consumption:** `@aero-js/core` depends on this package; the compiler is extracted for reuse.
+- **Exports:**
+  - `@aero-js/compiler` → main entry: `parse()`, `compile()`
+  - `@aero-js/compiler/parser` → `parse()` only
+  - `@aero-js/compiler/codegen` → `compile()` only
+  - `@aero-js/compiler/helpers` → `escapeHtml()`, `raw()`, `compileInterpolation()`, etc.
+  - `@aero-js/compiler/types` → TypeScript types
+- **Features:**
+  - Auto-escaping: `{ expr }` outputs HTML-escaped text
+  - Raw output: `{ raw(expr) }` bypasses escaping
+  - Loop metadata: `{ item, index in items }` provides `index`, `first`, `last`, `length`
+
 ## packages/core (framework)
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
@@ -37,7 +54,7 @@ aero/
   - `@aero-js/core/runtime`, `@aero-js/core/runtime/instance` → runtime
   - `@aero-js/core/types` → TypeScript types
 - **Key directories:**
-  - `compiler/` — parser, codegen, resolver, constants, helpers; tests in `compiler/__tests__/`
+  - `codegen/` — Aero-specific codegen that wraps @aero-js/compiler; tests in `codegen/__tests__/`
   - `vite/` — plugin entry, build orchestration, defaults; tests in `vite/__tests__/`
   - `runtime/` — Aero class, instance context, client entry
   - `utils/` — aliases (tsconfig path loading), routing
@@ -49,8 +66,8 @@ aero/
 
 ## packages/create (@aero-js/create)
 
-- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aero-js/template-minimal`.
-- **No app source** in create; templates live in `packages/templates/` and are copied from node_modules.
+- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aero-js/starter-minimal`.
+- **No app source** in create; starters live in `packages/starters/` and are copied from node_modules.
 
 ## examples/kitchen-sink (demo app)
 
@@ -59,7 +76,7 @@ aero/
 - **Path aliases:** Defined in `examples/kitchen-sink/tsconfig.json`; the Aero resolver merges these with framework defaults when resolving component/layout imports in HTML.
 - **Server:** When `server: true`, Nitro config is generated under `.aero/`; API in backend/ (or server/), routes in backend/routes.
 
-## packages/templates/minimal
+## packages/starters/minimal
 
 - **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm create @aero-js <name>` by default.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
@@ -99,5 +116,5 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 - **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). `packages/vite` re-exports the plugin as `@aero-js/vite`; core also exports it as `@aero-js/core/vite`.
 - **Demo app** is `examples/kitchen-sink`; run dev/build/preview from that directory. Root has no app dev script.
-- **@aero-js/create** lives in `packages/create`; scaffolds from `packages/templates/minimal`.
+- **@aero-js/create** lives in `packages/create`; scaffolds from `packages/starters/minimal`.
 - **Path conventions** use `client/` and `content/` by default (or custom dirs via aero.config, e.g. frontend/, backend/).

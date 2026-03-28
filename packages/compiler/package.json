@@ -1,0 +1,98 @@
+{
+	"name": "@aero-js/compiler",
+	"version": "0.3.5",
+	"private": false,
+	"homepage": "https://github.com/jamiewilson/aero",
+	"license": "MIT",
+	"author": "Jamie Wilson",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jamiewilson/aero.git",
+		"directory": "packages/compiler"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.mts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"default": "./dist/index.mjs"
+		},
+		"./helpers": {
+			"types": "./dist/helpers.d.mts",
+			"default": "./dist/helpers.mjs"
+		},
+		"./constants": {
+			"types": "./dist/constants.d.mts",
+			"default": "./dist/constants.mjs"
+		},
+		"./emit": {
+			"types": "./dist/emit.d.mts",
+			"default": "./dist/emit.mjs"
+		},
+		"./resolver": {
+			"types": "./dist/resolver.d.mts",
+			"default": "./dist/resolver.mjs"
+		},
+		"./parser": {
+			"types": "./dist/parser.d.mts",
+			"default": "./dist/parser.mjs"
+		},
+		"./codegen": {
+			"types": "./dist/codegen.d.mts",
+			"default": "./dist/codegen.mjs"
+		},
+		"./ir": {
+			"types": "./dist/ir.d.mts",
+			"default": "./dist/ir.mjs"
+		},
+		"./build-script-analysis": {
+			"types": "./dist/build-script-analysis.d.mts",
+			"default": "./dist/build-script-analysis.mjs"
+		},
+		"./types": {
+			"types": "./dist/types.d.mts",
+			"default": "./dist/types.mjs"
+		},
+		"./path": {
+			"types": "./dist/path.d.mts",
+			"default": "./dist/path.mjs"
+		},
+		"./directive-attributes": {
+			"types": "./dist/directive-attributes.d.mts",
+			"default": "./dist/directive-attributes.mjs"
+		},
+		"./tokenizer": {
+			"types": "./dist/tokenizer.d.mts",
+			"default": "./dist/tokenizer.mjs"
+		},
+		"./lowerer": {
+			"types": "./dist/lowerer/index.d.mts",
+			"default": "./dist/lowerer/index.mjs"
+		},
+		"./lowerer/lowerer": {
+			"types": "./dist/lowerer/lowerer.d.mts",
+			"default": "./dist/lowerer/lowerer.mjs"
+		}
+	},
+	"scripts": {
+		"build": "tsdown src/index.ts src/helpers.ts src/constants.ts src/emit.ts src/resolver.ts src/parser.ts src/codegen.ts src/ir.ts src/build-script-analysis.ts src/types.ts src/path.ts src/directive-attributes.ts src/tokenizer.ts src/lowerer/index.ts src/lowerer/lowerer.ts src/lowerer/attributes.ts src/lowerer/conditionals.ts src/lowerer/slots.ts src/lowerer/types.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@aero-js/interpolation": "workspace:*",
+		"linkedom": "^0.18.12",
+		"oxc-parser": "^0.115.0",
+		"oxc-transform": "^0.116.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.5.0",
+		"tsdown": "^0.21.4",
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.1"
+	}
+}

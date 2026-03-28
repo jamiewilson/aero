@@ -38,6 +38,7 @@
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
+		"@aero-js/compiler": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",

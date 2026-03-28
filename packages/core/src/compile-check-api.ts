@@ -4,4 +4,4 @@
  * @remarks
  * Kept separate from the browser entry so consumers do not pull codegen into client bundles.
  */
-export { compileTemplate } from './compiler/codegen'
+export { compileTemplate } from './codegen'

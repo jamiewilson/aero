@@ -107,6 +107,22 @@ export class Aero {
 		const params = pageInput?.params ?? input.params ?? {}
 		const siteUrl = typeof input.site === 'string' ? input.site : (input.site?.url ?? '')
 		let _passDataId = 0
+
+		const escapeHtml = (s: unknown): string => {
+			if (s == null) return ''
+			return String(s)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+		}
+
+		const raw = (s: unknown): string => {
+			if (s == null) return ''
+			return String(s)
+		}
+
 		const context = {
 			...this.globals,
 			props: input.props || {},
@@ -122,6 +138,8 @@ export class Aero {
 			headScripts: input.headScripts,
 			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
+			escapeHtml,
+			raw,
 		} as AeroTemplateContext
 
 		return context
