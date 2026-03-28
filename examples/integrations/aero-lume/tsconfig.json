@@ -5,9 +5,7 @@
 		"moduleResolution": "bundler",
 		"types": ["vite/client"],
 		"paths": {
-			"@styles/*": ["./client/assets/styles/*"],
-			"@scripts/*": ["./client/assets/scripts/*"],
-			"@content/*": ["./content/*"]
+			"@assets/*": ["./client/assets/*"]
 		}
 	}
 }

@@ -1,31 +1,36 @@
-<script is:build>
-	import base from '@layouts/base'
-</script>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Aero + Lume</title>
+		<link rel="stylesheet" href="@assets/styles/global.css" />
+		<script src="@assets/scripts/index.js"></script>
+	</head>
 
-<!-- prettier-ignore -->
-<base-layout>
-	<section>
-		<h1 data-show="name" hidden>Hello, <span data-bind="name"></span>!</h1>
-		<input data-bind="name" placeholder="Enter your name" />
-		<style>
-			@scope {
-				:scope {
-					display: grid;
-					place-content: center;
-				}
+	<body id="app">
+		<section>
+			<h1 data-show="name" hidden>Hello, <span data-bind="name"></span>!</h1>
+			<input data-bind="name" placeholder="Enter your name" />
+			<style>
+				@scope {
+					:scope {
+						display: grid;
+						place-content: center;
+					}
 
-				h1 {
-					top: 25vh;
-					width: 100%;
-					text-align: center;
-					position: absolute;
-				}
+					h1 {
+						top: 25vh;
+						width: 100%;
+						text-align: center;
+						position: absolute;
+					}
 
-				input {
-					font-size: 1rem;
-					padding: 1rem;
+					input {
+						font-size: 1rem;
+						padding: 1rem;
+					}
 				}
-			}
-		</style>
-	</section>
-</base-layout>
+			</style>
+		</section>
+	</body>
+</html>
