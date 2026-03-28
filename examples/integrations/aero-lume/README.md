@@ -1,6 +1,6 @@
 # aero-lume
 
-Bare-bones Aero + Lume example for client-side data binding.
+Bare-bones Aero + [Lume](https://github.com/sathvikc/lume-js) example for client-side data binding.
 
 ## Commands
 
