@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { compile } from '../codegen'
-import { parse } from '../parser'
+import { compile } from '../../codegen'
+import { parse } from '../../parser'
 
 describe('Compiler Integration', () => {
 	/** getStaticPaths must appear before export default async function(Aero) so Vite can expose it. */

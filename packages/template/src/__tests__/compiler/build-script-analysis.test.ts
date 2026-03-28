@@ -7,7 +7,7 @@ import {
 	analyzeBuildScript,
 	analyzeBuildScriptForEditor,
 	getPropsTypeFromBuildScript,
-} from '../build-script-analysis'
+} from '../../build-script-analysis'
 
 describe('analyzeBuildScript', () => {
 	describe('imports', () => {

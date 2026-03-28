@@ -8,6 +8,14 @@
  */
 
 import { parseSync, ImportNameKind } from 'oxc-parser'
+import { transformSync } from 'oxc-transform'
+
+/** Strip TypeScript syntax from a script string, returning plain JavaScript. */
+export function stripBuildScriptTypes(code: string, filename = 'script.ts'): string {
+	if (!code.trim()) return code
+	const result = transformSync(filename, code, { typescript: { onlyRemoveTypeImports: true } })
+	return result.code.replace(/(?:^|\n)\s*export\s\{\s*\}\s*;?/g, '')
+}
 
 /** Core binding extraction shared by `analyzeBuildScript` and `analyzeBuildScriptForEditor`. */
 function extractBindingsFromStaticImport(

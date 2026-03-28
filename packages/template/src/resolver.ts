@@ -7,9 +7,9 @@
  * Paths under the project root are returned as root-relative with forward slashes.
  */
 
-import type { ResolverOptions } from '../types'
+import type { ResolverOptions } from './types'
 import path from 'path'
-import { toPosix } from '../utils/path'
+import { toPosix } from './path'
 
 export class Resolver {
 	private root: string

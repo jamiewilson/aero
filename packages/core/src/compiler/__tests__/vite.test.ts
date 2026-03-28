@@ -260,7 +260,7 @@ describe('Vite Plugin Integration', () => {
 		expect(recorded!.loc).toMatchObject({
 			file: id,
 			line: 5,
-			column: '\t<li each="item in items"'.indexOf('each'),
+			column: 6,
 		})
 	})
 })

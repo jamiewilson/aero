@@ -2,45 +2,31 @@
  * Codegen: compile parsed HTML template and script blocks into an async render function (module source).
  *
  * @remarks
- * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
- * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
- * to lower to IR (elements, components, slots, data-each, data-if/else-if/else, script/style props),
- * then a single emitter turns IR → JS. Output is a string of JavaScript (default async render function,
- * optionally preceded by getStaticPaths export).
+ * This is the Aero-specific codegen that extends the base compiler with Vite/Aero features
+ * like client scripts, blocking scripts, and the emit-client-script-tag integration.
  */
 
 import type { ParseResult, CompileOptions } from '../types'
-import * as CONST from './constants'
-import * as Helper from './helpers'
-import { analyzeBuildScript } from './build-script-analysis'
-import { emitToJS, emitBodyAndStyle } from './emit'
-import { parse } from './parser'
+import * as Helper from '@aero-js/template/helpers'
+import * as CONST from '@aero-js/template/constants'
+import { emitToJS, emitBodyAndStyle } from '@aero-js/template/emit'
+import { Lowerer } from '@aero-js/template/lowerer/lowerer'
+import { Resolver } from '@aero-js/template/resolver'
+import {
+	analyzeBuildScript,
+	stripBuildScriptTypes,
+} from '@aero-js/template/build-script-analysis'
+import { parse } from '@aero-js/template/parser'
 import { parseHTML } from 'linkedom'
-import { Resolver } from './resolver'
-import { transformSync } from 'oxc-transform'
 import {
 	emitClientScriptTag,
 	VIRTUAL_PREFIX as CLIENT_SCRIPT_VIRTUAL_PREFIX,
 } from './emit-client-script-tag'
-import { Lowerer } from './lowerer/lowerer'
-
-/** Strip TypeScript syntax from a script string, returning plain JavaScript. */
-function stripTypes(code: string, filename = 'script.ts'): string {
-	if (!code.trim()) return code
-	const result = transformSync(filename, code, { typescript: { onlyRemoveTypeImports: true } })
-	return result.code.replace(/(?:^|\n)\s*export\s*\{\s*\}\s*;?/g, '')
-}
 
 /**
- * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
- *
- * @param parsed - Result from parser (buildScript, clientScripts, inlineScripts, blockingScripts, template).
- * @param options - Root, resolvePath, and optional overrides for client/inline/blocking script arrays.
- * @returns Module source: optional getStaticPaths export and default async function(Aero) that returns HTML string.
+ * Compile a parsed template and options into a JavaScript module string.
  */
 export function compile(parsed: ParseResult, options: CompileOptions): string {
-	const inlineScripts = options.inlineScripts ?? parsed.inlineScripts
-
 	const resolver = new Resolver({
 		root: options.root,
 		resolvePath: options.resolvePath,
@@ -57,7 +43,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
 	const analysis = analyzeBuildScript(script)
-	script = stripTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
+	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const getStaticPathsFn = analysis.getStaticPathsFn
 
 	const importsLines: string[] = []
@@ -75,7 +61,6 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		} else if (imp.namespaceBinding) {
 			importsLines.push(`const ${imp.namespaceBinding} = ${modExpr}`)
 		}
-		// Side-effect-only imports: no bindings to emit
 	}
 	const importsCode = importsLines.join('\n')
 
@@ -95,11 +80,6 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			<body>${expandedTemplate}</body>
 		</html>
 	`)
-
-	// Note: We no longer validate `is:*` attributes here because `parser.ts`
-	// already completely removed/categorized them before we hit this step.
-	// Any remaining `<script>` tags in the AST are guaranteed to be `is:inline`
-	// or unhandled `<head>` scripts, which is perfectly fine.
 
 	let styleCode = ''
 	if (document.body) {
@@ -123,7 +103,6 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const headScripts: string[] = []
 
 	// Process Bundled Client Scripts
-	// Virtual client URLs: use helper + string concatenation so no "${}" appears in script tag (vite:build-html would otherwise resolve it as a module).
 	const virtualPrefix = CLIENT_SCRIPT_VIRTUAL_PREFIX
 	const hasVirtualClientScripts =
 		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
@@ -141,7 +120,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	// Process Blocking Scripts (Hoisted to Head)
 	if (options.blockingScripts) {
 		for (const blockingScript of options.blockingScripts) {
-			const strippedContent = stripTypes(blockingScript.content, 'blocking.ts')
+			const strippedContent = stripBuildScriptTypes(blockingScript.content, 'blocking.ts')
 			if (blockingScript.passDataExpr) {
 				let blockingPropsNeedle: string | undefined
 				if (options.diagnosticTemplateSource && blockingScript.passDataExpr) {
@@ -185,13 +164,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 }
 
 /**
- * Compile an HTML template source into a JavaScript module string. Single entry for parse + compile.
- * When optional `parsed` is provided (e.g. after registering client scripts in the plugin), it is used to avoid parsing twice.
- *
- * @param htmlSource - Raw HTML template string.
- * @param options - CompileOptions (root, resolvePath, importer, optional script overrides).
- * @param parsed - Optional pre-parsed result; when provided, used instead of parsing htmlSource again.
- * @returns Module source (async render function + optional getStaticPaths).
+ * Compile an HTML template source into a JavaScript module string.
  */
 export function compileTemplate(
 	htmlSource: string,

@@ -25,7 +25,7 @@ import {
 	RENDER_INTERNAL_CONTEXT_KEYS,
 	getRenderComponentContextArg,
 	getRenderContextDestructurePattern,
-} from '../helpers'
+} from '../../helpers'
 
 describe('compileInterpolation', () => {
 	it('should return empty string for empty input', () => {

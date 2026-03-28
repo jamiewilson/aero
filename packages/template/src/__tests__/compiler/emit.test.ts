@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import type { IRNode } from '../ir'
-import { emitToJS, emitBodyAndStyle } from '../emit'
-import * as Helper from '../helpers'
+import type { IRNode } from '../../ir'
+import { emitToJS, emitBodyAndStyle } from '../../emit'
+import * as Helper from '../../helpers'
 
 describe('emitToJS', () => {
 	it('emits Append nodes', () => {

@@ -42,3 +42,16 @@ export function isDirectiveAttr(
 	if (exactNames.includes(attrName)) return true
 	return prefixes.some(p => attrName.startsWith(p))
 }
+
+/**
+ * Returns true if the attribute name is a framework-specific attribute
+ * that should be skipped in element attribute strings.
+ */
+export function isComponentAttr(attrName: string): boolean {
+	return (
+		attrName.startsWith('is:') ||
+		attrName.startsWith('data-is:') ||
+		attrName === 'slot' ||
+		attrName === 'name'
+	)
+}

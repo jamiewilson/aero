@@ -14,15 +14,15 @@ export {
 	type LiteralSegment,
 	type InterpolationSegment,
 	type TokenizeOptions,
-} from './compiler/tokenizer'
+} from '@aero-js/interpolation'
 
 export {
 	isDirectiveAttr,
 	DEFAULT_DIRECTIVE_PREFIXES,
 	type DirectiveAttrConfig,
-} from './compiler/directive-attributes'
+} from '@aero-js/template/directive-attributes'
 
-export { COMPONENT_SUFFIX_REGEX } from './compiler/constants'
+export { COMPONENT_SUFFIX_REGEX } from '@aero-js/template/constants'
 
 export {
 	analyzeBuildScriptForEditor,
@@ -30,4 +30,4 @@ export {
 	type BuildScriptImportForEditor,
 	type BuildScriptAnalysisForEditorResult,
 	type PropsTypeResult,
-} from './compiler/build-script-analysis'
+} from '@aero-js/template/build-script-analysis'

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { isDirectiveAttr, DEFAULT_DIRECTIVE_PREFIXES } from '../directive-attributes'
+import { isDirectiveAttr, DEFAULT_DIRECTIVE_PREFIXES } from '../../directive-attributes'
 
 describe('isDirectiveAttr with default config', () => {
 	it('returns true for Alpine x- prefix', () => {

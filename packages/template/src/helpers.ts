@@ -1,23 +1,30 @@
 /**
- * Helpers for the Aero codegen: interpolation, attributes, slots, and render-function emission.
- *
- * @remarks
- * Used by `codegen.ts` to compile `{ expr }` to template literals, build props/slots code, and emit
- * the top-level render wrapper.
+ * Helpers for the template codegen: interpolation, attributes, slots, and render-function emission.
  */
 
 import { tokenizeCurlyInterpolation, compileInterpolationFromSegments } from './tokenizer'
-import { AeroCompileError } from '@aero-js/diagnostics'
-import { lineColumnAtOffset } from '../utils/source-position'
+import { CompileError, type CompileErrorOptions } from './types'
+
+/** Compute line and column from a byte offset in source text (1-based line, 0-based column). */
+function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
+	const o = Math.max(0, Math.min(offset, source.length))
+	let line = 1
+	let lineStart = 0
+	for (let i = 0; i < o; i++) {
+		if (source.charCodeAt(i) === 10) {
+			line++
+			lineStart = i + 1
+		}
+	}
+	return { line, column: o - lineStart }
+}
 
 /** Options for validateSingleBracedExpression (directive/tag for error message). */
 export interface ValidateSingleBracedExpressionOptions {
 	directive?: string
 	tagName?: string
-	/** Original template source; used with {@link positionNeedle} for {@link AeroCompileError} location. */
 	diagnosticSource?: string
 	diagnosticFile?: string
-	/** First matching substring in `diagnosticSource` whose start offset is reported. */
 	positionNeedle?: string
 }
 
@@ -25,11 +32,6 @@ export interface ValidateSingleBracedExpressionOptions {
  * Validate that a value is a single well-formed braced expression using the same tokenizer as
  * attribute interpolation. Used for props (and optionally other braced directives); emission
  * stays expression-passthrough.
- *
- * @param value - Raw attribute value (e.g. props value).
- * @param options - Optional directive and tagName for error message.
- * @returns Trimmed value (including braces).
- * @throws If value is not exactly one interpolation segment spanning the whole trimmed string.
  */
 export function validateSingleBracedExpression(
 	value: string,
@@ -53,11 +55,11 @@ export function validateSingleBracedExpression(
 			const idx = src.indexOf(needle)
 			if (idx >= 0) {
 				const { line, column } = lineColumnAtOffset(src, idx)
-				throw new AeroCompileError({ message, file, line, column })
+				throw new CompileError({ message, file, line, column })
 			}
 		}
 		if (file !== undefined) {
-			throw new AeroCompileError({ message, file })
+			throw new CompileError({ message, file })
 		}
 		throw new Error(message)
 	}
@@ -66,9 +68,6 @@ export function validateSingleBracedExpression(
 
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ expr }`.
- *
- * @param text - Raw text (may contain `{...}` interpolation).
- * @returns String safe for embedding in a template literal (backticks escaped).
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
@@ -78,9 +77,6 @@ export function compileInterpolation(text: string): string {
 
 /**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
- *
- * @param text - Attribute value string.
- * @returns String safe for template literal (backticks escaped, double-braces as literals).
  */
 export function compileAttributeInterpolation(text: string): string {
 	if (!text) return ''
@@ -128,32 +124,33 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
 	return '{ ' + entries + ' }'
 }
 
-/**
- * Options for emitRenderFunction. All optional; used by codegen as the single source of truth for render emission.
- */
-export interface EmitRenderFunctionOptions {
-	/** Extracted getStaticPaths to prepend as named export. */
-	getStaticPathsFn?: string | null
-	/** Style labels to add to `styles` set (simple string labels). */
-	rootStyles?: string[]
-	/** Script labels to add to `scripts` set (simple string labels). */
-	rootScripts?: string[]
-	/** Generated code for compiled <style> blocks (styles?.add(...)). */
-	styleCode?: string
-	/** Full statements that add client script tags to `scripts` (e.g. scripts?.add(...) or props IIFE). */
-	rootScriptsLines?: string[]
-	/** Expressions for blocking head scripts (emitted as headScripts?.add(...)). */
-	headScriptsLines?: string[]
-}
+// ============================================================================
+// Internal context keys (Aero-specific, but needed for default emit)
+// ============================================================================
 
 /**
- * Emit the default async render function: destructured context, script block, optional style/script/head blocks, then body that appends to `__out`.
- * Single source of truth for the shape of the compiled render function; codegen calls this with all sections.
- *
- * @param script - Build script content (imports + user code).
- * @param body - Generated statements that build the HTML string.
- * @param options - Optional getStaticPathsFn, rootStyles, rootScripts, styleCode, rootScriptsLines, headScriptsLines.
- * @returns Full module source (getStaticPaths + default render function).
+ * Internal context keys destructured from the render context and forwarded to child components.
+ * User-facing data (`page`, `site`, `props`) is NOT destructured.
+ */
+export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = [
+	'styles',
+	'scripts',
+	'headScripts',
+]
+
+// ============================================================================
+// Default render function emission (Aero-compatible)
+// ============================================================================
+
+import type { EmitRenderFunctionOptions } from './types'
+
+/**
+ * Options for emitRenderFunction.
+ */
+export type { EmitRenderFunctionOptions as RenderFunctionOptions }
+
+/**
+ * Emit the default async render function for Aero.
  */
 export function emitRenderFunction(
 	script: string,
@@ -204,29 +201,13 @@ export function emitRenderFunction(
 	return renderFn.trim()
 }
 
-// ============================================================================
-// renderComponent context (single source of truth for emit + codegen)
-// ============================================================================
-
-/**
- * Internal context keys destructured from `Aero` and forwarded to child components.
- * User-facing data (`page`, `site`, `props`) is NOT destructured — templates access
- * these via `Aero.page`, `Aero.site`, `Aero.props` to avoid namespace pollution and
- * collisions with user-declared variables (e.g. `const site = ...` from content imports).
- */
-export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = [
-	'styles',
-	'scripts',
-	'headScripts',
-]
-
-/** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). Used by emit.ts and codegen.ts. */
+/** Emit the 4th (context) argument to Aero.renderComponent(component, props, slots, CONTEXT). */
 export function getRenderComponentContextArg(): string {
 	const internalEntries = RENDER_INTERNAL_CONTEXT_KEYS.join(', ')
 	return `{ page: Aero.page, site: Aero.site, ${internalEntries} }`
 }
 
-/** Build destructuring pattern for the render function: only internal plumbing, not user-facing data. */
+/** Build destructuring pattern for the render function. */
 export function getRenderContextDestructurePattern(): string {
 	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId`
 }

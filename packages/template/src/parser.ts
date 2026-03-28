@@ -1,4 +1,4 @@
-import type { ParseResult, ScriptEntry } from '../types'
+import type { ParseResult, ScriptEntry } from './types'
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 

@@ -6,9 +6,21 @@ import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import { isDirectiveAttr } from '../directive-attributes'
 import { Resolver } from '../resolver'
-import { AeroCompileError } from '@aero-js/diagnostics'
-import { lineColumnAtOffset } from '../../utils/source-position'
+import { CompileError } from '../types'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
+
+function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
+	const o = Math.max(0, Math.min(offset, source.length))
+	let line = 1
+	let lineStart = 0
+	for (let i = 0; i < o; i++) {
+		if (source.charCodeAt(i) === 10) {
+			line++
+			lineStart = i + 1
+		}
+	}
+	return { line, column: o - lineStart }
+}
 
 export function isSingleWrappedExpression(value: string): boolean {
 	const trimmed = value.trim()
@@ -118,7 +130,7 @@ export function parseElementAttributes(
 						const idx = diag.source.indexOf(needle)
 						if (idx >= 0) {
 							const { line, column } = lineColumnAtOffset(diag.source, idx)
-							throw new AeroCompileError({
+							throw new CompileError({
 								message: msg,
 								file: diag.file,
 								line,
@@ -127,7 +139,7 @@ export function parseElementAttributes(
 						}
 					}
 					if (diag?.file) {
-						throw new AeroCompileError({ message: msg, file: diag.file })
+						throw new CompileError({ message: msg, file: diag.file })
 					}
 					throw new Error(msg)
 				}
