@@ -32,6 +32,22 @@ const PROJECT_MARKERS: RegExp[] = [
 
 const cache = new Map<string, boolean>()
 
+/** True for file:// documents whose path ends in .html / .htm. */
+export function isHtmlTemplatePath(document: vscode.TextDocument): boolean {
+	if (document.uri.scheme !== 'file') return false
+	const p = document.uri.fsPath.toLowerCase()
+	return p.endsWith('.html') || p.endsWith('.htm')
+}
+
+/**
+ * Built-in HTML language, or misclassified plaintext (some restorations leave .html as plaintext briefly).
+ * Not `aero` — caller should skip switching when already aero.
+ */
+export function isSwitchableToAeroShell(document: vscode.TextDocument): boolean {
+	const id = document.languageId
+	return id === 'html' || (id === 'plaintext' && isHtmlTemplatePath(document))
+}
+
 /** Clear the "is Aero project" cache (e.g. when tsconfig changes). */
 export function clearScopeCache(): void {
 	cache.clear()
@@ -46,11 +62,17 @@ export function getScopeMode(): AeroScopeMode {
 	return 'auto'
 }
 
-/** True if document is considered an Aero template (used by providers/diagnostics). */
+/** True if document is considered an Aero template (used for providers/diagnostics). */
 export function isAeroDocument(document: vscode.TextDocument): boolean {
 	if (document.uri.scheme !== 'file') return false
 	if (document.languageId === 'aero') return true
-	if (document.languageId !== 'html') return false
+	if (document.languageId === 'html') {
+		// continue
+	} else if (document.languageId === 'plaintext' && isHtmlTemplatePath(document)) {
+		// continue — same as html until we switch to aero
+	} else {
+		return false
+	}
 
 	const mode = getScopeMode()
 	if (mode === 'always') return true
@@ -65,6 +87,19 @@ export function isAeroDocument(document: vscode.TextDocument): boolean {
 /** True if the file is inside a detected Aero project (exported for auto-language switching). */
 export function isInAeroProjectPath(filePath: string): boolean {
 	return isInAeroProject(filePath)
+}
+
+/**
+ * Whether to call setTextDocumentLanguage(html → aero). Aligns with isAeroDocument in auto mode
+ * (project or Aero markers), plus always/strict.
+ */
+export function shouldSwitchToAeroLanguage(document: vscode.TextDocument): boolean {
+	if (document.languageId === 'aero') return false
+	if (!isHtmlTemplatePath(document) || !isSwitchableToAeroShell(document)) return false
+	const mode = getScopeMode()
+	if (mode === 'always') return true
+	if (mode === 'strict') return isInAeroProject(document.uri.fsPath)
+	return isInAeroProject(document.uri.fsPath) || hasAeroMarkers(document.getText())
 }
 
 function hasAeroMarkers(text: string): boolean {

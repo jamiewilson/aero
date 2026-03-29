@@ -1,8 +1,31 @@
 import * as vscode from 'vscode'
-import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
+import {
+	iterateBuildScriptBindings,
+	type BuildScriptBinding,
+} from '@aero-js/compiler/build-scope-bindings'
 import { parseScriptBlocks } from '../script-tag'
-import { isInsideHtmlComment, maskJsComments } from './helpers'
+import { isInsideHtmlComment } from './helpers'
 import type { ScriptScope, VariableDefinition } from './types'
+
+function bindingToVariableDefinition(
+	document: vscode.TextDocument,
+	contentStart: number,
+	b: BuildScriptBinding
+): VariableDefinition {
+	const kind = b.kind === 'import' ? 'import' : 'declaration'
+	const def: VariableDefinition = {
+		name: b.name,
+		range: new vscode.Range(
+			document.positionAt(contentStart + b.start),
+			document.positionAt(contentStart + b.end)
+		),
+		kind,
+	}
+	if (b.properties && b.properties.size > 0) {
+		def.properties = new Set(b.properties)
+	}
+	return def
+}
 
 export function collectDefinedVariables(
 	document: vscode.TextDocument,
@@ -39,101 +62,8 @@ export function collectDefinedVariables(
 	for (const block of buildBlocks) {
 		const content = block.content
 		const contentStart = block.contentStart
-		const maskedContent = maskJsComments(content)
-
-		try {
-			const { imports: editorImports } = analyzeBuildScriptForEditor(content)
-			for (const imp of editorImports) {
-				const bindingRanges = imp.bindingRanges ?? {}
-				for (const [localName, range] of Object.entries(bindingRanges)) {
-					const [start, end] = range as [number, number]
-					setVar(localName, {
-						name: localName,
-						range: new vscode.Range(
-							document.positionAt(contentStart + start),
-							document.positionAt(contentStart + end)
-						),
-						kind: 'import',
-					})
-				}
-			}
-		} catch {
-			// Parse error in build script; skip imports for this block
-		}
-
-		const simpleDeclRegex =
-			/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s\[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
-		let declMatch: RegExpExecArray | null
-		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
-			const name = declMatch[1]
-			const initializer = declMatch[2]
-			const start = contentStart + declMatch.index + declMatch[0].indexOf(name)
-
-			const def: VariableDefinition = {
-				name,
-				range: new vscode.Range(
-					document.positionAt(start),
-					document.positionAt(start + name.length)
-				),
-				kind: 'declaration',
-			}
-
-			if (initializer) {
-				const properties = new Set<string>()
-				const keyRegex = /([A-Za-z_$][\w$]*)\s*:/g
-				let keyMatch: RegExpExecArray | null
-				while ((keyMatch = keyRegex.exec(initializer)) !== null) {
-					properties.add(keyMatch[1])
-				}
-				const shorthandRegex = /(?:\{|,)\s*([A-Za-z_$][\w$]*)\s*(?:,|\})/g
-				while ((keyMatch = shorthandRegex.exec(initializer)) !== null) {
-					properties.add(keyMatch[1])
-				}
-
-				if (properties.size > 0) {
-					def.properties = properties
-				}
-			}
-
-			setVar(name, def)
-		}
-
-		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
-		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
-			const body = declMatch[1]
-			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
-
-			const parts = body.split(',')
-			let currentOffset = 0
-			for (const part of parts) {
-				const trimmed = part.trim()
-				if (!trimmed) {
-					currentOffset += part.length + 1
-					continue
-				}
-
-				const colonIndex = trimmed.indexOf(':')
-				let localName = trimmed
-				if (colonIndex > -1) {
-					localName = trimmed.slice(colonIndex + 1).trim()
-				}
-
-				const partIndex = body.indexOf(part, currentOffset)
-				const localIndex = part.lastIndexOf(localName)
-				const absStart = bodyStart + partIndex + localIndex
-
-				if (localName) {
-					setVar(localName, {
-						name: localName,
-						range: new vscode.Range(
-							document.positionAt(absStart),
-							document.positionAt(absStart + localName.length)
-						),
-						kind: 'declaration',
-					})
-				}
-				currentOffset = partIndex + part.length
-			}
+		for (const b of iterateBuildScriptBindings(content)) {
+			setVar(b.name, bindingToVariableDefinition(document, contentStart, b))
 		}
 	}
 
@@ -159,7 +89,6 @@ export function collectVariablesByScope(
 		const content = block.content
 		const contentStart = block.contentStart
 		const rawAttrs = block.attrs
-		const maskedContent = maskJsComments(content)
 
 		if (scope === 'bundled') {
 			const propsRegex = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
@@ -185,99 +114,9 @@ export function collectVariablesByScope(
 			}
 		}
 
-		if (scope !== 'inline') {
-			try {
-				const { imports: editorImports } = analyzeBuildScriptForEditor(content)
-				for (const imp of editorImports) {
-					const bindingRanges = imp.bindingRanges ?? {}
-					for (const [localName, range] of Object.entries(bindingRanges)) {
-						const [start, end] = range as [number, number]
-						setVar(localName, {
-							name: localName,
-							range: new vscode.Range(
-								document.positionAt(contentStart + start),
-								document.positionAt(contentStart + end)
-							),
-							kind: 'import',
-						})
-					}
-				}
-			} catch {
-				// Parse error; skip imports for this block
-			}
-		}
-
-		const simpleDeclRegex = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]*?\})?/g
-		let declMatch: RegExpExecArray | null
-		while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
-			const name = declMatch[1]
-			const initializer = declMatch[2]
-			const start = contentStart + declMatch.index + declMatch[0].indexOf(name)
-
-			const def: VariableDefinition = {
-				name,
-				range: new vscode.Range(
-					document.positionAt(start),
-					document.positionAt(start + name.length)
-				),
-				kind: 'declaration',
-			}
-
-			if (initializer) {
-				const properties = new Set<string>()
-				const keyRegex = /([A-Za-z_$][\w$]*)\s*:/g
-				let keyMatch: RegExpExecArray | null
-				while ((keyMatch = keyRegex.exec(initializer)) !== null) {
-					properties.add(keyMatch[1])
-				}
-				const shorthandRegex = /(?:\{|,)\s*([A-Za-z_$][\w$]*)\s*(?:,|\})/g
-				while ((keyMatch = shorthandRegex.exec(initializer)) !== null) {
-					properties.add(keyMatch[1])
-				}
-				if (properties.size > 0) {
-					def.properties = properties
-				}
-			}
-
-			setVar(name, def)
-		}
-
-		const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
-		while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
-			const body = declMatch[1]
-			const bodyStart = contentStart + declMatch.index + declMatch[0].indexOf(body)
-
-			const parts = body.split(',')
-			let currentOffset = 0
-			for (const part of parts) {
-				const trimmed = part.trim()
-				if (!trimmed) {
-					currentOffset += part.length + 1
-					continue
-				}
-
-				const colonIndex = trimmed.indexOf(':')
-				let localName = trimmed
-				if (colonIndex > -1) {
-					localName = trimmed.slice(colonIndex + 1).trim()
-				}
-
-				const partIndex = body.indexOf(part, currentOffset)
-				const localIndex = part.lastIndexOf(localName)
-				const absStart = bodyStart + partIndex + localIndex
-
-				if (localName) {
-					setVar(localName, {
-						name: localName,
-						range: new vscode.Range(
-							document.positionAt(absStart),
-							document.positionAt(absStart + localName.length)
-						),
-						kind: 'declaration',
-					})
-				}
-				currentOffset = partIndex + part.length
-			}
+		const skipImports = scope === 'inline'
+		for (const b of iterateBuildScriptBindings(content, { skipImports })) {
+			setVar(b.name, bindingToVariableDefinition(document, contentStart, b))
 		}
 	}
 

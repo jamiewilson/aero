@@ -1,0 +1,43 @@
+import { describe, it, expect } from 'vitest'
+import { iterateBuildScriptBindings } from '../build-scope-bindings'
+
+describe('iterateBuildScriptBindings', () => {
+	it('yields imports then declarations in script order', () => {
+		const script = `import { foo } from 'm'
+const x = 1
+`
+		const bindings = [...iterateBuildScriptBindings(script)]
+		expect(bindings.map(b => [b.name, b.kind] as const)).toEqual([
+			['foo', 'import'],
+			['x', 'declaration'],
+		])
+	})
+
+	it('skips imports when skipImports is true', () => {
+		const script = `import { foo } from 'm'
+const x = 1
+`
+		const bindings = [...iterateBuildScriptBindings(script, { skipImports: true })]
+		expect(bindings.map(b => b.name)).toEqual(['x'])
+	})
+
+	it('collects destructured bindings and function names', () => {
+		const script = `const { title: t } = Aero.props
+function helper() {}
+`
+		const bindings = [...iterateBuildScriptBindings(script)]
+		const names = bindings.map(b => [b.name, b.kind] as const)
+		expect(names).toContainEqual(['t', 'declaration'])
+		expect(names).toContainEqual(['helper', 'function'])
+	})
+
+	it('records object literal keys on simple declarations', () => {
+		const script = `const o = { a: 1, b, c: 2 }`
+		const bindings = [...iterateBuildScriptBindings(script)]
+		const o = bindings.find(b => b.name === 'o')
+		expect(o?.properties).toBeDefined()
+		expect(o?.properties?.has('a')).toBe(true)
+		expect(o?.properties?.has('b')).toBe(true)
+		expect(o?.properties?.has('c')).toBe(true)
+	})
+})

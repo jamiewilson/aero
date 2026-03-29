@@ -34,6 +34,12 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 - **Cache invalidation**
   - Caches cleared when `tsconfig.json` changes or `aero.scopeMode` is updated.
 
+- **Emmet**
+  - The extension sets **emmet.includeLanguages** so `aero` files use the same Emmet Abbreviations as HTML (expand tags/snippets in templates).
+
+- **TypeScript in templates**
+  - **`<script is:build>`** defaults to TypeScript (with `Aero` build ambients). Use **`lang="js"`** or **`lang="javascript"`** for JavaScript-only build scripts. For **client**, **inline**, and **blocking** scripts, add **`lang="ts"`** / **`lang="typescript"`** when you want TypeScript (otherwise they stay JavaScript). Curly interpolations `{ ... }` use small TypeScript virtual fragments that include the same build-scoped bindings as `<script is:build>` so expressions type-check in the editor.
+
 ## Installation
 
 1. Open VS Code or Cursor.
@@ -67,5 +73,5 @@ In VS Code settings, search for **Aero**:
 - Entry: `src/extension.ts`
 - Build: `pnpm run build` (tsup, CJS, `dist/`)
 - Test: `pnpm test` (Vitest)
-- **Dependencies:** `@aero-js/core/editor`, `@aero-js/interpolation`, and **`@aero-js/diagnostics`** (`ide-catalog` only for doc URLs; no Effect in the client bundle beyond what core/editor already pulls). Only the `vscode` module is external; the build bundles workspace deps into `dist/`.
+- **Dependencies:** `@aero-js/core/editor`, `@aero-js/html-parser`, `@aero-js/interpolation`, and **`@aero-js/diagnostics`** (`ide-catalog` only for doc URLs; no Effect in the client bundle beyond what core/editor already pulls). Only the `vscode` module is external; the build bundles workspace deps into `dist/`.
 - **Publishing:** From the repo root, run `pnpm run vscode:package` to build and produce the `.vsix`. Or from the extension directory: `pnpm install`, `pnpm run build`, then `vsce package --no-dependencies`. Use `--no-dependencies` so vsce skips `npm list` (which fails in pnpm workspaces). The extension bundles deps into `dist/`; the `.vsix` contains only that and assets.

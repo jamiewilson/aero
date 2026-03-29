@@ -35,9 +35,16 @@ describe('aeroLanguagePlugin', () => {
 			expect(result).toBeInstanceOf(AeroVirtualCode)
 		})
 
-		it('returns undefined for non-aero language ID', () => {
+		it('creates AeroVirtualCode for html language ID on .html (editor often has not switched to aero yet)', () => {
 			const snapshot = createSnapshot('<div>test</div>')
 			const uri = URI.file('/project/test.html')
+			const result = aeroLanguagePlugin.createVirtualCode!(uri, 'html', snapshot, dummyCtx)
+			expect(result).toBeInstanceOf(AeroVirtualCode)
+		})
+
+		it('returns undefined for html language ID on non-.html paths', () => {
+			const snapshot = createSnapshot('<div>test</div>')
+			const uri = URI.file('/project/readme.md')
 			const result = aeroLanguagePlugin.createVirtualCode!(uri, 'html', snapshot, dummyCtx)
 			expect(result).toBeUndefined()
 		})

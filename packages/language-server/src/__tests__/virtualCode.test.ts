@@ -38,6 +38,26 @@ const { title } = Aero.props
 		expect(text).toContain('const { title } = Aero.props')
 	})
 
+	it('injects build-scope declare const bindings before template { } expression TS', () => {
+		const html = `<script is:build>
+const isHomepage = Aero.page.url.pathname === '/'
+const props = Aero.props as { x: number }
+</script>
+<div>{ isHomepage } { props.x }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const isHomepage: any;')
+		expect(expr0).toContain('declare const props: any;')
+		const expr0Body = ' isHomepage '
+		expect(expr0.indexOf('declare const isHomepage')).toBeLessThan(expr0.indexOf(expr0Body))
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const props: any;')
+		expect(expr1).toContain(' props.x ')
+		expect(expr1.indexOf('declare const props')).toBeLessThan(expr1.indexOf(' props.x '))
+	})
+
 	it('includes ambient preamble before build script content', () => {
 		const html = `<script is:build lang="ts">
 const x = 1
@@ -100,22 +120,38 @@ const theme = localStorage.getItem('theme')
 		expect(blocking!.languageId).toBe('typescript')
 	})
 
-	it('ignores inline scripts', () => {
+	it('extracts inline scripts as javascript when no lang', () => {
 		const html = `<script is:inline>
 alert('hello')
 </script>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
-		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('javascript')
+		expect(getEmbeddedText(code, 'inline_0')).toContain("alert('hello')")
 	})
 
-	it('ignores props scripts', () => {
+	it('extracts props scripts as embedded JS/TS like inline', () => {
 		const html = `<script props="{ storageKey }">
 const theme = JSON.parse(localStorage.getItem(storageKey))
 </script>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
-		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('javascript')
+	})
+
+	it('extracts inline script as typescript when lang="ts"', () => {
+		const html = `<script is:inline lang="ts">
+const x: number = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('typescript')
 	})
 
 	it('ignores external scripts', () => {
@@ -173,7 +209,7 @@ console.log('client 2')
 		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
 	})
 
-	it('extracts build script without lang="ts" as javascript', () => {
+	it('extracts build script without lang as typescript (default)', () => {
 		const html = `<script is:build>
 const x = 1
 </script>`
@@ -181,8 +217,33 @@ const x = 1
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const build = getEmbeddedById(code, 'build_0')
 		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('typescript')
+		const text = getEmbeddedText(code, 'build_0')!
+		expect(text).toContain('const x = 1')
+		expect(text).toContain('declare const Aero')
+	})
+
+	it('extracts build script with lang="js" as javascript', () => {
+		const html = `<script is:build lang="js">
+const x = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const build = getEmbeddedById(code, 'build_0')
+		expect(build).toBeDefined()
 		expect(build!.languageId).toBe('javascript')
-		expect(getEmbeddedText(code, 'build_0')).toContain('const x = 1')
+		expect(getEmbeddedText(code, 'build_0')).not.toContain('declare const Aero')
+	})
+
+	it('extracts build script with lang="javascript" as javascript', () => {
+		const html = `<script is:build lang="javascript">
+const x = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const build = getEmbeddedById(code, 'build_0')
+		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('javascript')
 		expect(getEmbeddedText(code, 'build_0')).not.toContain('declare const Aero')
 	})
 
@@ -206,6 +267,7 @@ const x = 1
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const build = getEmbeddedById(code, 'build_0')
 		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('typescript')
 		expect(getEmbeddedText(code, 'build_0')).toContain('const x = 1')
 	})
 
@@ -224,5 +286,26 @@ const x = 1
 		expect(code.mappings).toHaveLength(1)
 		expect(code.mappings[0].sourceOffsets[0]).toBe(0)
 		expect(code.mappings[0].lengths[0]).toBe(html.length)
+	})
+
+	it('extracts template { } interpolations as typescript virtual fragments', () => {
+		const html = `<h1>{ title }</h1>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr = getEmbeddedById(code, 'expr_0')
+		expect(expr).toBeDefined()
+		expect(expr!.languageId).toBe('typescript')
+		const text = getEmbeddedText(code, 'expr_0')!
+		expect(text).toContain('declare const Aero')
+		expect(text).toContain('title')
+	})
+
+	it('does not treat braces inside script bodies as template interpolations', () => {
+		const html = `<script is:build>
+const o = { a: 1 }
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		expect(getEmbeddedById(code, 'expr_0')).toBeUndefined()
 	})
 })

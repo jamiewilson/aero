@@ -134,13 +134,8 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 
 		const items: vscode.CompletionItem[] = []
 
-		// Scan client/components/ for component files
-		const componentsDir = path.join(resolver.root, 'client', 'components')
-		items.push(...this.scanDirForTags(componentsDir, 'component', prefix))
-
-		// Scan client/layouts/ for layout files
-		const layoutsDir = path.join(resolver.root, 'client', 'layouts')
-		items.push(...this.scanDirForTags(layoutsDir, 'layout', prefix))
+		items.push(...this.scanDirForTags(resolver.componentsDir, 'component', prefix))
+		items.push(...this.scanDirForTags(resolver.layoutsDir, 'layout', prefix))
 
 		return items
 	}

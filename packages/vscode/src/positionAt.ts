@@ -7,6 +7,7 @@
 import * as vscode from 'vscode'
 import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
+import { type Node, parseAeroHtmlDocument } from '@aero-js/html-parser'
 import { parseScriptBlocks } from './script-tag'
 
 /** Result of classifying a position: kind-specific data and range, or null. */
@@ -47,16 +48,12 @@ export function classifyPosition(
 	document: vscode.TextDocument,
 	position: vscode.Position
 ): PositionKind | null {
-	const line = document.lineAt(position.line)
-	const lineText = line.text
-	const offset = position.character
-
 	// 1. Check for import path or imported name (AST-based via core/editor)
 	const importResult = getImportAt(document, position)
 	if (importResult) return importResult
 
-	// 2. Check for <script src="..."> or <link href="...">
-	const assetResult = getAssetRefAt(lineText, position.line, offset)
+	// 2. Check for <script src="..."> or <link href="..."> (HTML parser — supports multiline tags)
+	const assetResult = getAssetRefAt(document, position)
 	if (assetResult) return assetResult
 
 	// 3. Check for component/layout tag name
@@ -129,41 +126,58 @@ function getImportAt(
 // Asset reference detection (<script src>, <link href>)
 // ---------------------------------------------------------------------------
 
-const SCRIPT_SRC_REGEX = /<script[^>]*?\bsrc\s*=\s*(['"])(.*?)\1/gi
-const LINK_HREF_REGEX = /<link[^>]*?\bhref\s*=\s*(['"])(.*?)\1/gi
+function attributeValueAtOffset(
+	sourceText: string,
+	node: Node,
+	offset: number,
+	attrName: string
+): { start: number; end: number; value: string } | null {
+	if (node.startTagEnd == null) return null
+	const open = sourceText.slice(node.start, node.startTagEnd)
+	const re = new RegExp(`\\b${attrName}\\s*=\\s*(['"])(.*?)\\1`, 'gis')
+	let m: RegExpExecArray | null
+	while ((m = re.exec(open)) !== null) {
+		const val = m[2]
+		const quote = m[1]
+		const valStartInMatch = m[0].indexOf(quote + val + quote) + 1
+		const valStart = node.start + m.index + valStartInMatch
+		const valEnd = valStart + val.length
+		if (offset >= valStart && offset <= valEnd) {
+			return { start: valStart, end: valEnd, value: val }
+		}
+	}
+	return null
+}
 
-function getAssetRefAt(lineText: string, lineNum: number, offset: number): PositionKind | null {
-	// Check <script src="...">
-	SCRIPT_SRC_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = SCRIPT_SRC_REGEX.exec(lineText)) !== null) {
-		const value = match[2]
-		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
-		const valueEnd = valueStart + value.length
-		if (offset >= valueStart && offset <= valueEnd) {
+function getAssetRefAt(document: vscode.TextDocument, position: vscode.Position): PositionKind | null {
+	const offset = document.offsetAt(position)
+	const text = document.getText()
+	const uri = document.uri.toString()
+	const htmlDoc = parseAeroHtmlDocument(text, uri)
+	const node = htmlDoc.findNodeAt(offset)
+	if (!node?.tag || node.startTagEnd == null) return null
+
+	const tag = node.tag.toLowerCase()
+	if (tag === 'script') {
+		const r = attributeValueAtOffset(text, node, offset, 'src')
+		if (r) {
 			return {
 				kind: 'script-src',
-				value,
-				range: new vscode.Range(lineNum, valueStart, lineNum, valueEnd),
+				value: r.value,
+				range: new vscode.Range(document.positionAt(r.start), document.positionAt(r.end)),
 			}
 		}
 	}
-
-	// Check <link href="...">
-	LINK_HREF_REGEX.lastIndex = 0
-	while ((match = LINK_HREF_REGEX.exec(lineText)) !== null) {
-		const value = match[2]
-		const valueStart = match.index + match[0].lastIndexOf(match[1] + value + match[1]) + 1
-		const valueEnd = valueStart + value.length
-		if (offset >= valueStart && offset <= valueEnd) {
+	if (tag === 'link') {
+		const r = attributeValueAtOffset(text, node, offset, 'href')
+		if (r) {
 			return {
 				kind: 'link-href',
-				value,
-				range: new vscode.Range(lineNum, valueStart, lineNum, valueEnd),
+				value: r.value,
+				range: new vscode.Range(document.positionAt(r.start), document.positionAt(r.end)),
 			}
 		}
 	}
-
 	return null
 }
 
@@ -171,40 +185,41 @@ function getAssetRefAt(lineText: string, lineNum: number, offset: number): Posit
 // Component/layout tag detection
 // ---------------------------------------------------------------------------
 
-const TAG_NAME_REGEX = /<\/?([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/gi
-
 function getComponentTagAt(
 	document: vscode.TextDocument,
 	position: vscode.Position
 ): PositionKind | null {
-	const lineText = document.lineAt(position.line).text
-	const offset = position.character
+	const offset = document.offsetAt(position)
+	const text = document.getText()
+	const uri = document.uri.toString()
+	const htmlDoc = parseAeroHtmlDocument(text, uri)
+	const node = htmlDoc.findNodeAt(offset)
+	if (!node?.tag || node.startTagEnd == null) return null
 
-	TAG_NAME_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = TAG_NAME_REGEX.exec(lineText)) !== null) {
-		const tagName = match[1]
-		// Calculate position of the tag name (after </ or <)
-		const tagNameStart = match.index + match[0].length - tagName.length
-		const tagNameEnd = tagNameStart + tagName.length
+	const tl = node.tag.toLowerCase()
+	if (tl === 'script' || tl === 'style') return null
 
-		if (offset >= tagNameStart && offset <= tagNameEnd) {
-			const suffixMatch = COMPONENT_SUFFIX_REGEX.exec(tagName)
-			if (suffixMatch) {
-				const suffix = suffixMatch[1] as 'component' | 'layout'
-				const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
-				return {
-					kind: 'component-tag',
-					tagName,
-					baseName,
-					suffix,
-					range: new vscode.Range(position.line, tagNameStart, position.line, tagNameEnd),
-				}
-			}
-		}
+	const open = text.slice(node.start, node.startTagEnd)
+	const nameMatch = open.match(/^<\s*\/?\s*([a-zA-Z][\w-]*)/)
+	if (!nameMatch) return null
+	const tagName = nameMatch[1]
+	const suffixMatch = COMPONENT_SUFFIX_REGEX.exec(tagName)
+	if (!suffixMatch) return null
+
+	const nameStartInOpen = nameMatch.index! + nameMatch[0].length - tagName.length
+	const nameAbsStart = node.start + nameStartInOpen
+	const nameAbsEnd = nameAbsStart + tagName.length
+	if (offset < nameAbsStart || offset > nameAbsEnd) return null
+
+	const suffix = suffixMatch[1] as 'component' | 'layout'
+	const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
+	return {
+		kind: 'component-tag',
+		tagName,
+		baseName,
+		suffix,
+		range: new vscode.Range(document.positionAt(nameAbsStart), document.positionAt(nameAbsEnd)),
 	}
-
-	return null
 }
 
 // ---------------------------------------------------------------------------

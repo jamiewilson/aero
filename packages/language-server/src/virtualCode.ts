@@ -5,7 +5,17 @@ import type {
 	CodeMapping,
 } from '@volar/language-core'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { parseHTMLDocument, type HTMLDocument, type Node } from './htmlParser'
+import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import {
+	parseMinimalHtmlDocument,
+	walkHtmlNodes,
+	type HTMLDocument,
+	type Node,
+} from '@aero-js/html-parser'
+import {
+	collectBuildScopeBindingNames,
+	formatBuildBindingAmbientBlock,
+} from '@aero-js/compiler/build-scope-bindings'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
@@ -58,13 +68,25 @@ function getScriptType(
 	return 'client'
 }
 
-/** True if script has lang="ts" or lang="typescript" (required for TypeScript extraction). */
+/** True if script has lang="ts" or lang="typescript". */
 function hasLangTs(node: Node, sourceText: string): boolean {
 	if (node.startTagEnd == null) return false
 	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
 	if (tagStart === -1) return false
 	const openTag = sourceText.substring(tagStart, node.startTagEnd)
 	return /\blang\s*=\s*["'](ts|typescript)["']/i.test(openTag)
+}
+
+/**
+ * True if script opts into JavaScript with lang="js" or lang="javascript".
+ * For `<script is:build>`, this opts out of the default TypeScript tooling (compiler still accepts JS via oxc).
+ */
+function hasLangJs(node: Node, sourceText: string): boolean {
+	if (node.startTagEnd == null) return false
+	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
+	if (tagStart === -1) return false
+	const openTag = sourceText.substring(tagStart, node.startTagEnd)
+	return /\blang\s*=\s*["'](js|javascript)["']/i.test(openTag)
 }
 
 /** True if script has type="importmap" (JSON, not JS/TS). */
@@ -84,18 +106,12 @@ function createSnapshot(text: string): IScriptSnapshot {
 	}
 }
 
-/**
- * Walks all nodes in the HTML document tree, yielding each one.
- * The vscode-html-languageservice parser only exposes `roots` and `children`,
- * so we recursively traverse to find nested script/style tags.
- */
-function* walkNodes(nodes: Node[]): Generator<Node> {
-	for (const node of nodes) {
-		yield node
-		if (node.children) {
-			yield* walkNodes(node.children)
-		}
-	}
+/** Mask inner text of script/style so `{` in JS/CSS does not become fake template interpolations. */
+function maskScriptAndStyleInner(sourceText: string): string {
+	return sourceText.replace(
+		/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi,
+		(match, _tag: string, inner: string) => match.replace(inner, ' '.repeat(inner.length))
+	)
 }
 
 export class AeroVirtualCode implements VirtualCode {
@@ -124,9 +140,20 @@ export class AeroVirtualCode implements VirtualCode {
 
 		const sourceText = snapshot.getText(0, snapshot.getLength())
 		const doc = TextDocument.create('', 'html', 0, sourceText)
-		this.htmlDocument = parseHTMLDocument(doc)
+		this.htmlDocument = parseMinimalHtmlDocument(doc)
+
+		const buildScriptBodies: string[] = []
+		for (const node of walkHtmlNodes(this.htmlDocument.roots)) {
+			if (getScriptType(node, sourceText) !== 'build') continue
+			if (node.startTagEnd == null || node.endTagStart == null) continue
+			const body = sourceText.substring(node.startTagEnd, node.endTagStart)
+			if (body.trim()) buildScriptBodies.push(body)
+		}
+		const buildBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
+
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
+			...this.extractInterpolationVirtualCodes(sourceText, buildBindingNames),
 			{
 				id: 'ambient',
 				languageId: 'typescriptdeclaration',
@@ -137,6 +164,41 @@ export class AeroVirtualCode implements VirtualCode {
 		]
 	}
 
+	private extractInterpolationVirtualCodes(
+		sourceText: string,
+		buildBindingNames: ReadonlySet<string>
+	): VirtualCode[] {
+		const binderDecl = formatBuildBindingAmbientBlock(buildBindingNames)
+		const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length
+		const masked = maskScriptAndStyleInner(sourceText)
+		const out: VirtualCode[] = []
+		let exprIdx = 0
+
+		for (const seg of tokenizeCurlyInterpolation(masked)) {
+			if (seg.kind !== 'interpolation') continue
+			const expr = seg.expression
+			if (!expr.trim()) continue
+
+			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + expr
+			out.push({
+				id: `expr_${exprIdx++}`,
+				languageId: 'typescript',
+				snapshot: createSnapshot(virtualText),
+				mappings: [
+					{
+						sourceOffsets: [seg.start + 1],
+						generatedOffsets: [exprOffsetInVirtual],
+						lengths: [expr.length],
+						data: BUILD_SCRIPT_FEATURES,
+					},
+				],
+				embeddedCodes: [],
+			})
+		}
+
+		return out
+	}
+
 	private *extractEmbeddedCodes(
 		snapshot: IScriptSnapshot,
 		sourceText: string
@@ -144,9 +206,10 @@ export class AeroVirtualCode implements VirtualCode {
 		let buildIdx = 0
 		let clientIdx = 0
 		let blockingIdx = 0
+		let inlineIdx = 0
 		let styleIdx = 0
 
-		for (const node of walkNodes(this.htmlDocument.roots)) {
+		for (const node of walkHtmlNodes(this.htmlDocument.roots)) {
 			if (node.tag === 'style' && node.startTagEnd != null && node.endTagStart != null) {
 				const styleText = sourceText.substring(node.startTagEnd, node.endTagStart)
 				yield {
@@ -167,13 +230,7 @@ export class AeroVirtualCode implements VirtualCode {
 			}
 
 			const scriptType = getScriptType(node, sourceText)
-			if (
-				!scriptType ||
-				scriptType === 'external' ||
-				scriptType === 'inline' ||
-				scriptType === 'importmap'
-			)
-				continue
+			if (!scriptType || scriptType === 'external' || scriptType === 'importmap') continue
 			if (node.startTagEnd == null || node.endTagStart == null) continue
 
 			const scriptContent = sourceText.substring(node.startTagEnd, node.endTagStart)
@@ -182,7 +239,9 @@ export class AeroVirtualCode implements VirtualCode {
 			const isTs = hasLangTs(node, sourceText)
 
 			if (scriptType === 'build') {
-				if (isTs) {
+				// Build scripts default to TS + preamble; `lang="js"` / `javascript` opts into JS only.
+				const useTypeScript = !hasLangJs(node, sourceText)
+				if (useTypeScript) {
 					const virtualText = BUILD_SCRIPT_PREAMBLE + scriptContent
 					yield {
 						id: `build_${buildIdx++}`,
@@ -213,6 +272,21 @@ export class AeroVirtualCode implements VirtualCode {
 						],
 						embeddedCodes: [],
 					}
+				}
+			} else if (scriptType === 'inline') {
+				yield {
+					id: `inline_${inlineIdx++}`,
+					languageId: isTs ? 'typescript' : 'javascript',
+					snapshot: createSnapshot(scriptContent),
+					mappings: [
+						{
+							sourceOffsets: [node.startTagEnd],
+							generatedOffsets: [0],
+							lengths: [scriptContent.length],
+							data: FULL_FEATURES,
+						},
+					],
+					embeddedCodes: [],
 				}
 			} else if (scriptType === 'client') {
 				yield {

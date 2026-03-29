@@ -1,7 +1,7 @@
 {
 	"scopeName": "text.html.aero",
 	"name": "Aero HTML",
-	"comment": "Extends HTML with script highlighting. Scripts with lang=\"ts\" or lang=\"typescript\" use TypeScript; others use JavaScript. Matches language-server extraction.",
+	"comment": "Extends HTML with script highlighting. Lang ts/typescript → TS; importmap → JSON; is:build (no lang=js) → TS (default); other scripts → JS. Matches language-server virtualCode.",
 	"patterns": [
 		{ "include": "#aero-script" },
 		{
@@ -92,7 +92,41 @@
 					]
 				},
 				{
-					"comment": "Script without lang=\"ts\" → JavaScript",
+					"comment": "Build script without lang=\"js\" → TypeScript (is:build defaults to TS; lang=\"js\" opts out)",
+					"name": "meta.embedded.block.ts.aero",
+					"begin": "(?i)(<)(script)\\b(?=[^>]*\\bis:build\\b)(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\blang\\s*=\\s*[\"'](?:js|javascript)[\"'])",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" }
+					},
+					"end": "(?i)(</)(script)\\s*(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "entity.name.tag.html" },
+						"3": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"patterns": [
+						{
+							"comment": "Opening tag attributes",
+							"begin": "\\G",
+							"end": "(>)",
+							"endCaptures": {
+								"1": { "name": "punctuation.definition.tag.end.html" }
+							},
+							"name": "meta.tag.metadata.script.start.html",
+							"patterns": [{ "include": "text.html.basic#attribute" }]
+						},
+						{
+							"comment": "Build script body as TypeScript",
+							"begin": "(?!\\G)",
+							"end": "(?=</(?i:script))",
+							"contentName": "source.ts",
+							"patterns": [{ "include": "source.ts" }]
+						}
+					]
+				},
+				{
+					"comment": "Script without lang=\"ts\" and not is:build → JavaScript",
 					"name": "meta.embedded.block.js.aero",
 					"begin": "(?i)(<)(script)\\b(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\btype\\s*=\\s*[\"']importmap[\"'])",
 					"beginCaptures": {

@@ -14,8 +14,9 @@ export const CONTENT_GLOBALS: Record<string, string> = {
 	theme: '@content/theme',
 }
 
-/** Document selector for Aero-relevant files (html and aero language IDs, scheme: file). */
+/** Document selector for Aero-relevant files (html / aero, and .html opened as plaintext). */
 export const HTML_SELECTOR: vscode.DocumentSelector = [
 	{ language: 'html', scheme: 'file' },
 	{ language: 'aero', scheme: 'file' },
+	{ language: 'plaintext', scheme: 'file', pattern: '**/*.{html,htm}' },
 ]
