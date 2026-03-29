@@ -1,6 +1,6 @@
 /**
  * Unit tests for the Aero VS Code analyzer (analyzer.ts): template references (components,
- * attributes), defined variables (imports), template scopes (data-each), and variables by scope
+ * attributes), defined variables (imports), template scopes (data-for), and variables by scope
  * (e.g. props/data-props in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
  */
 
@@ -198,67 +198,66 @@ const meta: MetaProps = { title: 'x' }
 	})
 })
 
-/** data-each / each scopes: item name and source expression; nested loops return inner-first. */
+/** for / data-for scopes: binding names and iterable expression; nested loops return inner-first. */
 describe('collectTemplateScopes', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
 	} as any
 
-	it('should parse data-each attribute', () => {
+	it('should parse data-for attribute', () => {
 		const text = `
 <ul>
-	<li data-each="{ item in items }">{item.name}</li>
+	<li data-for="{ const item of items }">{item.name}</li>
 </ul>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)
 
 		expect(scopes).toHaveLength(1)
-		expect(scopes[0].itemName).toBe('item')
+		expect(scopes[0].bindingNames).toContain('item')
 		expect(scopes[0].sourceExpr).toBe('items')
 	})
 
-	it('should parse shorthand each attribute', () => {
+	it('should parse shorthand for attribute', () => {
 		const text = `
 <ul>
-	<li each="{ user in users }">{user.name}</li>
+	<li for="{ const user of users }">{user.name}</li>
 </ul>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)
 
 		expect(scopes).toHaveLength(1)
-		expect(scopes[0].itemName).toBe('user')
+		expect(scopes[0].bindingNames).toContain('user')
 		expect(scopes[0].sourceExpr).toBe('users')
 	})
 
-	it('should handle nested data-each scopes', () => {
+	it('should handle nested data-for scopes', () => {
 		const text = `
-<div data-each="{ category in categories }">
-	<span data-each="{ item in category.items }">{item.name}</span>
+<div data-for="{ const category of categories }">
+	<span data-for="{ const item of category.items }">{item.name}</span>
 </div>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)
 
 		expect(scopes).toHaveLength(2)
 		// Scopes are returned in closing order (inner first, then outer)
-		expect(scopes[0].itemName).toBe('item')
-		expect(scopes[1].itemName).toBe('category')
+		expect(scopes[0].bindingNames).toContain('item')
+		expect(scopes[1].bindingNames).toContain('category')
 	})
 
-	it('should parse each with index variable (item, index in items)', () => {
+	it('should parse destructuring binding names', () => {
 		const text = `
 <ul>
-	<li each="{ item, idx in items }">{item.name}</li>
+	<li for="{ const { name, id } of users }">{name}</li>
 </ul>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)
 
 		expect(scopes).toHaveLength(1)
-		expect(scopes[0].itemName).toBe('item')
-		expect(scopes[0].indexName).toBe('idx')
-		expect(scopes[0].sourceExpr).toBe('items')
+		expect(scopes[0].bindingNames.sort()).toEqual(['id', 'name'])
+		expect(scopes[0].sourceExpr).toBe('users')
 	})
 
-	it('should return empty array for no data-each', () => {
+	it('should return empty array for no for loop', () => {
 		const text = `
 <div>No loop here</div>
 `

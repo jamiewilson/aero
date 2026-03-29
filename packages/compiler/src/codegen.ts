@@ -4,7 +4,7 @@
  * @remarks
  * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
  * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
- * to lower to IR (elements, components, slots, data-each, data-if/else-if/else, script/style props),
+ * to lower to IR (elements, components, slots, data-for, data-if/else-if/else, script/style props),
  * then a single emitter turns IR → JS. Output is a string of JavaScript (default async render function,
  * optionally preceded by getStaticPaths export).
  */

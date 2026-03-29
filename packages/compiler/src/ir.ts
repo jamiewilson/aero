@@ -25,11 +25,12 @@ export interface IRAppend {
 	outVar?: string
 }
 
-/** Loop: for (const item of items) { body }. Optionally includes index variable. */
+/** Loop: `for (const binding of iterable)` with injected index/first/last/length in body. */
 export interface IRFor {
 	kind: 'For'
-	item: string
-	index?: string
+	/** Binding pattern source (e.g. `item`, `{ name, id }`). */
+	binding: string
+	/** Iterable expression source. */
 	items: string
 	body: IRNode[]
 }

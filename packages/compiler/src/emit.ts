@@ -11,12 +11,23 @@ import * as Helper from './helpers'
 
 const DEFAULT_OUT = '__out'
 
-function emitLoopMetadata(item: string, index: string, items: string): string {
-	return `const ${item} = ${items}[${index}];
-const first = ${index} === 0;
-const last = ${index} === ${items}.length - 1;
-const length = ${items}.length;
-`
+function emitForLoopBlock(binding: string, iterable: string, body: IRNode[], outVar: string): string {
+	const uid = Math.random().toString(36).slice(2, 10)
+	const iterVar = `__aeroIter_${uid}`
+	const iVar = `__aeroI_${uid}`
+	return (
+		`{\n` +
+		`const ${iterVar} = (${iterable});\n` +
+		`const length = ${iterVar}.length;\n` +
+		`let ${iVar} = 0;\n` +
+		`for (const ${binding} of ${iterVar}) {\n` +
+		`const index = ${iVar}++;\n` +
+		`const first = index === 0;\n` +
+		`const last = index === length - 1;\n` +
+		emitToJS(body, outVar) +
+		`}\n` +
+		`}\n`
+	)
 }
 
 function outVarFor(node: IRNode, defaultVar: string): string {
@@ -52,15 +63,8 @@ function emitNode(node: IRNode, outVar: string): string {
 	switch (node.kind) {
 		case 'Append':
 			return Helper.emitAppend(node.content, outVarFor(node, outVar))
-		case 'For': {
-			const loopMeta = node.index ? emitLoopMetadata(node.item, node.index, node.items) : ''
-			return (
-				Helper.emitForOf(node.item, node.items, node.index) +
-				loopMeta +
-				emitToJS(node.body, outVar) +
-				Helper.emitEnd()
-			)
-		}
+		case 'For':
+			return emitForLoopBlock(node.binding, node.items, node.body, outVar)
 		case 'If': {
 			let code = Helper.emitIf(node.condition) + emitToJS(node.body, outVar)
 			if (node.elseIf?.length) {

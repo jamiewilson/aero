@@ -5,8 +5,8 @@
 
 <footer>
 	<ul>
-		<li each="{ link, index in links }" class="{ first ? 'is-first' : '' }">
-			<a href="{ link.path }">{ link.label }</a>
+		<li for="{ const { path, label } of links }">
+			<a href="{ path }">{ label }</a>
 		</li>
 	</ul>
 

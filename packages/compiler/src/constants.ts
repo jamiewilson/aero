@@ -2,18 +2,18 @@
  * Shared constants for the Aero compiler (parser, codegen, helpers).
  *
  * @remarks
- * Attribute names are used with optional `data-` prefix (e.g. `data-each`). Script taxonomy uses
+ * Attribute names are used with optional `data-` prefix (e.g. `data-for`). Script taxonomy uses
  * `is:build`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
  * When changing script taxonomy (is:build, is:inline, etc.), update all consumers per
  * _reference/script-taxonomy-sync.md.
  */
 
-/** Prefix for data attributes (e.g. `data-each` → ATTR_PREFIX + ATTR_EACH). */
+/** Prefix for data attributes (e.g. `data-for` → ATTR_PREFIX + ATTR_FOR). */
 export const ATTR_PREFIX = 'data-'
 /** Attribute for spreading props onto a component: `data-props` or `data-props="{ ... }"`. */
 export const ATTR_PROPS = 'props'
-/** Attribute for iteration: `data-each="{ item in items }"`. */
-export const ATTR_EACH = 'each'
+/** Attribute for iteration: `data-for="{ const item of items }"`. */
+export const ATTR_FOR = 'for'
 export const ATTR_IF = 'if'
 export const ATTR_ELSE_IF = 'else-if'
 export const ATTR_ELSE = 'else'
@@ -33,8 +33,6 @@ export const TAG_SLOT = 'slot'
 /** Default slot name when no name is given. */
 export const SLOT_NAME_DEFAULT = 'default'
 
-/** Matches `item in items` or `item, index in items` for data-each (captures: loop variable, optional index, iterable expression). */
-export const EACH_REGEX = /^(\w+)(?:,\s*(\w+))?\s+in\s+(.+)$/
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
 /** Self-closing tag: `<tag ... />`. */

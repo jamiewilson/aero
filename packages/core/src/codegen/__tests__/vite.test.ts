@@ -248,15 +248,15 @@ describe('Vite Plugin Integration', () => {
 	const items = ['a', 'b'];
 </script>
 <ul>
-	<li each="item in items">{ item }</li>
+	<li for="item of items">{ item }</li>
 </ul>`
-		const id = path.join(process.cwd(), 'client/pages/bad-each.html')
+		const id = path.join(process.cwd(), 'client/pages/bad-for.html')
 		expect(() => transformPlugin.transform.call(pluginCtx, html, id)).toThrow()
 		type ViteErr = { message: string; loc?: { line: number; column: number } }
 		const recorded = viteErrorRef.current as ViteErr | null
 		expect(recorded).not.toBeNull()
 		expect(recorded!.message).toContain('[AERO_COMPILE]')
-		expect(recorded!.message).toMatch(/each|brace/i)
+		expect(recorded!.message).toMatch(/for|brace|const/i)
 		expect(recorded!.loc).toMatchObject({
 			file: id,
 			line: 5,

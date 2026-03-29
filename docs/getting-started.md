@@ -185,7 +185,7 @@ Use it in any template or component:
 
 <title>{ site.meta.title }</title>
 <nav>
-	<a each="{ link in site.nav }" href="{ link.path }">{ link.label }</a>
+	<a data-for="{ const link of site.nav }" href="{ link.path }">{ link.label }</a>
 </nav>
 ```
 
@@ -269,11 +269,11 @@ Vite handles CSS bundling, autoprefixing, and minification automatically.
 
 ### Loops
 
-Use `each` to iterate:
+Use `for` / `data-for` with a for…of head:
 
 ```html
 <ul>
-	<li each="{ item in items }">{ item.name }</li>
+	<li data-for="{ const item of items }">{ item.name }</li>
 </ul>
 ```
 

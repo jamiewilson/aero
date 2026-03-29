@@ -50,7 +50,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 - **Single-file components** — HTML + optional `<script is:build>`, `<script>`, `<style>`.
 - **Props** — Attributes or `props`; read via `Aero.props`. [props.md](props.md)
-- **Conditionals and loops** — `if` / `else-if` / `else`, `each` with `{ }` expressions.
+- **Conditionals and loops** — `if` / `else-if` / `else`, `for` / `data-for` with `{ }` expressions.
 - **Scoped styling** — Native CSS (e.g. `@scope`) in `<style>` blocks.
 
 ### Scripts and data

@@ -105,7 +105,7 @@ export function compileAttributeInterpolation(text: string): string {
 		.join('')
 }
 
-/** True if `name` equals `attr` or `prefix + attr` (e.g. `each` or `data-each`). */
+/** True if `name` equals `attr` or `prefix + attr` (e.g. `for` or `data-for`). */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
 }
@@ -282,14 +282,6 @@ export function emitElse(): string {
 /** Emit `}`. */
 export function emitEnd(): string {
 	return `}\n`
-}
-
-/** Emit `for (const item of items) {` with optional index variable. */
-export function emitForOf(item: string, items: string, index?: string): string {
-	if (index) {
-		return `for (const [${index}, ${item}] of ${items}.entries()) {\n`
-	}
-	return `for (const ${item} of ${items}) {\n`
 }
 
 /** Emit `outVar += slots['name'] ?? \`defaultContent\`;` (default `outVar` is `__out`). */

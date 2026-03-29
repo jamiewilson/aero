@@ -9,13 +9,10 @@ export type VariableDefinition = {
 	properties?: Set<string>
 }
 
-/** Scope introduced by a data-each attribute. */
+/** Scope introduced by a `for` / `data-for` attribute (`const … of …`). */
 export type TemplateScope = {
-	itemName: string
-	itemRange: vscode.Range
-	/** Present when using `{ item, index in items }`; enables loop metadata (`first`, `last`, `length`). */
-	indexName?: string
-	indexRange?: vscode.Range
+	/** Bound names from the loop pattern (identifiers only; from compiler helper). */
+	bindingNames: string[]
 	sourceExpr: string
 	sourceRoot: string
 	sourceRange: vscode.Range

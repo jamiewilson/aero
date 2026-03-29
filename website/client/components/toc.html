@@ -6,7 +6,7 @@
 	<div class="sticky">
 		<a class="title" href="#top">Table of Contents</a>
 		<ul class="toc">
-			<li each="{ item in site.toc }">
+			<li data-for="{ const item of site.toc }">
 				<a class="link" href="{ item.href }" data-toc-link>{ item.label }</a>
 			</li>
 		</ul>

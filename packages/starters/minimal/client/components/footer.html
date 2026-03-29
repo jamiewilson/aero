@@ -5,7 +5,7 @@
 
 <footer>
 	<ul>
-		<li each="{ link in links }">
+		<li data-for="{ const link of links }">
 			<a href="{ link.path }">{ link.label }</a>
 		</li>
 	</ul>

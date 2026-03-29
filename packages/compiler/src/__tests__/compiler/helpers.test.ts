@@ -20,7 +20,6 @@ import {
 	emitElseIf,
 	emitElse,
 	emitEnd,
-	emitForOf,
 	emitSlotOutput,
 	RENDER_INTERNAL_CONTEXT_KEYS,
 	getRenderComponentContextArg,
@@ -77,7 +76,7 @@ describe('isAttr', () => {
 
 	it('should match prefixed attribute name', () => {
 		expect(isAttr('data-if', 'if', 'data-')).toBe(true)
-		expect(isAttr('data-each', 'each', 'data-')).toBe(true)
+		expect(isAttr('data-for', 'for', 'data-')).toBe(true)
 	})
 
 	it('should not match unrelated attributes', () => {
@@ -220,12 +219,6 @@ describe('emitElse', () => {
 describe('emitEnd', () => {
 	it('should emit closing brace', () => {
 		expect(emitEnd()).toBe('}\n')
-	})
-})
-
-describe('emitForOf', () => {
-	it('should emit for-of statement', () => {
-		expect(emitForOf('item', 'items')).toBe('for (const item of items) {\n')
 	})
 })
 

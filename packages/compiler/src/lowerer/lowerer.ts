@@ -1,5 +1,5 @@
 /**
- * Walks linkedom DOM and lowers to IR (elements, components, slots, each, if/else chains).
+ * Walks linkedom DOM and lowers to IR (elements, components, slots, for, if/else chains).
  */
 
 import type { IRNode } from '../ir'
@@ -167,8 +167,7 @@ export class Lowerer {
 			return [
 				{
 					kind: 'For',
-					item: loopData.item,
-					index: loopData.index,
+					binding: loopData.binding,
 					items: loopData.items,
 					body: inner,
 				},

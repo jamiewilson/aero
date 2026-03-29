@@ -154,8 +154,8 @@ function getAttributeKeysFromTag(attrs: string): string[] {
 		'data-if',
 		'else-if',
 		'data-else-if',
-		'each',
-		'data-each',
+		'for',
+		'data-for',
 		'slot',
 		'data-slot',
 	])

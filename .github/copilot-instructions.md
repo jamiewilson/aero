@@ -79,4 +79,4 @@ Run app dev/build/preview from **examples/kitchen-sink** or **packages/templates
 
 - Virtual client scripts use `/@aero/client/` prefix; plugin uses `\0` for Vite virtual modules
 - Slot passthrough: both `name` and `slot` on `<slot>` elements
-- `each` for loops: `<li each="{ item in items }">{ item.name }</li>` (or `data-each`)
+- `for` / `data-for` loops: `<li data-for="{ const item of items }">{ item.name }</li>`

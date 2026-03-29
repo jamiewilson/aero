@@ -38,7 +38,7 @@ Script blocks are classified by attributes (see [docs/script-taxonomy.md](https:
 
 - Parses templates and extracts `<script is:build>`, client (plain `<script>`), `<script is:inline>`, and `<script is:blocking>` blocks.
 - Lowers template DOM to an **IR** (intermediate representation), then emits a single async render function with `{ }` interpolation.
-- Supports components, slots, `each`, `if` / `else-if` / `else`, and `props` on scripts and styles.
+- Supports components, slots, `for` / `data-for`, `if` / `else-if` / `else`, and `props` on scripts and styles.
 
 **Example**
 

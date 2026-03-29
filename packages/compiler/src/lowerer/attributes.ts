@@ -1,5 +1,5 @@
 /**
- * Parse element and component DOM attributes for the lowerer (each, props, interpolation).
+ * Parse element and component DOM attributes for the lowerer (for, props, interpolation).
  */
 
 import * as CONST from '../constants'
@@ -7,6 +7,7 @@ import * as Helper from '../helpers'
 import { isDirectiveAttr } from '../directive-attributes'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
+import { parseForDirective, type ParsedForDirective } from '../for-directive'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
@@ -51,7 +52,7 @@ export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedCo
 	if (node.attributes) {
 		for (let i = 0; i < node.attributes.length; i++) {
 			const attr = node.attributes[i]
-			if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) continue
+			if (Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
@@ -97,20 +98,20 @@ export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedCo
 	return { propsString }
 }
 
-/** Parses element attributes, extracting data-each and building the attribute string */
+/** Parses element attributes, extracting data-for and building the attribute string */
 export function parseElementAttributes(
 	resolver: Resolver,
 	diag: LowererDiag,
 	node: any
 ): ParsedElementAttrs {
 	const attributes: string[] = []
-	let loopData: { item: string; index?: string; items: string } | null = null
+	let loopData: { binding: string; items: string } | null = null
 	let passDataExpr: string | null = null
 
 	if (node.attributes) {
 		for (let i = 0; i < node.attributes.length; i++) {
 			const attr = node.attributes[i]
-			if (Helper.isAttr(attr.name, CONST.ATTR_EACH, CONST.ATTR_PREFIX)) {
+			if (Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) {
 				const tagName = node?.tagName?.toLowerCase?.() || 'element'
 				const needle = `${attr.name}="${attr.value ?? ''}"`
 				const content = Helper.stripBraces(
@@ -122,10 +123,14 @@ export function parseElementAttributes(
 						positionNeedle: diag ? needle : undefined,
 					})
 				)
-				const match = content.match(CONST.EACH_REGEX)
-				if (!match) {
-					const tagNameInner = node?.tagName?.toLowerCase?.() || 'element'
-					const msg = `Directive \`${attr.name}\` on <${tagNameInner}> must match "{ item in items }" or "{ item, index in items }".`
+				let parsed: ParsedForDirective
+				try {
+					parsed = parseForDirective(content)
+				} catch (e) {
+					const msg =
+						e instanceof Error
+							? e.message
+							: `Directive \`${attr.name}\` on <${node?.tagName?.toLowerCase?.() || 'element'}> must be a valid for…of head: const … of …`
 					if (diag?.source && needle.length > 0) {
 						const idx = diag.source.indexOf(needle)
 						if (idx >= 0) {
@@ -143,7 +148,7 @@ export function parseElementAttributes(
 					}
 					throw new Error(msg)
 				}
-				loopData = { item: match[1], index: match[2], items: match[3] }
+				loopData = { binding: parsed.binding, items: parsed.iterable }
 				continue
 			}
 
