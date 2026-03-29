@@ -107,18 +107,6 @@ function resolveExpressionIdentifierDefinition(
 
 	const currentScope = findInnermostScope(scopes, offset)
 	if (currentScope) {
-		if (identifier === currentScope.itemName) {
-			return [makeDocumentLink(originRange, document.uri, currentScope.itemRange)]
-		}
-
-		if (
-			currentScope.indexName &&
-			identifier === currentScope.indexName &&
-			currentScope.indexRange
-		) {
-			return [makeDocumentLink(originRange, document.uri, currentScope.indexRange)]
-		}
-
 		if (identifier === currentScope.sourceRoot) {
 			const sourceDef = buildVars.get(currentScope.sourceRoot)
 			if (sourceDef) {
@@ -128,7 +116,11 @@ function resolveExpressionIdentifierDefinition(
 		}
 
 		const chain = getDotChainAt(document.lineAt(position.line).text, position.character)
-		if (chain && chain.segments.length >= 2 && chain.segments[0] === currentScope.itemName) {
+		if (
+			chain &&
+			chain.segments.length >= 2 &&
+			currentScope.bindingNames.includes(chain.segments[0])
+		) {
 			const contentRef = resolveContentRefFromExpression(currentScope.sourceExpr, buildVars)
 			if (contentRef) {
 				const resolved = resolver?.resolve(contentRef.alias, document.uri.fsPath)

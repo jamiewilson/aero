@@ -19,7 +19,7 @@ const CONFIG_SCOPE_MODE = 'scopeMode'
 const AERO_MARKERS = [
 	/<script\b[^>]*\bis:(?:build|inline|blocking)\b/i,
 	/<[a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout)\b/i,
-	/\bdata-(?:if|else-if|else|each|props)\b/,
+	/\bdata-(?:if|else-if|else|for|props)\b/,
 ]
 
 /** Patterns that indicate an Aero project (in vite/tsconfig/package). */

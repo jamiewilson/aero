@@ -30,6 +30,10 @@ export * from './helpers'
 // Constants
 export * from './constants'
 
+// for…of directive (editor + compiler)
+export { parseForDirective, collectForDirectiveBindingNames } from './for-directive'
+export type { ParsedForDirective } from './for-directive'
+
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'
 

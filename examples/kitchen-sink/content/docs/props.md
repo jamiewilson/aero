@@ -13,7 +13,7 @@ All props are read from **Aero.props** in `<script is:build>{:html}`. Destructur
 ## How attribute values work
 
 - **Normal attributes** are string literals unless you wrap the value in `{ ... }`. Use `{ expression }` for booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `each`) need brace-wrapped expressions, e.g. `<p if="{ condition }">{:html}`, `<p each="{ item in items }">{:html}`. Unbraced values are invalid.
+- **Directives** (`if`, `else-if`, `else`, `for`) need brace-wrapped expressions, e.g. `<p if="{ condition }">{:html}`, `<p data-for="{ const item of items }">{:html}`. Unbraced values are invalid.
 - **props:** `<my-component props="{ ...data }">{:html}` spreads the object’s keys as props. `<my-component props="{ data }">{:html}` passes the object as one prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-strings become strings and can cause bugs.
 
 ## Passing props

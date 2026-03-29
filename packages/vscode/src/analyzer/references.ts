@@ -152,7 +152,7 @@ function extractIdentifiers(
 	while ((match = idRegex.exec(maskedContent)) !== null) {
 		const id = match[1]
 		if (
-			/^(if|else|return|function|var|let|const|import|from|as|in|true|false|null|undefined)$/.test(
+			/^(if|else|return|function|var|let|const|import|from|as|in|of|true|false|null|undefined)$/.test(
 				id
 			)
 		)

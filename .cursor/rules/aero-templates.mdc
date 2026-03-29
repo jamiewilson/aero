@@ -45,7 +45,7 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 
 ## Loops and Slots
 
-- Loops: `data-each="item in items"` then `{ item.name }` etc.
+- Loops: `data-for="{ const item of items }"` then `{ item.name }` etc.
 - Slots: use both `name` and `slot` attributes on `<slot>` elements
 
 ## Client Stack

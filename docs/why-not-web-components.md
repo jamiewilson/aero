@@ -9,7 +9,7 @@ Aero and Web Components share the same admiration for standard web technologies,
 Aero is designed for **HTML-first authoring** and **static-first delivery**. It provides the ergonomics of a modern template engine but compiles away to pure HTML.
 
 - **Authoring in HTML, not JS:** In Aero, your components are just `.html` files. You don't need to write `class MyElement extends HTMLElement`, manually attach shadow roots, or imperatively update the DOM.
-- **No Client-Side JavaScript Required:** Aero compiles your templating (like `{ site.title }`, `if`/`else`, and `each` loops) at build time. The user receives plain, static HTML. Web components, by default, require JavaScript to be parsed and executed before they render anything, leading to performance overhead and potential Flash of Unstyled Content (FOUC).
+- **No Client-Side JavaScript Required:** Aero compiles your templating (like `{ site.title }`, `if`/`else`, and `for` loops) at build time. The user receives plain, static HTML. Web components, by default, require JavaScript to be parsed and executed before they render anything, leading to performance overhead and potential Flash of Unstyled Content (FOUC).
 - **Global Styling is Trivial:** Because Aero components render into the standard Document Object Model ("Light DOM"), your global CSS, Tailwind classes, or foundational stylesheets apply naturally.
 - **Clear Build vs. Client Split:** Aero gives you `<script is:build>` for build-time logic (fetching data, reading files) and plain `<script>` for client-side interactivity.
 - **HTML Over the Wire:** Aero pairs perfectly with libraries like Alpine.js and HTMX because it outputs standard DOM elements that these libraries can easily target and mutate.

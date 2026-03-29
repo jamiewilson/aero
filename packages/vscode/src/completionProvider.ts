@@ -2,7 +2,7 @@
  * Completion provider for Aero HTML: attributes, import paths, component/layout tags, content globals.
  *
  * @remarks
- * Triggers on `<`, `/`, `@`, `"`, `'`. Supplies Aero attributes (data-each, data-if, etc.), path/alias completions from the resolver, and content global properties. Uses classifyPosition and getResolver.
+ * Triggers on `<`, `/`, `@`, `"`, `'`. Supplies Aero attributes (data-for, data-if, etc.), path/alias completions from the resolver, and content global properties. Uses classifyPosition and getResolver.
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
@@ -28,9 +28,9 @@ const AERO_ATTRIBUTES: Array<{
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
-		label: 'data-each',
-		detail: 'Loop over items (Aero)',
-		snippet: 'data-each="{ ${1:item} in ${2:items} }"',
+		label: 'data-for',
+		detail: 'Loop over items (Aero for…of)',
+		snippet: 'data-for="{ const ${1:item} of ${2:items} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
@@ -56,9 +56,9 @@ const AERO_ATTRIBUTES: Array<{
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
-		label: 'each',
-		detail: 'Loop over items (Aero shorthand)',
-		snippet: 'each="{ ${1:item} in ${2:items} }"',
+		label: 'for',
+		detail: 'Loop over items (Aero for…of shorthand)',
+		snippet: 'for="{ const ${1:item} of ${2:items} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{

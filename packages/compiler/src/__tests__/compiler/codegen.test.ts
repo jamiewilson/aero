@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Aero codegen (codegen.ts): compile(parse(html)) → async render function.
  *
- * Covers interpolation, data-each, components (props, data-props, slots), if/else-if/else,
+ * Covers interpolation, data-for, components (props, data-props, slots), if/else-if/else,
  * getStaticPaths extraction, props (client/inline/blocking/style), client script injection,
  * Alpine/HTMX attribute preservation. Uses an execute()
  * helper that evals the generated module body with a mock Aero context.
@@ -92,7 +92,7 @@ describe('Codegen', () => {
 										const items = ['a', 'b', 'c'];
 									</script>
 									<ul>
-										<li data-each="{ item, index in items }">
+										<li data-for="{ const item of items }">
 											{ item }-{ index }-{ first }-{ last }-{ length }
 										</li>
 									</ul>`
@@ -169,12 +169,12 @@ describe('Codegen', () => {
 		expect(output).toBe('<div>Static</div>')
 	})
 
-	it('should compile data-each loops', async () => {
+	it('should compile data-for loops', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<li data-each="{ item in items }">{ item }</li>
+										<li data-for="{ const item of items }">{ item }</li>
 									</ul>`
 
 		const parsed = parse(html)
@@ -184,20 +184,20 @@ describe('Codegen', () => {
 		// Normalize whitespace for easier comparison if needed, but contain should work
 		expect(output).toContain('<li>a</li>')
 		expect(output).toContain('<li>b</li>')
-		expect(output).not.toContain('data-each')
+		expect(output).not.toContain('data-for')
 	})
 
-	it('should throw when each value is not brace-wrapped', async () => {
+	it('should throw when for value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<li each="item in items">{ item }</li>
+										<li for="const item of items">{ item }</li>
 									</ul>`
 
 		const parsed = parse(html)
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Directive `each` on <li> must use a braced expression'
+			'Directive `for` on <li> must use a braced expression'
 		)
 	})
 
@@ -564,17 +564,17 @@ describe('Codegen', () => {
 		)
 	})
 
-	it('should throw when data-each value is not brace-wrapped', async () => {
+	it('should throw when data-for value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<li data-each="item in items">{ item }</li>
+										<li data-for="const item of items">{ item }</li>
 									</ul>`
 
 		const parsed = parse(html)
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Directive `data-each` on <li> must use a braced expression'
+			'Directive `data-for` on <li> must use a braced expression'
 		)
 	})
 

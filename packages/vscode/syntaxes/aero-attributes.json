@@ -18,7 +18,7 @@
 			"comment": "Highlight Aero data-* control flow attributes while leaving shorthand attrs to default HTML tokenization",
 			"patterns": [
 				{
-					"match": "\\b(data-each)(?=[\\s=/>])",
+					"match": "\\b(data-for)(?=[\\s=/>])",
 					"captures": {
 						"1": { "name": "entity.other.attribute-name.html" }
 					}

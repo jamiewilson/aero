@@ -9,7 +9,7 @@ Aero provides a flexible, Astro-inspired props system for component composition.
 ## How attribute values work
 
 - **Normal attributes** are **string literals** unless you wrap the value in `{ ... }`. Use `{ expression }` to pass booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `each`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `each="{ item in items }"`. Unbraced values are invalid.
+- **Directives** (`if`, `else-if`, `else`, `for`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `for="{ const item of items }"`. Unbraced values are invalid.
 - **`props`** — `props="{ ...data }"` spreads the object’s keys as props. `props="{ data }"` passes the object as a single prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-string values become strings and can cause type bugs.
 
 ## Passing Props to Components

@@ -30,7 +30,7 @@ describe('isDirectiveAttr with default config', () => {
 	it('returns false for normal and Aero directive attributes', () => {
 		expect(isDirectiveAttr('href')).toBe(false)
 		expect(isDirectiveAttr('class')).toBe(false)
-		expect(isDirectiveAttr('data-each')).toBe(false)
+		expect(isDirectiveAttr('data-for')).toBe(false)
 		expect(isDirectiveAttr('data-if')).toBe(false)
 		expect(isDirectiveAttr('data-props')).toBe(false)
 	})

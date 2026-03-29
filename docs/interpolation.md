@@ -31,29 +31,24 @@ Use `raw()` to bypass escaping when you need to output raw HTML:
 
 Output: `<p><strong>bold</strong></p>`
 
-## Loop metadata
+## Loops (`for` / `data-for`)
 
-When using `data-each` with an index variable, you get access to loop metadata:
+Use a JavaScript **for…of** head inside braces: `for="{ const item of items }"`. Destructuring is supported (e.g. `const { name, id } of users`).
+
+Inside the loop body, **`index`**, **`first`**, **`last`**, and **`length`** are always injected (0-based index; `length` is the iterable’s `.length`, so it is only meaningful for array-like values).
 
 ```html
 <script is:build>
   const items = ['a', 'b', 'c'];
 </script>
 <ul>
-  <li data-each="{ item, index in items }">
+  <li data-for="{ const item of items }">
     { item } (index: { index }, first: { first }, last: { last }, length: { length })
   </li>
 </ul>
 ```
 
-Available variables:
-- `item` - current item
-- `index` - current index (0-based)
-- `first` - true if first iteration
-- `last` - true if last iteration
-- `length` - total number of items
-
-You can also use `data-each="{ item in items }"` without the index if you don't need metadata.
+If your binding pattern declares a name that collides with the injected metadata (e.g. `const { length } of rows`), it **shadows** the injected `length` inside that iteration.
 
 ## props (script and style)
 

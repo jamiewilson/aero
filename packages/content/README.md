@@ -67,7 +67,7 @@ const docs = defineCollection({
 	const doc = Aero.props
 	const { html } = await render(doc)
 </script>
-<article each="{ doc in [doc] }">
+<article data-for="{ const doc of [doc] }">
 	<h1>{ doc.data.title }</h1>
 	<div>{ html }</div>
 </article>

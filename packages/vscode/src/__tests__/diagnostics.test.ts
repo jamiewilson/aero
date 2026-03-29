@@ -508,13 +508,13 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		expect(undefinedDiag).toBeUndefined()
 	})
 
-	it('should NOT flag each two-binding loop item, index, and loop metadata', () => {
+	it('should NOT flag for loop bindings and injected loop metadata', () => {
 		const text = `
 <script is:build>
 	const links = [{ path: '/', label: 'Home' }]
 </script>
 <ul>
-	<li each="{ link, index in links }" class="{ first ? 'is-first' : '' }">
+	<li for="{ const link of links }" class="{ first ? 'is-first' : '' }">
 		{ link.path } { index } { last } { length }
 	</li>
 </ul>
@@ -1120,7 +1120,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 	})
 })
 
-/** Directives (data-if, data-each, etc.) must use braced expressions (e.g. data-if="{ cond }"). */
+/** Directives (data-if, data-for, etc.) must use braced expressions (e.g. data-if="{ cond }"). */
 describe('AeroDiagnostics Directive Expression Braces', () => {
 	beforeEach(() => {
 		mockSet.mockClear()

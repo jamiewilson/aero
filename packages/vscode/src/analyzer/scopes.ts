@@ -1,4 +1,7 @@
-import { EACH_REGEX } from '@aero-js/compiler/constants'
+import {
+	collectForDirectiveBindingNames,
+	parseForDirective,
+} from '@aero-js/compiler'
 import * as vscode from 'vscode'
 import type { TemplateScope } from './types'
 
@@ -8,7 +11,7 @@ export function collectTemplateScopes(
 ): TemplateScope[] {
 	type StackItem = {
 		tagName: string
-		each?: Omit<TemplateScope, 'endOffset'>
+		forScope?: Omit<TemplateScope, 'endOffset'>
 	}
 
 	const scopes: TemplateScope[] = []
@@ -28,8 +31,8 @@ export function collectTemplateScopes(
 			for (let i = stack.length - 1; i >= 0; i--) {
 				if (stack[i].tagName === tagName) {
 					const open = stack.splice(i, 1)[0]
-					if (open.each) {
-						scopes.push({ ...open.each, endOffset: tagEnd })
+					if (open.forScope) {
+						scopes.push({ ...open.forScope, endOffset: tagEnd })
 					}
 					break
 				}
@@ -37,40 +40,40 @@ export function collectTemplateScopes(
 			continue
 		}
 
-		const each = parseEachAttribute(document, attrs, tagStart, fullTag)
+		const forScope = parseForAttribute(document, attrs, tagStart, fullTag)
 		const selfClosing = /\/\s*>$/.test(fullTag)
 		if (selfClosing) {
-			if (each) {
-				scopes.push({ ...each, startOffset: tagStart, endOffset: tagEnd })
+			if (forScope) {
+				scopes.push({ ...forScope, startOffset: tagStart, endOffset: tagEnd })
 			}
 			continue
 		}
 
 		stack.push({
 			tagName,
-			each: each ? { ...each, startOffset: tagStart } : undefined,
+			forScope: forScope ? { ...forScope, startOffset: tagStart } : undefined,
 		})
 	}
 
 	for (const open of stack) {
-		if (open.each) {
-			scopes.push({ ...open.each, endOffset: text.length })
+		if (open.forScope) {
+			scopes.push({ ...open.forScope, endOffset: text.length })
 		}
 	}
 
 	return scopes
 }
 
-function parseEachAttribute(
+function parseForAttribute(
 	document: vscode.TextDocument,
 	attrs: string,
 	tagStart: number,
 	fullTag: string
 ): Omit<TemplateScope, 'startOffset' | 'endOffset'> | null {
-	const eachAttr = /\b(?:data-)?each\s*=\s*(['"])(.*?)\1/i.exec(attrs)
-	if (!eachAttr) return null
+	const forAttr = /\b(?:data-)?for\s*=\s*(['"])(.*?)\1/i.exec(attrs)
+	if (!forAttr) return null
 
-	const rawValue = eachAttr[2] || ''
+	const rawValue = forAttr[2] || ''
 	let exprContent = rawValue
 	let exprContentOffset = 0
 
@@ -80,54 +83,45 @@ function parseEachAttribute(
 		exprContentOffset = rawValue.indexOf(exprContent)
 	}
 
-	const expr = exprContent.trim()
-	const exprMatch = EACH_REGEX.exec(expr)
-	if (!exprMatch) return null
+	const inner = exprContent.trim()
+	let bindingNames: string[]
+	try {
+		bindingNames = collectForDirectiveBindingNames(inner)
+	} catch {
+		return null
+	}
 
-	const itemName = exprMatch[1]
-	const indexName = exprMatch[2] || undefined
-	const sourceExpr = exprMatch[3].trim()
+	let sourceExpr: string
+	try {
+		sourceExpr = parseForDirective(inner).iterable.trim()
+	} catch {
+		return null
+	}
+
 	const sourceRoot = sourceExpr.split(/[.\[]/)[0]
 
 	const attrsOffsetInTag = fullTag.indexOf(attrs)
 	const attrBase = tagStart + (attrsOffsetInTag >= 0 ? attrsOffsetInTag : 0)
-	const valueOffsetInAttr = eachAttr[0].indexOf(rawValue)
-	const valueStart = attrBase + eachAttr.index + valueOffsetInAttr
+	const valueOffsetInAttr = forAttr[0].indexOf(rawValue)
+	const valueStart = attrBase + forAttr.index + valueOffsetInAttr
 
-	const exprStartInValue = exprContentOffset + exprContent.indexOf(expr)
+	const exprStartInValue = exprContentOffset + exprContent.indexOf(inner)
 	const exprStart = valueStart + exprStartInValue
 
-	const itemStart = exprStart + expr.indexOf(itemName)
-	const itemEnd = itemStart + itemName.length
-
-	const afterIn = /\s+in\s+/.exec(expr)
-	const sourceInnerStart = afterIn ? exprStart + afterIn.index + afterIn[0].length : exprStart
-	const trimmedFromInner = expr.slice(afterIn ? afterIn.index + afterIn[0].length : 0)
-	const leadingPad = trimmedFromInner.length - trimmedFromInner.trimStart().length
+	const afterOf = /\s+of\s+/.exec(inner)
+	const sourceInnerStart = afterOf ? exprStart + afterOf.index + afterOf[0].length : exprStart
+	const rest = inner.slice(afterOf ? afterOf.index + afterOf[0].length : 0)
+	const leadingPad = rest.length - rest.trimStart().length
 	const sourceStart = sourceInnerStart + leadingPad
 	const sourceEnd = sourceStart + sourceExpr.length
 
-	let indexRange: vscode.Range | undefined
-	if (indexName) {
-		const commaIdx = expr.indexOf(',')
-		const idxInExpr = commaIdx >= 0 ? expr.indexOf(indexName, commaIdx) : expr.indexOf(indexName)
-		if (idxInExpr >= 0) {
-			const idxStart = exprStart + idxInExpr
-			const idxEnd = idxStart + indexName.length
-			indexRange = new vscode.Range(document.positionAt(idxStart), document.positionAt(idxEnd))
-		}
-	}
-
-	const result: Omit<TemplateScope, 'startOffset' | 'endOffset'> = {
-		itemName,
-		itemRange: new vscode.Range(document.positionAt(itemStart), document.positionAt(itemEnd)),
+	return {
+		bindingNames,
 		sourceExpr,
 		sourceRoot,
-		sourceRange: new vscode.Range(document.positionAt(sourceStart), document.positionAt(sourceEnd)),
+		sourceRange: new vscode.Range(
+			document.positionAt(sourceStart),
+			document.positionAt(sourceEnd)
+		),
 	}
-	if (indexName) {
-		result.indexName = indexName
-		if (indexRange) result.indexRange = indexRange
-	}
-	return result
 }

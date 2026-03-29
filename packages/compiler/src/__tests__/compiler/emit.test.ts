@@ -14,17 +14,21 @@ describe('emitToJS', () => {
 		expect(out).toBe(Helper.emitAppend('<div>hello</div>', '__out'))
 	})
 
-	it('emits For with body', () => {
+	it('emits For with body and injected loop metadata', () => {
 		const ir: IRNode[] = [
 			{
 				kind: 'For',
-				item: 'item',
+				binding: 'item',
 				items: 'items',
 				body: [{ kind: 'Append', content: '<li>${item}</li>' }],
 			},
 		]
 		const out = emitToJS(ir)
-		expect(out).toContain('for (const item of items) {')
+		expect(out).toContain('const length = ')
+		expect(out).toContain('for (const item of ')
+		expect(out).toContain('const index = ')
+		expect(out).toContain('const first = ')
+		expect(out).toContain('const last = ')
 		expect(out).toContain('__out += `<li>${item}</li>`;')
 		expect(out).toContain('}\n')
 	})

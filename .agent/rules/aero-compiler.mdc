@@ -10,10 +10,10 @@ All of the following live in **packages/core** (the framework package).
 
 ## Modules
 
-- **compiler/parser.ts** - Extract script blocks from HTML; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, EACH_REGEX, etc.)
+- **compiler/parser.ts** - Extract script blocks from HTML; use constants from **compiler/constants.ts** (ATTR_IS_BUILD, ATTR_IS_INLINE, COMPONENT_SUFFIX_REGEX, ATTR_FOR, etc.)
 - **compiler/build-script-analysis.ts** - AST-based analysis of build script content (oxc-parser): extracts imports and `export function getStaticPaths`; used by codegen.
 - **compiler/tokenizer.ts** - Re-exports from `@aero-js/interpolation`; use for text/attribute compilation.
-- **compiler/codegen.ts** - Emit async render functions; uses build-script-analysis for build script imports and getStaticPaths; handle `{ }` interpolation via helpers, `data-each`, `data-if` / `data-else-if` / `data-else`
+- **compiler/codegen.ts** - Emit async render functions; uses build-script-analysis for build script imports and getStaticPaths; handle `{ }` interpolation via helpers, `data-for`, `data-if` / `data-else-if` / `data-else`
 - **compiler/resolver.ts** - Resolve component/layout paths against path aliases (from project tsconfig)
 - **compiler/helpers.ts** - Interpolation (compileInterpolation, compileAttributeInterpolation use tokenizer), attribute helpers
 - **vite/index.ts** - Vite plugin: virtual modules for client scripts; use `\0` prefix for Vite virtual module IDs (not `/@aero/client/` in emitted IDs)
@@ -23,7 +23,7 @@ All of the following live in **packages/core** (the framework package).
 
 ## Constants (packages/core/compiler/constants.ts)
 
-Use named constants: `ATTR_PROPS`, `ATTR_EACH`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_IS_BLOCKING`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `EACH_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
+Use named constants: `ATTR_PROPS`, `ATTR_FOR`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_IS_BLOCKING`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
 
 ## TDD (red-to-green)
 
