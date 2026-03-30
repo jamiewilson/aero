@@ -298,14 +298,18 @@ function getExpressionIdentifierAt(
 		}
 	}
 
-	// Not a content global -- return as generic expression identifier
+	// Not a content global -- return as generic expression identifier.
+	// Use the chain root as the identifier so that a cursor on `site` inside
+	// `Aero.site.url` resolves as `Aero` (the chain root), not the bare word
+	// `site` which might shadow an unrelated import or variable.
 	const wordRange = getWordRangeAtPosition(lineText, position.line, offset)
 	if (!wordRange) return null
-	const word = lineText.slice(wordRange.start.character, wordRange.end.character)
+
+	const identifier = segments.length > 1 ? rootIdentifier : lineText.slice(wordRange.start.character, wordRange.end.character)
 
 	return {
 		kind: 'expression-identifier',
-		identifier: word,
+		identifier,
 		range: wordRange,
 	}
 }
