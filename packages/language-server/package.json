@@ -30,13 +30,15 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@aero-js/compiler": "workspace:*",
+		"@aero-js/html-parser": "workspace:*",
+		"@aero-js/interpolation": "workspace:*",
 		"@volar/language-core": "~2.4.28",
 		"@volar/language-server": "~2.4.28",
 		"@volar/typescript": "~2.4.28",
 		"volar-service-css": "0.0.62",
 		"volar-service-html": "0.0.62",
 		"volar-service-typescript": "0.0.62",
-		"vscode-html-languageservice": "^5.6.2",
 		"vscode-languageserver-textdocument": "^1.0.12",
 		"vscode-uri": "^3.1.0"
 	},

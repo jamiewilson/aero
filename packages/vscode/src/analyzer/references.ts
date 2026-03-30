@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { parseAeroHtmlDocument, walkHtmlNodes } from '@aero-js/html-parser'
 import { parseScriptBlocks } from '../script-tag'
 import { isInsideHtmlComment, maskJsComments } from './helpers'
 import type { TemplateReference } from './types'
@@ -38,33 +39,39 @@ export function collectTemplateReferences(
 
 	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
 
-	const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b([^>]*?)>/gi
-	let tagMatch: RegExpExecArray | null
+	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())
+	for (const node of walkHtmlNodes(htmlDoc.roots)) {
+		if (!node.tag || node.startTagEnd == null) continue
+		const tl = node.tag.toLowerCase()
+		if (tl === 'script' || tl === 'style') continue
+		if (isInsideHtmlComment(text, node.start)) continue
 
-	while ((tagMatch = tagRegex.exec(maskedText)) !== null) {
-		const tagName = tagMatch[1]
-		if (tagName === 'script' || tagName === 'style') continue
+		const open = text.slice(node.start, node.startTagEnd)
+		const nameMatch = open.match(/^<\s*\/?\s*([a-zA-Z][\w-]*)/)
+		if (!nameMatch) continue
+		const tagName = nameMatch[1]
 
 		if (tagName.endsWith('-component') || tagName.endsWith('-layout')) {
 			const suffix = tagName.endsWith('-component') ? '-component' : '-layout'
 			const prefix = tagName.slice(0, -suffix.length)
-			const camelPrefix = prefix.replace(/-([a-z])/g, g => g[1].toUpperCase())
+			const nameStartInOpen = nameMatch.index! + nameMatch[0].length - tagName.length
+			const absPrefixStart = node.start + nameStartInOpen
 
 			refs.push({
-				content: camelPrefix,
+				content: prefix.replace(/-([a-z])/g, g => g[1].toUpperCase()),
 				range: new vscode.Range(
-					document.positionAt(tagMatch.index + 1),
-					document.positionAt(tagMatch.index + 1 + prefix.length)
+					document.positionAt(absPrefixStart),
+					document.positionAt(absPrefixStart + prefix.length)
 				),
-				offset: tagMatch.index + 1,
+				offset: absPrefixStart,
 				isAttribute: false,
 				isComponent: true,
 			})
 		}
 
-		const attrsContent = tagMatch[2]
-		const tagStart = tagMatch.index
-		const attrsStart = tagStart + tagMatch[0].indexOf(attrsContent)
+		const attrsStart = node.start + nameMatch[0].length
+		const gt = open.lastIndexOf('>')
+		const attrsContent = gt > nameMatch[0].length ? open.slice(nameMatch[0].length, gt) : ''
 
 		const maskRange = (start: number, length: number) => {
 			maskedText =

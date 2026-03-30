@@ -42,6 +42,14 @@ declare function renderComponent(
 	slots?: Record<string, string>
 ): Promise<string>
 
+/**
+ * Bypass auto-escaping for raw HTML output.
+ *
+ * @param value - The value to output without HTML escaping.
+ * @returns The string representation of `value`, unescaped.
+ */
+declare function raw(value: unknown): string
+
 /** Allows importing `.html` component files in build scripts. */
 declare module '*.html' {
 	const component: string

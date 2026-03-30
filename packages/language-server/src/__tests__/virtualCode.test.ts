@@ -38,6 +38,26 @@ const { title } = Aero.props
 		expect(text).toContain('const { title } = Aero.props')
 	})
 
+	it('injects build-scope declare const bindings before template { } expression TS', () => {
+		const html = `<script is:build>
+const isHomepage = Aero.page.url.pathname === '/'
+const props = Aero.props as { x: number }
+</script>
+<div>{ isHomepage } { props.x }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const isHomepage: any;')
+		expect(expr0).toContain('declare const props: any;')
+		const expr0Body = ' isHomepage '
+		expect(expr0.indexOf('declare const isHomepage')).toBeLessThan(expr0.indexOf(expr0Body))
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const props: any;')
+		expect(expr1).toContain(' props.x ')
+		expect(expr1.indexOf('declare const props')).toBeLessThan(expr1.indexOf(' props.x '))
+	})
+
 	it('includes ambient preamble before build script content', () => {
 		const html = `<script is:build lang="ts">
 const x = 1
@@ -100,22 +120,38 @@ const theme = localStorage.getItem('theme')
 		expect(blocking!.languageId).toBe('typescript')
 	})
 
-	it('ignores inline scripts', () => {
+	it('extracts inline scripts as javascript when no lang', () => {
 		const html = `<script is:inline>
 alert('hello')
 </script>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
-		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('javascript')
+		expect(getEmbeddedText(code, 'inline_0')).toContain("alert('hello')")
 	})
 
-	it('ignores props scripts', () => {
+	it('extracts props scripts as embedded JS/TS like inline', () => {
 		const html = `<script props="{ storageKey }">
 const theme = JSON.parse(localStorage.getItem(storageKey))
 </script>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
-		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('javascript')
+	})
+
+	it('extracts inline script as typescript when lang="ts"', () => {
+		const html = `<script is:inline lang="ts">
+const x: number = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const inline = getEmbeddedById(code, 'inline_0')
+		expect(inline).toBeDefined()
+		expect(inline!.languageId).toBe('typescript')
 	})
 
 	it('ignores external scripts', () => {
@@ -173,7 +209,7 @@ console.log('client 2')
 		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient').length).toBe(0)
 	})
 
-	it('extracts build script without lang="ts" as javascript', () => {
+	it('extracts build script without lang as typescript (default)', () => {
 		const html = `<script is:build>
 const x = 1
 </script>`
@@ -181,8 +217,33 @@ const x = 1
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const build = getEmbeddedById(code, 'build_0')
 		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('typescript')
+		const text = getEmbeddedText(code, 'build_0')!
+		expect(text).toContain('const x = 1')
+		expect(text).toContain('declare const Aero')
+	})
+
+	it('extracts build script with lang="js" as javascript', () => {
+		const html = `<script is:build lang="js">
+const x = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const build = getEmbeddedById(code, 'build_0')
+		expect(build).toBeDefined()
 		expect(build!.languageId).toBe('javascript')
-		expect(getEmbeddedText(code, 'build_0')).toContain('const x = 1')
+		expect(getEmbeddedText(code, 'build_0')).not.toContain('declare const Aero')
+	})
+
+	it('extracts build script with lang="javascript" as javascript', () => {
+		const html = `<script is:build lang="javascript">
+const x = 1
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const build = getEmbeddedById(code, 'build_0')
+		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('javascript')
 		expect(getEmbeddedText(code, 'build_0')).not.toContain('declare const Aero')
 	})
 
@@ -206,6 +267,7 @@ const x = 1
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const build = getEmbeddedById(code, 'build_0')
 		expect(build).toBeDefined()
+		expect(build!.languageId).toBe('typescript')
 		expect(getEmbeddedText(code, 'build_0')).toContain('const x = 1')
 	})
 
@@ -224,5 +286,170 @@ const x = 1
 		expect(code.mappings).toHaveLength(1)
 		expect(code.mappings[0].sourceOffsets[0]).toBe(0)
 		expect(code.mappings[0].lengths[0]).toBe(html.length)
+	})
+
+	it('extracts template { } interpolations as typescript virtual fragments', () => {
+		const html = `<h1>{ title }</h1>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr = getEmbeddedById(code, 'expr_0')
+		expect(expr).toBeDefined()
+		expect(expr!.languageId).toBe('typescript')
+		const text = getEmbeddedText(code, 'expr_0')!
+		expect(text).toContain('declare const Aero')
+		expect(text).toContain('title')
+	})
+
+	it('does not treat braces inside script bodies as template interpolations', () => {
+		const html = `<script is:build>
+const o = { a: 1 }
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		expect(getEmbeddedById(code, 'expr_0')).toBeUndefined()
+	})
+
+	it('injects for-directive loop variable into interpolation virtual fragments', () => {
+		const html = `<ul><li data-for="{ const doc of docs }"><span>{ doc.id }</span><span>{ doc.data.title }</span></li></ul>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const doc: any;')
+		expect(expr0).toContain(' doc.id ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const doc: any;')
+		expect(expr1).toContain(' doc.data.title ')
+	})
+
+	it('injects destructured for-directive bindings into interpolation virtual fragments', () => {
+		const html = `<li for="{ const { path, label } of links }"><span>{ path }</span><span>{ label }</span></li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const path: any;')
+		expect(expr0).toContain(' path ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const label: any;')
+		expect(expr1).toContain(' label ')
+	})
+
+	it('injects implicit for-loop variables (index, first, last, length)', () => {
+		const html = `<li for="{ const item of items }">{ index } { first } { last } { length }</li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const index: any;')
+		expect(expr0).toContain('declare const first: any;')
+		expect(expr0).toContain('declare const last: any;')
+		expect(expr0).toContain('declare const length: any;')
+		expect(expr0).toContain('declare const item: any;')
+	})
+
+	it('handles nested for-directives with both scopes available', () => {
+		const html = `<ul for="{ const group of groups }"><li for="{ const item of group.items }">{ group.name } { item.label }</li></ul>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const group: any;')
+		expect(expr0).toContain('declare const item: any;')
+		expect(expr0).toContain(' group.name ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const group: any;')
+		expect(expr1).toContain('declare const item: any;')
+		expect(expr1).toContain(' item.label ')
+	})
+
+	it('does not create interpolation virtual fragment for the for-directive attribute value itself', () => {
+		const html = `<li for="{ const item of items }">{ item.name }</li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// Only the template expression should produce a virtual fragment, not the for-directive value
+		const allExprs = code.embeddedCodes?.filter(c => c.id.startsWith('expr_')) ?? []
+		expect(allExprs).toHaveLength(1)
+		const text = getEmbeddedText(code, 'expr_0')!
+		expect(text).toContain(' item.name ')
+	})
+
+	it('extracts interpolations from attribute values', () => {
+		const html = `<a href="/docs/{ slug }">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' slug ')
+	})
+
+	it('extracts multiple interpolations from a single attribute value', () => {
+		const html = `<a href="{ base }/{ path }">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' base ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain(' path ')
+	})
+
+	it('extracts mixed attribute and text-content interpolations', () => {
+		const html = `<a href="/docs/{ slug }">{ title }</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// expr_0 is from the attribute (pass 1), expr_1 from text content (pass 2)
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' slug ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain(' title ')
+	})
+
+	it('injects for-directive bindings into attribute interpolation fragments', () => {
+		const html = `<li data-for="{ const doc of docs }"><a href="{ doc.path }">{ doc.title }</a></li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const doc: any;')
+		expect(expr0).toContain(' doc.path ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const doc: any;')
+		expect(expr1).toContain(' doc.title ')
+	})
+
+	it('injects build-scope bindings into attribute interpolation fragments', () => {
+		const html = `<script is:build>const base = '/docs'</script><a href="{ base }/page">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const base: any;')
+		expect(expr0).toContain(' base ')
+	})
+
+	it('does not extract interpolations from Alpine directive attributes', () => {
+		const html = `<div x-bind:class="{ foo }">{ bar }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// Only one expression: the text content { bar }
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' bar ')
+		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+	})
+
+	it('treats {{ }} as literal braces in attribute values (no interpolation)', () => {
+		const html = `<div data-value="{{ not interpolated }}">{ real }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' real ')
+		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+	})
+
+	it('wraps spread expressions in array context to avoid TS1128', () => {
+		const html = `<meta-component props="{ ...Aero.props }" />`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		// Spread is wrapped in [ ] so it's valid TS
+		expect(expr0).toContain('[')
+		expect(expr0).toContain('...Aero.props')
+		expect(expr0).toContain(']')
 	})
 })

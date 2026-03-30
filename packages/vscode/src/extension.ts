@@ -27,20 +27,13 @@ import { registerAeroCodeActions } from './aero-code-actions'
 import { registerAeroTasks } from './aero-tasks'
 import { registerRunAeroCheck } from './runCheck'
 import { clearResolverCache } from './pathResolver'
-import { clearScopeCache, getScopeMode, isInAeroProjectPath } from './scope'
+import { clearScopeCache, shouldSwitchToAeroLanguage } from './scope'
 import { HTML_SELECTOR } from './constants'
 
 let languageClient: LanguageClient | undefined
 
-function shouldSwitchToAero(document: vscode.TextDocument): boolean {
-	if (document.languageId !== 'html' || document.uri.scheme !== 'file') return false
-	const mode = getScopeMode()
-	if (mode === 'always') return true
-	return isInAeroProjectPath(document.uri.fsPath)
-}
-
 async function trySetAeroLanguage(document: vscode.TextDocument): Promise<void> {
-	if (!shouldSwitchToAero(document)) return
+	if (!shouldSwitchToAeroLanguage(document)) return
 	try {
 		await vscode.languages.setTextDocumentLanguage(document, 'aero')
 	} catch {
@@ -48,7 +41,29 @@ async function trySetAeroLanguage(document: vscode.TextDocument): Promise<void> 
 	}
 }
 
+async function runTrySetAeroForAllOpenDocs(): Promise<void> {
+	await Promise.all(vscode.workspace.textDocuments.map(doc => trySetAeroLanguage(doc)))
+	for (const editor of vscode.window.visibleTextEditors) {
+		await trySetAeroLanguage(editor.document)
+	}
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+	// Switch matching .html docs to `aero` before any other async work so TextMate scopes
+	// (source.ts in is:build) apply before built-in embedded JavaScript validation runs.
+	await runTrySetAeroForAllOpenDocs()
+
+	context.subscriptions.push(
+		vscode.workspace.onDidOpenTextDocument(doc => {
+			void trySetAeroLanguage(doc)
+		})
+	)
+	context.subscriptions.push(
+		vscode.window.onDidChangeActiveTextEditor(editor => {
+			if (editor?.document) void trySetAeroLanguage(editor.document)
+		})
+	)
+
 	// ---- Language Server (Volar) ----
 	const serverModule = vscode.Uri.joinPath(context.extensionUri, 'dist', 'server.cjs')
 	const serverOptions: ServerOptions = {
@@ -90,19 +105,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		serverOptions,
 		clientOptions
 	)
+
 	await languageClient.start()
+	// Second pass: language mode can be reset while the LS starts, or tabs were not in textDocuments yet.
+	void runTrySetAeroForAllOpenDocs()
 	context.subscriptions.push({ dispose: () => languageClient?.stop() })
-
-	// ---- Auto-language switching ----
-	for (const doc of vscode.workspace.textDocuments) {
-		trySetAeroLanguage(doc)
-	}
-
-	context.subscriptions.push(
-		vscode.workspace.onDidOpenTextDocument(doc => {
-			trySetAeroLanguage(doc)
-		})
-	)
 
 	// ---- Completion Provider ----
 	context.subscriptions.push(

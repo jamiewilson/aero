@@ -452,6 +452,28 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1(@types/node@25.5.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
+  packages/html-parser:
+    dependencies:
+      vscode-html-languageservice:
+        specifier: ^5.6.2
+        version: 5.6.2
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      tsdown:
+        specifier: ^0.21.4
+        version: 0.21.4(oxc-resolver@11.19.1)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.1
+        version: 4.1.1(@types/node@25.5.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+
   packages/interpolation:
     devDependencies:
       '@types/node':
@@ -469,6 +491,15 @@ importers:
 
   packages/language-server:
     dependencies:
+      '@aero-js/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@aero-js/html-parser':
+        specifier: workspace:*
+        version: link:../html-parser
+      '@aero-js/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
       '@volar/language-core':
         specifier: ~2.4.28
         version: 2.4.28
@@ -487,9 +518,6 @@ importers:
       volar-service-typescript:
         specifier: 0.0.62
         version: 0.0.62(@volar/language-service@2.4.28)
-      vscode-html-languageservice:
-        specifier: ^5.6.2
-        version: 5.6.2
       vscode-languageserver-textdocument:
         specifier: ^1.0.12
         version: 1.0.12
@@ -541,6 +569,9 @@ importers:
       '@aero-js/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@aero-js/html-parser':
+        specifier: workspace:*
+        version: link:../html-parser
       '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation

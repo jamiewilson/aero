@@ -275,6 +275,76 @@ describe('AeroDefinitionProvider', () => {
 		expect(Array.isArray(result) ? result.length : 0).toBeGreaterThan(0)
 	})
 
+	it('should not resolve Aero.site to content/site import', async () => {
+		// When cursor is on 'site' inside 'Aero.site.url', the definition should NOT
+		// navigate to @content/site — 'site' here is a property of the Aero global,
+		// not the content global or the imported 'site' variable.
+		const lines = [
+			'<script is:build>',
+			"import site from '@content/site'",
+			'</script>',
+			'<div>{ Aero.site.url }</div>',
+		]
+		const fullText = lines.join('\n')
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
+			getText: () => fullText,
+			lineAt: (line: number) => ({ text: lines[line] ?? '' }),
+			positionAt: (offset: number) => {
+				let remaining = offset
+				for (let i = 0; i < lines.length; i++) {
+					if (remaining <= lines[i].length) {
+						return { line: i, character: remaining }
+					}
+					remaining -= lines[i].length + 1 // +1 for newline
+				}
+				return { line: lines.length - 1, character: 0 }
+			},
+			offsetAt: (pos: any) => {
+				let offset = 0
+				for (let i = 0; i < pos.line; i++) {
+					offset += lines[i].length + 1
+				}
+				return offset + pos.character
+			},
+		} as any
+
+		// Position cursor on 'site' in 'Aero.site.url' on the template line (line 3)
+		const templateLine = lines[3] // '<div>{ Aero.site.url }</div>'
+		const siteStart = templateLine.indexOf('Aero.site') + 5 // skip 'Aero.' to land on 's' in 'site'
+		const position = { line: 3, character: siteStart } as any
+		const result = await provider.provideDefinition(doc, position, {} as any)
+
+		// Must be null — 'site' in 'Aero.site' is a property of the Aero global,
+		// not a reference to the imported site variable or the content global.
+		expect(result).toBeNull()
+	})
+
+	it('classifyPosition returns chain root for non-content-global chains', async () => {
+		// Verify that classifyPosition uses the chain root (Aero) as the identifier
+		// when cursor is on a non-root segment (site) of a dot-chain (Aero.site.url)
+		const { classifyPosition } = await import('../positionAt')
+
+		const lineText = '<div>{ Aero.site.url }</div>'
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
+			getText: () => lineText,
+			lineAt: (_line: number) => ({ text: lineText }),
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			offsetAt: (pos: any) => pos.character,
+		} as any
+
+		// Cursor on 'site' in 'Aero.site.url'
+		const siteStart = lineText.indexOf('Aero.site') + 5
+		const position = { line: 0, character: siteStart } as any
+		const result = classifyPosition(doc, position)
+
+		expect(result).not.toBeNull()
+		expect(result!.kind).toBe('expression-identifier')
+		// Key assertion: identifier should be the chain root 'Aero', not the bare word 'site'
+		expect((result as any).identifier).toBe('Aero')
+	})
+
 	it('should provide definition for component tag', async () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },

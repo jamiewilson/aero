@@ -26,6 +26,7 @@ const packagePaths = [
 	'packages/diagnostics/package.json',
 	'packages/create/package.json',
 	'packages/highlight/package.json',
+	'packages/html-parser/package.json',
 	'packages/interpolation/package.json',
 	'packages/language-server/package.json',
 	'packages/templates/minimal/package.json',

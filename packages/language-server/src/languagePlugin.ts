@@ -5,6 +5,19 @@ import type * as ts from 'typescript'
 import type { URI } from 'vscode-uri'
 import { AeroVirtualCode } from './virtualCode'
 
+/**
+ * VS Code's first language-id resolver returns the TextDocument's languageId. Files are often
+ * still `html` until the extension runs setTextDocumentLanguage → `aero`, so we must accept both.
+ */
+function isHtmlTemplateUri(uri: URI): boolean {
+	return uri.path.toLowerCase().endsWith('.html')
+}
+
+function shouldCreateAeroVirtualCode(uri: URI, languageId: string): boolean {
+	if (!isHtmlTemplateUri(uri)) return false
+	return languageId === 'aero' || languageId === 'html'
+}
+
 const MODULE_SCRIPT_CONTENT = "export default '';\n"
 const moduleSnapshot: IScriptSnapshot = {
 	getText: (start, end) => MODULE_SCRIPT_CONTENT.substring(start, end),
@@ -26,13 +39,14 @@ export const aeroLanguagePlugin: LanguagePlugin<URI> = {
 		}
 	},
 
-	createVirtualCode(_uri, languageId, snapshot) {
-		if (languageId === 'aero') {
+	createVirtualCode(uri, languageId, snapshot) {
+		if (shouldCreateAeroVirtualCode(uri, languageId)) {
 			return new AeroVirtualCode(snapshot)
 		}
 	},
 
-	updateVirtualCode(_uri, _virtualCode, snapshot) {
+	updateVirtualCode(uri, _virtualCode, snapshot) {
+		if (!isHtmlTemplateUri(uri)) return undefined
 		return new AeroVirtualCode(snapshot)
 	},
 

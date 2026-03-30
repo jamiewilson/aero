@@ -20,6 +20,8 @@ declare function renderComponent(
 	slots?: Record<string, string>
 ): Promise<string>
 
+declare function raw(value: unknown): string
+
 declare module '*.html' {
 	const component: string
 	export default component
