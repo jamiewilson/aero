@@ -158,6 +158,6 @@
 	],
 	"icon": "images/logo.png",
 	"engines": {
-		"vscode": "^1.74.0"
+		"vscode": "^1.110.0"
 	}
 }

@@ -9,7 +9,7 @@ export default defineConfig({
 	outDir: 'dist',
 	deps: {
 		neverBundle: ['vscode'],
-		onlyAllowBundle: false,
+		onlyBundle: false,
 	},
 	inputOptions: {
 		checks: {
