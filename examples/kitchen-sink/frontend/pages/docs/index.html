@@ -17,7 +17,7 @@
 	</header>
 
 	<ul class="card">
-		<li data-for="{ const doc of docs }">
+		<li for="{ const doc of docs }">
 			<a href="/docs/{ doc.id }">{ doc.data.title }</a>
 			<badge-component if="{ !doc.data.published }" text="Draft" />
 			<p>{ doc.data.subtitle }</p>

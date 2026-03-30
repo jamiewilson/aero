@@ -308,4 +308,68 @@ const o = { a: 1 }
 		const code = new AeroVirtualCode(createSnapshot(html))
 		expect(getEmbeddedById(code, 'expr_0')).toBeUndefined()
 	})
+
+	it('injects for-directive loop variable into interpolation virtual fragments', () => {
+		const html = `<ul><li data-for="{ const doc of docs }"><span>{ doc.id }</span><span>{ doc.data.title }</span></li></ul>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const doc: any;')
+		expect(expr0).toContain(' doc.id ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const doc: any;')
+		expect(expr1).toContain(' doc.data.title ')
+	})
+
+	it('injects destructured for-directive bindings into interpolation virtual fragments', () => {
+		const html = `<li for="{ const { path, label } of links }"><span>{ path }</span><span>{ label }</span></li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const path: any;')
+		expect(expr0).toContain(' path ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const label: any;')
+		expect(expr1).toContain(' label ')
+	})
+
+	it('injects implicit for-loop variables (index, first, last, length)', () => {
+		const html = `<li for="{ const item of items }">{ index } { first } { last } { length }</li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const index: any;')
+		expect(expr0).toContain('declare const first: any;')
+		expect(expr0).toContain('declare const last: any;')
+		expect(expr0).toContain('declare const length: any;')
+		expect(expr0).toContain('declare const item: any;')
+	})
+
+	it('handles nested for-directives with both scopes available', () => {
+		const html = `<ul for="{ const group of groups }"><li for="{ const item of group.items }">{ group.name } { item.label }</li></ul>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const group: any;')
+		expect(expr0).toContain('declare const item: any;')
+		expect(expr0).toContain(' group.name ')
+
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const group: any;')
+		expect(expr1).toContain('declare const item: any;')
+		expect(expr1).toContain(' item.label ')
+	})
+
+	it('does not create interpolation virtual fragment for the for-directive attribute value itself', () => {
+		const html = `<li for="{ const item of items }">{ item.name }</li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// Only the template expression should produce a virtual fragment, not the for-directive value
+		const allExprs = code.embeddedCodes?.filter(c => c.id.startsWith('expr_')) ?? []
+		expect(allExprs).toHaveLength(1)
+		const text = getEmbeddedText(code, 'expr_0')!
+		expect(text).toContain(' item.name ')
+	})
 })

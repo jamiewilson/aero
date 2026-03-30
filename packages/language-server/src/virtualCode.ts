@@ -16,6 +16,7 @@ import {
 	collectBuildScopeBindingNames,
 	formatBuildBindingAmbientBlock,
 } from '@aero-js/compiler/build-scope-bindings'
+import { collectForDirectiveBindingNames } from '@aero-js/compiler'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
@@ -114,6 +115,90 @@ function maskScriptAndStyleInner(sourceText: string): string {
 	)
 }
 
+/** Mask the brace-wrapped value of for/data-for attributes so `{ const x of y }` is not a false interpolation. */
+function maskForDirectiveValues(sourceText: string): string {
+	return sourceText.replace(
+		/\b(?:data-)?for\s*=\s*(['"])([\s\S]*?)\1/gi,
+		(match, _q: string, inner: string) => match.replace(inner, ' '.repeat(inner.length))
+	)
+}
+
+/** Implicit loop variables injected by the for-directive runtime (see emit.ts). */
+const FOR_LOOP_IMPLICIT_NAMES = ['index', 'first', 'last', 'length']
+
+type ForDirectiveScope = {
+	/** Offset where bindings become available (after the opening tag). */
+	startOffset: number
+	/** Offset where bindings go out of scope (end of the element). */
+	endOffset: number
+	/** All binding names in scope (user bindings + implicit loop variables). */
+	bindingNames: string[]
+}
+
+/**
+ * Walks the parsed HTML tree and collects for-directive scopes.
+ *
+ * @remarks The vscode-html-languageservice parser includes surrounding quotes in attribute values
+ * (e.g. `"{ const doc of docs }"`), so we strip them before parsing.
+ */
+function collectForDirectiveScopes(roots: Node[], sourceText: string): ForDirectiveScope[] {
+	const scopes: ForDirectiveScope[] = []
+
+	for (const node of walkHtmlNodes(roots)) {
+		const attrs = node.attributes
+		if (!attrs) continue
+
+		const rawValue = attrs['for'] ?? attrs['data-for'] ?? undefined
+		if (rawValue == null) continue
+
+		// Strip surrounding quotes if present (parser includes them)
+		let value = rawValue
+		if (
+			value.length >= 2 &&
+			((value[0] === '"' && value[value.length - 1] === '"') ||
+				(value[0] === "'" && value[value.length - 1] === "'"))
+		) {
+			value = value.slice(1, -1)
+		}
+
+		// Strip outer braces: `{ const x of y }` → `const x of y`
+		const braceMatch = /^\s*\{([\s\S]*)\}\s*$/.exec(value)
+		const inner = braceMatch ? braceMatch[1].trim() : value.trim()
+		if (!inner) continue
+
+		let bindingNames: string[]
+		try {
+			bindingNames = [
+				...collectForDirectiveBindingNames(inner),
+				...FOR_LOOP_IMPLICIT_NAMES,
+			]
+		} catch {
+			continue
+		}
+
+		if (bindingNames.length === 0) continue
+
+		const startOffset = node.startTagEnd ?? node.start
+		const endOffset = node.endTagStart ?? node.end
+		scopes.push({ startOffset, endOffset, bindingNames })
+	}
+
+	return scopes
+}
+
+/** Returns the union of for-directive binding names whose scope range contains `offset`. */
+function getForBindingsAtOffset(offset: number, scopes: ForDirectiveScope[]): Set<string> {
+	const names = new Set<string>()
+	for (const scope of scopes) {
+		if (offset >= scope.startOffset && offset < scope.endOffset) {
+			for (const name of scope.bindingNames) {
+				names.add(name)
+			}
+		}
+	}
+	return names
+}
+
 export class AeroVirtualCode implements VirtualCode {
 	id = 'root'
 	languageId = 'html'
@@ -168,9 +253,8 @@ export class AeroVirtualCode implements VirtualCode {
 		sourceText: string,
 		buildBindingNames: ReadonlySet<string>
 	): VirtualCode[] {
-		const binderDecl = formatBuildBindingAmbientBlock(buildBindingNames)
-		const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length
-		const masked = maskScriptAndStyleInner(sourceText)
+		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
+		const masked = maskForDirectiveValues(maskScriptAndStyleInner(sourceText))
 		const out: VirtualCode[] = []
 		let exprIdx = 0
 
@@ -179,6 +263,13 @@ export class AeroVirtualCode implements VirtualCode {
 			const expr = seg.expression
 			if (!expr.trim()) continue
 
+			const forBindings = getForBindingsAtOffset(seg.start, forScopes)
+			const allBindings = forBindings.size > 0
+				? new Set([...buildBindingNames, ...forBindings])
+				: buildBindingNames
+
+			const binderDecl = formatBuildBindingAmbientBlock(allBindings)
+			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length
 			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + expr
 			out.push({
 				id: `expr_${exprIdx++}`,
