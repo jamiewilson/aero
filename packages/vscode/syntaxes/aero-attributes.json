@@ -15,40 +15,93 @@
 			}
 		},
 		"aero-control-flow-attributes": {
-			"comment": "Highlight Aero data-* control flow attributes while leaving shorthand attrs to default HTML tokenization",
+			"comment": "Highlight Aero control flow attributes (shorthand and data-* forms) with consistent styling. Matches the full attribute (name=value) so the base HTML grammar does not wrap data-* forms in meta.attribute.data-x.",
 			"patterns": [
 				{
-					"match": "\\b(data-for)(?=[\\s=/>])",
-					"captures": {
+					"comment": "Aero for / data-for with value",
+					"begin": "\\b(data-for|for)(?=[\\s=/>])",
+					"beginCaptures": {
 						"1": { "name": "entity.other.attribute-name.html" }
-					}
+					},
+					"end": "(?=\\s|/?>)",
+					"name": "meta.attribute.aero",
+					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"match": "\\b(data-if)(?=[\\s=/>])",
-					"captures": {
+					"comment": "Aero if / data-if with value",
+					"begin": "\\b(data-if|if)(?=[\\s=/>])",
+					"beginCaptures": {
 						"1": { "name": "entity.other.attribute-name.html" }
-					}
+					},
+					"end": "(?=\\s|/?>)",
+					"name": "meta.attribute.aero",
+					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"match": "\\b(data-else-if)(?=[\\s=/>])",
-					"captures": {
+					"comment": "Aero else-if / data-else-if with value",
+					"begin": "\\b(data-else-if|else-if)(?=[\\s=/>])",
+					"beginCaptures": {
 						"1": { "name": "entity.other.attribute-name.html" }
-					}
+					},
+					"end": "(?=\\s|/?>)",
+					"name": "meta.attribute.aero",
+					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"match": "\\b(data-else)(?=[\\s/>])",
+					"comment": "Aero else / data-else (valueless)",
+					"match": "\\b(data-else|else)(?=[\\s/>])",
 					"captures": {
 						"1": { "name": "entity.other.attribute-name.html" }
-					}
+					},
+					"name": "meta.attribute.aero"
 				}
 			]
 		},
 		"aero-props-attribute": {
-			"comment": "Highlight data-props as a special props attribute",
-			"match": "\\b(data-props)\\b",
-			"captures": {
-				"1": { "name": "entity.other.attribute-name.html" }
-			}
+			"comment": "Highlight props and data-props attributes",
+			"patterns": [
+				{
+					"begin": "\\b(data-props|props)(?=[\\s=/>])",
+					"beginCaptures": {
+						"1": { "name": "entity.other.attribute-name.html" }
+					},
+					"end": "(?=\\s|/?>)",
+					"name": "meta.attribute.aero",
+					"patterns": [{ "include": "#aero-attribute-value" }]
+				}
+			]
+		},
+		"aero-attribute-value": {
+			"comment": "Matches the = and quoted value portion of an Aero attribute",
+			"begin": "(=)\\s*",
+			"beginCaptures": {
+				"1": { "name": "punctuation.separator.key-value.html" }
+			},
+			"end": "(?<=[\"'])",
+			"patterns": [
+				{
+					"begin": "(\")",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "(\")",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.string.end.html" }
+					},
+					"contentName": "string.quoted.double.html"
+				},
+				{
+					"begin": "(')",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "(')",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.string.end.html" }
+					},
+					"contentName": "string.quoted.single.html"
+				}
+			]
 		}
 	}
 }

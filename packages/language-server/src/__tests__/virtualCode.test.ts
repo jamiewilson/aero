@@ -372,4 +372,84 @@ const o = { a: 1 }
 		const text = getEmbeddedText(code, 'expr_0')!
 		expect(text).toContain(' item.name ')
 	})
+
+	it('extracts interpolations from attribute values', () => {
+		const html = `<a href="/docs/{ slug }">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' slug ')
+	})
+
+	it('extracts multiple interpolations from a single attribute value', () => {
+		const html = `<a href="{ base }/{ path }">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' base ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain(' path ')
+	})
+
+	it('extracts mixed attribute and text-content interpolations', () => {
+		const html = `<a href="/docs/{ slug }">{ title }</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// expr_0 is from the attribute (pass 1), expr_1 from text content (pass 2)
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' slug ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain(' title ')
+	})
+
+	it('injects for-directive bindings into attribute interpolation fragments', () => {
+		const html = `<li data-for="{ const doc of docs }"><a href="{ doc.path }">{ doc.title }</a></li>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const doc: any;')
+		expect(expr0).toContain(' doc.path ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const doc: any;')
+		expect(expr1).toContain(' doc.title ')
+	})
+
+	it('injects build-scope bindings into attribute interpolation fragments', () => {
+		const html = `<script is:build>const base = '/docs'</script><a href="{ base }/page">link</a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const base: any;')
+		expect(expr0).toContain(' base ')
+	})
+
+	it('does not extract interpolations from Alpine directive attributes', () => {
+		const html = `<div x-bind:class="{ foo }">{ bar }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		// Only one expression: the text content { bar }
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' bar ')
+		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+	})
+
+	it('treats {{ }} as literal braces in attribute values (no interpolation)', () => {
+		const html = `<div data-value="{{ not interpolated }}">{ real }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain(' real ')
+		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+	})
+
+	it('wraps spread expressions in array context to avoid TS1128', () => {
+		const html = `<meta-component props="{ ...Aero.props }" />`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		// Spread is wrapped in [ ] so it's valid TS
+		expect(expr0).toContain('[')
+		expect(expr0).toContain('...Aero.props')
+		expect(expr0).toContain(']')
+	})
 })

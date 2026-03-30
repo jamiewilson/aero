@@ -16,7 +16,7 @@ import {
 	collectBuildScopeBindingNames,
 	formatBuildBindingAmbientBlock,
 } from '@aero-js/compiler/build-scope-bindings'
-import { collectForDirectiveBindingNames } from '@aero-js/compiler'
+import { collectForDirectiveBindingNames, isDirectiveAttr } from '@aero-js/compiler'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
@@ -121,6 +121,109 @@ function maskForDirectiveValues(sourceText: string): string {
 		/\b(?:data-)?for\s*=\s*(['"])([\s\S]*?)\1/gi,
 		(match, _q: string, inner: string) => match.replace(inner, ' '.repeat(inner.length))
 	)
+}
+
+/** Attributes whose values are Aero directives (not interpolated). */
+const FOR_ATTR_NAMES = new Set(['for', 'data-for'])
+
+type AttributeInterpolation = {
+	/** The expression text (without braces). */
+	expression: string
+	/** Absolute source offset of the expression start (after the `{`). */
+	sourceOffset: number
+}
+
+type AttributeMask = {
+	/** Absolute start offset of the region to mask. */
+	start: number
+	/** Length of the region to mask. */
+	length: number
+}
+
+/**
+ * Walks the HTML tree and tokenizes `{ }` interpolations inside non-directive
+ * attribute values. Returns the interpolation segments and regions to mask.
+ *
+ * @remarks Uses the same regex approach as the VS Code extension
+ * (`packages/vscode/src/analyzer/references.ts`). Attribute values are
+ * tokenized individually with `attributeMode: true` so that `"` delimiters
+ * do not interfere with brace detection.
+ */
+function collectAttributeInterpolations(
+	roots: Node[],
+	sourceText: string
+): { interpolations: AttributeInterpolation[]; masks: AttributeMask[] } {
+	const interpolations: AttributeInterpolation[] = []
+	const masks: AttributeMask[] = []
+
+	const attrRegex = /(?:\s|^)([a-zA-Z0-9\-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
+
+	for (const node of walkHtmlNodes(roots)) {
+		if (!node.tag || node.startTagEnd == null) continue
+		const tag = node.tag.toLowerCase()
+		if (tag === 'script' || tag === 'style') continue
+
+		const open = sourceText.substring(node.start, node.startTagEnd)
+		const nameMatch = open.match(/^<\s*\/?\s*([a-zA-Z][\w-]*)/)
+		if (!nameMatch) continue
+
+		const attrsStart = node.start + nameMatch[0].length
+		const gt = open.lastIndexOf('>')
+		const attrsContent = gt > nameMatch[0].length ? open.slice(nameMatch[0].length, gt) : ''
+
+		attrRegex.lastIndex = 0
+		let attrMatch: RegExpExecArray | null
+
+		while ((attrMatch = attrRegex.exec(attrsContent)) !== null) {
+			const fullMatch = attrMatch[0]
+			const name = attrMatch[1]
+			const hasValue = !!attrMatch[3]
+			const value = attrMatch[4] || ''
+
+			if (!hasValue || !value) continue
+
+			// Skip directive attributes (Alpine: x-*, @*, :*, .*)
+			if (isDirectiveAttr(name)) continue
+
+			// Skip for/data-for (already masked separately)
+			if (FOR_ATTR_NAMES.has(name)) continue
+
+			const matchStartInAttrs = attrMatch.index
+			const nameStartInMatch = fullMatch.indexOf(name)
+			const quote = attrMatch[3]
+			const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
+			const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
+
+			// Mask this attribute value region
+			masks.push({ start: absValueStart, length: value.length })
+
+			// Tokenize the attribute value individually
+			const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+			for (const seg of segments) {
+				if (seg.kind !== 'interpolation') continue
+				const expr = seg.expression
+				if (!expr.trim()) continue
+				interpolations.push({
+					expression: expr,
+					sourceOffset: absValueStart + seg.start + 1,
+				})
+			}
+		}
+	}
+
+	return { interpolations, masks }
+}
+
+/** Replace specified regions in text with spaces. */
+function applyMasks(text: string, masks: AttributeMask[]): string {
+	let result = text
+	for (const mask of masks) {
+		result =
+			result.substring(0, mask.start) +
+			' '.repeat(mask.length) +
+			result.substring(mask.start + mask.length)
+	}
+	return result
 }
 
 /** Implicit loop variables injected by the for-directive runtime (see emit.ts). */
@@ -254,37 +357,60 @@ export class AeroVirtualCode implements VirtualCode {
 		buildBindingNames: ReadonlySet<string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
-		const masked = maskForDirectiveValues(maskScriptAndStyleInner(sourceText))
 		const out: VirtualCode[] = []
 		let exprIdx = 0
 
-		for (const seg of tokenizeCurlyInterpolation(masked)) {
-			if (seg.kind !== 'interpolation') continue
-			const expr = seg.expression
-			if (!expr.trim()) continue
-
-			const forBindings = getForBindingsAtOffset(seg.start, forScopes)
+		// Helper to create a virtual code for an interpolation expression.
+		// Wraps in `[` + expr + `]` so spread expressions like `...Aero.props`
+		// are valid TypeScript (spreads are only legal in array/object/call contexts).
+		const makeExprVirtualCode = (
+			expression: string,
+			sourceOffset: number
+		): VirtualCode => {
+			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 			const allBindings = forBindings.size > 0
 				? new Set([...buildBindingNames, ...forBindings])
 				: buildBindingNames
 
 			const binderDecl = formatBuildBindingAmbientBlock(allBindings)
-			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length
-			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + expr
-			out.push({
+			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + 1 // +1 for `[`
+			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + '[' + expression + ']'
+
+			return {
 				id: `expr_${exprIdx++}`,
 				languageId: 'typescript',
 				snapshot: createSnapshot(virtualText),
 				mappings: [
 					{
-						sourceOffsets: [seg.start + 1],
+						sourceOffsets: [sourceOffset],
 						generatedOffsets: [exprOffsetInVirtual],
-						lengths: [expr.length],
+						lengths: [expression.length],
 						data: BUILD_SCRIPT_FEATURES,
 					},
 				],
 				embeddedCodes: [],
-			})
+			}
+		}
+
+		// Pass 1: Attribute interpolations
+		const { interpolations, masks } = collectAttributeInterpolations(
+			this.htmlDocument.roots,
+			sourceText
+		)
+		for (const interp of interpolations) {
+			out.push(makeExprVirtualCode(interp.expression, interp.sourceOffset))
+		}
+
+		// Pass 2: Text-content interpolations (on masked text)
+		const masked = applyMasks(
+			maskForDirectiveValues(maskScriptAndStyleInner(sourceText)),
+			masks
+		)
+		for (const seg of tokenizeCurlyInterpolation(masked)) {
+			if (seg.kind !== 'interpolation') continue
+			const expr = seg.expression
+			if (!expr.trim()) continue
+			out.push(makeExprVirtualCode(expr, seg.start + 1))
 		}
 
 		return out
