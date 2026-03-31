@@ -14,7 +14,7 @@ const TEMPLATES = ['minimal']
 const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
-	const pkgName = `@aero-js/template-${templateName}`
+	const pkgName = `@aero-js/starter-${templateName}`
 	try {
 		const pkgUrl = import.meta.resolve(`${pkgName}/package.json`)
 		const templatePath = dirname(fileURLToPath(pkgUrl))

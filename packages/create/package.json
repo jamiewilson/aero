@@ -24,6 +24,7 @@
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
+		"@aero-js/starter-fullstack": "workspace:*",
 		"@aero-js/starter-minimal": "workspace:*"
 	}
 }

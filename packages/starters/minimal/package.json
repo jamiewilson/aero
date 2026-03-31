@@ -16,7 +16,8 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"@aero-js/core": "workspace:*"
+		"@aero-js/core": "workspace:*",
+		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
 		"vite": "8.0.2"

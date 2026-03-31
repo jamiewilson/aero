@@ -13,3 +13,5 @@ build
 .output
 .env
 .env.local
+playwright-report
+test-results

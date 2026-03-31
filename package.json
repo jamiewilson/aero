@@ -6,6 +6,11 @@
 		"format": "oxfmt",
 		"dev": "pnpm --dir examples/kitchen-sink dev",
 		"preview": "pnpm --dir examples/kitchen-sink preview",
+		"e2e:install": "playwright install chromium",
+		"e2e": "playwright test",
+		"e2e:headed": "playwright test --headed",
+		"e2e:debug": "playwright test --debug",
+		"e2e:ci": "playwright test",
 		"test": "pnpm typecheck && vitest run",
 		"typecheck": "pnpm -r typecheck",
 		"build": "pnpm -r --filter @aero-js/interpolation --filter @aero-js/html-parser --filter @aero-js/highlight --filter @aero-js/diagnostics --filter @aero-js/compiler --filter @aero-js/core --filter @aero-js/vite --filter @aero-js/content --filter @aero-js/config --filter @aero-js/cli --filter @aero-js/create run build",
@@ -24,6 +29,8 @@
 		"release:publish": "pnpm -r publish"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.58.2",
+		"@types/node": "^25.5.0",
 		"oxfmt": "^0.36.0",
 		"vitest": "^4.1.1"
 	},

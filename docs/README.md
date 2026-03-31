@@ -41,3 +41,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 - **[Nitro](nitro-overview.md)** — API routes, handlers, storage, database, and optional prerender (when `server: true`).
 - **[HTMX and Alpine](htmx-and-alpine.md)** — Using htmx and Alpine.js with Aero, including together.
+
+## Testing and contribution
+
+- **[Testing](testing.md)** — Repo-level Vitest and Playwright commands, CI policy, selector guidance, and shared E2E harness conventions.

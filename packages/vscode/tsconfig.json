@@ -19,6 +19,6 @@
 		"sourceMap": true,
 		"types": ["node", "vscode"]
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts"],
+	"include": ["src/**/*.ts", "src/**/*.d.ts", "../html-parser/src/**/*.d.ts"],
 	"exclude": ["node_modules", "dist", "src/server.ts"]
 }
