@@ -16,7 +16,7 @@
 		</p>
 	</header>
 
-	<ul class="card">
+	<ul class="card" data-testid="docs-list">
 		<li for="{ const doc of docs }">
 			<a href="/docs/{ doc.id }">{ doc.data.title }</a>
 			<badge-component if="{ !doc.data.published }" text="Draft" />

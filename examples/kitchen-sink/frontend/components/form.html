@@ -7,11 +7,17 @@
 <section x-data="{ input: '', dismiss: ${dismiss} }">
 	<p>Test the server:</p>
 	<form
+		data-testid="home-form"
 		hx-post="/api/submit"
 		hx-on::after-request="if (event.detail.successful) this.reset()"
 		hx-target="[hx-toast]"
 		hx-swap="innerHTML">
-		<input x-model="input" type="text" name="message" placeholder="Enter a message" />
+		<input
+			x-model="input"
+			data-testid="home-message-input"
+			type="text"
+			name="message"
+			placeholder="Enter a message" />
 		<button type="submit" :disabled="!input.length">{ site.home.cta }</button>
 	</form>
 
@@ -19,7 +25,11 @@
 	<!-- Or should all nested scripts default to inline? -->
 	<script is:inline src="/scripts/static.js"></script>
 
-	<span class="toast" hx-toast @htmx:after-swap="dismiss($el)"></span>
+	<span
+		class="toast"
+		data-testid="home-toast"
+		hx-toast
+		@htmx:after-swap="dismiss($el)"></span>
 
 	<style>
 		@scope {

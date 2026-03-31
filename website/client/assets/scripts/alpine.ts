@@ -6,6 +6,14 @@ import persist from '@alpinejs/persist'
 Alpine.start()
 Alpine.plugin(persist)
 
+const withViewTransition = (update: () => void) => {
+	if (typeof document.startViewTransition === 'function') {
+		document.startViewTransition(update)
+		return
+	}
+	update()
+}
+
 Alpine.store(site.theme.storageKey, {
 	current: Alpine.$persist(site.theme.default).as(site.theme.storageKey),
 
@@ -22,7 +30,7 @@ Alpine.store(site.theme.storageKey, {
 		const update = () => {
 			if (next) this.current = next
 		}
-		document.startViewTransition ? document.startViewTransition(update) : update()
+		withViewTransition(update)
 	},
 })
 
