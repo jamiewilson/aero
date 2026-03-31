@@ -19,6 +19,8 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 ```bash
 # scaffold a new project
 pnpm create @aero-js my-app
+# or start with Nitro configured
+pnpm create @aero-js my-app --template fullstack
 # or use dlx (or npx)
 pnpm dlx @aero-js/create@latest my-app
 # add to an existing project
@@ -317,7 +319,7 @@ Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in b
 
 ## Server when you need it
 
-By default, `pnpm build` produces a static `dist/`. Enable Nitro in your Vite config for API routes and an optional server. Add handlers under `server/api/`; they are served at `/api/...`.
+By default, `pnpm build` produces a static `dist/`. Enable Nitro in your Vite config for API routes and an optional server. Add handlers under `server/api/`; they are served at `/api/...`. Use a root `nitro.config.ts` for Nitro-native features like storage, cache, database, tasks, plugins, and deployment presets.
 
 **`vite.config.ts`:**
 

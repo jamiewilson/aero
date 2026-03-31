@@ -1,0 +1,12 @@
+<script is:build>
+	import site from '@content/site'
+	const links = site.footer.links
+</script>
+
+<footer>
+	<ul>
+		<li data-for="{ const link of links }">
+			<a href="{ link.path }">{ link.label }</a>
+		</li>
+	</ul>
+</footer>

@@ -1,6 +1,6 @@
 # @aero-js/create
 
-Scaffold a new [Aero](https://github.com/jamiewilson/aero) project. Aero is an HTML-first static site generator powered by Vite.
+Scaffold a new [Aero](https://github.com/jamiewilson/aero) project. Aero is an HTML-first static site generator powered by Vite, with optional Nitro support for APIs and server features.
 
 ## Usage
 
@@ -23,15 +23,16 @@ pnpm dlx @aero-js/create@latest my-app
 | Argument | Description                | Default      |
 | -------- | -------------------------- | ------------ |
 | `<dir>`  | Project name and directory | _(required)_ |
+| `--template <name>` | Starter template (`minimal`, `fullstack`) | `minimal` |
 
 ## What it does
 
-1. Copies the minimal template into a new directory
+1. Copies the selected template into a new directory
 2. Rewrites `package.json` with your project name
 3. Auto-detects your package manager (pnpm > yarn > npm) and installs dependencies
 4. Prints next steps
 
-After scaffolding, the project has `@aero-js/core` and `@aero-js/vite` as its framework dependencies.
+The `fullstack` template also adds `@aero-js/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
 
 ## Project structure
 

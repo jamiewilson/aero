@@ -22,6 +22,14 @@ describe('@aero-js/create lib', () => {
 			})
 		})
 
+		it('supports the fullstack template', () => {
+			expect(parseArgs(['node', 'index.js', 'my-app', '--template', 'fullstack'])).toEqual({
+				target: 'my-app',
+				template: 'fullstack',
+				strict: false,
+			})
+		})
+
 		it('allows template before target', () => {
 			expect(parseArgs(['node', 'index.js', '--template', 'minimal', 'my-app'])).toEqual({
 				target: 'my-app',
@@ -208,6 +216,14 @@ describe('@aero-js/create lib', () => {
 			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
 			expect(readme).not.toContain('preview:api')
 			expect(readme).not.toContain('server/api')
+		})
+
+		it('includes Nitro commands and files for the fullstack template', () => {
+			writeReadme(tmpDir, 'my-app', 'fullstack')
+			const readme = readFileSync(join(tmpDir, 'README.md'), 'utf8')
+			expect(readme).toContain('preview:api')
+			expect(readme).toContain('nitro.config.ts')
+			expect(readme).toContain('Nitro')
 		})
 	})
 })

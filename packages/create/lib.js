@@ -83,6 +83,51 @@ export function findWorkspaceRoot(fromDir) {
  * @param {string} template
  */
 export function writeReadme(targetDir, projectName, template) {
+	if (template === 'fullstack') {
+		const lines = [
+			`# ${projectName}`,
+			'',
+			'Built with [Aero](https://github.com/jamiewilson/aero) and Nitro.',
+			'',
+			'## Commands',
+			'',
+			'| Command | Description |',
+			'|---|---|',
+			'| `pnpm dev` | Start the dev server with Nitro enabled |',
+			'| `pnpm build` | Build static HTML and Nitro output |',
+			'| `pnpm preview` | Preview the static build only |',
+			'| `pnpm preview:api` | Run the built Nitro server from `.output/` |',
+			'',
+			'## Project Structure',
+			'',
+			'```',
+			`${projectName}/`,
+			'├── client/             # Aero pages, layouts, components, assets',
+			'├── content/            # Global content modules',
+			'├── server/             # Nitro API routes and static catch-all route',
+			'├── plugins/            # Nitro runtime hooks',
+			'├── tasks/              # Nitro task handlers',
+			'├── server.ts           # Nitro server entry',
+			'├── nitro.config.ts     # Canonical Nitro config',
+			'├── vite.config.ts      # Aero Vite config (`server: true`)',
+			'└── tsconfig.json       # Path aliases and Nitro TS config',
+			'```',
+			'',
+			'## Included Nitro Features',
+			'',
+			'- `nitro.config.ts` as the primary Nitro config surface',
+			'- KV storage via `useStorage`',
+			'- Cached handlers via `defineCachedHandler`',
+			'- SQLite database access via `useDatabase`',
+			'- Nitro plugin hooks in `plugins/`',
+			'- Nitro tasks in `tasks/`',
+			'',
+		]
+
+		writeFileSync(join(targetDir, 'README.md'), lines.join('\n'))
+		return
+	}
+
 	const lines = [
 		`# ${projectName}`,
 		'',

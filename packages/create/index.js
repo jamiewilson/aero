@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const startPkgDir = __dirname
 const APPS_DIR = 'dist'
 
-const TEMPLATES = ['minimal']
+const TEMPLATES = ['minimal', 'fullstack']
 const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
@@ -140,7 +140,7 @@ function main() {
 
 	if (!target) {
 		console.error('[create-aero] missing target directory.')
-		console.error('Usage: pnpm create @aero-js <dir> [--template minimal] [--strict]')
+		console.error('Usage: pnpm create @aero-js <dir> [--template minimal|fullstack] [--strict]')
 		console.error('Example: pnpm create @aero-js my-app')
 		process.exit(1)
 	}
@@ -203,7 +203,12 @@ function main() {
 	console.log(`  1. cd ${inMonorepo ? relative(process.cwd(), targetDir) || targetDir : target}`)
 	console.log('  2. pnpm dev          # start the dev server')
 	console.log('  3. pnpm build        # production build')
-	console.log('  4. Install the "Aero" VS Code extension for template diagnostics')
+	if (template === 'fullstack') {
+		console.log('  4. pnpm preview:api  # preview the built Nitro server')
+		console.log('  5. Install the "Aero" VS Code extension for template diagnostics')
+	} else {
+		console.log('  4. Install the "Aero" VS Code extension for template diagnostics')
+	}
 	console.log('')
 	console.log('  Docs: https://github.com/jamiewilson/aero')
 	if (strict) {

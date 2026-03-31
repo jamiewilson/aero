@@ -14,7 +14,8 @@ aero/
 │   ├── vscode/           # VS Code extension
 │   ├── create/            # Project initializer (@aero-js/create)
 │   ├── starters/
-│   │   └── minimal/       # Starter template (@aero-js/starter-minimal)
+│   │   ├── minimal/       # Static starter template (@aero-js/starter-minimal)
+│   │   └── fullstack/     # Nitro starter template (@aero-js/starter-fullstack)
 ├── examples/
 │   └── kitchen-sink/      # Full demo app (@aero-js/example-kitchen-sink)
 │       ├── frontend/      # Or client/; pages, components, layouts, assets (per aero.config dirs)
@@ -22,7 +23,8 @@ aero/
 │       ├── content/       # Global data, content collections
 │       ├── build/         # Or dist/; output when custom dirs used
 │       ├── vite.config.ts
-│       └── .aero/         # Generated Nitro config when server: true (no top-level nitro.config)
+│       ├── .aero/         # Generated Nitro config/runtime files when server: true
+│       └── nitro.config.ts# Optional canonical Nitro config for end-user features
 ├── docs/
 └── .github/
 ```
@@ -66,7 +68,7 @@ aero/
 
 ## packages/create (@aero-js/create)
 
-- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on `@aero-js/starter-minimal`.
+- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on the starter packages under `packages/starters/`.
 - **No app source** in create; starters live in `packages/starters/` and are copied from node_modules.
 
 ## examples/kitchen-sink (demo app)
@@ -74,12 +76,17 @@ aero/
 - **Purpose:** Full demo app. Run dev/build/preview from **examples/kitchen-sink** (e.g. `pnpm --dir examples/kitchen-sink dev`). Root has no app dev script.
 - **Source directory:** Configurable via aero.config; kitchen-sink uses `frontend/`, `backend/`, `build/` for output. Default layout would be `client/`, `content/`, `server/`. Global data at `content/` (e.g. `site.ts`, content collections).
 - **Path aliases:** Defined in `examples/kitchen-sink/tsconfig.json`; the Aero resolver merges these with framework defaults when resolving component/layout imports in HTML.
-- **Server:** When `server: true`, Nitro config is generated under `.aero/`; API in backend/ (or server/), routes in backend/routes.
+- **Server:** When `server: true`, Aero generates `.aero/nitro.config.mjs` and extends the app's root `nitro.config.ts` when present. API stays in backend/ (or server/), routes in backend/routes.
 
 ## packages/starters/minimal
 
 - **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm create @aero-js <name>` by default.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
+
+## packages/starters/fullstack
+
+- **Purpose:** Nitro-enabled starter template. Includes root `nitro.config.ts`, `server/` routes, `plugins/`, `tasks/`, and `preview:api`.
+- **Structure:** `client/`, `content/site.ts`, `server/`, `plugins/`, `tasks/`, `server.ts`, `nitro.config.ts`.
 
 ## Build and test flow
 
