@@ -1,0 +1,22 @@
+<script is:build>
+	import meta from '@components/meta'
+	import footer from '@components/footer'
+</script>
+
+<html lang="en">
+	<head>
+		<meta-component props="{ ...Aero.props }" />
+		<link rel="stylesheet" href="@styles/global.css" />
+		<script type="module">
+			import aero from '@aero-js/core'
+			aero.mount()
+		</script>
+	</head>
+
+	<body id="app">
+		<main>
+			<slot />
+		</main>
+		<footer-component />
+	</body>
+</html>

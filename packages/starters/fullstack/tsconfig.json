@@ -1,0 +1,16 @@
+{
+	"extends": ["nitro/tsconfig"],
+	"compilerOptions": {
+		"types": ["vite/client"],
+		"moduleResolution": "bundler",
+		"paths": {
+			"@pages/*": ["./client/pages/*"],
+			"@layouts/*": ["./client/layouts/*"],
+			"@components/*": ["./client/components/*"],
+			"@styles/*": ["./client/assets/styles/*"],
+			"@scripts/*": ["./client/assets/scripts/*"],
+			"@images/*": ["./client/assets/images/*"],
+			"@content/*": ["./content/*"]
+		}
+	}
+}

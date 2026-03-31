@@ -1,0 +1,32 @@
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+
+	const headerProps = {
+		title: site.home.title,
+		subtitle: site.home.subtitle,
+	}
+</script>
+
+<base-layout>
+	<header-component props="{ ...headerProps }" />
+
+	<section class="card">
+		<h2>Nitro-native project surface</h2>
+		<p>
+			Configure Nitro in <code>nitro.config.ts</code>. Add handlers in
+			<code>server/api</code>, tasks in <code>tasks/</code>, plugins in
+			<code>plugins/</code>, and optional request interception in <code>server.ts</code>.
+		</p>
+	</section>
+
+	<section class="card">
+		<h2>Try these endpoints</h2>
+		<ul>
+			<li data-for="{ const endpoint of site.api }">
+				<a href="{ endpoint }">{ endpoint }</a>
+			</li>
+		</ul>
+	</section>
+</base-layout>

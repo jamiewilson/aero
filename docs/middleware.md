@@ -22,7 +22,7 @@ export default defineConfig({
 ```
 
 - **Dev:** The Vite plugin applies these before rendering; a matching path gets a `Location` response and no page render.
-- **Server (preview:api / production):** The plugin sets `AERO_REDIRECTS` before `nitro build`; the app's `nitro.config.ts` should merge them into `routeRules` (e.g. using `redirectsToRouteRules` from `@aero-js/config`). The demo app's Nitro config (when server: true) is generated under `.aero/`.
+- **Server (preview:api / production):** Aero generates `.aero/nitro.config.mjs` and extends the app's root `nitro.config.ts` when one exists. Redirects from `aero.config.ts` are translated into Nitro `routeRules`, but explicit `routeRules` in `nitro.config.ts` win on conflicts.
 - **Static build:** Redirects are not run at build time. For static-only deploys (no Nitro), use your host's redirect config (Netlify `_redirects`, Vercel `redirects`, etc.).
 - **Matching:** Exact path only; `from` is compared to the request pathname. Add separate entries for `/path` and `/path/` if you need both.
 

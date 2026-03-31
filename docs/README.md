@@ -39,7 +39,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Server and client libraries
 
-- **[Nitro](nitro-overview.md)** — API routes, handlers, storage, database, and optional prerender (when `server: true`).
+- **[Nitro](nitro-overview.md)** — `server: true`, root `nitro.config.ts`, Nitro-native APIs, storage, cache, database, tasks, plugins, and deployment presets.
 - **[HTMX and Alpine](htmx-and-alpine.md)** — Using htmx and Alpine.js with Aero, including together.
 
 ## Testing and contribution

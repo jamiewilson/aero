@@ -13,8 +13,11 @@ Full demo template for the Aero static site generator. Used for development and 
 | `frontend/assets/`     | Styles, scripts, images.                                                                                             |
 | `content/`             | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals.     |
 | `backend/`             | Nitro: `api/` (e.g. `submit.post.ts`), `routes/` (e.g. catch-all for static).                                        |
+| `plugins/`             | Nitro runtime hooks registered from `nitro.config.ts`.                                                               |
+| `tasks/`               | Nitro tasks wired through `nitro.config.ts`.                                                                         |
 | `public/`              | Static assets copied as-is.                                                                                          |
 | `aero.config.ts`       | Aero config (content, server, dirs, vite).                                                                           |
+| `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                               |
 | `content.config.ts`    | Content collections (used when `content: true`).                                                                     |
 | `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                      |
 | `tsconfig.json`        | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc.                                          |
@@ -24,7 +27,7 @@ Full demo template for the Aero static site generator. Used for development and 
 
 From repo root (or from `examples/kitchen-sink` if core is built):
 
-- **pnpm dev** — Vite dev server with HMR (and Nitro when `server: true`).
+- **pnpm dev** — Vite dev server with HMR and Nitro loaded from `nitro.config.ts`.
 - **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
 - **pnpm preview** — Static preview only (`AERO_SERVER=false` build + `vite preview`).
 - **pnpm preview:api** — Full server preview (static + Nitro API).
