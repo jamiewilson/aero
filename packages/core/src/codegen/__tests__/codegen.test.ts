@@ -158,7 +158,10 @@ describe('Aero Codegen - Props (script/style)', () => {
 		expect(out).toContain('type="application/json"')
 		expect(out).toContain('class="__aero_data"')
 		expect(out).toContain('{"config":{"theme":"dark","id":42}}')
-		expect(out).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
+		expect(out).toContain('window.__aero_data_next=')
+		expect(out).toContain('document.currentScript')
+		expect(out).not.toContain('document.getElementById')
+		expect(out).not.toContain('nextPassDataId')
 		expect(out).toContain('<script type="module" src="/auto.js"></script>')
 	})
 
@@ -218,7 +221,9 @@ describe('Aero Codegen - Props (script/style)', () => {
 		const out = Array.from(scripts).join('\n')
 
 		expect(output).not.toContain('props=')
-		expect(out).toContain('window.__aero_data_next=JSON.parse(document.getElementById')
+		expect(out).toContain('window.__aero_data_next=')
+		expect(out).toContain('document.currentScript')
+		expect(out).not.toContain('document.getElementById')
 	})
 
 	it('should throw when props value is not brace-wrapped', async () => {
