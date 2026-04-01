@@ -10,9 +10,19 @@ import type { IRNode, BodyAndStyleIR } from './ir'
 import * as Helper from './helpers'
 
 const DEFAULT_OUT = '__out'
+let emittedInternalId = 0
 
-function emitForLoopBlock(binding: string, iterable: string, body: IRNode[], outVar: string): string {
-	const uid = Math.random().toString(36).slice(2, 10)
+function nextInternalId(prefix: string): string {
+	return `__aero_${prefix}_${emittedInternalId++}`
+}
+
+function emitForLoopBlock(
+	binding: string,
+	iterable: string,
+	body: IRNode[],
+	outVar: string
+): string {
+	const uid = nextInternalId('iter')
 	const iterVar = `__aeroIter_${uid}`
 	const iVar = `__aeroI_${uid}`
 	return (
@@ -101,7 +111,7 @@ function emitNode(node: IRNode, outVar: string): string {
 			if (!node.isModule) {
 				code += Helper.emitAppend('\\n{\\n', node.outVar)
 			}
-			const jsMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+			const jsMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
 			code += Helper.emitAppend(`\${${jsMapExpr}}\\n`, node.outVar)
 			return code
 		}
@@ -127,7 +137,7 @@ export function emitBodyAndStyle(ir: BodyAndStyleIR): {
 	const bodyCode = emitToJS(ir.body, DEFAULT_OUT)
 	let styleCode = ''
 	if (ir.style.length > 0) {
-		const styleVar = `__out_style_${Math.random().toString(36).slice(2)}`
+		const styleVar = nextInternalId('style')
 		styleCode += `let ${styleVar} = '';\n`
 		styleCode += emitToJS(ir.style, styleVar)
 		styleCode += `styles?.add(${styleVar});\n`

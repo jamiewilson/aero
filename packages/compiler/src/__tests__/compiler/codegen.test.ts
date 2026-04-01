@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
-import { getRenderComponentContextArg, escapeHtml, raw } from '../../helpers'
+import { getRenderComponentContextArg, escapeHtml, escapeScriptJson, raw } from '../../helpers'
 import { analyzeBuildScript } from '../../build-script-analysis'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
@@ -48,6 +48,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		slots: {},
 		props: {},
 		escapeHtml,
+		escapeScriptJson,
 		raw,
 		...context,
 	}
@@ -1022,7 +1023,7 @@ describe('Codegen', () => {
 
 			const output = await execute(code)
 
-			expect(output).toContain('const apiUrl = "/api/v1";')
+			expect(output).toContain('const apiUrl = "\\u002Fapi\\u002Fv1";')
 			expect(output).toContain('const debug = true;')
 			expect(output).toContain('const version = 3;')
 		})

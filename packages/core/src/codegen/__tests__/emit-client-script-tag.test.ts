@@ -23,7 +23,7 @@ describe('emitClientScriptTag', () => {
 		const { head, root } = emitClientScriptTag(script, vp)
 		expect(root).toEqual([])
 		expect(head.length).toBe(1)
-		expect(head[0]).toMatch(/^'/)
+		expect(head[0]).toMatch(/^["']/)
 	})
 
 	it('emits pass-data body bundle with json + tag', () => {

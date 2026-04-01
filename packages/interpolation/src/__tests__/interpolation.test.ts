@@ -143,6 +143,11 @@ describe('compileInterpolationFromSegments', () => {
 		expect(compileInterpolationFromSegments(segments)).toBe('\\`world\\`')
 	})
 
+	it('escapes backslashes and literal ${ sequences in literal segments', () => {
+		const segments: Segment[] = [{ kind: 'literal', start: 0, end: 15, value: 'path \\ ${value}' }]
+		expect(compileInterpolationFromSegments(segments)).toBe('path \\\\ \\${value}')
+	})
+
 	it('interpolation segment → ${expression}', () => {
 		const segments: Segment[] = [{ kind: 'interpolation', start: 0, end: 6, expression: 'name' }]
 		expect(compileInterpolationFromSegments(segments)).toBe('${name}')

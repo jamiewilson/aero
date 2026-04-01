@@ -3,6 +3,7 @@
  */
 
 import type { ScriptEntry } from '../types'
+import { serializeJsonForScriptTagExpression } from './script-escape'
 
 const VIRTUAL_PREFIX = '/@aero/client/'
 
@@ -27,12 +28,11 @@ export function emitClientScriptTag(
 	const urlExpr = clientScript.content.startsWith(virtualPrefix)
 		? `__aeroScriptUrl(${JSON.stringify(clientScript.content.slice(virtualPrefix.length))})`
 		: JSON.stringify(clientScript.content)
-	const baseAttrsEscaped = baseAttrs.replace(/'/g, "\\'")
-	const tagExpr = `'<script ${baseAttrsEscaped} src="'+${urlExpr}+'"></script>'`
+	const tagExpr = `${JSON.stringify(`<script ${baseAttrs} src="`)}+${urlExpr}+${JSON.stringify('"></script>')}`
 	const isHead = clientScript.injectInHead
 
 	if (clientScript.passDataExpr) {
-		const jsonExpr = `JSON.stringify(${clientScript.passDataExpr})`
+		const jsonExpr = serializeJsonForScriptTagExpression(clientScript.passDataExpr)
 		if (isHead) {
 			// Single expression for `injectedHeadScripts?.add(expr)` — concat JSON script, assignment script, module script.
 			head.push(

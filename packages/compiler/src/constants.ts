@@ -35,9 +35,6 @@ export const SLOT_NAME_DEFAULT = 'default'
 
 /** Matches tag names ending with `-component` or `-layout`. */
 export const COMPONENT_SUFFIX_REGEX = /-(component|layout)$/
-/** Self-closing tag: `<tag ... />`. */
-export const SELF_CLOSING_TAG_REGEX = /<([a-z0-9-]+)([^>]*?)\/>/gi
-export const SELF_CLOSING_TAIL_REGEX = /\/>$/
 
 /** HTML void elements that have no closing tag. */
 export const VOID_TAGS = new Set([

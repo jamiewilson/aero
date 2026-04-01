@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { escapeScriptJson } from '@aero-js/compiler/helpers'
 import { parse } from '@aero-js/compiler/parser'
 import { compile } from '..'
 
@@ -41,6 +42,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		},
 		slots: {},
 		props: {},
+		escapeScriptJson,
 		...context,
 	}
 	return await renderFn(aeroContext)
@@ -217,12 +219,12 @@ describe('Aero Codegen - Props (script/style)', () => {
 							</script>`
 
 		const parsed = parse(html)
-		expect(() => compile(parsed, {
-			...mockOptions,
-			blockingScripts: parsed.blockingScripts,
-		})).toThrow(
-			'Directive `props` on <script> must use a braced expression'
-		)
+		expect(() =>
+			compile(parsed, {
+				...mockOptions,
+				blockingScripts: parsed.blockingScripts,
+			})
+		).toThrow('Directive `props` on <script> must use a braced expression')
 	})
 
 	it('should emit JSON data tag before bundled module script', async () => {

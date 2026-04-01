@@ -149,6 +149,14 @@ function createStaticPrerenderServices(): StaticPrerenderServices {
 	}
 }
 
+function trimEdgeSlashes(value: string): string {
+	let start = 0
+	let end = value.length
+	while (start < end && value[start] === '/') start++
+	while (end > start && value[end - 1] === '/') end--
+	return value.slice(start, end)
+}
+
 interface RunPrerenderWithCancellationArgs<T> {
 	services: StaticPrerenderServices
 	items: readonly T[]
@@ -575,7 +583,7 @@ export async function renderStaticPages(
 
 		// Skip building pages that are redirect sources so the Nitro routeRule is the only handler.
 		const redirectFromSet = new Set(
-			(options.redirects ?? []).map(r => r.from.replace(/^\/+|\/+$/g, '').trim() || '')
+			(options.redirects ?? []).map(r => trimEdgeSlashes(r.from).trim() || '')
 		)
 		const pathMatchesRedirect = (page: StaticPage): boolean => {
 			const pathSegment = page.routePath === '' ? '' : page.routePath
@@ -747,4 +755,5 @@ export const __internal = {
 	resolveStaticPrerenderConcurrency,
 	createStaticPrerenderServices,
 	runPrerenderWithCancellation,
+	trimEdgeSlashes,
 }

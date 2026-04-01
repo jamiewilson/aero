@@ -253,6 +253,12 @@ describe('vite build helpers', () => {
 		)
 	})
 
+	it('trims leading and trailing slashes without regex backtracking', () => {
+		expect(__internal.trimEdgeSlashes('///docs///')).toBe('docs')
+		expect(__internal.trimEdgeSlashes('/')).toBe('')
+		expect(__internal.trimEdgeSlashes('docs')).toBe('docs')
+	})
+
 	// =========================================================================
 	// discoverPages (integration: temp dir with .html files)
 	// =========================================================================

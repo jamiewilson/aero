@@ -76,7 +76,7 @@ export function compileInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return seg.value.replace(/`/g, '\\`')
+				return escapeTemplateLiteralContent(seg.value)
 			}
 			// raw(...) bypasses escaping - check with trimmed expression
 			const expr = seg.expression.trim()
@@ -98,7 +98,7 @@ export function compileAttributeInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return seg.value.replace(/`/g, '\\`')
+				return escapeTemplateLiteralContent(seg.value)
 			}
 			return `\${${seg.expression}}`
 		})
@@ -132,9 +132,14 @@ export function buildPropsString(entries: string[], spreadExpr: string | null): 
 	return `{ ${entries.join(', ')} }`
 }
 
-/** Escape backticks for safe embedding in generated template literals. */
+/** Escape characters with special meaning inside generated template literals. */
+export function escapeTemplateLiteralContent(s: string): string {
+	return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+}
+
+/** Backward-compatible alias for template-literal escaping. */
 export function escapeBackticks(s: string): string {
-	return s.replace(/`/g, '\\`')
+	return escapeTemplateLiteralContent(s)
 }
 
 /** Escape HTML special characters for safe output. */
@@ -146,6 +151,17 @@ export function escapeHtml(s: unknown): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;')
+}
+
+/** Escape JSON for safe embedding inside inline `<script>` tags. */
+export function escapeScriptJson(value: unknown): string {
+	return JSON.stringify(value)
+		.replace(/</g, '\\u003C')
+		.replace(/>/g, '\\u003E')
+		.replace(/&/g, '\\u0026')
+		.replace(/\//g, '\\u002F')
+		.replace(/\u2028/g, '\\u2028')
+		.replace(/\u2029/g, '\\u2029')
 }
 
 /** Bypass auto-escaping for raw HTML output. */
@@ -170,11 +186,7 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
  * Internal context keys destructured from the render context and forwarded to child components.
  * User-facing data (`page`, `site`, `props`) is NOT destructured.
  */
-export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = [
-	'styles',
-	'scripts',
-	'headScripts',
-]
+export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = ['styles', 'scripts', 'headScripts']
 
 // ============================================================================
 // Default render function emission (Aero-compatible)
@@ -247,7 +259,7 @@ export function getRenderComponentContextArg(): string {
 
 /** Build destructuring pattern for the render function. */
 export function getRenderContextDestructurePattern(): string {
-	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, raw`
+	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, raw`
 }
 
 // ============================================================================

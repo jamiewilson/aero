@@ -139,7 +139,7 @@ describe('emitBodyAndStyle', () => {
 		}
 		const { bodyCode, styleCode } = emitBodyAndStyle(ir)
 		expect(bodyCode).toBe('')
-		expect(styleCode).toMatch(/let __out_style_\w+ = '';/)
+		expect(styleCode).toMatch(/let __aero_style_\w+ = '';/)
 		expect(styleCode).toContain('styles?.add(')
 	})
 })
