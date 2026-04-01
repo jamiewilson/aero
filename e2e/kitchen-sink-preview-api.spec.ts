@@ -6,14 +6,14 @@ const kitchenSinkRoot = repoPath('examples', 'kitchen-sink')
 test.describe('kitchen-sink preview:api', () => {
 	test.describe.configure({ mode: 'serial' })
 
-	let server: ServerHandle
+	let server: ServerHandle | undefined
 
 	test.beforeAll(async () => {
 		server = await startNitroPreview(kitchenSinkRoot, 4301)
 	})
 
 	test.afterAll(async () => {
-		await server.stop()
+		if (server) await server.stop()
 	})
 
 	test('submits the HTMX form and renders the toast fragment', async ({ page }) => {

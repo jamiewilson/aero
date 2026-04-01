@@ -434,6 +434,13 @@ Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
 - `pnpm preview:api` — Preview with Nitro (static + API from one origin).
 - `pnpm test` — Run Vitest (packages/core).
 
+Repo testing commands:
+
+- `pnpm e2e` — Install the local Playwright Chromium bundle if needed, then run the E2E suite.
+- `pnpm e2e:headed` — Same local bootstrap, with headed Playwright.
+- `pnpm e2e:debug` — Same local bootstrap, with Playwright debug mode.
+- `pnpm e2e:ci` — Run Playwright without installing browsers first; intended for CI environments that pre-provision the cache.
+
 ## Build output
 
 - **Static only:** `pnpm build` → `dist/`. Deploy to any static host or open via `file://`.
