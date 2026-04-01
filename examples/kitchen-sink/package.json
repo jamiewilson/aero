@@ -15,19 +15,19 @@
 		"@aero-js/content": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/highlight": "workspace:*",
-		"@alpinejs/persist": "^3.15.8",
-		"@shikijs/rehype": "^3.23.0",
+		"@alpinejs/persist": "^3.15.10",
+		"@shikijs/rehype": "^4.0.2",
 		"@shikijs/themes": "^4.0.2",
-		"alpinejs": "^3.15.8",
+		"alpinejs": "^3.15.10",
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.27",
-		"nitro": "3.0.1-alpha.2",
+		"nitro": "catalog:",
 		"shiki": "^4.0.2",
-		"vite": "8.0.2",
+		"vite": "catalog:",
 		"zod": "^4.3.6"
 	}
 }

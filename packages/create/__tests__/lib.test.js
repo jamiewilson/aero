@@ -88,7 +88,7 @@ describe('@aero-js/create lib', () => {
 					type: 'module',
 					scripts: { dev: 'vite dev' },
 					dependencies: { '@aero-js/core': '<version>' },
-					devDependencies: { vite: '8.0.2' },
+					devDependencies: { vite: '8.0.3' },
 				})
 			)
 			rewritePackageJson(templateDir, targetDir, 'my-app', true)

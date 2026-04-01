@@ -29,6 +29,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 ## Content and configuration
 
 - **[Content API](content-api.md)** — Content collections, `getCollection()`, `render()`, and `getStaticPaths` with props.
+- **[Dependency policy](dependency-policy.md)** — Catalog vs overrides vs explicit versions, plus CI guardrails.
 - **[Site URL](site-url.md)** — Canonical URL, sitemap, and `Aero.site` / `import.meta.env.SITE`.
 - **[Environment variables](environment-variables.md)** — Vite env, `VITE_` prefix, `.env` files, and TypeScript.
 - **[Middleware and redirects](middleware.md)** — Request-time middleware (dev) and config redirects.
