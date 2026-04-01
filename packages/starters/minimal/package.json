@@ -20,6 +20,6 @@
 		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
-		"vite": "8.0.2"
+		"vite": "catalog:"
 	}
 }
