@@ -75,7 +75,7 @@ describe('Vite Plugin Integration', () => {
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		expect(result.code).toContain('@aero/client')
 		expect(result.code).toContain('client/pages/plain.ts')
-		expect(result.code).toMatch(/scripts\?\.add\(.*script.*src/)
+		expect(result.code).toContain('scripts?.add(Aero.createScriptTag(')
 		expect(result.code).not.toContain('import { allCaps }')
 		const virtualId = '\0/@aero/client/client/pages/plain.ts'
 		const loadedContent = virtualsPlugin.load(virtualId)

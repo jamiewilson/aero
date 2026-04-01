@@ -19,7 +19,7 @@ import {
 	VIRTUAL_PREFIX as CLIENT_SCRIPT_VIRTUAL_PREFIX,
 } from './emit-client-script-tag'
 import { VOID_TAGS } from '@aero-js/compiler/constants'
-import { escapeTemplateLiteralContent, serializeJsonForScriptTagExpression } from './script-escape'
+import { escapeTemplateLiteralContent } from './script-escape'
 
 let emittedStyleVarId = 0
 
@@ -216,8 +216,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 					diagnosticFile: options.importer,
 					positionNeedle: blockingPropsNeedle,
 				})
-				const serializedValueExpr = serializeJsonForScriptTagExpression('v')
-				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + ${serializedValueExpr} + ";").join("")`
+				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
 				headScripts.push(
 					`\`<script${escapedAttrs}>\${${jsMapExpr}}${escapeTemplateLiteralContent(strippedContent)}</script>\``
 				)
