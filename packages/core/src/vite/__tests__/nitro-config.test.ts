@@ -76,13 +76,19 @@ export default defineNitroConfig({
 		expect(fs.existsSync(result.filePath)).toBe(true)
 	})
 
-	it('extends the user nitro config and skips conflicting redirect route rules', () => {
+	it('composes the user nitro config and normalizes relative Nitro paths', () => {
 		const root = makeTempDir()
 		fs.writeFileSync(
 			path.join(root, 'nitro.config.ts'),
 			`export default {
 	routeRules: {
 		'/legacy': { redirect: { to: '/docs', statusCode: 302 } },
+	},
+	plugins: ['./plugins/runtime.ts'],
+	tasks: {
+		'cache:warm': {
+			handler: './tasks/cache/warm.ts',
+		},
 	},
 	scanDirs: ['./custom-server'],
 }
@@ -104,9 +110,13 @@ export default defineNitroConfig({
 
 		expect(result.userConfigFile).toBe(path.join(root, 'nitro.config.ts'))
 		expect(result.conflictingRedirects).toEqual(['/legacy'])
-		expect(result.content).toContain('extends: "../nitro.config.ts"')
-		expect(result.content).toContain('userNitroConfig')
-		expect(result.content).toContain('Array.from(new Set([...userScanDirs, ...aeroScanDirs]))')
+		expect(result.content).toContain('...userNitroConfigObject')
+		expect(result.content).not.toContain('extends: "../nitro.config.ts"')
+		expect(result.content).toContain(path.join(root, 'plugins', 'runtime.ts').replace(/\\/g, '/'))
+		expect(result.content).toContain(
+			path.join(root, 'tasks', 'cache', 'warm.ts').replace(/\\/g, '/')
+		)
+		expect(result.content).toContain(path.join(root, 'custom-server').replace(/\\/g, '/'))
 		expect(result.content).not.toContain('"/legacy":')
 		expect(result.content).toContain('"/docs":')
 		expect(warn).toHaveBeenCalledOnce()
