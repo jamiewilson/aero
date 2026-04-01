@@ -124,6 +124,11 @@ export class Aero {
 			return String(s)
 		}
 
+		const createScriptTag = (attrs: string, src: string): string => {
+			const normalizedAttrs = attrs.trim()
+			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${escapeHtml(src)}"></script>`
+		}
+
 		const context = {
 			...this.globals,
 			props: input.props || {},
@@ -139,6 +144,7 @@ export class Aero {
 			headScripts: input.headScripts,
 			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
+			createScriptTag,
 			escapeHtml,
 			escapeScriptJson,
 			raw,

@@ -29,12 +29,23 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const renderFn = new AsyncFunction('Aero', body)
 
 	let _passDataId = 0
+	const createScriptTag = (attrs: string, src: string) => {
+		const normalizedAttrs = attrs.trim()
+		const escapedSrc = src
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+		return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${escapedSrc}"></script>`
+	}
 	const aeroContext = {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
 		styles: new Set<string>(),
 		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
+		createScriptTag,
 		page: {
 			url: new URL('http://localhost'),
 			request: new Request('http://localhost'),
