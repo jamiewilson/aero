@@ -420,7 +420,7 @@ importers:
         specifier: workspace:*
         version: link:../starters/minimal
 
-  packages/create/dist/e2e-create-1774994403976:
+  packages/create/dist/e2e-create-1775000065774:
     dependencies:
       '@aero-js/core':
         specifier: workspace:*
