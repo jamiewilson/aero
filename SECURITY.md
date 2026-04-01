@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Aero, please report it directly through GitHub using the ["Report a vulnerability"](../../security/advisories/new) feature on the Security tab of the repository. This ensures your report is handled privately by the maintainers.
+If you discover a security vulnerability in Aero, please report it directly through GitHub using the ["Report a vulnerability"](/security/advisories) feature on the Security tab of the repository. This ensures your report is handled privately by the maintainers.
 
 - **Do not** disclose security issues publicly until they have been reviewed and addressed by the Aero team.
 - We aim to acknowledge and respond to all reports within **5 business days**.
