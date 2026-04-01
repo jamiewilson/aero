@@ -32,14 +32,17 @@ export function emitClientScriptTag(
 
 	if (clientScript.passDataExpr) {
 		const jsonExpr = `escapeScriptJson(${clientScript.passDataExpr})`
+		const bridgeScript =
+			'<script>(function(){var __aero_prev=document.currentScript&&document.currentScript.previousElementSibling;window.__aero_data_next=__aero_prev&&__aero_prev.tagName==="SCRIPT"&&__aero_prev.getAttribute("type")==="application/json"?JSON.parse(__aero_prev.textContent):{};})();</' +
+			'script>'
 		if (isHead) {
-			// Single expression for `injectedHeadScripts?.add(expr)` — concat JSON script, assignment script, module script.
+			// Single expression for `injectedHeadScripts?.add(expr)` — concat JSON script, bridge script, module script.
 			head.push(
-				`(function(){const __pid=Aero.nextPassDataId();return '<script type="application/json" id="'+__pid+'" class="__aero_data">'+${jsonExpr}+'</'+'script>'+'<script>window.__aero_data_next=JSON.parse(document.getElementById("'+__pid+'").textContent);</'+'script>'+(${tagExpr});})()`
+				`(function(){return '<script type="application/json" class="__aero_data">'+${jsonExpr}+'</'+'script>'+${JSON.stringify(bridgeScript)}+(${tagExpr});})()`
 			)
 		} else {
 			root.push(
-				`(function(){const __pid=Aero.nextPassDataId();scripts?.add(\`<script type="application/json" id="\${__pid}" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(\`<script>window.__aero_data_next=JSON.parse(document.getElementById("\${__pid}").textContent);</script>\`);scripts?.add(${tagExpr});})();`
+				`(function(){scripts?.add(\`<script type="application/json" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(${JSON.stringify(bridgeScript)});scripts?.add(${tagExpr});})();`
 			)
 		}
 	} else {
