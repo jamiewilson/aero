@@ -2,6 +2,84 @@ import type { ParseResult, ScriptEntry } from './types'
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 
+function isTagNameChar(char: string | undefined): boolean {
+	return char !== undefined && /[A-Za-z0-9-]/.test(char)
+}
+
+function findTagEnd(html: string, start: number): number {
+	let quote: '"' | "'" | null = null
+
+	for (let i = start; i < html.length; i++) {
+		const char = html[i]
+		if (quote) {
+			if (char === quote) quote = null
+			continue
+		}
+
+		if (char === '"' || char === "'") {
+			quote = char
+			continue
+		}
+
+		if (char === '>') return i
+	}
+
+	return -1
+}
+
+function findSelfClosingSlash(html: string, tagEnd: number): number {
+	let i = tagEnd - 1
+	while (i >= 0 && /\s/.test(html[i] ?? '')) i--
+	return html[i] === '/' ? i : -1
+}
+
+export function expandSelfClosingTags(html: string): string {
+	let out = ''
+	let cursor = 0
+
+	while (cursor < html.length) {
+		const tagStart = html.indexOf('<', cursor)
+		if (tagStart === -1) {
+			out += html.slice(cursor)
+			break
+		}
+
+		out += html.slice(cursor, tagStart)
+		const firstTagChar = html[tagStart + 1]
+		if (!isTagNameChar(firstTagChar)) {
+			out += '<'
+			cursor = tagStart + 1
+			continue
+		}
+
+		let nameEnd = tagStart + 1
+		while (isTagNameChar(html[nameEnd])) nameEnd++
+		const tagName = html.slice(tagStart + 1, nameEnd)
+		const tagEnd = findTagEnd(html, nameEnd)
+		if (tagEnd === -1) {
+			out += html.slice(tagStart)
+			break
+		}
+
+		const selfClosingSlash = findSelfClosingSlash(html, tagEnd)
+		if (selfClosingSlash === -1) {
+			out += html.slice(tagStart, tagEnd + 1)
+			cursor = tagEnd + 1
+			continue
+		}
+
+		const openingTag = html.slice(tagStart, selfClosingSlash)
+		if (CONST.VOID_TAGS.has(tagName.toLowerCase())) {
+			out += `${openingTag}>`
+		} else {
+			out += `${openingTag}></${tagName}>`
+		}
+		cursor = tagEnd + 1
+	}
+
+	return out
+}
+
 /** Serialize element attributes to a string, excluding given names (case-insensitive). Values are XML-escaped. */
 function getAttrsString(element: Element, exclude: Set<string>): string {
 	const parts: string[] = []
@@ -78,11 +156,7 @@ export function parse(html: string): ParseResult {
 
 	// Expand non-void self-closing tags so the HTML5 parser (linkedom) builds correct DOM.
 	// Otherwise e.g. <nav-component /> is parsed as opening-only and swallows following siblings.
-	html = html.replace(CONST.SELF_CLOSING_TAG_REGEX, (match, tagName, attrs) => {
-		const tag = String(tagName).toLowerCase()
-		if (CONST.VOID_TAGS.has(tag)) return match
-		return `<${tagName}${attrs}></${tagName}>`
-	})
+	html = expandSelfClosingTags(html)
 
 	const isFullDocument = /<\s*html[\s>]/i.test(html)
 	let doc: Document

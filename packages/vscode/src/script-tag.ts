@@ -26,8 +26,43 @@ export interface ParsedScriptBlock {
 	tagLength: number
 }
 
-/** Source pattern for matching `<script>` tags. Use with `new RegExp(SCRIPT_TAG_PATTERN, 'gi')`. */
-export const SCRIPT_TAG_PATTERN = '<script\\b([^>]*)>([\\s\\S]*?)<\\/script>'
+function isScriptTagBoundary(char: string | undefined): boolean {
+	return char === undefined || /[\t\n\f\r />]/.test(char)
+}
+
+function findTagEnd(text: string, start: number): number {
+	let quote: '"' | "'" | null = null
+
+	for (let i = start; i < text.length; i++) {
+		const char = text[i]
+		if (quote) {
+			if (char === quote) quote = null
+			continue
+		}
+
+		if (char === '"' || char === "'") {
+			quote = char
+			continue
+		}
+
+		if (char === '>') return i
+	}
+
+	return -1
+}
+
+function findClosingScriptTag(text: string, lowerText: string, from: number): number {
+	let cursor = from
+	while (cursor < text.length) {
+		const closeStart = lowerText.indexOf('</script', cursor)
+		if (closeStart === -1) return -1
+		if (isScriptTagBoundary(text[closeStart + '</script'.length])) {
+			return closeStart
+		}
+		cursor = closeStart + 1
+	}
+	return -1
+}
 
 /**
  * Classify a script tag's kind from its attribute string.
@@ -52,19 +87,29 @@ export function classifyScriptTag(attrs: string): ScriptTagKind {
  */
 export function parseScriptBlocks(text: string): ParsedScriptBlock[] {
 	const blocks: ParsedScriptBlock[] = []
-	const regex = new RegExp(SCRIPT_TAG_PATTERN, 'gi')
-	let match: RegExpExecArray | null
+	const lowerText = text.toLowerCase()
+	let cursor = 0
 
-	while ((match = regex.exec(text)) !== null) {
-		const attrs = match[1] || ''
-		const content = match[2]
-		const tagStart = match.index
-		// `content` can be empty (`<script ...></script>`). Using `indexOf(content)`
-		// would return 0 for empty strings and incorrectly point `contentStart` at `tagStart`.
-		// The regex guarantees `match[0]` contains the full opening tag ending `>` and
-		// the content capture group begins immediately after that.
-		const openingTagEndInMatch = match[0].indexOf('>') + 1
-		const contentStart = tagStart + openingTagEndInMatch
+	while (cursor < text.length) {
+		const tagStart = lowerText.indexOf('<script', cursor)
+		if (tagStart === -1) break
+		if (!isScriptTagBoundary(text[tagStart + '<script'.length])) {
+			cursor = tagStart + 1
+			continue
+		}
+
+		const openingTagEnd = findTagEnd(text, tagStart + '<script'.length)
+		if (openingTagEnd === -1) break
+
+		const closeStart = findClosingScriptTag(text, lowerText, openingTagEnd + 1)
+		if (closeStart === -1) break
+
+		const closeTagEnd = findTagEnd(text, closeStart + '</script'.length)
+		if (closeTagEnd === -1) break
+
+		const attrs = text.slice(tagStart + '<script'.length, openingTagEnd)
+		const contentStart = openingTagEnd + 1
+		const content = text.slice(contentStart, closeStart)
 
 		blocks.push({
 			kind: classifyScriptTag(attrs),
@@ -72,8 +117,10 @@ export function parseScriptBlocks(text: string): ParsedScriptBlock[] {
 			content,
 			contentStart,
 			tagStart,
-			tagLength: match[0].length,
+			tagLength: closeTagEnd + 1 - tagStart,
 		})
+
+		cursor = closeTagEnd + 1
 	}
 
 	return blocks

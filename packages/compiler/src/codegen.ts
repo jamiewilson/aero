@@ -14,11 +14,16 @@ import * as CONST from './constants'
 import * as Helper from './helpers'
 import { analyzeBuildScript } from './build-script-analysis'
 import { emitToJS, emitBodyAndStyle } from './emit'
-import { parse } from './parser'
+import { expandSelfClosingTags, parse } from './parser'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 import { transformSync } from 'oxc-transform'
 import { Lowerer } from './lowerer/lowerer'
+let emittedStyleVarId = 0
+
+function nextStyleVar(): string {
+	return `__aero_style_${emittedStyleVarId++}`
+}
 
 /** Strip TypeScript syntax from a script string, returning plain JavaScript. */
 function stripTypes(code: string, filename = 'script.ts'): string {
@@ -69,16 +74,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	const importsCode = importsLines.join('\n')
 
-	const expandedTemplate = parsed.template.replace(
-		CONST.SELF_CLOSING_TAG_REGEX,
-		(match, tagName, attrs) => {
-			const tag = String(tagName).toLowerCase()
-			if (CONST.VOID_TAGS.has(tag)) {
-				return match.replace(CONST.SELF_CLOSING_TAIL_REGEX, '>')
-			}
-			return `<${tagName}${attrs}></${tagName}>`
-		}
-	)
+	const expandedTemplate = expandSelfClosingTags(parsed.template)
 
 	const { document } = parseHTML(`
 		<html lang="en">
@@ -91,7 +87,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		const children = Array.from(document.body.childNodes)
 		for (const node of children) {
 			if (node.nodeType === 1 && (node as any).tagName === 'STYLE') {
-				const styleVar = `__out_style_${Math.random().toString(36).slice(2)}`
+				const styleVar = nextStyleVar()
 				const styleIR = lowerer.compileNode(node, false, styleVar)
 				styleCode += `let ${styleVar} = '';\n`
 				styleCode += emitToJS(styleIR, styleVar)

@@ -39,10 +39,13 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('hello `world`')).toBe('hello \\`world\\`')
 	})
 
+	it('should escape backslashes in literal text', () => {
+		expect(compileInterpolation('cost \\ total')).toBe('cost \\\\ total')
+	})
+
 	it('should handle multiple interpolations', () => {
 		expect(compileInterpolation('{a} and {b}')).toBe('${escapeHtml(a)} and ${escapeHtml(b)}')
 	})
-
 })
 
 describe('compileAttributeInterpolation', () => {
@@ -58,6 +61,10 @@ describe('compileAttributeInterpolation', () => {
 		expect(compileAttributeInterpolation('`test`')).toBe('\\`test\\`')
 	})
 
+	it('should escape backslashes in literal text', () => {
+		expect(compileAttributeInterpolation('path \\ value')).toBe('path \\\\ value')
+	})
+
 	it('should handle escaped braces {{ and }}', () => {
 		expect(compileAttributeInterpolation('{{ literal }}')).toBe('{ literal }')
 	})
@@ -65,7 +72,6 @@ describe('compileAttributeInterpolation', () => {
 	it('should handle mixed escaped and interpolation', () => {
 		expect(compileAttributeInterpolation('{{ {expr} }}')).toBe('{ ${expr} }')
 	})
-
 })
 
 describe('isAttr', () => {
@@ -138,6 +144,10 @@ describe('escapeBackticks', () => {
 
 	it('should handle no backticks', () => {
 		expect(escapeBackticks('hello world')).toBe('hello world')
+	})
+
+	it('should escape backslashes and ${ sequences for template literals', () => {
+		expect(escapeBackticks('path \\ ${value}')).toBe('path \\\\ \\${value}')
 	})
 })
 

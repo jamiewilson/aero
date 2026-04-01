@@ -28,6 +28,10 @@ export interface TokenizeOptions {
 	attributeMode?: boolean
 }
 
+function escapeTemplateLiteralContent(value: string): string {
+	return value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+}
+
 /**
  * Tokenize a string into literal and interpolation segments. Tracks nesting and
  * string/comment context so expressions like `{ a({ b: 1 }) }` or `{ "}" }` are
@@ -180,7 +184,7 @@ export function compileInterpolationFromSegments(segments: Segment[]): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return seg.value.replace(/`/g, '\\`')
+				return escapeTemplateLiteralContent(seg.value)
 			}
 			return `\${${seg.expression}}`
 		})

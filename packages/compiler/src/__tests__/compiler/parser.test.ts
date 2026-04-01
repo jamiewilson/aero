@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse } from '../../parser'
+import { expandSelfClosingTags, parse } from '../../parser'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -66,6 +66,13 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.buildScript?.content).toContain('const a = 1;')
 		expect(result.buildScript?.content).toContain('const b = 2;')
 		expect(result.template).toBe('<div>Content</div>')
+	})
+
+	it('expands self-closing tags without regex backtracking and preserves quoted > characters', () => {
+		const input = '<card-component title="> demo" /><img src="/x.svg" />'
+		expect(expandSelfClosingTags(input)).toBe(
+			'<card-component title="> demo" ></card-component><img src="/x.svg" >'
+		)
 	})
 
 	it('should not extract scripts inside HTML comments', () => {

@@ -8,20 +8,102 @@
 
 import type { ParseResult, CompileOptions } from '../types'
 import * as Helper from '@aero-js/compiler/helpers'
-import * as CONST from '@aero-js/compiler/constants'
 import { emitToJS, emitBodyAndStyle } from '@aero-js/compiler/emit'
 import { Lowerer } from '@aero-js/compiler/lowerer/lowerer'
 import { Resolver } from '@aero-js/compiler/resolver'
-import {
-	analyzeBuildScript,
-	stripBuildScriptTypes,
-} from '@aero-js/compiler/build-script-analysis'
+import { analyzeBuildScript, stripBuildScriptTypes } from '@aero-js/compiler/build-script-analysis'
 import { parse } from '@aero-js/compiler/parser'
 import { parseHTML } from 'linkedom'
 import {
 	emitClientScriptTag,
 	VIRTUAL_PREFIX as CLIENT_SCRIPT_VIRTUAL_PREFIX,
 } from './emit-client-script-tag'
+import { VOID_TAGS } from '@aero-js/compiler/constants'
+import { escapeTemplateLiteralContent, serializeJsonForScriptTagExpression } from './script-escape'
+
+let emittedStyleVarId = 0
+
+function nextStyleVar(): string {
+	return `__aero_style_${emittedStyleVarId++}`
+}
+
+function isTagNameChar(char: string | undefined): boolean {
+	return char !== undefined && /[A-Za-z0-9-]/.test(char)
+}
+
+function findTagEnd(html: string, start: number): number {
+	let quote: '"' | "'" | null = null
+
+	for (let i = start; i < html.length; i++) {
+		const char = html[i]
+		if (quote) {
+			if (char === quote) quote = null
+			continue
+		}
+
+		if (char === '"' || char === "'") {
+			quote = char
+			continue
+		}
+
+		if (char === '>') return i
+	}
+
+	return -1
+}
+
+function findSelfClosingSlash(html: string, tagEnd: number): number {
+	let i = tagEnd - 1
+	while (i >= 0 && /\s/.test(html[i] ?? '')) i--
+	return html[i] === '/' ? i : -1
+}
+
+function expandSelfClosingTags(html: string): string {
+	let out = ''
+	let cursor = 0
+
+	while (cursor < html.length) {
+		const tagStart = html.indexOf('<', cursor)
+		if (tagStart === -1) {
+			out += html.slice(cursor)
+			break
+		}
+
+		out += html.slice(cursor, tagStart)
+		const firstTagChar = html[tagStart + 1]
+		if (!isTagNameChar(firstTagChar)) {
+			out += '<'
+			cursor = tagStart + 1
+			continue
+		}
+
+		let nameEnd = tagStart + 1
+		while (isTagNameChar(html[nameEnd])) nameEnd++
+		const tagName = html.slice(tagStart + 1, nameEnd)
+		const tagEnd = findTagEnd(html, nameEnd)
+		if (tagEnd === -1) {
+			out += html.slice(tagStart)
+			break
+		}
+
+		const selfClosingSlash = findSelfClosingSlash(html, tagEnd)
+		if (selfClosingSlash === -1) {
+			out += html.slice(tagStart, tagEnd + 1)
+			cursor = tagEnd + 1
+			continue
+		}
+
+		const openingTag = html.slice(tagStart, selfClosingSlash)
+		if (VOID_TAGS.has(tagName.toLowerCase())) {
+			out += `${openingTag}>`
+		} else {
+			out += `${openingTag}></${tagName}>`
+		}
+		cursor = tagEnd + 1
+	}
+
+	return out
+}
 
 /**
  * Compile a parsed template and options into a JavaScript module string.
@@ -64,16 +146,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	}
 	const importsCode = importsLines.join('\n')
 
-	const expandedTemplate = parsed.template.replace(
-		CONST.SELF_CLOSING_TAG_REGEX,
-		(match, tagName, attrs) => {
-			const tag = String(tagName).toLowerCase()
-			if (CONST.VOID_TAGS.has(tag)) {
-				return match.replace(CONST.SELF_CLOSING_TAIL_REGEX, '>')
-			}
-			return `<${tagName}${attrs}></${tagName}>`
-		}
-	)
+	const expandedTemplate = expandSelfClosingTags(parsed.template)
 
 	const { document } = parseHTML(`
 		<html lang="en">
@@ -86,7 +159,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		const children = Array.from(document.body.childNodes)
 		for (const node of children) {
 			if (node.nodeType === 1 && (node as any).tagName === 'STYLE') {
-				const styleVar = `__out_style_${Math.random().toString(36).slice(2)}`
+				const styleVar = nextStyleVar()
 				const styleIR = lowerer.compileNode(node, false, styleVar)
 				styleCode += `let ${styleVar} = '';\n`
 				styleCode += emitToJS(styleIR, styleVar)
@@ -121,6 +194,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (options.blockingScripts) {
 		for (const blockingScript of options.blockingScripts) {
 			const strippedContent = stripBuildScriptTypes(blockingScript.content, 'blocking.ts')
+			const escapedAttrs = blockingScript.attrs
+				? ` ${escapeTemplateLiteralContent(blockingScript.attrs)}`
+				: ''
 			if (blockingScript.passDataExpr) {
 				let blockingPropsNeedle: string | undefined
 				if (options.diagnosticTemplateSource && blockingScript.passDataExpr) {
@@ -140,15 +216,14 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 					diagnosticFile: options.importer,
 					positionNeedle: blockingPropsNeedle,
 				})
-				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + JSON.stringify(v) + ";").join("")`
+				const serializedValueExpr = serializeJsonForScriptTagExpression('v')
+				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + ${serializedValueExpr} + ";").join("")`
 				headScripts.push(
-					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>\${${jsMapExpr}}${strippedContent.replace(/`/g, '\\`')}</script>\``
+					`\`<script${escapedAttrs}>\${${jsMapExpr}}${escapeTemplateLiteralContent(strippedContent)}</script>\``
 				)
 			} else {
-				const escapedContent = strippedContent.replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
-				headScripts.push(
-					`\`<script${blockingScript.attrs ? ' ' + blockingScript.attrs : ''}>${escapedContent}</script>\``
-				)
+				const escapedContent = escapeTemplateLiteralContent(strippedContent)
+				headScripts.push(`\`<script${escapedAttrs}>${escapedContent}</script>\``)
 			}
 		}
 	}

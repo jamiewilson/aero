@@ -15,6 +15,7 @@ import type {
 	AeroTemplateContext,
 	MountOptions,
 } from '../types'
+import { escapeScriptJson } from '@aero-js/compiler/helpers'
 import { pagePathToKey, resolvePageTarget } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 
@@ -139,6 +140,7 @@ export class Aero {
 			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
 			escapeHtml,
+			escapeScriptJson,
 			raw,
 		} as AeroTemplateContext
 
