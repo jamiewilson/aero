@@ -58,7 +58,6 @@ import {
 	type AeroBuildManifest,
 } from './build-manifest'
 import { loadTsconfigAliases } from '../utils/aliases'
-
 export { addDoctype } from './rewrite'
 
 export {
@@ -74,7 +73,6 @@ export {
 	writeBuildManifest,
 	type AeroBuildManifest,
 } from './build-manifest'
-
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
 function aeroStaticBuildDebug(message: string): void {
 	const v = process.env.AERO_LOG
