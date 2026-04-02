@@ -5,8 +5,8 @@
 			"path": ".",
 		},
 		{
-			"name": "examples",
-			"path": "examples",
+			"name": "kitchen-sink",
+			"path": "examples/kitchen-sink",
 		},
 		{
 			"name": "starters",

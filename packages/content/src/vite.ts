@@ -6,7 +6,7 @@
  * Loads content.config.ts in configResolved (and buildStart fallback); watches collection dirs and invalidates on change.
  */
 import type { ContentConfig } from './types'
-import type { Plugin, ResolvedConfig } from 'vite'
+import type { ModuleNode, Plugin, ResolvedConfig } from 'vite'
 import { formatContentSchemaIssuesReport } from './content-issues'
 import {
 	loadAllCollections,
@@ -39,11 +39,12 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 	let resolvedConfig: ResolvedConfig
 	let contentConfig: ContentConfig | null = null
 	let serialized: string | null = null
-	let watchedDirs: string[] = []
+	/** Mutable so tests can seed watched paths; same array configResolved/buildStart assign into. */
+	const hotState = { watchedDirs: [] as string[] }
 	/** Last virtual-module load: schema warnings count (for build-end recap). */
 	let lastContentSchemaIssueCount = 0
 
-	return {
+	const plugin: Plugin = {
 		name: 'vite-plugin-aero-content',
 		/** Load content.config.ts, set contentConfig and watchedDirs; initialize processor early. */
 		async configResolved(config) {
@@ -57,14 +58,14 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 					config.logger.warn(
 						`[aero:content] No config found at "${configFile}". Single-file imports and render() still work with defaults.`
 					)
-					watchedDirs = [getContentRoot(root)]
+					hotState.watchedDirs = [getContentRoot(root)]
 				} else {
 					throw loaded.error
 				}
 			} else {
 				contentConfig = loaded.config
-				watchedDirs = getWatchedDirs(contentConfig, root)
-				watchedDirs.push(getContentRoot(root))
+				hotState.watchedDirs = getWatchedDirs(contentConfig, root)
+				hotState.watchedDirs.push(getContentRoot(root))
 				await initProcessor(contentConfig.markdown)
 			}
 		},
@@ -133,24 +134,29 @@ export function getCollection() {
 			}
 		},
 
-		/** Invalidate virtual module and .md modules when a file in a watched content dir changes. */
-		handleHotUpdate({ file, server }) {
-			const isContent = watchedDirs.some(dir => file.startsWith(dir))
+		/**
+		 * Invalidate virtual module and .md modules when a file in a watched content dir changes.
+		 * Returns affected module nodes so Vite propagates HMR to `aero:content` importers without a full page reload.
+		 */
+		handleHotUpdate({ file, server }): ModuleNode[] | void {
+			const isContent = hotState.watchedDirs.some(dir => file.startsWith(dir))
 			if (!isContent) return
 
-			// Invalidate directly imported .md module so it reloads
+			const mods: ModuleNode[] = []
+
 			const mdMod = server.moduleGraph.getModuleById(file)
 			if (mdMod) {
 				server.moduleGraph.invalidateModule(mdMod)
+				mods.push(mdMod)
 			}
 
-			// Invalidate the virtual module so getCollection/render consumers reload
 			const mod = server.moduleGraph.getModuleById(RESOLVED_CONTENT_MODULE_ID)
 			if (mod) {
 				server.moduleGraph.invalidateModule(mod)
-				// Trigger a full reload since content data shapes the page
-				server.hot.send({ type: 'full-reload' })
+				mods.push(mod)
 			}
+
+			return mods.length > 0 ? mods : undefined
 		},
 
 		/** Fallback: load config in build if not already loaded in configResolved. */
@@ -161,13 +167,20 @@ export function getCollection() {
 			const configFile = options.config || CONFIG_FILE
 			const loaded = loadContentConfigFileSync(root, configFile)
 			if (!loaded.ok) {
-				watchedDirs = [getContentRoot(root)]
+				hotState.watchedDirs = [getContentRoot(root)]
 				return
 			}
 			contentConfig = loaded.config
-			watchedDirs = getWatchedDirs(contentConfig, root)
-			watchedDirs.push(getContentRoot(root))
+			hotState.watchedDirs = getWatchedDirs(contentConfig, root)
+			hotState.watchedDirs.push(getContentRoot(root))
 			await initProcessor(contentConfig.markdown)
 		},
 	}
+
+	Object.defineProperty(plugin, '__hotState', {
+		value: hotState,
+		enumerable: false,
+	})
+
+	return plugin
 }

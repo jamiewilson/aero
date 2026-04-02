@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "AERO_INCREMENTAL=1 AERO_LOG=debug vite build",
 		"preview": "AERO_SERVER=false vite build && vite preview",
 		"preview:api": "vite build && node .output/server/index.mjs"
 	},

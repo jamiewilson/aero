@@ -106,7 +106,7 @@ describe('aeroContent', () => {
 				},
 			}
 
-			;(plugin as any).watchedDirs = ['/project/content']
+			;(plugin as any).__hotState.watchedDirs = ['/project/content']
 
 			handleHotUpdate({
 				file: '/project/src/other.ts',
@@ -114,6 +114,33 @@ describe('aeroContent', () => {
 			})
 
 			expect(mockServer.hot.send).not.toHaveBeenCalled()
+		})
+
+		it('invalidates md + virtual modules and returns them for HMR (no full-reload)', () => {
+			const mdMod = { id: '/project/content/foo.md' } as any
+			const vmMod = { id: '\0aero:content' } as any
+			const mockServer = {
+				moduleGraph: {
+					getModuleById: vi.fn((id: string) => {
+						if (id === '/project/content/foo.md') return mdMod
+						if (id === '\0aero:content') return vmMod
+						return null
+					}),
+					invalidateModule: vi.fn(),
+				},
+				hot: { send: vi.fn() },
+			}
+			;(plugin as any).__hotState.watchedDirs = ['/project/content']
+
+			const result = handleHotUpdate({
+				file: '/project/content/foo.md',
+				server: mockServer as any,
+			})
+
+			expect(mockServer.hot.send).not.toHaveBeenCalled()
+			expect(mockServer.moduleGraph.invalidateModule).toHaveBeenCalledWith(mdMod)
+			expect(mockServer.moduleGraph.invalidateModule).toHaveBeenCalledWith(vmMod)
+			expect(result).toEqual([mdMod, vmMod])
 		})
 	})
 })

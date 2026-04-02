@@ -12,8 +12,14 @@ import os from 'node:os'
 import type { Manifest } from 'vite'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { __internal, createBuildConfig } from '../build'
+import {
+	collectTransitiveTemplateImports,
+	createBuildConfig,
+	discoverRuntimeTemplatePaths,
+	__internal,
+} from '../build'
 import { resolveDirs } from '../defaults'
+import { loadTsconfigAliases, mergeWithDefaultAliases } from '../../utils/aliases'
 
 describe('vite build helpers', () => {
 	it('maps routes to root-style output files', () => {
@@ -286,6 +292,49 @@ describe('vite build helpers', () => {
 			expect(byName['about/index']).toBeDefined()
 			expect(byName['about/index'].routePath).toBe('about')
 			expect(byName['about/index'].outputFile).toBe('about/index.html')
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+		}
+	})
+
+	it('discoverRuntimeTemplatePaths: layouts are non-recursive; components and pages are recursive', () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-rtp-'))
+		try {
+			fs.mkdirSync(path.join(tmp, 'client', 'components', 'nest'), { recursive: true })
+			fs.writeFileSync(path.join(tmp, 'client', 'components', 'a.html'), '<html></html>')
+			fs.writeFileSync(path.join(tmp, 'client', 'components', 'nest', 'b.html'), '<html></html>')
+			fs.mkdirSync(path.join(tmp, 'client', 'layouts', 'sub'), { recursive: true })
+			fs.writeFileSync(path.join(tmp, 'client', 'layouts', 'base.html'), '<html></html>')
+			fs.writeFileSync(path.join(tmp, 'client', 'layouts', 'sub', 'ignored.html'), '<html></html>')
+			fs.mkdirSync(path.join(tmp, 'client', 'pages'), { recursive: true })
+			fs.writeFileSync(path.join(tmp, 'client', 'pages', 'index.html'), '<html></html>')
+			const d = discoverRuntimeTemplatePaths(tmp, 'client')
+			expect(d.components.map(p => path.basename(p)).sort()).toEqual(['a.html', 'b.html'])
+			expect(d.layouts.map(p => path.basename(p))).toEqual(['base.html'])
+			expect(d.pages.map(p => path.basename(p))).toEqual(['index.html'])
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+		}
+	})
+
+	it('collectTransitiveTemplateImports follows build-script imports', () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-cti-'))
+		try {
+			const pagePath = path.join(tmp, 'client', 'pages', 'home.html')
+			const compPath = path.join(tmp, 'client', 'components', 'h.html')
+			fs.mkdirSync(path.dirname(pagePath), { recursive: true })
+			fs.mkdirSync(path.dirname(compPath), { recursive: true })
+			fs.writeFileSync(
+				pagePath,
+				`<html><script is:build type="module">
+import h from '@components/h'
+</script></html>`
+			)
+			fs.writeFileSync(compPath, '<html></html>')
+			const { resolve } = mergeWithDefaultAliases(loadTsconfigAliases(tmp), tmp, resolveDirs())
+			const closure = collectTransitiveTemplateImports(tmp, 'client', resolve, pagePath)
+			expect(closure.has('client/pages/home.html')).toBe(true)
+			expect(closure.has('client/components/h.html')).toBe(true)
 		} finally {
 			fs.rmSync(tmp, { recursive: true, force: true })
 		}

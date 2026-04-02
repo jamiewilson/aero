@@ -19,7 +19,7 @@ import path from 'node:path'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { Effect } from 'effect'
 import { parseHTML } from 'linkedom'
-import { parse } from '@aero-js/compiler'
+import { analyzeBuildScript, parse } from '@aero-js/compiler'
 import { pagePathToKey } from '../utils/routing'
 import { expandRoutePattern, isDynamicRoutePattern } from '../utils/route-pattern'
 import { createServer } from 'vite'
@@ -44,7 +44,36 @@ import {
 
 import { toPosix, toPosixRelative } from '../utils/path'
 
+import {
+	AERO_BUILD_MANIFEST_VERSION,
+	canSkipEntirePrerender,
+	computeClientHtmlFingerprint,
+	diffTemplateFileHashes,
+	hashFileSha256,
+	hashStaticBuildOptions,
+	hashViteOutputManifest,
+	isIncrementalStaticBuildEnabled,
+	readBuildManifest,
+	writeBuildManifest,
+	type AeroBuildManifest,
+} from './build-manifest'
+import { loadTsconfigAliases } from '../utils/aliases'
+
 export { addDoctype } from './rewrite'
+
+export {
+	AERO_BUILD_MANIFEST_VERSION,
+	canSkipEntirePrerender,
+	computeClientHtmlFingerprint,
+	diffTemplateFileHashes,
+	getBuildManifestPath,
+	hashFileSha256,
+	hashViteOutputManifest,
+	isIncrementalStaticBuildEnabled,
+	readBuildManifest,
+	writeBuildManifest,
+	type AeroBuildManifest,
+} from './build-manifest'
 
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
 function aeroStaticBuildDebug(message: string): void {
@@ -226,6 +255,193 @@ function walkHtmlFiles(dir: string): string[] {
 	return files
 }
 
+/** Only `*.html` directly in `dir` (matches `layouts/*.html` glob, not nested). */
+function walkHtmlFilesDirectOnly(dir: string): string[] {
+	if (!fs.existsSync(dir)) return []
+	const out: string[] = []
+	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+		if (item.isFile() && item.name.endsWith('.html')) {
+			out.push(path.join(dir, item.name))
+		}
+	}
+	return out
+}
+
+function toRootRelativeImportUrl(root: string, absolutePath: string): string {
+	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
+	return '/' + rel.replace(/^\//, '')
+}
+
+/**
+ * Discovered template paths (absolute), matching dev/runtime glob rules: components recursive,
+ * layouts non-recursive, pages recursive.
+ */
+export function discoverRuntimeTemplatePaths(
+	root: string,
+	clientDir: string
+): { components: string[]; layouts: string[]; pages: string[] } {
+	const clientRoot = path.resolve(root, clientDir)
+	return {
+		components: walkHtmlFiles(path.join(clientRoot, 'components')).sort((a, b) => a.localeCompare(b)),
+		layouts: walkHtmlFilesDirectOnly(path.join(clientRoot, 'layouts')).sort((a, b) =>
+			a.localeCompare(b)
+		),
+		pages: walkHtmlFiles(path.join(clientRoot, 'pages')).sort((a, b) => a.localeCompare(b)),
+	}
+}
+
+/** Per `*.html` file under `clientDir` → sha256 (keys: posix path relative to `root`). */
+export function computeTemplateFileHashesMap(root: string, clientDir: string): Record<string, string> {
+	const base = path.resolve(root, clientDir)
+	const files = walkHtmlFiles(base)
+	const out: Record<string, string> = {}
+	for (const f of files) {
+		const h = hashFileSha256(f)
+		if (h) {
+			out[toPosixRelative(f, root)] = h
+		}
+	}
+	return out
+}
+
+function isUnderClientRoot(absFile: string, clientRoot: string): boolean {
+	const norm = path.normalize(absFile)
+	const base = path.normalize(clientRoot)
+	return norm === base || norm.startsWith(base + path.sep)
+}
+
+/**
+ * Transitive template `.html` dependencies via `import` lines in `<script is:build>` (build script analysis).
+ * Used for incremental static prerender: which pages to re-render when specific files change.
+ */
+export function collectTransitiveTemplateImports(
+	root: string,
+	clientDir: string,
+	resolvePath: (specifier: string, importer: string) => string,
+	entryAbs: string
+): Set<string> {
+	const clientRoot = path.resolve(root, clientDir)
+	const result = new Set<string>()
+	const visited = new Set<string>()
+
+	function visit(abs: string): void {
+		const norm = path.normalize(abs)
+		if (visited.has(norm)) return
+		if (!norm.endsWith('.html') || !fs.existsSync(norm)) return
+		if (!isUnderClientRoot(norm, clientRoot)) return
+		visited.add(norm)
+		result.add(toPosixRelative(norm, root))
+
+		const raw = fs.readFileSync(norm, 'utf-8')
+		const parsed = parse(raw)
+		if (!parsed.buildScript?.content?.trim()) return
+
+		let analysis: ReturnType<typeof analyzeBuildScript>
+		try {
+			analysis = analyzeBuildScript(parsed.buildScript.content)
+		} catch {
+			return
+		}
+
+		for (const imp of analysis.imports) {
+			let resolved: string
+			try {
+				resolved = resolvePath(imp.specifier, norm)
+			} catch {
+				continue
+			}
+			let absNext = path.isAbsolute(resolved)
+				? path.normalize(resolved)
+				: path.normalize(path.resolve(path.dirname(norm), resolved))
+			if (!absNext.endsWith('.html')) {
+				const withHtml = absNext + '.html'
+				if (fs.existsSync(withHtml)) absNext = withHtml
+				else continue
+			}
+			visit(absNext)
+		}
+	}
+
+	visit(path.normalize(entryAbs))
+	return result
+}
+
+/**
+ * Dev/build runtime instance module: explicit imports per discovered template (manifest-driven)
+ * so Vite HMR invalidates only affected modules instead of eager `import.meta.glob` for everything.
+ */
+export function getRuntimeInstanceModuleSource(
+	root: string,
+	clientDir: string,
+	runtimeImportPath: string
+): string {
+	const { components, layouts, pages } = discoverRuntimeTemplatePaths(root, clientDir)
+	const lines: string[] = []
+	lines.push(`import { Aero } from ${JSON.stringify(runtimeImportPath)}`)
+	lines.push('')
+	lines.push(`const instance = globalThis.__AERO_INSTANCE__ || new Aero()`)
+	lines.push(`const listeners = globalThis.__AERO_LISTENERS__ || new Set()`)
+	lines.push(`const aero = instance`)
+	lines.push('')
+	lines.push(`const onUpdate = (cb) => {`)
+	lines.push(`\tlisteners.add(cb)`)
+	lines.push(`\treturn () => listeners.delete(cb)`)
+	lines.push(`}`)
+	lines.push(`const notify = () => {`)
+	lines.push(`\tlisteners.forEach((cb) => cb())`)
+	lines.push(`}`)
+	lines.push('')
+	lines.push(`if (!globalThis.__AERO_INSTANCE__) globalThis.__AERO_INSTANCE__ = instance`)
+	lines.push(`if (!globalThis.__AERO_LISTENERS__) globalThis.__AERO_LISTENERS__ = listeners`)
+	lines.push('')
+
+	const compEntries: string[] = []
+	for (let i = 0; i < components.length; i++) {
+		const url = toRootRelativeImportUrl(root, components[i]!)
+		const name = `__aero_c${i}`
+		lines.push(`import * as ${name} from ${JSON.stringify(url)}`)
+		compEntries.push(`${JSON.stringify(url)}: ${name}`)
+	}
+	lines.push(`const components = { ${compEntries.join(', ')} }`)
+
+	const layEntries: string[] = []
+	for (let i = 0; i < layouts.length; i++) {
+		const url = toRootRelativeImportUrl(root, layouts[i]!)
+		const name = `__aero_l${i}`
+		lines.push(`import * as ${name} from ${JSON.stringify(url)}`)
+		layEntries.push(`${JSON.stringify(url)}: ${name}`)
+	}
+	lines.push(`const layouts = { ${layEntries.join(', ')} }`)
+
+	const pageEntries: string[] = []
+	for (let i = 0; i < pages.length; i++) {
+		const url = toRootRelativeImportUrl(root, pages[i]!)
+		const name = `__aero_p${i}`
+		lines.push(`import * as ${name} from ${JSON.stringify(url)}`)
+		pageEntries.push(`${JSON.stringify(url)}: ${name}`)
+	}
+	lines.push(`const pages = { ${pageEntries.join(', ')} }`)
+	lines.push('')
+	lines.push(`aero.registerPages(components)`)
+	lines.push(`aero.registerPages(layouts)`)
+	lines.push(`aero.registerPages(pages)`)
+	lines.push('')
+	lines.push(`notify()`)
+	lines.push('')
+	lines.push(`if (import.meta.hot) import.meta.hot.accept()`)
+	lines.push('')
+	lines.push(`export { aero, onUpdate }`)
+	lines.push('')
+	return lines.join('\n')
+}
+
+function getResolvePathForProject(
+	root: string,
+	explicit?: (specifier: string, importer: string) => string
+): (specifier: string, importer: string) => string {
+	return explicit ?? loadTsconfigAliases(root).resolve
+}
+
 /** Page name to route path (e.g. index → '', about → about, blog/index → blog). */
 function toRouteFromPageName(pageName: string): string {
 	if (pageName === 'index') return ''
@@ -300,9 +516,10 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 
 /**
  * Walks template paths once and caches file contents so client-script and asset discovery
- * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`).
+ * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`
+ * and dev `buildStart` for the client-script map — Phase B single discovery pass).
  */
-class TemplateDiscovery {
+export class TemplateDiscovery {
 	private readonly root: string
 	private readonly templateRoot: string
 	private _files: string[] | null = null
@@ -361,66 +578,40 @@ function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	})
 }
 
-/**
- * Discover all extracted client scripts from templates under root/templateRoot.
- *
- * @param root - Project root.
- * @param templateRoot - Directory under root containing .html templates (e.g. client).
- * @returns Map from virtual URL (e.g. `/@aero/client/client/pages/home.js`) to ScriptEntry.
- */
-export function discoverClientScriptContentMap(
-	root: string,
-	templateRoot: string
-): Map<string, ScriptEntry> {
-	const discovery = new TemplateDiscovery(root, templateRoot)
-	const map = new Map<string, ScriptEntry>()
-	for (const file of discovery.templateFiles) {
-		const source = discovery.readSource(file)
-		const parsed = parse(source)
-		if (parsed.clientScripts.length === 0) continue
-		const rel = toPosixRelative(file, root)
-		const baseName = rel.replace(/\.html$/i, '')
-		registerClientScriptsToMap(parsed, baseName, map)
-	}
-	return map
+/** One pass over `TemplateDiscovery`: client virtual scripts + template-referenced assets (shared parse/read). */
+interface TemplateDerivedRollupData {
+	clientScriptContentMap: Map<string, ScriptEntry>
+	virtualClientInputs: Record<string, string>
+	templateAssetEntries: Map<string, string>
 }
 
-/** Rollup input entries for virtual client scripts (manifest key → virtual path); used by createBuildConfig. */
-function discoverClientScriptVirtualInputs(
+function collectTemplateDerivedRollupData(
 	root: string,
 	templateRoot: string,
-	discovery?: TemplateDiscovery
-): Record<string, string> {
-	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
-	const entries: Record<string, string> = {}
-	for (const file of d.templateFiles) {
-		const source = d.readSource(file)
-		const parsed = parse(source)
-		if (parsed.clientScripts.length === 0) continue
-		const rel = toPosixRelative(file, root)
-		const baseName = rel.replace(/\.html$/i, '')
-		const { clientScripts } = parsed
-		const total = clientScripts.length
-		for (let i = 0; i < total; i++) {
-			const virtualPath = getClientScriptVirtualUrl(baseName, i, total)
-			const manifestKey = virtualPath.replace(/^\//, '')
-			entries[manifestKey] = virtualPath
-		}
-	}
-	return entries
-}
+	resolvePath: ((specifier: string, importer: string) => string) | undefined,
+	discovery: TemplateDiscovery
+): TemplateDerivedRollupData {
+	const clientScriptContentMap = new Map<string, ScriptEntry>()
+	const virtualClientInputs: Record<string, string> = {}
+	const templateAssetEntries = new Map<string, string>()
 
-/** Rollup input entries: script/link refs from templates, default client index, and assets/images. */
-function discoverAssetInputs(
-	root: string,
-	resolvePath?: (specifier: string, importer: string) => string,
-	templateRoot = 'client',
-	discovery?: TemplateDiscovery
-): Record<string, string> {
-	const d = discovery ?? new TemplateDiscovery(root, templateRoot)
-	const entries = new Map<string, string>()
-	for (const templateFile of d.templateFiles) {
-		const source = d.readSource(templateFile)
+	for (const templateFile of discovery.templateFiles) {
+		const source = discovery.readSource(templateFile)
+		const rel = toPosixRelative(templateFile, root)
+		const baseName = rel.replace(/\.html$/i, '')
+
+		const parsed = parse(source)
+		if (parsed.clientScripts.length > 0) {
+			registerClientScriptsToMap(parsed, baseName, clientScriptContentMap)
+			const { clientScripts } = parsed
+			const total = clientScripts.length
+			for (let i = 0; i < total; i++) {
+				const virtualPath = getClientScriptVirtualUrl(baseName, i, total)
+				const manifestKey = virtualPath.replace(/^\//, '')
+				virtualClientInputs[manifestKey] = virtualPath
+			}
+		}
+
 		const { document } = parseHTML(source)
 		const scripts = Array.from(document.querySelectorAll('script[src]'))
 		const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]'))
@@ -433,34 +624,50 @@ function discoverAssetInputs(
 			if (!resolved || !fs.existsSync(resolved)) continue
 			const ext = path.extname(resolved).toLowerCase()
 			if (!['.js', '.mjs', '.ts', '.tsx', '.css'].includes(ext)) continue
-			entries.set(toManifestKey(root, resolved), resolved)
+			templateAssetEntries.set(toManifestKey(root, resolved), resolved)
 		}
 	}
 
-	// Keep build resilient when templates do not declare script/style entries.
+	return { clientScriptContentMap, virtualClientInputs, templateAssetEntries }
+}
+
+/** Default `client/index.ts` and `client/assets/images` entries merged into template-derived assets. */
+function appendDefaultAndImageAssetInputs(
+	root: string,
+	templateRoot: string,
+	entries: Map<string, string>
+): void {
 	const defaultClientEntry = path.resolve(root, `${templateRoot}/index.ts`)
 	if (fs.existsSync(defaultClientEntry)) {
 		entries.set(toManifestKey(root, defaultClientEntry), defaultClientEntry)
 	}
 
-	// Add all assets from the images directory to ensure they are processed
-	// and added to the manifest, even if only referenced in SSR.
 	const imagesDir = path.resolve(root, templateRoot, 'assets/images')
 	if (fs.existsSync(imagesDir)) {
 		const imageFiles = walkFiles(imagesDir)
 		for (const file of imageFiles) {
-			// Skip files that are already added (e.g. via HTML scan)
 			const key = toManifestKey(root, file)
 			if (entries.has(key)) continue
-
-			// Start with basic image/font extensions, or just include everything not hidden
 			if (path.basename(file).startsWith('.')) continue
-
 			entries.set(key, file)
 		}
 	}
+}
 
-	return Object.fromEntries(entries)
+/**
+ * Discover all extracted client scripts from templates under root/templateRoot.
+ *
+ * @param root - Project root.
+ * @param templateRoot - Directory under root containing .html templates (e.g. client).
+ * @returns Map from virtual URL (e.g. `/@aero/client/client/pages/home.js`) to ScriptEntry.
+ */
+export function discoverClientScriptContentMap(
+	root: string,
+	templateRoot: string,
+	sharedDiscovery?: TemplateDiscovery
+): Map<string, ScriptEntry> {
+	const discovery = sharedDiscovery ?? new TemplateDiscovery(root, templateRoot)
+	return collectTemplateDerivedRollupData(root, templateRoot, undefined, discovery).clientScriptContentMap
 }
 
 /** Recursively collect all file paths under dir (no extension filter). */
@@ -496,6 +703,37 @@ export async function renderStaticPages(
 	// Pages are always discovered from the client/pages subtree.
 	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))
 	const distDir = path.resolve(root, outDir)
+
+	const prevBuildManifest = readBuildManifest(root)
+	const viteManifestHashForIncremental = hashViteOutputManifest(distDir)
+	const clientHtmlFingerprint = computeClientHtmlFingerprint(root, dirs.client)
+	const staticBuildOptionsHash = hashStaticBuildOptions(
+		options.site?.trim() ?? '',
+		JSON.stringify(options.redirects ?? [])
+	)
+	const templateFileHashesCurrent = computeTemplateFileHashesMap(root, dirs.client)
+	const hasDynamicRoutes = discoveredPages.some(p => isDynamicPage(p))
+
+	if (isIncrementalStaticBuildEnabled() && hasDynamicRoutes) {
+		aeroStaticBuildDebug(
+			'static prerender: incremental whole-phase skip disabled (dynamic [param] page(s) present; getStaticPaths must run each build)'
+		)
+	}
+
+	if (
+		isIncrementalStaticBuildEnabled() &&
+		!hasDynamicRoutes &&
+		canSkipEntirePrerender({
+			previous: prevBuildManifest,
+			currentViteManifestHash: viteManifestHashForIncremental,
+			currentClientHtmlFingerprint: clientHtmlFingerprint,
+			currentStaticBuildOptionsHash: staticBuildOptionsHash,
+		})
+	) {
+		aeroStaticBuildDebug('static prerender: skipped (incremental manifest match)')
+		return
+	}
+
 	const manifest = readManifest(distDir)
 
 	// Disable Nitro plugin during static page rendering to prevent it from handling
@@ -593,8 +831,54 @@ export async function renderStaticPages(
 			? pages.filter(p => !pathMatchesRedirect(p))
 			: pages
 
+		let pagesToPrerender = pagesToRender
+		if (
+			isIncrementalStaticBuildEnabled() &&
+			!hasDynamicRoutes &&
+			prevBuildManifest &&
+			prevBuildManifest.templateFileHashes &&
+			prevBuildManifest.viteManifestHash === viteManifestHashForIncremental &&
+			prevBuildManifest.staticBuildOptionsHash === staticBuildOptionsHash
+		) {
+			const changed = diffTemplateFileHashes(
+				prevBuildManifest.templateFileHashes,
+				templateFileHashesCurrent
+			)
+			if (changed.length > 0) {
+				const resolvePath = getResolvePathForProject(root, options.resolvePath)
+				const dirty: StaticPage[] = []
+				for (const page of pagesToRender) {
+					const closure = collectTransitiveTemplateImports(
+						root,
+						dirs.client,
+						resolvePath,
+						page.sourceFile
+					)
+					let needs = false
+					for (const c of changed) {
+						if (closure.has(c)) {
+							needs = true
+							break
+						}
+					}
+					if (needs) dirty.push(page)
+				}
+				if (dirty.length === 0) {
+					aeroStaticBuildDebug(
+						'static prerender: incremental partial — no page depends on changed template(s); skipping HTML writes'
+					)
+					pagesToPrerender = []
+				} else if (dirty.length < pagesToRender.length) {
+					pagesToPrerender = dirty
+					aeroStaticBuildDebug(
+						`static prerender: incremental partial (${dirty.length} of ${pagesToRender.length} page(s))`
+					)
+				}
+			}
+		}
+
 		aeroStaticBuildDebug(
-			`static prerender: ${pagesToRender.length} page(s) to render after route expansion (${Date.now() - tBuildStart}ms)`
+			`static prerender: ${pagesToPrerender.length} of ${pagesToRender.length} page(s) in prerender queue after route expansion (${Date.now() - tBuildStart}ms)`
 		)
 
 		const routeSet = new Set(pagesToRender.map(p => p.routePath))
@@ -613,7 +897,7 @@ export async function renderStaticPages(
 		try {
 			await runPrerenderWithCancellation({
 				services: prerenderServices,
-				items: pagesToRender,
+				items: pagesToPrerender,
 				concurrency,
 				signal: prerenderAbort.signal,
 				worker: async page => {
@@ -666,7 +950,7 @@ export async function renderStaticPages(
 		}
 
 		aeroStaticBuildDebug(
-			`static prerender: wrote HTML in ${Date.now() - tPrerender}ms (${pagesToRender.length} page(s))`
+			`static prerender: wrote HTML in ${Date.now() - tPrerender}ms (${pagesToPrerender.length} page(s))`
 		)
 
 		if (options.site && options.site.trim() !== '') {
@@ -674,6 +958,27 @@ export async function renderStaticPages(
 			const routePaths = [...new Set(pagesToRender.map(p => p.routePath))]
 			writeSitemap(routePaths, options.site.trim(), distDir)
 			aeroStaticBuildDebug(`static prerender: sitemap in ${Date.now() - tSite}ms`)
+		}
+
+		if (isIncrementalStaticBuildEnabled()) {
+			const produced = new Set(pagesToRender.map(p => p.outputFile))
+			if (prevBuildManifest) {
+				for (const entry of Object.values(prevBuildManifest.pages)) {
+					if (!produced.has(entry.outputFile)) {
+						const stale = path.join(distDir, entry.outputFile)
+						if (fs.existsSync(stale)) fs.unlinkSync(stale)
+					}
+				}
+			}
+			writeBuildManifest(root, {
+				version: AERO_BUILD_MANIFEST_VERSION,
+				generatedAt: new Date().toISOString(),
+				viteManifestHash: hashViteOutputManifest(distDir) ?? '',
+				clientHtmlFingerprint: computeClientHtmlFingerprint(root, dirs.client),
+				staticBuildOptionsHash,
+				templateFileHashes: templateFileHashesCurrent,
+				pages: Object.fromEntries(pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])),
+			})
 		}
 
 		aeroStaticBuildDebug(`static prerender: total ${Date.now() - tBuildStart}ms`)
@@ -697,25 +1002,29 @@ interface BuildConfigOptions {
  *
  * @param options - Optional dirs and resolvePath for asset discovery.
  * @param root - Project root (default process.cwd()).
+ * @param sharedDiscovery - Optional shared {@link TemplateDiscovery} (dev: same instance as `buildStart` client-script map).
  * @returns Vite UserConfig.build fragment.
  */
 export function createBuildConfig(
 	options: BuildConfigOptions = {},
-	root = process.cwd()
+	root = process.cwd(),
+	sharedDiscovery?: TemplateDiscovery
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const templateDiscovery = new TemplateDiscovery(root, dirs.client)
-	const assetInputs = discoverAssetInputs(root, options.resolvePath, dirs.client, templateDiscovery)
-	const virtualClientInputs = discoverClientScriptVirtualInputs(
+	const templateDiscovery = sharedDiscovery ?? new TemplateDiscovery(root, dirs.client)
+	const { virtualClientInputs, templateAssetEntries } = collectTemplateDerivedRollupData(
 		root,
 		dirs.client,
+		options.resolvePath,
 		templateDiscovery
 	)
-	const inputs = { ...assetInputs, ...virtualClientInputs }
+	const assetEntries = new Map(templateAssetEntries)
+	appendDefaultAndImageAssetInputs(root, dirs.client, assetEntries)
+	const inputs = { ...Object.fromEntries(assetEntries), ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,
 		manifest: true,
-		emptyOutDir: true,
+		emptyOutDir: !isIncrementalStaticBuildEnabled(),
 		rollupOptions: {
 			input: inputs,
 			output: {
