@@ -10,6 +10,7 @@ import {
 	AERO_BUILD_MANIFEST_VERSION,
 	canSkipEntirePrerender,
 	computeClientHtmlFingerprint,
+	diffTemplateFileHashes,
 	hashStaticBuildOptions,
 	readBuildManifest,
 	writeBuildManifest,
@@ -35,6 +36,7 @@ describe('build-manifest', () => {
 			viteManifestHash: 'abc',
 			clientHtmlFingerprint: 'def',
 			staticBuildOptionsHash: 'ghi',
+			templateFileHashes: { 'client/pages/index.html': 'aa' },
 			pages: { '': { outputFile: 'index.html' } },
 		}
 		writeBuildManifest(tmp, m)
@@ -105,5 +107,28 @@ describe('build-manifest', () => {
 			hashStaticBuildOptions('https://b.com', '[]')
 		)
 		expect(hashStaticBuildOptions('', '[]')).not.toBe(hashStaticBuildOptions('', '[{"from":"/x"}]'))
+	})
+
+	it('diffTemplateFileHashes reports added, removed, and changed paths', () => {
+		const prev = { 'client/a.html': 'h1', 'client/b.html': 'h2' }
+		const curr = { 'client/a.html': 'h1x', 'client/c.html': 'h3' }
+		const d = diffTemplateFileHashes(prev, curr)
+		expect(d.sort()).toEqual(['client/a.html', 'client/b.html', 'client/c.html'].sort())
+	})
+
+	it('readBuildManifest accepts version 1 manifests without templateFileHashes', () => {
+		tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-bm-'))
+		const m = {
+			version: 1,
+			generatedAt: '2026-01-01T00:00:00.000Z',
+			viteManifestHash: 'v',
+			clientHtmlFingerprint: 'c',
+			staticBuildOptionsHash: 's',
+			pages: {},
+		}
+		writeBuildManifest(tmp, m as unknown as AeroBuildManifest)
+		const read = readBuildManifest(tmp)
+		expect(read?.version).toBe(1)
+		expect(read?.templateFileHashes).toBeUndefined()
 	})
 })

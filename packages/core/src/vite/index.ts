@@ -47,7 +47,12 @@ import { handleSsrRequest } from './ssr-middleware'
 import { parse } from '@aero-js/compiler'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
-import { createBuildConfig, discoverClientScriptContentMap, renderStaticPages } from './build'
+import {
+	createBuildConfig,
+	discoverClientScriptContentMap,
+	getRuntimeInstanceModuleSource,
+	renderStaticPages,
+} from './build'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -200,7 +205,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			const runtimeImportPath = path.relative(dir, runtimeIndexPath).replace(/\\/g, '/')
 			writeFileSync(
 				filePath,
-				getRuntimeInstanceVirtualSource(
+				getRuntimeInstanceModuleSource(
+					resolvedConfig.root,
 					state.dirs.client,
 					runtimeImportPath.startsWith('.') ? runtimeImportPath : './' + runtimeImportPath
 				),
@@ -228,15 +234,6 @@ function isAeroTemplateHtml(
 	)
 }
 
-/**
- * Prefix for import.meta.glob patterns. In virtual modules Vite requires globs to start with '/'
- * (absolute from project root). Uses app-configured client dir so custom dirs (e.g. frontend/) resolve correctly.
- */
-function clientGlobPrefix(clientDir: string): string {
-	const normalized = clientDir.replace(/\\/g, '/').replace(/^\.\/+/, '')
-	return normalized ? `/${normalized}` : '/client'
-}
-
 /** Turn a compile Effect exit into JS source, or call Vite `error` on failure. */
 function compileExitToGeneratedOrReport(
 	ctx: { error(payload: unknown): never },
@@ -256,52 +253,6 @@ function compileExitToGeneratedOrReport(
 	const payload =
 		merged.length > 1 ? { ...fields, message: diagnosticsToSingleMessage(merged) } : fields
 	ctx.error(payload)
-}
-
-/**
- * Virtual module source for the runtime instance with glob patterns using the app's client dir.
- * Ensures template resolution works for custom dirs (e.g. dirs.client === 'frontend').
- * runtimeImportPath: path that resolves to @aero-js/core/runtime from the generated file (e.g. relative to .aero/ for SSR).
- */
-function getRuntimeInstanceVirtualSource(
-	clientDir: string,
-	runtimeImportPath: string = '@aero-js/core/runtime'
-): string {
-	const prefix = clientGlobPrefix(clientDir)
-	const componentsPattern = `${prefix}/components/**/*.html`
-	const layoutsPattern = `${prefix}/layouts/*.html`
-	const pagesPattern = `${prefix}/pages/**/*.html`
-	return `import { Aero } from ${JSON.stringify(runtimeImportPath)}
-
-const instance = globalThis.__AERO_INSTANCE__ || new Aero()
-const listeners = globalThis.__AERO_LISTENERS__ || new Set()
-const aero = instance
-
-const onUpdate = (cb) => {
-	listeners.add(cb)
-	return () => listeners.delete(cb)
-}
-const notify = () => {
-	listeners.forEach((cb) => cb())
-}
-
-if (!globalThis.__AERO_INSTANCE__) globalThis.__AERO_INSTANCE__ = instance
-if (!globalThis.__AERO_LISTENERS__) globalThis.__AERO_LISTENERS__ = listeners
-
-const components = import.meta.glob(${JSON.stringify(componentsPattern)}, { eager: true })
-const layouts = import.meta.glob(${JSON.stringify(layoutsPattern)}, { eager: true })
-const pages = import.meta.glob(${JSON.stringify(pagesPattern)}, { eager: true })
-
-aero.registerPages(components)
-aero.registerPages(layouts)
-aero.registerPages(pages)
-
-notify()
-
-if (import.meta.hot) import.meta.hot.accept()
-
-export { aero, onUpdate }
-`
 }
 
 function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
@@ -346,6 +297,22 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			// so browser module caching does not keep stale script behavior.
 			ctx.server.ws.send({ type: 'full-reload' })
 			return []
+		},
+		configureServer(server: ViteDevServer) {
+			const invalidateRuntimeRegistration = (): void => {
+				const mod = server.moduleGraph.getModuleById(RESOLVED_RUNTIME_INSTANCE_MODULE_ID)
+				if (mod) server.moduleGraph.invalidateModule(mod)
+			}
+			const onClientTemplateFs = (file: string): void => {
+				if (!file.endsWith('.html')) return
+				if (!state.config) return
+				const clientRoot = path.resolve(state.config.root, state.dirs.client)
+				const abs = path.resolve(file)
+				if (abs !== clientRoot && !abs.startsWith(clientRoot + path.sep)) return
+				invalidateRuntimeRegistration()
+			}
+			server.watcher.on('add', onClientTemplateFs)
+			server.watcher.on('unlink', onClientTemplateFs)
 		},
 		async resolveId(id, importer) {
 			// In dev: redirect client's runtime instance import to the virtual module.
@@ -450,7 +417,12 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 		},
 		load(id) {
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
-				return getRuntimeInstanceVirtualSource(state.dirs.client)
+				if (!state.config) return null
+				return getRuntimeInstanceModuleSource(
+					state.config.root,
+					state.dirs.client,
+					'@aero-js/core/runtime'
+				)
 			}
 
 			if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {

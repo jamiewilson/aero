@@ -12,7 +12,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 /** Bump when the JSON shape or invalidation rules change. */
-export const AERO_BUILD_MANIFEST_VERSION = 1 as const
+export const AERO_BUILD_MANIFEST_VERSION = 2 as const
 
 export const AERO_BUILD_MANIFEST_REL_PATH = path.join('.aero', 'cache', 'build-manifest.json')
 
@@ -21,11 +21,14 @@ export interface AeroBuildManifestPageEntry {
 }
 
 export interface AeroBuildManifest {
-	version: typeof AERO_BUILD_MANIFEST_VERSION
+	/** `1` = legacy; `2` adds per-file template hashes for partial prerender. */
+	version: 1 | typeof AERO_BUILD_MANIFEST_VERSION
 	generatedAt: string
 	viteManifestHash: string
 	clientHtmlFingerprint: string
 	staticBuildOptionsHash: string
+	/** Per `*.html` path under `client/` (posix, relative to project root) → sha256; Phase B partial prerender. */
+	templateFileHashes?: Record<string, string>
 	pages: Record<string, AeroBuildManifestPageEntry>
 }
 
@@ -98,7 +101,7 @@ export function readBuildManifest(root: string): AeroBuildManifest | null {
 	try {
 		const raw = fs.readFileSync(p, 'utf-8')
 		const data = JSON.parse(raw) as AeroBuildManifest
-		if (data.version !== AERO_BUILD_MANIFEST_VERSION) return null
+		if (data.version !== 1 && data.version !== AERO_BUILD_MANIFEST_VERSION) return null
 		if (
 			typeof data.viteManifestHash !== 'string' ||
 			typeof data.clientHtmlFingerprint !== 'string' ||
@@ -135,4 +138,20 @@ export function canSkipEntirePrerender(args: {
 		previous.clientHtmlFingerprint === currentClientHtmlFingerprint &&
 		previous.staticBuildOptionsHash === currentStaticBuildOptionsHash
 	)
+}
+
+/** Paths (posix rel to root) whose content changed between manifest snapshots. */
+export function diffTemplateFileHashes(
+	previous: Record<string, string> | undefined,
+	current: Record<string, string>
+): string[] {
+	if (!previous) return Object.keys(current).sort()
+	const changed: string[] = []
+	for (const [k, v] of Object.entries(current)) {
+		if (previous[k] !== v) changed.push(k)
+	}
+	for (const k of Object.keys(previous)) {
+		if (!(k in current)) changed.push(k)
+	}
+	return changed.sort()
 }
