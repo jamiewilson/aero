@@ -44,6 +44,9 @@ function checkUnusedInScope(
 
 	for (const [name, def] of definedVars) {
 		if (scope === 'build') {
+			// Consumed by the static prerender pipeline; only appears as `export async function getStaticPaths`.
+			if (name === 'getStaticPaths') continue
+
 			if (usedInTemplate.has(name)) continue
 
 			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

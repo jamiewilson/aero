@@ -57,7 +57,10 @@ vi.mock('vscode', () => {
 			onDidCloseTextDocument: vi.fn(),
 			textDocuments: [],
 			getWorkspaceFolder: vi.fn(),
-			getConfiguration: () => ({ get: () => 'always' }),
+			getConfiguration: () => ({
+				get: (key: string) =>
+					key === 'diagnostics.regexUndefinedVariables' ? true : 'always',
+			}),
 		},
 		languages: {
 			createDiagnosticCollection: () => mockCollection,
@@ -339,6 +342,46 @@ describe('AeroDiagnostics Unused Variables', () => {
 			d.message.includes("'getCollection' is declared but its value is never read")
 		)
 		expect(unusedDiag).toBeUndefined()
+	})
+
+	it('should NOT flag getStaticPaths as unused (build-time export)', () => {
+		const text = `
+<script is:build>
+    import { getCollection, render } from 'aero:content'
+
+    export async function getStaticPaths() {
+        const docs = await getCollection('docs')
+        return docs.map(doc => ({
+            params: { slug: doc.id },
+            props: doc,
+        }))
+    }
+
+    const doc = Aero.props
+    const { html } = await render(doc)
+</script>
+<div></div>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedGsp = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'getStaticPaths' is declared but its value is never read")
+		)
+		expect(unusedGsp).toBeUndefined()
 	})
 
 	it('should NOT flag build-scope variables as unused when passed via props', () => {
