@@ -9,7 +9,12 @@ import {
 	loadContentConfigFileSync,
 } from '@aero-js/content'
 import { initProcessor } from '@aero-js/content/processor'
-import { checkTemplateBuildScriptTypesWithFile, compileTemplate } from '@aero-js/core/compile-check'
+import {
+	checkTemplateTypesWithFile,
+	compileTemplate,
+	loadProjectTsConfig,
+	writeComponentRegistryDts,
+} from '@aero-js/core/compile-check'
 import type { AeroDiagnostic } from '@aero-js/core/diagnostics'
 import {
 	exitCodeForDiagnostics,
@@ -96,7 +101,8 @@ function templateDirs(root: string, clientRel: string): string[] {
 
 export type AeroCheckOptions = {
 	/**
-	 * Run TypeScript semantic/syntactic check on merged `<script is:build>` bodies (same ambient as the language server).
+	 * Run TypeScript checks on merged `<script is:build>` and `{ }` interpolations (same virtual files as Volar),
+	 * using the workspace tsconfig (paths, strict). Writes `.aero/cache/types/components.d.ts` for the component registry.
 	 */
 	types?: boolean
 }
@@ -165,6 +171,11 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 			}
 			const sorted = [...new Set(htmlFiles)].sort()
 			const runTypes = options.types === true
+			const projectTs = runTypes ? loadProjectTsConfig(root) : null
+			const componentsDir = path.join(root, dirs.client, 'components')
+			const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
+			const registryPath = registryWritten?.path
+
 			yield* Effect.forEach(
 				sorted,
 				file =>
@@ -186,10 +197,17 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 										importer: file,
 									})
 									if (runTypes) {
-										for (const issue of checkTemplateBuildScriptTypesWithFile(source, file)) {
+										for (const issue of checkTemplateTypesWithFile(source, file, {
+											root,
+											project: projectTs ?? undefined,
+											interpolations: true,
+											componentRegistryDtsPath: registryPath,
+										})) {
+											const code =
+												issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
 											diagnostics.push({
 												severity: 'error',
-												code: 'AERO_BUILD_SCRIPT',
+												code,
 												message: issue.message,
 												file: issue.file,
 												span: {

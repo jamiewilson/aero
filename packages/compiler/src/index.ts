@@ -15,11 +15,33 @@ export {
 	buildTemplateEditorAmbient,
 	getTemplateEditorAmbientFromParsed,
 } from './template-editor-context'
-export type { BuildScriptTypeIssue } from './build-script-type-check'
+export type {
+	BuildScriptTypeIssue,
+	TemplateTypeIssue,
+	TemplateTypeIssueKind,
+	CheckTemplateTypesOptions,
+} from './template-type-check'
 export {
+	checkTemplateTypes,
+	checkTemplateTypesWithFile,
 	checkTemplateBuildScriptTypes,
 	checkTemplateBuildScriptTypesWithFile,
-} from './build-script-type-check'
+} from './template-type-check'
+export type { LoadedProjectTsConfig } from './project-tsconfig'
+export { loadProjectTsConfig, compilerOptionsForVirtualCheck } from './project-tsconfig'
+export {
+	collectTemplateInterpolationSites,
+	formatInterpolationBinderPrelude,
+	formatInterpolationBinderPreludeFromTemplate,
+	type TemplateInterpolationSite,
+} from './template-interpolation-sites'
+export {
+	collectComponentRegistryEntries,
+	renderComponentRegistryDts,
+	writeComponentRegistryDts,
+	DEFAULT_COMPONENT_REGISTRY_REL,
+	type ComponentRegistryEntry,
+} from './component-registry-codegen'
 export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 export { parse } from './parser'
 

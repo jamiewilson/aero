@@ -15,7 +15,7 @@ Usage:
   aero --help
 
   check   Validate config (when present), content collections (when configured), and compile all page/component/layout templates.
-          --types   After a successful compile, type-check merged <script is:build> bodies (TypeScript; same globals as the editor).
+          --types   After compile, TypeScript-check build scripts and { } interpolations (workspace tsconfig); writes .aero/cache/types/components.d.ts.
   doctor  Print environment checklist (Node, Vite, Aero deps); exits 1 only if Node is below the minimum.
 `)
 }

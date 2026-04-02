@@ -6,7 +6,15 @@
  */
 export {
 	compileTemplate,
+	checkTemplateTypes,
+	checkTemplateTypesWithFile,
 	checkTemplateBuildScriptTypes,
 	checkTemplateBuildScriptTypesWithFile,
+	loadProjectTsConfig,
+	writeComponentRegistryDts,
 } from '@aero-js/compiler'
-export type { BuildScriptTypeIssue } from '@aero-js/compiler'
+export type {
+	BuildScriptTypeIssue,
+	TemplateTypeIssue,
+	CheckTemplateTypesOptions,
+} from '@aero-js/compiler'

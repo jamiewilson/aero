@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkTemplateBuildScriptTypes } from '../build-script-type-check'
+import { checkTemplateBuildScriptTypes } from '../template-type-check'
 
 describe('checkTemplateBuildScriptTypes', () => {
 	it('returns no issues for valid build script', () => {

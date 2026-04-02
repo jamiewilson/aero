@@ -57,3 +57,22 @@ declare module '*.md' {
 	export default doc
 }
 `
+
+/**
+ * `declare module 'aero:content'` — keep in sync with `AMBIENT_DECLARATIONS` in
+ * `packages/language-server/src/generated/ambient-preamble.ts`.
+ */
+export const AERO_CONTENT_MODULE_DECLARATIONS = `declare module 'aero:content' {
+	interface CollectionEntry {
+		id: string
+		data: Record<string, any>
+		body?: string
+	}
+	export function getCollection(name: string): Promise<CollectionEntry[]>
+	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
+}
+`
+
+/** Full prelude for `aero check --types` (build script + virtual imports like `aero:content`). */
+export const FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK =
+	BUILD_SCRIPT_AMBIENT_PRELUDE + '\n' + AERO_CONTENT_MODULE_DECLARATIONS + '\n'
