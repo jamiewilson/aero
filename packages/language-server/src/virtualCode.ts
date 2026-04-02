@@ -243,11 +243,13 @@ export class AeroVirtualCode implements VirtualCode {
 		let exprIdx = 0
 
 		// Helper to create a virtual code for an interpolation expression.
-		// Wraps in `[` + expr + `]` so spread expressions like `...Aero.props`
-		// are valid TypeScript (spreads are only legal in array/object/call contexts).
+		// Default: `[` + expr + `]` so bare spreads like `{...arr}` in text become valid array spread.
+		// For `props` / `data-props` attributes, use `[{` + expr + `}]` so `{ ...obj }` inner text
+		// is object spread (not `[...obj]` array spread, which requires Symbol.iterator on objects).
 		const makeExprVirtualCode = (
 			expression: string,
-			sourceOffset: number
+			sourceOffset: number,
+			wrapPropsObjectLiteral?: boolean
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 			const allBindings = forBindings.size > 0
@@ -255,8 +257,10 @@ export class AeroVirtualCode implements VirtualCode {
 				: buildBindingNames
 
 			const binderDecl = formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts, buildScriptBodies)
-			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + 1 // +1 for `[`
-			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + '[' + expression + ']'
+			const open = wrapPropsObjectLiteral ? '[{' : '['
+			const close = wrapPropsObjectLiteral ? '}]' : ']'
+			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + open.length
+			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + open + expression + close
 
 			return {
 				id: `expr_${exprIdx++}`,
@@ -275,7 +279,9 @@ export class AeroVirtualCode implements VirtualCode {
 		}
 
 		for (const site of collectTemplateInterpolationSites(sourceText)) {
-			out.push(makeExprVirtualCode(site.expression, site.braceOffset))
+			out.push(
+				makeExprVirtualCode(site.expression, site.braceOffset, site.wrapPropsObjectLiteral === true)
+			)
 		}
 
 		return out

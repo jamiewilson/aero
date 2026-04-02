@@ -11,11 +11,17 @@ import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
 import { collectForDirectiveBindingNames } from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
+import { ATTR_PREFIX, ATTR_PROPS } from './constants'
 
 export type TemplateInterpolationSite = {
 	readonly expression: string
 	/** Absolute offset of `{` in the HTML source. */
 	readonly braceOffset: number
+	/**
+	 * When true, virtual TS uses `[{ expr }]` instead of `[expr]` so object/spread props
+	 * (e.g. `props="{ ...x }"`) typecheck as object spread, not array spread.
+	 */
+	readonly wrapPropsObjectLiteral?: boolean
 }
 
 const FOR_ATTR_NAMES = new Set(['for', 'data-for'])
@@ -39,8 +45,19 @@ function maskForDirectiveValues(sourceText: string): string {
 function collectAttributeInterpolations(
 	roots: Node[],
 	sourceText: string
-): { interpolations: { expression: string; sourceOffset: number }[]; masks: AttributeMask[] } {
-	const interpolations: { expression: string; sourceOffset: number }[] = []
+): {
+	interpolations: {
+		expression: string
+		sourceOffset: number
+		wrapPropsObjectLiteral?: boolean
+	}[]
+	masks: AttributeMask[]
+} {
+	const interpolations: {
+		expression: string
+		sourceOffset: number
+		wrapPropsObjectLiteral?: boolean
+	}[] = []
 	const masks: AttributeMask[] = []
 
 	const attrRegex = /(?:\s|^)([a-zA-Z0-9\-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
@@ -73,6 +90,11 @@ function collectAttributeInterpolations(
 
 			if (FOR_ATTR_NAMES.has(name)) continue
 
+			const nameLower = name.toLowerCase()
+			const wrapPropsObjectLiteral =
+				nameLower === ATTR_PROPS.toLowerCase() ||
+				nameLower === `${ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase()
+
 			const matchStartInAttrs = attrMatch.index
 			const nameStartInMatch = fullMatch.indexOf(name)
 			const quote = attrMatch[3]
@@ -89,6 +111,7 @@ function collectAttributeInterpolations(
 				interpolations.push({
 					expression: expr,
 					sourceOffset: absValueStart + seg.start + 1,
+					wrapPropsObjectLiteral,
 				})
 			}
 		}
@@ -213,7 +236,11 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 
 	const { interpolations, masks } = collectAttributeInterpolations(roots, sourceText)
 	for (const i of interpolations) {
-		out.push({ expression: i.expression, braceOffset: i.sourceOffset })
+		out.push({
+			expression: i.expression,
+			braceOffset: i.sourceOffset,
+			...(i.wrapPropsObjectLiteral ? { wrapPropsObjectLiteral: true as const } : {}),
+		})
 	}
 
 	const masked = applyMasks(

@@ -188,8 +188,10 @@ export function checkTemplateTypes(
 		let exprIdx = 0
 		for (const site of sites) {
 			const binderDecl = formatInterpolationBinderPreludeFromTemplate(htmlSource, site.braceOffset)
-			const head = FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n' + binderDecl + '['
-			const virtualText = head + site.expression + ']'
+			const open = site.wrapPropsObjectLiteral === true ? '[{' : '['
+			const close = site.wrapPropsObjectLiteral === true ? '}]' : ']'
+			const head = FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n' + binderDecl + open
+			const virtualText = head + site.expression + close
 			const exprStartInVirtual = head.length
 			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
 
