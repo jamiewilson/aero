@@ -22,7 +22,11 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	checkDirectiveExpressionBraces(document, text, diagnostics)
 	checkComponentReferences(document, text, diagnostics, resolver)
 	checkComponentProps(document, text, diagnostics, resolver, parsed.definedVariables)
-	checkUndefinedVariables(parsed, diagnostics)
+	const regexUndefined =
+		vscode.workspace.getConfiguration('aero').get<boolean>('diagnostics.regexUndefinedVariables') === true
+	if (regexUndefined) {
+		checkUndefinedVariables(parsed, diagnostics)
+	}
 	checkUnusedVariables(parsed, diagnostics)
 	checkDuplicateDeclarations(parsed, diagnostics)
 

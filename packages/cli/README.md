@@ -12,6 +12,7 @@ pnpm add -D @aero-js/cli
 
 ```bash
 pnpm exec aero check
+pnpm exec aero check --types
 pnpm exec aero check --root /path/to/project
 pnpm exec aero doctor
 pnpm exec aero --help

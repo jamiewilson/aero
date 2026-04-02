@@ -9,7 +9,12 @@ import {
 	loadContentConfigFileSync,
 } from '@aero-js/content'
 import { initProcessor } from '@aero-js/content/processor'
-import { compileTemplate } from '@aero-js/core/compile-check'
+import {
+	checkTemplateTypesWithFile,
+	compileTemplate,
+	loadProjectTsConfig,
+	writeComponentRegistryDts,
+} from '@aero-js/core/compile-check'
 import type { AeroDiagnostic } from '@aero-js/core/diagnostics'
 import {
 	exitCodeForDiagnostics,
@@ -94,12 +99,20 @@ function templateDirs(root: string, clientRel: string): string[] {
 	return [path.join(base, 'pages'), path.join(base, 'components'), path.join(base, 'layouts')]
 }
 
+export type AeroCheckOptions = {
+	/**
+	 * Run TypeScript checks on merged `<script is:build>` and `{ }` interpolations (same virtual files as Volar),
+	 * using the workspace tsconfig (paths, strict). Writes `.aero/cache/types/components.d.ts` for the component registry.
+	 */
+	types?: boolean
+}
+
 /**
  * Run validation checks for an Aero project directory.
  *
  * @returns Exit code `0` when clean; otherwise {@link exitCodeForDiagnostics} (10–14) from the primary error, matching static build buckets.
  */
-export async function runAeroCheck(root: string): Promise<number> {
+export async function runAeroCheck(root: string, options: AeroCheckOptions = {}): Promise<number> {
 	return Effect.runPromise(
 		Effect.gen(function* () {
 			const span = startDebugSpan('cli-check')
@@ -157,6 +170,12 @@ export async function runAeroCheck(root: string): Promise<number> {
 				htmlFiles.push(...walkHtmlFiles(dir))
 			}
 			const sorted = [...new Set(htmlFiles)].sort()
+			const runTypes = options.types === true
+			const projectTs = runTypes ? loadProjectTsConfig(root) : null
+			const componentsDir = path.join(root, dirs.client, 'components')
+			const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
+			const registryPath = registryWritten?.path
+
 			yield* Effect.forEach(
 				sorted,
 				file =>
@@ -171,12 +190,37 @@ export async function runAeroCheck(root: string): Promise<number> {
 						Effect.flatMap(source => {
 							if (source === null) return Effect.void
 							return Effect.try({
-								try: () =>
+								try: () => {
 									compileTemplate(source, {
 										root,
 										resolvePath,
 										importer: file,
-									}),
+									})
+									if (runTypes) {
+										for (const issue of checkTemplateTypesWithFile(source, file, {
+											root,
+											project: projectTs ?? undefined,
+											interpolations: true,
+											componentRegistryDtsPath: registryPath,
+										})) {
+											const code =
+												issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
+											diagnostics.push({
+												severity: 'error',
+												code,
+												message: issue.message,
+												file: issue.file,
+												span: {
+													file: issue.file,
+													line: issue.line,
+													column: issue.column,
+													lineEnd: issue.lineEnd,
+													columnEnd: issue.columnEnd,
+												},
+											})
+										}
+									}
+								},
 								catch: err => err,
 							}).pipe(
 								Effect.catchAll(err => {

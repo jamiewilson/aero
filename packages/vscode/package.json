@@ -104,6 +104,11 @@
 					],
 					"default": "auto",
 					"markdownDescription": "Controls where Aero language features run for HTML files. `auto` enables features in Aero projects and files with Aero markers, `strict` only in detected Aero projects, and `always` in all HTML files."
+				},
+				"aero.diagnostics.regexUndefinedVariables": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "When false (default), skip regex-based “undefined variable in `{ }`” diagnostics — rely on the Volar language server and `aero check --types` for expression typing. Enable only if you need the legacy heuristic without the LS."
 				}
 			}
 		},

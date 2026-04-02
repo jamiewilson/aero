@@ -1,9 +1,13 @@
 /**
- * Generated from @aero-js/core/env.d.ts - do not edit manually.
- * Run: node scripts/generate-ambient-preamble.mjs
+ * Ambient prelude for `<script is:build>` TypeScript checking — must match
+ * `BUILD_SCRIPT_PREAMBLE` in `packages/language-server/src/generated/ambient-preamble.ts`
+ * (generated from `packages/core/env.d.ts`).
+ *
+ * @remarks
+ * After changing `env.d.ts`, run `pnpm --dir packages/language-server exec node scripts/generate-ambient-preamble.mjs`
+ * and sync this string with `BUILD_SCRIPT_PREAMBLE`.
  */
-
-export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
+export const BUILD_SCRIPT_AMBIENT_PRELUDE = `declare const Aero: {
 	
 	props: Record<string, any>
 	
@@ -54,7 +58,11 @@ declare module '*.md' {
 }
 `
 
-export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {
+/**
+ * `declare module 'aero:content'` — keep in sync with `AMBIENT_DECLARATIONS` in
+ * `packages/language-server/src/generated/ambient-preamble.ts`.
+ */
+export const AERO_CONTENT_MODULE_DECLARATIONS = `declare module 'aero:content' {
 	interface CollectionEntry {
 		id: string
 		data: Record<string, any>
@@ -64,3 +72,7 @@ export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {
 	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
 }
 `
+
+/** Full prelude for `aero check --types` (build script + virtual imports like `aero:content`). */
+export const FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK =
+	BUILD_SCRIPT_AMBIENT_PRELUDE + '\n' + AERO_CONTENT_MODULE_DECLARATIONS + '\n'

@@ -29,13 +29,26 @@ declare const Aero: {
 }
 
 /**
+ * Augment with tag names mapped to `{ props: YourProps }` for typed `renderComponent` (see Phase C / component registry).
+ * Generated files may place declarations under `.aero/cache/types/`.
+ */
+declare namespace Aero {
+	interface ComponentRegistry {}
+}
+
+/**
  * Render a child component and return its HTML.
  *
- * @param component - The imported component (default import from an `.html` file).
+ * @param component - The imported component (default import from an `.html` file), or a registry key when augmented.
  * @param props - Props to pass to the component.
  * @param slots - Named slot content.
  * @returns The rendered HTML string.
  */
+declare function renderComponent<K extends keyof Aero.ComponentRegistry>(
+	component: K,
+	props?: Aero.ComponentRegistry[K] extends { props: infer P } ? P : Record<string, unknown>,
+	slots?: Record<string, string>
+): Promise<string>
 declare function renderComponent(
 	component: any,
 	props?: Record<string, any>,
