@@ -12,8 +12,11 @@ import {
 	type Node,
 } from '@aero-js/html-parser'
 import { formatBuildScopeAmbientPrelude } from '@aero-js/compiler/build-scope-bindings'
-import { buildTemplateEditorAmbient, collectTemplateInterpolationSites } from '@aero-js/compiler'
-import { collectForDirectiveBindingNames } from '@aero-js/compiler'
+import {
+	buildTemplateEditorAmbient,
+	collectForDirectiveBindingNames,
+	collectTemplateInterpolationSites,
+} from '@aero-js/compiler'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
