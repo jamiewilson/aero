@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emitClientScriptTag, VIRTUAL_PREFIX } from '../emit-client-script-tag'
+import { emitClientScriptTag, VIRTUAL_PREFIX } from '../../emit-client-script-tag'
 import type { ScriptEntry } from '../../types'
 
 describe('emitClientScriptTag', () => {
@@ -50,7 +50,6 @@ describe('emitClientScriptTag', () => {
 		expect(root).toEqual([])
 		expect(head.length).toBe(1)
 		const line = head[0] ?? ''
-		// Single IIFE whose return concatenates JSON + assignment + module tag (valid inside injectedHeadScripts?.add(...)).
 		expect(line).toContain('return \'<script type="application/json"')
 		expect(line).toContain('document.currentScript')
 		expect(line).toContain('__aeroScriptUrl')

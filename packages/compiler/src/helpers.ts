@@ -4,6 +4,15 @@
 
 import { tokenizeCurlyInterpolation, compileInterpolationFromSegments } from './tokenizer'
 import { CompileError, type CompileErrorOptions } from './types'
+import { escapeCodegenTemplateBody, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
+
+export {
+	escapeCodegenTemplateBody,
+	escapeHtmlAttributeLiteral,
+	escapeTemplateLiteralContent,
+	escapeHtml,
+	escapeScriptJson,
+} from './escapes'
 
 /** Compute line and column from a byte offset in source text (1-based line, 0-based column). */
 function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
@@ -98,7 +107,7 @@ export function compileAttributeInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return escapeTemplateLiteralContent(seg.value)
+				return escapeTemplateLiteralContent(escapeHtmlAttributeLiteral(seg.value))
 			}
 			return `\${${seg.expression}}`
 		})
@@ -132,36 +141,9 @@ export function buildPropsString(entries: string[], spreadExpr: string | null): 
 	return `{ ${entries.join(', ')} }`
 }
 
-/** Escape characters with special meaning inside generated template literals. */
-export function escapeTemplateLiteralContent(s: string): string {
-	return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
-}
-
 /** Backward-compatible alias for template-literal escaping. */
 export function escapeBackticks(s: string): string {
 	return escapeTemplateLiteralContent(s)
-}
-
-/** Escape HTML special characters for safe output. */
-export function escapeHtml(s: unknown): string {
-	if (s == null) return ''
-	return String(s)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;')
-}
-
-/** Escape JSON for safe embedding inside inline `<script>` tags. */
-export function escapeScriptJson(value: unknown): string {
-	return JSON.stringify(value)
-		.replace(/</g, '\\u003C')
-		.replace(/>/g, '\\u003E')
-		.replace(/&/g, '\\u0026')
-		.replace(/\//g, '\\u002F')
-		.replace(/\u2028/g, '\\u2028')
-		.replace(/\u2029/g, '\\u2029')
 }
 
 /** Bypass auto-escaping for raw HTML output. */
@@ -296,7 +278,9 @@ export function emitEnd(): string {
 	return `}\n`
 }
 
-/** Emit `outVar += slots['name'] ?? \`defaultContent\`;` (default `outVar` is `__out`). */
+/** Emit `outVar += slots[…] ?? \`defaultContent\`;` (default `outVar` is `__out`). */
 export function emitSlotOutput(name: string, defaultContent: string, outVar = '__out'): string {
-	return `${outVar} += slots['${name}'] ?? \`${defaultContent}\`;\n`
+	const key = JSON.stringify(name)
+	const body = escapeCodegenTemplateBody(defaultContent)
+	return `${outVar} += slots[${key}] ?? \`${body}\`;\n`
 }

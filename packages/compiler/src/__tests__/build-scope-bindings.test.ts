@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { iterateBuildScriptBindings } from '../build-scope-bindings'
+import {
+	collectBuildScriptTypeDeclarationTexts,
+	formatBuildScopeAmbientPrelude,
+	iterateBuildScriptBindings,
+} from '../build-scope-bindings'
 
 describe('iterateBuildScriptBindings', () => {
 	it('yields imports then declarations in script order', () => {
@@ -39,5 +43,35 @@ function helper() {}
 		expect(o?.properties?.has('a')).toBe(true)
 		expect(o?.properties?.has('b')).toBe(true)
 		expect(o?.properties?.has('c')).toBe(true)
+	})
+})
+
+describe('formatBuildScopeAmbientPrelude', () => {
+	it('places type declarations before declare const lines', () => {
+		const prelude = formatBuildScopeAmbientPrelude(new Set(['title']), [
+			'interface PageProps { title: string }',
+		])
+		expect(prelude.indexOf('interface PageProps')).toBeLessThan(prelude.indexOf('declare const title'))
+		expect(prelude).toContain('declare const title: any;')
+	})
+
+	it('uses checker types for bindings when build script bodies are provided', () => {
+		const prelude = formatBuildScopeAmbientPrelude(new Set(['x', 'y']), [], [
+			'const x: number = 1',
+			'const y = "hi"',
+		])
+		expect(prelude).toContain('declare const x: number;')
+		expect(prelude).toContain('declare const y:')
+	})
+
+	it('collectBuildScriptTypeDeclarationTexts flattens multiple scripts', () => {
+		const texts = collectBuildScriptTypeDeclarationTexts([
+			'type A = 1',
+			`
+interface B { x: number }
+`,
+		])
+		expect(texts.some(t => t.includes('type A'))).toBe(true)
+		expect(texts.some(t => t.includes('interface B'))).toBe(true)
 	})
 })

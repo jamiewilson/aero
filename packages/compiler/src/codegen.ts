@@ -5,32 +5,18 @@
  * Consumes `ParseResult` from the parser and `CompileOptions` (root, resolvePath, script arrays).
  * Resolves imports, extracts getStaticPaths, parses the template with linkedom, and walks the DOM
  * to lower to IR (elements, components, slots, data-for, data-if/else-if/else, script/style props),
- * then a single emitter turns IR → JS. Output is a string of JavaScript (default async render function,
- * optionally preceded by getStaticPaths export).
+ * then a single emitter turns IR → JS. Aero/Vite adds client scripts, blocking scripts, and virtual
+ * client URLs via the same entry (no duplicate pipeline in core).
  */
 
 import type { ParseResult, CompileOptions } from './types'
-import * as CONST from './constants'
 import * as Helper from './helpers'
-import { analyzeBuildScript } from './build-script-analysis'
-import { emitToJS, emitBodyAndStyle } from './emit'
-import { expandSelfClosingTags, parse } from './parser'
-import { parseHTML } from 'linkedom'
+import { stripBuildScriptTypes } from './build-script-analysis'
+import { parse } from './parser'
 import { Resolver } from './resolver'
-import { transformSync } from 'oxc-transform'
 import { Lowerer } from './lowerer/lowerer'
-let emittedStyleVarId = 0
-
-function nextStyleVar(): string {
-	return `__aero_style_${emittedStyleVarId++}`
-}
-
-/** Strip TypeScript syntax from a script string, returning plain JavaScript. */
-function stripTypes(code: string, filename = 'script.ts'): string {
-	if (!code.trim()) return code
-	const result = transformSync(filename, code, { typescript: { onlyRemoveTypeImports: true } })
-	return result.code.replace(/(?:^|\n)\s*export\s\{\s*\}\s*;?/g, '')
-}
+import { buildTemplateAnalysis } from './template-analysis'
+import { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 
 /**
  * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
@@ -49,72 +35,86 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			: undefined
 	)
 
-	let script = parsed.buildScript ? parsed.buildScript.content : ''
+	const ta = buildTemplateAnalysis(parsed, options, resolver, lowerer)
+	let script = ta.scriptBody
 
-	const analysis = analyzeBuildScript(script)
-	script = stripTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
-	const getStaticPathsFn = analysis.getStaticPathsFn
+	const rootScripts: string[] = []
+	const headScripts: string[] = []
 
-	const importsLines: string[] = []
-	const quote = '"'
-	for (const imp of analysis.imports) {
-		const resolved = resolver.resolveImport(imp.specifier)
-		const modExpr = `await import(${quote}${resolved}${quote})`
-		if (imp.defaultBinding) {
-			importsLines.push(`const ${imp.defaultBinding} = (${modExpr}).default`)
-		} else if (imp.namedBindings.length > 0) {
-			const names = imp.namedBindings
-				.map(b => (b.imported === b.local ? b.local : `${b.imported} as ${b.local}`))
-				.join(', ')
-			importsLines.push(`const {${names}} = ${modExpr}`)
-		} else if (imp.namespaceBinding) {
-			importsLines.push(`const ${imp.namespaceBinding} = ${modExpr}`)
+	const virtualPrefix = VIRTUAL_PREFIX
+	const hasVirtualClientScripts =
+		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
+	if (hasVirtualClientScripts) {
+		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
+	}
+	if (options.clientScripts && options.clientScripts.length > 0) {
+		for (const clientScript of options.clientScripts) {
+			const { head, root } = emitClientScriptTag(clientScript, virtualPrefix)
+			headScripts.push(...head)
+			rootScripts.push(...root)
 		}
 	}
 
-	const importsCode = importsLines.join('\n')
-
-	const expandedTemplate = expandSelfClosingTags(parsed.template)
-
-	const { document } = parseHTML(`
-		<html lang="en">
-			<body>${expandedTemplate}</body>
-		</html>
-	`)
-
-	let styleCode = ''
-	if (document.body) {
-		const children = Array.from(document.body.childNodes)
-		for (const node of children) {
-			if (node.nodeType === 1 && (node as any).tagName === 'STYLE') {
-				const styleVar = nextStyleVar()
-				const styleIR = lowerer.compileNode(node, false, styleVar)
-				styleCode += `let ${styleVar} = '';\n`
-				styleCode += emitToJS(styleIR, styleVar)
-				styleCode += `styles?.add(${styleVar});\n`
-				;(node as any).remove()
+	if (options.blockingScripts) {
+		for (const blockingScript of options.blockingScripts) {
+			const strippedContent = stripBuildScriptTypes(blockingScript.content, 'blocking.ts')
+			const escapedAttrs = blockingScript.attrs
+				? ` ${Helper.escapeTemplateLiteralContent(blockingScript.attrs)}`
+				: ''
+			if (blockingScript.passDataExpr) {
+				let blockingPropsNeedle: string | undefined
+				if (options.diagnosticTemplateSource && blockingScript.passDataExpr) {
+					const src = options.diagnosticTemplateSource
+					const expr = blockingScript.passDataExpr
+					for (const n of [`props="${expr}"`, `data-props="${expr}"`]) {
+						if (src.includes(n)) {
+							blockingPropsNeedle = n
+							break
+						}
+					}
+				}
+				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
+					directive: 'props',
+					tagName: 'script',
+					diagnosticSource: options.diagnosticTemplateSource,
+					diagnosticFile: options.importer,
+					positionNeedle: blockingPropsNeedle,
+				})
+				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
+				headScripts.push(
+					`\`<script${escapedAttrs}>\${${jsMapExpr}}${Helper.escapeTemplateLiteralContent(strippedContent)}</script>\``
+				)
+			} else {
+				const escapedContent = Helper.escapeTemplateLiteralContent(strippedContent)
+				headScripts.push(`\`<script${escapedAttrs}>${escapedContent}</script>\``)
 			}
 		}
 	}
 
-	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
-	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
-
-	const renderFn = Helper.emitRenderFunction(script, bodyCode, {
-		getStaticPathsFn: getStaticPathsFn || undefined,
-		styleCode,
+	const renderFn = Helper.emitRenderFunction(script, ta.bodyCode, {
+		getStaticPathsFn: ta.getStaticPathsFn || undefined,
+		styleCode: ta.styleCode,
+		rootScriptsLines: rootScripts,
+		headScriptsLines: headScripts,
 	})
 
-	return importsCode + '\n' + renderFn
+	return ta.importsCode + '\n' + renderFn
 }
 
 /**
  * Compile an HTML template source into a JavaScript module string. Single entry for parse + compile.
  */
-export function compileTemplate(htmlSource: string, options: CompileOptions): string {
-	const parsed = parse(htmlSource)
-	return compile(parsed, {
+export function compileTemplate(
+	htmlSource: string,
+	options: CompileOptions,
+	parsed?: ParseResult
+): string {
+	const p = parsed ?? parse(htmlSource)
+	return compile(p, {
 		...options,
 		diagnosticTemplateSource: options.diagnosticTemplateSource ?? htmlSource,
+		clientScripts: options.clientScripts ?? p.clientScripts,
+		inlineScripts: options.inlineScripts ?? p.inlineScripts,
+		blockingScripts: options.blockingScripts ?? p.blockingScripts,
 	})
 }

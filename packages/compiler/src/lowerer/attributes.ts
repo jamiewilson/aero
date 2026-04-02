@@ -87,7 +87,7 @@ export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedCo
 				const compiled = Helper.compileAttributeInterpolation(rawValue)
 				const hasInterpolation =
 					compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
-				propVal = hasInterpolation ? `\`${compiled}\`` : `"${escapedLiteral}"`
+				propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
 			}
 
 			propsEntries.push(`${attr.name}: ${propVal}`)

@@ -6,7 +6,11 @@
  */
 
 // Compiler
+export { CodeBuilder } from './code-builder'
 export { compile, compileTemplate } from './codegen'
+export type { TemplateAnalysis } from './template-analysis'
+export { buildTemplateAnalysis } from './template-analysis'
+export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 export { parse } from './parser'
 
 // Types
@@ -44,7 +48,24 @@ export { Resolver } from './resolver'
 export { toPosix } from './path'
 
 // Build script analysis
-export { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
+export {
+	analyzeBuildScript,
+	stripBuildScriptTypes,
+	extractBuildScriptTypeDeclarationTexts,
+} from './build-script-analysis'
+
+// Build scope ambient (language server)
+export {
+	collectBuildScriptTypeDeclarationTexts,
+	formatBuildScopeAmbientPrelude,
+} from './build-scope-bindings'
+
+// TypeScript checker (optional peer `typescript`; for tooling / Phase C)
+export {
+	collectBindingTypeStringsFromBuildScript,
+	collectBindingTypeStringsFromBuildScripts,
+	getBindingTypeStringFromBuildScript,
+} from './build-script-type-inference'
 
 // Tokenizer (re-exported from @aero-js/interpolation)
 export {

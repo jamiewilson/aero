@@ -1,0 +1,38 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileTemplate snapshots > component props and static attribute with special characters 1`] = `
+"
+export default async function(Aero) {
+		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw } = Aero;
+		const x = 1;
+
+		
+		
+		
+		
+		
+		let __out = '';
+		let __slot_0 = '';
+__out += await Aero.renderComponent(my, { title: "a\\"b", data-x: x }, { "default": __slot_0 }, { page: Aero.page, site: Aero.site, styles, scripts, headScripts });
+return __out;
+	}"
+`;
+
+exports[`compileTemplate snapshots > minimal page with build script and interpolation 1`] = `
+"
+export default async function(Aero) {
+		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw } = Aero;
+		const title = "Hi";
+
+		
+		
+		
+		
+		
+		let __out = '';
+		__out += \`<h1>\`;
+__out += \`\${escapeHtml( title )}\`;
+__out += \`</h1>\`;
+return __out;
+	}"
+`;

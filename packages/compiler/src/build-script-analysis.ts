@@ -309,6 +309,55 @@ function getTypeNameFromAnnotation(annotation: Record<string, unknown>): string 
 	return null
 }
 
+const TYPE_DECL_IN_EXPORT = new Set([
+	'TSInterfaceDeclaration',
+	'TSTypeAliasDeclaration',
+	'TSEnumDeclaration',
+])
+
+/**
+ * Extract verbatim source slices for top-level `interface` / `type` / `enum` declarations
+ * (including `export …`), for injection into template expression ambient TypeScript.
+ *
+ * @param script - Raw build script content (JS or TS).
+ * @returns Declaration texts in source order. On parse error, returns [].
+ */
+export function extractBuildScriptTypeDeclarationTexts(script: string): string[] {
+	if (!script.trim()) return []
+
+	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
+		sourceType: 'module',
+		range: true,
+		lang: 'ts',
+	})
+
+	if (result.errors.length > 0) return []
+
+	const body = (result.program as { body?: unknown[] }).body
+	if (!body) return []
+
+	const out: string[] = []
+	for (const stmt of body) {
+		if (!stmt || typeof stmt !== 'object') continue
+		const s = stmt as Record<string, unknown>
+		if (s.type === 'ExportNamedDeclaration') {
+			const decl = s.declaration as Record<string, unknown> | undefined
+			const dt = decl?.type as string | undefined
+			if (decl && dt && TYPE_DECL_IN_EXPORT.has(dt)) {
+				const range = s.range as [number, number] | undefined
+				if (range) out.push(script.slice(range[0], range[1]))
+			}
+			continue
+		}
+		const t = s.type as string
+		if (t && TYPE_DECL_IN_EXPORT.has(t)) {
+			const range = s.range as [number, number] | undefined
+			if (range) out.push(script.slice(range[0], range[1]))
+		}
+	}
+	return out
+}
+
 /**
  * Analyze build script for editor use: same as analyzeBuildScript but returns imports with
  * source ranges (full statement and per-binding) so the extension can map to vscode.Range.
