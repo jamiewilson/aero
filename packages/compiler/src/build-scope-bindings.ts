@@ -3,7 +3,7 @@
  *
  * @remarks {@link iterateBuildScriptBindings} is the single implementation; consumers derive names or full ranges from it.
  */
-import { analyzeBuildScriptForEditor } from './build-script-analysis'
+import { analyzeBuildScriptForEditor, extractBuildScriptTypeDeclarationTexts } from './build-script-analysis'
 
 function maskJsComments(text: string): string {
 	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
@@ -155,6 +155,32 @@ export function formatBuildBindingAmbientBlock(names: ReadonlySet<string>): stri
 		.sort()
 		.map(n => `declare const ${n}: any;`)
 		.join('\n') + '\n'
+}
+
+/**
+ * Collect `interface` / `type` / `enum` slices from every build script body (document order).
+ */
+export function collectBuildScriptTypeDeclarationTexts(buildScriptBodies: Iterable<string>): string[] {
+	const out: string[] = []
+	for (const body of buildScriptBodies) {
+		out.push(...extractBuildScriptTypeDeclarationTexts(body))
+	}
+	return out
+}
+
+/**
+ * Ambient prelude for template expression checking: optional type declarations from the build
+ * script(s), then `declare const` for each binding name (unchanged behavior).
+ */
+export function formatBuildScopeAmbientPrelude(
+	names: ReadonlySet<string>,
+	typeDeclarationSources: readonly string[]
+): string {
+	const typeBlock = typeDeclarationSources.map(s => s.trim()).filter(Boolean).join('\n\n')
+	const bindingBlock = formatBuildBindingAmbientBlock(names)
+	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
+	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
+	return bindingBlock
 }
 
 /**

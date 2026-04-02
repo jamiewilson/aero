@@ -14,7 +14,8 @@ import {
 } from '@aero-js/html-parser'
 import {
 	collectBuildScopeBindingNames,
-	formatBuildBindingAmbientBlock,
+	collectBuildScriptTypeDeclarationTexts,
+	formatBuildScopeAmbientPrelude,
 } from '@aero-js/compiler/build-scope-bindings'
 import { collectForDirectiveBindingNames, isDirectiveAttr } from '@aero-js/compiler'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
@@ -338,10 +339,11 @@ export class AeroVirtualCode implements VirtualCode {
 			if (body.trim()) buildScriptBodies.push(body)
 		}
 		const buildBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
+		const buildTypeDeclTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
-			...this.extractInterpolationVirtualCodes(sourceText, buildBindingNames),
+			...this.extractInterpolationVirtualCodes(sourceText, buildBindingNames, buildTypeDeclTexts),
 			{
 				id: 'ambient',
 				languageId: 'typescriptdeclaration',
@@ -354,7 +356,8 @@ export class AeroVirtualCode implements VirtualCode {
 
 	private extractInterpolationVirtualCodes(
 		sourceText: string,
-		buildBindingNames: ReadonlySet<string>
+		buildBindingNames: ReadonlySet<string>,
+		buildTypeDeclTexts: readonly string[]
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const out: VirtualCode[] = []
@@ -372,7 +375,7 @@ export class AeroVirtualCode implements VirtualCode {
 				? new Set([...buildBindingNames, ...forBindings])
 				: buildBindingNames
 
-			const binderDecl = formatBuildBindingAmbientBlock(allBindings)
+			const binderDecl = formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts)
 			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + 1 // +1 for `[`
 			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + '[' + expression + ']'
 

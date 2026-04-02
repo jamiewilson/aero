@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest'
 import {
 	analyzeBuildScript,
 	analyzeBuildScriptForEditor,
+	extractBuildScriptTypeDeclarationTexts,
 	getPropsTypeFromBuildScript,
 } from '../../build-script-analysis'
 
@@ -234,5 +235,35 @@ const props = Aero.props`
 
 	it('returns null for empty script', () => {
 		expect(getPropsTypeFromBuildScript('   \n  ')).toBeNull()
+	})
+})
+
+describe('extractBuildScriptTypeDeclarationTexts', () => {
+	it('collects interface, type alias, and enum in source order', () => {
+		const script = `
+interface A { x: number }
+type B = string
+enum E { X }
+const x = 1
+`
+		const texts = extractBuildScriptTypeDeclarationTexts(script)
+		expect(texts).toHaveLength(3)
+		expect(texts[0]).toContain('interface A')
+		expect(texts[1]).toContain('type B')
+		expect(texts[2]).toContain('enum E')
+	})
+
+	it('includes export keyword on exported declarations', () => {
+		const script = `export interface PageProps { title: string }
+export type Id = string
+`
+		const texts = extractBuildScriptTypeDeclarationTexts(script)
+		expect(texts).toHaveLength(2)
+		expect(texts[0]).toMatch(/^export interface PageProps/)
+		expect(texts[1]).toMatch(/^export type Id/)
+	})
+
+	it('returns [] on parse error', () => {
+		expect(extractBuildScriptTypeDeclarationTexts('interface { broken')).toEqual([])
 	})
 })

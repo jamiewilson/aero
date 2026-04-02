@@ -38,6 +38,20 @@ const { title } = Aero.props
 		expect(text).toContain('const { title } = Aero.props')
 	})
 
+	it('injects interface declarations from build script before declare const in expression virtual TS', () => {
+		const html = `<script is:build lang="ts">
+interface PageProps { title: string }
+const { title } = Aero.props as PageProps
+</script>
+<div>{ title }</div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('interface PageProps')
+		expect(expr0.indexOf('interface PageProps')).toBeLessThan(expr0.indexOf('declare const title'))
+		expect(expr0).toContain('declare const title: any;')
+	})
+
 	it('injects build-scope declare const bindings before template { } expression TS', () => {
 		const html = `<script is:build>
 const isHomepage = Aero.page.url.pathname === '/'
