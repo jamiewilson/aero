@@ -55,7 +55,7 @@ Aero does not reinvent styling with bespoke CSS-in-JS abstractions or scoped CSS
 
 ### 4. Vitest & Monorepo Tooling
 
-The Aero framework itself is built using the standard modern open-source stack: `pnpm` workspaces, `tsup` for package building, and `vitest` for robust, fast unit testing.
+The Aero framework itself is built using the standard modern open-source stack: `pnpm` workspaces, `tsdown` for package building, and `vitest` for robust, fast unit testing.
 
 ---
 
