@@ -2,9 +2,9 @@
  * Build codegen fragments for bundled client `<script>` tags (virtual URL vs literal, pass-data, head vs body).
  */
 
-import type { ScriptEntry } from '../types'
+import type { ScriptEntry } from './types'
 
-const VIRTUAL_PREFIX = '/@aero/client/'
+export const VIRTUAL_PREFIX = '/@aero/client/'
 
 /** HTML `type` attribute is case-insensitive; avoid duplicating `type="module"` when author used e.g. `TYPE="module"`. */
 function hasTypeAttribute(attrs: string): boolean {
@@ -36,7 +36,6 @@ export function emitClientScriptTag(
 			'<script>(function(){var __aero_prev=document.currentScript&&document.currentScript.previousElementSibling;window.__aero_data_next=__aero_prev&&__aero_prev.tagName==="SCRIPT"&&__aero_prev.getAttribute("type")==="application/json"?JSON.parse(__aero_prev.textContent):{};})();</' +
 			'script>'
 		if (isHead) {
-			// Single expression for `injectedHeadScripts?.add(expr)` — concat JSON script, bridge script, module script.
 			head.push(
 				`(function(){return '<script type="application/json" class="__aero_data">'+${jsonExpr}+'</'+'script>'+${JSON.stringify(bridgeScript)}+(${tagExpr});})()`
 			)
@@ -55,5 +54,3 @@ export function emitClientScriptTag(
 
 	return { head, root }
 }
-
-export { VIRTUAL_PREFIX }

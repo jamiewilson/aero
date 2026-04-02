@@ -1,14 +1,11 @@
 /**
- * Unit tests for the Aero-specific codegen features:
- * - clientScripts injection
- * - blockingScripts hoisting to head
- * - props on script/style elements with data passing
+ * Unit tests for Aero codegen features (clientScripts, blockingScripts, props on script elements).
  */
 
 import { describe, it, expect } from 'vitest'
-import { escapeScriptJson } from '@aero-js/compiler/helpers'
-import { parse } from '@aero-js/compiler/parser'
-import { compile } from '..'
+import { escapeScriptJson } from '../../helpers'
+import { parse } from '../../parser'
+import { compile } from '../../codegen'
 
 const mockOptions = {
 	root: '/',

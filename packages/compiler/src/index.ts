@@ -7,6 +7,9 @@
 
 // Compiler
 export { compile, compileTemplate } from './codegen'
+export type { TemplateAnalysis } from './template-analysis'
+export { buildTemplateAnalysis } from './template-analysis'
+export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 export { parse } from './parser'
 
 // Types
