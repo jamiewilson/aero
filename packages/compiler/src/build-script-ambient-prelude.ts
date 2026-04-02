@@ -1,9 +1,13 @@
 /**
- * Generated from @aero-js/core/env.d.ts - do not edit manually.
- * Run: node scripts/generate-ambient-preamble.mjs
+ * Ambient prelude for `<script is:build>` TypeScript checking — must match
+ * `BUILD_SCRIPT_PREAMBLE` in `packages/language-server/src/generated/ambient-preamble.ts`
+ * (generated from `packages/core/env.d.ts`).
+ *
+ * @remarks
+ * After changing `env.d.ts`, run `pnpm --dir packages/language-server exec node scripts/generate-ambient-preamble.mjs`
+ * and sync this string with `BUILD_SCRIPT_PREAMBLE`.
  */
-
-export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
+export const BUILD_SCRIPT_AMBIENT_PRELUDE = `declare const Aero: {
 	
 	props: Record<string, any>
 	
@@ -51,16 +55,5 @@ declare module '*.md' {
 	}
 	const doc: ContentDocument
 	export default doc
-}
-`
-
-export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {
-	interface CollectionEntry {
-		id: string
-		data: Record<string, any>
-		body?: string
-	}
-	export function getCollection(name: string): Promise<CollectionEntry[]>
-	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
 }
 `

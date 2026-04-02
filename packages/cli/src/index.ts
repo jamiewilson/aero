@@ -10,11 +10,12 @@ function printHelp(): void {
 	process.stdout.write(`Aero — HTML-first static sites
 
 Usage:
-  aero check [--root <dir>]
+  aero check [--root <dir>] [--types]
   aero doctor [--root <dir>]
   aero --help
 
   check   Validate config (when present), content collections (when configured), and compile all page/component/layout templates.
+          --types   After a successful compile, type-check merged <script is:build> bodies (TypeScript; same globals as the editor).
   doctor  Print environment checklist (Node, Vite, Aero deps); exits 1 only if Node is below the minimum.
 `)
 }
@@ -34,7 +35,9 @@ async function main(): Promise<void> {
 	const { root, rest } = parsed
 	const cmd = rest[0]
 	if (cmd === 'check') {
-		const code = await runAeroCheck(root)
+		const checkRest = rest.slice(1)
+		const types = checkRest.includes('--types')
+		const code = await runAeroCheck(root, { types })
 		process.exit(code)
 	}
 	if (cmd === 'doctor') {

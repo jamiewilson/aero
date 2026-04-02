@@ -10,6 +10,16 @@ export { CodeBuilder } from './code-builder'
 export { compile, compileTemplate } from './codegen'
 export type { TemplateAnalysis } from './template-analysis'
 export { buildTemplateAnalysis } from './template-analysis'
+export type { TemplateEditorAmbient } from './template-editor-context'
+export {
+	buildTemplateEditorAmbient,
+	getTemplateEditorAmbientFromParsed,
+} from './template-editor-context'
+export type { BuildScriptTypeIssue } from './build-script-type-check'
+export {
+	checkTemplateBuildScriptTypes,
+	checkTemplateBuildScriptTypesWithFile,
+} from './build-script-type-check'
 export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 export { parse } from './parser'
 

@@ -12,11 +12,8 @@ import {
 	type HTMLDocument,
 	type Node,
 } from '@aero-js/html-parser'
-import {
-	collectBuildScopeBindingNames,
-	collectBuildScriptTypeDeclarationTexts,
-	formatBuildScopeAmbientPrelude,
-} from '@aero-js/compiler/build-scope-bindings'
+import { formatBuildScopeAmbientPrelude } from '@aero-js/compiler/build-scope-bindings'
+import { buildTemplateEditorAmbient } from '@aero-js/compiler'
 import { collectForDirectiveBindingNames, isDirectiveAttr } from '@aero-js/compiler'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
@@ -331,15 +328,11 @@ export class AeroVirtualCode implements VirtualCode {
 		const doc = TextDocument.create('', 'html', 0, sourceText)
 		this.htmlDocument = parseMinimalHtmlDocument(doc)
 
-		const buildScriptBodies: string[] = []
-		for (const node of walkHtmlNodes(this.htmlDocument.roots)) {
-			if (getScriptType(node, sourceText) !== 'build') continue
-			if (node.startTagEnd == null || node.endTagStart == null) continue
-			const body = sourceText.substring(node.startTagEnd, node.endTagStart)
-			if (body.trim()) buildScriptBodies.push(body)
-		}
-		const buildBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
-		const buildTypeDeclTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
+		const {
+			buildScriptBodies,
+			typeDeclarationTexts: buildTypeDeclTexts,
+			bindingNames: buildBindingNames,
+		} = buildTemplateEditorAmbient(sourceText)
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),

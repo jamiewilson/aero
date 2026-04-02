@@ -4,4 +4,9 @@
  * @remarks
  * Kept separate from the browser entry so consumers do not pull codegen into client bundles.
  */
-export { compileTemplate } from '@aero-js/compiler'
+export {
+	compileTemplate,
+	checkTemplateBuildScriptTypes,
+	checkTemplateBuildScriptTypesWithFile,
+} from '@aero-js/compiler'
+export type { BuildScriptTypeIssue } from '@aero-js/compiler'

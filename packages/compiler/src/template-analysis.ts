@@ -7,6 +7,7 @@
 
 import type { ParseResult, CompileOptions } from './types'
 import type { IRNode } from './ir'
+import type { TemplateEditorAmbient } from './template-editor-context'
 import { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
 import { emitBodyAndStyle } from './emit'
 import { expandSelfClosingTags } from './parser'
@@ -14,6 +15,7 @@ import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 import { Lowerer } from './lowerer/lowerer'
 import { emitToJS } from './emit'
+import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 
 /**
  * Analysis artifacts for one template: imports, style extraction, body IR, and stripped build script.
@@ -28,6 +30,10 @@ export interface TemplateAnalysis {
 	/** Build script after strip + import rewrite prep (no leading import lines). */
 	readonly scriptBody: string
 	readonly getStaticPathsFn: string | null
+	/**
+	 * Build-scope names and type slices aligned with {@link parse} — for tooling and LSP ambient preludes.
+	 */
+	readonly editorAmbient: TemplateEditorAmbient
 }
 
 /**
@@ -94,6 +100,8 @@ export function buildTemplateAnalysis(
 	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
 
+	const editorAmbient = getTemplateEditorAmbientFromParsed(parsed)
+
 	return {
 		importsCode,
 		styleCode,
@@ -101,5 +109,6 @@ export function buildTemplateAnalysis(
 		bodyCode,
 		scriptBody: script,
 		getStaticPathsFn: getStaticPathsFn || null,
+		editorAmbient,
 	}
 }
