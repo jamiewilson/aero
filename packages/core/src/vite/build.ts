@@ -516,9 +516,10 @@ function discoverTemplates(root: string, templateRoot: string): string[] {
 
 /**
  * Walks template paths once and caches file contents so client-script and asset discovery
- * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`).
+ * share one `discoverTemplates` + read pass when used from the same build (e.g. `createBuildConfig`
+ * and dev `buildStart` for the client-script map — Phase B single discovery pass).
  */
-class TemplateDiscovery {
+export class TemplateDiscovery {
 	private readonly root: string
 	private readonly templateRoot: string
 	private _files: string[] | null = null
@@ -662,9 +663,10 @@ function appendDefaultAndImageAssetInputs(
  */
 export function discoverClientScriptContentMap(
 	root: string,
-	templateRoot: string
+	templateRoot: string,
+	sharedDiscovery?: TemplateDiscovery
 ): Map<string, ScriptEntry> {
-	const discovery = new TemplateDiscovery(root, templateRoot)
+	const discovery = sharedDiscovery ?? new TemplateDiscovery(root, templateRoot)
 	return collectTemplateDerivedRollupData(root, templateRoot, undefined, discovery).clientScriptContentMap
 }
 
@@ -1000,14 +1002,16 @@ interface BuildConfigOptions {
  *
  * @param options - Optional dirs and resolvePath for asset discovery.
  * @param root - Project root (default process.cwd()).
+ * @param sharedDiscovery - Optional shared {@link TemplateDiscovery} (dev: same instance as `buildStart` client-script map).
  * @returns Vite UserConfig.build fragment.
  */
 export function createBuildConfig(
 	options: BuildConfigOptions = {},
-	root = process.cwd()
+	root = process.cwd(),
+	sharedDiscovery?: TemplateDiscovery
 ): UserConfig['build'] {
 	const dirs = resolveDirs(options.dirs)
-	const templateDiscovery = new TemplateDiscovery(root, dirs.client)
+	const templateDiscovery = sharedDiscovery ?? new TemplateDiscovery(root, dirs.client)
 	const { virtualClientInputs, templateAssetEntries } = collectTemplateDerivedRollupData(
 		root,
 		dirs.client,

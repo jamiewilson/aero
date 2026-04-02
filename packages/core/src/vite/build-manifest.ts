@@ -27,7 +27,10 @@ export interface AeroBuildManifest {
 	viteManifestHash: string
 	clientHtmlFingerprint: string
 	staticBuildOptionsHash: string
-	/** Per `*.html` path under `client/` (posix, relative to project root) → sha256; Phase B partial prerender. */
+	/**
+	 * Per `*.html` path under `client/` (posix, relative to project root) → sha256 of file bytes.
+	 * Stable cache keys for incremental prerender: content-only hash per template + route graph elsewhere.
+	 */
 	templateFileHashes?: Record<string, string>
 	pages: Record<string, AeroBuildManifestPageEntry>
 }

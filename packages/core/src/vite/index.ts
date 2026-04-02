@@ -48,6 +48,7 @@ import { parse } from '@aero-js/compiler'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
 import {
+	TemplateDiscovery,
 	createBuildConfig,
 	discoverClientScriptContentMap,
 	getRuntimeInstanceModuleSource,
@@ -74,6 +75,8 @@ interface AeroPluginState {
 	config: ResolvedConfig | null
 	aliasResult: AliasResult | null
 	clientScripts: Map<string, ScriptEntry>
+	/** Single template walk + source cache: shared by Rollup `createBuildConfig` inputs and dev `buildStart` client scripts. */
+	templateDiscovery: TemplateDiscovery | null
 	runtimeInstancePath: string
 	/** Set in configResolved: path to .aero/runtime-instance.mjs so Vite treats it as a real module (glob rules). */
 	generatedRuntimeInstancePath: string | null
@@ -113,6 +116,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
+			state.templateDiscovery = new TemplateDiscovery(root, state.dirs.client)
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)
 			const site = state.options.site?.url ?? ''
@@ -190,7 +194,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				},
 				build: createBuildConfig(
 					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
-					root
+					root,
+					state.templateDiscovery
 				),
 			}
 		},
@@ -262,7 +267,13 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 		buildStart() {
 			if (!state.config) return
 			state.clientScripts.clear()
-			const contentMap = discoverClientScriptContentMap(state.config.root, state.dirs.client)
+			const discovery =
+				state.templateDiscovery ?? new TemplateDiscovery(state.config.root, state.dirs.client)
+			const contentMap = discoverClientScriptContentMap(
+				state.config.root,
+				state.dirs.client,
+				discovery
+			)
 			contentMap.forEach((entry, url) => state.clientScripts.set(url, entry))
 		},
 		async handleHotUpdate(ctx) {
@@ -544,6 +555,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		config: null,
 		aliasResult: null,
 		clientScripts: new Map<string, ScriptEntry>(),
+		templateDiscovery: null,
 		runtimeInstancePath,
 		generatedRuntimeInstancePath: null,
 		dirs,
