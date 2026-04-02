@@ -456,14 +456,14 @@ const o = { a: 1 }
 		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
 	})
 
-	it('wraps spread expressions in array context to avoid TS1128', () => {
+	it('wraps props attribute spreads in object-then-array context for valid object spread', () => {
 		const html = `<meta-component props="{ ...Aero.props }" />`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
-		// Spread is wrapped in [ ] so it's valid TS
-		expect(expr0).toContain('[')
+		// Inner `{ ...Aero.props }` becomes `[{ ...Aero.props }]` (not `[...Aero.props]`, which needs an iterable)
+		expect(expr0).toContain('[{')
 		expect(expr0).toContain('...Aero.props')
-		expect(expr0).toContain(']')
+		expect(expr0).toContain('}]')
 	})
 })
