@@ -7,6 +7,7 @@
  */
 
 import type { IRNode, BodyAndStyleIR } from './ir'
+import { CodeBuilder } from './code-builder'
 import * as Helper from './helpers'
 
 const DEFAULT_OUT = '__out'
@@ -112,12 +113,14 @@ function emitNode(node: IRNode, outVar: string): string {
 				code += Helper.emitAppend('\\n{\\n', node.outVar)
 			}
 			const jsMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
-			code += Helper.emitAppend(`\${${jsMapExpr}}\\n`, node.outVar)
+			const scriptInner = new CodeBuilder().raw('${' + jsMapExpr + '}').raw('\\n').toString()
+			code += Helper.emitAppend(scriptInner, node.outVar)
 			return code
 		}
 		case 'StylePassData': {
 			const cssMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
-			return Helper.emitAppend(`\n:root {\${${cssMapExpr}}\n}\n`, node.outVar)
+			const styleInner = new CodeBuilder().raw('\n:root {' + '${' + cssMapExpr + '}' + '\n}\n').toString()
+			return Helper.emitAppend(styleInner, node.outVar)
 		}
 		default: {
 			const _: never = node

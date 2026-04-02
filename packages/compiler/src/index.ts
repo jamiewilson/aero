@@ -6,6 +6,7 @@
  */
 
 // Compiler
+export { CodeBuilder } from './code-builder'
 export { compile, compileTemplate } from './codegen'
 export type { TemplateAnalysis } from './template-analysis'
 export { buildTemplateAnalysis } from './template-analysis'
