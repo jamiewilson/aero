@@ -6,6 +6,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 - **[Getting Started](getting-started.md)** — Build your first Aero project: pages, components, layouts, data, and scripts.
 - **[Overview](overview.md)** — What Aero is, core stack and philosophy, and what it supports (with links to deeper docs).
+- **[Aero principles & goals](../_reference/aero-principles-and-goals.md)** — Canonical product goals, web-platform stance, toolchain commitments, and engineering principles (for refactors and consistency).
 - **[What Makes Aero Different?](what-makes-aero-different.md)** — Aero's architectural philosophy and differences from standard frameworks.
 - **[Why Not Web Components?](why-not-web-components.md)** — A comparison of Aero's approach versus standard Web Components.
 

@@ -23,6 +23,10 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 - **Output:** By default you get a static `dist/`. With `server: true`, you also get a Nitro server for API routes.
 - **Client:** HTMX and Alpine attributes are preserved so they run in the browser as-is. Aero does not own the DOM.
 
+### Principles and direction
+
+For the full canonical list of product goals, web-platform stance, toolchain commitments, and internal engineering principles, see [**Aero principles & goals**](../_reference/aero-principles-and-goals.md).
+
 ### Design goals
 
 - **Native HTML feel** — File-based routing with `.html` in `client/pages/`; components and layouts are HTML.

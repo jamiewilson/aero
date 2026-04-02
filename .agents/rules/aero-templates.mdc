@@ -1,12 +1,14 @@
 ---
 description: Aero template conventions for app HTML (components, pages, layouts)
-globs: src/**/*.html
+globs: "**/*.html"
 alwaysApply: false
 ---
 
 # Aero Templates
 
 Document discoveries from code exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+
+Full script taxonomy: [docs/script-taxonomy.md](docs/script-taxonomy.md). Legacy `on:build` / `on:client` were replaced by `is:build` and plain `<script>` (client).
 
 ## TDD (red-to-green)
 
@@ -17,7 +19,7 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 Use `-component` or `-layout` suffix in markup; import without suffix (resolves to .html):
 
 ```html
-<script on:build>
+<script is:build>
 	import header from '@components/header'
 </script>
 <header-component title="Hello" />
@@ -25,27 +27,32 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 
 ## Script Types
 
-- `<script on:build>` - Build time; has `aero.props`, `site`, imports
-- `<script on:client>` - Bundled as virtual module, runs in browser
-- `<script src="...">` - External scripts allowed without attributes
-- **Required**: Inline scripts must have `on:client` or `on:build`
+- `<script is:build>` — Build time; one per file; has `Aero.props`, `Aero.site`, `site`, imports. Add `lang="ts"` for IntelliSense/formatting when using TypeScript.
+- Plain `<script>` (no `is:*`) — Client module; Vite bundles as a virtual module. Use `props` / `data-props` to pass values into the module.
+- `<script is:inline>` — Left in the DOM where written; not bundled by Vite; runs as classic inline script in the browser.
+- `<script is:blocking>` — Emitted in `<head>` to run before the rest of the page.
+- `<script src="...">` — External or resolved local scripts per [docs/script-taxonomy.md](docs/script-taxonomy.md).
+
+Use one of these for **executable** script bodies: `is:build`, plain `<script>` (client module), `is:inline`, or `is:blocking`. Do not use deprecated `on:build` / `on:client`.
 
 ## Props
 
-- Pass: attributes, `data-props="{ ...obj }"`, or `data-props` / `props` to spread a `props` variable
-- Receive: destructure `aero.props` in `<script on:build>`
+- Pass: attributes, `props` / `data-props` (including spreads), as in [docs/interpolation.md](docs/interpolation.md).
+- Receive: destructure `Aero.props` in `<script is:build>`.
 
 ```html
 <my-component title="{ site.title }" />
-<my-component data-props />
-<script on:build>
-	const { title } = aero.props
+<my-component props="{ componentProps }" />
+<my-component props="{ ...spreadProps }" />
+<my-component props />
+<script is:build>
+	const { title } = Aero.props
 </script>
 ```
 
 ## Loops and Slots
 
-- Loops: `data-for="{ const item of items }"` then `{ item.name }` etc.
+- Loops: `(data-)for="{ const item of items }"` then `{ item.name }` etc.
 - Slots: use both `name` and `slot` attributes on `<slot>` elements
 
 ## Client Stack

@@ -9,56 +9,54 @@ Aero is a static site generator with an HTML-first template engine.
 
 ## Monorepo Layout
 
-- **Root** - Workspace root. Scripts delegate to packages/core and packages/start.
-- **packages/core** - Framework: compiler, runtime, Vite plugin. Built with tsup; consumed as `@aero-ssg/core` and `@aero-ssg/vite`.
-- **packages/vite** - Vite plugin re-export (@aero-ssg/vite).
-- **packages/vscode** - VS Code extension (syntaxes, etc.).
-- **packages/start** - Starter/scaffold app (src/, server/, vite.config, nitro.config).
+- **Root** — Workspace root. Scripts: `pnpm test`, `pnpm build` (packages), `pnpm dev` delegates to `examples/kitchen-sink` (see root `package.json`).
+- **packages/diagnostics** — `AeroDiagnostic` contract, formatters, Effect integration; published as `@aero-js/diagnostics`.
+- **packages/core** — Compiler, runtime, Vite plugin. Built with **tsdown**; consumed as `@aero-js/core` and `@aero-js/vite` (see `packages/vite`).
+- **packages/compiler** — Standalone template compiler shared with core (see compilation pipeline).
+- **packages/cli** — `@aero-js/cli` (`aero check`, `aero doctor`).
+- **packages/vscode** — VS Code extension (syntaxes, diagnostics).
+- **packages/create** — Project initializer (`pnpm create @aero-js`).
+- **packages/templates/** — Starter templates for create.
+- **examples/kitchen-sink** — Full demo app; run dev/build from that directory.
 
-Build order: `predev` / `prebuild` run `pnpm --dir packages/core build` so the app uses the built framework.
+## Pipeline (`@aero-js/compiler` + `packages/core`)
 
-## Pipeline (packages/core)
+1. **Parser** (`packages/compiler/src/parser.ts`) — Extracts `<script is:build>`, client `<script>`, `<script is:inline>`, `<script is:blocking>` from HTML; core imports `parse` from `@aero-js/compiler`.
+2. **Build-script analysis** (`packages/compiler/src/build-script-analysis.ts`) — AST analysis (oxc-parser) of build scripts: imports, `getStaticPaths`, etc.
+3. **Codegen** — Shared compiler emits IR; `packages/core/src/codegen/` adds Vite-specific client/blocking script handling and ties into the plugin.
+4. **Vite plugin** (`packages/core/src/vite/`) — Build orchestration, middleware, virtual modules for client scripts.
+5. **Runtime** (`packages/core/src/runtime/`) — `Aero` class and client helpers.
 
-1. **Parser** (packages/core/compiler/parser.ts) - Extracts `<script on:build>` and `<script on:client>` from HTML
-2. **Codegen** (packages/core/compiler/codegen.ts) - Compiles templates into async render functions with `{ }` interpolation
-3. **Vite Plugin** (packages/core/vite/index.ts) - Build orchestration, middleware, virtual modules for client scripts
-4. **Runtime** (packages/core/runtime/index.ts) - `Aero` class renders pages and components with context
+## App file structure (typical app)
 
-## App File Structure (root)
+Conventions use **`client/`** for pages, layouts, and components (see [README](../../README.md)):
 
-- `src/pages/` - Route pages (index.html → `/`, about.html → `/about`)
-- `src/components/` - Reusable components
-- `src/layouts/` - Layout wrappers with `<slot>` support
-- `src/content/` - Global data (e.g. site.ts, theme.ts exposed as `site` in templates)
-- `src/assets/` - Styles, scripts, images
-- `server/api/` - Nitro API handlers (e.g. submit.post.ts)
-- `server/routes/` - Nitro routes (e.g. catch-all for static files)
+- `client/pages/` — Routes (`index.html` → `/`, etc.)
+- `client/layouts/`, `client/components/` — Templates with `<name-layout>` / `<name-component>`
+- `content/` — Content modules and collections
+- `server/` or a configured backend directory — Nitro API routes when `server: true` (kitchen-sink uses `backend/` via config)
 
 ## TDD (red-to-green)
 
 When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
 
-## Commands
+## Commands (example app)
 
-- `pnpm run dev` - Vite dev server with HMR (Nitro enabled when `aero({ server: true })`)
-- `pnpm run build` - Static build to dist/; with Nitro also produces .output/
-- `pnpm run preview` - Static preview (no API)
-- `pnpm run preview:api` - Full server preview (static + API)
-- `pnpm test` / `npx vitest` - Tests (run from root; Vitest in packages/core)
+From an app directory such as `examples/kitchen-sink`: `pnpm dev`, `pnpm build`, `pnpm preview`, `pnpm preview:api` as documented in the app. Root `pnpm test` runs Vitest for framework packages.
 
 ## Documentation and discoveries
 
-Document any discoveries made during code exploration (gaps, workarounds, implementation opportunities) in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
+Document gaps discovered during exploration in [_reference/DISCOVERY.md](../../_reference/DISCOVERY.md).
 
-## Path Aliases (root tsconfig.json)
+## Path aliases (typical; see app `tsconfig`)
 
-- `@components/*` → src/components/*
-- `@layouts/*` → src/layouts/*
-- `@pages/*` → src/pages/*
-- `@content/*` → src/content/*
-- `@styles/*` → src/assets/styles/*
-- `@scripts/*` → src/assets/scripts/*
-- `@images/*` → src/assets/images/*
-- `@src/*` → src/*
-- `@server/*` → server/*
+- `@components/*` → `client/components/*`
+- `@layouts/*` → `client/layouts/*`
+- `@pages/*` → `client/pages/*`
+- `@content/*` → `content/*`
+- `@scripts/*`, `@styles/*`, `@images/*` — Under `client/assets/` as configured
+- `@src/*` → `client/*`
+- `@server/*` → server or configured server root
 - `~/*` → project root
+
+Canonical principles: [_reference/aero-principles-and-goals.md](../../_reference/aero-principles-and-goals.md).
