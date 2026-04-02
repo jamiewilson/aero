@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { getBindingTypeStringFromBuildScript } from '../../build-script-type-inference'
+import {
+	collectBindingTypeStringsFromBuildScript,
+	collectBindingTypeStringsFromBuildScripts,
+	getBindingTypeStringFromBuildScript,
+} from '../../build-script-type-inference'
+
+describe('collectBindingTypeStringsFromBuildScript', () => {
+	it('collects overlapping names from one script with first-win merge semantics across files', () => {
+		const a = collectBindingTypeStringsFromBuildScripts([
+			'const x: number = 1',
+			'const x: string = "a"',
+		])
+		expect(a.get('x')).toBe('number')
+	})
+})
 
 describe('getBindingTypeStringFromBuildScript', () => {
 	it('returns explicit type for const', () => {
@@ -10,6 +24,12 @@ describe('getBindingTypeStringFromBuildScript', () => {
 		const t = getBindingTypeStringFromBuildScript('const n = 1', 'n')
 		expect(t).toBeTruthy()
 		expect(t === '1' || t === 'number').toBe(true)
+	})
+
+	it('collects destructure bindings', () => {
+		const m = collectBindingTypeStringsFromBuildScript(`const { a, b } = { a: 1, b: 2 }`)
+		expect(m.get('a')).toMatch(/number/)
+		expect(m.get('b')).toMatch(/number/)
 	})
 
 	it('returns null for missing binding', () => {

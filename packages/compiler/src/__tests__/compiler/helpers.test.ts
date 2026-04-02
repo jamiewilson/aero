@@ -234,11 +234,22 @@ describe('emitEnd', () => {
 
 describe('emitSlotOutput', () => {
 	it('should emit slot output', () => {
-		expect(emitSlotOutput('default', 'content')).toBe("__out += slots['default'] ?? `content`;\n")
+		expect(emitSlotOutput('default', 'content')).toBe('__out += slots["default"] ?? `content`;\n')
 	})
 
 	it('should use custom output variable', () => {
-		expect(emitSlotOutput('header', 'h', '__html')).toBe("__html += slots['header'] ?? `h`;\n")
+		expect(emitSlotOutput('header', 'h', '__html')).toBe('__html += slots["header"] ?? `h`;\n')
+	})
+
+	it('escapes backticks in default content and JSON-encodes slot name', () => {
+		expect(emitSlotOutput('a"b', 'x`y')).toBe('__out += slots["a\\"b"] ?? `x\\`y`;\n')
+	})
+
+	it('preserves ${…} in default content for nested codegen', () => {
+		const body = '${ await Aero.renderComponent(x, {}, {}, ctx) }'
+		expect(emitSlotOutput('default', body)).toBe(
+			`__out += slots["default"] ?? \`${body}\`;\n`
+		)
 	})
 })
 

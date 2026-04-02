@@ -61,7 +61,11 @@ export {
 } from './build-scope-bindings'
 
 // TypeScript checker (optional peer `typescript`; for tooling / Phase C)
-export { getBindingTypeStringFromBuildScript } from './build-script-type-inference'
+export {
+	collectBindingTypeStringsFromBuildScript,
+	collectBindingTypeStringsFromBuildScripts,
+	getBindingTypeStringFromBuildScript,
+} from './build-script-type-inference'
 
 // Tokenizer (re-exported from @aero-js/interpolation)
 export {

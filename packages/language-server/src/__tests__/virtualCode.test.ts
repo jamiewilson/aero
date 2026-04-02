@@ -49,7 +49,7 @@ const { title } = Aero.props as PageProps
 		const expr0 = getEmbeddedText(code, 'expr_0')!
 		expect(expr0).toContain('interface PageProps')
 		expect(expr0.indexOf('interface PageProps')).toBeLessThan(expr0.indexOf('declare const title'))
-		expect(expr0).toContain('declare const title: any;')
+		expect(expr0).toMatch(/declare const title: string;/)
 	})
 
 	it('injects build-scope declare const bindings before template { } expression TS', () => {
@@ -61,13 +61,13 @@ const props = Aero.props as { x: number }
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
-		expect(expr0).toContain('declare const isHomepage: any;')
-		expect(expr0).toContain('declare const props: any;')
+		expect(expr0).toMatch(/declare const isHomepage: boolean;/)
+		expect(expr0).toContain('declare const props:')
 		const expr0Body = ' isHomepage '
 		expect(expr0.indexOf('declare const isHomepage')).toBeLessThan(expr0.indexOf(expr0Body))
 
 		const expr1 = getEmbeddedText(code, 'expr_1')!
-		expect(expr1).toContain('declare const props: any;')
+		expect(expr1).toMatch(/declare const props: \{[^}]*x: number/)
 		expect(expr1).toContain(' props.x ')
 		expect(expr1.indexOf('declare const props')).toBeLessThan(expr1.indexOf(' props.x '))
 	})
@@ -433,7 +433,7 @@ const o = { a: 1 }
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
-		expect(expr0).toContain('declare const base: any;')
+		expect(expr0).toMatch(/declare const base: "\/docs";/)
 		expect(expr0).toContain(' base ')
 	})
 

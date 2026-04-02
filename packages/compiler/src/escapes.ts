@@ -11,6 +11,22 @@ export function escapeTemplateLiteralContent(s: string): string {
 	return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
 }
 
+/**
+ * Escape `\\` and `` ` `` only — preserves `${…}` so nested codegen interpolations stay valid.
+ * Use for slot default bodies and other fragments that already contain `${ await … }`.
+ */
+export function escapeCodegenTemplateBody(s: string): string {
+	return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`')
+}
+
+/**
+ * Escape literal text embedded in HTML double-quoted attribute values in generated markup
+ * (`attr="…"`). Prevents `"` / `&` / `<` from breaking attributes or the surrounding template.
+ */
+export function escapeHtmlAttributeLiteral(s: string): string {
+	return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
 /** Escape HTML special characters for safe output (runtime helper semantics). */
 export function escapeHtml(s: unknown): string {
 	if (s == null) return ''

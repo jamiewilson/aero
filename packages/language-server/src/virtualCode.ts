@@ -343,7 +343,12 @@ export class AeroVirtualCode implements VirtualCode {
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
-			...this.extractInterpolationVirtualCodes(sourceText, buildBindingNames, buildTypeDeclTexts),
+			...this.extractInterpolationVirtualCodes(
+				sourceText,
+				buildBindingNames,
+				buildTypeDeclTexts,
+				buildScriptBodies
+			),
 			{
 				id: 'ambient',
 				languageId: 'typescriptdeclaration',
@@ -357,7 +362,8 @@ export class AeroVirtualCode implements VirtualCode {
 	private extractInterpolationVirtualCodes(
 		sourceText: string,
 		buildBindingNames: ReadonlySet<string>,
-		buildTypeDeclTexts: readonly string[]
+		buildTypeDeclTexts: readonly string[],
+		buildScriptBodies: readonly string[]
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const out: VirtualCode[] = []
@@ -375,7 +381,7 @@ export class AeroVirtualCode implements VirtualCode {
 				? new Set([...buildBindingNames, ...forBindings])
 				: buildBindingNames
 
-			const binderDecl = formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts)
+			const binderDecl = formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts, buildScriptBodies)
 			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + 1 // +1 for `[`
 			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + '[' + expression + ']'
 

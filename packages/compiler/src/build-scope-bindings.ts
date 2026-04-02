@@ -4,6 +4,7 @@
  * @remarks {@link iterateBuildScriptBindings} is the single implementation; consumers derive names or full ranges from it.
  */
 import { analyzeBuildScriptForEditor, extractBuildScriptTypeDeclarationTexts } from './build-script-analysis'
+import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
 
 function maskJsComments(text: string): string {
 	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
@@ -147,13 +148,21 @@ export function collectBindingsFromBuildScriptContent(content: string, into: Set
 
 /**
  * Renders ambient declarations so each name is a legal value reference in template expr TS.
+ * When `bindingTypes` has an entry, uses that type string; otherwise `any`.
  */
-export function formatBuildBindingAmbientBlock(names: ReadonlySet<string>): string {
+export function formatBuildBindingAmbientBlock(
+	names: ReadonlySet<string>,
+	bindingTypes?: ReadonlyMap<string, string>
+): string {
 	if (names.size === 0) return ''
 	return [...names]
 		.filter(n => n.length > 0)
 		.sort()
-		.map(n => `declare const ${n}: any;`)
+		.map(n => {
+			const t = bindingTypes?.get(n)
+			const typeStr = t !== undefined && t.trim().length > 0 ? t : 'any'
+			return `declare const ${n}: ${typeStr};`
+		})
 		.join('\n') + '\n'
 }
 
@@ -170,14 +179,20 @@ export function collectBuildScriptTypeDeclarationTexts(buildScriptBodies: Iterab
 
 /**
  * Ambient prelude for template expression checking: optional type declarations from the build
- * script(s), then `declare const` for each binding name (unchanged behavior).
+ * script(s), then `declare const` per binding. When `buildScriptBodiesForInference` is set,
+ * TypeScript checker types are used instead of `any` where resolution succeeds (same-file only).
  */
 export function formatBuildScopeAmbientPrelude(
 	names: ReadonlySet<string>,
-	typeDeclarationSources: readonly string[]
+	typeDeclarationSources: readonly string[],
+	buildScriptBodiesForInference?: readonly string[]
 ): string {
 	const typeBlock = typeDeclarationSources.map(s => s.trim()).filter(Boolean).join('\n\n')
-	const bindingBlock = formatBuildBindingAmbientBlock(names)
+	const bindingTypes =
+		buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
+			? collectBindingTypeStringsFromBuildScripts(buildScriptBodiesForInference)
+			: undefined
+	const bindingBlock = formatBuildBindingAmbientBlock(names, bindingTypes)
 	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
 	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
 	return bindingBlock
