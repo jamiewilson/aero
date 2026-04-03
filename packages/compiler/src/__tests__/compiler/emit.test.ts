@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import type { IRNode } from '../../ir'
-import { emitToJS, emitBodyAndStyle } from '../../emit'
+import { emitToJS, emitBodyAndStyle, emitStyleBlock } from '../../emit'
 import * as Helper from '../../helpers'
 
 describe('emitToJS', () => {
@@ -118,6 +118,18 @@ describe('emitToJS', () => {
 		const ir: IRNode[] = [{ kind: 'Append', content: 'x', outVar: '__html' }]
 		const out = emitToJS(ir, '__html')
 		expect(out).toContain('__html += `x`;')
+	})
+})
+
+describe('emitStyleBlock', () => {
+	it('declares var, emits IR, then styles?.add', () => {
+		const style: IRNode[] = [{ kind: 'Append', content: ':root{}' }]
+		const code = emitStyleBlock(style, '__style_test')
+		expect(code).toBe(
+			"let __style_test = '';\n" +
+				"__style_test += `:root{}`;\n" +
+				'styles?.add(__style_test);\n'
+		)
 	})
 })
 

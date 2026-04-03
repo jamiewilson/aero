@@ -10,6 +10,7 @@
  */
 
 import type { ParseResult, CompileOptions } from './types'
+import { CodeBuilder } from './code-builder'
 import * as Helper from './helpers'
 import { stripBuildScriptTypes } from './build-script-analysis'
 import { parse } from './parser'
@@ -45,7 +46,10 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const hasVirtualClientScripts =
 		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
 	if (hasVirtualClientScripts) {
-		script = `function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n` + script
+		script = new CodeBuilder()
+			.raw(`function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n`)
+			.raw(script)
+			.toString()
 	}
 	if (options.clientScripts && options.clientScripts.length > 0) {
 		for (const clientScript of options.clientScripts) {
@@ -98,7 +102,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		headScriptsLines: headScripts,
 	})
 
-	return ta.importsCode + '\n' + renderFn
+	return new CodeBuilder().raw(ta.importsCode).raw('\n').raw(renderFn).toString()
 }
 
 /**

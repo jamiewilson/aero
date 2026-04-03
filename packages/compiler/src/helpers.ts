@@ -4,7 +4,8 @@
 
 import { tokenizeCurlyInterpolation, compileInterpolationFromSegments } from './tokenizer'
 import { CompileError, type CompileErrorOptions } from './types'
-import { escapeCodegenTemplateBody, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
+import { CodeBuilder } from './code-builder'
+import { escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
 
 export {
 	escapeCodegenTemplateBody,
@@ -181,6 +182,36 @@ import type { EmitRenderFunctionOptions } from './types'
  */
 export type { EmitRenderFunctionOptions as RenderFunctionOptions }
 
+/** `styles?.add(…)` / `scripts?.add(…)` lines joined with `\\n\\t\\t` (render function body slot). */
+function joinRenderFnRootAdds(kind: 'styles' | 'scripts', items: string[]): string {
+	const b = new CodeBuilder()
+	for (let i = 0; i < items.length; i++) {
+		if (i > 0) b.raw('\n\t\t')
+		b.raw(`${kind}?.add(${JSON.stringify(items[i])});`)
+	}
+	return b.toString()
+}
+
+/** `headScripts?.add(expr)` lines joined with `\\n\\t\\t`. */
+function joinRenderFnHeadScripts(lines: string[]): string {
+	const b = new CodeBuilder()
+	for (let i = 0; i < lines.length; i++) {
+		if (i > 0) b.raw('\n\t\t')
+		b.raw(`headScripts?.add(${lines[i]});`)
+	}
+	return b.toString()
+}
+
+/** `rootScriptsLines` joined with `\\n\\t\\t`. */
+function joinRenderFnRootScriptLines(lines: string[]): string {
+	const b = new CodeBuilder()
+	for (let i = 0; i < lines.length; i++) {
+		if (i > 0) b.raw('\n\t\t')
+		b.raw(lines[i]!)
+	}
+	return b.toString()
+}
+
 /**
  * Emit the default async render function for Aero.
  */
@@ -199,35 +230,43 @@ export function emitRenderFunction(
 	} = options
 
 	const stylesCode =
-		rootStyles && rootStyles.length > 0
-			? rootStyles.map(s => `styles?.add(${JSON.stringify(s)});`).join('\n\t\t')
-			: ''
+		rootStyles && rootStyles.length > 0 ? joinRenderFnRootAdds('styles', rootStyles) : ''
 
 	const scriptsCode =
-		rootScripts && rootScripts.length > 0
-			? rootScripts.map(s => `scripts?.add(${JSON.stringify(s)});`).join('\n\t\t')
-			: ''
+		rootScripts && rootScripts.length > 0 ? joinRenderFnRootAdds('scripts', rootScripts) : ''
 
-	const rootScriptsBlock = rootScriptsLines.length > 0 ? rootScriptsLines.join('\n\t\t') : ''
+	const rootScriptsBlock =
+		rootScriptsLines.length > 0 ? joinRenderFnRootScriptLines(rootScriptsLines) : ''
+
 	const headScriptsBlock =
-		headScriptsLines.length > 0
-			? headScriptsLines.map(s => `headScripts?.add(${s});`).join('\n\t\t')
-			: ''
+		headScriptsLines.length > 0 ? joinRenderFnHeadScripts(headScriptsLines) : ''
 
-	const renderFn = `export default async function(Aero) {
-		const { ${getRenderContextDestructurePattern()} } = Aero;
-		${script}
-		${styleCode}
-		${stylesCode}
-		${scriptsCode}
-		${rootScriptsBlock}
-		${headScriptsBlock}
-		let __out = '';
-		${body}return __out;
-	}`
+	const renderFn = new CodeBuilder()
+		.raw('export default async function(Aero) {\n')
+		.raw('\t\tconst { ')
+		.raw(getRenderContextDestructurePattern())
+		.raw(' } = Aero;\n')
+		.raw('\t\t')
+		.raw(script)
+		.raw('\n\t\t')
+		.raw(styleCode)
+		.raw('\n\t\t')
+		.raw(stylesCode)
+		.raw('\n\t\t')
+		.raw(scriptsCode)
+		.raw('\n\t\t')
+		.raw(rootScriptsBlock)
+		.raw('\n\t\t')
+		.raw(headScriptsBlock)
+		.raw('\n\t\tlet __out = \'\';')
+		.raw('\n\t\t')
+		.raw(body)
+		.raw('return __out;\n')
+		.raw('\t}')
+		.toString()
 
 	if (getStaticPathsFn) {
-		return `${getStaticPathsFn}\n\n${renderFn}`.trim()
+		return new CodeBuilder().raw(getStaticPathsFn).raw('\n\n').raw(renderFn).toString().trim()
 	}
 
 	return renderFn.trim()
@@ -250,37 +289,48 @@ export function getRenderContextDestructurePattern(): string {
 
 /** Emit `let varName = '';` for a slot accumulator. */
 export function emitSlotVar(varName: string): string {
-	return `let ${varName} = '';\n`
+	return new CodeBuilder().stmtSlotVar(varName).toString()
 }
 
 /** Emit `outVar += \`content\`;` (default `outVar` is `__out`). */
 export function emitAppend(content: string, outVar = '__out'): string {
-	return `${outVar} += \`${content}\`;\n`
+	return new CodeBuilder().stmtAppendOut(content, outVar).toString()
 }
 
 /** Emit `if (condition) {`. */
 export function emitIf(condition: string): string {
-	return `if (${condition}) {\n`
+	return new CodeBuilder().stmtIf(condition).toString()
 }
 
 /** Emit `} else if (condition) {`. */
 export function emitElseIf(condition: string): string {
-	return `} else if (${condition}) {\n`
+	return new CodeBuilder().stmtElseIf(condition).toString()
 }
 
 /** Emit `} else {`. */
 export function emitElse(): string {
-	return `} else {\n`
+	return new CodeBuilder().stmtElse().toString()
 }
 
 /** Emit `}`. */
 export function emitEnd(): string {
-	return `}\n`
+	return new CodeBuilder().stmtEnd().toString()
 }
 
 /** Emit `outVar += slots[…] ?? \`defaultContent\`;` (default `outVar` is `__out`). */
 export function emitSlotOutput(name: string, defaultContent: string, outVar = '__out'): string {
-	const key = JSON.stringify(name)
-	const body = escapeCodegenTemplateBody(defaultContent)
-	return `${outVar} += slots[${key}] ?? \`${body}\`;\n`
+	return new CodeBuilder().stmtSlotOutput(name, defaultContent, outVar).toString()
+}
+
+/** Emit `outVar += await Aero.renderComponent(…);` with the given slots object expression. */
+export function emitRenderComponentStatement(
+	targetVar: string,
+	baseName: string,
+	propsString: string,
+	slotsObjectExpr: string,
+	contextArg: string
+): string {
+	return new CodeBuilder()
+		.stmtRenderComponent(targetVar, baseName, propsString, slotsObjectExpr, contextArg)
+		.toString()
 }
