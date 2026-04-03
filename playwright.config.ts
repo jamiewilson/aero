@@ -11,7 +11,7 @@ const projects = crossBrowser
 	: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
 
 export default defineConfig({
-	testDir: './e2e',
+	testDir: './tests/e2e',
 	testMatch: '**/*.spec.ts',
 	timeout: 90_000,
 	expect: {
@@ -21,8 +21,17 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
-	reporter: [['list'], ['html', { open: 'never' }]],
-	outputDir: 'test-results/playwright',
+	reporter: [
+		['list'],
+		[
+			'html',
+			{
+				open: 'never',
+				outputFolder: 'tests/output/report',
+			},
+		],
+	],
+	outputDir: 'tests/output/results',
 	use: {
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',

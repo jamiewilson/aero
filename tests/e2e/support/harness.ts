@@ -2,9 +2,8 @@ import { spawn } from 'node:child_process'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 
-const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
+const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..')
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 

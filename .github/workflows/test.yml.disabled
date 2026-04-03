@@ -70,7 +70,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright
-        run: pnpm e2e:ci
+        run: pnpm test:e2e:ci
 
       - name: Upload Playwright report
         if: always()
@@ -78,8 +78,8 @@ jobs:
         with:
           name: playwright-report-chromium
           path: |
-            playwright-report
-            test-results
+            tests/output/report
+            tests/output/results
           if-no-files-found: ignore
 
   e2e-cross-browser:
@@ -115,7 +115,7 @@ jobs:
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run Playwright for ${{ matrix.browser }}
-        run: pnpm exec playwright test --project=${{ matrix.browser }}
+        run: pnpm test:e2e:ci -- --project=${{ matrix.browser }}
 
       - name: Upload Playwright report
         if: always()
@@ -123,6 +123,6 @@ jobs:
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |
-            playwright-report
-            test-results
+            tests/output/report
+            tests/output/results
           if-no-files-found: ignore

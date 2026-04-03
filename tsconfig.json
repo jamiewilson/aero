@@ -10,5 +10,5 @@
 		"allowSyntheticDefaultImports": true,
 		"skipLibCheck": true
 	},
-	"include": ["playwright.config.ts", "e2e/**/*.ts"]
+	"include": ["playwright.config.ts", "tests/e2e/**/*.ts"]
 }

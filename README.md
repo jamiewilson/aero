@@ -436,10 +436,13 @@ Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
 
 Repo testing commands:
 
-- `pnpm e2e` — Install the local Playwright Chromium bundle if needed, then run the E2E suite.
-- `pnpm e2e:headed` — Same local bootstrap, with headed Playwright.
-- `pnpm e2e:debug` — Same local bootstrap, with Playwright debug mode.
-- `pnpm e2e:ci` — Run Playwright without installing browsers first; intended for CI environments that pre-provision the cache.
+- `pnpm test:ui` — Vitest UI (browser).
+- `pnpm test:e2e` — Install the local Playwright Chromium bundle if needed, then run the E2E suite.
+- `pnpm test:e2e:headed` — Same local bootstrap, with headed Playwright.
+- `pnpm test:e2e:debug` — Same local bootstrap, with Playwright debug mode.
+- `pnpm test:e2e:install` — Install Chromium for Playwright only (no test run).
+- `pnpm test:e2e:ci` — Run Playwright without installing browsers first; intended for CI environments that pre-provision the cache.
+- `pnpm test:all` — Typecheck, Vitest, then Playwright (`test:e2e:ci`).
 
 ## Build output
 
