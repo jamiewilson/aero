@@ -54,7 +54,7 @@ For the full canonical list of product goals, web-platform stance, toolchain com
 
 - **Single-file components** — HTML + optional `<script is:build>`, `<script>`, `<style>`.
 - **Props** — Attributes or `props`; read via `Aero.props`. [props.md](props.md)
-- **Conditionals and loops** — `if` / `else-if` / `else`, `for` / `data-for` with `{ }` expressions.
+- **Conditionals and loops** — `if` / `else-if` / `else`, `for` / `data-for` with `{ }` expressions. Use `<template>` for **wrapperless** branches (children only in the output); see [html-template-element.md](html-template-element.md).
 - **Scoped styling** — Native CSS (e.g. `@scope`) in `<style>` blocks.
 
 ### Scripts and data
