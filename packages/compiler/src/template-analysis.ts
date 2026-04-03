@@ -5,16 +5,16 @@
  * Single ownership of resolver → build script → DOM → IR for the compile pipeline; feeds `compile()` in codegen.
  */
 
+import { CodeBuilder } from './code-builder'
 import type { ParseResult, CompileOptions } from './types'
 import type { IRNode } from './ir'
 import type { TemplateEditorAmbient } from './template-editor-context'
 import { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
-import { emitBodyAndStyle } from './emit'
+import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { expandSelfClosingTags } from './parser'
 import { parseHTML } from 'linkedom'
 import { Resolver } from './resolver'
 import { Lowerer } from './lowerer/lowerer'
-import { emitToJS } from './emit'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 
 /**
@@ -67,7 +67,12 @@ export function buildTemplateAnalysis(
 			importsLines.push(`const ${imp.namespaceBinding} = ${modExpr}`)
 		}
 	}
-	const importsCode = importsLines.join('\n')
+	const importsBuilder = new CodeBuilder()
+	for (let i = 0; i < importsLines.length; i++) {
+		if (i > 0) importsBuilder.raw('\n')
+		importsBuilder.raw(importsLines[i]!)
+	}
+	const importsCode = importsBuilder.toString()
 
 	const expandedTemplate = expandSelfClosingTags(parsed.template)
 
@@ -89,9 +94,7 @@ export function buildTemplateAnalysis(
 			if (node.nodeType === 1 && (node as { tagName?: string }).tagName === 'STYLE') {
 				const styleVar = nextStyleVar()
 				const styleIR = lowerer.compileNode(node, false, styleVar)
-				styleCode += `let ${styleVar} = '';\n`
-				styleCode += emitToJS(styleIR, styleVar)
-				styleCode += `styles?.add(${styleVar});\n`
+				styleCode += emitStyleBlock(styleIR, styleVar)
 				;(node as { remove: () => void }).remove()
 			}
 		}
