@@ -13,5 +13,10 @@ build
 .output
 .env
 .env.local
+
+# Playwright defaults
 playwright-report
 test-results
+# custom output location
+tests/output
+
