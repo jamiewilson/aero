@@ -12,6 +12,7 @@ export type IRNode =
 	| IRAppend
 	| IRFor
 	| IRIf
+	| IRSwitch
 	| IRSlot
 	| IRSlotVar
 	| IRComponent
@@ -42,6 +43,21 @@ export interface IRIf {
 	body: IRNode[]
 	elseIf?: { condition: string; body: IRNode[] }[]
 	else?: IRNode[]
+}
+
+/** One `case` branch: strict equality against any of `comparandExprs` (JS expression sources). */
+export interface IRSwitchCase {
+	comparandExprs: string[]
+	body: IRNode[]
+}
+
+/** Switch: first matching `case` wins; optional `default` body. */
+export interface IRSwitch {
+	kind: 'Switch'
+	/** Discriminant expression (already-validated JS from `switch="{ … }"`). */
+	expression: string
+	cases: IRSwitchCase[]
+	defaultBody?: IRNode[]
 }
 
 /** Output slot with default content (slots['name'] ?? defaultContent). */

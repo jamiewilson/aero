@@ -286,6 +286,20 @@ Use `if`, `else-if`, and `else`:
 <p else>Not logged in.</p>
 ```
 
+### Switch (`switch` / `case` / `default`)
+
+For matching one value against several alternatives, use a **`switch`** container and **`case`** branches (optional **`default`** last):
+
+```html
+<div switch="{ status }">
+	<p case="loading">Loading…</p>
+	<p case="ready">Ready</p>
+	<p default>Other</p>
+</div>
+```
+
+Wrapperless **`<template switch>`** emits only the matching branch’s children. Details: **[HTML `<template>`](html-template-element.md)**.
+
 ### Optional: wrapperless groups with `<template>`
 
 On a **normal element**, the tag is part of the output: `<div if="{ x }">` yields a `<div>` when the branch runs. When you need **only the inner markup** (several siblings, table rows, or no extra wrapper inside a layout), put the directive on **`<template>`**. Aero then emits **only the children**, not a `<template>` node — otherwise the browser would treat the subtree as **inert**.

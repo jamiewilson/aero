@@ -249,6 +249,97 @@ describe('Codegen', () => {
 		expect(output).not.toMatch(/<template[\s>]/i)
 	})
 
+	it('should compile switch on a div (preserved wrapper, case/default)', async () => {
+		const html = `<script is:build>
+										const state = 'ready';
+									</script>
+									<div>
+										<section class="panel" switch="{ state }">
+											<p case="loading">Loading</p>
+											<p case="ready">Ready</p>
+											<p default>Other</p>
+										</section>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<section class="panel">')
+		expect(output).toContain('<p>Ready</p>')
+		expect(output).not.toContain('Loading')
+		expect(output).not.toContain('Other')
+		expect(output).not.toContain('switch')
+		expect(output).not.toContain('case=')
+	})
+
+	it('should compile wrapperless template switch', async () => {
+		const html = `<script is:build>
+										const tab = 'settings';
+									</script>
+									<div>
+										<template switch="{ tab }">
+											<section case="overview">Overview</section>
+											<section case="settings">Settings</section>
+											<section default>Fallback</section>
+										</template>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Settings')
+		expect(output).not.toContain('Overview')
+		expect(output).not.toContain('Fallback')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should compile grouped case values', async () => {
+		const html = `<script is:build>
+										const status = 'queued';
+									</script>
+									<div>
+										<div switch="{ status }">
+											<span case="{ ['active', 'queued'] }">Visible</span>
+											<span case="archived">Archived</span>
+											<span default>Unknown</span>
+										</div>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('Visible')
+		expect(output).not.toContain('Archived')
+		expect(output).not.toContain('Unknown')
+	})
+
+	it('should compile switch inside component default slot', async () => {
+		const html = `<script is:build>
+										const mode = 'b';
+										const shell = { name: 'shell' };
+									</script>
+									<shell-component>
+										<div switch="{ mode }">
+											<span case="a">A</span>
+											<span case="b">B</span>
+										</div>
+									</shell-component>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const Aero = {
+			renderComponent: async (_c: any, _p: any, slots: any) => slots.default ?? '',
+		}
+
+		const output = await execute(code, Aero)
+		expect(output).toContain('B')
+		expect(output).not.toContain('A')
+	})
+
 	it('should throw when for value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];

@@ -58,7 +58,17 @@ export type {
 export { CompileError } from './types'
 
 // IR
-export type { IRNode, IRAppend, IRFor, IRIf, IRSlot, IRSlotVar, IRComponent } from './ir'
+export type {
+	IRNode,
+	IRAppend,
+	IRFor,
+	IRIf,
+	IRSwitch,
+	IRSwitchCase,
+	IRSlot,
+	IRSlotVar,
+	IRComponent,
+} from './ir'
 
 // Helpers (for advanced use cases)
 export * from './helpers'

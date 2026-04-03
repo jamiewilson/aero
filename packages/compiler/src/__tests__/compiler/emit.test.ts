@@ -64,6 +64,31 @@ describe('emitToJS', () => {
 		expect(out).toContain('__out += `other`;')
 	})
 
+	it('emits Switch as if / else if / else', () => {
+		const ir: IRNode[] = [
+			{
+				kind: 'Switch',
+				expression: 'status',
+				cases: [
+					{
+						comparandExprs: [JSON.stringify('a')],
+						body: [{ kind: 'Append', content: '<p>A</p>' }],
+					},
+					{
+						comparandExprs: [JSON.stringify('b'), JSON.stringify('c')],
+						body: [{ kind: 'Append', content: '<p>BC</p>' }],
+					},
+				],
+				defaultBody: [{ kind: 'Append', content: '<p>d</p>' }],
+			},
+		]
+		const out = emitToJS(ir)
+		expect(out).toContain('if ((status) === ("a")) {')
+		expect(out).toContain('} else if ((status) === ("b") || (status) === ("c")) {')
+		expect(out).toContain('} else {')
+		expect(out).toContain('__out += `<p>d</p>`;')
+	})
+
 	it('emits Slot node', () => {
 		const ir: IRNode[] = [{ kind: 'Slot', name: 'default', defaultContent: 'fallback' }]
 		const out = emitToJS(ir)

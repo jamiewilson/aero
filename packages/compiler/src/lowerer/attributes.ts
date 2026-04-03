@@ -56,6 +56,9 @@ export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedCo
 			if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
+			if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) continue
+			if (Helper.isAttr(attr.name, CONST.ATTR_CASE, CONST.ATTR_PREFIX)) continue
+			if (Helper.isAttr(attr.name, CONST.ATTR_DEFAULT, CONST.ATTR_PREFIX)) continue
 
 			if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
 				const value = attr.value?.trim() || ''
@@ -106,6 +109,7 @@ export function parseElementAttributes(
 ): ParsedElementAttrs {
 	const attributes: string[] = []
 	let loopData: { binding: string; items: string } | null = null
+	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
 
 	if (node.attributes) {
@@ -156,6 +160,24 @@ export function parseElementAttributes(
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
 			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
 
+			if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
+				const tagName = node?.tagName?.toLowerCase?.() || 'element'
+				const needle = `${attr.name}="${attr.value ?? ''}"`
+				switchExpr = Helper.stripBraces(
+					Helper.validateSingleBracedExpression(attr.value || '', {
+						directive: attr.name,
+						tagName,
+						diagnosticSource: diag?.source,
+						diagnosticFile: diag?.file,
+						positionNeedle: diag ? needle : undefined,
+					})
+				)
+				continue
+			}
+
+			if (Helper.isAttr(attr.name, CONST.ATTR_CASE, CONST.ATTR_PREFIX)) continue
+			if (Helper.isAttr(attr.name, CONST.ATTR_DEFAULT, CONST.ATTR_PREFIX)) continue
+
 			if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
 				const value = attr.value?.trim() || ''
 				passDataExpr = value
@@ -184,5 +206,5 @@ export function parseElementAttributes(
 	}
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
-	return { attrString, loopData, passDataExpr }
+	return { attrString, loopData, switchExpr, passDataExpr }
 }

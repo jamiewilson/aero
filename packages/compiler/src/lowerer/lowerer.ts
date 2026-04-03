@@ -1,5 +1,5 @@
 /**
- * Walks linkedom DOM and lowers to IR (elements, components, slots, for, if/else chains).
+ * Walks linkedom DOM and lowers to IR (elements, components, slots, for, if/else chains, switch).
  *
  * @remarks
  * **`<template>`:** A plain `<template>` in source is still lowered through {@link compileElement},
@@ -13,8 +13,20 @@ import type { IRNode } from '../ir'
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
+import { CompileError } from '../types'
 import { parseElementAttributes, parseComponentAttributes } from './attributes'
-import { compileConditionalChain, hasIfAttr } from './conditionals'
+import {
+	compileConditionalChain,
+	hasElseAttr,
+	hasElseIfAttr,
+	hasIfAttr,
+} from './conditionals'
+import {
+	compileSwitchContainer,
+	hasCaseAttr,
+	hasDefaultAttr,
+	parentIsSwitchContainer,
+} from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 import {
 	compileSlot,
@@ -154,13 +166,38 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, passDataExpr } = parseElementAttributes(
+		const { attrString, loopData, switchExpr, passDataExpr } = parseElementAttributes(
 			this.resolver,
 			this.diag,
 			node
 		)
 		const childSkip =
 			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
+
+		if (loopData && switchExpr) {
+			throw new CompileError({
+				message: 'Cannot combine `switch` with `for` / `data-for` on the same element.',
+				file: this.diag?.file,
+			})
+		}
+
+		if (
+			switchExpr &&
+			(hasIfAttr(node) || hasElseIfAttr(node) || hasElseAttr(node))
+		) {
+			throw new CompileError({
+				message: 'Cannot combine `switch` with `if` / `else-if` / `else` on the same element.',
+				file: this.diag?.file,
+			})
+		}
+
+		if ((hasCaseAttr(node) || hasDefaultAttr(node)) && !parentIsSwitchContainer(node)) {
+			throw new CompileError({
+				message:
+					'`case` and `default` must be direct children of an element with `switch` / `data-switch`.',
+				file: this.diag?.file,
+			})
+		}
 
 		// Wrapperless `<template data-for>` / `<template for>`: body is template contents only.
 		if (loopData && isTemplateElement(node)) {
@@ -173,6 +210,27 @@ export class Lowerer {
 					body: inner,
 				},
 			]
+		}
+
+		if (switchExpr && isTemplateElement(node)) {
+			const sw = compileSwitchContainer(
+				{
+					compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+				},
+				this.diag,
+				node,
+				switchExpr,
+				childSkip,
+				outVar
+			)
+			return [sw]
+		}
+
+		if (switchExpr && CONST.VOID_TAGS.has(tagName)) {
+			throw new CompileError({
+				message: '`switch` cannot be used on a void element (no room for `case` / `default` children).',
+				file: this.diag?.file,
+			})
 		}
 
 		const inner: IRNode[] = []
@@ -202,7 +260,23 @@ export class Lowerer {
 				inner.push({ kind: 'StylePassData', passDataExpr, outVar })
 			}
 
-			inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar))
+			if (switchExpr) {
+				inner.push(
+					compileSwitchContainer(
+						{
+							compileBranchBody: (n, skip, o) =>
+								this.compileWrapperAwareBranch(n, skip, o),
+						},
+						this.diag,
+						node,
+						switchExpr,
+						childSkip,
+						outVar
+					)
+				)
+			} else {
+				inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar))
+			}
 
 			if (closeBlock) {
 				inner.push({ kind: 'Append', content: '\\n}\\n', outVar })

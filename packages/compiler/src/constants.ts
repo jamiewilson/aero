@@ -17,6 +17,12 @@ export const ATTR_FOR = 'for'
 export const ATTR_IF = 'if'
 export const ATTR_ELSE_IF = 'else-if'
 export const ATTR_ELSE = 'else'
+/** Structural switch container: `switch` / `data-switch`. */
+export const ATTR_SWITCH = 'switch'
+/** Switch branch: `case` / `data-case`. */
+export const ATTR_CASE = 'case'
+/** Switch fallback: `default` / `data-default`. */
+export const ATTR_DEFAULT = 'default'
 /** Slot name (on `<slot>` or content). */
 export const ATTR_NAME = 'name'
 export const ATTR_SLOT = 'slot'
