@@ -63,8 +63,8 @@ aero/
 
 ## packages/vscode
 
-- **Purpose:** VS Code extension for Aero (e.g. syntax highlighting for Aero expressions).
-- **Contents:** `package.json`, `syntaxes/aero-expressions.json`, README. Separate from the core framework; not required for build or dev.
+- **Purpose:** [VS Code / Cursor extension](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode) for Aero templates: TextMate grammars, **Volar** language service (completions, diagnostics, go-to-definition), stable **`AeroDiagnosticCode`** values with doc links, palette command **Aero: Run check**, and settings such as **`aero.scopeMode`** and **`aero.diagnostics.regexUndefinedVariables`**.
+- **Contents:** `package.json`, `syntaxes/`, `src/`, README. Separate from the core framework; not required for build or dev. User-facing details: [packages/vscode/README.md](../packages/vscode/README.md).
 
 ## packages/create (@aero-js/create)
 

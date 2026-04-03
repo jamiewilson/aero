@@ -110,16 +110,18 @@ aero.mount({
 
 ## File structure
 
+Template compilation lives in **`@aero-js/compiler`**; this package integrates it via the Vite plugin and runtime.
+
 ```
 src/
-  compiler/     # parser.ts, codegen.ts, ir.ts, emit.ts, resolver.ts, helpers.ts, constants.ts
-  runtime/      # index.ts (Aero), instance.ts, client.ts
-  vite/         # index.ts (plugin), build.ts, defaults.ts
-  utils/        # aliases.ts, routing.ts
-  types.ts
-  index.ts      # client entry (aero + mount)
+  vite/         # aero() plugin, static build, build manifest, SSR helpers
+  runtime/      # Aero class, instance, client entry helpers
+  utils/        # aliases, routing
+  codegen/      # aero-target helpers (not a second compiler pipeline)
+  compile-check-api.ts   # re-exports for aero check
+  types.ts, entry-*.ts, ambient.d.ts, diagnostics.ts, index.ts
 ```
 
 ## Tests
 
-Vitest in `packages/core`: `compiler/__tests__/`, `runtime/__tests__/`, `vite/__tests__/`. Run from repo root: `pnpm test`.
+Vitest: `src/runtime/__tests__/`, `src/utils/__tests__/`, `src/vite/__tests__/`, `src/codegen/__tests__/`. Run from repo root: `pnpm test` (see workspace scripts for package-scoped runs).

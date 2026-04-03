@@ -23,6 +23,7 @@ Run from an app project root that has `@aero-js/cli` installed, or set `--root`:
 
 ```bash
 pnpm exec aero check
+pnpm exec aero check --types
 pnpm exec aero check --root /path/to/project
 pnpm exec aero doctor
 pnpm exec aero doctor --root /path/to/project
@@ -84,6 +85,19 @@ For each file, `compileTemplate(source, { root, resolvePath, importer })` runs. 
 
 This checks parse and codegen, including build-script analysis, but does not execute SSR, Nitro, or a full Vite build.
 
+### TypeScript checking (`--types`)
+
+Pass **`--types`** to run a **TypeScript check** after compilation succeeds for each template:
+
+- **Build scripts** — `<script is:build>` (and related build-script surfaces) using the same merged model as the language server / Volar virtual files.
+- **`{ }` interpolations** — Expression sites in the template are checked with **`interpolations: true`**, aligned with editor diagnostics.
+
+Resolution uses the **workspace `tsconfig.json`** (via `loadProjectTsConfig`), including path aliases and compiler options such as `strict`.
+
+The CLI also writes **`.aero/cache/types/components.d.ts`** (component registry for typed imports) when `--types` is enabled, so cross-file component references can resolve during the check.
+
+Relationship to the default check: **`aero check` without `--types`** still validates config, content, and compile-only diagnostics. **`--types`** adds TS errors as `AERO_BUILD_SCRIPT` or `AERO_COMPILE` diagnostics with spans when the compiler reports line/column information.
+
 ## `aero doctor`
 
 `aero doctor` prints a short checklist for `--root` or the current working directory:
@@ -123,7 +137,7 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 | Surface               | Description                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Binary `aero`         | Entry: `packages/cli/dist/index.mjs` with a Node shebang.                                                               |
-| `runAeroCheck(root)`  | Implemented in `packages/cli/src/check.ts`. Consumed by the CLI binary and not currently exported as a package subpath. |
+| `runAeroCheck(root, options?)` | Implemented in `packages/cli/src/check.ts`. `options.types` enables the same TypeScript pass as **`aero check --types`**. Not exported as a package subpath. |
 | `runAeroDoctor(root)` | Implemented in `packages/cli/src/doctor.ts`; returns `0` or `1`.                                                        |
 
 ### `@aero-js/config`
@@ -160,6 +174,13 @@ Use `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`, `AeroDiagnostic`, a
 ```yaml
 - run: pnpm install
 - run: pnpm exec aero check
+```
+
+Add TypeScript validation in CI:
+
+```yaml
+- run: pnpm install
+- run: pnpm exec aero check --types
 ```
 
 Use `--root` when the job’s working directory is not the app root.

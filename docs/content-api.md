@@ -94,3 +94,5 @@ The route dynamically picks up the data and surfaces it via `Aero.props` immedia
 	const { html } = await render(doc)
 </script>
 ```
+
+In development, edits to Markdown or collection config **invalidate** the `aero:content` virtual module so Vite can hot-update importers without always forcing a full page reload.

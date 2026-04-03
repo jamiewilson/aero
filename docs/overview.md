@@ -72,8 +72,9 @@ For the full canonical list of product goals, web-platform stance, toolchain com
 ### Assets and tooling
 
 - **Image optimization** — Optional pipeline during build. [image-optimization.md](image-optimization.md)
-- **VS Code extension** — Syntax and diagnostics (packages/vscode).
-- **TypeScript** — Scripts and content; path aliases from tsconfig.
+- **VS Code extension** — Syntax highlighting, Volar-backed IntelliSense and diagnostics for Aero HTML, palette commands, and settings such as scope mode. See the extension README: [packages/vscode/README.md](../packages/vscode/README.md).
+- **TypeScript** — Scripts and content; path aliases from tsconfig. [typescript-guide.md](typescript-guide.md); CI: [aero-cli-and-check.md](aero-cli-and-check.md) (`aero check --types`).
+- **Incremental static build** — Optional faster repeat `vite build` via `AERO_INCREMENTAL` and `.aero/cache/`. [build-performance.md](build-performance.md)
 
 ### Server and client libraries
 

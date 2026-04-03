@@ -316,6 +316,8 @@ For custom directory layouts (e.g. `frontend/` instead of `client/`), define pat
 | `pnpm build`   | Build for production to `dist/` |
 | `pnpm preview` | Preview the built site          |
 
+For **faster repeat production builds**, you can enable [incremental static prerender](build-performance.md) with `AERO_INCREMENTAL=1` (optional; see that doc for limits with dynamic routes). For **CI type-checking** of build scripts and `{ }` expressions, use `pnpm exec aero check --types` — see [Aero CLI (`aero check`) and tooling APIs](aero-cli-and-check.md).
+
 ---
 
 ## Next Steps
@@ -329,3 +331,4 @@ Now that you have the basics, explore the reference docs:
 - **[Nitro](nitro-overview.md)** — API routes and server-side features
 - **[HTMX & Alpine](htmx-and-alpine.md)** — Client interactivity
 - **[Configuration](../README.md#configuration)** — Vite plugin options, `aero.config.ts`
+- **[Incremental static build](build-performance.md)** — Optional `AERO_INCREMENTAL` and build manifest cache
