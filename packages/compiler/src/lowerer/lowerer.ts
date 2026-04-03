@@ -3,10 +3,10 @@
  *
  * @remarks
  * **`<template>`:** A plain `<template>` in source is still lowered through {@link compileElement},
- * which emits `<template>...</template>` and compiles inner nodes via `node.childNodes`. For
- * **wrapperless** semantics (no `<template>` in output, children from `template.content`), use
- * {@link compileWrapperlessNode} or {@link compileWrapperAwareBranch}. Conditional / switch
- * integration will call the wrapper-aware API when implemented.
+ * which emits `<template>...</template>`. **Wrapperless** cases (no `<template>` in output,
+ * children from `template.content`): `if` / `else-if` / `else` chains via
+ * {@link compileWrapperAwareBranch}; `data-for` / `for` on `<template>` via
+ * {@link compileWrapperlessNode} for the loop body.
  */
 
 import type { IRNode } from '../ir'
@@ -84,8 +84,8 @@ export class Lowerer {
 
 	/**
 	 * Compiles a branch body: {@link compileElement} for normal elements; for `<template>` only,
-	 * {@link compileWrapperlessNode} so the tag is not present in the output. Intended for
-	 * `if` / `else` / `switch` branches once wired from `conditionals` / switch lowering.
+	 * {@link compileWrapperlessNode} so the tag is not present in the output. Used by conditional
+	 * chains and intended for `switch` branches.
 	 */
 	compileWrapperAwareBranch(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		if (isTemplateElement(node)) {
@@ -108,7 +108,7 @@ export class Lowerer {
 			if (hasIfAttr(node)) {
 				const { nodes: chainNodes, consumed } = compileConditionalChain(
 					{
-						compileElement: (n, skip, o) => this.compileElement(n, skip, o),
+						compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
 					},
 					this.diag,
 					nodes,
@@ -161,6 +161,19 @@ export class Lowerer {
 		)
 		const childSkip =
 			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
+
+		// Wrapperless `<template data-for>` / `<template for>`: body is template contents only.
+		if (loopData && isTemplateElement(node)) {
+			const inner = this.compileWrapperlessNode(node, childSkip, outVar)
+			return [
+				{
+					kind: 'For',
+					binding: loopData.binding,
+					items: loopData.items,
+					body: inner,
+				},
+			]
+		}
 
 		const inner: IRNode[] = []
 
@@ -221,6 +234,78 @@ export class Lowerer {
 		return { nodes, closeBlock: !isModule }
 	}
 
+	/**
+	 * Slot content must use the same sibling-based rules as {@link compileChildNodes}, including
+	 * `if` / `else-if` / `else` chains. A plain `for` over `compileNode` would miss those chains
+	 * (e.g. wrapperless `<template if>` inside `<base-layout>`).
+	 */
+	private compileSlotChildList(
+		children: any[],
+		skipInterpolation: boolean,
+		outVar: string
+	): IRNode[] {
+		const slotIR: IRNode[] = []
+		let i = 0
+		while (i < children.length) {
+			const child = children[i]
+			if (child.nodeType === 1) {
+				const childTagName = child.tagName?.toLowerCase()
+				if (
+					childTagName === CONST.TAG_SLOT &&
+					child.hasAttribute(CONST.ATTR_NAME) &&
+					child.hasAttribute(CONST.ATTR_SLOT)
+				) {
+					const passthroughName = child.getAttribute(CONST.ATTR_NAME)
+					const defaultContent = this.compileSlotDefaultContent(
+						child.childNodes,
+						skipInterpolation
+					)
+					slotIR.push({
+						kind: 'Slot',
+						name: passthroughName,
+						defaultContent,
+						outVar,
+					})
+					i++
+					continue
+				}
+			}
+
+			if (child.nodeType === 1 && hasIfAttr(child)) {
+				const parent = child.parentNode
+				if (parent?.childNodes) {
+					const startIndex = Array.prototype.indexOf.call(parent.childNodes as NodeList, child)
+					if (startIndex >= 0) {
+						const { nodes: chainNodes, consumed } = compileConditionalChain(
+							{
+								compileBranchBody: (n, skip, o) =>
+									this.compileWrapperAwareBranch(n, skip, o),
+							},
+							this.diag,
+							parent.childNodes,
+							startIndex,
+							skipInterpolation,
+							outVar
+						)
+						slotIR.push(...chainNodes)
+						const consumedSet = new Set<unknown>()
+						for (let j = startIndex; j < startIndex + consumed; j++) {
+							consumedSet.add(parent.childNodes[j])
+						}
+						while (i < children.length && consumedSet.has(children[i])) {
+							i++
+						}
+						continue
+					}
+				}
+			}
+
+			slotIR.push(...this.compileNode(child, skipInterpolation, outVar))
+			i++
+		}
+		return slotIR
+	}
+
 	private compileComponent(
 		node: any,
 		tagName: string,
@@ -254,32 +339,7 @@ export class Lowerer {
 			const slotVar = `__slot_${this.slotCounter++}`
 			slotVarMap[slotName] = slotVar
 
-			const slotIR: IRNode[] = []
-			for (const child of children) {
-				if (child.nodeType === 1) {
-					const childTagName = child.tagName?.toLowerCase()
-					if (
-						childTagName === CONST.TAG_SLOT &&
-						child.hasAttribute(CONST.ATTR_NAME) &&
-						child.hasAttribute(CONST.ATTR_SLOT)
-					) {
-						const passthroughName = child.getAttribute(CONST.ATTR_NAME)
-						const defaultContent = this.compileSlotDefaultContent(
-							child.childNodes,
-							skipInterpolation
-						)
-						slotIR.push({
-							kind: 'Slot',
-							name: passthroughName,
-							defaultContent,
-							outVar: slotVar,
-						})
-						continue
-					}
-				}
-				slotIR.push(...this.compileNode(child, skipInterpolation, slotVar))
-			}
-			slots[slotName] = slotIR
+			slots[slotName] = this.compileSlotChildList(children, skipInterpolation, slotVar)
 		}
 
 		return [

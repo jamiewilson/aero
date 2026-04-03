@@ -2,8 +2,8 @@
  * data-if / data-else-if / data-else chain detection and lowering to a single IR `If` node.
  *
  * @remarks
- * Branch bodies are compiled via `deps.compileElement` today. For `<template>` branches, the
- * intended API is `Lowerer.compileWrapperAwareBranch` (see `lowerer/template.ts`) once integrated.
+ * Branch bodies use {@link ConditionalChainDeps.compileBranchBody}, which must compile
+ * `<template>` branches without emitting the wrapper (see `Lowerer.compileWrapperAwareBranch`).
  */
 
 import * as CONST from '../constants'
@@ -69,7 +69,8 @@ export function getCondition(node: any, attr: string, diag: LowererDiag): string
 }
 
 export interface ConditionalChainDeps {
-	compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[]
+	/** Wrapper-aware: `<template>` branches compile children only; other elements keep their tags. */
+	compileBranchBody(node: any, skipInterpolation: boolean, outVar: string): IRNode[]
 }
 
 /**
@@ -92,8 +93,15 @@ export function compileConditionalChain(
 
 	while (i < nodes.length) {
 		const node = nodes[i] as any
-		if (!node || node.nodeType !== 1) {
-			if (node?.nodeType === 3 && node.textContent?.trim() === '') {
+		if (!node) break
+
+		// Ignorable separators between branches (whitespace text, comments)
+		if (node.nodeType === 8) {
+			i++
+			continue
+		}
+		if (node.nodeType !== 1) {
+			if (node.nodeType === 3 && node.textContent?.trim() === '') {
 				i++
 				continue
 			}
@@ -103,17 +111,17 @@ export function compileConditionalChain(
 		if (condition === null) {
 			if (!hasIfAttr(node)) break
 			condition = getCondition(node, CONST.ATTR_IF, diag)!
-			body = deps.compileElement(node, skipInterpolation, outVar)
+			body = deps.compileBranchBody(node, skipInterpolation, outVar)
 			i++
 		} else if (hasElseIfAttr(node)) {
 			const elseIfCondition = getCondition(node, CONST.ATTR_ELSE_IF, diag)!
 			elseIf.push({
 				condition: elseIfCondition,
-				body: deps.compileElement(node, skipInterpolation, outVar),
+				body: deps.compileBranchBody(node, skipInterpolation, outVar),
 			})
 			i++
 		} else if (hasElseAttr(node)) {
-			elseBody = deps.compileElement(node, skipInterpolation, outVar)
+			elseBody = deps.compileBranchBody(node, skipInterpolation, outVar)
 			i++
 			break
 		} else {

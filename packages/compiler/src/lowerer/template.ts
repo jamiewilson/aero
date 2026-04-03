@@ -9,10 +9,10 @@
  * **Linkedom:** May mirror children on both `childNodes` and `content`; we still read from
  * `content` when present so behavior matches browsers and the spec.
  *
- * **Wrapperless vs literal:** Directive-driven wrapperless branches should compile via
- * `Lowerer.compileWrapperAwareBranch` / `compileWrapperlessNode`, which use this module. A
- * literal `<template>` in a page still passes through `compileElement`, which currently walks
- * `node.childNodes` for inner content (see `lowerer.ts`).
+ * **Wrapperless vs literal:** Conditional chains lower each branch with `compileWrapperAwareBranch`
+ * (wrapperless `<template>` via `compileWrapperlessNode`). `data-for` / `for` on `<template>` use
+ * `compileWrapperlessNode` for the loop body. A literal `<template>` without those directives
+ * still passes through `compileElement` (see `lowerer.ts`).
  */
 
 import * as CONST from '../constants'

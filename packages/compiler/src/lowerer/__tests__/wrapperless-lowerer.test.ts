@@ -41,4 +41,17 @@ describe('Lowerer wrapperless foundation', () => {
 		expect(ir.some((n: any) => n.kind === 'Append' && String(n.content).includes('<div'))).toBe(true)
 		expect(serialized).toContain('</div>')
 	})
+
+	it('compileNode lowers template data-for to For with wrapperless body', () => {
+		const { document } = parseHTML(
+			'<html><body><template data-for="{ const x of xs }"><span>{ x }</span></template></body></html>'
+		)
+		const template = document.body!.firstElementChild!
+		const lowerer = new Lowerer(resolver)
+		const ir = lowerer.compileNode(template, false, '__out')
+		expect(ir).toHaveLength(1)
+		expect(ir[0]?.kind).toBe('For')
+		const body = (ir[0] as { kind: string; body?: unknown[] }).body
+		expect(JSON.stringify(body)).not.toMatch(/<template/i)
+	})
 })

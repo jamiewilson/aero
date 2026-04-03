@@ -188,6 +188,67 @@ describe('Codegen', () => {
 		expect(output).not.toContain('data-for')
 	})
 
+	it('should compile wrapperless template data-for (children only, no template tag)', async () => {
+		const html = `<script is:build>
+										const items = ['a', 'b'];
+									</script>
+									<ul>
+										<template data-for="{ const item of items }">
+											<li>{ item }</li>
+										</template>
+									</ul>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<li>a</li>')
+		expect(output).toContain('<li>b</li>')
+		expect(output).not.toMatch(/<template[\s>]/i)
+		expect(output).not.toContain('data-for')
+	})
+
+	it('should compile wrapperless template for alias (for=)', async () => {
+		const html = `<script is:build>
+										const items = [1, 2];
+									</script>
+									<div>
+										<template for="{ const n of items }"><span>{ n }</span></template>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<span>1</span>')
+		expect(output).toContain('<span>2</span>')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should compile wrapperless template data-for inside component default slot', async () => {
+		const html = `<script is:build>
+										const items = ['x', 'y'];
+										const layout = { name: 'layout' };
+									</script>
+									<layout-component>
+										<template data-for="{ const item of items }">
+											<p>{ item }</p>
+										</template>
+									</layout-component>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const Aero = {
+			renderComponent: async (_comp: any, _props: any, slots: any) => slots.default ?? '',
+		}
+
+		const output = await execute(code, Aero)
+		expect(output).toContain('<p>x</p>')
+		expect(output).toContain('<p>y</p>')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
 	it('should throw when for value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
@@ -826,6 +887,117 @@ describe('Codegen', () => {
 		expect(output).toContain('Two')
 		expect(output).not.toContain('One')
 		expect(output).not.toContain('Other')
+	})
+
+	it('should compile wrapperless template if (children only, no template tag in output)', async () => {
+		const html = `<script is:build>
+										const condition = true;
+									</script>
+									<div>
+										<template if="{ condition }">
+											<h1>Title</h1>
+											<main>Body</main>
+										</template>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<h1>Title</h1>')
+		expect(output).toContain('<main>Body</main>')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should omit wrapperless template branch when condition is false', async () => {
+		const html = `<script is:build>
+										const condition = false;
+									</script>
+									<div>
+										<template if="{ condition }">
+											<h1>Nope</h1>
+										</template>
+										<p>Always</p>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).not.toContain('Nope')
+		expect(output).toContain('Always')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should compile wrapperless template if / else-if / else chain', async () => {
+		const html = `<script is:build>
+										const state = 'error';
+									</script>
+									<div>
+										<template if="{ state === 'loading' }">
+											<p>Loading</p>
+										</template>
+										<template else-if="{ state === 'error' }">
+											<p>Error</p>
+										</template>
+										<template else>
+											<p>Ready</p>
+										</template>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<p>Error</p>')
+		expect(output).not.toContain('Loading')
+		expect(output).not.toContain('Ready')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should allow mixed wrapperless template and element branches', async () => {
+		const html = `<script is:build>
+										const ready = true;
+									</script>
+									<div>
+										<template if="{ !ready }">
+											<p>Loading</p>
+										</template>
+										<section else class="panel">
+											<h1>Ready</h1>
+										</section>
+									</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const output = await execute(code)
+		expect(output).toContain('<section class="panel">')
+		expect(output).toContain('<h1>Ready</h1>')
+		expect(output).not.toContain('Loading')
+		expect(output).not.toMatch(/<template[\s>]/i)
+	})
+
+	it('should compile wrapperless template if inside component default slot', async () => {
+		const html = `<script is:build>
+										const layout = { name: 'layout' };
+									</script>
+									<layout-component>
+										<template if="{ true }">
+											<p>Hello</p>
+										</template>
+									</layout-component>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const Aero = {
+			renderComponent: async (_comp: any, _props: any, slots: any) => slots.default ?? '',
+		}
+
+		const output = await execute(code, Aero)
+		expect(output).toContain('<p>Hello</p>')
+		expect(output).not.toMatch(/<template[\s>]/i)
 	})
 
 	it('should treat lone data-else (invalid markup) as normal element and strip directive', async () => {
