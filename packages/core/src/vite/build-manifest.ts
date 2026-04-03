@@ -132,8 +132,12 @@ export function canSkipEntirePrerender(args: {
 	currentClientHtmlFingerprint: string
 	currentStaticBuildOptionsHash: string
 }): boolean {
-	const { previous, currentViteManifestHash, currentClientHtmlFingerprint, currentStaticBuildOptionsHash } =
-		args
+	const {
+		previous,
+		currentViteManifestHash,
+		currentClientHtmlFingerprint,
+		currentStaticBuildOptionsHash,
+	} = args
 	// No fingerprint without a Rolldown manifest (e.g. broken or partial dist).
 	if (!previous || currentViteManifestHash === null) return false
 	return (

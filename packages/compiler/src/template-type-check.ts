@@ -45,7 +45,10 @@ export type TemplateTypeIssue = {
 /** @deprecated Use {@link TemplateTypeIssue} */
 export type BuildScriptTypeIssue = Omit<TemplateTypeIssue, 'kind'>
 
-function offsetToOneBasedLineColumn(source: string, offset: number): { line: number; column: number } {
+function offsetToOneBasedLineColumn(
+	source: string,
+	offset: number
+): { line: number; column: number } {
 	let line = 1
 	let lineStart = 0
 	for (let i = 0; i < offset && i < source.length; i++) {
@@ -72,7 +75,10 @@ function mapDiagnosticToHtmlInterpolation(
 	const posInExpr = start - exprStartInVirtual
 	const bracePos = braceOffset
 	const base = offsetToOneBasedLineColumn(htmlSource, bracePos)
-	const exprLine1 = offsetToOneBasedLineColumn(exprText, Math.min(Math.max(0, posInExpr), exprText.length))
+	const exprLine1 = offsetToOneBasedLineColumn(
+		exprText,
+		Math.min(Math.max(0, posInExpr), exprText.length)
+	)
 	const line = base.line + exprLine1.line - 1
 	const column = exprLine1.line === 1 ? base.column + 1 + exprLine1.column - 1 : exprLine1.column
 
@@ -110,10 +116,9 @@ function createVirtualProgramDiagnostics(
 	const sf = program.getSourceFile(virtualAbsolutePath)
 	if (!sf) return []
 
-	return [
-		...program.getSyntacticDiagnostics(sf),
-		...program.getSemanticDiagnostics(sf),
-	].filter(d => d.category === ts.DiagnosticCategory.Error && shouldReportTsDiagnostic(d))
+	return [...program.getSyntacticDiagnostics(sf), ...program.getSemanticDiagnostics(sf)].filter(
+		d => d.category === ts.DiagnosticCategory.Error && shouldReportTsDiagnostic(d)
+	)
 }
 
 export type CheckTemplateTypesOptions = {
@@ -157,7 +162,6 @@ export function checkTemplateTypes(
 		const scriptOffset = prelude.length
 		const scriptOnly = script
 		const diags = createVirtualProgramDiagnostics(root, virtualBuildPath, full, tsOpts, extraRoots)
-		const fullSf = ts.createSourceFile(virtualBuildPath, full, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
 
 		for (const d of diags) {
 			if (d.start === undefined || d.start < scriptOffset) continue
@@ -195,8 +199,20 @@ export function checkTemplateTypes(
 			const exprStartInVirtual = head.length
 			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
 
-			const diags = createVirtualProgramDiagnostics(root, virtualPath, virtualText, tsOpts, extraRoots)
-			const sf = ts.createSourceFile(virtualPath, virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+			const diags = createVirtualProgramDiagnostics(
+				root,
+				virtualPath,
+				virtualText,
+				tsOpts,
+				extraRoots
+			)
+			const sf = ts.createSourceFile(
+				virtualPath,
+				virtualText,
+				ts.ScriptTarget.Latest,
+				true,
+				ts.ScriptKind.TS
+			)
 
 			for (const d of diags) {
 				const span = mapDiagnosticToHtmlInterpolation(
@@ -255,5 +271,5 @@ export function checkTemplateBuildScriptTypesWithFile(
 		root: process.cwd(),
 		project: loaded ?? undefined,
 		interpolations: false,
-	}).map(({ kind, ...rest }) => rest as BuildScriptTypeIssue & { readonly file: string })
+	}).map(({ kind: _kind, ...rest }) => rest as BuildScriptTypeIssue & { readonly file: string })
 }

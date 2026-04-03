@@ -1,7 +1,4 @@
-import {
-	collectForDirectiveBindingNames,
-	parseForDirective,
-} from '@aero-js/compiler'
+import { collectForDirectiveBindingNames, parseForDirective } from '@aero-js/compiler'
 import * as vscode from 'vscode'
 import type { TemplateScope } from './types'
 
@@ -98,7 +95,7 @@ function parseForAttribute(
 		return null
 	}
 
-	const sourceRoot = sourceExpr.split(/[.\[]/)[0]
+	const sourceRoot = sourceExpr.split(/[.[]/)[0]
 
 	const attrsOffsetInTag = fullTag.indexOf(attrs)
 	const attrBase = tagStart + (attrsOffsetInTag >= 0 ? attrsOffsetInTag : 0)
@@ -119,9 +116,6 @@ function parseForAttribute(
 		bindingNames,
 		sourceExpr,
 		sourceRoot,
-		sourceRange: new vscode.Range(
-			document.positionAt(sourceStart),
-			document.positionAt(sourceEnd)
-		),
+		sourceRange: new vscode.Range(document.positionAt(sourceStart), document.positionAt(sourceEnd)),
 	}
 }

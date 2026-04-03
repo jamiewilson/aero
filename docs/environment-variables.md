@@ -55,11 +55,11 @@ So in build scripts you can use `import.meta.env.SITE` without defining it in `.
 
 These are read by the Aero Vite plugin during `vite build` / `vite dev` (they are **not** `import.meta.env` unless you wire them yourself). See **[Incremental static build](build-performance.md)** for full detail.
 
-| Variable | Purpose |
-| -------- | ------- |
-| `AERO_INCREMENTAL` | When `1`, `true`, or `yes`, enables incremental static prerender, manifest caching, and (with content) on-disk cache for collection parsing. Same effect as `incremental: true` in `aero.config.ts` when unset, or `aero build --incremental`. |
-| `AERO_LOG` | Set to `debug` (or a list that includes `debug`) to log static prerender decisions and timings. |
-| `AERO_STATIC_PRERENDER_CONCURRENCY` | Optional bounded parallelism for static HTML prerender (integer). |
+| Variable                            | Purpose                                                                                                                                                                                                                                        |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AERO_INCREMENTAL`                  | When `1`, `true`, or `yes`, enables incremental static prerender, manifest caching, and (with content) on-disk cache for collection parsing. Same effect as `incremental: true` in `aero.config.ts` when unset, or `aero build --incremental`. |
+| `AERO_LOG`                          | Set to `debug` (or a list that includes `debug`) to log static prerender decisions and timings.                                                                                                                                                |
+| `AERO_STATIC_PRERENDER_CONCURRENCY` | Optional bounded parallelism for static HTML prerender (integer).                                                                                                                                                                              |
 
 ## .env files
 

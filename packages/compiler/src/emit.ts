@@ -113,13 +113,18 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 				b.stmtAppendOut('\\n{\\n', node.outVar)
 			}
 			const jsMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
-			const scriptInner = new CodeBuilder().raw('${' + jsMapExpr + '}').raw('\\n').toString()
+			const scriptInner = new CodeBuilder()
+				.raw('${' + jsMapExpr + '}')
+				.raw('\\n')
+				.toString()
 			b.stmtAppendOut(scriptInner, node.outVar)
 			break
 		}
 		case 'StylePassData': {
 			const cssMapExpr = `Object.entries(${node.passDataExpr}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
-			const styleInner = new CodeBuilder().raw('\n:root {' + '${' + cssMapExpr + '}' + '\n}\n').toString()
+			const styleInner = new CodeBuilder()
+				.raw('\n:root {' + '${' + cssMapExpr + '}' + '\n}\n')
+				.toString()
 			b.stmtAppendOut(styleInner, node.outVar)
 			break
 		}

@@ -139,7 +139,7 @@ type ForDirectiveScope = {
 	bindingNames: string[]
 }
 
-function collectForDirectiveScopes(roots: Node[], sourceText: string): ForDirectiveScope[] {
+function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirectiveScope[] {
 	const scopes: ForDirectiveScope[] = []
 
 	for (const node of walkHtmlNodes(roots)) {
@@ -216,7 +216,8 @@ export function formatInterpolationBinderPreludeFromTemplate(
 	sourceText: string,
 	braceOffset: number
 ): string {
-	const { buildScriptBodies, typeDeclarationTexts, bindingNames } = buildTemplateEditorAmbient(sourceText)
+	const { buildScriptBodies, typeDeclarationTexts, bindingNames } =
+		buildTemplateEditorAmbient(sourceText)
 	return formatInterpolationBinderPrelude(
 		sourceText,
 		braceOffset,
@@ -243,10 +244,7 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 		})
 	}
 
-	const masked = applyMasks(
-		maskForDirectiveValues(maskScriptAndStyleInner(sourceText)),
-		masks
-	)
+	const masked = applyMasks(maskForDirectiveValues(maskScriptAndStyleInner(sourceText)), masks)
 	for (const seg of tokenizeCurlyInterpolation(masked)) {
 		if (seg.kind !== 'interpolation') continue
 		const expr = seg.expression

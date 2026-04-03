@@ -42,7 +42,7 @@ import {
 	toOutputFile,
 } from './rewrite'
 
-import { toPosix, toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path'
 
 import {
 	AERO_BUILD_MANIFEST_VERSION,
@@ -280,7 +280,9 @@ export function discoverRuntimeTemplatePaths(
 ): { components: string[]; layouts: string[]; pages: string[] } {
 	const clientRoot = path.resolve(root, clientDir)
 	return {
-		components: walkHtmlFiles(path.join(clientRoot, 'components')).sort((a, b) => a.localeCompare(b)),
+		components: walkHtmlFiles(path.join(clientRoot, 'components')).sort((a, b) =>
+			a.localeCompare(b)
+		),
 		layouts: walkHtmlFilesDirectOnly(path.join(clientRoot, 'layouts')).sort((a, b) =>
 			a.localeCompare(b)
 		),
@@ -289,7 +291,10 @@ export function discoverRuntimeTemplatePaths(
 }
 
 /** Per `*.html` file under `clientDir` → sha256 (keys: posix path relative to `root`). */
-export function computeTemplateFileHashesMap(root: string, clientDir: string): Record<string, string> {
+export function computeTemplateFileHashesMap(
+	root: string,
+	clientDir: string
+): Record<string, string> {
 	const base = path.resolve(root, clientDir)
 	const files = walkHtmlFiles(base)
 	const out: Record<string, string> = {}
@@ -665,7 +670,8 @@ export function discoverClientScriptContentMap(
 	sharedDiscovery?: TemplateDiscovery
 ): Map<string, ScriptEntry> {
 	const discovery = sharedDiscovery ?? new TemplateDiscovery(root, templateRoot)
-	return collectTemplateDerivedRollupData(root, templateRoot, undefined, discovery).clientScriptContentMap
+	return collectTemplateDerivedRollupData(root, templateRoot, undefined, discovery)
+		.clientScriptContentMap
 }
 
 /** Recursively collect all file paths under dir (no extension filter). */
@@ -975,7 +981,9 @@ export async function renderStaticPages(
 				clientHtmlFingerprint: computeClientHtmlFingerprint(root, dirs.client),
 				staticBuildOptionsHash,
 				templateFileHashes: templateFileHashesCurrent,
-				pages: Object.fromEntries(pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])),
+				pages: Object.fromEntries(
+					pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])
+				),
 			})
 		}
 

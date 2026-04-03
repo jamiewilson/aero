@@ -18,8 +18,17 @@ const OPTIONS: ts.CompilerOptions = {
 
 const SYNTHETIC = 'build.ts'
 
-function createProgramForScript(script: string): { program: ts.Program; sourceFile: ts.SourceFile } {
-	const sourceFile = ts.createSourceFile(SYNTHETIC, script, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+function createProgramForScript(script: string): {
+	program: ts.Program
+	sourceFile: ts.SourceFile
+} {
+	const sourceFile = ts.createSourceFile(
+		SYNTHETIC,
+		script,
+		ts.ScriptTarget.Latest,
+		true,
+		ts.ScriptKind.TS
+	)
 	const host = ts.createCompilerHost(OPTIONS)
 	const original = host.getSourceFile.bind(host)
 	host.getSourceFile = (fileName, languageVersion, ...args) => {
@@ -101,7 +110,9 @@ export function collectBindingTypeStringsFromBuildScript(script: string): Map<st
 /**
  * Merge type maps from several build scripts; earlier bodies win for each name.
  */
-export function collectBindingTypeStringsFromBuildScripts(bodies: Iterable<string>): Map<string, string> {
+export function collectBindingTypeStringsFromBuildScripts(
+	bodies: Iterable<string>
+): Map<string, string> {
 	const merged = new Map<string, string>()
 	for (const body of bodies) {
 		const m = collectBindingTypeStringsFromBuildScript(body)
@@ -118,7 +129,10 @@ export function collectBindingTypeStringsFromBuildScripts(bodies: Iterable<strin
  * @param script - Full `<script is:build>` body (TypeScript).
  * @param bindingName - Identifier to resolve (e.g. `x` from `const x = 1`).
  */
-export function getBindingTypeStringFromBuildScript(script: string, bindingName: string): string | null {
+export function getBindingTypeStringFromBuildScript(
+	script: string,
+	bindingName: string
+): string | null {
 	if (!bindingName) return null
 	return collectBindingTypeStringsFromBuildScript(script).get(bindingName) ?? null
 }

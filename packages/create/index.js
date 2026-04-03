@@ -11,7 +11,6 @@ const startPkgDir = __dirname
 const APPS_DIR = 'dist'
 
 const TEMPLATES = ['minimal', 'fullstack']
-const DEFAULT_TEMPLATE = 'minimal'
 
 function resolveTemplatePath(templateName) {
 	const pkgName = `@aero-js/starter-${templateName}`
@@ -19,7 +18,7 @@ function resolveTemplatePath(templateName) {
 		const pkgUrl = import.meta.resolve(`${pkgName}/package.json`)
 		const templatePath = dirname(fileURLToPath(pkgUrl))
 		return templatePath
-	} catch (e) {
+	} catch {
 		console.error(`[create-aero] template "${templateName}" not found.`)
 		console.error(`Please install with: npm install -g ${pkgName} (or locally)`)
 		process.exit(1)

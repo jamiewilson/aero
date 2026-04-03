@@ -23,7 +23,9 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	checkComponentReferences(document, text, diagnostics, resolver)
 	checkComponentProps(document, text, diagnostics, resolver, parsed.definedVariables)
 	const regexUndefined =
-		vscode.workspace.getConfiguration('aero').get<boolean>('diagnostics.regexUndefinedVariables') === true
+		vscode.workspace
+			.getConfiguration('aero')
+			.get<boolean>('diagnostics.regexUndefinedVariables') === true
 	if (regexUndefined) {
 		checkUndefinedVariables(parsed, diagnostics)
 	}

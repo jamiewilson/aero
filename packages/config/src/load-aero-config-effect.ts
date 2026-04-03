@@ -51,7 +51,7 @@ function applyEnvPolicy(config: AeroConfig, env: NodeJS.ProcessEnv): AeroConfig 
 	}
 	if (dirClient || dirServer || dirDist) {
 		next.dirs = {
-			...(next.dirs ?? {}),
+			...next.dirs,
 			...(dirClient ? { client: dirClient } : {}),
 			...(dirServer ? { server: dirServer } : {}),
 			...(dirDist ? { dist: dirDist } : {}),

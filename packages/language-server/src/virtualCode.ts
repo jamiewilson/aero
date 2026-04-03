@@ -125,7 +125,7 @@ type ForDirectiveScope = {
  * @remarks The vscode-html-languageservice parser includes surrounding quotes in attribute values
  * (e.g. `"{ const doc of docs }"`), so we strip them before parsing.
  */
-function collectForDirectiveScopes(roots: Node[], sourceText: string): ForDirectiveScope[] {
+function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirectiveScope[] {
 	const scopes: ForDirectiveScope[] = []
 
 	for (const node of walkHtmlNodes(roots)) {
@@ -152,10 +152,7 @@ function collectForDirectiveScopes(roots: Node[], sourceText: string): ForDirect
 
 		let bindingNames: string[]
 		try {
-			bindingNames = [
-				...collectForDirectiveBindingNames(inner),
-				...FOR_LOOP_IMPLICIT_NAMES,
-			]
+			bindingNames = [...collectForDirectiveBindingNames(inner), ...FOR_LOOP_IMPLICIT_NAMES]
 		} catch {
 			continue
 		}
@@ -255,11 +252,14 @@ export class AeroVirtualCode implements VirtualCode {
 			wrapPropsObjectLiteral?: boolean
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
-			const allBindings = forBindings.size > 0
-				? new Set([...buildBindingNames, ...forBindings])
-				: buildBindingNames
+			const allBindings =
+				forBindings.size > 0 ? new Set([...buildBindingNames, ...forBindings]) : buildBindingNames
 
-			const binderDecl = formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts, buildScriptBodies)
+			const binderDecl = formatBuildScopeAmbientPrelude(
+				allBindings,
+				buildTypeDeclTexts,
+				buildScriptBodies
+			)
 			const open = wrapPropsObjectLiteral ? '[{' : '['
 			const close = wrapPropsObjectLiteral ? '}]' : ']'
 			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + open.length

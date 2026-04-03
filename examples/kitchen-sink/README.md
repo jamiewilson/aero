@@ -17,7 +17,7 @@ Full demo template for the Aero static site generator. Used for development and 
 | `tasks/`               | Nitro tasks wired through `nitro.config.ts`.                                                                         |
 | `public/`              | Static assets copied as-is.                                                                                          |
 | `aero.config.ts`       | Aero config (content, server, dirs, vite).                                                                           |
-| `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                               |
+| `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                                |
 | `content.config.ts`    | Content collections (used when `content: true`).                                                                     |
 | `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                      |
 | `tsconfig.json`        | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc.                                          |

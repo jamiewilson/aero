@@ -92,13 +92,9 @@ export function aeroContent(options: AeroContentOptions = {}): Plugin {
 				const absolutePath = path.isAbsolute(idPath) ? idPath : path.resolve(root, idPath)
 				const relToContent = path.relative(contentDir, absolutePath)
 				if (!relToContent.startsWith('..') && !path.isAbsolute(relToContent)) {
-					try {
-						const doc = await loadSingleFile(absolutePath, contentConfig, root)
-						this.addWatchFile(absolutePath)
-						return `export default ${JSON.stringify(doc)}`
-					} catch (err) {
-						throw err
-					}
+					const doc = await loadSingleFile(absolutePath, contentConfig, root)
+					this.addWatchFile(absolutePath)
+					return `export default ${JSON.stringify(doc)}`
 				}
 			}
 
@@ -116,9 +112,13 @@ export function getCollection() {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const { loaded, schemaIssues } = await loadAllCollections(contentConfig, resolvedConfig.root, {
-				contentConfigPath: options.config || CONFIG_FILE,
-			})
+			const { loaded, schemaIssues } = await loadAllCollections(
+				contentConfig,
+				resolvedConfig.root,
+				{
+					contentConfigPath: options.config || CONFIG_FILE,
+				}
+			)
 			if (schemaIssues.length > 0) {
 				resolvedConfig.logger.warn(formatContentSchemaIssuesReport(schemaIssues))
 			}

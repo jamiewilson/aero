@@ -35,8 +35,6 @@ import {
 	diagnosticsToSingleMessage,
 	enrichDiagnosticsWithSourceFrames,
 	exitFailureToAeroDiagnostics,
-	formatDiagnosticsTerminal,
-	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { Effect, Exit } from 'effect'
 import { htmlCompileTry } from './compile-html-effect'
@@ -183,7 +181,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					'import.meta.env.SITE': JSON.stringify(site),
 				},
 				environments: {
-					...(userEnvs ?? {}),
+					...userEnvs,
 					ssr: {
 						...userSsr,
 						dev: {
