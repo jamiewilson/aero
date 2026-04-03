@@ -42,9 +42,9 @@ export default defineNitroConfig({
 
 After a production build, choose how you preview:
 
-| Command | What runs |
-| -------- | ---------- |
-| `pnpm preview` (typically `AERO_SERVER=false vite build && vite preview`) | Static files only — no Nitro APIs |
+| Command                                                                      | What runs                                                                            |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm preview` (typically `AERO_SERVER=false vite build && vite preview`)    | Static files only — no Nitro APIs                                                    |
 | `pnpm preview:api` (typically `vite build && node .output/server/index.mjs`) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, etc. |
 
 The **`@aero-js/starter-fullstack`** template (`packages/starters/fullstack` in the Aero repo) ships both scripts and a working `server/` tree you can copy from.

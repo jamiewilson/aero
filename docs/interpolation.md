@@ -24,7 +24,7 @@ Use `raw()` to bypass escaping when you need to output raw HTML:
 
 ```html
 <script is:build>
-  const html = '<strong>bold</strong>';
+	const html = '<strong>bold</strong>'
 </script>
 <p>{ raw(html) }</p>
 ```
@@ -39,12 +39,12 @@ Inside the loop body, **`index`**, **`first`**, **`last`**, and **`length`** are
 
 ```html
 <script is:build>
-  const items = ['a', 'b', 'c'];
+	const items = ['a', 'b', 'c']
 </script>
 <ul>
-  <li data-for="{ const item of items }">
-    { item } (index: { index }, first: { first }, last: { last }, length: { length })
-  </li>
+	<li data-for="{ const item of items }">
+		{ item } (index: { index }, first: { first }, last: { last }, length: { length })
+	</li>
 </ul>
 ```
 

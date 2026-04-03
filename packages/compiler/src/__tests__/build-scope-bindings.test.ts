@@ -51,15 +51,18 @@ describe('formatBuildScopeAmbientPrelude', () => {
 		const prelude = formatBuildScopeAmbientPrelude(new Set(['title']), [
 			'interface PageProps { title: string }',
 		])
-		expect(prelude.indexOf('interface PageProps')).toBeLessThan(prelude.indexOf('declare const title'))
+		expect(prelude.indexOf('interface PageProps')).toBeLessThan(
+			prelude.indexOf('declare const title')
+		)
 		expect(prelude).toContain('declare const title: any;')
 	})
 
 	it('uses checker types for bindings when build script bodies are provided', () => {
-		const prelude = formatBuildScopeAmbientPrelude(new Set(['x', 'y']), [], [
-			'const x: number = 1',
-			'const y = "hi"',
-		])
+		const prelude = formatBuildScopeAmbientPrelude(
+			new Set(['x', 'y']),
+			[],
+			['const x: number = 1', 'const y = "hi"']
+		)
 		expect(prelude).toContain('declare const x: number;')
 		expect(prelude).toContain('declare const y:')
 	})

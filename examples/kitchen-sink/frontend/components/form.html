@@ -25,11 +25,7 @@
 	<!-- Or should all nested scripts default to inline? -->
 	<script is:inline src="/scripts/static.js"></script>
 
-	<span
-		class="toast"
-		data-testid="home-toast"
-		hx-toast
-		@htmx:after-swap="dismiss($el)"></span>
+	<span class="toast" data-testid="home-toast" hx-toast @htmx:after-swap="dismiss($el)"></span>
 
 	<style>
 		@scope {

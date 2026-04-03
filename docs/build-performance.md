@@ -4,12 +4,12 @@ For production `vite build`, Aero can **skip or narrow** the static HTML prerend
 
 Opt in in any of these ways (all tie into the same behavior):
 
-| Mechanism | Meaning |
-| --------- | ------- |
-| `AERO_INCREMENTAL=1` (or `true` / `yes`, case-insensitive) | Enable incremental behavior for the build process. |
-| `incremental: true` in **`aero.config.ts`** | During `vite build`, sets `AERO_INCREMENTAL` when the variable is unset (explicit env always wins). |
-| `aero build --incremental` | Same as setting the env var for that command (see [Aero CLI](aero-cli-and-check.md)). |
-| Unset / `false` | Full prerender and no content disk cache (default). |
+| Mechanism                                                  | Meaning                                                                                             |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `AERO_INCREMENTAL=1` (or `true` / `yes`, case-insensitive) | Enable incremental behavior for the build process.                                                  |
+| `incremental: true` in **`aero.config.ts`**                | During `vite build`, sets `AERO_INCREMENTAL` when the variable is unset (explicit env always wins). |
+| `aero build --incremental`                                 | Same as setting the env var for that command (see [Aero CLI](aero-cli-and-check.md)).               |
+| Unset / `false`                                            | Full prerender and no content disk cache (default).                                                 |
 
 Examples:
 

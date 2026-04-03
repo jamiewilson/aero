@@ -24,12 +24,12 @@ Import **only** from `vite.config.ts` (pulls in Vite). Do **not** import this en
 
 ## Config shape (`AeroConfig`)
 
-| Field     | Type                            | Description                                                                                                                                                             |
-| --------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content` | `boolean \| AeroContentOptions` | Enable content collections. `true` or options (e.g. `config` path).                                                                                                     |
-| `server`  | `boolean`                       | Enable Nitro server integration (default: `false`).                                                                                                                     |
-| `site`    | `{ url: string }`               | Canonical site URL (e.g. `{ url: 'https://example.com' }`). Exposed as `import.meta.env.SITE` and `Aero.site.url` in templates; used for sitemap, RSS, canonical links. |
-| `dirs`    | `object`                        | Overrides: `client`, `server`, `dist`. Same shape as the aero() Vite plugin.                                                                                            |
+| Field         | Type                            | Description                                                                                                                                                             |
+| ------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`     | `boolean \| AeroContentOptions` | Enable content collections. `true` or options (e.g. `config` path).                                                                                                     |
+| `server`      | `boolean`                       | Enable Nitro server integration (default: `false`).                                                                                                                     |
+| `site`        | `{ url: string }`               | Canonical site URL (e.g. `{ url: 'https://example.com' }`). Exposed as `import.meta.env.SITE` and `Aero.site.url` in templates; used for sitemap, RSS, canonical links. |
+| `dirs`        | `object`                        | Overrides: `client`, `server`, `dist`. Same shape as the aero() Vite plugin.                                                                                            |
 | `vite`        | `UserConfig`                    | Vite config merged with Aero defaults.                                                                                                                                  |
 | `incremental` | `boolean`                       | When `true`, `vite build` sets `AERO_INCREMENTAL` if unset ([incremental static build](../../docs/build-performance.md)).                                               |
 

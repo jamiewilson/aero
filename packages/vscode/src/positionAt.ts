@@ -149,7 +149,10 @@ function attributeValueAtOffset(
 	return null
 }
 
-function getAssetRefAt(document: vscode.TextDocument, position: vscode.Position): PositionKind | null {
+function getAssetRefAt(
+	document: vscode.TextDocument,
+	position: vscode.Position
+): PositionKind | null {
 	const offset = document.offsetAt(position)
 	const text = document.getText()
 	const uri = document.uri.toString()
@@ -305,7 +308,10 @@ function getExpressionIdentifierAt(
 	const wordRange = getWordRangeAtPosition(lineText, position.line, offset)
 	if (!wordRange) return null
 
-	const identifier = segments.length > 1 ? rootIdentifier : lineText.slice(wordRange.start.character, wordRange.end.character)
+	const identifier =
+		segments.length > 1
+			? rootIdentifier
+			: lineText.slice(wordRange.start.character, wordRange.end.character)
 
 	return {
 		kind: 'expression-identifier',
@@ -365,8 +371,7 @@ function getAeroExpressionAttributeValueRangeAt(
 	lineText: string,
 	offset: number
 ): { start: number; end: number } | null {
-	const attrValueRegex =
-		/\b(?:data-if|if|data-else-if|else-if|data-for|for)\s*=\s*(['"])(.*?)\1/gi
+	const attrValueRegex = /\b(?:data-if|if|data-else-if|else-if|data-for|for)\s*=\s*(['"])(.*?)\1/gi
 
 	let match: RegExpExecArray | null
 	while ((match = attrValueRegex.exec(lineText)) !== null) {

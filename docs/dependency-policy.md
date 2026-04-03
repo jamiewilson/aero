@@ -21,4 +21,4 @@ When a package needs a version **different** from the catalog (e.g. a single pac
 - **`pnpm install`** with a locked lockfile is the source of truth for CI.
 - Keep `packageManager` in root `package.json` aligned with the pnpm version contributors should use.
 
-For product-level principles that include “stay aligned with Vite / modern JS tooling,” see [_reference/aero-principles-and-goals.md](../_reference/aero-principles-and-goals.md).
+For product-level principles that include “stay aligned with Vite / modern JS tooling,” see [\_reference/aero-principles-and-goals.md](../_reference/aero-principles-and-goals.md).

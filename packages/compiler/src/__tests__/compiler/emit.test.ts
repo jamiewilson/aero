@@ -126,9 +126,7 @@ describe('emitStyleBlock', () => {
 		const style: IRNode[] = [{ kind: 'Append', content: ':root{}' }]
 		const code = emitStyleBlock(style, '__style_test')
 		expect(code).toBe(
-			"let __style_test = '';\n" +
-				"__style_test += `:root{}`;\n" +
-				'styles?.add(__style_test);\n'
+			"let __style_test = '';\n" + '__style_test += `:root{}`;\n' + 'styles?.add(__style_test);\n'
 		)
 	})
 })

@@ -229,7 +229,9 @@ export function loadAllCollectionsEffect(
 	session?: ContentDiskCacheSession | null
 ): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
 	const collections = config.collections ?? []
-	return Effect.forEach(collections, collection => loadCollectionEffect(collection, root, session)).pipe(
+	return Effect.forEach(collections, collection =>
+		loadCollectionEffect(collection, root, session)
+	).pipe(
 		Effect.map(results => {
 			const loaded: LoadedContent = new Map()
 			const schemaIssues: ContentSchemaIssue[] = []

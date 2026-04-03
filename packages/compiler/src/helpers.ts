@@ -2,8 +2,8 @@
  * Helpers for the template codegen: interpolation, attributes, slots, and render-function emission.
  */
 
-import { tokenizeCurlyInterpolation, compileInterpolationFromSegments } from './tokenizer'
-import { CompileError, type CompileErrorOptions } from './types'
+import { tokenizeCurlyInterpolation } from './tokenizer'
+import { CompileError } from './types'
 import { CodeBuilder } from './code-builder'
 import { escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
 
@@ -258,7 +258,7 @@ export function emitRenderFunction(
 		.raw(rootScriptsBlock)
 		.raw('\n\t\t')
 		.raw(headScriptsBlock)
-		.raw('\n\t\tlet __out = \'\';')
+		.raw("\n\t\tlet __out = '';")
 		.raw('\n\t\t')
 		.raw(body)
 		.raw('return __out;\n')

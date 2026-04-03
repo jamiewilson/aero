@@ -6,7 +6,10 @@ import * as Helper from '../../helpers'
 describe('CodeBuilder', () => {
 	it('matches emitAppend for ScriptPassData inner fragment', () => {
 		const jsMapExpr = `Object.entries(props).map(([k, v]) => "\\nconst " + k + " = " + Helper.escapeScriptJson(v) + ";").join("")`
-		const fromBuilder = new CodeBuilder().raw('${' + jsMapExpr + '}').raw('\\n').toString()
+		const fromBuilder = new CodeBuilder()
+			.raw('${' + jsMapExpr + '}')
+			.raw('\\n')
+			.toString()
 		const fromTemplate = `\${${jsMapExpr}}\\n`
 		expect(fromBuilder).toBe(fromTemplate)
 		expect(Helper.emitAppend(fromBuilder, '__out')).toBe(Helper.emitAppend(fromTemplate, '__out'))
@@ -29,7 +32,9 @@ describe('CodeBuilder', () => {
 
 	describe('stmt* matches helpers emit*', () => {
 		it('stmtAppendOut', () => {
-			expect(new CodeBuilder().stmtAppendOut('x', '__out').toString()).toBe(Helper.emitAppend('x', '__out'))
+			expect(new CodeBuilder().stmtAppendOut('x', '__out').toString()).toBe(
+				Helper.emitAppend('x', '__out')
+			)
 		})
 		it('stmtSlotVar', () => {
 			expect(new CodeBuilder().stmtSlotVar('__s').toString()).toBe(Helper.emitSlotVar('__s'))
@@ -50,7 +55,15 @@ describe('CodeBuilder', () => {
 				new CodeBuilder()
 					.stmtRenderComponent('__out', 'Header', '{}', '{ "default": __slot_0 }', '{ ctx: 1 }')
 					.toString()
-			).toBe(Helper.emitRenderComponentStatement('__out', 'Header', '{}', '{ "default": __slot_0 }', '{ ctx: 1 }'))
+			).toBe(
+				Helper.emitRenderComponentStatement(
+					'__out',
+					'Header',
+					'{}',
+					'{ "default": __slot_0 }',
+					'{ ctx: 1 }'
+				)
+			)
 		})
 		it('stmtStylesAdd', () => {
 			expect(new CodeBuilder().stmtStylesAdd('__aero_style_0').toString()).toBe(

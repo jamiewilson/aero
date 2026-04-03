@@ -26,6 +26,10 @@ export {
 	loadCollectionEffect,
 	type LoadAllCollectionsOptions,
 } from './loader'
-export { isContentDiskCacheEnabled, CONTENT_CACHE_REL_PATH, getContentCachePath } from './content-cache'
+export {
+	isContentDiskCacheEnabled,
+	CONTENT_CACHE_REL_PATH,
+	getContentCachePath,
+} from './content-cache'
 export { render } from './render'
 export { loadContentConfigFileSync, type LoadContentConfigResult } from './load-content-config'

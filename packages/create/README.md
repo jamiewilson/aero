@@ -20,10 +20,10 @@ pnpm dlx @aero-js/create@latest my-app
 
 ## Options
 
-| Argument | Description                | Default      |
-| -------- | -------------------------- | ------------ |
-| `<dir>`  | Project name and directory | _(required)_ |
-| `--template <name>` | Starter template (`minimal`, `fullstack`) | `minimal` |
+| Argument            | Description                               | Default      |
+| ------------------- | ----------------------------------------- | ------------ |
+| `<dir>`             | Project name and directory                | _(required)_ |
+| `--template <name>` | Starter template (`minimal`, `fullstack`) | `minimal`    |
 
 ## What it does
 

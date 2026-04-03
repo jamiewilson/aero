@@ -3,7 +3,10 @@
  *
  * @remarks {@link iterateBuildScriptBindings} is the single implementation; consumers derive names or full ranges from it.
  */
-import { analyzeBuildScriptForEditor, extractBuildScriptTypeDeclarationTexts } from './build-script-analysis'
+import {
+	analyzeBuildScriptForEditor,
+	extractBuildScriptTypeDeclarationTexts,
+} from './build-script-analysis'
 import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
 
 function maskJsComments(text: string): string {
@@ -75,7 +78,7 @@ export function* iterateBuildScriptBindings(
 	}
 
 	const simpleDeclRegex =
-		/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s\[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
+		/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
 	let declMatch: RegExpExecArray | null
 	while ((declMatch = simpleDeclRegex.exec(masked)) !== null) {
 		const name = declMatch[1]
@@ -155,21 +158,25 @@ export function formatBuildBindingAmbientBlock(
 	bindingTypes?: ReadonlyMap<string, string>
 ): string {
 	if (names.size === 0) return ''
-	return [...names]
-		.filter(n => n.length > 0)
-		.sort()
-		.map(n => {
-			const t = bindingTypes?.get(n)
-			const typeStr = t !== undefined && t.trim().length > 0 ? t : 'any'
-			return `declare const ${n}: ${typeStr};`
-		})
-		.join('\n') + '\n'
+	return (
+		[...names]
+			.filter(n => n.length > 0)
+			.sort()
+			.map(n => {
+				const t = bindingTypes?.get(n)
+				const typeStr = t !== undefined && t.trim().length > 0 ? t : 'any'
+				return `declare const ${n}: ${typeStr};`
+			})
+			.join('\n') + '\n'
+	)
 }
 
 /**
  * Collect `interface` / `type` / `enum` slices from every build script body (document order).
  */
-export function collectBuildScriptTypeDeclarationTexts(buildScriptBodies: Iterable<string>): string[] {
+export function collectBuildScriptTypeDeclarationTexts(
+	buildScriptBodies: Iterable<string>
+): string[] {
 	const out: string[] = []
 	for (const body of buildScriptBodies) {
 		out.push(...extractBuildScriptTypeDeclarationTexts(body))
@@ -187,7 +194,10 @@ export function formatBuildScopeAmbientPrelude(
 	typeDeclarationSources: readonly string[],
 	buildScriptBodiesForInference?: readonly string[]
 ): string {
-	const typeBlock = typeDeclarationSources.map(s => s.trim()).filter(Boolean).join('\n\n')
+	const typeBlock = typeDeclarationSources
+		.map(s => s.trim())
+		.filter(Boolean)
+		.join('\n\n')
 	const bindingTypes =
 		buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
 			? collectBindingTypeStringsFromBuildScripts(buildScriptBodiesForInference)

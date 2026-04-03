@@ -54,7 +54,11 @@ export function readContentCache(root: string): ContentCollectionsCache | null {
 	try {
 		const raw = fs.readFileSync(p, 'utf-8')
 		const data = JSON.parse(raw) as ContentCollectionsCache
-		if (data.version !== 1 || typeof data.configHash !== 'string' || typeof data.collections !== 'object') {
+		if (
+			data.version !== 1 ||
+			typeof data.configHash !== 'string' ||
+			typeof data.collections !== 'object'
+		) {
 			return null
 		}
 		return data

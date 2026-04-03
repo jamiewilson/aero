@@ -213,7 +213,7 @@ describe('Codegen', () => {
 
 		// Mock Aero context with renderComponent
 		const Aero = {
-			renderComponent: async (comp: any, props: any) => {
+			renderComponent: async (comp: any, _props: any) => {
 				return `<div class="mock-rendered">${comp.name}</div>`
 			},
 		}
@@ -481,7 +481,7 @@ describe('Codegen', () => {
 
 		const Aero = {
 			slots: {}, // Empty slots at runtime
-			renderComponent: async (comp: any) => '<nav-mock />',
+			renderComponent: async (_comp: any) => '<nav-mock />',
 		}
 
 		const output = await execute(code, Aero)

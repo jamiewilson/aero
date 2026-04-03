@@ -14,7 +14,9 @@ import { augmentFromCssSyntaxError } from './css-postcss-error'
 import { diagnosticPathForDisplay } from './path-display'
 import { firstStackSpan } from './stack-frame'
 
-function isCompileError(err: unknown): err is { message: string; file?: string; line?: number; column?: number } {
+function isCompileError(
+	err: unknown
+): err is { message: string; file?: string; line?: number; column?: number } {
 	return err instanceof Error && err.name === 'CompileError'
 }
 

@@ -140,11 +140,11 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 
 ### `@aero-js/cli`
 
-| Surface               | Description                                                                                                             |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Binary `aero`         | Entry: `packages/cli/dist/index.mjs` with a Node shebang.                                                               |
+| Surface                        | Description                                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Binary `aero`                  | Entry: `packages/cli/dist/index.mjs` with a Node shebang.                                                                                                    |
 | `runAeroCheck(root, options?)` | Implemented in `packages/cli/src/check.ts`. `options.types` enables the same TypeScript pass as **`aero check --types`**. Not exported as a package subpath. |
-| `runAeroDoctor(root)` | Implemented in `packages/cli/src/doctor.ts`; returns `0` or `1`.                                                        |
+| `runAeroDoctor(root)`          | Implemented in `packages/cli/src/doctor.ts`; returns `0` or `1`.                                                                                             |
 
 ### `@aero-js/config`
 

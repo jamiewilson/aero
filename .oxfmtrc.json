@@ -9,5 +9,5 @@
 	"bracketSpacing": true,
 	"singleAttributePerLine": false,
 	"trailingComma": "es5",
-	"ignorePatterns": ["Base.astro", ".cursor/**/*", ".gemini/**/*", ".agent/**/*"]
+	"ignorePatterns": [".cursor/**/*", ".gemini/**/*", ".agent/**/*"]
 }

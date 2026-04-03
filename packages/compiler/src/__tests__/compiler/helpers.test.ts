@@ -247,9 +247,7 @@ describe('emitSlotOutput', () => {
 
 	it('preserves ${…} in default content for nested codegen', () => {
 		const body = '${ await Aero.renderComponent(x, {}, {}, ctx) }'
-		expect(emitSlotOutput('default', body)).toBe(
-			`__out += slots["default"] ?? \`${body}\`;\n`
-		)
+		expect(emitSlotOutput('default', body)).toBe(`__out += slots["default"] ?? \`${body}\`;\n`)
 	})
 })
 

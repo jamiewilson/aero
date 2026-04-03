@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test'
-import {
-	chromiumOnly,
-	repoPath,
-	startStaticPreview,
-	type ServerHandle,
-} from './support/harness'
+import { chromiumOnly, repoPath, startStaticPreview, type ServerHandle } from './support/harness'
 
 const examples = [
 	'cdn-externals',

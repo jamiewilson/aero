@@ -58,8 +58,7 @@ vi.mock('vscode', () => {
 			textDocuments: [],
 			getWorkspaceFolder: vi.fn(),
 			getConfiguration: () => ({
-				get: (key: string) =>
-					key === 'diagnostics.regexUndefinedVariables' ? true : 'always',
+				get: (key: string) => (key === 'diagnostics.regexUndefinedVariables' ? true : 'always'),
 			}),
 		},
 		languages: {

@@ -15,6 +15,8 @@ describe('renderComponentRegistryDts', () => {
 		expect(dts).toContain(`declare namespace AeroRegistryGenerated`)
 		expect(dts).toContain(`export namespace __tag_site_header`)
 		expect(dts).toContain(`interface HeaderProps`)
-		expect(dts).toContain(`'site-header': { props: AeroRegistryGenerated.__tag_site_header.HeaderProps }`)
+		expect(dts).toContain(
+			`'site-header': { props: AeroRegistryGenerated.__tag_site_header.HeaderProps }`
+		)
 	})
 })
