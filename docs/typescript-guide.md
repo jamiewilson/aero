@@ -94,6 +94,12 @@ When passing props from a page or parent component, type the object you spread:
 
 ---
 
+## Slot prop types (convention)
+
+For a **named** slot (`<slot name="item" … />`), the child component can declare what the parent passes into the slot body using an interface named **`{Name}SlotProps`**, where `{Name}` is the **PascalCase** slot name (for example, slot `item` → `ItemSlotProps`; slot `default` → `DefaultSlotProps`). This naming convention is agreed for generators and future tooling; **full IntelliSense for expressions inside the parent’s slot markup** is not guaranteed yet and may arrive in a later tooling pass. For the decision record, see [phase-c-slot-typing.md](../_reference/refactors/compilation/phase-c-slot-typing.md).
+
+---
+
 ## Typing Content Globals
 
 Content files in `client/content/` (e.g. `site.ts`, `theme.ts`) are exposed as globals (`site`, `theme`) in templates. Type them by exporting typed objects from `.ts` files.
@@ -278,6 +284,18 @@ See [Tsconfig path aliases](tsconfig-aliases.md) for details.
 
 ---
 
+## CI type-check
+
+In the editor, the language server type-checks `<script is:build>` and `{ }` interpolations. To enforce the same in **continuous integration** without opening an IDE, run:
+
+```bash
+pnpm exec aero check --types
+```
+
+That runs compile checks first, then TypeScript on build scripts and interpolation sites using your workspace `tsconfig.json`. See [Aero CLI (`aero check`) and tooling APIs](aero-cli-and-check.md) for flags, exit codes, and how this differs from **`aero check`** without **`--types`**.
+
+---
+
 ## Troubleshooting
 
 ### IntelliSense not updating when types change
@@ -299,6 +317,7 @@ Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) 
 | Area                    | Approach                                                                                                                                                             |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Component props**     | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread and layout attributes (with limitations) |
+| **Slot props (named slots)** | Optional `{Name}SlotProps` interface in the child; convention for future slot-body typing (see [Slot prop types](#slot-prop-types-convention)) |
 | **Content globals**     | Export typed objects from `content/*.ts`; use `satisfies` for validation                                                                                             |
 | **Content collections** | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data`                                                                             |
 | **Ambient globals**     | Use `@aero-js/core/env`; extend via project `env.d.ts`                                                                                                               |

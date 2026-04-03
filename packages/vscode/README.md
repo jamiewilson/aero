@@ -23,7 +23,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
   - Invalid expressions, missing props, script scopes (`is:build` / client / `is:inline`), and similar template rules.
 
 - **Command palette**
-  - **Aero: Run check (config, content, templates)** — runs `aero check` in the workspace (pnpm / yarn / npx depending on lockfiles).
+  - **Aero: Run check (config, content, templates)** — runs `aero check` in the workspace (pnpm / yarn / npx depending on lockfiles). This matches the default compile check only; for **TypeScript** validation of build scripts and `{ }` interpolations in CI, use **`aero check --types`** from the terminal (see [docs/aero-cli-and-check.md](../../docs/aero-cli-and-check.md)).
 
 - **Scope mode** (`aero.scopeMode`)
   - `auto` (default) — Features run in detected Aero projects and HTML files with Aero markers.
@@ -67,6 +67,8 @@ Plain HTML files without Aero markers do not get Aero features unless `aero.scop
 In VS Code settings, search for **Aero**:
 
 - **aero.scopeMode** — Where Aero features are enabled: `auto`, `strict`, or `always`.
+
+- **aero.diagnostics.regexUndefinedVariables** — Default **`false`**. When **`false`**, the extension does **not** run regex-based “undefined variable inside `{ }`” diagnostics; use the Volar language server and, for CI, **`aero check --types`** for expression typing. Set to **`true`** only if you need that legacy heuristic without relying on the language server.
 
 ## Development
 

@@ -89,7 +89,7 @@ Each document has:
 
 ## Vite plugin
 
-`aeroContent(options?)` resolves the virtual module `aero:content` (and `aero:content/...`) with serialized collections, `getCollection`, and `render`. It loads `content.config.ts` at config resolve/build start and watches collection directories for HMR. Options: `config` (path to config file, default `content.config.ts`).
+`aeroContent(options?)` resolves the virtual module `aero:content` (and `aero:content/...`) with serialized collections, `getCollection`, and `render`. It loads `content.config.ts` at config resolve/build start and watches collection directories for HMR. On file changes, `handleHotUpdate` returns affected module nodes (including the virtual `aero:content` module) so Vite propagates updates without always forcing a full page reload. Options: `config` (path to config file, default `content.config.ts`).
 
 ## File structure
 

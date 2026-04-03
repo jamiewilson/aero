@@ -64,7 +64,7 @@ export default defineConfig(({ command, mode }) => ({
 
 ```ts
 import { createViteConfig } from '@aero-js/config/vite'
-import aeroConfig from './aero.config'
+import aeroConfig from './aero.config.ts'
 
 export default createViteConfig(aeroConfig, {
 	command: process.argv.includes('build') ? 'build' : 'dev',

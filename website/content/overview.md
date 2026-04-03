@@ -17,6 +17,8 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
 | 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                          |
 | 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
+| ✅ CI type-check           | [`aero check --types`](https://github.com/jamiewilson/aero/blob/main/docs/aero-cli-and-check.md) — TypeScript on build scripts and `{ }` like the editor |
+| ⚡ Incremental builds      | Optional [`AERO_INCREMENTAL`](https://github.com/jamiewilson/aero/blob/main/docs/build-performance.md) for faster repeat static prerender |
 
 ## [Try it out](#try-it-out)
 
@@ -417,7 +419,7 @@ export default defineConfig({
 ```ts
 // vite.config.ts
 import { createViteConfig } from '@aero-js/config/vite'
-import aeroConfig from './aero.config'
+import aeroConfig from './aero.config.ts'
 
 export default createViteConfig(aeroConfig)
 ```

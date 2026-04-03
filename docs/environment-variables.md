@@ -51,6 +51,16 @@ When you set **`site`** in your Aero config, the plugin injects:
 
 So in build scripts you can use `import.meta.env.SITE` without defining it in `.env`.
 
+## Aero build-time (Node) variables
+
+These are read by the Aero Vite plugin during `vite build` / `vite dev` (they are **not** `import.meta.env` unless you wire them yourself). See **[Incremental static build](build-performance.md)** for full detail.
+
+| Variable | Purpose |
+| -------- | ------- |
+| `AERO_INCREMENTAL` | When `1`, `true`, or `yes`, enables incremental static prerender and manifest caching. |
+| `AERO_LOG` | Set to `debug` (or a list that includes `debug`) to log static prerender decisions and timings. |
+| `AERO_STATIC_PRERENDER_CONCURRENCY` | Optional bounded parallelism for static HTML prerender (integer). |
+
 ## .env files
 
 Vite loads env files from the project root:
