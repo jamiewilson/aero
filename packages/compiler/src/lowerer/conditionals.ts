@@ -1,5 +1,9 @@
 /**
  * data-if / data-else-if / data-else chain detection and lowering to a single IR `If` node.
+ *
+ * @remarks
+ * Branch bodies are compiled via `deps.compileElement` today. For `<template>` branches, the
+ * intended API is `Lowerer.compileWrapperAwareBranch` (see `lowerer/template.ts`) once integrated.
  */
 
 import * as CONST from '../constants'

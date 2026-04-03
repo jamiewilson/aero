@@ -1,5 +1,12 @@
 /**
  * Walks linkedom DOM and lowers to IR (elements, components, slots, for, if/else chains).
+ *
+ * @remarks
+ * **`<template>`:** A plain `<template>` in source is still lowered through {@link compileElement},
+ * which emits `<template>...</template>` and compiles inner nodes via `node.childNodes`. For
+ * **wrapperless** semantics (no `<template>` in output, children from `template.content`), use
+ * {@link compileWrapperlessNode} or {@link compileWrapperAwareBranch}. Conditional / switch
+ * integration will call the wrapper-aware API when implemented.
  */
 
 import type { IRNode } from '../ir'
@@ -8,6 +15,7 @@ import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
 import { parseElementAttributes, parseComponentAttributes } from './attributes'
 import { compileConditionalChain, hasIfAttr } from './conditionals'
+import { getEffectiveChildNodes, isTemplateElement } from './template'
 import {
 	compileSlot,
 	compileSlotDefaultContent,
@@ -64,6 +72,28 @@ export class Lowerer {
 		return this.compileChildNodes(nodes, false, '__out')
 	}
 
+	/**
+	 * Compiles `node`'s inner structure via {@link getEffectiveChildNodes} without emitting the
+	 * node's outer tags. For `<template>`, inner markup comes from `template.content`, so output
+	 * IR never includes `<template>` / `</template>`.
+	 */
+	compileWrapperlessNode(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+		const children = getEffectiveChildNodes(node)
+		return this.compileChildNodes(children, skipInterpolation, outVar)
+	}
+
+	/**
+	 * Compiles a branch body: {@link compileElement} for normal elements; for `<template>` only,
+	 * {@link compileWrapperlessNode} so the tag is not present in the output. Intended for
+	 * `if` / `else` / `switch` branches once wired from `conditionals` / switch lowering.
+	 */
+	compileWrapperAwareBranch(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+		if (isTemplateElement(node)) {
+			return this.compileWrapperlessNode(node, skipInterpolation, outVar)
+		}
+		return this.compileElement(node, skipInterpolation, outVar)
+	}
+
 	private compileChildNodes(
 		nodes: NodeList | undefined,
 		skipInterpolation: boolean,
@@ -106,6 +136,11 @@ export class Lowerer {
 		return [{ kind: 'Append', content, outVar }]
 	}
 
+	/**
+	 * Lower a single element node to IR (tags + children). Uses `node.childNodes` for children;
+	 * for `<template>`, wrapperless APIs in `template.ts` should be used when the tag must not
+	 * appear in output.
+	 */
 	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 

@@ -3,6 +3,7 @@
  */
 
 export { Lowerer } from './lowerer'
+export { getEffectiveChildNodes, isTemplateElement } from './template'
 export { parseElementAttributes, parseComponentAttributes } from './attributes'
 export { compileConditionalChain, hasIfAttr } from './conditionals'
 export { compileSlot, compileSlotDefaultContent, compileElementDefaultContent } from './slots'
