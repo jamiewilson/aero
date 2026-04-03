@@ -57,7 +57,7 @@ These are read by the Aero Vite plugin during `vite build` / `vite dev` (they ar
 
 | Variable | Purpose |
 | -------- | ------- |
-| `AERO_INCREMENTAL` | When `1`, `true`, or `yes`, enables incremental static prerender and manifest caching. |
+| `AERO_INCREMENTAL` | When `1`, `true`, or `yes`, enables incremental static prerender, manifest caching, and (with content) on-disk cache for collection parsing. Same effect as `incremental: true` in `aero.config.ts` when unset, or `aero build --incremental`. |
 | `AERO_LOG` | Set to `debug` (or a list that includes `debug`) to log static prerender decisions and timings. |
 | `AERO_STATIC_PRERENDER_CONCURRENCY` | Optional bounded parallelism for static HTML prerender (integer). |
 

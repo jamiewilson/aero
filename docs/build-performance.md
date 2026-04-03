@@ -2,28 +2,34 @@
 
 For production `vite build`, Aero can **skip or narrow** the static HTML prerender phase when a previous run left a compatible cache. This speeds up repeated builds when only some templates or assets change.
 
-Opt in by setting a Node environment variable before the build:
+Opt in in any of these ways (all tie into the same behavior):
 
-| Value | Meaning |
-| ----- | ------- |
-| `AERO_INCREMENTAL=1` | Enable incremental behavior (also accepts `true` or `yes`, case-insensitive). |
-| Unset or any other value | Full prerender every time (default). |
+| Mechanism | Meaning |
+| --------- | ------- |
+| `AERO_INCREMENTAL=1` (or `true` / `yes`, case-insensitive) | Enable incremental behavior for the build process. |
+| `incremental: true` in **`aero.config.ts`** | During `vite build`, sets `AERO_INCREMENTAL` when the variable is unset (explicit env always wins). |
+| `aero build --incremental` | Same as setting the env var for that command (see [Aero CLI](aero-cli-and-check.md)). |
+| Unset / `false` | Full prerender and no content disk cache (default). |
 
-Example:
+Examples:
 
 ```bash
 AERO_INCREMENTAL=1 pnpm build
 ```
 
-The [kitchen-sink](https://github.com/jamiewilson/aero/tree/main/examples/kitchen-sink) example enables this on its `build` script.
+```bash
+pnpm exec aero build --incremental
+```
+
+The [kitchen-sink](https://github.com/jamiewilson/aero/tree/main/examples/kitchen-sink) example enables incremental env on its `build` script.
 
 ## Where state is stored
 
-Successful incremental builds write a JSON manifest:
+Successful incremental builds write JSON under `.aero/cache/` (not committed):
 
-- **Path:** `.aero/cache/build-manifest.json` (under the project root).
+- **`build-manifest.json`** — Fingerprints of the client template tree, the Vite output manifest, static build options, per-file template hashes, and which routes map to which output files. **Version** `2` adds `templateFileHashes` (sha256 per `*.html` under your client directory, e.g. `client/`). Older version-`1` manifests are still read but do not support partial prerender.
 
-The manifest records fingerprints of the client template tree, the Vite output manifest, static build options, per-file template hashes, and which routes map to which output files. **Version** `2` adds `templateFileHashes` (sha256 per `*.html` under your client directory, e.g. `client/`). Older version-`1` manifests are still read but do not support partial prerender.
+- **`content-collections.json`** (when content collections are enabled) — Per markdown file: sha256 of raw file bytes → cached parsed document after schema/transform. Invalidated when **`content.config.ts`** changes (file hash). Speeds up `aero:content` loading on repeat production builds when sources are unchanged.
 
 When incremental mode is on, the Vite **`build.emptyOutDir`** option is **disabled** so `dist/` is not wiped before each build; unchanged outputs can be reused.
 

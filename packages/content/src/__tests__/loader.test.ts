@@ -4,6 +4,8 @@
  */
 import { describe, it, expect } from 'vitest'
 import { Effect } from 'effect'
+import fs from 'node:fs'
+import os from 'node:os'
 import {
 	loadAllCollections,
 	loadAllCollectionsEffect,
@@ -33,6 +35,37 @@ const docsCollection = defineCollection({
 })
 
 describe('loadAllCollections', () => {
+	it('writes and uses disk cache when AERO_INCREMENTAL and contentConfigPath are set', async () => {
+		const prev = process.env.AERO_INCREMENTAL
+		process.env.AERO_INCREMENTAL = '1'
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-content-cache-'))
+		try {
+			const contentDir = path.join(tmp, 'content', 'posts')
+			fs.mkdirSync(contentDir, { recursive: true })
+			fs.writeFileSync(path.join(contentDir, 'a.md'), '---\ntitle: A\n---\nBody A\n', 'utf-8')
+			fs.writeFileSync(path.join(tmp, 'content.config.ts'), 'export default {}\n', 'utf-8')
+
+			const posts = defineCollection({
+				name: 'posts',
+				directory: 'content/posts',
+				include: '**/*.md',
+				schema: z.object({ title: z.string() }),
+			})
+			const config = defineConfig({ collections: [posts] })
+
+			const r1 = await loadAllCollections(config, tmp, { contentConfigPath: 'content.config.ts' })
+			const cachePath = path.join(tmp, '.aero', 'cache', 'content-collections.json')
+			expect(fs.existsSync(cachePath)).toBe(true)
+
+			const r2 = await loadAllCollections(config, tmp, { contentConfigPath: 'content.config.ts' })
+			expect(r2.loaded.get('posts')).toEqual(r1.loaded.get('posts'))
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+			if (prev === undefined) delete process.env.AERO_INCREMENTAL
+			else process.env.AERO_INCREMENTAL = prev
+		}
+	})
+
 	it('discovers and loads all markdown files in the collection directory', async () => {
 		const config = defineConfig({ collections: [docsCollection] })
 		const { loaded } = await loadAllCollections(config, '/')

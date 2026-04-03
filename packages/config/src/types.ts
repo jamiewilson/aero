@@ -40,6 +40,12 @@ export interface AeroConfig {
 
 	/** Vite configuration merged with Aero defaults (plugins, build, etc.). */
 	vite?: UserConfig
+
+	/**
+	 * When `true` and `vite build`, sets `AERO_INCREMENTAL=1` if the env var is unset (incremental
+	 * static prerender + content disk cache). Explicit `AERO_INCREMENTAL` in the environment always wins.
+	 */
+	incremental?: boolean
 }
 
 /** Resolved config plus environment (used internally when invoking config function). */

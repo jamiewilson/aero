@@ -116,7 +116,9 @@ export function getCollection() {
 
 			// Processor was already initialized in configResolved hook
 			// Load and serialize all collections
-			const { loaded, schemaIssues } = await loadAllCollections(contentConfig, resolvedConfig.root)
+			const { loaded, schemaIssues } = await loadAllCollections(contentConfig, resolvedConfig.root, {
+				contentConfigPath: options.config || CONFIG_FILE,
+			})
 			if (schemaIssues.length > 0) {
 				resolvedConfig.logger.warn(formatContentSchemaIssuesReport(schemaIssues))
 			}

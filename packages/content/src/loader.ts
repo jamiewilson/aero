@@ -12,6 +12,9 @@ import type {
 	ContentSchemaIssue,
 } from './types'
 import { contentSchemaAggregateError } from './content-issues'
+import type { ContentCacheFileEntry } from './content-cache'
+import { ContentDiskCacheSession, isContentDiskCacheEnabled } from './content-cache'
+import { createHash } from 'node:crypto'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
@@ -21,20 +24,34 @@ import { Cause, Effect, Exit, Option } from 'effect'
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
-	root: string
+	root: string,
+	session?: ContentDiskCacheSession | null
 ): Promise<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }> {
 	const dir = path.resolve(root, config.directory)
 	const pattern = config.include || '**/*.md'
-	const files = await fg(pattern, { cwd: dir, absolute: true })
+	const files = (await fg(pattern, { cwd: dir, absolute: true })).sort((a, b) => a.localeCompare(b))
 
 	const documents: TOutput[] = []
 	const schemaIssues: ContentSchemaIssue[] = []
+	const fileEntries: Record<string, ContentCacheFileEntry> = {}
 
 	for (const file of files) {
 		const raw = fs.readFileSync(file, 'utf-8')
+		const fileHash = createHash('sha256').update(raw).digest('hex')
+		const relPath = path.relative(dir, file)
+		const relKey = relPath.split(path.sep).join('/')
+
+		if (session) {
+			const hit = session.tryHit(config.name, relKey, fileHash)
+			if (hit !== undefined) {
+				documents.push(hit as TOutput)
+				fileEntries[relKey] = { hash: fileHash, doc: hit }
+				continue
+			}
+		}
+
 		const { data: frontmatter, content: body } = matter(raw)
 
-		const relPath = path.relative(dir, file)
 		const parsed = path.parse(relPath)
 		const id = parsed.dir ? `${parsed.dir}/${parsed.name}` : parsed.name
 		const meta: ContentMeta = {
@@ -74,11 +91,18 @@ async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>
 			_meta: meta,
 		}
 
+		let outDoc: TOutput
 		if (config.transform) {
-			documents.push(await config.transform(doc))
+			outDoc = await config.transform(doc)
 		} else {
-			documents.push(doc as unknown as TOutput)
+			outDoc = doc as unknown as TOutput
 		}
+		documents.push(outDoc)
+		fileEntries[relKey] = { hash: fileHash, doc: outDoc }
+	}
+
+	if (session) {
+		session.setCollectionSlice(config.name, fileEntries)
 	}
 
 	return { documents, schemaIssues }
@@ -90,10 +114,11 @@ async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>
  */
 export function loadCollectionEffect<TSchema extends Record<string, any>, TOutput>(
 	config: ContentCollectionConfig<TSchema, TOutput>,
-	root: string
+	root: string,
+	session?: ContentDiskCacheSession | null
 ): Effect.Effect<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }, Error, never> {
 	return Effect.tryPromise({
-		try: () => loadCollectionAsync(config, root),
+		try: () => loadCollectionAsync(config, root, session),
 		catch: e => (e instanceof Error ? e : new Error(String(e))),
 	})
 }
@@ -186,15 +211,25 @@ function isStrictSchemaEnabled(config: ContentConfig): boolean {
 	return config.strictSchema === true || process.env.AERO_CONTENT_STRICT === '1'
 }
 
+/** Options for {@link loadAllCollections} (disk cache, tooling). */
+export interface LoadAllCollectionsOptions {
+	/**
+	 * Relative path to `content.config.ts` (or custom) for cache invalidation.
+	 * When omitted or when `AERO_INCREMENTAL` is off, per-file disk cache is not used.
+	 */
+	contentConfigPath?: string
+}
+
 /**
  * Effect program for loading all collections; {@link loadAllCollections} runs this with `Effect.runPromise`.
  */
 export function loadAllCollectionsEffect(
 	config: ContentConfig,
-	root: string
+	root: string,
+	session?: ContentDiskCacheSession | null
 ): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
 	const collections = config.collections ?? []
-	return Effect.forEach(collections, collection => loadCollectionEffect(collection, root)).pipe(
+	return Effect.forEach(collections, collection => loadCollectionEffect(collection, root, session)).pipe(
 		Effect.map(results => {
 			const loaded: LoadedContent = new Map()
 			const schemaIssues: ContentSchemaIssue[] = []
@@ -221,19 +256,28 @@ export function loadAllCollectionsEffect(
  */
 export async function loadAllCollections(
 	config: ContentConfig,
-	root: string
+	root: string,
+	options?: LoadAllCollectionsOptions
 ): Promise<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }> {
-	const exit = await Effect.runPromiseExit(loadAllCollectionsEffect(config, root))
-	return Exit.match(exit, {
-		onSuccess: value => value,
-		onFailure: cause => {
-			const failure = Cause.failureOption(cause)
-			if (Option.isSome(failure)) {
-				throw failure.value
-			}
-			throw new Error(Cause.pretty(cause))
-		},
-	})
+	let session: ContentDiskCacheSession | null = null
+	if (isContentDiskCacheEnabled() && options?.contentConfigPath) {
+		session = new ContentDiskCacheSession(root, options.contentConfigPath)
+	}
+	try {
+		const exit = await Effect.runPromiseExit(loadAllCollectionsEffect(config, root, session))
+		return Exit.match(exit, {
+			onSuccess: value => value,
+			onFailure: cause => {
+				const failure = Cause.failureOption(cause)
+				if (Option.isSome(failure)) {
+					throw failure.value
+				}
+				throw new Error(Cause.pretty(cause))
+			},
+		})
+	} finally {
+		session?.flush()
+	}
 }
 
 /** Absolute paths of all collection directories (for HMR watch and invalidation). */
