@@ -20,6 +20,12 @@ export {
 	formatContentSchemaIssuesReport,
 } from './content-issues'
 export { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
-export { loadAllCollections, loadAllCollectionsEffect, loadCollectionEffect } from './loader'
+export {
+	loadAllCollections,
+	loadAllCollectionsEffect,
+	loadCollectionEffect,
+	type LoadAllCollectionsOptions,
+} from './loader'
+export { isContentDiskCacheEnabled, CONTENT_CACHE_REL_PATH, getContentCachePath } from './content-cache'
 export { render } from './render'
 export { loadContentConfigFileSync, type LoadContentConfigResult } from './load-content-config'

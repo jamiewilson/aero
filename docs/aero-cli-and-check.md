@@ -5,7 +5,7 @@ overview: Documentation for @aero-js/cli (aero check), supporting package APIs, 
 
 # Aero CLI (`aero check`) and tooling APIs
 
-This document describes `@aero-js/cli`, the `aero check` command, the `aero doctor` command, and the supporting public APIs used by Aero tooling.
+This document describes `@aero-js/cli`, the `aero check`, `aero doctor`, and `aero build` commands, and the supporting public APIs used by Aero tooling.
 
 ## Why `@aero-js/cli` is a separate package
 
@@ -27,6 +27,8 @@ pnpm exec aero check --types
 pnpm exec aero check --root /path/to/project
 pnpm exec aero doctor
 pnpm exec aero doctor --root /path/to/project
+pnpm exec aero build
+pnpm exec aero build --incremental
 pnpm exec aero --help
 ```
 
@@ -36,6 +38,10 @@ For local monorepo development after `pnpm build`, invoke the built CLI directly
 node packages/cli/dist/index.mjs check --root examples/kitchen-sink
 node packages/cli/dist/index.mjs doctor --root examples/kitchen-sink
 ```
+
+## `aero build`
+
+Runs **`vite build`** using `createViteConfig` from the project root (same as your usual production build when `vite.config` delegates to it). Use **`--incremental`** to set `AERO_INCREMENTAL=1` when that variable is unset, enabling [incremental static build](build-performance.md) and content disk cache.
 
 ## `aero check`
 

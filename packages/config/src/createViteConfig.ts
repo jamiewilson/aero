@@ -83,7 +83,15 @@ function createViteConfigFromAero(
 		redirects,
 		middleware,
 		vite: userViteConfig,
+		incremental,
 	} = resolvedConfig
+
+	if (options.command === 'build' && incremental === true) {
+		const v = process.env.AERO_INCREMENTAL?.trim()
+		if (v === undefined || v === '') {
+			process.env.AERO_INCREMENTAL = '1'
+		}
+	}
 
 	const contentOptions = content === true ? {} : typeof content === 'object' ? content : undefined
 	const basePlugins: UserConfig['plugins'] = [

@@ -150,7 +150,9 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					yield* Effect.tryPromise({
 						try: async () => {
 							await initProcessor(contentLoad.config.markdown)
-							const { schemaIssues } = await loadAllCollections(contentLoad.config, root)
+							const { schemaIssues } = await loadAllCollections(contentLoad.config, root, {
+								contentConfigPath: contentRel,
+							})
 							if (schemaIssues.length > 0) {
 								diagnostics.push(...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error'))
 							}

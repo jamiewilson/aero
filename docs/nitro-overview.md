@@ -38,6 +38,31 @@ export default defineNitroConfig({
 })
 ```
 
+### Preview: static site vs Nitro server
+
+After a production build, choose how you preview:
+
+| Command | What runs |
+| -------- | ---------- |
+| `pnpm preview` (typically `AERO_SERVER=false vite build && vite preview`) | Static files only — no Nitro APIs |
+| `pnpm preview:api` (typically `vite build && node .output/server/index.mjs`) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, etc. |
+
+The **`@aero-js/starter-fullstack`** template (`packages/starters/fullstack` in the Aero repo) ships both scripts and a working `server/` tree you can copy from.
+
+## Cookbook index
+
+This page is the **Nitro-in-Aero cookbook**: short, copy-paste patterns for common server features. Jump to a topic:
+
+- [Routing and handlers](#routing-and-handlers)
+- [KV storage](#kv-storage)
+- [Cache](#cache)
+- [Database](#database)
+- [Plugins, tasks, and server entry](#plugins-tasks-and-server-entry)
+- [Route rules and runtime config](#route-rules-and-runtime-config)
+- [Deployment presets](#deployment-presets)
+
+For a **full runnable project** that exercises these patterns together, use the monorepo’s `packages/starters/fullstack` package (`pnpm create` / starter selection when available) or clone the repo and run `pnpm install && pnpm dev` inside that starter.
+
 ## What Aero Adds
 
 Aero generates a small `.aero/nitro.config.mjs` during build, but that generated file now **extends your root `nitro.config.ts`** instead of replacing it.
