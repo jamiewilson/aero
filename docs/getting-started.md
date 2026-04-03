@@ -286,6 +286,23 @@ Use `if`, `else-if`, and `else`:
 <p else>Not logged in.</p>
 ```
 
+### Optional: wrapperless groups with `<template>`
+
+On a **normal element**, the tag is part of the output: `<div if="{ x }">` yields a `<div>` when the branch runs. When you need **only the inner markup** (several siblings, table rows, or no extra wrapper inside a layout), put the directive on **`<template>`**. Aero then emits **only the children**, not a `<template>` node — otherwise the browser would treat the subtree as **inert**.
+
+```html
+<template if="{ showPromo }">
+	<h2>Sale</h2>
+	<p>Ends Friday.</p>
+</template>
+
+<template data-for="{ const item of items }">
+	<li>{ item }</li>
+</template>
+```
+
+You can mix `<template>` branches with regular elements in the same `if` / `else-if` / `else` chain. For literal `<template>` tags kept in the DOM for JavaScript (inert fragments), and for tables or other restricted markup, see **[HTML `<template>`](html-template-element.md)**.
+
 ---
 
 ## Path Aliases
@@ -325,6 +342,7 @@ For **faster repeat production builds**, you can enable [incremental static prer
 Now that you have the basics, explore the reference docs:
 
 - **[Routing](routing.md)** — Dynamic routes, `getStaticPaths`, nested directories
+- **[HTML `<template>`](html-template-element.md)** — Wrapperless conditionals and loops
 - **[Props](props.md)** — All the ways to pass and receive data
 - **[Scripts](script-taxonomy.md)** — Script types, `props`, bundling
 - **[Content](content-api.md)** — Collections, Markdown, `getCollection()` / `render()`

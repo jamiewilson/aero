@@ -30,6 +30,11 @@ export const ATTR_IS_BLOCKING = 'is:blocking'
 export const ATTR_SRC = 'src'
 
 export const TAG_SLOT = 'slot'
+/**
+ * HTML `<template>` tag name. For lowering, prefer `template.content.childNodes` over `childNodes`
+ * alone — see `getEffectiveChildNodes` in `lowerer/template.ts`.
+ */
+export const TAG_TEMPLATE = 'template'
 /** Default slot name when no name is given. */
 export const SLOT_NAME_DEFAULT = 'default'
 

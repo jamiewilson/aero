@@ -50,6 +50,8 @@ Inside the loop body, **`index`**, **`first`**, **`last`**, and **`length`** are
 
 If your binding pattern declares a name that collides with the injected metadata (e.g. `const { length } of rows`), it **shadows** the injected `length` inside that iteration.
 
+To repeat a fragment **without** an extra wrapper element, put `data-for` / `for` on **`<template>`** so only the inner markup is emitted — see [HTML `<template>` — Wrapperless loops](html-template-element.md).
+
 ## props (script and style)
 
 The `props` attribute on `<script>` and `<style>` uses the **same idea**: one braced expression, evaluated at render time. The value must be braced (`{ ... }`) and is used **as-is** (no extra "strip one level" rule). The expression must evaluate to an object; in script its keys become globals, in style they become CSS custom properties (e.g. `--fg`, `--bg`). Bare `props` (no value) spreads a local `props` variable.
