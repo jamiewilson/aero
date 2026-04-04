@@ -2,7 +2,7 @@
  * Map Rolldown/Vite HTML-module SSR PARSE_ERROR values into {@link AeroDiagnostic} and unified terminal output.
  */
 
-import { formatDiagnosticsTerminal } from './format-terminal'
+import { formatDiagnosticsTerminal } from './render/terminal'
 import { normalizeParseErrorFrame } from './frame-normalize'
 import type { AeroDiagnostic } from './types'
 

@@ -12,6 +12,7 @@ import {
 } from './content-schema-aggregate'
 import { augmentFromCssSyntaxError } from './css-postcss-error'
 import { diagnosticPathForDisplay } from './path-display'
+import { tryRefineHtmlReferenceErrorSpan } from './refine-html-reference-error-span'
 import { firstStackSpan } from './stack-frame'
 
 function isCompileError(
@@ -22,6 +23,73 @@ function isCompileError(
 
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === 'object' && v !== null
+}
+
+/**
+ * Map a generic Error with contextFile-specific enrichment (CSS path promotion,
+ * HTML reference span refinement, "while rendering" hint).
+ *
+ * This is the catch-block path that adds context-file awareness on top of the
+ * shared `genericErrorToDiagnostic` logic.
+ */
+function errorWithContextToDiagnostic(
+	err: Error,
+	code: AeroDiagnosticCode,
+	contextFile: string | undefined
+): AeroDiagnostic {
+	const css = augmentFromCssSyntaxError(err)
+	const stackSpan = css ? undefined : firstStackSpan(err.stack)
+	let diagFile = css?.file ?? stackSpan?.file ?? contextFile
+	let span =
+		css?.span ??
+		(stackSpan
+			? { file: stackSpan.file, line: stackSpan.line, column: stackSpan.column }
+			: undefined)
+
+	const promoteInlineCssPath =
+		css != null &&
+		Boolean(contextFile) &&
+		css.hint?.includes('inline <style>') === true &&
+		path.normalize(contextFile!) !== path.normalize(css.file)
+
+	if (promoteInlineCssPath) {
+		diagFile = contextFile!
+		if (span) span = { ...span, file: contextFile! }
+	}
+
+	const refinedSpan = tryRefineHtmlReferenceErrorSpan(err, span, diagFile)
+	if (refinedSpan) {
+		span = refinedSpan
+	}
+
+	let hint: string | undefined
+	if (css) {
+		if (promoteInlineCssPath) {
+			hint = css.hint
+		} else {
+			const parts: string[] = []
+			if (css.hint) parts.push(css.hint)
+			if (contextFile && path.normalize(contextFile) !== path.normalize(css.file)) {
+				parts.push(`while rendering ${diagnosticPathForDisplay(contextFile)}`)
+			}
+			hint = parts.length > 0 ? parts.join('\n') : undefined
+		}
+	} else {
+		hint =
+			contextFile && stackSpan && path.normalize(contextFile) !== path.normalize(stackSpan.file)
+				? `while rendering ${diagnosticPathForDisplay(contextFile)}`
+				: undefined
+	}
+
+	return {
+		code,
+		severity: 'error',
+		message: css?.message ?? (err.message || String(err)),
+		file: diagFile,
+		span,
+		...(css?.frame ? { frame: css.frame } : {}),
+		...(hint ? { hint } : {}),
+	}
 }
 
 /**
@@ -52,11 +120,7 @@ export function unknownToAeroDiagnostics(
 	if (isCompileError(err)) {
 		const span =
 			err.file !== undefined && err.line !== undefined
-				? {
-						file: err.file,
-						line: err.line,
-						column: err.column ?? 0,
-					}
+				? { file: err.file, line: err.line, column: err.column ?? 0 }
 				: undefined
 		return [
 			{
@@ -70,61 +134,7 @@ export function unknownToAeroDiagnostics(
 	}
 
 	if (err instanceof Error) {
-		const contextFile = file
-		const css = augmentFromCssSyntaxError(err)
-		const stackSpan = css ? undefined : firstStackSpan(err.stack)
-		let diagFile = css?.file ?? stackSpan?.file ?? contextFile
-		let span =
-			css?.span ??
-			(stackSpan
-				? {
-						file: stackSpan.file,
-						line: stackSpan.line,
-						column: stackSpan.column,
-					}
-				: undefined)
-
-		const promoteInlineCssPath =
-			css != null &&
-			Boolean(contextFile) &&
-			css.hint?.includes('inline <style>') === true &&
-			path.normalize(contextFile!) !== path.normalize(css.file)
-
-		if (promoteInlineCssPath) {
-			diagFile = contextFile!
-			if (span) span = { ...span, file: contextFile! }
-		}
-
-		let hint: string | undefined
-		if (css) {
-			if (promoteInlineCssPath) {
-				hint = css.hint
-			} else {
-				const parts: string[] = []
-				if (css.hint) parts.push(css.hint)
-				if (contextFile && path.normalize(contextFile) !== path.normalize(css.file)) {
-					parts.push(`while rendering ${diagnosticPathForDisplay(contextFile)}`)
-				}
-				hint = parts.length > 0 ? parts.join('\n') : undefined
-			}
-		} else {
-			hint =
-				contextFile && stackSpan && path.normalize(contextFile) !== path.normalize(stackSpan.file)
-					? `while rendering ${diagnosticPathForDisplay(contextFile)}`
-					: undefined
-		}
-
-		return [
-			{
-				code,
-				severity: 'error',
-				message: css?.message ?? (err.message || String(err)),
-				file: diagFile,
-				span,
-				...(css?.frame ? { frame: css.frame } : {}),
-				...(hint ? { hint } : {}),
-			},
-		]
+		return [errorWithContextToDiagnostic(err, code, file)]
 	}
 
 	if (typeof err === 'string') {

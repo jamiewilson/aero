@@ -36,7 +36,7 @@ describe('html-ssr-parse-error', () => {
 		expect(d.hint).toBeTruthy()
 	})
 
-	it('formats like other terminal diagnostics (frame + [aero])', () => {
+	it('formats like other terminal diagnostics (banner + File/Error)', () => {
 		const err = Object.assign(
 			new Error(
 				'Parse failure: Parse failed with 1 error:\nUnexpected token\n\n23: x\nAt file: /frontend/nav.html:25:3'
@@ -49,9 +49,8 @@ describe('html-ssr-parse-error', () => {
 			}
 		)
 		const out = formatCondensedHtmlSsrParseError(err)
-		expect(out).toContain('[aero]')
-		expect(out).toContain('[AERO_COMPILE]')
-		expect(out).toContain('/frontend/nav.html:25:3')
+		expect(out).toContain('Aero Compiler Error')
+		expect(out).toContain('File: /frontend/nav.html:25:3')
 		expect(out).toContain('Unexpected token')
 		expect(out).toContain('23 | a')
 		expect(out).not.toMatch(/at async fetchModule/)
