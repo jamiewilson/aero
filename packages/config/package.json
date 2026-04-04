@@ -22,10 +22,14 @@
 		"./vite": {
 			"types": "./dist/vite.d.mts",
 			"default": "./dist/vite.mjs"
+		},
+		"./analyzer-entries": {
+			"types": "./dist/analyzer-entries.d.mts",
+			"default": "./dist/analyzer-entries.mjs"
 		}
 	},
 	"scripts": {
-		"build": "tsdown src/index.ts src/vite.ts --format esm --dts --clean --out-dir dist",
+		"build": "tsdown src/index.ts src/vite.ts src/analyzer-entries.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
 		"prepack": "cp ../../LICENSE ."
 	},

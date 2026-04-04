@@ -9,18 +9,10 @@
 		subtitle: site.home.subtitle,
 		requiredProp: true,
 	}
-
-	const state = 'isVisible'
 </script>
 
 <base-layout>
 	<header-component props="{ ...headerProps }" />
-
-	<template switch="{ state }">
-		<p case="isVisible">Visible</p>
-		<p case="isHidden">Hidden</p>
-	</template>
-
 	<form-component />
 	<script is:inline>
 		console.debug('[AERO] <script is:inline> nested in <base-layout>')
