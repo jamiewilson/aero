@@ -15,12 +15,7 @@ import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { parseElementAttributes, parseComponentAttributes } from './attributes'
-import {
-	compileConditionalChain,
-	hasElseAttr,
-	hasElseIfAttr,
-	hasIfAttr,
-} from './conditionals'
+import { compileConditionalChain, hasElseAttr, hasElseIfAttr, hasIfAttr } from './conditionals'
 import {
 	compileSwitchContainer,
 	hasCaseAttr,
@@ -181,10 +176,7 @@ export class Lowerer {
 			})
 		}
 
-		if (
-			switchExpr &&
-			(hasIfAttr(node) || hasElseIfAttr(node) || hasElseAttr(node))
-		) {
+		if (switchExpr && (hasIfAttr(node) || hasElseIfAttr(node) || hasElseAttr(node))) {
 			throw new CompileError({
 				message: 'Cannot combine `switch` with `if` / `else-if` / `else` on the same element.',
 				file: this.diag?.file,
@@ -228,7 +220,8 @@ export class Lowerer {
 
 		if (switchExpr && CONST.VOID_TAGS.has(tagName)) {
 			throw new CompileError({
-				message: '`switch` cannot be used on a void element (no room for `case` / `default` children).',
+				message:
+					'`switch` cannot be used on a void element (no room for `case` / `default` children).',
 				file: this.diag?.file,
 			})
 		}
@@ -264,8 +257,7 @@ export class Lowerer {
 				inner.push(
 					compileSwitchContainer(
 						{
-							compileBranchBody: (n, skip, o) =>
-								this.compileWrapperAwareBranch(n, skip, o),
+							compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
 						},
 						this.diag,
 						node,
@@ -330,10 +322,7 @@ export class Lowerer {
 					child.hasAttribute(CONST.ATTR_SLOT)
 				) {
 					const passthroughName = child.getAttribute(CONST.ATTR_NAME)
-					const defaultContent = this.compileSlotDefaultContent(
-						child.childNodes,
-						skipInterpolation
-					)
+					const defaultContent = this.compileSlotDefaultContent(child.childNodes, skipInterpolation)
 					slotIR.push({
 						kind: 'Slot',
 						name: passthroughName,
@@ -352,8 +341,7 @@ export class Lowerer {
 					if (startIndex >= 0) {
 						const { nodes: chainNodes, consumed } = compileConditionalChain(
 							{
-								compileBranchBody: (n, skip, o) =>
-									this.compileWrapperAwareBranch(n, skip, o),
+								compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
 							},
 							this.diag,
 							parent.childNodes,

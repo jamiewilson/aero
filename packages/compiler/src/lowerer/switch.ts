@@ -12,7 +12,8 @@ import { getEffectiveChildNodes, isTemplateElement } from './template'
 export function hasSwitchAttr(node: any): boolean {
 	return (
 		node?.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_SWITCH) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_SWITCH))
+		(node.hasAttribute(CONST.ATTR_SWITCH) ||
+			node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_SWITCH))
 	)
 }
 
@@ -26,7 +27,8 @@ export function hasCaseAttr(node: any): boolean {
 export function hasDefaultAttr(node: any): boolean {
 	return (
 		node?.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_DEFAULT) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_DEFAULT))
+		(node.hasAttribute(CONST.ATTR_DEFAULT) ||
+			node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_DEFAULT))
 	)
 }
 
@@ -79,7 +81,7 @@ export function parseCaseComparands(node: any, diag: LowererDiag): string[] {
 	const dataName = CONST.ATTR_PREFIX + CONST.ATTR_CASE
 	const dataVal = node.getAttribute(dataName)
 	const useData = plain === null && dataVal !== null
-	const raw = useData ? dataVal! : plain ?? ''
+	const raw = useData ? dataVal! : (plain ?? '')
 	const attrLabel = useData ? dataName : CONST.ATTR_CASE
 
 	if (raw === null || raw === '') {

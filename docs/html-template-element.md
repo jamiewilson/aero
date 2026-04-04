@@ -2,10 +2,10 @@
 
 Aero treats **`<template>`** in two different ways, depending on whether you use **structural directives** on the tag (`if`, `else-if`, `else`, `for`, `data-for`, `switch`):
 
-| Usage | What appears in the generated HTML |
-| ----- | ------------------------------------ |
-| **Structural directive on `<template>`** | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li data-for>`, but without an extra element in the tree. |
-| **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** (contents are not normal page content) until script moves or clones them — standard HTML behavior. |
+| Usage                                        | What appears in the generated HTML                                                                                                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Structural directive on `<template>`**     | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li data-for>`, but without an extra element in the tree. |
+| **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** (contents are not normal page content) until script moves or clones them — standard HTML behavior.   |
 
 Use this page when you choose between a **wrapperless group** (no extra tag), a **literal inert** template (for JS), or a **restricted HTML context** where only certain tags are allowed.
 
@@ -100,4 +100,4 @@ Directive attributes (`if`, `for`, `switch`, `case`, `default`, etc.) are compil
 - [Interpolation — Loops](interpolation.md#loops-for--data-for) — `for` / `data-for` syntax and loop metadata.
 - [Props](props.md) — Directive expression rules (`if="{ … }"`, `for="{ … }"`).
 
-For compiler internals (e.g. `template.content` vs `childNodes`), see [_reference/refactors/wrapperless/template-lowering-in-compiler.md](../_reference/refactors/wrapperless/template-lowering-in-compiler.md).
+For compiler internals (e.g. `template.content` vs `childNodes`), see [\_reference/refactors/wrapperless/template-lowering-in-compiler.md](../_reference/refactors/wrapperless/template-lowering-in-compiler.md).

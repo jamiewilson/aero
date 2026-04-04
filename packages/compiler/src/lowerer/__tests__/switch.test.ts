@@ -5,7 +5,7 @@ import { Resolver } from '../../resolver'
 import { compileSwitchContainer, parseCaseComparands, parentIsSwitchContainer } from '../switch'
 
 describe('lowerer/switch', () => {
-	const resolver = new Resolver({ root: '/', resolvePath: (s) => s, importer: '/' })
+	const resolver = new Resolver({ root: '/', resolvePath: s => s, importer: '/' })
 
 	it('parseCaseComparands handles literal and braced expression', () => {
 		const { document } = parseHTML('<html><body><span case="a"></span></body></html>')
@@ -18,7 +18,7 @@ describe('lowerer/switch', () => {
 
 	it('parseCaseComparands handles grouped array', () => {
 		const { document } = parseHTML(
-			'<html><body><span case="{ [\'active\', \'pending\'] }"></span></body></html>'
+			"<html><body><span case=\"{ ['active', 'pending'] }\"></span></body></html>"
 		)
 		const span = document.body!.firstElementChild!
 		expect(parseCaseComparands(span, undefined)).toEqual(["'active'", "'pending'"])

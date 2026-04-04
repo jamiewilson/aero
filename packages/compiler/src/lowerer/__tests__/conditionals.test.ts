@@ -57,7 +57,7 @@ describe('lowerer/conditionals', () => {
 		const body = document.body!
 		body.innerHTML =
 			'<template if="{a}"><span>a</span></template><template else-if="{b}"><b>b</b></template><template else><i>c</i></template>'
-		const resolver = new Resolver({ root: '/', resolvePath: (s) => s, importer: '/' })
+		const resolver = new Resolver({ root: '/', resolvePath: s => s, importer: '/' })
 		const lowerer = new Lowerer(resolver)
 		const result = compileConditionalChain(
 			{
@@ -82,7 +82,7 @@ describe('lowerer/conditionals', () => {
 		const body = document.body!
 		body.innerHTML =
 			'<template if="{x}"><p>a</p></template><!-- sep --><template else><p>b</p></template>'
-		const resolver = new Resolver({ root: '/', resolvePath: (s) => s, importer: '/' })
+		const resolver = new Resolver({ root: '/', resolvePath: s => s, importer: '/' })
 		const lowerer = new Lowerer(resolver)
 		const result = compileConditionalChain(
 			{
