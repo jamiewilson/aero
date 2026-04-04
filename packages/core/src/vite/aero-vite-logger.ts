@@ -6,10 +6,10 @@ import type { Logger, ServerModuleRunnerOptions } from 'vite'
 import {
 	formatCondensedHtmlSsrParseError,
 	isCondensableHtmlSsrParseError,
-} from './condense-ssr-parse-error'
+} from '@aero-js/diagnostics'
 
 /** @see import('vite/module-runner').HMRLogger */
-export interface HMRLoggerLike {
+interface HmrLoggerLike {
 	error(msg: string | Error): void
 	debug(...msg: unknown[]): void
 }
@@ -31,7 +31,7 @@ export function wrapAeroViteLogger(base: Logger): Logger {
 	}
 }
 
-export function createAeroSsrHmrLogger(): HMRLoggerLike {
+export function createAeroSsrHmrLogger(): HmrLoggerLike {
 	return {
 		debug: (...msg: unknown[]) => console.log('[vite]', ...msg),
 		error(msg: string | Error) {
@@ -53,7 +53,7 @@ export function createAeroSsrHmrLogger(): HMRLoggerLike {
  */
 export function mergeSsrRunnerOptionsWithHmrLogger(
 	base: ServerModuleRunnerOptions | undefined,
-	hmrLogger: HMRLoggerLike
+	hmrLogger: HmrLoggerLike
 ): ServerModuleRunnerOptions {
 	if (base?.hmr === false) {
 		return { ...base }

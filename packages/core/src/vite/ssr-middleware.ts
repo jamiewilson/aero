@@ -20,7 +20,7 @@ import { addDoctype } from './build'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
 
 /** Subset of Aero plugin state needed for SSR (avoids circular import from `index.ts`). */
-export interface AeroSsrMiddlewareState {
+interface AeroSsrMiddlewareState {
 	config: { root: string } | null
 	dirs: ReturnType<typeof resolveDirs>
 	apiPrefix: string

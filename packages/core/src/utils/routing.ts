@@ -16,7 +16,7 @@ import { matchRoutePattern } from './route-pattern'
 /**
  * Result of resolving a page: the module (or lazy loader), canonical page name, and route params.
  */
-export interface PageTargetResult {
+interface PageTargetResult {
 	module: AeroPageModule
 	pageName: string
 	params: AeroRouteParams

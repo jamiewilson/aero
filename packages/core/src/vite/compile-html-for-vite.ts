@@ -10,7 +10,7 @@ import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 
 /** Parameters from resolved Vite config and alias resolution; used by both virtual load and .html transform. */
-export interface CompileHtmlForViteParams {
+interface CompileHtmlForViteParams {
 	resolvedConfig: ResolvedConfig
 	resolvePath: (specifier: string, importer: string) => string
 }

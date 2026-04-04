@@ -51,6 +51,7 @@ export interface AeroOptions {
 }
 
 /** Request context passed to middleware (url, request, route path, resolved page name, site). */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export interface AeroRequestContext {
 	url: URL
 	request: Request
@@ -67,6 +68,7 @@ export type AeroMiddlewareResult =
 	| void
 
 /** Middleware handler: receives request context; returns redirect/rewrite/response or nothing to continue. */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export type AeroMiddleware = (
 	ctx: AeroRequestContext
 ) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
@@ -97,6 +99,7 @@ export interface ScriptEntry {
  * @remarks
  * Script arrays come from the parser; `root` and `resolvePath` from the build.
  */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export interface CompileOptions {
 	root: string
 	/** Client script entries (plain `<script>`): after transform, `content` may be virtual URL. */
@@ -114,6 +117,7 @@ export interface CompileOptions {
 }
 
 /** Options for the path resolver (e.g. resolving `@components/foo` to a file path). */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export interface ResolverOptions {
 	root: string
 	resolvePath?: (specifier: string, importer: string) => string
@@ -199,6 +203,7 @@ export interface AeroRenderInput {
 /**
  * Page context: request URL, Request object, and route params.
  */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export interface AeroPageContext {
 	url: URL
 	request: Request
@@ -220,6 +225,7 @@ export interface AeroSiteContext {
  * Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params` for request-scoped data;
  * use `Aero.site.url` for the canonical site URL.
  */
+// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
 export interface AeroTemplateContext {
 	[key: string]: any
 	props: Record<string, any>

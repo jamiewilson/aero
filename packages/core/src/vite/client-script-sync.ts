@@ -8,7 +8,7 @@ import { registerClientScriptsToMap } from './build'
 import { CLIENT_SCRIPT_PREFIX } from './defaults'
 
 /** Compare two ScriptEntry records for semantic equality (used to detect client script changes on HMR). */
-export function sameScriptEntry(a: ScriptEntry | undefined, b: ScriptEntry | undefined): boolean {
+function sameScriptEntry(a: ScriptEntry | undefined, b: ScriptEntry | undefined): boolean {
 	if (!a || !b) return false
 	return (
 		a.content === b.content &&
@@ -23,7 +23,7 @@ function clientScriptPrefixForBase(baseName: string): string {
 }
 
 /** All virtual client script ids belonging to the same template baseName. */
-export function getClientScriptIdsForBase(
+function getClientScriptIdsForBase(
 	baseName: string,
 	target: Map<string, ScriptEntry>
 ): string[] {

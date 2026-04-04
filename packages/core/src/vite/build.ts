@@ -55,24 +55,10 @@ import {
 	isIncrementalStaticBuildEnabled,
 	readBuildManifest,
 	writeBuildManifest,
-	type AeroBuildManifest,
 } from './build-manifest'
 import { loadTsconfigAliases } from '../utils/aliases'
 export { addDoctype } from './rewrite'
 
-export {
-	AERO_BUILD_MANIFEST_VERSION,
-	canSkipEntirePrerender,
-	computeClientHtmlFingerprint,
-	diffTemplateFileHashes,
-	getBuildManifestPath,
-	hashFileSha256,
-	hashViteOutputManifest,
-	isIncrementalStaticBuildEnabled,
-	readBuildManifest,
-	writeBuildManifest,
-	type AeroBuildManifest,
-} from './build-manifest'
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
 function aeroStaticBuildDebug(message: string): void {
 	const v = process.env.AERO_LOG
@@ -291,10 +277,7 @@ export function discoverRuntimeTemplatePaths(
 }
 
 /** Per `*.html` file under `clientDir` → sha256 (keys: posix path relative to `root`). */
-export function computeTemplateFileHashesMap(
-	root: string,
-	clientDir: string
-): Record<string, string> {
+function computeTemplateFileHashesMap(root: string, clientDir: string): Record<string, string> {
 	const base = path.resolve(root, clientDir)
 	const files = walkHtmlFiles(base)
 	const out: Record<string, string> = {}
