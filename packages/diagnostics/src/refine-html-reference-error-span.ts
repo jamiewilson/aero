@@ -9,8 +9,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { AeroDiagnosticSpan } from './types'
 
-const SIMPLE_REFERENCE =
-	/^([A-Za-z_$][\w$]*) is not defined$/
+const SIMPLE_REFERENCE = /^([A-Za-z_$][\w$]*) is not defined$/
 
 function escapeRegExp(s: string): string {
 	return s.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')

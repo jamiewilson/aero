@@ -19,7 +19,11 @@ export {
 	type DiagnosticSectionKind,
 	type LayoutOptions,
 } from './render/layout'
-export { terminalRenderer, formatDiagnosticsTerminal, type FormatDiagnosticsTerminalOptions } from './render/terminal'
+export {
+	terminalRenderer,
+	formatDiagnosticsTerminal,
+	type FormatDiagnosticsTerminalOptions,
+} from './render/terminal'
 export {
 	htmlRenderer,
 	formatDiagnosticsBrowserHtml,

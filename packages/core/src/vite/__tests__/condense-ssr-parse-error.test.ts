@@ -15,6 +15,6 @@ describe('condense-ssr-parse-error re-export', () => {
 			loc: { file: '/a.html', line: 1, column: 1 },
 		})
 		expect(isCondensableHtmlSsrParseError(err)).toBe(true)
-		expect(formatCondensedHtmlSsrParseError(err)).toContain('[aero]')
+		expect(formatCondensedHtmlSsrParseError(err)).toContain('Aero Compiler Error')
 	})
 })

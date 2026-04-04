@@ -183,7 +183,7 @@ describe('loadAllCollections', () => {
 			expect(e).toBeInstanceOf(ContentSchemaAggregateError)
 			const err = e as ContentSchemaAggregateError
 			expect(err.issues).toHaveLength(2)
-			expect(err.message).toContain('[AERO_CONTENT_SCHEMA]')
+			expect(err.message).toContain('Aero Content Schema Error')
 		}
 	})
 
