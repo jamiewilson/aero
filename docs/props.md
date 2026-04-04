@@ -9,7 +9,7 @@ Aero provides a flexible, Astro-inspired props system for component composition.
 ## How attribute values work
 
 - **Normal attributes** are **string literals** unless you wrap the value in `{ ... }`. Use `{ expression }` to pass booleans, numbers, or computed values.
-- **Directives** (`if`, `else-if`, `else`, `for`) require brace-wrapped expressions: e.g. `if="{ condition }"`, `for="{ const item of items }"`. Unbraced values are invalid. On **`<template>`**, those directives compile to **wrapperless** output (children only); see [html-template-element.md](html-template-element.md).
+- **Directives** (`if`, `else-if`, `else`, `for`, `switch`) require brace-wrapped expressions where applicable: e.g. `if="{ condition }"`, `for="{ const item of items }"`, `switch="{ state }"`. `case` accepts a string literal (`case="active"`) or a braced expression (`case="{ expr }"`); grouped cases use an array: `case="{ ['a', 'b'] }"`. `default` is a bare attribute (like `else`). Unbraced values are invalid where the directive expects `{ … }`. On **`<template>`**, `if` / `for` / `switch` compile to **wrapperless** output (children only); see [html-template-element.md](html-template-element.md).
 - **`props`** — `props="{ ...data }"` spreads the object’s keys as props. `props="{ data }"` passes the object as a single prop named `data`. `props` with no value spreads a local variable named `props`. Without braces, non-string values become strings and can cause type bugs.
 
 ## Passing Props to Components

@@ -6,6 +6,13 @@ export { Lowerer } from './lowerer'
 export { getEffectiveChildNodes, isTemplateElement } from './template'
 export { parseElementAttributes, parseComponentAttributes } from './attributes'
 export { compileConditionalChain, hasIfAttr } from './conditionals'
+export {
+	compileSwitchContainer,
+	hasSwitchAttr,
+	hasCaseAttr,
+	hasDefaultAttr,
+	parentIsSwitchContainer,
+} from './switch'
 export { compileSlot, compileSlotDefaultContent, compileElementDefaultContent } from './slots'
 export type { SlotDefaultContentDeps } from './slots'
 export type { LowererDiag, ParsedElementAttrs, ParsedComponentAttrs } from './types'

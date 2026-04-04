@@ -9,6 +9,8 @@ export type LowererDiag = { source: string; file?: string } | undefined
 export interface ParsedElementAttrs {
 	attrString: string
 	loopData: { binding: string; items: string } | null
+	/** Discriminant from `switch` / `data-switch="{ … }"` when present. */
+	switchExpr: string | null
 	passDataExpr: string | null
 }
 

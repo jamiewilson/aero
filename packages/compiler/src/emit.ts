@@ -84,6 +84,39 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 			b.raw(code + new CodeBuilder().stmtEnd().toString())
 			break
 		}
+		case 'Switch': {
+			const expr = node.expression
+			if (node.cases.length === 0) {
+				if (node.defaultBody !== undefined) {
+					emitToJSInto(b, node.defaultBody, outVar)
+				}
+				break
+			}
+			let code = ''
+			for (let ci = 0; ci < node.cases.length; ci++) {
+				const branch = node.cases[ci]!
+				const cond = branch.comparandExprs.map(k => `(${expr}) === (${k})`).join(' || ')
+				if (ci === 0) {
+					code = new CodeBuilder().stmtIf(cond).toString()
+					const bodyB = new CodeBuilder()
+					emitToJSInto(bodyB, branch.body, outVar)
+					code += bodyB.toString()
+				} else {
+					code = code.slice(0, -2) + new CodeBuilder().stmtElseIf(cond).toString()
+					const bodyB = new CodeBuilder()
+					emitToJSInto(bodyB, branch.body, outVar)
+					code += bodyB.toString()
+				}
+			}
+			if (node.defaultBody !== undefined) {
+				code = code.slice(0, -2) + new CodeBuilder().stmtElse().toString()
+				const elseB = new CodeBuilder()
+				emitToJSInto(elseB, node.defaultBody, outVar)
+				code += elseB.toString()
+			}
+			b.raw(code + new CodeBuilder().stmtEnd().toString())
+			break
+		}
 		case 'Slot':
 			b.stmtSlotOutput(node.name, node.defaultContent, outVarFor(node, outVar))
 			break
