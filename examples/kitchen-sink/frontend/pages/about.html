@@ -13,11 +13,24 @@
 		custom: { title: 'About Page Title' },
 		subtitle: site.about.subtitle,
 	}
+
+	enum AuthState {
+		SignedIn,
+		SignedOut
+	}
+
+	const auth = { state: AuthState.SignedOut }
 </script>
 
 <sub-layout title="{ meta.title }" image="{ meta.image }">
 	<img src="{ aboutImage }" class="fullscreen" alt="About" />
-	<a href="#" slot="thru-sub">Slot</a>
+
+	<!-- FIXME:  slot="thru-sub" should be stripped on compile -->
+	<div switch="{ auth.state }" slot="thru-sub">
+		<a href="#" case="{ AuthState.SignedIn }">Sign Out</a>
+		<a href="#" case="{ AuthState.SignedOut }">Sign In</a>
+	</div>
+
 	<header-component props />
 </sub-layout>
 

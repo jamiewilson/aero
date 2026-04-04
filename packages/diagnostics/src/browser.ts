@@ -14,11 +14,12 @@ export {
 	formatDiagnosticPlainText,
 	formatDiagnosticsBrowserHtml,
 	escapeForBrowserPre,
-} from './format-browser'
+	type FormatDiagnosticsBrowserHtmlOptions,
+} from './render/html'
 export {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
 	AERO_DIAGNOSTICS_SCRIPT_ID,
 	decodeDiagnosticsHeaderValue,
-	extractDiagnosticsFromDevErrorHtml,
 	parseDiagnosticsJson,
-} from './dev-ssr-transport'
+} from './wire-format'
+export { extractDiagnosticsFromDevErrorHtml } from './error-page-parse'

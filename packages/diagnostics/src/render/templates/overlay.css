@@ -1,0 +1,97 @@
+/*
+ * Aero diagnostic overlay styles.
+ *
+ * CSS custom properties allow theming (dark mode, custom branding)
+ * without touching structural rules. Override --aero-diag-* vars on
+ * a parent element or :root to retheme.
+ */
+
+:root {
+	--aero-diag-font: system-ui, sans-serif;
+	--aero-diag-mono: ui-monospace, monospace;
+
+	--aero-diag-bg: light-dark(#fff, #0c1117);
+	--aero-diag-text: light-dark(#0c1117, #fff);
+	--aero-diag-text-secondary: light-dark(#1b222b, #aaa);
+	--aero-diag-text-muted: light-dark(#1b222b, #ccc);
+	--aero-diag-link: light-dark(#0b57d0, #6ab0ff);
+
+	--aero-diag-label-weight: 600;
+	--aero-diag-label-color: light-dark(#1b222b, #ccc);
+
+	--aero-diag-frame-bg: light-dark(#f6f6f6, #030911);
+	--aero-diag-frame-border: light-dark(#e8e8e8, #1b222b);
+	--aero-diag-frame-radius: 0.25rem;
+
+	--aero-diag-banner-color: light-dark(#999, #666);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+	}
+}
+
+body {
+	font-family: var(--aero-diag-font);
+	color: var(--aero-diag-text);
+	background: var(--aero-diag-bg);
+	padding: 1rem;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+h1 {
+	color: var(--aero-diag-text-muted);
+	margin-bottom: 1rem;
+}
+
+.aero-diagnostics {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.aero-diag-block {
+	margin: 0;
+	padding: 0;
+}
+
+.aero-diag-index {
+	margin: 0 0 0.5rem;
+	color: var(--aero-diag-text-secondary);
+}
+
+.aero-diag-k {
+	font-weight: var(--aero-diag-label-weight);
+	color: var(--aero-diag-label-color);
+	margin-right: 0.2rem;
+}
+
+.aero-diag-v {
+	word-break: break-word;
+}
+
+.aero-diag-frame {
+	white-space: pre;
+	font-family: var(--aero-diag-mono);
+	padding: 2rem;
+	background: var(--aero-diag-frame-bg);
+	border: 1px solid var(--aero-diag-frame-border);
+	border-radius: var(--aero-diag-frame-radius);
+	overflow: auto;
+	line-height: 1.5;
+}
+
+.aero-diag-row a {
+	color: var(--aero-diag-link);
+}
+
+.aero-diag-banner {
+	margin: 0;
+	padding: 0;
+	font-family: var(--aero-diag-mono);
+	color: var(--aero-diag-banner-color);
+	white-space: pre;
+	line-height: 1.4;
+}

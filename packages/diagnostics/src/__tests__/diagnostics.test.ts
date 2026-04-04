@@ -52,7 +52,7 @@ describe('diagnostics', () => {
 		expect(d[0]!.hint).toContain('index.html')
 	})
 
-	it('formatDiagnosticsTerminal includes code and path', () => {
+	it('formatDiagnosticsTerminal includes title, path, and message', () => {
 		const text = formatDiagnosticsTerminal([
 			{
 				code: 'AERO_PARSE',
@@ -62,7 +62,7 @@ describe('diagnostics', () => {
 				span: { file: 'pages/a.html', line: 2, column: 5 },
 			},
 		])
-		expect(text).toContain('[AERO_PARSE]')
+		expect(text).toContain('Aero Parse Error')
 		expect(text).toContain('pages/a.html:2:5')
 		expect(text).toContain('bad brace')
 	})
@@ -245,6 +245,8 @@ describe('diagnostics', () => {
 		expect(html).not.toContain('<script>')
 		expect(html).toContain('&lt;script&gt;')
 		expect(html).toContain('&amp;')
+		expect(html).toContain('aero-diag-block')
+		expect(html).toContain('data-aero-code="AERO_COMPILE"')
 	})
 
 	it('formatDiagnosticsBrowserHtml includes escaped frame', () => {
@@ -258,6 +260,7 @@ describe('diagnostics', () => {
 		])
 		expect(html).toContain('aero-diag-frame')
 		expect(html).toContain('&lt;tag&gt;')
+		expect(html).toContain('Aero Parse Error')
 	})
 
 	it('preserves code/message across terminal, vite, browser, and SSR transport', () => {
@@ -280,7 +283,7 @@ describe('diagnostics', () => {
 		expect(vite.loc).toEqual({ file: 'client/pages/bad.html', line: 1, column: 31 })
 
 		const browser = formatDiagnosticsBrowserHtml([d])
-		expect(browser).toContain('AERO_COMPILE')
+		expect(browser).toContain('data-aero-code="AERO_COMPILE"')
 		expect(browser).toContain('Directive props must be braced')
 
 		const ssrHtml = buildDevSsrErrorHtml([d])

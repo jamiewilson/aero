@@ -30,9 +30,12 @@
 		}
 	},
 	"scripts": {
-		"build": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
-		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"gen-templates": "node scripts/embed-templates.mjs",
+		"compile": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
+		"embed-templates": "pnpm gen-templates && pnpm compile",
+		"build": "pnpm embed-templates",
+		"typecheck": "pnpm gen-templates && tsc --noEmit",
+		"test": "pnpm gen-templates && vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {

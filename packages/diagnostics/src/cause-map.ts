@@ -7,76 +7,31 @@ import * as Chunk from 'effect/Chunk'
 import * as Exit from 'effect/Exit'
 import * as Option from 'effect/Option'
 import type { AeroDiagnostic } from './types'
-import { augmentFromCssSyntaxError } from './css-postcss-error'
+import {
+	cancelledErrorToDiagnostic,
+	compileErrorToDiagnostic,
+	genericErrorToDiagnostic,
+	unknownValueToDiagnostic,
+} from './error-to-diagnostic'
 import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
-import { firstStackSpan } from './stack-frame'
 
 /**
  * Convert an Effect failure value from Cause.fail into diagnostics (single or multiple per parallel Cause).
  */
 export function failureToAeroDiagnostics(value: unknown): AeroDiagnostic[] {
 	if (value instanceof AeroBuildCancelledError) {
-		return [
-			{
-				code: 'AERO_INTERNAL',
-				severity: 'warning',
-				message: value.message ?? 'Static build cancelled',
-			},
-		]
+		return [cancelledErrorToDiagnostic(value)]
 	}
 
 	if (value instanceof AeroCompileError) {
-		const span =
-			value.file !== undefined && value.line !== undefined
-				? {
-						file: value.file,
-						line: value.line,
-						column: value.column ?? 0,
-					}
-				: undefined
-
-		return [
-			{
-				code: 'AERO_COMPILE',
-				severity: 'error',
-				message: value.message,
-				file: value.file,
-				span,
-			},
-		]
+		return [compileErrorToDiagnostic(value)]
 	}
 
 	if (value instanceof Error) {
-		const css = augmentFromCssSyntaxError(value)
-		const stackSpan = css ? undefined : firstStackSpan(value.stack)
-		return [
-			{
-				code: 'AERO_COMPILE',
-				severity: 'error',
-				message: css?.message ?? (value.message || String(value)),
-				file: css?.file ?? stackSpan?.file,
-				span:
-					css?.span ??
-					(stackSpan
-						? {
-								file: stackSpan.file,
-								line: stackSpan.line,
-								column: stackSpan.column,
-							}
-						: undefined),
-				...(css?.frame ? { frame: css.frame } : {}),
-				...(css?.hint ? { hint: css.hint } : {}),
-			},
-		]
+		return [genericErrorToDiagnostic(value)]
 	}
 
-	return [
-		{
-			code: 'AERO_INTERNAL',
-			severity: 'error',
-			message: typeof value === 'string' ? value : `Unknown failure: ${String(value)}`,
-		},
-	]
+	return [unknownValueToDiagnostic(value)]
 }
 
 /**

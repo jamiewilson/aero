@@ -40,12 +40,11 @@ describe('contentSchemaIssuesToAeroDiagnostics', () => {
 		expect(d.every(x => x.severity === 'error')).toBe(true)
 	})
 
-	it('formats through formatDiagnosticsTerminal with [aero] and code', () => {
+	it('formats through formatDiagnosticsTerminal with banner title and paths', () => {
 		const text = formatDiagnosticsTerminal(
 			contentSchemaIssuesToAeroDiagnostics(sampleIssues, 'warning')
 		)
-		expect(text).toContain('[aero]')
-		expect(text).toContain('[AERO_CONTENT_SCHEMA]')
+		expect(text).toContain('Aero Content Schema Error')
 		expect(text).toContain('/proj/content/docs/bad.md')
 	})
 })

@@ -2,7 +2,7 @@
  * Schema validation issue aggregation for content collections (terminal / Vite logger).
  *
  * @remarks
- * Terminal text uses `@aero-js/diagnostics` `formatDiagnosticsTerminal` for consistent `[aero] [AERO_CONTENT_SCHEMA]` output.
+ * Terminal text uses `@aero-js/diagnostics` `formatDiagnosticsTerminal` (banner + File/Error lines).
  */
 
 import { formatDiagnosticsTerminal } from '@aero-js/diagnostics'

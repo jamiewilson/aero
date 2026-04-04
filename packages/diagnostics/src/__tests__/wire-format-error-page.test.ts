@@ -1,16 +1,18 @@
 /**
- * Round-trip and HTML extraction for dev SSR diagnostic transport.
+ * Wire format (header / JSON) and dev SSR error HTML round-trip.
  */
 
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
 	buildDevSsrErrorHtml,
+	extractDiagnosticsFromDevErrorHtml,
+} from '../error-page'
+import {
 	decodeDiagnosticsHeaderValue,
 	encodeDiagnosticsHeaderValue,
-	extractDiagnosticsFromDevErrorHtml,
 	parseDiagnosticsJson,
-} from '../dev-ssr-transport'
+} from '../wire-format'
 import type { AeroDiagnostic } from '../types'
 
 const sample: AeroDiagnostic[] = [
@@ -24,7 +26,7 @@ const sample: AeroDiagnostic[] = [
 	},
 ]
 
-describe('dev-ssr-transport', () => {
+describe('wire-format and error-page', () => {
 	it('round-trips diagnostics via base64 header encoding', () => {
 		const enc = encodeDiagnosticsHeaderValue(sample)
 		const dec = decodeDiagnosticsHeaderValue(enc)
@@ -40,6 +42,9 @@ describe('dev-ssr-transport', () => {
 	it('extractDiagnosticsFromDevErrorHtml reads script payload from buildDevSsrErrorHtml', () => {
 		const html = buildDevSsrErrorHtml(sample)
 		expect(html).toContain('bad &lt;script&gt; edge')
+		expect(html).toContain('<h1>Aero Compiler Error</h1>')
+		expect(html).toContain('<title>Aero Compiler Error</title>')
+		expect(html).not.toContain('class="aero-diag-banner')
 		const parsed = extractDiagnosticsFromDevErrorHtml(html)
 		expect(parsed).toEqual(sample)
 	})
