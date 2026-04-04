@@ -685,3 +685,6 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 
 	return plugins
 }
+
+export { DEFAULT_DIRS, resolveDirs } from './defaults'
+export { discoverRuntimeTemplatePaths } from './build'

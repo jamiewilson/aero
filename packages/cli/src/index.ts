@@ -5,6 +5,7 @@
 import { runAeroBuild } from './build'
 import { runAeroCheck } from './check'
 import { runAeroDoctor } from './doctor'
+import { parseGraphFormat, runAeroGraph } from './graph'
 import { parseRootArgs } from './parse-cli-args'
 
 function printHelp(): void {
@@ -14,12 +15,16 @@ Usage:
   aero check [--root <dir>] [--types]
   aero doctor [--root <dir>]
   aero build [--root <dir>] [--incremental]
+  aero graph [--root <dir>] [--format json|lines|fallow-entry]
   aero --help
 
   check   Validate config (when present), content collections (when configured), and compile all page/component/layout templates.
           --types   After compile, TypeScript-check build scripts and { } interpolations (workspace tsconfig); writes .aero/cache/types/components.d.ts.
   doctor  Print environment checklist (Node, Vite, Aero deps); exits 1 only if Node is below the minimum.
   build   Run vite build (same as pnpm exec vite build). --incremental sets AERO_INCREMENTAL when unset.
+  graph   Print entry globs for Fallow/knip-style analyzers (from aero.config dirs). Default: one glob per line.
+          --format json           JSON with entryGlobs + discovered template paths.
+          --format fallow-entry   JSON object { "entry": [...] } for .fallowrc.json.
 `)
 }
 
@@ -51,6 +56,12 @@ async function main(): Promise<void> {
 		const buildRest = rest.slice(1)
 		const incremental = buildRest.includes('--incremental')
 		await runAeroBuild(root, { incremental })
+		process.exit(0)
+	}
+	if (cmd === 'graph') {
+		const graphRest = rest.slice(1)
+		const { format } = parseGraphFormat(graphRest)
+		runAeroGraph(root, format)
 		process.exit(0)
 	}
 	if (!cmd) {

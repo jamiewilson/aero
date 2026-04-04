@@ -1,0 +1,31 @@
+{
+	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+	"entry": [
+		"aero.config.ts",
+		"vite.config.ts",
+		"content.config.ts",
+		"nitro.config.ts",
+		"server.ts",
+		"frontend/pages/**/*.html",
+		"frontend/layouts/*.html",
+		"frontend/components/**/*.html",
+		"frontend/assets/**/*.ts",
+		"frontend/assets/**/*.css",
+		"frontend/assets/**/*.js",
+		"public/**/*.js",
+		"backend/**/*.ts",
+		"content/**/*.ts",
+		"lib/**/*.ts",
+		"plugins/**/*.ts",
+		"tasks/**/*.ts"
+	],
+	"ignorePatterns": ["build/**", ".output/**", ".nitro/**", ".aero/**", ".vite/**", "dist/**"],
+	"ignoreDependencies": [
+		"@aero-js/cli",
+		"@aero-js/content",
+		"@aero-js/core",
+		"@aero-js/highlight",
+		"autoprefixer",
+		"shiki"
+	]
+}
