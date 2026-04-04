@@ -4,7 +4,7 @@ import { Lowerer } from '../lowerer'
 import { Resolver } from '../../resolver'
 
 describe('Lowerer wrapperless foundation', () => {
-	const resolver = new Resolver({ root: '/', resolvePath: (s) => s, importer: '/' })
+	const resolver = new Resolver({ root: '/', resolvePath: s => s, importer: '/' })
 
 	it('compileWrapperlessNode emits child markup without template tags', () => {
 		const { document } = parseHTML(
@@ -16,7 +16,9 @@ describe('Lowerer wrapperless foundation', () => {
 		const serialized = JSON.stringify(ir)
 		expect(serialized).not.toContain('<template')
 		expect(serialized).not.toContain('</template>')
-		expect(ir.some((n: any) => n.kind === 'Append' && String(n.content).includes('<span'))).toBe(true)
+		expect(ir.some((n: any) => n.kind === 'Append' && String(n.content).includes('<span'))).toBe(
+			true
+		)
 		expect(serialized).toMatch(/hi/)
 	})
 
@@ -31,14 +33,14 @@ describe('Lowerer wrapperless foundation', () => {
 	})
 
 	it('compileWrapperAwareBranch preserves element wrapper for div', () => {
-		const { document } = parseHTML(
-			'<html><body><div class="p"><i>y</i></div></body></html>'
-		)
+		const { document } = parseHTML('<html><body><div class="p"><i>y</i></div></body></html>')
 		const div = document.body!.firstElementChild!
 		const lowerer = new Lowerer(resolver)
 		const ir = lowerer.compileWrapperAwareBranch(div, false, '__out')
 		const serialized = JSON.stringify(ir)
-		expect(ir.some((n: any) => n.kind === 'Append' && String(n.content).includes('<div'))).toBe(true)
+		expect(ir.some((n: any) => n.kind === 'Append' && String(n.content).includes('<div'))).toBe(
+			true
+		)
 		expect(serialized).toContain('</div>')
 	})
 
