@@ -49,7 +49,7 @@ function sectionsToTerminalBlock(sections: DiagnosticSection[]): string {
 			(s.kind === 'frame' && prev?.kind === 'error') ||
 			(s.kind === 'hint' && (prev?.kind === 'frame' || prev?.kind === 'error')) ||
 			(s.kind === 'docs' && prev?.kind === 'hint') ||
-			(s.kind === 'banner-bottom')
+			s.kind === 'banner-bottom'
 
 		if (needsBlankBefore) {
 			lines.push('')
@@ -77,10 +77,7 @@ export const terminalRenderer: DiagnosticRenderer<string> = {
 		return sectionsToTerminalBlock(sections)
 	},
 
-	renderDiagnostics(
-		diagnostics: readonly AeroDiagnostic[],
-		options?: RenderOptions
-	): string {
+	renderDiagnostics(diagnostics: readonly AeroDiagnostic[], options?: RenderOptions): string {
 		if (diagnostics.length === 0) return ''
 		return diagnostics
 			.map((d, i) => terminalRenderer.renderOne(d, i, diagnostics.length, options))

@@ -24,11 +24,7 @@ describe('tryRefineHtmlReferenceErrorSpan', () => {
 		const err = new Error('stat is not defined')
 		err.name = 'ReferenceError'
 
-		const refined = tryRefineHtmlReferenceErrorSpan(
-			err,
-			{ file, line: 35, column: 1 },
-			file
-		)
+		const refined = tryRefineHtmlReferenceErrorSpan(err, { file, line: 35, column: 1 }, file)
 		expect(refined).toBeDefined()
 		expect(refined!.line).toBe(2)
 		expect(refined!.file).toBe(file)
@@ -41,11 +37,7 @@ describe('tryRefineHtmlReferenceErrorSpan', () => {
 	it('returns undefined when two braced occurrences exist', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-refine-'))
 		const file = path.join(dir, 'q.html')
-		fs.writeFileSync(
-			file,
-			'<div>{ stat }</div>\n<div>{ stat }</div>\n',
-			'utf8'
-		)
+		fs.writeFileSync(file, '<div>{ stat }</div>\n<div>{ stat }</div>\n', 'utf8')
 		const err = new Error('stat is not defined')
 		err.name = 'ReferenceError'
 		expect(tryRefineHtmlReferenceErrorSpan(err, { file, line: 1, column: 0 }, file)).toBeUndefined()

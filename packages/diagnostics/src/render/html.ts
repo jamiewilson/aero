@@ -60,14 +60,9 @@ function renderOneHtml(
 export const htmlRenderer: DiagnosticRenderer<string> = {
 	renderOne: renderOneHtml,
 
-	renderDiagnostics(
-		diagnostics: readonly AeroDiagnostic[],
-		options?: RenderOptions
-	): string {
+	renderDiagnostics(diagnostics: readonly AeroDiagnostic[], options?: RenderOptions): string {
 		if (diagnostics.length === 0) return ''
-		const blocks = diagnostics.map((d, i) =>
-			renderOneHtml(d, i, diagnostics.length, options)
-		)
+		const blocks = diagnostics.map((d, i) => renderOneHtml(d, i, diagnostics.length, options))
 		return `<div class="aero-diagnostics" data-aero-diagnostics="1">\n${blocks.join('')}</div>`
 	},
 }

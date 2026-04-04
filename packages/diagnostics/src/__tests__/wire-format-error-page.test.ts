@@ -4,10 +4,7 @@
 
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import {
-	buildDevSsrErrorHtml,
-	extractDiagnosticsFromDevErrorHtml,
-} from '../error-page'
+import { buildDevSsrErrorHtml, extractDiagnosticsFromDevErrorHtml } from '../error-page'
 import {
 	decodeDiagnosticsHeaderValue,
 	encodeDiagnosticsHeaderValue,

@@ -27,15 +27,7 @@ describe('layoutDiagnostic', () => {
 	it('produces all sections for a fully-populated diagnostic', () => {
 		const sections = layoutDiagnostic(full, 0, 1, { banners: true })
 		const kinds = sections.map(s => s.kind)
-		expect(kinds).toEqual([
-			'banner-top',
-			'file',
-			'error',
-			'frame',
-			'hint',
-			'docs',
-			'banner-bottom',
-		])
+		expect(kinds).toEqual(['banner-top', 'file', 'error', 'frame', 'hint', 'docs', 'banner-bottom'])
 	})
 
 	it('includes index section when total > 1', () => {
