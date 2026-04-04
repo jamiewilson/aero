@@ -6,10 +6,10 @@
  */
 
 /** Single segment of a route pattern: static literal or a named param. */
-export type RouteSegment = { type: 'static'; value: string } | { type: 'param'; name: string }
+type RouteSegment = { type: 'static'; value: string } | { type: 'param'; name: string }
 
 /** Parsed route pattern: ordered list of segments (e.g. `blog`, `[id]` for `blog/[id]`). */
-export interface RoutePattern {
+interface RoutePattern {
 	segments: RouteSegment[]
 }
 

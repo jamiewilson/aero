@@ -14,9 +14,9 @@ import path from 'node:path'
 /** Bump when the JSON shape or invalidation rules change. */
 export const AERO_BUILD_MANIFEST_VERSION = 2 as const
 
-export const AERO_BUILD_MANIFEST_REL_PATH = path.join('.aero', 'cache', 'build-manifest.json')
+const AERO_BUILD_MANIFEST_REL_PATH = path.join('.aero', 'cache', 'build-manifest.json')
 
-export interface AeroBuildManifestPageEntry {
+interface AeroBuildManifestPageEntry {
 	outputFile: string
 }
 
@@ -35,7 +35,7 @@ export interface AeroBuildManifest {
 	pages: Record<string, AeroBuildManifestPageEntry>
 }
 
-export function getBuildManifestPath(root: string): string {
+function getBuildManifestPath(root: string): string {
 	return path.join(root, AERO_BUILD_MANIFEST_REL_PATH)
 }
 

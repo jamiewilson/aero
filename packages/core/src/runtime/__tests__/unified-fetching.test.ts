@@ -7,6 +7,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Aero } from '../index'
 
+function mockDynamicDocsPageModule(
+	staticPathsResult: Array<{ params: Record<string, string>; props: Record<string, string> }>
+) {
+	const getStaticPaths = vi.fn().mockResolvedValue(staticPathsResult)
+	return {
+		getStaticPaths,
+		default: vi.fn().mockImplementation(async (context: { props: { title: string } }) => {
+			return `<h1>${context.props.title}</h1>`
+		}),
+		[Symbol.toStringTag]: 'Module',
+	}
+}
+
 describe('Aero Runtime - Unified Data Fetching', () => {
 	beforeEach(() => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -15,19 +28,10 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 	it('should execute getStaticPaths and inject props when props are missing', async () => {
 		const aero = new Aero()
 
-		// Mock getStaticPaths
-		const getStaticPaths = vi
-			.fn()
-			.mockResolvedValue([{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } }])
-
-		// Simulate a real module namespace object
-		const pageModule = {
-			getStaticPaths,
-			default: vi.fn().mockImplementation(async context => {
-				return `<h1>${context.props.title}</h1>`
-			}),
-			[Symbol.toStringTag]: 'Module',
-		}
+		const pageModule = mockDynamicDocsPageModule([
+			{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
+		])
+		const { getStaticPaths } = pageModule
 
 		aero.registerPages({
 			'docs/[slug].html': pageModule,
@@ -45,16 +49,10 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 	it('should return null (404) if params do not match any path', async () => {
 		const aero = new Aero()
 
-		const getStaticPaths = vi
-			.fn()
-			.mockResolvedValue([{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } }])
-
-		const pageModule = {
-			getStaticPaths,
-			default: vi.fn().mockImplementation(async context => {
-				return `<h1>${context.props.title}</h1>`
-			}),
-		}
+		const pageModule = mockDynamicDocsPageModule([
+			{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
+		])
+		const { getStaticPaths } = pageModule
 
 		aero.registerPages({
 			'docs/[slug].html': pageModule,

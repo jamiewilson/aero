@@ -405,15 +405,9 @@ importers:
       nitro:
         specifier: 3.0.260311-beta
         version: 3.0.260311-beta(chokidar@4.0.3)(jiti@2.6.1)(rollup@4.59.0)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
-      oxc-parser:
-        specifier: ^0.123.0
-        version: 0.123.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)
       oxc-resolver:
         specifier: ^11.19.1
         version: 11.19.1
-      oxc-transform:
-        specifier: ^0.123.0
-        version: 0.123.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -448,19 +442,6 @@ importers:
       '@aero-js/starter-minimal':
         specifier: workspace:*
         version: link:../starters/minimal
-
-  packages/create/dist/e2e-create-1775237050127:
-    dependencies:
-      '@aero-js/core':
-        specifier: workspace:*
-        version: link:../../../core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../vite
-    devDependencies:
-      vite:
-        specifier: 8.0.3
-        version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
 
   packages/diagnostics:
     dependencies:

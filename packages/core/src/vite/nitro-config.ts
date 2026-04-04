@@ -6,7 +6,7 @@ import { redirectsToRouteRules } from '../utils/redirects'
 
 const require = createRequire(import.meta.url)
 
-export const NITRO_CONFIG_NAMES = [
+const NITRO_CONFIG_NAMES = [
 	'nitro.config.ts',
 	'nitro.config.mts',
 	'nitro.config.cts',
@@ -17,13 +17,13 @@ export const NITRO_CONFIG_NAMES = [
 
 type NitroConfigObject = Record<string, unknown>
 
-export type LoadProjectNitroConfigDetailedResult =
+type LoadProjectNitroConfigDetailedResult =
 	| { ok: true; filePath: string; config: NitroConfigObject }
 	| { ok: false; reason: 'not-found' }
 	| { ok: false; reason: 'invalid-export'; filePath: string }
 	| { ok: false; reason: 'load-error'; filePath: string; error: unknown }
 
-export interface GeneratedNitroConfigResult {
+interface GeneratedNitroConfigResult {
 	aeroDir: string
 	filePath: string
 	content: string

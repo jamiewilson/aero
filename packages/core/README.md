@@ -117,11 +117,10 @@ src/
   vite/         # aero() plugin, static build, build manifest, SSR helpers
   runtime/      # Aero class, instance, client entry helpers
   utils/        # aliases, routing
-  codegen/      # aero-target helpers (not a second compiler pipeline)
   compile-check-api.ts   # re-exports for aero check
   types.ts, entry-*.ts, ambient.d.ts, diagnostics.ts, index.ts
 ```
 
 ## Tests
 
-Vitest: `src/runtime/__tests__/`, `src/utils/__tests__/`, `src/vite/__tests__/`, `src/codegen/__tests__/`. Run from repo root: `pnpm test` (see workspace scripts for package-scoped runs).
+Vitest: `src/runtime/__tests__/`, `src/utils/__tests__/`, `src/vite/__tests__/`. Run from repo root: `pnpm test` (see workspace scripts for package-scoped runs).

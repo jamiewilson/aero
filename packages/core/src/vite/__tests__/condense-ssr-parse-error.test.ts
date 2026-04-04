@@ -1,14 +1,14 @@
 /**
- * Core re-exports SSR parse helpers from @aero-js/diagnostics; detailed tests live there.
+ * Core uses @aero-js/diagnostics for condensed SSR HTML parse errors; detailed tests live there.
  */
 import { describe, expect, it } from 'vitest'
 import {
 	formatCondensedHtmlSsrParseError,
 	isCondensableHtmlSsrParseError,
-} from '../condense-ssr-parse-error'
+} from '@aero-js/diagnostics'
 
-describe('condense-ssr-parse-error re-export', () => {
-	it('re-exports unified formatter', () => {
+describe('HTML SSR parse error helpers (diagnostics)', () => {
+	it('formats condensable Rolldown HTML parse errors', () => {
 		const err = Object.assign(new Error('Unexpected token'), {
 			code: 'PARSE_ERROR',
 			id: '/a.html',
