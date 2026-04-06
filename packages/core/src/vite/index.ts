@@ -272,7 +272,9 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				state.dirs.client,
 				discovery
 			)
-			contentMap.forEach((entry, url) => state.clientScripts.set(url, entry))
+			contentMap.forEach((entry, url) => {
+				state.clientScripts.set(url, entry)
+			})
 		},
 		async handleHotUpdate(ctx) {
 			if (!state.config || state.config.command === 'build') return
@@ -448,13 +450,26 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const exit = Effect.runSyncExit(
 					htmlCompileTry(filePath, () => {
 						const code = readFileSync(filePath, 'utf-8')
-						return compileHtmlSourceForVite(
-							code,
-							filePath,
-							{ resolvedConfig, resolvePath: resolvedAlias.resolve },
-							state.clientScripts
-						)
-					})
+					return compileHtmlSourceForVite(
+						code,
+						filePath,
+						{
+							resolvedConfig,
+							resolvePath: resolvedAlias.resolve,
+							onWarning: warning => {
+								const loc =
+									warning.line !== undefined && warning.column !== undefined
+										? `:${warning.line}:${warning.column}`
+										: ''
+								const where = warning.file ? `${warning.file}${loc}` : filePath
+								resolvedConfig.logger.warn(
+									`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
+								)
+							},
+						},
+						state.clientScripts
+					)
+				})
 				)
 				const generated = compileExitToGeneratedOrReport(
 					this,
@@ -501,7 +516,20 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 					compileHtmlSourceForVite(
 						code,
 						id,
-						{ resolvedConfig, resolvePath: resolvedAlias.resolve },
+						{
+							resolvedConfig,
+							resolvePath: resolvedAlias.resolve,
+							onWarning: warning => {
+								const loc =
+									warning.line !== undefined && warning.column !== undefined
+										? `:${warning.line}:${warning.column}`
+										: ''
+								const where = warning.file ? `${warning.file}${loc}` : id
+								resolvedConfig.logger.warn(
+									`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
+								)
+							},
+						},
 						state.clientScripts
 					)
 				)

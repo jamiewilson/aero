@@ -48,6 +48,7 @@ export { parse } from './parser'
 // Types
 export type {
 	CompileOptions,
+	CompileWarning,
 	ParseResult,
 	ScriptEntry,
 	ResolverOptions,

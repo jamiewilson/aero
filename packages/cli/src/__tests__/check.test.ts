@@ -82,4 +82,25 @@ describe('runAeroCheck', () => {
 			spy.mockRestore()
 		}
 	})
+
+	it('prints template/switch compiler warnings but still returns 0', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-warn-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/warn.html'),
+			'<template if="{ ok }" class="panel"><p>x</p></template><div switch="{ state }"><p case="a">a</p><p case="a">dup</p></div>\n',
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(0)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_TEMPLATE]')
+			expect(out).toContain('[AERO_SWITCH]')
+			expect(out).toContain('warning:')
+		} finally {
+			spy.mockRestore()
+		}
+	})
 })

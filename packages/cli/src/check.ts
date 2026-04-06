@@ -197,6 +197,23 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 										root,
 										resolvePath,
 										importer: file,
+										onWarning: warning => {
+											diagnostics.push({
+												severity: 'warning',
+												code: warning.code,
+												message: warning.message,
+												file: warning.file ?? file,
+												...(warning.line !== undefined && warning.column !== undefined
+													? {
+														span: {
+															file: warning.file ?? file,
+															line: warning.line,
+															column: warning.column,
+														},
+													}
+													: {}),
+											})
+										},
 									})
 									if (runTypes) {
 										for (const issue of checkTemplateTypesWithFile(source, file, {
@@ -237,8 +254,13 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 			)
 
 			const errors = diagnostics.filter(d => d.severity === 'error')
+			const warnings = diagnostics.filter(d => d.severity === 'warning')
+			if (warnings.length > 0) {
+				const warningText = formatDiagnosticsTerminal(warnings, { plain: true })
+				process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))
+			}
 			if (errors.length === 0) {
-				span.end('clean')
+				span.end(warnings.length > 0 ? `warnings=${warnings.length}` : 'clean')
 				return 0
 			}
 			recordCliDiagnosticsMetrics(errors)

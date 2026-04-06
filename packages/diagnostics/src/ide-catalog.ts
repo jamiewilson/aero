@@ -25,6 +25,8 @@ const CODE_DOC: Record<AeroDiagnosticCode, string> = {
 	AERO_PARSE: 'interpolation.md',
 	AERO_RESOLVE: 'importing-and-bundling.md',
 	AERO_ROUTE: 'routing.md',
+	AERO_TEMPLATE: 'html-template-element.md',
+	AERO_SWITCH: 'html-template-element.md',
 	AERO_CONTENT_SCHEMA: 'content-api.md',
 	AERO_CONFIG: 'getting-started.md',
 	AERO_BUILD_SCRIPT: 'script-taxonomy.md',

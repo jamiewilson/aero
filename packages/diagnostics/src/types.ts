@@ -11,6 +11,8 @@ export type AeroDiagnosticCode =
 	| 'AERO_PARSE'
 	| 'AERO_RESOLVE'
 	| 'AERO_ROUTE'
+	| 'AERO_TEMPLATE'
+	| 'AERO_SWITCH'
 	| 'AERO_CONTENT_SCHEMA'
 	| 'AERO_CONFIG'
 	| 'AERO_BUILD_SCRIPT'

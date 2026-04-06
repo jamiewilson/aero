@@ -32,6 +32,15 @@ export interface CompileOptions {
 	resolvePath?: (specifier: string, importer: string) => string
 	importer?: string
 	diagnosticTemplateSource?: string
+	onWarning?: (warning: CompileWarning) => void
+}
+
+export interface CompileWarning {
+	code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+	message: string
+	file?: string
+	line?: number
+	column?: number
 }
 
 /**
