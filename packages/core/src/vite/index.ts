@@ -450,26 +450,26 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const exit = Effect.runSyncExit(
 					htmlCompileTry(filePath, () => {
 						const code = readFileSync(filePath, 'utf-8')
-					return compileHtmlSourceForVite(
-						code,
-						filePath,
-						{
-							resolvedConfig,
-							resolvePath: resolvedAlias.resolve,
-							onWarning: warning => {
-								const loc =
-									warning.line !== undefined && warning.column !== undefined
-										? `:${warning.line}:${warning.column}`
-										: ''
-								const where = warning.file ? `${warning.file}${loc}` : filePath
-								resolvedConfig.logger.warn(
-									`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
-								)
+						return compileHtmlSourceForVite(
+							code,
+							filePath,
+							{
+								resolvedConfig,
+								resolvePath: resolvedAlias.resolve,
+								onWarning: warning => {
+									const loc =
+										warning.line !== undefined && warning.column !== undefined
+											? `:${warning.line}:${warning.column}`
+											: ''
+									const where = warning.file ? `${warning.file}${loc}` : filePath
+									resolvedConfig.logger.warn(
+										`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
+									)
+								},
 							},
-						},
-						state.clientScripts
-					)
-				})
+							state.clientScripts
+						)
+					})
 				)
 				const generated = compileExitToGeneratedOrReport(
 					this,

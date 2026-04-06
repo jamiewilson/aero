@@ -3,11 +3,13 @@
  */
 
 /** Optional original template source + file path for directive diagnostics. */
-export type LowererDiag = {
-	source: string
-	file?: string
-	onWarning?: (warning: { code: 'AERO_TEMPLATE' | 'AERO_SWITCH'; message: string }) => void
-} | undefined
+export type LowererDiag =
+	| {
+			source: string
+			file?: string
+			onWarning?: (warning: { code: 'AERO_TEMPLATE' | 'AERO_SWITCH'; message: string }) => void
+	  }
+	| undefined
 
 /** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional props expr. */
 export interface ParsedElementAttrs {
