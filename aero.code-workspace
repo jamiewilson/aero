@@ -1,35 +1,35 @@
-{
-	"folders": [
-		{
-			"name": "aero",
-			"path": ".",
-		},
-		{
-			"name": "kitchen-sink",
-			"path": "examples/kitchen-sink",
-		},
-		{
-			"name": "starters",
-			"path": "packages/starters",
-		},
-		{
-			"name": "website",
-			"path": "website",
-		},
-		{
-			"name": "packages",
-			"path": "packages",
-		},
-	],
-	"extensions": {
-		"recommendations": ["oxc.oxc-vscode"],
-	},
-	"settings": {
-		"chat.tools.terminal.autoApprove": {
-			"pnpm": true,
-		},
-		"oxc.fmt.configPath": null,
-		"editor.defaultFormatter": "oxc.oxc-vscode",
-		"editor.formatOnSave": true,
-	},
-}
+//{
+//	"folders": [
+//		{
+//			"name": "aero",
+//			"path": ".",
+//		},
+//		{
+//			"name": "kitchen-sink",
+//			"path": "examples/kitchen-sink",
+//		},
+//		{
+//			"name": "starters",
+//			"path": "packages/starters",
+//		},
+//		{
+//			"name": "website",
+//			"path": "website",
+//		},
+//		{
+//			"name": "packages",
+//			"path": "packages",
+//		},
+//	],
+//	"extensions": {
+//		"recommendations": ["oxc.oxc-vscode"],
+//	},
+//	"settings": {
+//		"chat.tools.terminal.autoApprove": {
+//			"pnpm": true,
+//		},
+//		"oxc.fmt.configPath": null,
+//		"editor.defaultFormatter": "oxc.oxc-vscode",
+//		"editor.formatOnSave": true,
+//	},
+//}

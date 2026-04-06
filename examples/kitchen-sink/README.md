@@ -31,7 +31,7 @@ From repo root (or from `examples/kitchen-sink` if core is built):
 - **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
 - **pnpm preview** — Static preview only (`AERO_SERVER=false` build + `vite preview`).
 - **pnpm preview:api** — Full server preview (static + Nitro API).
-- **Fallow / static analysis** — This example includes [`.fallowrc.json`](./.fallowrc.json). Regenerate the `entry` list with `aero graph --format fallow-entry` (see [\_reference/fallow-aero.md](../../_reference/fallow-aero.md)).
+- **Fallow / static analysis** — This example includes [`.fallowrc.json`](./.fallowrc.json). Regenerate the `entry` list with `aero graph --format fallow-entry` (see [\_reference/fallow-aero.md](../../_reference/guides/fallow-aero.md)).
 
 Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs core build first).
 
