@@ -33,6 +33,10 @@
 			"types": "./dist/runtime/index.d.mts",
 			"default": "./dist/runtime/index.mjs"
 		},
+		"./runtime/standalone": {
+			"types": "./dist/runtime/standalone.d.mts",
+			"default": "./dist/runtime/standalone.mjs"
+		},
 		"./runtime/instance": {
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"
