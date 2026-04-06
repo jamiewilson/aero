@@ -25,7 +25,7 @@ Aero is a **static site generator** with a custom **HTML-first template engine**
 
 ### Principles and direction
 
-For the full canonical list of product goals, web-platform stance, toolchain commitments, and internal engineering principles, see [**Aero principles & goals**](../_reference/aero-principles-and-goals.md).
+For the full canonical list of product goals, web-platform stance, toolchain commitments, and internal engineering principles, see [**Aero principles & goals**](../_reference/guides/aero-principles-and-goals.md).
 
 ### Design goals
 

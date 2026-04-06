@@ -1,3 +1,10 @@
+---
+description: Applies to all coding tasks to ensure correct and understandable code.
+alwaysApply: true
+globs: "**/*"
+---
+
+
 # Aero Agent & Codebase Rules
 
 These rules are distilled from enduring software principles. They guide agent behavior, code review, and architectural decisions in Aero projects.

@@ -135,7 +135,7 @@ For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md
 
 ## Documentation (TSDoc)
 
-When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.cursor/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
+When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.agents/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
 
 ## Documentation: implementation progress vs discoveries
 

@@ -14,15 +14,15 @@ The `is:build` attribute defines the "server-side render body" of your component
 - **Purpose:** Used to fetch data, import components, read configuration, and process properties before the template is converted into HTML.
 - **Syntax Limitation:** You can only have one `<script is:build>` tag per template file.
 - **Output:** This code **never** reaches the browser. It gets compiled into the hidden `export default async function(Aero) { ... }` module that powers the static site generator.
-- **TypeScript / IntelliSense:** Add `lang="ts"` (or `lang="typescript"`) so the language server extracts the block for TypeScript IntelliSense. This also enables Prettier and oxfmt to format the script content.
+- **TypeScript / IntelliSense:** Add to `lang="js"` (or `lang="javascript"`) to eject out of typescript by default.
 
 ```html
-<script is:build lang="ts">
+<script is:build>
 	import Header from '@components/header'
 	const title = 'Welcome to Aero'
 </script>
 
-<header title="{title}" />
+<header-component title="{ title }" />
 ```
 
 ### Plain `<script>` (client)
@@ -35,7 +35,7 @@ A `<script>` tag with no `is:*` attribute is treated as a client-side module scr
 - **Data Passing:** Use the `props` (or `data-props`) attribute to pass server context into the module.
 
 ```html
-<script props="{ { apiToken } }">
+<script props="{ apiToken }">
 	import { initAnalytics } from 'my-analytics'
 	initAnalytics(apiToken)
 </script>
@@ -57,15 +57,6 @@ The `is:inline` attribute tells the compiler to leave the script tag mostly alon
 	document.documentElement.setAttribute('data-theme', theme)
 </script>
 ```
-
-## Migration from v1
-
-Migrating to the v2 taxonomy is primarily just renaming your script tags:
-
-- Replace `<script on:build>` with `<script is:build>`
-- Replace `<script on:client>` with plain `<script>` (client module by default)
-
-If you had any `on:client` scripts that you intended to be completely externalized from Vite's bundling pipeline (e.g., inline analytics init), use `<script is:inline>` instead.
 
 ## Other script types
 
@@ -90,7 +81,3 @@ If you had any `on:client` scripts that you intended to be completely externaliz
 ### props and multiple instances
 
 When the same component is used multiple times with different `props`, each instance gets a unique JSON data tag and an inline bridge so the bundled module script receives the correct data when it runs. Multiple instances do not clash. See [props-directive.md](props-directive.md) for how to use `props`.
-
----
-
-**Implementation note:** Contributors changing this taxonomy should keep the parser, compiler constants, and documentation aligned.
