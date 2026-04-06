@@ -281,7 +281,8 @@ function loadPathAliasesForImporter(importerFile: string): PathAlias[] {
 
 function tryResolveToHtml(candidateBasePath: string): string | null {
 	if (!candidateBasePath) return null
-	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html')) return candidateBasePath
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html'))
+		return candidateBasePath
 	if (fs.existsSync(candidateBasePath + '.html')) return candidateBasePath + '.html'
 	const indexHtml = path.join(candidateBasePath, 'index.html')
 	if (fs.existsSync(indexHtml)) return indexHtml
@@ -381,7 +382,10 @@ function collectSlotTypeInfoByName(
 			parseSlotPropsBindings(attrs.props ?? attrs['data-props'] ?? undefined)
 		)
 	}
-	const out = new Map<string, { typeName: string; declarationText: string; bindingNames: string[] }>()
+	const out = new Map<
+		string,
+		{ typeName: string; declarationText: string; bindingNames: string[] }
+	>()
 	for (const [slotName, bindingNames] of slotNamesWithBindings.entries()) {
 		const typeName = slotTypeNameForSlot(slotName)
 		const decl = byName.get(typeName)
@@ -391,10 +395,7 @@ function collectSlotTypeInfoByName(
 	return out
 }
 
-function collectSlotScopes(
-	sourceText: string,
-	htmlFilePath: string | undefined
-): SlotScope[] {
+function collectSlotScopes(sourceText: string, htmlFilePath: string | undefined): SlotScope[] {
 	const scopes: SlotScope[] = []
 	if (!htmlFilePath) return scopes
 	const importedHtml = collectImportedHtmlByIdentifier(sourceText, htmlFilePath)
@@ -578,7 +579,10 @@ export class AeroVirtualCode implements VirtualCode {
 			}
 			const mergedTypeDecls =
 				slotTypeDecls.size > 0
-					? [...buildTypeDeclTexts, ...[...slotTypeDecls].filter(d => !buildTypeDeclTexts.includes(d))]
+					? [
+							...buildTypeDeclTexts,
+							...[...slotTypeDecls].filter(d => !buildTypeDeclTexts.includes(d)),
+						]
 					: buildTypeDeclTexts
 
 			const binderDecl = formatBuildScopeAmbientPrelude(
@@ -592,7 +596,8 @@ export class AeroVirtualCode implements VirtualCode {
 			const close = wrapPropsObjectLiteral ? '}]' : ']'
 			const exprOffsetInVirtual =
 				BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + slotTypedBlock.length + open.length
-			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock + open + expression + close
+			const virtualText =
+				BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock + open + expression + close
 
 			return {
 				id: `expr_${exprIdx++}`,

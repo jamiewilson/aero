@@ -23,10 +23,7 @@ function clientScriptPrefixForBase(baseName: string): string {
 }
 
 /** All virtual client script ids belonging to the same template baseName. */
-function getClientScriptIdsForBase(
-	baseName: string,
-	target: Map<string, ScriptEntry>
-): string[] {
+function getClientScriptIdsForBase(baseName: string, target: Map<string, ScriptEntry>): string[] {
 	const prefix = clientScriptPrefixForBase(baseName)
 	const ids: string[] = []
 	for (const id of target.keys()) {

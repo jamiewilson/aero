@@ -205,12 +205,12 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 												file: warning.file ?? file,
 												...(warning.line !== undefined && warning.column !== undefined
 													? {
-														span: {
-															file: warning.file ?? file,
-															line: warning.line,
-															column: warning.column,
-														},
-													}
+															span: {
+																file: warning.file ?? file,
+																line: warning.line,
+																column: warning.column,
+															},
+														}
 													: {}),
 											})
 										},

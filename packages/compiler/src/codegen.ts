@@ -41,9 +41,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 									...warning,
 									file: options.importer,
 								})
-						  }
+							}
 						: undefined,
-			  }
+				}
 			: undefined
 	)
 

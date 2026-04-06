@@ -48,10 +48,7 @@ function createStandaloneResolveImportMeta(
 	}
 }
 
-function injectImportMetaResolveBridge(
-	compiledSource: string,
-	resolveExpr: string
-): string {
+function injectImportMetaResolveBridge(compiledSource: string, resolveExpr: string): string {
 	return compiledSource.replace(/import\.meta\.resolve\(/g, `${resolveExpr}(`)
 }
 
@@ -161,7 +158,9 @@ export async function loadCompiledTemplateModule(
 /**
  * One-shot standalone rendering helper: compile HTML source and render it with the Aero runtime.
  */
-export async function renderTemplate(options: StandaloneRenderTemplateOptions): Promise<string | null> {
+export async function renderTemplate(
+	options: StandaloneRenderTemplateOptions
+): Promise<string | null> {
 	const { templateSource, root, importer, resolvePath, globals, input } = options
 	if (!root) throw new Error('[aero] renderTemplate requires `root`.')
 	if (!importer) throw new Error('[aero] renderTemplate requires `importer`.')
