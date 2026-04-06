@@ -14,7 +14,11 @@ import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
-import { parseElementAttributes, parseComponentAttributes } from './attributes'
+import {
+	parseElementAttributes,
+	parseComponentAttributes,
+	warnWrapperlessTemplateAttributes,
+} from './attributes'
 import { compileConditionalChain, hasElseAttr, hasElseIfAttr, hasIfAttr } from './conditionals'
 import {
 	compileSwitchContainer,
@@ -37,7 +41,7 @@ export class Lowerer {
 	private slotCounter = 0
 	private readonly diag: LowererDiag
 
-	constructor(resolver: Resolver, diag?: { source: string; file?: string }) {
+	constructor(resolver: Resolver, diag?: LowererDiag) {
 		this.resolver = resolver
 		this.diag = diag
 	}
@@ -96,6 +100,7 @@ export class Lowerer {
 	 */
 	compileWrapperAwareBranch(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		if (isTemplateElement(node)) {
+			warnWrapperlessTemplateAttributes(this.diag, node)
 			return this.compileWrapperlessNode(node, skipInterpolation, outVar)
 		}
 		return this.compileElement(node, skipInterpolation, outVar)
@@ -150,6 +155,7 @@ export class Lowerer {
 	 */
 	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
+		warnWrapperlessTemplateAttributes(this.diag, node)
 
 		if (tagName === CONST.TAG_SLOT) {
 			return compileSlot(node, skipInterpolation, outVar, (nodes, skip) =>

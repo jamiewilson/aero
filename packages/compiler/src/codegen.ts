@@ -9,7 +9,7 @@
  * client URLs via the same entry (no duplicate pipeline in core).
  */
 
-import type { ParseResult, CompileOptions } from './types'
+import type { ParseResult, CompileOptions, CompileWarning } from './types'
 import { CodeBuilder } from './code-builder'
 import * as Helper from './helpers'
 import { stripBuildScriptTypes } from './build-script-analysis'
@@ -31,8 +31,19 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	const lowerer = new Lowerer(
 		resolver,
-		options.diagnosticTemplateSource !== undefined
-			? { source: options.diagnosticTemplateSource, file: options.importer }
+		options.diagnosticTemplateSource !== undefined || options.onWarning
+			? {
+					source: options.diagnosticTemplateSource ?? '',
+					file: options.importer,
+					onWarning: options.onWarning
+						? (warning: CompileWarning) => {
+								options.onWarning?.({
+									...warning,
+									file: options.importer,
+								})
+						  }
+						: undefined,
+			  }
 			: undefined
 	)
 

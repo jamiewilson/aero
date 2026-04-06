@@ -142,6 +142,7 @@ export function compileSwitchContainer(
 	const cases: { comparandExprs: string[]; body: IRNode[] }[] = []
 	let defaultBody: IRNode[] | undefined
 	let seenDefault = false
+	const seenComparands = new Set<string>()
 
 	if (!childList) {
 		return { kind: 'Switch', expression, cases: [], defaultBody: undefined }
@@ -193,6 +194,16 @@ export function compileSwitchContainer(
 
 		if (hasCase) {
 			const comparandExprs = parseCaseComparands(n, diag)
+			for (const expr of comparandExprs) {
+				if (seenComparands.has(expr)) {
+					diag?.onWarning?.({
+						code: 'AERO_SWITCH',
+						message: `Duplicate switch case value \`${expr}\`; only the first matching branch can run.`,
+					})
+				} else {
+					seenComparands.add(expr)
+				}
+			}
 			const body = deps.compileBranchBody(n, skipInterpolation, outVar)
 			cases.push({ comparandExprs, body })
 			i++
@@ -210,6 +221,14 @@ export function compileSwitchContainer(
 		throw new CompileError({
 			message: '`switch` requires at least one `case` or `default` branch.',
 			file: diag?.file,
+		})
+	}
+
+	if (!seenDefault) {
+		diag?.onWarning?.({
+			code: 'AERO_SWITCH',
+			message:
+				'Switch has no `default` branch; unmatched values render no switch-controlled content.',
 		})
 	}
 

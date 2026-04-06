@@ -67,6 +67,25 @@ describe('diagnostics', () => {
 		expect(text).toContain('bad brace')
 	})
 
+	it('formatDiagnosticsTerminal uses warning banner titles for template/switch warnings', () => {
+		const text = formatDiagnosticsTerminal([
+			{
+				code: 'AERO_TEMPLATE',
+				severity: 'warning',
+				message: 'template attrs ignored',
+				file: 'pages/a.html',
+			},
+			{
+				code: 'AERO_SWITCH',
+				severity: 'warning',
+				message: 'missing default',
+				file: 'pages/b.html',
+			},
+		])
+		expect(text).toContain('Aero Template Warning')
+		expect(text).toContain('Aero Switch Warning')
+	})
+
 	it('aeroDiagnosticToViteErrorFields sets loc for overlay', () => {
 		const fields = aeroDiagnosticToViteErrorFields(
 			{

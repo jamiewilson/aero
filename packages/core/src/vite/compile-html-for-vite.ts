@@ -9,10 +9,19 @@ import { getClientScriptVirtualUrl } from './defaults'
 import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 
+interface CompileHtmlWarning {
+	code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+	message: string
+	file?: string
+	line?: number
+	column?: number
+}
+
 /** Parameters from resolved Vite config and alias resolution; used by both virtual load and .html transform. */
 interface CompileHtmlForViteParams {
 	resolvedConfig: ResolvedConfig
 	resolvePath: (specifier: string, importer: string) => string
+	onWarning?: (warning: CompileHtmlWarning) => void
 }
 
 /**
@@ -47,6 +56,7 @@ export function compileHtmlSourceForVite(
 			inlineScripts: parsed.inlineScripts,
 			resolvePath: params.resolvePath,
 			importer: filePath,
+			onWarning: params.onWarning,
 		},
 		parsed
 	)

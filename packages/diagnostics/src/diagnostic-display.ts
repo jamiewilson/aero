@@ -45,6 +45,8 @@ export const DIAGNOSTIC_BANNER_TITLE: Record<AeroDiagnosticCode, string> = {
 	AERO_PARSE: 'Aero Parse Error',
 	AERO_RESOLVE: 'Aero Import Error',
 	AERO_ROUTE: 'Aero Route Error',
+	AERO_TEMPLATE: 'Aero Template Warning',
+	AERO_SWITCH: 'Aero Switch Warning',
 	AERO_CONTENT_SCHEMA: 'Aero Content Schema Error',
 	AERO_CONFIG: 'Aero Config Error',
 	AERO_BUILD_SCRIPT: 'Aero Build Script Error',

@@ -53,13 +53,29 @@ aero/
 - **Exports (package.json):**
   - `@aero-js/core` → main entry and types
   - `@aero-js/vite` → Vite plugin (re-exports from core)
-  - `@aero-js/core/runtime`, `@aero-js/core/runtime/instance` → runtime
+  - `@aero-js/core/runtime`, `@aero-js/core/runtime/standalone`, `@aero-js/core/runtime/instance` → runtime
   - `@aero-js/core/types` → TypeScript types
 - **Key directories:**
   - `codegen/` — Aero-specific codegen that wraps @aero-js/compiler; tests in `codegen/__tests__/`
   - `vite/` — plugin entry, build orchestration, defaults; tests in `vite/__tests__/`
   - `runtime/` — Aero class, instance context, client entry
   - `utils/` — aliases (tsconfig path loading), routing
+
+### Standalone runtime (ESM-first)
+
+`@aero-js/compiler` remains source-to-module generation (`parse()`, `compile()`, `compileTemplate()`).
+`@aero-js/core/runtime/standalone` adds execution helpers for plain Node ESM (outside Vite):
+
+- `loadCompiledTemplateModule({ compiledSource, root, importer, resolvePath? })`
+  - Loads compiled module text into a renderable `AeroPageModule`.
+  - Uses an ESM-first bridge; imports are resolved from `root` + `importer` and optional `resolvePath`.
+- `renderTemplate({ templateSource, root, importer, resolvePath?, globals?, input? })`
+  - One-shot compile + execute + render helper using the same `Aero` runtime class.
+  - Supports globals (`Aero.global`), props/slots/page/site input, and `getStaticPaths` behavior.
+
+Important: import standalone helpers from `@aero-js/core/runtime/standalone` only. Do not pull them from `@aero-js/core/runtime` in normal Vite app runtime paths, because standalone execution intentionally uses dynamic module loading and Node-oriented resolution that are not part of the regular dev-server/runtime graph.
+
+This standalone path is intentionally ESM-first for now; broader execution environments can be added later.
 
 ## packages/vscode
 

@@ -10,6 +10,51 @@ import { CompileError } from '../types'
 import { parseForDirective, type ParsedForDirective } from '../for-directive'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
+function isTemplateDirectiveAttr(attrName: string): boolean {
+	return (
+		Helper.isAttr(attrName, CONST.ATTR_IF, CONST.ATTR_PREFIX) ||
+		Helper.isAttr(attrName, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX) ||
+		Helper.isAttr(attrName, CONST.ATTR_ELSE, CONST.ATTR_PREFIX) ||
+		Helper.isAttr(attrName, CONST.ATTR_FOR, CONST.ATTR_PREFIX) ||
+		Helper.isAttr(attrName, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)
+	)
+}
+
+export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: any): void {
+	if (!diag?.onWarning) return
+	if (node?.nodeType !== 1) return
+	if (typeof node.tagName !== 'string' || node.tagName.toLowerCase() !== CONST.TAG_TEMPLATE) return
+	if (!node.attributes || node.attributes.length === 0) return
+	const isWrapperlessTemplate =
+		node.hasAttribute(CONST.ATTR_IF) ||
+		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_IF) ||
+		node.hasAttribute(CONST.ATTR_ELSE_IF) ||
+		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE_IF) ||
+		node.hasAttribute(CONST.ATTR_ELSE) ||
+		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE) ||
+		node.hasAttribute(CONST.ATTR_FOR) ||
+		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_FOR) ||
+		node.hasAttribute(CONST.ATTR_SWITCH) ||
+		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_SWITCH)
+	if (!isWrapperlessTemplate) return
+
+	const invalid: string[] = []
+	for (let i = 0; i < node.attributes.length; i++) {
+		const attr = node.attributes[i]
+		if (!attr?.name) continue
+		if (isTemplateDirectiveAttr(attr.name)) continue
+		invalid.push(attr.name)
+	}
+	if (invalid.length === 0) return
+	const unique = [...new Set(invalid)].sort()
+	diag.onWarning({
+		code: 'AERO_TEMPLATE',
+		message:
+			`Wrapperless <template> ignores non-directive attributes (${unique.join(', ')}). ` +
+			'Move them to a real element inside the template block.',
+	})
+}
+
 function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
 	const o = Math.max(0, Math.min(offset, source.length))
 	let line = 1

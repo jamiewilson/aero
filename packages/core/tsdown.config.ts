@@ -11,6 +11,7 @@ const entry = [
 	'src/utils/aliases.ts',
 	'src/utils/redirects.ts',
 	'src/runtime/index.ts',
+	'src/runtime/standalone.ts',
 	'src/runtime/instance.ts',
 ]
 

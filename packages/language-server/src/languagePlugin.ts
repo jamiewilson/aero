@@ -41,13 +41,13 @@ export const aeroLanguagePlugin: LanguagePlugin<URI> = {
 
 	createVirtualCode(uri, languageId, snapshot) {
 		if (shouldCreateAeroVirtualCode(uri, languageId)) {
-			return new AeroVirtualCode(snapshot)
+			return new AeroVirtualCode(snapshot, uri.fsPath)
 		}
 	},
 
 	updateVirtualCode(uri, _virtualCode, snapshot) {
 		if (!isHtmlTemplateUri(uri)) return undefined
-		return new AeroVirtualCode(snapshot)
+		return new AeroVirtualCode(snapshot, uri.fsPath)
 	},
 
 	typescript: {

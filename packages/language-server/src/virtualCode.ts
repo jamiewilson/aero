@@ -4,6 +4,9 @@ import type {
 	CodeInformation,
 	CodeMapping,
 } from '@volar/language-core'
+import fs from 'node:fs'
+import path from 'node:path'
+import ts from 'typescript'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import {
 	parseMinimalHtmlDocument,
@@ -16,7 +19,9 @@ import {
 	buildTemplateEditorAmbient,
 	collectForDirectiveBindingNames,
 	collectTemplateInterpolationSites,
+	parse,
 } from '@aero-js/compiler'
+import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
@@ -180,14 +185,321 @@ function getForBindingsAtOffset(offset: number, scopes: ForDirectiveScope[]): Se
 	return names
 }
 
+type SlotScope = {
+	startOffset: number
+	endOffset: number
+	bindingNames: string[]
+	typedBindingNames: string[]
+	typeDeclarationTexts: string[]
+	typedBindingDecls: string[]
+}
+
+type PathAlias = {
+	find: string
+	replacement: string
+}
+
+const aliasContextCache = new Map<string, PathAlias[]>()
+
+function kebabToCamelCase(value: string): string {
+	return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
+}
+
+function slotTypeNameForSlot(slotName: string): string {
+	if (slotName.length === 0) return 'DefaultSlotProps'
+	const normalized = slotName.replace(/[^a-zA-Z0-9]+/g, ' ').trim()
+	if (!normalized) return 'DefaultSlotProps'
+	const pascal = normalized
+		.split(/\s+/)
+		.map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+		.join('')
+	return `${pascal}SlotProps`
+}
+
+function slotBindingNameForSlot(slotName: string): string | null {
+	const normalized = slotName.trim().toLowerCase()
+	if (normalized === 'default' || normalized.length === 0) return 'defaultSlot'
+	const candidate = kebabToCamelCase(slotName)
+	if (!/^[A-Za-z_$][\w$]*$/.test(candidate)) return null
+	if (candidate === 'default') return 'defaultSlot'
+	return candidate
+}
+
+function parseSlotPropsBindings(rawValue: string | undefined): string[] {
+	if (!rawValue) return []
+	const trimmed = rawValue.trim().replace(/^['"]|['"]$/g, '')
+	if (!trimmed) return []
+	const braceMatch = /^\{([\s\S]*)\}$/.exec(trimmed)
+	const inner = (braceMatch ? braceMatch[1] : trimmed).trim()
+	if (!inner) return []
+	const out: string[] = []
+	for (const part of inner.split(',')) {
+		const candidate = part.trim()
+		if (!candidate) continue
+		const alias = candidate.split(':').pop()?.trim() ?? candidate
+		if (/^[A-Za-z_$][\w$]*$/.test(alias)) out.push(alias)
+	}
+	return [...new Set(out)]
+}
+
+function findTsconfigPath(startDir: string): string | null {
+	return ts.findConfigFile(startDir, ts.sys.fileExists) ?? null
+}
+
+function loadPathAliasesForImporter(importerFile: string): PathAlias[] {
+	const importerDir = path.dirname(importerFile)
+	const tsconfigPath = findTsconfigPath(importerDir)
+	if (!tsconfigPath) return []
+	if (aliasContextCache.has(tsconfigPath)) return aliasContextCache.get(tsconfigPath) ?? []
+
+	const configDir = path.dirname(tsconfigPath)
+	const read = ts.readConfigFile(tsconfigPath, ts.sys.readFile)
+	if (read.error || !read.config) {
+		aliasContextCache.set(tsconfigPath, [])
+		return []
+	}
+	const compilerOptions = (read.config.compilerOptions ?? {}) as {
+		baseUrl?: string
+		paths?: Record<string, string[]>
+	}
+	const baseUrl = compilerOptions.baseUrl
+		? path.resolve(configDir, compilerOptions.baseUrl)
+		: configDir
+	const out: PathAlias[] = []
+	const pathsMap = compilerOptions.paths ?? {}
+	for (const [key, values] of Object.entries(pathsMap)) {
+		const first = values[0]
+		if (!first) continue
+		const find = key.replace(/\/$/, '').replace(/\/\*$/, '')
+		const target = first.replace(/\/$/, '').replace(/\/\*$/, '')
+		out.push({ find, replacement: path.resolve(baseUrl, target) })
+	}
+
+	aliasContextCache.set(tsconfigPath, out)
+	return out
+}
+
+function tryResolveToHtml(candidateBasePath: string): string | null {
+	if (!candidateBasePath) return null
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html')) return candidateBasePath
+	if (fs.existsSync(candidateBasePath + '.html')) return candidateBasePath + '.html'
+	const indexHtml = path.join(candidateBasePath, 'index.html')
+	if (fs.existsSync(indexHtml)) return indexHtml
+	return null
+}
+
+function resolveHtmlImportPath(specifier: string, importerFile: string): string | null {
+	if (!specifier || !importerFile) return null
+	if (specifier.startsWith('/')) {
+		const abs = path.resolve(specifier)
+		return tryResolveToHtml(abs)
+	}
+	if (specifier.startsWith('.')) {
+		const candidate = path.resolve(path.dirname(importerFile), specifier)
+		return tryResolveToHtml(candidate)
+	}
+
+	if (!specifier.startsWith('@')) return null
+	const aliases = loadPathAliasesForImporter(importerFile)
+	for (const alias of aliases) {
+		if (specifier === alias.find || specifier.startsWith(alias.find + '/')) {
+			const rest = specifier.slice(alias.find.length).replace(/^\//, '')
+			const candidate = path.join(alias.replacement, rest)
+			const resolved = tryResolveToHtml(candidate)
+			if (resolved) return resolved
+		}
+	}
+
+	return null
+}
+
+function collectImportedHtmlByIdentifier(
+	htmlSource: string,
+	htmlFilePath?: string
+): Map<string, string> {
+	const out = new Map<string, string>()
+	if (!htmlFilePath) return out
+	let script = ''
+	try {
+		const parsed = parse(htmlSource)
+		script = parsed.buildScript?.content ?? ''
+	} catch {
+		return out
+	}
+	if (!script.trim()) return out
+	try {
+		const { imports } = analyzeBuildScriptForEditor(script)
+		for (const imp of imports) {
+			const resolvedHtml = resolveHtmlImportPath(imp.specifier, htmlFilePath)
+			if (!resolvedHtml) continue
+			if (imp.defaultBinding) out.set(imp.defaultBinding, resolvedHtml)
+			for (const named of imp.namedBindings) {
+				out.set(named.local, resolvedHtml)
+			}
+		}
+	} catch {
+		return out
+	}
+	return out
+}
+
+function collectSlotTypeInfoByName(
+	componentHtmlPath: string
+): Map<string, { typeName: string; declarationText: string; bindingNames: string[] }> {
+	let source = ''
+	try {
+		source = fs.readFileSync(componentHtmlPath, 'utf-8')
+	} catch {
+		return new Map()
+	}
+	let parsed: ReturnType<typeof parse>
+	try {
+		parsed = parse(source)
+	} catch {
+		return new Map()
+	}
+	const buildScript = parsed.buildScript?.content ?? ''
+	if (!buildScript.trim()) return new Map()
+	const ambient = buildTemplateEditorAmbient(source)
+	const byName = new Map<string, string>()
+	for (const decl of ambient.typeDeclarationTexts) {
+		const m = /^\s*(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)\b/.exec(decl)
+		if (!m) continue
+		byName.set(m[1], decl)
+	}
+	const doc = TextDocument.create(componentHtmlPath, 'html', 0, source)
+	const htmlDoc = parseMinimalHtmlDocument(doc)
+	const slotNamesWithBindings = new Map<string, string[]>()
+	for (const node of walkHtmlNodes(htmlDoc.roots)) {
+		if (node.tag !== 'slot') continue
+		const attrs = node.attributes ?? {}
+		const slotNameRaw = attrs.name ?? 'default'
+		const slotName = String(slotNameRaw).replace(/^['"]|['"]$/g, '')
+		const normalized = slotName || 'default'
+		slotNamesWithBindings.set(
+			normalized,
+			parseSlotPropsBindings(attrs.props ?? attrs['data-props'] ?? undefined)
+		)
+	}
+	const out = new Map<string, { typeName: string; declarationText: string; bindingNames: string[] }>()
+	for (const [slotName, bindingNames] of slotNamesWithBindings.entries()) {
+		const typeName = slotTypeNameForSlot(slotName)
+		const decl = byName.get(typeName)
+		if (!decl) continue
+		out.set(slotName, { typeName, declarationText: decl, bindingNames })
+	}
+	return out
+}
+
+function collectSlotScopes(
+	sourceText: string,
+	htmlFilePath: string | undefined
+): SlotScope[] {
+	const scopes: SlotScope[] = []
+	if (!htmlFilePath) return scopes
+	const importedHtml = collectImportedHtmlByIdentifier(sourceText, htmlFilePath)
+	if (importedHtml.size === 0) return scopes
+
+	const doc = TextDocument.create(htmlFilePath, 'html', 0, sourceText)
+	const htmlDoc = parseMinimalHtmlDocument(doc)
+
+	for (const node of walkHtmlNodes(htmlDoc.roots)) {
+		if (!node.tag || !node.tag.endsWith('-component')) continue
+		const base = node.tag.replace(/-component$/, '')
+		const importName = kebabToCamelCase(base)
+		const componentPath = importedHtml.get(importName)
+		if (!componentPath) continue
+
+		const slotTypeInfoByName = collectSlotTypeInfoByName(componentPath)
+		if (slotTypeInfoByName.size === 0) continue
+
+		for (const child of node.children ?? []) {
+			if (!child || child.startTagEnd == null || child.endTagStart == null) continue
+			if (child.tag === 'script' || child.tag === 'style') continue
+			const childAttrs = child.attributes ?? {}
+			const slotAttr = childAttrs.slot ?? childAttrs['data-slot'] ?? 'default'
+			const slotName = String(slotAttr).replace(/^['"]|['"]$/g, '') || 'default'
+			const slotTypeInfo = slotTypeInfoByName.get(slotName)
+			if (!slotTypeInfo) continue
+			const slotBinding = slotBindingNameForSlot(slotName)
+			const bindingNames = slotBinding ? [slotBinding, 'slotProps'] : ['slotProps']
+			const typedBindingDecls: string[] = []
+			const typedBindingNames: string[] = []
+			for (const binding of slotTypeInfo.bindingNames) {
+				typedBindingNames.push(binding)
+				typedBindingDecls.push(
+					`declare const ${binding}: ${slotTypeInfo.typeName}[${JSON.stringify(binding)}];`
+				)
+			}
+			typedBindingNames.push('slotProps')
+			typedBindingDecls.push(`declare const slotProps: ${slotTypeInfo.typeName};`)
+			scopes.push({
+				startOffset: child.startTagEnd,
+				endOffset: child.endTagStart,
+				bindingNames,
+				typedBindingNames,
+				typeDeclarationTexts: [slotTypeInfo.declarationText],
+				typedBindingDecls,
+			})
+		}
+	}
+
+	return scopes
+}
+
+function getSlotBindingsAtOffset(offset: number, scopes: SlotScope[]): Set<string> {
+	const names = new Set<string>()
+	for (const scope of scopes) {
+		if (offset >= scope.startOffset && offset < scope.endOffset) {
+			for (const name of scope.bindingNames) names.add(name)
+		}
+	}
+	return names
+}
+
+function getSlotTypeDeclsAtOffset(offset: number, scopes: SlotScope[]): Set<string> {
+	const decls = new Set<string>()
+	for (const scope of scopes) {
+		if (offset >= scope.startOffset && offset < scope.endOffset) {
+			for (const decl of scope.typeDeclarationTexts) decls.add(decl)
+		}
+	}
+	return decls
+}
+
+function getSlotTypedBindingNamesAtOffset(offset: number, scopes: SlotScope[]): Set<string> {
+	const names = new Set<string>()
+	for (const scope of scopes) {
+		if (offset >= scope.startOffset && offset < scope.endOffset) {
+			for (const name of scope.typedBindingNames) names.add(name)
+		}
+	}
+	return names
+}
+
+function getSlotTypedBindingDeclsAtOffset(offset: number, scopes: SlotScope[]): string[] {
+	const out: string[] = []
+	for (const scope of scopes) {
+		if (offset >= scope.startOffset && offset < scope.endOffset) {
+			out.push(...scope.typedBindingDecls)
+		}
+	}
+	return [...new Set(out)]
+}
+
 export class AeroVirtualCode implements VirtualCode {
 	id = 'root'
 	languageId = 'html'
 	mappings: CodeMapping[]
 	embeddedCodes: VirtualCode[] = []
 	htmlDocument: HTMLDocument
+	htmlFilePath?: string
 
-	constructor(public snapshot: IScriptSnapshot) {
+	constructor(
+		public snapshot: IScriptSnapshot,
+		htmlFilePath?: string
+	) {
+		this.htmlFilePath = htmlFilePath
 		this.mappings = [
 			{
 				sourceOffsets: [0],
@@ -205,7 +517,7 @@ export class AeroVirtualCode implements VirtualCode {
 		]
 
 		const sourceText = snapshot.getText(0, snapshot.getLength())
-		const doc = TextDocument.create('', 'html', 0, sourceText)
+		const doc = TextDocument.create(this.htmlFilePath ?? '', 'html', 0, sourceText)
 		this.htmlDocument = parseMinimalHtmlDocument(doc)
 
 		const {
@@ -239,6 +551,7 @@ export class AeroVirtualCode implements VirtualCode {
 		buildScriptBodies: readonly string[]
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
+		const slotScopes = collectSlotScopes(sourceText, this.htmlFilePath)
 		const out: VirtualCode[] = []
 		let exprIdx = 0
 
@@ -252,18 +565,34 @@ export class AeroVirtualCode implements VirtualCode {
 			wrapPropsObjectLiteral?: boolean
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
-			const allBindings =
-				forBindings.size > 0 ? new Set([...buildBindingNames, ...forBindings]) : buildBindingNames
+			const slotBindings = getSlotBindingsAtOffset(sourceOffset, slotScopes)
+			const slotTypedBindingNames = getSlotTypedBindingNamesAtOffset(sourceOffset, slotScopes)
+			const slotTypeDecls = getSlotTypeDeclsAtOffset(sourceOffset, slotScopes)
+			const slotTypedBindingDecls = getSlotTypedBindingDeclsAtOffset(sourceOffset, slotScopes)
+			const combinedBindings =
+				forBindings.size > 0 || slotBindings.size > 0
+					? new Set([...buildBindingNames, ...forBindings, ...slotBindings])
+					: new Set(buildBindingNames)
+			for (const typedName of slotTypedBindingNames) {
+				combinedBindings.delete(typedName)
+			}
+			const mergedTypeDecls =
+				slotTypeDecls.size > 0
+					? [...buildTypeDeclTexts, ...[...slotTypeDecls].filter(d => !buildTypeDeclTexts.includes(d))]
+					: buildTypeDeclTexts
 
 			const binderDecl = formatBuildScopeAmbientPrelude(
-				allBindings,
-				buildTypeDeclTexts,
+				combinedBindings,
+				mergedTypeDecls,
 				buildScriptBodies
 			)
+			const slotTypedBlock =
+				slotTypedBindingDecls.length > 0 ? slotTypedBindingDecls.join('\n') + '\n' : ''
 			const open = wrapPropsObjectLiteral ? '[{' : '['
 			const close = wrapPropsObjectLiteral ? '}]' : ']'
-			const exprOffsetInVirtual = BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + open.length
-			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + open + expression + close
+			const exprOffsetInVirtual =
+				BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + slotTypedBlock.length + open.length
+			const virtualText = BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock + open + expression + close
 
 			return {
 				id: `expr_${exprIdx++}`,

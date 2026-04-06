@@ -466,4 +466,40 @@ const o = { a: 1 }
 		expect(expr0).toContain('...Aero.props')
 		expect(expr0).toContain('}]')
 	})
+
+	it('injects slot binding names for parent slot markup from child SlotProps convention', () => {
+		const fixtureDir = '/Users/jamie/dev/aero/packages/language-server/src/__tests__/fixtures/slots'
+		const parentPath = fixtureDir + '/parent.html'
+		const html = `<script is:build>
+import card from './card.html'
+</script>
+<card-component>
+  <div slot="item">{ item.price }</div>
+</card-component>`
+
+		const code = new AeroVirtualCode(createSnapshot(html), parentPath)
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('interface ItemSlotProps')
+		expect(expr0).toContain('declare const item: ItemSlotProps["item"];')
+		expect(expr0).toContain('declare const slotProps: ItemSlotProps;')
+		expect(expr0).not.toContain('declare const item: any;')
+		expect(expr0).toContain(' item.price ')
+	})
+
+	it('resolves slot typing from alias import paths', () => {
+		const fixtureDir = '/Users/jamie/dev/aero/packages/language-server/src/__tests__/fixtures/slots'
+		const parentPath = fixtureDir + '/parent-alias.html'
+		const html = `<script is:build>
+import card from '@components/card'
+</script>
+<card-component>
+  <div slot="item">{ item.name }</div>
+</card-component>`
+
+		const code = new AeroVirtualCode(createSnapshot(html), parentPath)
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('interface ItemSlotProps')
+		expect(expr0).toContain('declare const item: ItemSlotProps["item"];')
+		expect(expr0).toContain(' item.name ')
+	})
 })

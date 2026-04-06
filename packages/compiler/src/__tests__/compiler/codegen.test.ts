@@ -1364,6 +1364,36 @@ describe('Codegen', () => {
 				'Directive `props` on <div> must use a braced expression'
 			)
 		})
+
+		it('collects warning for non-directive attributes on wrapperless template', () => {
+			const html = `<template if="{ ready }" class="panel" data-test="x"><p>ok</p></template>`
+			const parsed = parse(html)
+			const warnings: Array<{ code: string; message: string }> = []
+			compile(parsed, {
+				...mockOptions,
+				onWarning: w => warnings.push({ code: w.code, message: w.message }),
+			})
+			expect(warnings).toHaveLength(1)
+			expect(warnings[0]?.code).toBe('AERO_TEMPLATE')
+			expect(warnings[0]?.message).toContain('Wrapperless <template> ignores non-directive')
+			expect(warnings[0]?.message).toContain('class')
+		})
+
+		it('collects warning for duplicate switch cases and missing default', () => {
+			const html = `<div switch="{ status }"><span case="ready">a</span><span case="ready">b</span></div>`
+			const parsed = parse(html)
+			const warnings: Array<{ code: string; message: string }> = []
+			compile(parsed, {
+				...mockOptions,
+				onWarning: w => warnings.push({ code: w.code, message: w.message }),
+			})
+			expect(warnings.some(w => w.code === 'AERO_SWITCH' && w.message.includes('Duplicate'))).toBe(
+				true
+			)
+			expect(
+				warnings.some(w => w.code === 'AERO_SWITCH' && w.message.includes('no `default` branch'))
+			).toBe(true)
+		})
 	})
 
 	// =========================================================================
