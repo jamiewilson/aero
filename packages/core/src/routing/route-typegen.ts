@@ -45,6 +45,7 @@ export function renderRouteTypesDts(manifest: RouteManifestFile): string {
 		paramsByPattern,
 		'}',
 		'',
+		'/** Search-param typing is intentionally deferred in Phase 2; use `Aero.page.url.searchParams` at runtime. */',
 		'export interface AeroRouteSearchByPath {}',
 		'',
 	].join('\n')
@@ -75,9 +76,14 @@ export function renderRouteHelpersTs(manifest: RouteManifestFile): string {
 	].join('\n')
 }
 
+function writeIfChanged(filePath: string, content: string): void {
+	const prev = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
+	if (prev !== content) fs.writeFileSync(filePath, content, 'utf8')
+}
+
 export function writeRouteTypesGenerated(root: string, manifest: RouteManifestFile): void {
 	const outDir = path.join(root, '.aero', 'generated')
 	fs.mkdirSync(outDir, { recursive: true })
-	fs.writeFileSync(path.join(outDir, 'route-types.d.ts'), renderRouteTypesDts(manifest), 'utf8')
-	fs.writeFileSync(path.join(outDir, 'route-helpers.ts'), renderRouteHelpersTs(manifest), 'utf8')
+	writeIfChanged(path.join(outDir, 'route-types.d.ts'), renderRouteTypesDts(manifest))
+	writeIfChanged(path.join(outDir, 'route-helpers.ts'), renderRouteHelpersTs(manifest))
 }

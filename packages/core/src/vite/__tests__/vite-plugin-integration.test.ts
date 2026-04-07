@@ -242,6 +242,68 @@ describe('Vite Plugin Integration', () => {
 		expect(sends).toContainEqual({ type: 'full-reload' })
 	})
 
+	it('regenerates route artifacts on route file add/unlink (rename flow)', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-routes-watch-'))
+		const pagesDir = path.join(tmpDir, 'client', 'pages')
+		fs.mkdirSync(pagesDir, { recursive: true })
+		fs.writeFileSync(path.join(pagesDir, 'index.html'), '<p>home</p>', 'utf-8')
+
+		const watcherHandlers = new Map<string, (file: string) => void>()
+		const invalidatedIds: string[] = []
+		try {
+			configPlugin.config({ root: tmpDir }, { command: 'serve' })
+			configPlugin.configResolved({ root: tmpDir, command: 'serve' })
+			virtualsPlugin.configureServer?.({
+				watcher: {
+					on: (event: string, cb: (file: string) => void) => {
+						watcherHandlers.set(event, cb)
+					},
+				},
+				moduleGraph: {
+					getModuleById: (id: string) =>
+						id === '\0virtual:aero/runtime-instance.ts' ? { id } : null,
+					invalidateModule: (mod: { id: string }) => invalidatedIds.push(mod.id),
+				},
+			} as any)
+
+			const manifestPath = path.join(tmpDir, '.aero', 'generated', 'route-manifest.json')
+			const readPaths = (): string[] => {
+				const raw = fs.readFileSync(manifestPath, 'utf-8')
+				const json = JSON.parse(raw) as { routes: Array<{ path: string }> }
+				return json.routes.map(r => r.path)
+			}
+
+			expect(readPaths()).toContain('/')
+
+			const add = watcherHandlers.get('add')
+			const unlink = watcherHandlers.get('unlink')
+			expect(add).toBeDefined()
+			expect(unlink).toBeDefined()
+
+			const docsPath = path.join(pagesDir, 'docs.html')
+			fs.writeFileSync(docsPath, '<p>docs</p>', 'utf-8')
+			add!(docsPath)
+			expect(readPaths()).toContain('/docs')
+
+			const guidePath = path.join(pagesDir, 'guide.html')
+			fs.renameSync(docsPath, guidePath)
+			unlink!(docsPath)
+			add!(guidePath)
+			const afterRename = readPaths()
+			expect(afterRename).toContain('/guide')
+			expect(afterRename).not.toContain('/docs')
+
+			fs.unlinkSync(guidePath)
+			unlink!(guidePath)
+			expect(readPaths()).not.toContain('/guide')
+			expect(invalidatedIds).toContain('\0virtual:aero/runtime-instance.ts')
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+			configPlugin.config({ root: process.cwd() }, { command: 'serve' })
+			configPlugin.configResolved({ root: process.cwd(), command: 'serve' })
+		}
+	})
+
 	it('transform surfaces [AERO_COMPILE] when compile throws', () => {
 		viteErrorRef.current = null
 		const html = `<script is:build>

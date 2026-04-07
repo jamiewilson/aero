@@ -120,4 +120,20 @@ describe('runAeroCheck', () => {
 			spy.mockRestore()
 		}
 	})
+
+	it('reports unsupported route segment syntax as AERO_ROUTE errors', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-route-unsupported-'))
+		fs.mkdirSync(path.join(dir, 'client/pages/docs'), { recursive: true })
+		fs.writeFileSync(path.join(dir, 'client/pages/docs/[...slug].html'), '<p>x</p>\n', 'utf-8')
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_ROUTE)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_ROUTE]')
+			expect(out).toContain('Unsupported route segment')
+		} finally {
+			spy.mockRestore()
+		}
+	})
 })

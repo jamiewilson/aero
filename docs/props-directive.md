@@ -70,7 +70,7 @@ Behind the scenes, the variables get directly hoisted as root-level custom CSS e
 </script>
 
 <!-- Converts Javascript data mapping into CSS variables! -->
-<style props="{ { ...designTokens } }">
+<style props="{ ...designTokens }">
 	.button {
 		background-color: var(--primaryBg);
 		color: var(--primaryFg);

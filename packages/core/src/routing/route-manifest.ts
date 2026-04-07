@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { pagePathToKey } from '../utils/routing'
-import { parseRoutePattern } from '../utils/route-pattern'
+import { getUnsupportedRoutePatternIssues, parseRoutePattern } from '../utils/route-pattern'
 
 export interface RouteManifestEntry {
 	id: string
@@ -106,6 +106,21 @@ export function buildRouteManifestWithDiagnostics(
 		const pageName = pagePathToKey(relRoot)
 		const routePath = toRoutePath(pageName)
 		const pattern = pageName
+		const unsupported = getUnsupportedRoutePatternIssues(pattern)
+		for (const issue of unsupported) {
+			const hint =
+				issue.reason === 'catch-all'
+					? 'Catch-all syntax is not supported yet. Use static segments or single-parameter [name] segments.'
+					: issue.reason === 'optional'
+						? 'Optional parameter syntax is not supported yet. Use explicit static routes or separate files.'
+						: 'Use bracket parameter segments like [id] with alphanumeric/underscore names.'
+			diagnostics.push({
+				code: 'AERO_ROUTE',
+				severity: 'error',
+				message: `Unsupported route segment ${JSON.stringify(issue.segment)} in ${JSON.stringify(pattern)}. ${hint}`,
+				file: relRoot,
+			})
+		}
 		const segs = parseRoutePattern(pattern).segments
 		const params = segs.flatMap(s => (s.type === 'param' ? [s.name] : []))
 		return {
@@ -158,6 +173,15 @@ export function buildRouteManifest(root: string, clientDir: string): RouteManife
 	return buildRouteManifestWithDiagnostics(root, clientDir).manifest
 }
 
+function routeManifestEqualsIgnoringGeneratedAt(
+	a: RouteManifestFile,
+	b: RouteManifestFile
+): boolean {
+	if (a.version !== b.version) return false
+	if (a.pagesDir !== b.pagesDir) return false
+	return JSON.stringify(a.routes) === JSON.stringify(b.routes)
+}
+
 export function writeRouteManifestGenerated(
 	root: string,
 	clientDir: string
@@ -166,6 +190,23 @@ export function writeRouteManifestGenerated(
 	const outDir = path.join(root, '.aero', 'generated')
 	fs.mkdirSync(outDir, { recursive: true })
 	const manifestPath = path.join(outDir, 'route-manifest.json')
-	fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8')
+
+	if (fs.existsSync(manifestPath)) {
+		try {
+			const existingRaw = fs.readFileSync(manifestPath, 'utf8')
+			const existing = JSON.parse(existingRaw) as RouteManifestFile
+			if (routeManifestEqualsIgnoringGeneratedAt(existing, manifest)) {
+				manifest.generatedAt = existing.generatedAt
+			}
+		} catch {
+			// If existing manifest is unreadable, overwrite with fresh generated output.
+		}
+	}
+
+	const nextText = JSON.stringify(manifest, null, 2) + '\n'
+	const prevText = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, 'utf8') : null
+	if (prevText !== nextText) {
+		fs.writeFileSync(manifestPath, nextText, 'utf8')
+	}
 	return { manifestPath, manifest, diagnostics }
 }

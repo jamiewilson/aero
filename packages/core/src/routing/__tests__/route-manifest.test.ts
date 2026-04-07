@@ -2,7 +2,11 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { buildRouteManifest, writeRouteManifestGenerated } from '../route-manifest'
+import {
+	buildRouteManifest,
+	buildRouteManifestWithDiagnostics,
+	writeRouteManifestGenerated,
+} from '../route-manifest'
 import {
 	renderRouteHelpersTs,
 	renderRouteTypesDts,
@@ -45,6 +49,22 @@ describe('route manifest generation', () => {
 		}
 	})
 
+	it('reports diagnostics for unsupported route segment syntax', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-unsupported-'))
+		try {
+			fs.mkdirSync(path.join(root, 'client', 'pages', 'docs'), { recursive: true })
+			fs.writeFileSync(
+				path.join(root, 'client', 'pages', 'docs', '[...slug].html'),
+				'<html></html>'
+			)
+			const { diagnostics } = buildRouteManifestWithDiagnostics(root, 'client')
+			expect(diagnostics.some(d => d.message.includes('Unsupported route segment'))).toBe(true)
+			expect(diagnostics.some(d => d.file === 'client/pages/docs/[...slug].html')).toBe(true)
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true })
+		}
+	})
+
 	it('uses collision-safe route ids for static vs dynamic segments', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-id-'))
 		try {
@@ -79,6 +99,35 @@ describe('route manifest generation', () => {
 			writeRouteTypesGenerated(root, manifest)
 			expect(fs.existsSync(path.join(root, '.aero', 'generated', 'route-types.d.ts'))).toBe(true)
 			expect(fs.existsSync(path.join(root, '.aero', 'generated', 'route-helpers.ts'))).toBe(true)
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true })
+		}
+	})
+
+	it('preserves generatedAt and file contents when routes are unchanged', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-stable-'))
+		try {
+			fs.mkdirSync(path.join(root, 'client', 'pages'), { recursive: true })
+			fs.writeFileSync(path.join(root, 'client', 'pages', 'index.html'), '<html></html>')
+
+			const first = writeRouteManifestGenerated(root, 'client')
+			const manifestPath = first.manifestPath
+			const firstText = fs.readFileSync(manifestPath, 'utf8')
+
+			const second = writeRouteManifestGenerated(root, 'client')
+			const secondText = fs.readFileSync(manifestPath, 'utf8')
+
+			expect(second.manifest.generatedAt).toBe(first.manifest.generatedAt)
+			expect(secondText).toBe(firstText)
+
+			writeRouteTypesGenerated(root, second.manifest)
+			const dtsPath = path.join(root, '.aero', 'generated', 'route-types.d.ts')
+			const helpersPath = path.join(root, '.aero', 'generated', 'route-helpers.ts')
+			const dtsBefore = fs.readFileSync(dtsPath, 'utf8')
+			const helpersBefore = fs.readFileSync(helpersPath, 'utf8')
+			writeRouteTypesGenerated(root, second.manifest)
+			expect(fs.readFileSync(dtsPath, 'utf8')).toBe(dtsBefore)
+			expect(fs.readFileSync(helpersPath, 'utf8')).toBe(helpersBefore)
 		} finally {
 			fs.rmSync(root, { recursive: true, force: true })
 		}
