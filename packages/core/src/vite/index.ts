@@ -52,6 +52,8 @@ import {
 	getRuntimeInstanceModuleSource,
 	renderStaticPages,
 } from './build'
+import { writeRouteManifestGenerated } from '../routing/route-manifest'
+import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -199,6 +201,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		},
 		configResolved(resolvedConfig) {
 			state.config = resolvedConfig
+			const { manifest } = writeRouteManifestGenerated(resolvedConfig.root, state.dirs.client)
+			writeRouteTypesGenerated(resolvedConfig.root, manifest)
 			// Write runtime instance to a real file under .aero so Vite's import-glob allows our patterns (virtual modules require leading '/').
 			const dir = path.join(resolvedConfig.root, AERO_DIR)
 			mkdirSync(dir, { recursive: true })
@@ -314,12 +318,18 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const mod = server.moduleGraph.getModuleById(RESOLVED_RUNTIME_INSTANCE_MODULE_ID)
 				if (mod) server.moduleGraph.invalidateModule(mod)
 			}
+			const regenerateRouteArtifacts = (): void => {
+				if (!state.config) return
+				const { manifest } = writeRouteManifestGenerated(state.config.root, state.dirs.client)
+				writeRouteTypesGenerated(state.config.root, manifest)
+			}
 			const onClientTemplateFs = (file: string): void => {
 				if (!file.endsWith('.html')) return
 				if (!state.config) return
 				const clientRoot = path.resolve(state.config.root, state.dirs.client)
 				const abs = path.resolve(file)
 				if (abs !== clientRoot && !abs.startsWith(clientRoot + path.sep)) return
+				regenerateRouteArtifacts()
 				invalidateRuntimeRegistration()
 			}
 			server.watcher.on('add', onClientTemplateFs)

@@ -57,6 +57,8 @@ import {
 	writeBuildManifest,
 } from './build-manifest'
 import { loadTsconfigAliases } from '../utils/aliases'
+import { writeRouteManifestGenerated } from '../routing/route-manifest'
+import { writeRouteTypesGenerated } from '../routing/route-typegen'
 export { addDoctype } from './rewrite'
 
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
@@ -686,6 +688,8 @@ export async function renderStaticPages(
 ): Promise<void> {
 	const root = options.root
 	const dirs = resolveDirs(options.dirs)
+	const { manifest: routeManifest } = writeRouteManifestGenerated(root, dirs.client)
+	writeRouteTypesGenerated(root, routeManifest)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	// Pages are always discovered from the client/pages subtree.
 	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))
