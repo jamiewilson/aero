@@ -1,5 +1,5 @@
 import { runAeroCheck } from '../check'
-import { AERO_EXIT_COMPILE } from '@aero-js/core/diagnostics'
+import { AERO_EXIT_COMPILE, AERO_EXIT_ROUTE } from '@aero-js/core/diagnostics'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -99,6 +99,23 @@ describe('runAeroCheck', () => {
 			expect(out).toContain('[AERO_TEMPLATE]')
 			expect(out).toContain('[AERO_SWITCH]')
 			expect(out).toContain('warning:')
+		} finally {
+			spy.mockRestore()
+		}
+	})
+
+	it('reports duplicate route-path collisions as AERO_ROUTE errors', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-route-collision-'))
+		fs.mkdirSync(path.join(dir, 'client/pages/a'), { recursive: true })
+		fs.writeFileSync(path.join(dir, 'client/pages/a/index.html'), '<p>a</p>\n', 'utf-8')
+		fs.writeFileSync(path.join(dir, 'client/pages/a.html'), '<p>b</p>\n', 'utf-8')
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_ROUTE)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_ROUTE]')
+			expect(out).toContain('Duplicate route path')
 		} finally {
 			spy.mockRestore()
 		}

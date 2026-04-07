@@ -8,6 +8,8 @@ const entry = [
 	'src/vite/index.ts',
 	'src/diagnostics.ts',
 	'src/compile-check-api.ts',
+	'src/routing/route-manifest.ts',
+	'src/routing/route-typegen.ts',
 	'src/utils/aliases.ts',
 	'src/utils/redirects.ts',
 	'src/runtime/index.ts',

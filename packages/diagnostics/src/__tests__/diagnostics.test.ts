@@ -86,6 +86,19 @@ describe('diagnostics', () => {
 		expect(text).toContain('Aero Switch Warning')
 	})
 
+	it('formatDiagnosticsTerminal uses route banner title for route diagnostics', () => {
+		const text = formatDiagnosticsTerminal([
+			{
+				code: 'AERO_ROUTE',
+				severity: 'error',
+				message: 'duplicate route path',
+				file: 'client/pages/docs/index.html',
+			},
+		])
+		expect(text).toContain('Aero Route Error')
+		expect(text).toContain('duplicate route path')
+	})
+
 	it('aeroDiagnosticToViteErrorFields sets loc for overlay', () => {
 		const fields = aeroDiagnosticToViteErrorFields(
 			{

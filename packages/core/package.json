@@ -62,6 +62,14 @@
 			"types": "./dist/compile-check-api.d.mts",
 			"default": "./dist/compile-check-api.mjs"
 		},
+		"./routing/route-manifest": {
+			"types": "./dist/routing/route-manifest.d.mts",
+			"default": "./dist/routing/route-manifest.mjs"
+		},
+		"./routing/route-typegen": {
+			"types": "./dist/routing/route-typegen.d.mts",
+			"default": "./dist/routing/route-typegen.mjs"
+		},
 		"./env": "./env.d.ts"
 	},
 	"scripts": {

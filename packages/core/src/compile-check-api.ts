@@ -13,8 +13,24 @@ export {
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/compiler'
+export {
+	buildRouteManifest,
+	buildRouteManifestWithDiagnostics,
+	writeRouteManifestGenerated,
+} from './routing/route-manifest'
+export {
+	renderRouteTypesDts,
+	renderRouteHelpersTs,
+	writeRouteTypesGenerated,
+} from './routing/route-typegen'
 export type {
 	BuildScriptTypeIssue,
 	TemplateTypeIssue,
 	CheckTemplateTypesOptions,
 } from '@aero-js/compiler'
+export type {
+	RouteManifestEntry,
+	RouteManifestFile,
+	RouteManifestDiagnostic,
+	RouteManifestBuildResult,
+} from './routing/route-manifest'
