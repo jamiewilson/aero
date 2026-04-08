@@ -88,6 +88,40 @@ function normalizeTasks(tasks: unknown, configDir: string): unknown {
 	)
 }
 
+function normalizeModules(modules: unknown, configDir: string): unknown {
+	if (!Array.isArray(modules)) return undefined
+	return modules.map(entry => normalizeRelativeModulePath(entry, configDir))
+}
+
+function normalizeImports(imports: unknown, configDir: string): unknown {
+	if (!isPlainObject(imports)) return undefined
+	const dirs = Array.isArray(imports.dirs)
+		? imports.dirs.map(entry => normalizeRelativeModulePath(entry, configDir))
+		: imports.dirs
+	return {
+		...imports,
+		...(dirs !== undefined ? { dirs } : {}),
+	}
+}
+
+function normalizeAlias(alias: unknown, configDir: string): unknown {
+	if (!isPlainObject(alias)) return undefined
+	return Object.fromEntries(
+		Object.entries(alias).map(([key, value]) => [key, normalizeRelativeModulePath(value, configDir)])
+	)
+}
+
+function normalizeAssetEntries(entries: unknown, configDir: string): unknown {
+	if (!Array.isArray(entries)) return undefined
+	return entries.map(entry => {
+		if (!isPlainObject(entry)) return entry
+		return {
+			...entry,
+			dir: normalizeRelativeModulePath(entry.dir, configDir),
+		}
+	})
+}
+
 function serializeInline(value: unknown): string {
 	return value === undefined ? 'undefined' : JSON.stringify(value, null, 2)
 }
@@ -184,6 +218,34 @@ export function writeGeneratedNitroConfig({
 		userConfig.ok && userConfigDir !== null
 			? normalizeTasks(userConfig.config.tasks, userConfigDir)
 			: undefined
+	const normalizedUserModules =
+		userConfig.ok && userConfigDir !== null
+			? normalizeModules(userConfig.config.modules, userConfigDir)
+			: undefined
+	const normalizedUserErrorHandler =
+		userConfig.ok && userConfigDir !== null
+			? normalizeRelativeModulePath(userConfig.config.errorHandler, userConfigDir)
+			: undefined
+	const normalizedUserImports =
+		userConfig.ok && userConfigDir !== null
+			? normalizeImports(userConfig.config.imports, userConfigDir)
+			: undefined
+	const normalizedUserAlias =
+		userConfig.ok && userConfigDir !== null
+			? normalizeAlias(userConfig.config.alias, userConfigDir)
+			: undefined
+	const normalizedUserServerAssets =
+		userConfig.ok && userConfigDir !== null
+			? normalizeAssetEntries(userConfig.config.serverAssets, userConfigDir)
+			: undefined
+	const normalizedUserPublicAssets =
+		userConfig.ok && userConfigDir !== null
+			? normalizeAssetEntries(userConfig.config.publicAssets, userConfigDir)
+			: undefined
+	const normalizedUserServerEntry =
+		userConfig.ok && userConfigDir !== null
+			? normalizeRelativeModulePath(userConfig.config.serverEntry, userConfigDir)
+			: undefined
 
 	const content =
 		importPath === null
@@ -220,6 +282,20 @@ const userPlugins = ${serializeInline(normalizedUserPlugins)}
 
 const userTasks = ${serializeInline(normalizedUserTasks)}
 
+const userModules = ${serializeInline(normalizedUserModules)}
+
+const userErrorHandler = ${serializeInline(normalizedUserErrorHandler)}
+
+const userImports = ${serializeInline(normalizedUserImports)}
+
+const userAlias = ${serializeInline(normalizedUserAlias)}
+
+const userServerAssets = ${serializeInline(normalizedUserServerAssets)}
+
+const userPublicAssets = ${serializeInline(normalizedUserPublicAssets)}
+
+const userServerEntry = ${serializeInline(normalizedUserServerEntry)}
+
 const aeroRouteRules = ${JSON.stringify(effectiveAeroRouteRules, null, 2)}
 const userRouteRules =
 	userNitroConfigObject.routeRules &&
@@ -242,6 +318,13 @@ export default defineNitroConfig({
 	scanDirs: Array.from(new Set([...userScanDirs, ...aeroScanDirs])),
 	...(userPlugins !== undefined ? { plugins: userPlugins } : {}),
 	...(userTasks !== undefined ? { tasks: userTasks } : {}),
+	...(userModules !== undefined ? { modules: userModules } : {}),
+	...(userErrorHandler !== undefined ? { errorHandler: userErrorHandler } : {}),
+	...(userImports !== undefined ? { imports: userImports } : {}),
+	...(userAlias !== undefined ? { alias: userAlias } : {}),
+	...(userServerAssets !== undefined ? { serverAssets: userServerAssets } : {}),
+	...(userPublicAssets !== undefined ? { publicAssets: userPublicAssets } : {}),
+	...(userServerEntry !== undefined ? { serverEntry: userServerEntry } : {}),
 	routeRules: {
 		...aeroRouteRules,
 		...userRouteRules,

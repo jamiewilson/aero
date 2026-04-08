@@ -90,7 +90,18 @@ export default defineNitroConfig({
 			handler: './tasks/cache/warm.ts',
 		},
 	},
+	modules: ['./modules/feature.ts'],
+	errorHandler: './server/error.ts',
+	imports: {
+		dirs: ['./imports'],
+	},
+	alias: {
+		'@server-utils': './server/utils.ts',
+	},
+	serverAssets: [{ dir: './server/assets' }],
+	publicAssets: [{ dir: './public' }],
 	scanDirs: ['./custom-server'],
+	serverEntry: './server/entry.ts',
 }
 `
 		)
@@ -117,6 +128,13 @@ export default defineNitroConfig({
 			path.join(root, 'tasks', 'cache', 'warm.ts').replace(/\\/g, '/')
 		)
 		expect(result.content).toContain(path.join(root, 'custom-server').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'server', 'entry.ts').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'modules', 'feature.ts').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'server', 'error.ts').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'imports').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'server', 'utils.ts').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'server', 'assets').replace(/\\/g, '/'))
+		expect(result.content).toContain(path.join(root, 'public').replace(/\\/g, '/'))
 		expect(result.content).not.toContain('"/legacy":')
 		expect(result.content).toContain('"/docs":')
 		expect(warn).toHaveBeenCalledOnce()
