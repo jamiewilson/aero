@@ -12,6 +12,7 @@ import type { MountOptions } from './types'
 import { Aero } from './runtime'
 import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
+import { resolveMountTarget } from './runtime/mount-target'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
@@ -39,9 +40,7 @@ const hmrState: {
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
-	const el = typeof target === 'string' ? (document.querySelector(target) as HTMLElement) : target
-
-	if (!el) throw new Error('Target element not found: ' + target)
+	const el = resolveMountTarget(target)
 
 	hmrState.lastEl = el
 

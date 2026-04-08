@@ -20,22 +20,25 @@ function mockDynamicDocsPageModule(
 	}
 }
 
+function setupDynamicDocsRuntime() {
+	const aero = new Aero()
+	const pageModule = mockDynamicDocsPageModule([
+		{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
+	])
+	const { getStaticPaths } = pageModule
+	aero.registerPages({
+		'docs/[slug].html': pageModule,
+	})
+	return { aero, getStaticPaths }
+}
+
 describe('Aero Runtime - Unified Data Fetching', () => {
 	beforeEach(() => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
 	})
 
 	it('should execute getStaticPaths and inject props when props are missing', async () => {
-		const aero = new Aero()
-
-		const pageModule = mockDynamicDocsPageModule([
-			{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
-		])
-		const { getStaticPaths } = pageModule
-
-		aero.registerPages({
-			'docs/[slug].html': pageModule,
-		})
+		const { aero, getStaticPaths } = setupDynamicDocsRuntime()
 
 		// Render with valid slug but NO props
 		const html = await aero.render('docs/[slug]', {
@@ -47,16 +50,7 @@ describe('Aero Runtime - Unified Data Fetching', () => {
 	})
 
 	it('should return null (404) if params do not match any path', async () => {
-		const aero = new Aero()
-
-		const pageModule = mockDynamicDocsPageModule([
-			{ params: { slug: 'valid-slug' }, props: { title: 'Valid Page' } },
-		])
-		const { getStaticPaths } = pageModule
-
-		aero.registerPages({
-			'docs/[slug].html': pageModule,
-		})
+		const { aero, getStaticPaths } = setupDynamicDocsRuntime()
 
 		// Render with INVALID slug
 		const html = await aero.render('docs/[slug]', {

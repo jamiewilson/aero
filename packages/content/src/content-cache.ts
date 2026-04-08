@@ -23,7 +23,7 @@ export function getContentCachePath(root: string): string {
 	return path.join(root, CONTENT_CACHE_REL_PATH)
 }
 
-export function hashFileSha256(absolutePath: string): string | null {
+function hashFileSha256(absolutePath: string): string | null {
 	try {
 		const buf = fs.readFileSync(absolutePath)
 		return createHash('sha256').update(buf).digest('hex')
@@ -38,17 +38,17 @@ export interface ContentCacheFileEntry {
 	doc: unknown
 }
 
-export interface ContentCacheCollectionSlice {
+interface ContentCacheCollectionSlice {
 	files: Record<string, ContentCacheFileEntry>
 }
 
-export interface ContentCollectionsCache {
+interface ContentCollectionsCache {
 	version: 1
 	configHash: string
 	collections: Record<string, ContentCacheCollectionSlice>
 }
 
-export function readContentCache(root: string): ContentCollectionsCache | null {
+function readContentCache(root: string): ContentCollectionsCache | null {
 	const p = getContentCachePath(root)
 	if (!fs.existsSync(p)) return null
 	try {
@@ -67,7 +67,7 @@ export function readContentCache(root: string): ContentCollectionsCache | null {
 	}
 }
 
-export function writeContentCache(root: string, cache: ContentCollectionsCache): void {
+function writeContentCache(root: string, cache: ContentCollectionsCache): void {
 	const p = getContentCachePath(root)
 	fs.mkdirSync(path.dirname(p), { recursive: true })
 	fs.writeFileSync(p, JSON.stringify(cache, null, '\t') + '\n', 'utf-8')
