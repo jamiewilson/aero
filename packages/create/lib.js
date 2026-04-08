@@ -117,10 +117,14 @@ export function writeReadme(targetDir, projectName, template) {
 			'',
 			'- `nitro.config.ts` as the primary Nitro config surface',
 			'- KV storage via `useStorage`',
-			'- Cached handlers via `defineCachedHandler`',
+			'- Cached handlers/functions via `defineCachedHandler` and `defineCachedFunction`',
 			'- SQLite database access via `useDatabase`',
 			'- Nitro plugin hooks in `plugins/`',
 			'- Nitro tasks in `tasks/`',
+			'',
+			'## Learn More',
+			'',
+			'- [Nitro in Aero guide](https://github.com/jamiewilson/aero/blob/main/docs/nitro-overview.md)',
 			'',
 		]
 

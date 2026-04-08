@@ -20,10 +20,11 @@ pnpm dlx @aero-js/create@latest my-app
 
 ## Options
 
-| Argument            | Description                               | Default      |
-| ------------------- | ----------------------------------------- | ------------ |
-| `<dir>`             | Project name and directory                | _(required)_ |
-| `--template <name>` | Starter template (`minimal`, `fullstack`) | `minimal`    |
+| Argument            | Description                                                        | Default      |
+| ------------------- | ------------------------------------------------------------------ | ------------ |
+| `<dir>`             | Project name and directory                                         | _(required)_ |
+| `--template <name>` | Starter template (`minimal`, `fullstack`)                         | `minimal`    |
+| `--strict`          | Run post-scaffold checks (`aero doctor`, `aero check`, best-effort `aero check --types`) | off          |
 
 ## What it does
 
@@ -31,6 +32,7 @@ pnpm dlx @aero-js/create@latest my-app
 2. Rewrites `package.json` with your project name
 3. Auto-detects your package manager (pnpm > yarn > npm) and installs dependencies
 4. Prints next steps
+5. With `--strict`, runs `aero doctor`, `aero check`, and a best-effort `aero check --types`
 
 The `fullstack` template also adds `@aero-js/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
 
