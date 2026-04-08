@@ -3,7 +3,7 @@
  */
 import { getAeroAnalyzerEntryGlobs, listAeroTemplatePaths } from '@aero-js/config/analyzer-entries'
 
-export type GraphFormat = 'json' | 'lines' | 'fallow-entry'
+type GraphFormat = 'json' | 'lines' | 'fallow-entry'
 
 export function parseGraphFormat(rest: string[]): { format: GraphFormat; rest: string[] } {
 	let format: GraphFormat = 'lines'

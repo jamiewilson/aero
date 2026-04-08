@@ -89,6 +89,27 @@ const AERO_DIR = '.aero'
 /** Filename for the generated runtime instance (uses app dirs for globs); written under .aero so Vite treats it as a real module. */
 const RUNTIME_INSTANCE_FILENAME = 'runtime-instance.mjs'
 
+interface CompileWarning {
+	line?: number
+	column?: number
+	file?: string
+	code: string
+	message: string
+}
+
+function createCompileWarningLogger(resolvedConfig: ResolvedConfig, fallbackFile: string) {
+	return (warning: CompileWarning): void => {
+		const loc =
+			warning.line !== undefined && warning.column !== undefined
+				? `:${warning.line}:${warning.column}`
+				: ''
+		const where = warning.file ? `${warning.file}${loc}` : fallbackFile
+		resolvedConfig.logger.warn(
+			`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
+		)
+	}
+}
+
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
 async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
 	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
@@ -466,16 +487,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 							{
 								resolvedConfig,
 								resolvePath: resolvedAlias.resolve,
-								onWarning: warning => {
-									const loc =
-										warning.line !== undefined && warning.column !== undefined
-											? `:${warning.line}:${warning.column}`
-											: ''
-									const where = warning.file ? `${warning.file}${loc}` : filePath
-									resolvedConfig.logger.warn(
-										`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
-									)
-								},
+								onWarning: createCompileWarningLogger(resolvedConfig, filePath),
 							},
 							state.clientScripts
 						)
@@ -529,16 +541,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 						{
 							resolvedConfig,
 							resolvePath: resolvedAlias.resolve,
-							onWarning: warning => {
-								const loc =
-									warning.line !== undefined && warning.column !== undefined
-										? `:${warning.line}:${warning.column}`
-										: ''
-								const where = warning.file ? `${warning.file}${loc}` : id
-								resolvedConfig.logger.warn(
-									`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
-								)
-							},
+							onWarning: createCompileWarningLogger(resolvedConfig, id),
 						},
 						state.clientScripts
 					)

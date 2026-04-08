@@ -3,6 +3,12 @@ import { Effect, Exit } from 'effect'
 import { AeroCompileError, exitFailureToAeroDiagnostics } from '@aero-js/diagnostics'
 import { htmlCompileTry } from '../compile-html-effect'
 
+function runCompileFailure(program: ReturnType<typeof htmlCompileTry>) {
+	const exit = Effect.runSyncExit(program)
+	expect(Exit.isFailure(exit)).toBe(true)
+	return exitFailureToAeroDiagnostics(exit)
+}
+
 describe('htmlCompileTry', () => {
 	it('returns success value from sync thunk', () => {
 		const program = htmlCompileTry('/proj/pages/a.html', () => 'export default {}')
@@ -13,9 +19,7 @@ describe('htmlCompileTry', () => {
 		const program = htmlCompileTry('/proj/pages/b.html', () => {
 			throw new Error('compile failed')
 		})
-		const exit = Effect.runSyncExit(program)
-		expect(Exit.isFailure(exit)).toBe(true)
-		const d = exitFailureToAeroDiagnostics(exit)
+		const d = runCompileFailure(program)
 		expect(d[0]!.code).toBe('AERO_COMPILE')
 		expect(d[0]!.message).toBe('compile failed')
 		expect(d[0]!.file).toBe('/proj/pages/b.html')
@@ -30,9 +34,7 @@ describe('htmlCompileTry', () => {
 				column: 0,
 			})
 		})
-		const exit = Effect.runSyncExit(program)
-		expect(Exit.isFailure(exit)).toBe(true)
-		const d = exitFailureToAeroDiagnostics(exit)
+		const d = runCompileFailure(program)
 		expect(d[0]!.span).toEqual({ file: 'real.html', line: 5, column: 0 })
 	})
 
@@ -40,9 +42,7 @@ describe('htmlCompileTry', () => {
 		const program = htmlCompileTry('/proj/pages/c.html', () => {
 			throw 'not-an-error'
 		})
-		const exit = Effect.runSyncExit(program)
-		expect(Exit.isFailure(exit)).toBe(true)
-		const d = exitFailureToAeroDiagnostics(exit)
+		const d = runCompileFailure(program)
 		expect(d[0]!.code).toBe('AERO_COMPILE')
 		expect(d[0]!.file).toBe('/proj/pages/c.html')
 		expect(d[0]!.message).toContain('not-an-error')

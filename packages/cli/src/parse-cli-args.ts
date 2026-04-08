@@ -3,7 +3,7 @@
  */
 import path from 'node:path'
 
-export type ParseCliRootResult =
+type ParseCliRootResult =
 	| { ok: true; root: string; rest: string[] }
 	| { ok: false; message: string }
 

@@ -18,6 +18,14 @@ vi.mock('get-tsconfig', () => ({
 	getTsconfig: vi.fn(),
 }))
 
+function resolveKitchenSinkComponentHeader() {
+	const kitchenSink = path.join(process.cwd(), 'examples/kitchen-sink')
+	const importer = path.join(kitchenSink, 'client/pages/index.html')
+	const result = loadTsconfigAliases(kitchenSink)
+	const resolved = result.resolve('@components/header', importer)
+	return { result, resolved }
+}
+
 describe('loadTsconfigAliases', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -72,26 +80,19 @@ describe('loadTsconfigAliases', () => {
 	})
 
 	it('should resolve paths correctly', async () => {
-		const kitchenSink = path.join(process.cwd(), 'examples/kitchen-sink')
-		const importer = path.join(kitchenSink, 'client/pages/index.html')
-		const result = loadTsconfigAliases(kitchenSink)
+		const { result, resolved } = resolveKitchenSinkComponentHeader()
 
 		expect(result.resolve).toBeDefined()
 		expect(result.aliases.length).toBeGreaterThan(0)
-
-		const resolved = result.resolve('@components/header', importer)
 		expect(resolved).toBeDefined()
 		expect(resolved).toContain('components')
 		expect(resolved).toContain('header')
 	})
 
 	it('should handle nested paths', async () => {
-		const kitchenSink = path.join(process.cwd(), 'examples/kitchen-sink')
-		const importer = path.join(kitchenSink, 'client/pages/index.html')
-		const result = loadTsconfigAliases(kitchenSink)
+		const { result, resolved } = resolveKitchenSinkComponentHeader()
 
 		expect(result.resolve).toBeDefined()
-		const resolved = result.resolve('@components/header', importer)
 		expect(resolved).toBeDefined()
 		expect(resolved).toContain('components')
 	})

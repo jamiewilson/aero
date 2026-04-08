@@ -4,7 +4,7 @@
 import { build } from 'vite'
 import { createViteConfig, getDefaultOptions } from '@aero-js/config/vite'
 
-export type AeroBuildOptions = {
+type AeroBuildOptions = {
 	/** Set `AERO_INCREMENTAL=1` when unset (matches `incremental: true` in aero.config). */
 	incremental?: boolean
 }

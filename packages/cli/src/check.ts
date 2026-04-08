@@ -239,7 +239,7 @@ function templateDirs(root: string, clientRel: string): string[] {
 	return [path.join(base, 'pages'), path.join(base, 'components'), path.join(base, 'layouts')]
 }
 
-export type AeroCheckOptions = {
+type AeroCheckOptions = {
 	/**
 	 * Run TypeScript checks on merged `<script is:build>` and `{ }` interpolations (same virtual files as Volar),
 	 * using the workspace tsconfig (paths, strict). Writes `.aero/cache/types/components.d.ts` for the component registry.

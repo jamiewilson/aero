@@ -124,7 +124,7 @@ export function loadCollectionEffect<TSchema extends Record<string, any>, TOutpu
 }
 
 /** Loaded content keyed by collection name. */
-export type LoadedContent = Map<string, any[]>
+type LoadedContent = Map<string, any[]>
 
 const CONTENT_ROOT = 'content'
 
@@ -299,7 +299,7 @@ export function toExportName(collectionName: string): string {
 }
 
 /** Options for {@link serializeContentModule} (e.g. schema warnings for tooling / `aero check`). */
-export interface SerializeContentModuleOptions {
+interface SerializeContentModuleOptions {
 	/** Non-strict loads: files that failed schema validation (embedded for static analysis). */
 	schemaIssues?: readonly ContentSchemaIssue[]
 }

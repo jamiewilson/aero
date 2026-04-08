@@ -9,13 +9,12 @@
 
 import type { MountOptions } from './types'
 import { Aero } from './runtime'
+import { resolveMountTarget } from './runtime/mount-target'
 
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
-	const el = typeof target === 'string' ? (document.querySelector(target) as HTMLElement) : target
-
-	if (!el) throw new Error('Target element not found: ' + target)
+	const el = resolveMountTarget(target)
 
 	if (onRender) onRender(el)
 

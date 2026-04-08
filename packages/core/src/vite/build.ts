@@ -224,21 +224,26 @@ function expandPattern(pattern: string, params: Record<string, string>): string 
 	return expandRoutePattern(pattern, params)
 }
 
-/** Recursively collect all .html file paths under dir. */
-function walkHtmlFiles(dir: string): string[] {
+/** Recursively collect file paths under dir that match the predicate. */
+function walkFilesRecursive(dir: string, matches: (item: fs.Dirent) => boolean): string[] {
 	if (!fs.existsSync(dir)) return []
 	const files: string[] = []
 	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
 		const fullPath = path.join(dir, item.name)
 		if (item.isDirectory()) {
-			files.push(...walkHtmlFiles(fullPath))
+			files.push(...walkFilesRecursive(fullPath, matches))
 			continue
 		}
-		if (item.isFile() && item.name.endsWith('.html')) {
+		if (item.isFile() && matches(item)) {
 			files.push(fullPath)
 		}
 	}
 	return files
+}
+
+/** Recursively collect all .html file paths under dir. */
+function walkHtmlFiles(dir: string): string[] {
+	return walkFilesRecursive(dir, item => item.name.endsWith('.html'))
 }
 
 /** Only `*.html` directly in `dir` (matches `layouts/*.html` glob, not nested). */
@@ -256,6 +261,10 @@ function walkHtmlFilesDirectOnly(dir: string): string[] {
 function toRootRelativeImportUrl(root: string, absolutePath: string): string {
 	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
 	return '/' + rel.replace(/^\//, '')
+}
+
+function appendLines(lines: string[], ...entries: string[]): void {
+	lines.push(...entries)
 }
 
 /**
@@ -365,23 +374,26 @@ export function getRuntimeInstanceModuleSource(
 ): string {
 	const { components, layouts, pages } = discoverRuntimeTemplatePaths(root, clientDir)
 	const lines: string[] = []
-	lines.push(`import { Aero } from ${JSON.stringify(runtimeImportPath)}`)
-	lines.push('')
-	lines.push(`const instance = globalThis.__AERO_INSTANCE__ || new Aero()`)
-	lines.push(`const listeners = globalThis.__AERO_LISTENERS__ || new Set()`)
-	lines.push(`const aero = instance`)
-	lines.push('')
-	lines.push(`const onUpdate = (cb) => {`)
-	lines.push(`\tlisteners.add(cb)`)
-	lines.push(`\treturn () => listeners.delete(cb)`)
-	lines.push(`}`)
-	lines.push(`const notify = () => {`)
-	lines.push(`\tlisteners.forEach((cb) => cb())`)
-	lines.push(`}`)
-	lines.push('')
-	lines.push(`if (!globalThis.__AERO_INSTANCE__) globalThis.__AERO_INSTANCE__ = instance`)
-	lines.push(`if (!globalThis.__AERO_LISTENERS__) globalThis.__AERO_LISTENERS__ = listeners`)
-	lines.push('')
+	appendLines(
+		lines,
+		`import { Aero } from ${JSON.stringify(runtimeImportPath)}`,
+		'',
+		`const instance = globalThis.__AERO_INSTANCE__ || new Aero()`,
+		`const listeners = globalThis.__AERO_LISTENERS__ || new Set()`,
+		`const aero = instance`,
+		'',
+		`const onUpdate = (cb) => {`,
+		`\tlisteners.add(cb)`,
+		`\treturn () => listeners.delete(cb)`,
+		`}`,
+		`const notify = () => {`,
+		`\tlisteners.forEach((cb) => cb())`,
+		`}`,
+		'',
+		`if (!globalThis.__AERO_INSTANCE__) globalThis.__AERO_INSTANCE__ = instance`,
+		`if (!globalThis.__AERO_LISTENERS__) globalThis.__AERO_LISTENERS__ = listeners`,
+		''
+	)
 
 	const compEntries: string[] = []
 	for (let i = 0; i < components.length; i++) {
@@ -409,17 +421,20 @@ export function getRuntimeInstanceModuleSource(
 		pageEntries.push(`${JSON.stringify(url)}: ${name}`)
 	}
 	lines.push(`const pages = { ${pageEntries.join(', ')} }`)
-	lines.push('')
-	lines.push(`aero.registerPages(components)`)
-	lines.push(`aero.registerPages(layouts)`)
-	lines.push(`aero.registerPages(pages)`)
-	lines.push('')
-	lines.push(`notify()`)
-	lines.push('')
-	lines.push(`if (import.meta.hot) import.meta.hot.accept()`)
-	lines.push('')
-	lines.push(`export { aero, onUpdate }`)
-	lines.push('')
+	appendLines(
+		lines,
+		'',
+		`aero.registerPages(components)`,
+		`aero.registerPages(layouts)`,
+		`aero.registerPages(pages)`,
+		'',
+		`notify()`,
+		'',
+		`if (import.meta.hot) import.meta.hot.accept()`,
+		'',
+		`export { aero, onUpdate }`,
+		''
+	)
 	return lines.join('\n')
 }
 
@@ -661,19 +676,7 @@ export function discoverClientScriptContentMap(
 
 /** Recursively collect all file paths under dir (no extension filter). */
 function walkFiles(dir: string): string[] {
-	if (!fs.existsSync(dir)) return []
-	const files: string[] = []
-	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
-		const fullPath = path.join(dir, item.name)
-		if (item.isDirectory()) {
-			files.push(...walkFiles(fullPath))
-			continue
-		}
-		if (item.isFile()) {
-			files.push(fullPath)
-		}
-	}
-	return files
+	return walkFilesRecursive(dir, () => true)
 }
 
 /**

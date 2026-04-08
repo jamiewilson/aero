@@ -13,6 +13,11 @@ import {
 	writeRouteTypesGenerated,
 } from '../route-typegen'
 
+function writeIndexPage(root: string): void {
+	fs.mkdirSync(path.join(root, 'client', 'pages'), { recursive: true })
+	fs.writeFileSync(path.join(root, 'client', 'pages', 'index.html'), '<html></html>')
+}
+
 describe('route manifest generation', () => {
 	it('builds route manifest from pages tree with params and parent relationships', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-'))
@@ -86,8 +91,7 @@ describe('route manifest generation', () => {
 	it('writes manifest + generated route types/helpers', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-write-'))
 		try {
-			fs.mkdirSync(path.join(root, 'client', 'pages'), { recursive: true })
-			fs.writeFileSync(path.join(root, 'client', 'pages', 'index.html'), '<html></html>')
+			writeIndexPage(root)
 			const { manifestPath, manifest } = writeRouteManifestGenerated(root, 'client')
 			expect(fs.existsSync(manifestPath)).toBe(true)
 
@@ -107,8 +111,7 @@ describe('route manifest generation', () => {
 	it('preserves generatedAt and file contents when routes are unchanged', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-routes-stable-'))
 		try {
-			fs.mkdirSync(path.join(root, 'client', 'pages'), { recursive: true })
-			fs.writeFileSync(path.join(root, 'client', 'pages', 'index.html'), '<html></html>')
+			writeIndexPage(root)
 
 			const first = writeRouteManifestGenerated(root, 'client')
 			const manifestPath = first.manifestPath
