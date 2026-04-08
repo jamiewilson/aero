@@ -6,10 +6,10 @@ Full-stack Aero template with Nitro enabled from day one. Includes `nitro.config
 
 - `client/` — Pages, layouts, components, assets
 - `content/site.ts` — Global site data
-- `server/` — Nitro API routes and the static catch-all route
-- `plugins/` — Nitro runtime hooks
-- `tasks/` — Nitro task handlers
-- `server.ts` — Nitro server entry
+- `server/` — Nitro API/routes plus server plugins, tasks, and server entry
+- `server/plugins/` — Nitro runtime hooks
+- `server/tasks/` — Nitro task handlers
+- `server/entry.ts` — Nitro server entry (wired via `serverEntry`)
 - `nitro.config.ts` — Canonical Nitro config for the project
 
 ## Commands

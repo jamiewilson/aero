@@ -9,6 +9,9 @@ describe('getAeroAnalyzerEntryGlobs', () => {
 		const globs = getAeroAnalyzerEntryGlobs(process.cwd(), {})
 		expect(globs).toContain('client/pages/**/*.html')
 		expect(globs).toContain('server/**/*.ts')
+		expect(globs).toContain('server/plugins/**/*.ts')
+		expect(globs).toContain('server/tasks/**/*.ts')
+		expect(globs).toContain('server/entry.ts')
 	})
 
 	it('respects custom dirs from config', () => {
@@ -18,6 +21,9 @@ describe('getAeroAnalyzerEntryGlobs', () => {
 		const globs = getAeroAnalyzerEntryGlobs(process.cwd(), config)
 		expect(globs).toContain('frontend/pages/**/*.html')
 		expect(globs).toContain('backend/**/*.ts')
+		expect(globs).toContain('backend/plugins/**/*.ts')
+		expect(globs).toContain('backend/tasks/**/*.ts')
+		expect(globs).toContain('backend/entry.ts')
 	})
 })
 

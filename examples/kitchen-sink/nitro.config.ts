@@ -40,13 +40,14 @@ export default defineNitroConfig({
 			options: { name: 'kitchen-sink-dev' },
 		},
 	},
-	plugins: ['./plugins/runtime.ts'],
+	plugins: ['./server/plugins/runtime.ts'],
 	tasks: {
 		'cache:warm': {
-			handler: './tasks/cache/warm.ts',
+			handler: './server/tasks/cache/warm.ts',
 			description: 'Warm the kitchen sink cache endpoint',
 		},
 	},
+	serverEntry: './server/entry.ts',
 	routeRules: {
 		'/health': {
 			headers: {

@@ -7,7 +7,7 @@ The contract is intentionally thin:
 - Aero owns page compilation and writes static HTML to `dist/` (or your configured output directory).
 - Nitro owns request-time server behavior.
 - End-user projects configure Nitro with a normal **`nitro.config.ts`** at the project root.
-- End-user projects use Nitro-native files and APIs such as `server/api`, `server/routes`, `server/middleware`, `plugins`, `tasks`, `server.ts`, `useStorage`, `useDatabase`, `defineCachedHandler`, and `runTask`.
+- End-user projects use Nitro-native files and APIs such as `server/api`, `server/routes`, `server/middleware`, `server/plugins`, `server/tasks`, `server/entry.ts` (via `serverEntry`), `useStorage`, `useDatabase`, `defineCachedHandler`, and `runTask`.
 
 ## Quick Start
 
@@ -71,9 +71,9 @@ The fullstack starter includes concrete files for the cookbook patterns in this 
 - `server/api/kv/[key].ts` + `[key].post.ts` — KV storage example
 - `server/api/cache/time.ts` — cached handler example
 - `server/api/database/users.ts` — database example
-- `plugins/runtime.ts` — Nitro plugin hook example
-- `tasks/cache/warm.ts` + `server/api/tasks/cache-warm.post.ts` — Nitro tasks example
-- `server.ts` — server entry example
+- `server/plugins/runtime.ts` — Nitro plugin hook example
+- `server/tasks/cache/warm.ts` + `server/api/tasks/cache-warm.post.ts` — Nitro tasks example
+- `server/entry.ts` — server entry example
 - `nitro.config.ts` — canonical Nitro config
 
 ## What Aero Adds
@@ -102,11 +102,11 @@ Use Nitro's normal project structure in Aero projects:
 ├── server/
 │   ├── api/
 │   ├── routes/
-│   └── middleware/
-├── plugins/
-├── tasks/
+│   ├── middleware/
+│   ├── plugins/
+│   ├── tasks/
+│   └── entry.ts
 ├── assets/
-├── server.ts
 ├── aero.config.ts
 ├── nitro.config.ts
 └── vite.config.ts
@@ -114,7 +114,8 @@ Use Nitro's normal project structure in Aero projects:
 
 - `server/api` and `server/routes` remain the primary place for request handlers.
 - `server/middleware` is for Nitro middleware, not Aero dev-only middleware.
-- `plugins/`, `tasks/`, `assets/`, and `server.ts` are Nitro-native extension points at the project root.
+- `server/plugins`, `server/tasks`, and `server/entry.ts` are Nitro-native extension points colocated under your server directory.
+- If preferred, root-level Nitro paths still work when referenced explicitly in `nitro.config.ts`.
 
 ## Supported Nitro Features
 
@@ -328,7 +329,7 @@ export default defineHandler(async () => {
 Plugins use Nitro lifecycle hooks:
 
 ```ts
-// plugins/runtime.ts
+// server/plugins/runtime.ts
 import { definePlugin } from 'nitro'
 
 export default definePlugin(nitroApp => {
@@ -341,7 +342,7 @@ export default definePlugin(nitroApp => {
 Tasks stay Nitro-native:
 
 ```ts
-// tasks/cache/warm.ts
+// server/tasks/cache/warm.ts
 import { defineTask } from 'nitro/task'
 
 export default defineTask({
@@ -367,10 +368,10 @@ export default defineHandler(async () => {
 })
 ```
 
-Server entry works the same way as normal Nitro:
+Server entry works the same way as normal Nitro (wire it with `serverEntry` in `nitro.config.ts`):
 
 ```ts
-// server.ts
+// server/entry.ts
 export default {
 	async fetch(request: Request) {
 		const url = new URL(request.url)
@@ -382,6 +383,15 @@ export default {
 		}
 	},
 }
+```
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	serverEntry: './server/entry.ts',
+})
 ```
 
 ## Route Rules and Runtime Config
