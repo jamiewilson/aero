@@ -18,3 +18,7 @@ Full-stack Aero template with Nitro enabled from day one. Includes `nitro.config
 - `pnpm build` — Build static HTML and Nitro output
 - `pnpm preview` — Preview the static build only
 - `pnpm preview:api` — Preview the full Nitro server from `.output/`
+
+## Learn More
+
+- [Nitro in Aero guide](https://github.com/jamiewilson/aero/blob/main/docs/nitro-overview.md)

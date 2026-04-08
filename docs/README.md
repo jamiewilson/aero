@@ -45,6 +45,7 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 - **[Aero CLI (`aero check`) and tooling APIs](aero-cli-and-check.md)** — `aero check`, `aero check --types`, `aero doctor`, exit codes, and related package APIs.
 - **[Incremental static build](build-performance.md)** — `AERO_INCREMENTAL`, `.aero/cache/build-manifest.json`, and when prerender is skipped or partial.
+- **[Standalone runtime](standalone-runtime.md)** — Use Aero compile/runtime helpers in ESM scripts and non-Vite execution flows.
 - **VS Code extension** — Install from the marketplace; features and settings are documented in [packages/vscode/README.md](../packages/vscode/README.md).
 
 ## Server and client libraries

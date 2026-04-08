@@ -99,7 +99,8 @@ function installStandalone(targetDir) {
 }
 
 /**
- * After scaffold, optionally run `aero doctor` and `aero check` when `--strict` is set (best-effort).
+ * After scaffold, optionally run `aero doctor`, `aero check`, and a best-effort `aero check --types`
+ * when `--strict` is set.
  * @param {string} targetDir
  * @param {boolean} inMonorepo
  */
@@ -131,6 +132,28 @@ function runOptionalStrictChecks(targetDir, inMonorepo) {
 			})
 	if (rCheck.status !== 0) {
 		console.error('[create-aero] aero check reported issues (see above). Fix before shipping.')
+	}
+
+	const rCheckTypes = inMonorepo
+		? spawnSync('pnpm', ['exec', 'aero', 'check', '--types'], {
+				stdio: 'inherit',
+				cwd: targetDir,
+				shell: true,
+			})
+		: spawnSync(
+				process.platform === 'win32' ? 'npx.cmd' : 'npx',
+				['--yes', 'aero', 'check', '--types'],
+				{
+					stdio: 'inherit',
+					cwd: targetDir,
+					shell: true,
+				}
+			)
+	if (rCheckTypes.status !== 0) {
+		console.error(
+			'[create-aero] aero check --types did not complete cleanly (best-effort). ' +
+				'You can run it later with: pnpm exec aero check --types'
+		)
 	}
 }
 

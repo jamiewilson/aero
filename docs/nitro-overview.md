@@ -63,6 +63,19 @@ This page is the **Nitro-in-Aero cookbook**: short, copy-paste patterns for comm
 
 For a **full runnable project** that exercises these patterns together, use the monorepo’s `packages/starters/fullstack` package (`pnpm create` / starter selection when available) or clone the repo and run `pnpm install && pnpm dev` inside that starter.
 
+### Starter parity map (current)
+
+The fullstack starter includes concrete files for the cookbook patterns in this doc:
+
+- `server/api/hello.ts` — basic Nitro handler
+- `server/api/kv/[key].ts` + `[key].post.ts` — KV storage example
+- `server/api/cache/time.ts` — cached handler example
+- `server/api/database/users.ts` — database example
+- `plugins/runtime.ts` — Nitro plugin hook example
+- `tasks/cache/warm.ts` + `server/api/tasks/cache-warm.post.ts` — Nitro tasks example
+- `server.ts` — server entry example
+- `nitro.config.ts` — canonical Nitro config
+
 ## What Aero Adds
 
 Aero generates a small `.aero/nitro.config.mjs` during build, but that generated file now **extends your root `nitro.config.ts`** instead of replacing it.
