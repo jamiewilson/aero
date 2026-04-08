@@ -1518,7 +1518,12 @@ describe('AeroDiagnostics Route Contract', () => {
 				String(d.message).includes('Unsupported route segment')
 			)
 			expect(routeDiag).toBeDefined()
-			expect(routeDiag.code.value).toBe('AERO_ROUTE')
+			if (!routeDiag) throw new Error('Expected route diagnostic')
+			const routeCode =
+				typeof routeDiag.code === 'object' && routeDiag.code !== null && 'value' in routeDiag.code
+					? routeDiag.code.value
+					: routeDiag.code
+			expect(routeCode).toBe('AERO_ROUTE')
 		} finally {
 			fs.rmSync(root, { recursive: true, force: true })
 		}

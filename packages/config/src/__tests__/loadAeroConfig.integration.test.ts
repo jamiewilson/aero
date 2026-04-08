@@ -9,7 +9,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 describe('loadAeroConfig (integration)', () => {
-	it('loads kitchen-sink aero.config.ts and reads dirs', () => {
+	it('loads kitchen-sink aero.config.ts', () => {
 		const root = path.resolve(process.cwd(), 'examples/kitchen-sink')
 		if (!fs.existsSync(path.join(root, 'aero.config.ts'))) {
 			return
@@ -17,7 +17,8 @@ describe('loadAeroConfig (integration)', () => {
 		const cfg = loadAeroConfig(root)
 		expect(cfg).not.toBeNull()
 		const obj = typeof cfg === 'function' ? cfg({ command: 'build', mode: 'production' }) : cfg
-		expect(obj?.dirs?.client).toBe('./frontend')
+		expect(obj?.server).toBe(true)
+		expect(obj?.dirs).toBeUndefined()
 	})
 
 	it('falls back to the next config extension when an earlier file is invalid', () => {
