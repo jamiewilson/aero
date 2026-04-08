@@ -1489,3 +1489,38 @@ import mid from './mid.html'
 		}
 	})
 })
+
+describe('AeroDiagnostics Route Contract', () => {
+	it('reports unsupported route segments in pages file names as AERO_ROUTE', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-route-'))
+		try {
+			const pagesDir = path.join(root, 'client', 'pages', 'docs')
+			fs.mkdirSync(pagesDir, { recursive: true })
+			const filePath = path.join(pagesDir, '[...slug].html')
+			const text = '<p>hello</p>\n'
+			fs.writeFileSync(filePath, text, 'utf-8')
+
+			const doc = {
+				uri: {
+					toString: () => `file://${filePath}`,
+					fsPath: filePath,
+					scheme: 'file',
+				},
+				getText: () => text,
+				positionAt: (offset: number) => ({ line: 0, character: offset }),
+				languageId: 'html',
+				fileName: filePath,
+				lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+			} as any
+
+			const diagnostics = collectDiagnosticsForDocument(doc)
+			const routeDiag = diagnostics.find((d: any) =>
+				String(d.message).includes('Unsupported route segment')
+			)
+			expect(routeDiag).toBeDefined()
+			expect(routeDiag.code.value).toBe('AERO_ROUTE')
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true })
+		}
+	})
+})

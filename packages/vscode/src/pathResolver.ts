@@ -81,6 +81,8 @@ export interface PathResolver {
 	resolve(specifier: string, fromFile?: string): string | undefined
 	/** The project root (directory containing tsconfig.json or workspace root). */
 	root: string
+	/** Resolved `client`/frontend root + `pages` (respects aero.config dirs). */
+	pagesDir: string
 	/** Resolved `client`/frontend root + `components` (respects aero.config dirs). */
 	componentsDir: string
 	/** Resolved `client`/frontend root + `layouts`. */
@@ -112,11 +114,13 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 	const resolveFn = aliasResult.resolve
 
 	const clientRoot = path.join(projectRoot, dirs.client)
+	const pagesDir = path.join(clientRoot, 'pages')
 	const componentsDir = path.join(clientRoot, 'components')
 	const layoutsDir = path.join(clientRoot, 'layouts')
 
 	const resolver: PathResolver = {
 		root: projectRoot,
+		pagesDir,
 		componentsDir,
 		layoutsDir,
 		resolve(specifier: string, fromFile?: string): string | undefined {
