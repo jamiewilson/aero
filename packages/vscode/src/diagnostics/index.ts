@@ -10,6 +10,7 @@ import { checkDuplicateDeclarations } from './check-duplicate-declarations'
 import { checkScriptTags } from './check-script-tags'
 import { checkUndefinedVariables } from './check-undefined-variables'
 import { checkUnusedVariables } from './check-unused-variables'
+import { checkRouteContract } from './check-route-contract'
 
 export function collectDiagnosticsForDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
 	const parsed = parseDocument(document)
@@ -22,6 +23,7 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	checkDirectiveExpressionBraces(document, text, diagnostics)
 	checkComponentReferences(document, text, diagnostics, resolver)
 	checkComponentProps(document, text, diagnostics, resolver, parsed.definedVariables)
+	checkRouteContract(document, diagnostics, resolver)
 	const regexUndefined =
 		vscode.workspace
 			.getConfiguration('aero')
