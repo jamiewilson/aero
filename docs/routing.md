@@ -144,6 +144,92 @@ Every page has access to these routing-related values inside `<script is:build>`
 | `Aero.page.url.pathname` | The URL path                                | `'/alpha'`                   |
 | `Aero.props`             | Props passed from a parent component/layout | `{ title: 'Hello' }`         |
 
+## Generated route contracts (optional)
+
+### The problem
+
+As route trees grow, hard-coded route strings and hand-written param types drift from real page files. Renaming `client/pages/docs/[slug].html` can silently break helper code that still expects old paths.
+
+### What this looks like without Aero
+
+```ts
+// easy to drift from filesystem routes
+const href = `/docs/${slug}`
+```
+
+This works until route patterns change, and then the mismatch is discovered late.
+
+### How Aero helps
+
+Aero generates route contract artifacts under `.aero/generated/` from your `client/pages/**.html` tree. These files are regenerated in dev/build and can be imported for compile-time route safety.
+
+### Usage
+
+Generated files:
+
+- `.aero/generated/route-manifest.json` — route manifest (`path`, `pattern`, params, parent relation)
+- `.aero/generated/route-types.d.ts` — route unions and param maps
+- `.aero/generated/route-helpers.ts` — `pathFor(...)` helper with typed params
+
+### Route manifest schema contract (v1)
+
+The manifest is a versioned contract. Current schema version is **`1`**.
+
+```json
+{
+	"version": 1,
+	"generatedAt": "2026-04-07T00:00:00.000Z",
+	"pagesDir": "client/pages",
+	"routes": [
+		{
+			"id": "s:docs/p:slug",
+			"file": "client/pages/docs/[slug].html",
+			"pageName": "docs/[slug]",
+			"path": "/docs/:slug",
+			"pattern": "docs/[slug]",
+			"params": ["slug"],
+			"isDynamic": true,
+			"parentId": "s:docs",
+			"isNotFound": false
+		}
+	]
+}
+```
+
+Field meanings:
+
+- `version`: manifest schema version. Breaking shape changes increment this.
+- `generatedAt`: generation timestamp.
+- `pagesDir`: resolved pages directory used for discovery.
+- `routes[]`: one entry per discovered page route.
+  - `id`: stable internal route id.
+  - `file`: project-relative source file path.
+  - `pageName`: page key form used by Aero routing internals.
+  - `path`: URL-facing path form (`:param` style).
+  - `pattern`: Aero page pattern form (`[param]` style).
+  - `params`: ordered dynamic param names found in `pattern`.
+  - `isDynamic`: whether the route has dynamic params.
+  - `parentId`: structural parent route id, or `null`.
+  - `isNotFound`: true only for `404.html` routes.
+
+Stability policy:
+
+- Additive fields may be introduced in the same `version`.
+- Removing or changing existing field semantics requires a new `version`.
+- Consumers should check `version` before relying on manifest shape.
+
+Example:
+
+```ts
+import { pathFor } from '../.aero/generated/route-helpers'
+
+const href = pathFor('docs/[slug]', { slug: 'intro' })
+```
+
+If required params are missing, TypeScript reports it at compile time.
+
+> Search params are intentionally not typed yet in this phase. Use `Aero.page.url.searchParams` at runtime.
+
 ## Linking Between Pages
 
 Use standard `<a href>` tags with absolute paths:

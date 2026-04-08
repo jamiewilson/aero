@@ -8,6 +8,7 @@ import {
 	parseRoutePattern,
 	matchRoutePattern,
 	expandRoutePattern,
+	getUnsupportedRoutePatternIssues,
 	isDynamicRoutePattern,
 } from '../route-pattern'
 
@@ -62,6 +63,25 @@ describe('parseRoutePattern', () => {
 				{ type: 'static', value: '[.html]' },
 			],
 		})
+	})
+})
+
+describe('getUnsupportedRoutePatternIssues', () => {
+	it('returns empty for supported static and [param] segments', () => {
+		expect(getUnsupportedRoutePatternIssues('about')).toEqual([])
+		expect(getUnsupportedRoutePatternIssues('docs/[slug]')).toEqual([])
+	})
+
+	it('flags unsupported catch-all, optional, and malformed bracket segments', () => {
+		expect(getUnsupportedRoutePatternIssues('docs/[...slug]')).toEqual([
+			{ segment: '[...slug]', reason: 'catch-all' },
+		])
+		expect(getUnsupportedRoutePatternIssues('docs/[id?]')).toEqual([
+			{ segment: '[id?]', reason: 'optional' },
+		])
+		expect(getUnsupportedRoutePatternIssues('docs/[.html]')).toEqual([
+			{ segment: '[.html]', reason: 'invalid-param-segment' },
+		])
 	})
 })
 

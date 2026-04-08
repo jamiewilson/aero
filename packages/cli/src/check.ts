@@ -21,7 +21,11 @@ import {
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
 } from '@aero-js/core/diagnostics'
-import { buildRouteManifestWithDiagnostics } from '@aero-js/core/routing/route-manifest'
+import {
+	buildRouteManifestWithDiagnostics,
+	writeRouteManifestGenerated,
+} from '@aero-js/core/routing/route-manifest'
+import { writeRouteTypesGenerated } from '@aero-js/core/routing/route-typegen'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
@@ -60,19 +64,43 @@ function toRoutePathFromPageName(pageName: string): string {
 	return '/' + mapped.join('/')
 }
 
-function collectRouteCollisionDiagnosticsFallback(root: string, clientDir: string): AeroDiagnostic[] {
+function collectRouteContractDiagnosticsFallback(
+	root: string,
+	clientDir: string
+): AeroDiagnostic[] {
 	const pagesDir = path.join(root, clientDir, 'pages')
 	const files = walkHtmlFiles(pagesDir)
 	const byRoute = new Map<string, string[]>()
+	const diagnostics: AeroDiagnostic[] = []
+
 	for (const abs of files) {
 		const pageName = toPageNameFromPagesDir(abs, pagesDir)
+		const pageSegments = pageName.split('/').filter(Boolean)
+		for (const seg of pageSegments) {
+			if (!seg.startsWith('[') || !seg.endsWith(']')) continue
+			const inner = seg.slice(1, -1)
+			const validParam = /^[A-Za-z_][A-Za-z0-9_]*$/.test(inner)
+			if (validParam) continue
+			const hint = inner.startsWith('...')
+				? 'Catch-all syntax is not supported yet. Use static segments or single-parameter [name] segments.'
+				: inner.endsWith('?')
+					? 'Optional parameter syntax is not supported yet. Use explicit static routes or separate files.'
+					: 'Use bracket parameter segments like [id] with alphanumeric/underscore names.'
+			diagnostics.push({
+				severity: 'error',
+				code: 'AERO_ROUTE',
+				message: `Unsupported route segment ${JSON.stringify(seg)} in ${JSON.stringify(pageName)}. ${hint}`,
+				file: abs,
+			})
+		}
+
 		if (pageName === '404') continue
 		const routePath = toRoutePathFromPageName(pageName)
 		const current = byRoute.get(routePath) ?? []
 		current.push(abs)
 		byRoute.set(routePath, current)
 	}
-	const diagnostics: AeroDiagnostic[] = []
+
 	for (const [routePath, entries] of byRoute.entries()) {
 		if (entries.length <= 1) continue
 		diagnostics.push({
@@ -84,22 +112,61 @@ function collectRouteCollisionDiagnosticsFallback(root: string, clientDir: strin
 			file: entries[0],
 		})
 	}
+
 	return diagnostics
 }
 
 function collectRouteCollisionDiagnostics(root: string, clientDir: string): AeroDiagnostic[] {
+	const dedupe = (items: AeroDiagnostic[]): AeroDiagnostic[] => {
+		const seen = new Set<string>()
+		const out: AeroDiagnostic[] = []
+		for (const item of items) {
+			const key = `${item.code}|${item.file ?? ''}|${item.message}`
+			if (seen.has(key)) continue
+			seen.add(key)
+			out.push(item)
+		}
+		return out
+	}
+
+	const fallback = collectRouteContractDiagnosticsFallback(root, clientDir)
 	try {
 		const { diagnostics } = buildRouteManifestWithDiagnostics(root, clientDir)
-		return diagnostics.map(d => ({
+		const fromManifest = diagnostics.map(d => ({
 			severity: d.severity,
 			code: d.code,
 			message: d.message,
 			...(d.file ? { file: path.resolve(root, d.file) } : {}),
 		}))
+		return dedupe([...fromManifest, ...fallback])
 	} catch (err) {
-		const fallback = collectRouteCollisionDiagnosticsFallback(root, clientDir)
-		if (fallback.length > 0) return fallback
+		if (fallback.length > 0) return dedupe(fallback)
 		return unknownToAeroDiagnostics(err)
+	}
+}
+
+function routeArtifactIoDiagnostic(root: string, message: string): AeroDiagnostic {
+	return {
+		severity: 'error',
+		code: 'AERO_ROUTE',
+		message,
+		file: path.join(root, '.aero', 'generated'),
+	}
+}
+
+function ensureRouteArtifacts(root: string, clientDir: string): AeroDiagnostic[] {
+	try {
+		const { manifest } = writeRouteManifestGenerated(root, clientDir)
+		writeRouteTypesGenerated(root, manifest)
+		return []
+	} catch (err) {
+		const detail = err instanceof Error ? err.message : String(err)
+		return [
+			routeArtifactIoDiagnostic(
+				root,
+				`[aero check] Failed to write generated route artifacts under .aero/generated: ${detail}`
+			),
+		]
 	}
 }
 
@@ -205,6 +272,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 			const mergedAliases = mergeWithDefaultAliases(loadTsconfigAliases(root), root, dirs)
 			const resolvePath = mergedAliases.resolve
 			diagnostics.push(...collectRouteCollisionDiagnostics(root, dirs.client))
+			diagnostics.push(...ensureRouteArtifacts(root, dirs.client))
 
 			const contentRel = contentConfigPathFromAero(root, aero)
 			if (shouldRunContentCheck(aero, root, contentRel)) {

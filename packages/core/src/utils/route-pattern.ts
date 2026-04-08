@@ -13,8 +13,38 @@ interface RoutePattern {
 	segments: RouteSegment[]
 }
 
-/** Matches a single [param] segment; capture is param name (no leading . or ..., no ]). */
-const PARAM_SEGMENT_REGEX = /^\[([^.\][]+)\]$/
+/** Matches a single supported [param] segment; param names are identifier-like (`[A-Za-z_][A-Za-z0-9_]*`). */
+const PARAM_SEGMENT_REGEX = /^\[([A-Za-z_][A-Za-z0-9_]*)\]$/
+
+export interface UnsupportedRoutePatternIssue {
+	segment: string
+	reason: 'catch-all' | 'optional' | 'invalid-param-segment'
+}
+
+/**
+ * Returns unsupported route-segment issues for Aero's current routing grammar.
+ *
+ * Supported dynamic syntax today is only `[param]`.
+ */
+export function getUnsupportedRoutePatternIssues(pattern: string): UnsupportedRoutePatternIssue[] {
+	const rawSegments = pattern.split('/').filter(Boolean)
+	const issues: UnsupportedRoutePatternIssue[] = []
+	for (const seg of rawSegments) {
+		if (!seg.startsWith('[') || !seg.endsWith(']')) continue
+		if (PARAM_SEGMENT_REGEX.test(seg)) continue
+		const inner = seg.slice(1, -1)
+		if (inner.startsWith('...')) {
+			issues.push({ segment: seg, reason: 'catch-all' })
+			continue
+		}
+		if (inner.endsWith('?')) {
+			issues.push({ segment: seg, reason: 'optional' })
+			continue
+		}
+		issues.push({ segment: seg, reason: 'invalid-param-segment' })
+	}
+	return issues
+}
 
 /**
  * Parses a route pattern (page name) into segments.
