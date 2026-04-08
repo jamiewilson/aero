@@ -101,8 +101,8 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## packages/starters/fullstack
 
-- **Purpose:** Nitro-enabled starter template. Includes root `nitro.config.ts`, `server/` routes, `plugins/`, `tasks/`, and `preview:api`.
-- **Structure:** `client/`, `content/site.ts`, `server/`, `plugins/`, `tasks/`, `server.ts`, `nitro.config.ts`.
+- **Purpose:** Nitro-enabled starter template. Includes root `nitro.config.ts`, `server/` routes, `server/plugins/`, `server/tasks/`, `server/entry.ts`, and `preview:api`.
+- **Structure:** `client/`, `content/site.ts`, `server/`, `server/plugins/`, `server/tasks/`, `server/entry.ts`, `nitro.config.ts`.
 
 ## Build and test flow
 

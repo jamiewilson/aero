@@ -40,13 +40,14 @@ export default defineNitroConfig({
 			options: { name: 'app-dev' },
 		},
 	},
-	plugins: ['./plugins/runtime.ts'],
+	plugins: ['./server/plugins/runtime.ts'],
 	tasks: {
 		'cache:warm': {
-			handler: './tasks/cache/warm.ts',
+			handler: './server/tasks/cache/warm.ts',
 			description: 'Warm the starter cache endpoint',
 		},
 	},
+	serverEntry: './server/entry.ts',
 	routeRules: {
 		'/health': {
 			headers: {
