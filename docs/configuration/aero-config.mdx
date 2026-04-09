@@ -1,6 +1,6 @@
 ---
-title: "Aero Config"
-description: "Use aero.config.ts with defineConfig() to manage Aero options in a dedicated file."
+title: 'Aero Config'
+description: 'Use aero.config.ts with defineConfig() to manage Aero options in a dedicated file.'
 ---
 
 For larger projects, `@aero-js/config` lets you move all Aero options out of `vite.config.ts` and into a dedicated `aero.config.ts`. You get typed config with `defineConfig()`, a clean separation from Vite settings, and support for env-aware configuration.
@@ -8,21 +8,9 @@ For larger projects, `@aero-js/config` lets you move all Aero options out of `vi
 ## Install
 
 <Tabs>
-  <Tab title="pnpm">
-    ```bash
-    pnpm add @aero-js/config
-    ```
-  </Tab>
-  <Tab title="npm">
-    ```bash
-    npm install @aero-js/config
-    ```
-  </Tab>
-  <Tab title="yarn">
-    ```bash
-    yarn add @aero-js/config
-    ```
-  </Tab>
+	<Tab title="pnpm">```bash pnpm add @aero-js/config ```</Tab>
+	<Tab title="npm">```bash npm install @aero-js/config ```</Tab>
+	<Tab title="yarn">```bash yarn add @aero-js/config ```</Tab>
 </Tabs>
 
 ## Set up
@@ -48,6 +36,7 @@ For larger projects, `@aero-js/config` lets you move all Aero options out of `vi
       },
     })
     ```
+
   </Step>
   <Step title="Update vite.config.ts">
     Import your config and pass it to `createViteConfig()` from `@aero-js/config/vite`:
@@ -59,6 +48,7 @@ For larger projects, `@aero-js/config` lets you move all Aero options out of `vi
 
     export default createViteConfig(aeroConfig)
     ```
+
   </Step>
 </Steps>
 
@@ -74,7 +64,8 @@ export default createViteConfig()
 ```
 
 <Tip>
-  The no-argument form is the recommended pattern for projects scaffolded with `@aero-js/create`. It keeps `vite.config.ts` as minimal as possible.
+	The no-argument form is the recommended pattern for projects scaffolded with `@aero-js/create`. It
+	keeps `vite.config.ts` as minimal as possible.
 </Tip>
 
 ## Env-aware config
@@ -85,20 +76,20 @@ Pass a function instead of an object to `defineConfig()` to vary options between
 // aero.config.ts
 import { defineConfig } from '@aero-js/config'
 
-export default defineConfig((env) => ({
-  site: env.mode === 'production'
-    ? 'https://example.com'
-    : 'http://localhost:5173',
-  content: true,
-  server: true,
-  vite: {
-    build: {
-      minify: env.mode === 'production',
-    },
-  },
+export default defineConfig(env => ({
+	site: env.mode === 'production' ? 'https://example.com' : 'http://localhost:5173',
+	content: true,
+	server: true,
+	vite: {
+		build: {
+			minify: env.mode === 'production',
+		},
+	},
 }))
 ```
 
 <Note>
-  The `env` parameter is the same object Vite passes to a config function — it includes `mode`, `command`, and `isSsrBuild`. See the [Vite docs](https://vitejs.dev/config/#conditional-config) for details.
+	The `env` parameter is the same object Vite passes to a config function — it includes `mode`,
+	`command`, and `isSsrBuild`. See the [Vite docs](https://vitejs.dev/config/#conditional-config)
+	for details.
 </Note>

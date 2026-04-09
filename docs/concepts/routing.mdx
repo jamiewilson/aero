@@ -1,5 +1,5 @@
 ---
-title: "Pages & Routing"
+title: 'Pages & Routing'
 description: "Map HTML files to URLs using Aero's file-based router. No config required — your file path is your URL."
 ---
 
@@ -9,12 +9,12 @@ Every `.html` file you create in `client/pages/` becomes a route. There is no ro
 
 Drop an `.html` file in `client/pages/` and Aero turns it into a URL:
 
-| File | URL | Build output |
-| --- | --- | --- |
-| `client/pages/index.html` | `/` | `dist/index.html` |
-| `client/pages/about.html` | `/about` | `dist/about/index.html` |
-| `client/pages/docs/index.html` | `/docs` | `dist/docs/index.html` |
-| `client/pages/404.html` | (404 page) | `dist/404.html` |
+| File                           | URL        | Build output            |
+| ------------------------------ | ---------- | ----------------------- |
+| `client/pages/index.html`      | `/`        | `dist/index.html`       |
+| `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
+| `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
+| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
 
 `index.html` at the root of the pages directory maps to `/`. Any other filename (e.g. `about.html`) maps to that name (`/about`).
 
@@ -37,9 +37,9 @@ Create `client/pages/404.html` and Aero treats it as your error page. It is writ
 
 Add bracket-delimited filenames to create dynamic routes. The content inside the brackets becomes the parameter name, available as `Aero.page.params.<name>` in your template.
 
-| File | Pattern | Example URLs |
-| --- | --- | --- |
-| `client/pages/[id].html` | `/:id` | `/alpha`, `/beta` |
+| File                            | Pattern       | Example URLs                |
+| ------------------------------- | ------------- | --------------------------- |
+| `client/pages/[id].html`        | `/:id`        | `/alpha`, `/beta`           |
 | `client/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`, `/docs/name` |
 
 ### Dev vs build behavior
@@ -51,9 +51,10 @@ For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPath
 <Warning>
   If a dynamic page does not export `getStaticPaths`, it is skipped during the build with a warning. The page still works in dev but produces no output files.
 
-  ```text
-  [aero] ⚠ Skipping [id].html — no getStaticPaths() exported. Page will not be pre-rendered.
-  ```
+```text
+[aero] ⚠ Skipping [id].html — no getStaticPaths() exported. Page will not be pre-rendered.
+```
+
 </Warning>
 
 ## getStaticPaths()
@@ -67,19 +68,15 @@ Return an array of `{ params }` objects — one per URL you want to generate:
 ```html
 <!-- client/pages/[id].html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export function getStaticPaths() {
-    return [
-      { params: { id: 'alpha' } },
-      { params: { id: 'beta' } },
-      { params: { id: 'gamma' } }
-    ]
-  }
+	export function getStaticPaths() {
+		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }, { params: { id: 'gamma' } }]
+	}
 </script>
 
 <base-layout title="Page: { Aero.page.params.id }">
-  <h1>{ Aero.page.params.id }</h1>
+	<h1>{ Aero.page.params.id }</h1>
 </base-layout>
 ```
 
@@ -97,13 +94,13 @@ dist/gamma/index.html
 
 ```html
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export async function getStaticPaths() {
-    const res = await fetch('https://api.example.com/posts')
-    const posts = await res.json()
-    return posts.map(post => ({ params: { slug: post.slug } }))
-  }
+	export async function getStaticPaths() {
+		const res = await fetch('https://api.example.com/posts')
+		const posts = await res.json()
+		return posts.map(post => ({ params: { slug: post.slug } }))
+	}
 </script>
 ```
 
@@ -114,18 +111,15 @@ Dynamic segments work inside subdirectories too:
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 
-  export function getStaticPaths() {
-    return [
-      { params: { slug: 'intro' } },
-      { params: { slug: 'name' } }
-    ]
-  }
+	export function getStaticPaths() {
+		return [{ params: { slug: 'intro' } }, { params: { slug: 'name' } }]
+	}
 </script>
 
 <base-layout title="{ Aero.page.params.slug }">
-  <h1>{ Aero.page.params.slug }</h1>
+	<h1>{ Aero.page.params.slug }</h1>
 </base-layout>
 ```
 
@@ -140,11 +134,11 @@ dist/docs/name/index.html
 
 Inside `<script is:build>` and `{ }` expressions, every page has access to these routing values:
 
-| Value | Description | Example |
-| --- | --- | --- |
-| `Aero.page.params` | Dynamic route parameters | `{ id: 'alpha' }` |
-| `Aero.page.url` | Full URL object for the current page | `URL { pathname: '/alpha' }` |
-| `Aero.page.url.pathname` | The URL path | `'/alpha'` |
+| Value                    | Description                          | Example                      |
+| ------------------------ | ------------------------------------ | ---------------------------- |
+| `Aero.page.params`       | Dynamic route parameters             | `{ id: 'alpha' }`            |
+| `Aero.page.url`          | Full URL object for the current page | `URL { pathname: '/alpha' }` |
+| `Aero.page.url.pathname` | The URL path                         | `'/alpha'`                   |
 
 ## Linking between pages
 
@@ -179,17 +173,18 @@ const href = pathFor('docs/[slug]', { slug: 'intro' })
 If required params are missing, TypeScript reports it at compile time.
 
 <Note>
-  Search params are not typed in the current version. Use `Aero.page.url.searchParams` at runtime to read them.
+	Search params are not typed in the current version. Use `Aero.page.url.searchParams` at runtime to
+	read them.
 </Note>
 
 ## Behavior summary
 
-| Behavior | `pnpm dev` | `pnpm build` \+ `preview` | `pnpm build` \+ `preview:api` |
-| --- | --- | --- | --- |
-| Static pages | Rendered on request | Pre-rendered to `dist/` | Served from `dist/` |
-| Dynamic routes | Resolved at request time | Expanded via `getStaticPaths` | Served from `dist/` |
-| Unknown routes | Returns "Page not found" | 404 (no file on disk) | Serves `dist/404.html` with 404 |
-| Links | Absolute paths (`/about`) | Rewritten to relative | Rewritten to relative |
+| Behavior       | `pnpm dev`                | `pnpm build` \+ `preview`     | `pnpm build` \+ `preview:api`   |
+| -------------- | ------------------------- | ----------------------------- | ------------------------------- |
+| Static pages   | Rendered on request       | Pre-rendered to `dist/`       | Served from `dist/`             |
+| Dynamic routes | Resolved at request time  | Expanded via `getStaticPaths` | Served from `dist/`             |
+| Unknown routes | Returns "Page not found"  | 404 (no file on disk)         | Serves `dist/404.html` with 404 |
+| Links          | Absolute paths (`/about`) | Rewritten to relative         | Rewritten to relative           |
 
 ## File structure reference
 

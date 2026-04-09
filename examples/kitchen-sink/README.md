@@ -4,21 +4,21 @@ Full demo template for the Aero static site generator. Used for development and 
 
 ## Structure
 
-| Path                   | Description                                                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `frontend/`            | Front-end source: pages, components, layouts, assets.                                                                |
-| `frontend/pages/`      | Route pages (e.g. `home.html` → `/`, `about.html` → `/about`, `docs/[slug].html` → `/docs/:slug`).                   |
-| `frontend/components/` | Reusable components (`-component` suffix in markup).                                                                 |
-| `frontend/layouts/`    | Layout wrappers with `<slot>`.                                                                                       |
-| `frontend/assets/`     | Styles, scripts, images.                                                                                             |
-| `content/`             | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals.     |
-| `backend/`             | Nitro: `api/`, `routes/`, `backend/plugins/`, `backend/tasks/`, and `backend/entry.ts` (wired via `nitro.config.ts`). |
-| `public/`              | Static assets copied as-is.                                                                                          |
-| `aero.config.ts`       | Aero config (content, server, dirs, vite).                                                                           |
-| `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                                |
-| `content.config.ts`    | Content collections (used when `content: true`).                                                                     |
-| `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                      |
-| `tsconfig.json`        | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc.                                          |
+| Path                   | Description                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/`            | Front-end source: pages, components, layouts, assets.                                                                       |
+| `frontend/pages/`      | Route pages (e.g. `home.html` → `/`, `about.html` → `/about`, `docs/[slug].html` → `/docs/:slug`).                          |
+| `frontend/components/` | Reusable components (`-component` suffix in markup).                                                                        |
+| `frontend/layouts/`    | Layout wrappers with `<slot>`.                                                                                              |
+| `frontend/assets/`     | Styles, scripts, images.                                                                                                    |
+| `content/`             | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals.            |
+| `backend/`             | Nitro: `api/`, `routes/`, `backend/plugins/`, `backend/tasks/`, and `backend/entry.ts` (wired via `nitro.config.ts`).       |
+| `public/`              | Static assets copied as-is.                                                                                                 |
+| `aero.config.ts`       | Aero config (content, server, dirs, vite).                                                                                  |
+| `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                                       |
+| `content.config.ts`    | Content collections (used when `content: true`).                                                                            |
+| `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                             |
+| `tsconfig.json`        | Path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@content/*`, etc.                                                 |
 | `env.d.ts`             | Optional: extends `ImportMetaEnv` with `SITE` and custom env vars for TypeScript. See docs/drafts/environment-variables.md. |
 
 ## Commands

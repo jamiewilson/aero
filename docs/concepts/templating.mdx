@@ -1,6 +1,6 @@
 ---
-title: "Templating"
-description: "Use { } expressions, loops, conditionals, and switch/case to generate HTML at build time."
+title: 'Templating'
+description: 'Use { } expressions, loops, conditionals, and switch/case to generate HTML at build time.'
 ---
 
 Aero's template engine lives entirely in `.html` files. You write standard HTML with `{ }` expressions for dynamic values, and use directives like `for`, `if`, and `switch` directly on elements as attributes. All of this runs at build time — the output is plain static HTML.
@@ -11,8 +11,8 @@ Wrap any JavaScript expression in single braces to interpolate it into text cont
 
 ```html
 <script is:build>
-  const title = 'Hello from Aero'
-  const href = '/docs'
+	const title = 'Hello from Aero'
+	const href = '/docs'
 </script>
 
 <h1>{ title }</h1>
@@ -33,7 +33,7 @@ Use `raw()` when you intentionally need to output unescaped HTML:
 
 ```html
 <script is:build>
-  const html = '<strong>bold</strong>'
+	const html = '<strong>bold</strong>'
 </script>
 <p>{ raw(html) }</p>
 <!-- Output: <p><strong>bold</strong></p> -->
@@ -53,31 +53,32 @@ Use `for` or `data-for` with a JavaScript `for…of` head to repeat an element. 
 
 ```html
 <script is:build>
-  const items = ['a', 'b', 'c']
+	const items = ['a', 'b', 'c']
 </script>
 
 <ul>
-  <li data-for="{ const item of items }">{ item }</li>
+	<li data-for="{ const item of items }">{ item }</li>
 </ul>
 ```
 
 Inside the loop body, Aero injects these variables automatically:
 
-| Variable | Description |
-| --- | --- |
-| `index` | 0-based position in the iterable |
-| `first` | `true` on the first iteration |
-| `last` | `true` on the last iteration |
+| Variable | Description                                      |
+| -------- | ------------------------------------------------ |
+| `index`  | 0-based position in the iterable                 |
+| `first`  | `true` on the first iteration                    |
+| `last`   | `true` on the last iteration                     |
 | `length` | The iterable's `.length` (meaningful for arrays) |
 
 ```html
 <li data-for="{ const item of items }">
-  { item } (index: { index }, first: { first }, last: { last }, length: { length })
+	{ item } (index: { index }, first: { first }, last: { last }, length: { length })
 </li>
 ```
 
 <Note>
-  If your binding pattern declares a name that collides with an injected variable (e.g. `const { length } of rows`), it shadows the injected value inside that iteration.
+	If your binding pattern declares a name that collides with an injected variable (e.g. `const{' '}
+	{length} of rows`), it shadows the injected value inside that iteration.
 </Note>
 
 ## Conditionals
@@ -103,9 +104,9 @@ For matching one value against multiple alternatives, use `switch` on a containe
 
 ```html
 <div switch="{ status }">
-  <p case="loading">Loading…</p>
-  <p case="ready">Ready</p>
-  <p default>Other</p>
+	<p case="loading">Loading…</p>
+	<p case="ready">Ready</p>
+	<p default>Other</p>
 </div>
 ```
 
@@ -113,8 +114,8 @@ To match against multiple values with one `case`, use array syntax:
 
 ```html
 <div switch="{ role }">
-  <p case="{ ['admin', 'moderator'] }">Elevated access</p>
-  <p default>Standard access</p>
+	<p case="{ ['admin', 'moderator'] }">Elevated access</p>
+	<p default>Standard access</p>
 </div>
 ```
 
@@ -126,13 +127,13 @@ By default, `for`, `if`, and `switch` preserve their host element in the output 
 
 ```html
 <template if="{ showDetails }">
-  <dl class="details">…</dl>
+	<dl class="details">…</dl>
 </template>
 <template else-if="{ showSummary }">
-  <p class="summary">…</p>
+	<p class="summary">…</p>
 </template>
 <template else>
-  <p>Default.</p>
+	<p>Default.</p>
 </template>
 ```
 
@@ -140,9 +141,9 @@ By default, `for`, `if`, and `switch` preserve their host element in the output 
 
 ```html
 <ul>
-  <template data-for="{ const item of items }">
-    <li>{ item.name }</li>
-  </template>
+	<template data-for="{ const item of items }">
+		<li>{ item.name }</li>
+	</template>
 </ul>
 ```
 
@@ -152,9 +153,9 @@ The list items become direct children of `<ul>` with no extra element in the tre
 
 ```html
 <template switch="{ state }">
-  <p case="loading">Loading…</p>
-  <section case="ready">…</section>
-  <p default>Fallback</p>
+	<p case="loading">Loading…</p>
+	<section case="ready">…</section>
+	<p default>Fallback</p>
 </template>
 ```
 

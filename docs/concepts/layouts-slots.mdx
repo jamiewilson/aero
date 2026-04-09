@@ -1,6 +1,6 @@
 ---
-title: "Layouts & Slots"
-description: "Wrap pages in shared structure using layouts, and control where content lands with slots."
+title: 'Layouts & Slots'
+description: 'Wrap pages in shared structure using layouts, and control where content lands with slots.'
 ---
 
 A layout is a `.html` file in `client/layouts/`. It wraps your page content with shared structure — an HTML shell, navigation, footer, or any markup you want every page to share. Layouts expose `<slot />` to mark where the page's content goes.
@@ -12,15 +12,15 @@ Define a layout with a `<slot />` placeholder:
 ```html
 <!-- client/layouts/base.html -->
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>My Site</title>
-  </head>
-  <body>
-    <header>Site header</header>
-    <slot />
-    <footer>Site footer</footer>
-  </body>
+	<head>
+		<meta charset="UTF-8" />
+		<title>My Site</title>
+	</head>
+	<body>
+		<header>Site header</header>
+		<slot />
+		<footer>Site footer</footer>
+	</body>
 </html>
 ```
 
@@ -29,19 +29,20 @@ To use it, import the layout in your page's `<script is:build>` block and wrap y
 ```html
 <!-- client/pages/about.html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 </script>
 
 <base-layout>
-  <h1>About</h1>
-  <p>This paragraph and the heading above fill the default slot.</p>
+	<h1>About</h1>
+	<p>This paragraph and the heading above fill the default slot.</p>
 </base-layout>
 ```
 
 Everything between `<base-layout>` and `</base-layout>` is rendered where `<slot />` appears in the layout.
 
 <Note>
-  Import the layout without its `.html` extension: `import base from '@layouts/base'` resolves to `client/layouts/base.html`.
+	Import the layout without its `.html` extension: `import base from '@layouts/base'` resolves to
+	`client/layouts/base.html`.
 </Note>
 
 ## Nested layouts
@@ -53,11 +54,11 @@ Create a sub-layout that uses `base`:
 ```html
 <!-- client/layouts/sub.html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 </script>
 
 <base-layout>
-  <slot />
+	<slot />
 </base-layout>
 ```
 
@@ -66,12 +67,12 @@ Then use the sub-layout from a page:
 ```html
 <!-- client/pages/docs.html -->
 <script is:build>
-  import sub from '@layouts/sub'
+	import sub from '@layouts/sub'
 </script>
 
 <sub-layout>
-  <h1>Docs</h1>
-  <p>This page uses a nested layout: sub → base.</p>
+	<h1>Docs</h1>
+	<p>This page uses a nested layout: sub → base.</p>
 </sub-layout>
 ```
 
@@ -82,22 +83,22 @@ A layout can define named slots using the `name` attribute on `<slot>`. A page p
 ```html
 <!-- client/layouts/base.html -->
 <nav>
-  <slot name="nav" />
+	<slot name="nav" />
 </nav>
 <main>
-  <slot />
+	<slot />
 </main>
 ```
 
 ```html
 <!-- client/pages/home.html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 </script>
 
 <base-layout>
-  <a href="/docs" slot="nav">Docs</a>
-  <h1>Welcome</h1>
+	<a href="/docs" slot="nav">Docs</a>
+	<h1>Welcome</h1>
 </base-layout>
 ```
 
@@ -110,7 +111,7 @@ When you have a three-level hierarchy — page → sub-layout → base-layout �
 ```html
 <!-- client/pages/home.html -->
 <sub-layout>
-  <a href="#" slot="thru-sub">Link from Home</a>
+	<a href="#" slot="thru-sub">Link from Home</a>
 </sub-layout>
 ```
 
@@ -119,11 +120,11 @@ The sub-layout receives the `thru-sub` slot and passes it through to `into-nav`:
 ```html
 <!-- client/layouts/sub.html -->
 <script is:build>
-  import base from '@layouts/base'
+	import base from '@layouts/base'
 </script>
 
 <base-layout>
-  <slot name="thru-sub" slot="into-nav" />
+	<slot name="thru-sub" slot="into-nav" />
 </base-layout>
 ```
 
@@ -132,12 +133,12 @@ The base layout defines `into-nav` and passes it into a nav component alongside 
 ```html
 <!-- client/layouts/base.html -->
 <script is:build>
-  import nav from '@components/nav'
+	import nav from '@components/nav'
 </script>
 
 <nav-component>
-  <slot name="into-nav" />
-  <a href="#">Link from Base</a>
+	<slot name="into-nav" />
+	<a href="#">Link from Base</a>
 </nav-component>
 ```
 
@@ -146,13 +147,13 @@ The nav component's default slot receives both the passed-through link and the b
 ```html
 <!-- client/components/nav.html -->
 <nav>
-  <slot />
+	<slot />
 </nav>
 
 <!-- renders as: -->
 <nav>
-  <a href="#">Link from Home</a>
-  <a href="#">Link from Base</a>
+	<a href="#">Link from Home</a>
+	<a href="#">Link from Base</a>
 </nav>
 ```
 

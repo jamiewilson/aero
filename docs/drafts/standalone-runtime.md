@@ -28,10 +28,7 @@ These helpers keep the same template contract but avoid requiring the full dev s
 ## What to import
 
 ```ts
-import {
-  loadCompiledTemplateModule,
-  renderTemplate,
-} from '@aero-js/core/runtime/standalone'
+import { loadCompiledTemplateModule, renderTemplate } from '@aero-js/core/runtime/standalone'
 import { compileTemplate } from '@aero-js/compiler'
 ```
 
@@ -43,10 +40,10 @@ Use `renderTemplate(...)` when you have HTML source and want rendered output dir
 import { renderTemplate } from '@aero-js/core/runtime/standalone'
 
 const html = await renderTemplate({
-  templateSource: `<h1>{ title }</h1>`,
-  root: process.cwd(),
-  importer: '/virtual/example.html',
-  input: { props: { title: 'Hello' } },
+	templateSource: `<h1>{ title }</h1>`,
+	root: process.cwd(),
+	importer: '/virtual/example.html',
+	input: { props: { title: 'Hello' } },
 })
 ```
 
@@ -69,14 +66,14 @@ import { loadCompiledTemplateModule } from '@aero-js/core/runtime/standalone'
 
 const source = `<p>{ message }</p>`
 const compiledSource = compileTemplate(source, {
-  root: process.cwd(),
-  importer: '/virtual/message.html',
+	root: process.cwd(),
+	importer: '/virtual/message.html',
 })
 
 const pageModule = await loadCompiledTemplateModule({
-  compiledSource,
-  root: process.cwd(),
-  importer: '/virtual/message.html',
+	compiledSource,
+	root: process.cwd(),
+	importer: '/virtual/message.html',
 })
 ```
 

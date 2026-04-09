@@ -1,6 +1,6 @@
 ---
-title: "Components"
-description: "Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts."
+title: 'Components'
+description: 'Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts.'
 ---
 
 A component is a `.html` file in `client/components/`. You import it in a `<script is:build>` block and use it in markup with a `-component` suffix — `header.html` becomes `<header-component>`, `card.html` becomes `<card-component>`, and so on.
@@ -12,7 +12,7 @@ Here is a complete example. Create the file `client/components/greeting.html`:
 ```html
 <!-- client/components/greeting.html -->
 <script is:build>
-  const { name } = Aero.props
+	const { name } = Aero.props
 </script>
 
 <h2>Hello, { name }!</h2>
@@ -27,17 +27,18 @@ Import the component in your page's `<script is:build>` block, then use `<greeti
 ```html
 <!-- client/pages/index.html -->
 <script is:build>
-  import base from '@layouts/base'
-  import greeting from '@components/greeting'
+	import base from '@layouts/base'
+	import greeting from '@components/greeting'
 </script>
 
 <base-layout>
-  <greeting-component name="World" />
+	<greeting-component name="World" />
 </base-layout>
 ```
 
 <Note>
-  Import the file without its extension: `import greeting from '@components/greeting'` resolves to `client/components/greeting.html`.
+	Import the file without its extension: `import greeting from '@components/greeting'` resolves to
+	`client/components/greeting.html`.
 </Note>
 
 ## Passing props
@@ -59,7 +60,7 @@ Inside the component, read every attribute from `Aero.props`:
 
 ```html
 <script is:build>
-  const { name, greeting = 'Hello' } = Aero.props
+	const { name, greeting = 'Hello' } = Aero.props
 </script>
 
 <h2>{ greeting }, { name }!</h2>
@@ -72,8 +73,8 @@ If you have a variable called `props` in the build script, the bare `props` attr
 ```html
 <!-- Page -->
 <script is:build>
-  import card from '@components/card'
-  const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
+	import card from '@components/card'
+	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 
 <card-component props />
@@ -95,21 +96,21 @@ Here is a card component that uses props for content and passes theme data into 
 ```html
 <!-- client/components/card.html -->
 <script is:build>
-  const { title, subtitle, accent } = Aero.props
-  const theme = { fg: '#111', bg: '#fff', accent }
+	const { title, subtitle, accent } = Aero.props
+	const theme = { fg: '#111', bg: '#fff', accent }
 </script>
 
 <div class="card">
-  <h2>{ title }</h2>
-  <p>{ subtitle }</p>
+	<h2>{ title }</h2>
+	<p>{ subtitle }</p>
 </div>
 
 <style props="{ ...theme }">
-  .card {
-    color: var(--fg);
-    background: var(--bg);
-    border: 4px solid var(--accent);
-  }
+	.card {
+		color: var(--fg);
+		background: var(--bg);
+		border: 4px solid var(--accent);
+	}
 </style>
 ```
 
@@ -117,12 +118,12 @@ Use it on a page:
 
 ```html
 <script is:build>
-  import base from '@layouts/base'
-  import card from '@components/card'
+	import base from '@layouts/base'
+	import card from '@components/card'
 </script>
 
 <base-layout>
-  <card-component title="Getting started" subtitle="Learn the basics." accent="blue" />
+	<card-component title="Getting started" subtitle="Learn the basics." accent="blue" />
 </base-layout>
 ```
 
@@ -138,12 +139,14 @@ Use opening and closing tags when you want to pass child content into the compon
 
 ```html
 <card-component title="Note">
-  <p>This content fills the card's default slot.</p>
+	<p>This content fills the card's default slot.</p>
 </card-component>
 ```
 
 See [Layouts & Slots](/concepts/layouts-slots) for a full explanation of how slots work.
 
 <Tip>
-  All custom attributes — `props`, `for`, `if`, `else`, etc. — also accept a `data-` prefix (e.g. `data-props`, `data-for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
+	All custom attributes — `props`, `for`, `if`, `else`, etc. — also accept a `data-` prefix (e.g.
+	`data-props`, `data-for`) for strict HTML spec compliance. Both forms are equivalent; the
+	shorthand is preferred for readability.
 </Tip>

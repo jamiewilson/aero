@@ -1,6 +1,6 @@
 ---
-title: "TypeScript"
-description: "Add type safety to build scripts, component props, content collections, and environment variables."
+title: 'TypeScript'
+description: 'Add type safety to build scripts, component props, content collections, and environment variables.'
 ---
 
 Aero supports TypeScript in `<script is:build lang="ts">` blocks, content files, and shared type modules. The VS Code extension and language server provide IntelliSense and diagnostics for build scripts automatically — you get autocomplete and type errors in your HTML templates without any extra setup.
@@ -12,12 +12,12 @@ Aero supports TypeScript in `<script is:build lang="ts">` blocks, content files,
 ```html
 <!-- client/components/greeting.html -->
 <script is:build lang="ts">
-  interface GreetingProps {
-    name: string
-    title?: string
-  }
+	interface GreetingProps {
+		name: string
+		title?: string
+	}
 
-  const { name, title = 'Guest' } = Aero.props as GreetingProps
+	const { name, title = 'Guest' } = Aero.props as GreetingProps
 </script>
 
 <h1>Hello, { name }!</h1>
@@ -30,26 +30,28 @@ For types shared across multiple components, define them in a `.ts` file and imp
 ```ts
 // client/types/props.ts
 export interface HeaderProps {
-  title: string
-  subtitle?: string
+	title: string
+	subtitle?: string
 }
 ```
 
 ```html
 <!-- client/components/header.html -->
 <script is:build lang="ts">
-  import type { HeaderProps } from 'types/props'
+	import type { HeaderProps } from 'types/props'
 
-  const { title, subtitle } = Aero.props as HeaderProps
+	const { title, subtitle } = Aero.props as HeaderProps
 </script>
 
 <header>
-  <h1>{ title }</h1>
+	<h1>{ title }</h1>
 </header>
 ```
 
 <Tip>
-  Avoid the `@types/*` prefix for your own type modules — it is reserved for DefinitelyTyped packages. Use a path like `types/props` or add a custom alias such as `@project-types/*` in `tsconfig.json`.
+	Avoid the `@types/*` prefix for your own type modules — it is reserved for DefinitelyTyped
+	packages. Use a path like `types/props` or add a custom alias such as `@project-types/*` in
+	`tsconfig.json`.
 </Tip>
 
 ### Typed props when passing
@@ -59,14 +61,14 @@ Type the object you spread so TypeScript catches missing required props at the c
 ```html
 <!-- client/pages/index.html -->
 <script is:build lang="ts">
-  import header from '@components/header'
-  import site from '@content/site'
-  import type { HeaderProps } from 'types/props'
+	import header from '@components/header'
+	import site from '@content/site'
+	import type { HeaderProps } from 'types/props'
 
-  const headerProps: HeaderProps = {
-    title: site.home.title,
-    subtitle: site.home.subtitle,
-  }
+	const headerProps: HeaderProps = {
+		title: site.home.title,
+		subtitle: site.home.subtitle,
+	}
 </script>
 
 <header-component props="{ ...headerProps }" />
@@ -82,19 +84,19 @@ import { defineConfig, defineCollection } from '@aero-js/content'
 import { z } from 'zod'
 
 const docsSchema = z.object({
-  title: z.string(),
-  subtitle: z.string().optional(),
-  published: z.number(),
+	title: z.string(),
+	subtitle: z.string().optional(),
+	published: z.number(),
 })
 
 export default defineConfig({
-  collections: [
-    defineCollection({
-      name: 'docs',
-      directory: 'client/content/docs',
-      schema: docsSchema,
-    }),
-  ],
+	collections: [
+		defineCollection({
+			name: 'docs',
+			directory: 'client/content/docs',
+			schema: docsSchema,
+		}),
+	],
 })
 ```
 
@@ -105,18 +107,18 @@ Use the schema-inferred types in dynamic page scripts:
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build lang="ts">
-  import { getCollection, render } from 'aero:content'
+	import { getCollection, render } from 'aero:content'
 
-  export async function getStaticPaths() {
-    const docs = await getCollection('docs')
-    return docs.map(doc => ({
-      params: { slug: doc.id },
-      props: doc,
-    }))
-  }
+	export async function getStaticPaths() {
+		const docs = await getCollection('docs')
+		return docs.map(doc => ({
+			params: { slug: doc.id },
+			props: doc,
+		}))
+	}
 
-  const doc = Aero.props
-  const { html } = await render(doc)
+	const doc = Aero.props
+	const { html } = await render(doc)
 </script>
 
 <h1>{ doc.data.title }</h1>
@@ -127,25 +129,25 @@ For stricter typing on `doc.data`, add an inline interface and assert:
 
 ```html
 <script is:build lang="ts">
-  import { getCollection, render } from 'aero:content'
+	import { getCollection, render } from 'aero:content'
 
-  interface DocData {
-    title: string
-    subtitle?: string
-    published: number
-  }
+	interface DocData {
+		title: string
+		subtitle?: string
+		published: number
+	}
 
-  export async function getStaticPaths() {
-    const docs = await getCollection('docs')
-    return docs.map(doc => ({
-      params: { slug: doc.id },
-      props: doc,
-    }))
-  }
+	export async function getStaticPaths() {
+		const docs = await getCollection('docs')
+		return docs.map(doc => ({
+			params: { slug: doc.id },
+			props: doc,
+		}))
+	}
 
-  const doc = Aero.props
-  const data = doc.data as DocData
-  const { html } = await render(doc)
+	const doc = Aero.props
+	const data = doc.data as DocData
+	const { html } = await render(doc)
 </script>
 
 <h1>{ data.title }</h1>
@@ -159,9 +161,9 @@ Aero ships ambient declarations in `@aero-js/core/env` that make `Aero`, `render
 
 ```json tsconfig.json (types array)
 {
-  "compilerOptions": {
-    "types": ["@aero-js/core/env"]
-  }
+	"compilerOptions": {
+		"types": ["@aero-js/core/env"]
+	}
 }
 ```
 
@@ -172,7 +174,8 @@ Aero ships ambient declarations in `@aero-js/core/env` that make `Aero`, `render
 </CodeGroup>
 
 <Note>
-  For `.html` build scripts, the VS Code extension and language server inject these declarations automatically. You only need the above for `.ts` files outside of templates.
+	For `.html` build scripts, the VS Code extension and language server inject these declarations
+	automatically. You only need the above for `.ts` files outside of templates.
 </Note>
 
 ### Typing import.meta.env
@@ -184,13 +187,13 @@ Create an `env.d.ts` in your project root to add types for `import.meta.env.SITE
 /// <reference types="@aero-js/core/env" />
 
 interface ImportMetaEnv {
-  readonly SITE: string
-  readonly VITE_API_URL: string
-  // add more VITE_ variables here
+	readonly SITE: string
+	readonly VITE_API_URL: string
+	// add more VITE_ variables here
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
+	readonly env: ImportMetaEnv
 }
 ```
 

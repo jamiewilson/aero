@@ -1,14 +1,14 @@
 ---
-title: "Middleware & Redirects"
+title: 'Middleware & Redirects'
 description: "Handle redirects and request-time logic in Aero's dev server and Nitro."
 ---
 
 Aero gives you two request-time mechanisms depending on where you need them to run: **redirects** work in dev and in the Nitro server, while **middleware** runs in dev only.
 
-| Mechanism | Dev | Nitro server (preview:api / production) | Static build |
-|---|---|---|---|
-| `redirects` config | Yes | Yes (via Nitro `routeRules`) | No — configure on your host |
-| `middleware` config | Yes | No | No |
+| Mechanism           | Dev | Nitro server (preview:api / production) | Static build                |
+| ------------------- | --- | --------------------------------------- | --------------------------- |
+| `redirects` config  | Yes | Yes (via Nitro `routeRules`)            | No — configure on your host |
+| `middleware` config | Yes | No                                      | No                          |
 
 ## Redirects
 
@@ -19,12 +19,12 @@ Use `redirects` when you want a path → URL redirect that works in dev and stay
 import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
-  site: { url: 'https://example.com' },
-  redirects: [
-    { from: '/home', to: '/', status: 301 },
-    { from: '/old-page', to: '/new-page', status: 302 },
-  ],
-  server: true,
+	site: { url: 'https://example.com' },
+	redirects: [
+		{ from: '/home', to: '/', status: 301 },
+		{ from: '/old-page', to: '/new-page', status: 302 },
+	],
+	server: true,
 })
 ```
 
@@ -37,7 +37,8 @@ Each entry takes a `from` path, a `to` URL, and an optional `status` (defaults t
 - In production with Nitro, redirects are translated to `routeRules`. If you define the same path explicitly in `nitro.config.ts`, your explicit rule wins.
 
 <Warning>
-  For static-only deploys (no Nitro), `redirects` has no effect. Configure redirects on your host instead — Netlify `_redirects`, Vercel `redirects` in `vercel.json`, etc.
+	For static-only deploys (no Nitro), `redirects` has no effect. Configure redirects on your host
+	instead — Netlify `_redirects`, Vercel `redirects` in `vercel.json`, etc.
 </Warning>
 
 ## Middleware
@@ -45,7 +46,9 @@ Each entry takes a `from` path, a `to` URL, and an optional `status` (defaults t
 Use `middleware` for request-time logic that only needs to run during development — rewrites, feature flags, or custom responses you want to test locally without shipping to production.
 
 <Note>
-  Middleware does not run in the Nitro server (`preview:api` or production). For production request-time logic, use [Nitro middleware](https://nitro.build/guide/middleware) in `server/middleware/`.
+	Middleware does not run in the Nitro server (`preview:api` or production). For production
+	request-time logic, use [Nitro middleware](https://nitro.build/guide/middleware) in
+	`server/middleware/`.
 </Note>
 
 ### Configuration
@@ -56,15 +59,15 @@ import { defineConfig } from '@aero-js/config'
 import type { AeroMiddleware } from '@aero-js/core/types'
 
 const redirectHome: AeroMiddleware = ctx => {
-  if (ctx.routePath === '/home') {
-    return { redirect: { url: '/', status: 301 } }
-  }
-  return
+	if (ctx.routePath === '/home') {
+		return { redirect: { url: '/', status: 301 } }
+	}
+	return
 }
 
 export default defineConfig({
-  site: { url: 'https://example.com' },
-  middleware: [redirectHome],
+	site: { url: 'https://example.com' },
+	middleware: [redirectHome],
 })
 ```
 
@@ -72,22 +75,22 @@ export default defineConfig({
 
 Each middleware function receives an `AeroRequestContext`:
 
-| Property | Type | Description |
-|---|---|---|
-| `url` | `URL` | Full URL of the request |
-| `request` | `Request` | Standard Fetch `Request` |
-| `routePath` | `string` | Pathname, e.g. `'/about'`, `'/blog/[id]'` |
-| `pageName` | `string` | Resolved page key, e.g. `'about'`, `'blog/post'` |
-| `site` | `string \| undefined` | Canonical site URL from config |
+| Property    | Type                  | Description                                      |
+| ----------- | --------------------- | ------------------------------------------------ |
+| `url`       | `URL`                 | Full URL of the request                          |
+| `request`   | `Request`             | Standard Fetch `Request`                         |
+| `routePath` | `string`              | Pathname, e.g. `'/about'`, `'/blog/[id]'`        |
+| `pageName`  | `string`              | Resolved page key, e.g. `'about'`, `'blog/post'` |
+| `site`      | `string \| undefined` | Canonical site URL from config                   |
 
 Return one of these values (sync or async):
 
-| Return value | Effect |
-|---|---|
-| `undefined` / nothing | Continue to the next handler, then render as usual |
-| `{ redirect: { url, status? } }` | Respond with `Location` and status (default `302`). Stop. |
+| Return value                                 | Effect                                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `undefined` / nothing                        | Continue to the next handler, then render as usual                                          |
+| `{ redirect: { url, status? } }`             | Respond with `Location` and status (default `302`). Stop.                                   |
 | `{ rewrite: { pageName?, ...renderInput } }` | Render with the given page name and/or overridden `url`, `request`, `params`, `props`, etc. |
-| `{ response: Response }` | Send the `Response` directly. Stop. |
+| `{ response: Response }`                     | Send the `Response` directly. Stop.                                                         |
 
 Handlers run in order. The first `redirect` or `response` result wins. Multiple `rewrite` results are merged, with later handlers overriding earlier ones.
 
@@ -162,10 +165,12 @@ Handlers run in order. The first `redirect` or `response` result wins. Multiple 
 ## When to use redirects vs. middleware
 
 Use **`redirects`** when:
+
 - You need the redirect to work in production (not just dev).
 - The logic is a straightforward path → URL mapping.
 
 Use **`middleware`** when:
+
 - You only need the behavior during local development.
 - You need rewrites, custom responses, or conditional logic beyond a simple redirect.
 

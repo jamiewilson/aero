@@ -1,6 +1,6 @@
 ---
-title: "HTMX & Alpine"
-description: "Add server-driven interactivity and reactive client behavior to your Aero pages."
+title: 'HTMX & Alpine'
+description: 'Add server-driven interactivity and reactive client behavior to your Aero pages.'
 ---
 
 Aero passes `hx-*` and `x-*` attributes through unchanged, so you can use [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) directly in your HTML templates. No wrappers, no adapters — just the libraries as they are.
@@ -15,50 +15,44 @@ HTMX extends HTML with attributes that trigger HTTP requests and swap responses 
 ### Basic usage
 
 ```html
-<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">
-  Load Message
-</button>
+<button hx-get="/api/hello" hx-target="#result" hx-swap="innerHTML">Load Message</button>
 <div id="result"></div>
 
 <form hx-post="/api/submit" hx-target="#response" hx-swap="outerHTML">
-  <input type="text" name="message" placeholder="Enter message" />
-  <button type="submit">Submit</button>
+	<input type="text" name="message" placeholder="Enter message" />
+	<button type="submit">Submit</button>
 </form>
 <div id="response"></div>
 ```
 
 ### Core attributes
 
-| Attribute | Description |
-|---|---|
-| `hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete` | HTTP method and URL |
-| `hx-target` | CSS selector for where to swap the response |
-| `hx-swap` | How to swap: `innerHTML`, `outerHTML`, `beforeend`, etc. |
-| `hx-trigger` | Event that triggers the request (default: `click` / `change`) |
-| `hx-indicator` | Element to show during a request (loading state) |
-| `hx-confirm` | Show a confirmation dialog before the request fires |
+| Attribute                                              | Description                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------- |
+| `hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete` | HTTP method and URL                                           |
+| `hx-target`                                            | CSS selector for where to swap the response                   |
+| `hx-swap`                                              | How to swap: `innerHTML`, `outerHTML`, `beforeend`, etc.      |
+| `hx-trigger`                                           | Event that triggers the request (default: `click` / `change`) |
+| `hx-indicator`                                         | Element to show during a request (loading state)              |
+| `hx-confirm`                                           | Show a confirmation dialog before the request fires           |
 
 ### Advanced triggers
 
 ```html
 <!-- Debounced search input -->
 <input
-  type="search"
-  name="q"
-  hx-get="/api/search"
-  hx-trigger="keyup changed delay:500ms"
-  hx-target="#search-results"
-  placeholder="Search..." />
+	type="search"
+	name="q"
+	hx-get="/api/search"
+	hx-trigger="keyup changed delay:500ms"
+	hx-target="#search-results"
+	placeholder="Search..." />
 
 <!-- Lazy-load on scroll -->
-<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">
-  Loading...
-</div>
+<div hx-get="/api/lazy-content" hx-trigger="revealed" hx-swap="outerHTML">Loading...</div>
 
 <!-- Poll every 5 seconds -->
-<div hx-get="/api/notifications" hx-trigger="every 5s">
-  Notifications here
-</div>
+<div hx-get="/api/notifications" hx-trigger="every 5s">Notifications here</div>
 ```
 
 ### Server handlers
@@ -70,13 +64,14 @@ Return HTML fragments from your Nitro API handlers and HTMX will swap them in:
 import { defineHandler, readBody } from 'nitro/h3'
 
 export default defineHandler(async event => {
-  const body = await readBody(event)
-  return `<div id="response" class="success">Message received: ${body.message}</div>`
+	const body = await readBody(event)
+	return `<div id="response" class="success">Message received: ${body.message}</div>`
 })
 ```
 
 <Tip>
-  Include `hx-swap-oob="true"` on elements in a response to update multiple targets from a single request.
+	Include `hx-swap-oob="true"` on elements in a response to update multiple targets from a single
+	request.
 </Tip>
 
 ### Import HTMX
@@ -100,36 +95,36 @@ Alpine.js gives you reactive, declarative behavior directly in your markup — d
 ```html
 <!-- Counter -->
 <div x-data="{ count: 0 }">
-  <button @click="count++">Increment</button>
-  <span x-text="count"></span>
+	<button @click="count++">Increment</button>
+	<span x-text="count"></span>
 </div>
 
 <!-- Toggle -->
 <div x-data="{ open: false }">
-  <button @click="open = !open">Toggle</button>
-  <div x-show="open" x-transition>Content</div>
+	<button @click="open = !open">Toggle</button>
+	<div x-show="open" x-transition>Content</div>
 </div>
 
 <!-- Two-way binding -->
 <div x-data="{ name: '' }">
-  <input type="text" x-model="name" placeholder="Your name" />
-  <p>Hello, <span x-text="name || 'stranger'"></span>!</p>
+	<input type="text" x-model="name" placeholder="Your name" />
+	<p>Hello, <span x-text="name || 'stranger'"></span>!</p>
 </div>
 ```
 
 ### Core directives
 
-| Directive | Description |
-|---|---|
-| `x-data` | Reactive data scope |
-| `x-bind` / `:attr` | Bind attributes reactively |
-| `x-on` / `@event` | Event listeners |
-| `x-text`, `x-html` | Text or HTML content |
-| `x-model` | Two-way binding for inputs |
-| `x-show`, `x-if` | Visibility and conditional rendering |
-| `x-for` | Loop over items |
-| `x-transition` | CSS transitions |
-| `x-init` | Run code on component init |
+| Directive          | Description                          |
+| ------------------ | ------------------------------------ |
+| `x-data`           | Reactive data scope                  |
+| `x-bind` / `:attr` | Bind attributes reactively           |
+| `x-on` / `@event`  | Event listeners                      |
+| `x-text`, `x-html` | Text or HTML content                 |
+| `x-model`          | Two-way binding for inputs           |
+| `x-show`, `x-if`   | Visibility and conditional rendering |
+| `x-for`            | Loop over items                      |
+| `x-transition`     | CSS transitions                      |
+| `x-init`           | Run code on component init           |
 
 ### Reusable components and global store
 
@@ -140,8 +135,10 @@ Register reusable components with `Alpine.data` and global state with `Alpine.st
 import Alpine from 'alpinejs'
 
 Alpine.data('dropdown', () => ({
-  open: false,
-  toggle() { this.open = !this.open },
+	open: false,
+	toggle() {
+		this.open = !this.open
+	},
 }))
 
 Alpine.store('user', { name: '', loggedIn: false })
@@ -154,8 +151,8 @@ Use them in your templates:
 
 ```html
 <div x-data="dropdown">
-  <button @click="toggle">Menu</button>
-  <nav x-show="open">...</nav>
+	<button @click="toggle">Menu</button>
+	<nav x-show="open">...</nav>
 </div>
 
 <span x-text="$store.user.name"></span>
@@ -186,7 +183,7 @@ import htmx from 'htmx.org'
 import Alpine from 'alpinejs'
 
 htmx.onLoad(content => {
-  Alpine.initTree(content)
+	Alpine.initTree(content)
 })
 
 window.Alpine = Alpine
@@ -200,17 +197,17 @@ Use Alpine to manage form state and HTMX to submit:
 
 ```html
 <form
-  x-data="{ submitting: false }"
-  hx-post="/api/register"
-  hx-target="#form-result"
-  hx-indicator=".spinner"
-  @htmx:before-request="submitting = true"
-  @htmx:after-request="submitting = false">
-  <input type="email" name="email" />
-  <button type="submit" :disabled="submitting">
-    <span x-show="!submitting">Register</span>
-    <span x-show="submitting" class="spinner">Loading...</span>
-  </button>
+	x-data="{ submitting: false }"
+	hx-post="/api/register"
+	hx-target="#form-result"
+	hx-indicator=".spinner"
+	@htmx:before-request="submitting = true"
+	@htmx:after-request="submitting = false">
+	<input type="email" name="email" />
+	<button type="submit" :disabled="submitting">
+		<span x-show="!submitting">Register</span>
+		<span x-show="submitting" class="spinner">Loading...</span>
+	</button>
 </form>
 <div id="form-result"></div>
 ```
@@ -219,18 +216,16 @@ Use Alpine to manage form state and HTMX to submit:
 
 ```html
 <div x-data="{ loading: false, query: '' }">
-  <input
-    type="search"
-    x-model="query"
-    hx-get="/api/search"
-    hx-trigger="keyup changed delay:300ms"
-    hx-target="#results"
-    hx-indicator="#search-loading"
-    name="q"
-    placeholder="Search..." />
-  <div id="search-loading" x-show="loading" class="htmx-indicator">
-    Searching...
-  </div>
-  <div id="results"></div>
+	<input
+		type="search"
+		x-model="query"
+		hx-get="/api/search"
+		hx-trigger="keyup changed delay:300ms"
+		hx-target="#results"
+		hx-indicator="#search-loading"
+		name="q"
+		placeholder="Search..." />
+	<div id="search-loading" x-show="loading" class="htmx-indicator">Searching...</div>
+	<div id="results"></div>
 </div>
 ```

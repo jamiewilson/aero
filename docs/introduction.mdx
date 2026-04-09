@@ -1,6 +1,6 @@
 ---
-title: "Introduction"
-description: "Aero is an HTML-first static site generator. Write plain .html files, get plain HTML output — no framework runtime, no hydration."
+title: 'Introduction'
+description: 'Aero is an HTML-first static site generator. Write plain .html files, get plain HTML output — no framework runtime, no hydration.'
 ---
 
 Aero is a static site generator built around plain HTML. You write `.html` files with optional `<script>` and `<style>` blocks, Aero compiles them at build time, and you get a `dist/` folder you can deploy anywhere. When you need more — API routes, server-side logic, deployment adapters — you opt into Nitro. Nothing is forced on you.
@@ -51,26 +51,27 @@ Aero is a good fit if you:
 
 Aero is published as a set of focused packages:
 
-| Package | Description |
-| --- | --- |
-| `@aero-js/core` | Runtime, Vite integration, and Aero orchestration |
-| `@aero-js/create` | Scaffold new projects from the minimal or fullstack template |
-| `@aero-js/vite` | The Aero Vite plugin |
-| `@aero-js/config` | `defineConfig` and `createViteConfig` for typed `aero.config.ts` |
+| Package            | Description                                                            |
+| ------------------ | ---------------------------------------------------------------------- |
+| `@aero-js/core`    | Runtime, Vite integration, and Aero orchestration                      |
+| `@aero-js/create`  | Scaffold new projects from the minimal or fullstack template           |
+| `@aero-js/vite`    | The Aero Vite plugin                                                   |
+| `@aero-js/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
 | `@aero-js/content` | Content collections — `getCollection()`, `render()`, schema validation |
-| `@aero-js/cli` | `aero check` and `aero doctor` for type-checking and diagnostics |
+| `@aero-js/cli`     | `aero check` and `aero doctor` for type-checking and diagnostics       |
 
 <Note>
-  Most projects only need `@aero-js/core` and `@aero-js/vite` (or `@aero-js/create` to scaffold). The other packages are opt-in.
+	Most projects only need `@aero-js/core` and `@aero-js/vite` (or `@aero-js/create` to scaffold).
+	The other packages are opt-in.
 </Note>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Quick Start" icon="bolt" href="/quickstart">
-    Scaffold your first project and have a site running in minutes.
-  </Card>
-  <Card title="Project Structure" icon="folder-open" href="/project-structure">
-    Learn how pages, layouts, components, and content are organized.
-  </Card>
+	<Card title="Quick Start" icon="bolt" href="/quickstart">
+		Scaffold your first project and have a site running in minutes.
+	</Card>
+	<Card title="Project Structure" icon="folder-open" href="/project-structure">
+		Learn how pages, layouts, components, and content are organized.
+	</Card>
 </CardGroup>

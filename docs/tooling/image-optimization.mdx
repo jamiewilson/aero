@@ -1,5 +1,5 @@
 ---
-title: "Image Optimization"
+title: 'Image Optimization'
 description: "Automatically compress images during your production build with Aero's built-in optimization pipeline."
 ---
 
@@ -9,14 +9,14 @@ Under the hood, Aero uses [`vite-plugin-image-optimizer`](https://github.com/Fat
 
 ## Supported formats
 
-| Format | Extension(s) |
-| ------ | ------------ |
+| Format | Extension(s)    |
+| ------ | --------------- |
 | JPEG   | `.jpg`, `.jpeg` |
-| PNG    | `.png` |
-| WebP   | `.webp` |
-| AVIF   | `.avif` |
-| GIF    | `.gif` |
-| SVG    | `.svg` |
+| PNG    | `.png`          |
+| WebP   | `.webp`         |
+| AVIF   | `.avif`         |
+| GIF    | `.gif`          |
+| SVG    | `.svg`          |
 
 ## How it works
 
@@ -27,8 +27,8 @@ Aero processes two sources of images:
 
 ```html
 <script is:build>
-  // Vite hashes this import; the optimizer compresses it on build.
-  import AboutImage from '@images/about.jpg'
+	// Vite hashes this import; the optimizer compresses it on build.
+	import AboutImage from '@images/about.jpg'
 </script>
 
 <img src="{ AboutImage }" alt="About Us" />
@@ -50,5 +50,5 @@ total savings = 103.30kB/546.75kB (~19%)
 ```
 
 <Note>
-  Empty image files (0 bytes) are skipped with a warning rather than causing a hard build failure.
+	Empty image files (0 bytes) are skipped with a warning rather than causing a hard build failure.
 </Note>

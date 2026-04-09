@@ -1,6 +1,6 @@
 ---
-title: "Quick Start"
-description: "Scaffold your first Aero project and have a site running in minutes."
+title: 'Quick Start'
+description: 'Scaffold your first Aero project and have a site running in minutes.'
 ---
 
 The fastest way to start is with `@aero-js/create`, which scaffolds a project, installs dependencies, and prints next steps.
@@ -38,6 +38,7 @@ The fastest way to start is with `@aero-js/create`, which scaffolds a project, i
 
       The fullstack template adds `@aero-js/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
     </Tip>
+
   </Step>
 
   <Step title="Start the dev server">
@@ -47,6 +48,7 @@ The fastest way to start is with `@aero-js/create`, which scaffolds a project, i
     ```
 
     Open `http://localhost:5173` to see your site. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
+
   </Step>
 
   <Step title="Create your first page">
@@ -73,6 +75,7 @@ The fastest way to start is with `@aero-js/create`, which scaffolds a project, i
     ```
 
     The layout's `<slot />` is replaced with your page content at build time.
+
   </Step>
 
   <Step title="Build for production">
@@ -98,31 +101,32 @@ The fastest way to start is with `@aero-js/create`, which scaffolds a project, i
         Serves both the static files and API routes from one origin. Available in the fullstack template or when `server: true` is set.
       </Tab>
     </Tabs>
+
   </Step>
 </Steps>
 
 ## Commands reference
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start the dev server with HMR |
-| `pnpm build` | Build to `dist/` (and `.output/` with Nitro) |
-| `pnpm preview` | Preview the static build |
+| Command            | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `pnpm dev`         | Start the dev server with HMR                |
+| `pnpm build`       | Build to `dist/` (and `.output/` with Nitro) |
+| `pnpm preview`     | Preview the static build                     |
 | `pnpm preview:api` | Preview static + API from one origin (Nitro) |
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Project Structure" icon="folder-open" href="/project-structure">
-    Understand how your scaffolded project is organized.
-  </Card>
-  <Card title="Routing" icon="route" href="/concepts/routing">
-    File-based routing, dynamic routes, and `getStaticPaths`.
-  </Card>
-  <Card title="Components" icon="puzzle-piece" href="/concepts/components">
-    Build reusable `.html` components with props.
-  </Card>
-  <Card title="Nitro Server" icon="server" href="/server/nitro">
-    Add API routes and server-side logic when you need them.
-  </Card>
+	<Card title="Project Structure" icon="folder-open" href="/project-structure">
+		Understand how your scaffolded project is organized.
+	</Card>
+	<Card title="Routing" icon="route" href="/concepts/routing">
+		File-based routing, dynamic routes, and `getStaticPaths`.
+	</Card>
+	<Card title="Components" icon="puzzle-piece" href="/concepts/components">
+		Build reusable `.html` components with props.
+	</Card>
+	<Card title="Nitro Server" icon="server" href="/server/nitro">
+		Add API routes and server-side logic when you need them.
+	</Card>
 </CardGroup>
