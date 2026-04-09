@@ -10,14 +10,6 @@ Incremental builds let Aero reuse the output from a previous build instead of re
 There are three ways to opt in — pick whichever fits your workflow:
 
 <Tabs>
-  <Tab title="Environment variable">
-    Set `AERO_INCREMENTAL=1` before your build command. Aero also accepts `true` or `yes` (case-insensitive).
-
-    ```bash
-    AERO_INCREMENTAL=1 pnpm build
-    ```
-
-  </Tab>
   <Tab title="aero.config.ts">
     Set `incremental: true` in your Aero config. During `vite build`, Aero will set `AERO_INCREMENTAL` automatically — but an explicit environment variable always takes precedence.
 
@@ -36,6 +28,14 @@ There are three ways to opt in — pick whichever fits your workflow:
 
     ```bash
     pnpm exec aero build --incremental
+    ```
+
+  </Tab>
+	<Tab title="Environment variable">
+    Set `AERO_INCREMENTAL=1` before your build command. Aero also accepts `true` or `yes` (case-insensitive).
+
+    ```bash
+    AERO_INCREMENTAL=1 pnpm build
     ```
 
   </Tab>

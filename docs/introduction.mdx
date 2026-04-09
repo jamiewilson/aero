@@ -5,6 +5,26 @@ description: 'Aero is an HTML-first static site generator. Write plain .html fil
 
 Aero is a static site generator built around plain HTML. You write `.html` files with optional `<script>` and `<style>` blocks, Aero compiles them at build time, and you get a `dist/` folder you can deploy anywhere. When you need more — API routes, server-side logic, deployment adapters — you opt into Nitro. Nothing is forced on you.
 
+It looks like this:
+
+```html pages/index.html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+</script>
+
+<base-layout>
+	<header-component title="{ site.title }" subtitle="{ site.subtitle }" />
+	<p>{ site.description }</p>
+</base-layout>
+
+<script>
+	import someFunction from '@scripts/someModule'
+	someFunction()
+</script>
+```
+
 ## Who it's for
 
 Aero is a good fit if you:
@@ -75,3 +95,4 @@ Aero is published as a set of focused packages:
 		Learn how pages, layouts, components, and content are organized.
 	</Card>
 </CardGroup>
+```

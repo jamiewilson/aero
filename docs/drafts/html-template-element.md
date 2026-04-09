@@ -27,9 +27,11 @@ Use the same directives as on any other element; optional `data-` prefixes work 
 <template if="{ showDetails }">
 	<dl class="details">…</dl>
 </template>
+
 <template else-if="{ showSummary }">
 	<p class="summary">…</p>
 </template>
+
 <template else>
 	<p>Default.</p>
 </template>
@@ -45,7 +47,7 @@ Put the loop directive on `<template>` to repeat **only the inner fragment** wit
 
 ```html
 <ul>
-	<template data-for="{ const item of items }">
+	<template for="{ const item of items }">
 		<li>{ item.name }</li>
 	</template>
 </ul>
