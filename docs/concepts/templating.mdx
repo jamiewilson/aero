@@ -129,9 +129,11 @@ By default, `for`, `if`, and `switch` preserve their host element in the output 
 <template if="{ showDetails }">
 	<dl class="details">…</dl>
 </template>
+
 <template else-if="{ showSummary }">
 	<p class="summary">…</p>
 </template>
+
 <template else>
 	<p>Default.</p>
 </template>
@@ -141,7 +143,7 @@ By default, `for`, `if`, and `switch` preserve their host element in the output 
 
 ```html
 <ul>
-	<template data-for="{ const item of items }">
+	<template for="{ const item of items }">
 		<li>{ item.name }</li>
 	</template>
 </ul>

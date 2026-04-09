@@ -5,7 +5,7 @@ description: 'A tour of the directories and config files in a scaffolded Aero pr
 
 When you run `pnpm create @aero-js my-app`, Aero scaffolds this structure:
 
-```plaintext
+```
 my-app/
 ├── client/
 │   ├── assets/
@@ -62,8 +62,7 @@ A page can be as simple as plain HTML, or it can include a `<script is:build>` b
 
 Layouts are `.html` files that wrap pages. They expose a `<slot />` where page content is inserted. Import a layout in your page's `<script is:build>` and use it as `<name-layout>`:
 
-```html
-<!-- client/layouts/base.html -->
+```html layouts/base.html
 <html lang="en">
 	<head>
 		...
@@ -80,8 +79,7 @@ The file name determines the tag name: `base.html` → `<base-layout>`.
 
 Components are reusable `.html` files. Import them in a page or layout and use them as `<name-component>`. Pass data via attributes or the `props` attribute; read it with `Aero.props`:
 
-```html
-<!-- client/components/greeting.html -->
+```html components/greeting.html
 <script is:build>
 	const { name } = Aero.props
 </script>
@@ -111,8 +109,7 @@ Vite handles bundling, autoprefixing, and minification automatically.
 
 Put TypeScript or JavaScript data modules here. `content/site.ts` is created by the scaffold and is a good place for global site data:
 
-```ts
-// content/site.ts
+```ts content/site.ts
 export default {
 	meta: {
 		title: 'My Site',
@@ -145,8 +142,8 @@ Files in `public/` are copied to `dist/` as-is without processing. Use it for fa
 
 API route handlers live under `server/api/`. Each file maps to a URL under `/api/` by default. File names can include HTTP method suffixes:
 
-```ts
-// server/api/submit.post.ts  →  POST /api/submit
+```ts server/api/submit.post.ts
+// POST /api/submit
 import { defineHandler, readBody } from 'nitro/h3'
 
 export default defineHandler(async event => {
@@ -163,7 +160,7 @@ This directory is powered by Nitro. It only exists when you use the fullstack te
 
 The entry point for Aero's Vite plugin. At minimum it registers the `aero()` plugin:
 
-```ts
+```ts vite.config.ts
 import { defineConfig } from 'vite'
 import { aero } from '@aero-js/vite'
 
@@ -188,8 +185,7 @@ plugins: [
 
 Projects using `@aero-js/config` (included in the fullstack template) can put Aero options in a dedicated `aero.config.ts`. This keeps `vite.config.ts` minimal and gives you typed, env-aware config:
 
-```ts
-// aero.config.ts
+```ts aero.config.ts
 import { defineConfig } from '@aero-js/config'
 
 export default defineConfig({
@@ -199,8 +195,7 @@ export default defineConfig({
 })
 ```
 
-```ts
-// vite.config.ts
+```ts vite.config.ts
 import { createViteConfig } from '@aero-js/config/vite'
 import aeroConfig from './aero.config.ts'
 
@@ -232,8 +227,7 @@ Provides TypeScript compiler options and path aliases for your editor and `tsc`.
 
 Nitro-native configuration: storage, cache, database, tasks, plugins, and deployment presets. Use this file for anything that goes beyond the `server: true` toggle in `aero.config.ts`.
 
-```ts
-// nitro.config.ts
+```ts nitro.config.ts
 import { defineNitroConfig } from 'nitro/config'
 
 export default defineNitroConfig({
