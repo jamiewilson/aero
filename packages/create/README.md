@@ -20,10 +20,10 @@ pnpm dlx @aero-js/create@latest my-app
 
 ## Options
 
-| Argument            | Description                                                        | Default      |
-| ------------------- | ------------------------------------------------------------------ | ------------ |
-| `<dir>`             | Project name and directory                                         | _(required)_ |
-| `--template <name>` | Starter template (`minimal`, `fullstack`)                         | `minimal`    |
+| Argument            | Description                                                                              | Default      |
+| ------------------- | ---------------------------------------------------------------------------------------- | ------------ |
+| `<dir>`             | Project name and directory                                                               | _(required)_ |
+| `--template <name>` | Starter template (`minimal`, `fullstack`)                                                | `minimal`    |
 | `--strict`          | Run post-scaffold checks (`aero doctor`, `aero check`, best-effort `aero check --types`) | off          |
 
 ## What it does

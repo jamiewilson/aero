@@ -1,6 +1,6 @@
 ---
-title: "Environment Variables"
-description: "Use .env files to manage build-time and client-exposed variables in Aero."
+title: 'Environment Variables'
+description: 'Use .env files to manage build-time and client-exposed variables in Aero.'
 ---
 
 Aero uses Vite's environment variable system. Variables are available in build-time code by default; you opt specific ones into the client bundle by prefixing them with `VITE_`.
@@ -9,10 +9,10 @@ Aero uses Vite's environment variable system. Variables are available in build-t
 
 The prefix on a variable name controls where it's available:
 
-| Prefix   | Where it's available  | Example use                        |
-| -------- | --------------------- | ---------------------------------- |
-| (none)   | Build and server only | API keys, internal URLs            |
-| `VITE_`  | Build and client      | Public API base URL, feature flags |
+| Prefix  | Where it's available  | Example use                        |
+| ------- | --------------------- | ---------------------------------- |
+| (none)  | Build and server only | API keys, internal URLs            |
+| `VITE_` | Build and client      | Public API base URL, feature flags |
 
 Variables without a prefix are never included in the browser bundle — they're only accessible in `<script is:build>` and other code that runs at build time. Prefix a variable with `VITE_` to make it available in both build scripts and client `<script>` blocks.
 
@@ -43,11 +43,12 @@ Access variables through `import.meta.env` in both build and client code:
 
 ```html Client script
 <script>
-  // Only VITE_-prefixed vars (and built-ins) are replaced here
-  const api = import.meta.env.VITE_PUBLIC_API
-  const isDev = import.meta.env.DEV
+	// Only VITE_-prefixed vars (and built-ins) are replaced here
+	const api = import.meta.env.VITE_PUBLIC_API
+	const isDev = import.meta.env.DEV
 </script>
 ```
+
 </CodeGroup>
 
 ## .env file loading order
@@ -62,28 +63,30 @@ Vite loads env files from the project root in this order (later files override e
 Shell environment variables win over `.env` files. Restart the dev server after changing any `.env` file.
 
 <Tip>
-  You can change the client-exposed prefix with Vite's [`envPrefix`](https://vite.dev/config/shared-options.html#envprefix) option. For example, set `envPrefix: 'PUBLIC_'` to use `PUBLIC_` instead of `VITE_`.
+	You can change the client-exposed prefix with Vite's
+	[`envPrefix`](https://vite.dev/config/shared-options.html#envprefix) option. For example, set
+	`envPrefix: 'PUBLIC_'` to use `PUBLIC_` instead of `VITE_`.
 </Tip>
 
 ## Built-in Vite variables
 
 Vite provides these out of the box — no `.env` entry needed:
 
-| Variable                  | Value                                          |
-| ------------------------- | ---------------------------------------------- |
-| `import.meta.env.MODE`    | `'development'` or `'production'`              |
-| `import.meta.env.DEV`     | `true` in dev                                  |
-| `import.meta.env.PROD`    | `true` in production build                     |
-| `import.meta.env.BASE_URL`| Base URL from Vite config (e.g. `'./'`)        |
-| `import.meta.env.SSR`     | `true` when running in SSR / build             |
+| Variable                   | Value                                   |
+| -------------------------- | --------------------------------------- |
+| `import.meta.env.MODE`     | `'development'` or `'production'`       |
+| `import.meta.env.DEV`      | `true` in dev                           |
+| `import.meta.env.PROD`     | `true` in production build              |
+| `import.meta.env.BASE_URL` | Base URL from Vite config (e.g. `'./'`) |
+| `import.meta.env.SSR`      | `true` when running in SSR / build      |
 
 ## Aero-injected variable
 
 When you set `site.url` in your Aero config, the plugin automatically injects:
 
-| Variable                  | Value                                          |
-| ------------------------- | ---------------------------------------------- |
-| `import.meta.env.SITE`    | Your canonical site URL, e.g. `'https://example.com'` |
+| Variable               | Value                                                 |
+| ---------------------- | ----------------------------------------------------- |
+| `import.meta.env.SITE` | Your canonical site URL, e.g. `'https://example.com'` |
 
 You don't need to add `SITE` to `.env` — Aero handles it. See [Site URL](/data/site-url) for configuration details.
 
@@ -91,11 +94,11 @@ You don't need to add `SITE` to `.env` — Aero handles it. See [Site URL](/data
 
 These environment variables control Aero's build behavior at the Node/process level. They are **not** available as `import.meta.env` unless you wire them yourself:
 
-| Variable                              | Purpose                                                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `AERO_INCREMENTAL`                    | Set to `1`, `true`, or `yes` to enable incremental static prerender, manifest caching, and collection cache. |
-| `AERO_LOG`                            | Set to `debug` to log static prerender decisions and timings.                                                |
-| `AERO_STATIC_PRERENDER_CONCURRENCY`   | Integer — limits parallel static HTML prerender jobs.                                                        |
+| Variable                            | Purpose                                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `AERO_INCREMENTAL`                  | Set to `1`, `true`, or `yes` to enable incremental static prerender, manifest caching, and collection cache. |
+| `AERO_LOG`                          | Set to `debug` to log static prerender decisions and timings.                                                |
+| `AERO_STATIC_PRERENDER_CONCURRENCY` | Integer — limits parallel static HTML prerender jobs.                                                        |
 
 ```bash
 # Run a build with incremental mode and debug logging
@@ -111,13 +114,13 @@ For type-checking and autocomplete on `import.meta.env`, add a declaration file 
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly SITE: string
-  // Add your own variables here:
-  readonly VITE_PUBLIC_API: string
+	readonly SITE: string
+	// Add your own variables here:
+	readonly VITE_PUBLIC_API: string
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
+	readonly env: ImportMetaEnv
 }
 ```
 

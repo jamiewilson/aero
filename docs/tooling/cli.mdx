@@ -1,6 +1,6 @@
 ---
-title: "CLI"
-description: "Validate templates, check types, and diagnose your project with the Aero CLI."
+title: 'CLI'
+description: 'Validate templates, check types, and diagnose your project with the Aero CLI.'
 ---
 
 Install the Aero CLI as a dev dependency in your project:
@@ -35,13 +35,13 @@ With `--types`, the CLI writes `.aero/cache/types/components.d.ts` so cross-file
 
 #### Exit codes
 
-| Code | Meaning |
-| ---- | ------- |
-| `0`  | No error-level diagnostics |
-| `10` | Config error |
+| Code | Meaning                                 |
+| ---- | --------------------------------------- |
+| `0`  | No error-level diagnostics              |
+| `10` | Config error                            |
 | `12` | Compile, resolve, or build-script error |
-| `13` | Content schema error |
-| `14` | Route error |
+| `13` | Content schema error                    |
+| `14` | Route error                             |
 
 ### aero doctor
 
@@ -93,5 +93,6 @@ Use `--root` when your CI job's working directory is not the app root:
 ```
 
 <Note>
-  `aero check` validates config, content, and template compilation. It does not execute SSR, Nitro, or a full Vite build, so it runs faster than `vite build` in CI.
+	`aero check` validates config, content, and template compilation. It does not execute SSR, Nitro,
+	or a full Vite build, so it runs faster than `vite build` in CI.
 </Note>

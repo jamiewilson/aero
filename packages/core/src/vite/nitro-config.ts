@@ -107,7 +107,10 @@ function normalizeImports(imports: unknown, configDir: string): unknown {
 function normalizeAlias(alias: unknown, configDir: string): unknown {
 	if (!isPlainObject(alias)) return undefined
 	return Object.fromEntries(
-		Object.entries(alias).map(([key, value]) => [key, normalizeRelativeModulePath(value, configDir)])
+		Object.entries(alias).map(([key, value]) => [
+			key,
+			normalizeRelativeModulePath(value, configDir),
+		])
 	)
 }
 

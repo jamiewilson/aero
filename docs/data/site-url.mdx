@@ -1,6 +1,6 @@
 ---
-title: "Site URL"
-description: "Set your canonical site URL in Aero config to power sitemaps, canonical links, and Open Graph tags."
+title: 'Site URL'
+description: 'Set your canonical site URL in Aero config to power sitemaps, canonical links, and Open Graph tags.'
 ---
 
 Setting a canonical site URL in your Aero config gives you an absolute base URL you can use for sitemaps, RSS feeds, canonical `<link>` tags, and Open Graph metadata. Without it, Aero can only generate relative URLs.
@@ -18,6 +18,7 @@ Setting a canonical site URL in your Aero config gives you an absolute base URL 
       site: { url: 'https://example.com' },
     })
     ```
+
   </Tab>
   <Tab title="vite.config.ts">
     ```ts
@@ -32,6 +33,7 @@ Setting a canonical site URL in your Aero config gives you an absolute base URL 
       ],
     })
     ```
+
   </Tab>
 </Tabs>
 
@@ -41,10 +43,10 @@ If you omit `site`, the URL defaults to an empty string. Aero won't generate a s
 
 Once configured, the site URL is available in two places:
 
-| Context                    | How to use it                  |
-| -------------------------- | ------------------------------ |
-| Build scripts and templates | `Aero.site.url`               |
-| Client scripts (Vite)       | `import.meta.env.SITE`        |
+| Context                     | How to use it          |
+| --------------------------- | ---------------------- |
+| Build scripts and templates | `Aero.site.url`        |
+| Client scripts (Vite)       | `import.meta.env.SITE` |
 
 ### In a layout
 
@@ -52,7 +54,7 @@ Use `Aero.site.url` to build canonical and Open Graph URLs:
 
 ```html
 <script is:build>
-  const base = Aero.site.url || ''
+	const base = Aero.site.url || ''
 </script>
 
 <link rel="canonical" href="{ base }{ Aero.page.url.pathname }" />
@@ -65,8 +67,8 @@ Use `Aero.site.url` to build canonical and Open Graph URLs:
 
 ```html
 <script>
-  const siteUrl = import.meta.env.SITE
-  console.log('Running on:', siteUrl)
+	const siteUrl = import.meta.env.SITE
+	console.log('Running on:', siteUrl)
 </script>
 ```
 
@@ -78,7 +80,7 @@ To help crawlers discover it, link to the sitemap from your layout's `<head>`:
 
 ```html
 <script is:build>
-  const base = Aero.site.url || ''
+	const base = Aero.site.url || ''
 </script>
 
 <link rel="sitemap" type="application/xml" href="{ base }/sitemap.xml" />
@@ -88,12 +90,14 @@ If you want to omit the link when `site.url` isn't set (e.g. in local dev), use 
 
 ```html
 <link
-  rel="sitemap"
-  type="application/xml"
-  href="{ Aero.site.url }/sitemap.xml"
-  if="{ Aero.site.url }" />
+	rel="sitemap"
+	type="application/xml"
+	href="{ Aero.site.url }/sitemap.xml"
+	if="{ Aero.site.url }" />
 ```
 
 <Note>
-  The `site` global from your content module (e.g. `content/site.ts`, imported as `@content/site`) is separate from the config `site`. Your content's `site` holds things like page titles and navigation data. The config `site` is only the canonical origin URL.
+	The `site` global from your content module (e.g. `content/site.ts`, imported as `@content/site`)
+	is separate from the config `site`. Your content's `site` holds things like page titles and
+	navigation data. The config `site` is only the canonical origin URL.
 </Note>

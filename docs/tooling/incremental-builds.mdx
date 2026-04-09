@@ -1,5 +1,5 @@
 ---
-title: "Incremental Builds"
+title: 'Incremental Builds'
 description: "Skip or narrow the static HTML prerender phase on repeat builds using Aero's build cache."
 ---
 
@@ -16,6 +16,7 @@ There are three ways to opt in — pick whichever fits your workflow:
     ```bash
     AERO_INCREMENTAL=1 pnpm build
     ```
+
   </Tab>
   <Tab title="aero.config.ts">
     Set `incremental: true` in your Aero config. During `vite build`, Aero will set `AERO_INCREMENTAL` automatically — but an explicit environment variable always takes precedence.
@@ -28,6 +29,7 @@ There are three ways to opt in — pick whichever fits your workflow:
       incremental: true,
     })
     ```
+
   </Tab>
   <Tab title="aero build --incremental">
     Pass the `--incremental` flag to the Aero CLI build command:
@@ -35,6 +37,7 @@ There are three ways to opt in — pick whichever fits your workflow:
     ```bash
     pnpm exec aero build --incremental
     ```
+
   </Tab>
 </Tabs>
 
@@ -68,7 +71,8 @@ If those hashes don't all match but the Vite output manifest hash and static bui
 If any page is a dynamic route (`[slug].html` style), `getStaticPaths()` must run every build. Whole-phase skip is disabled, and partial prerender is also disabled — the full prerender path runs.
 
 <Warning>
-  Dynamic routes opt your project out of whole-phase and partial prerender skipping. If build speed matters, consider whether all parameterized pages need to be dynamic.
+	Dynamic routes opt your project out of whole-phase and partial prerender skipping. If build speed
+	matters, consider whether all parameterized pages need to be dynamic.
 </Warning>
 
 ## Troubleshooting

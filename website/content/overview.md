@@ -6,17 +6,17 @@ published: true
 
 Aero is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity.
 
-| Feature                    | Description                                                                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`                                                                                     |
-| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`                                                                                     |
-| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component                                                                             |
-| 🔁 Loops & conditionals    | `for`/`data-for` and `if/else-if/else` right in your markup                                                                                              |
-| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes                                                                                  |
-| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`                                                                               |
-| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server                                                                                       |
-| 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                                                                                                      |
-| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback                                                                             |
+| Feature                    | Description                                                                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`                                                                                            |
+| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`                                                                                            |
+| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component                                                                                    |
+| 🔁 Loops & conditionals    | `for`/`data-for` and `if/else-if/else` right in your markup                                                                                                     |
+| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes                                                                                         |
+| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`                                                                                      |
+| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server                                                                                              |
+| 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                                                                                                             |
+| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback                                                                                    |
 | ✅ CI type-check           | [`aero check --types`](https://github.com/jamiewilson/aero/blob/main/docs/drafts/aero-cli-and-check.md) — TypeScript on build scripts and `{ }` like the editor |
 | ⚡ Incremental builds      | Optional [`AERO_INCREMENTAL`](https://github.com/jamiewilson/aero/blob/main/docs/drafts/build-performance.md) for faster repeat static prerender                |
 

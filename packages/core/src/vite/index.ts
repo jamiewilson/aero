@@ -104,9 +104,7 @@ function createCompileWarningLogger(resolvedConfig: ResolvedConfig, fallbackFile
 				? `:${warning.line}:${warning.column}`
 				: ''
 		const where = warning.file ? `${warning.file}${loc}` : fallbackFile
-		resolvedConfig.logger.warn(
-			`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`
-		)
+		resolvedConfig.logger.warn(`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`)
 	}
 }
 

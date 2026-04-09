@@ -1,6 +1,6 @@
 ---
-title: "Content Collections"
-description: "Define typed content schemas, query collections, and render Markdown with getCollection() and render()."
+title: 'Content Collections'
+description: 'Define typed content schemas, query collections, and render Markdown with getCollection() and render().'
 ---
 
 Content collections give you a type-safe way to work with structured content — blog posts, docs, changelogs, or any Markdown-and-frontmatter files. You define a schema, query items at build time, and render Markdown on demand.
@@ -15,17 +15,18 @@ import { defineCollection, defineConfig } from '@aero-js/content'
 import { z } from 'zod'
 
 export const docs = defineCollection({
-  name: 'docs',
-  directory: 'client/content/docs',
-  schema: z.object({
-    title: z.string(),
-    date: z.date(),
-  }),
+	name: 'docs',
+	directory: 'client/content/docs',
+	schema: z.object({
+		title: z.string(),
+		date: z.date(),
+	}),
 })
 ```
 
 <Note>
-  The content API uses [Standard Schema](https://standardschema.dev), so you can substitute Zod with ArkType, Valibot, or any spec-compliant validator.
+	The content API uses [Standard Schema](https://standardschema.dev), so you can substitute Zod with
+	ArkType, Valibot, or any spec-compliant validator.
 </Note>
 
 ## Fetch a collection
@@ -35,16 +36,16 @@ Use `getCollection()` inside a `<script is:build>` block to fetch all items in a
 ```html
 <!-- client/pages/docs/index.html -->
 <script is:build>
-  import { getCollection } from 'aero:content'
+	import { getCollection } from 'aero:content'
 
-  const allDocs = await getCollection('docs')
-  allDocs.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+	const allDocs = await getCollection('docs')
+	allDocs.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
 </script>
 
 <ul>
-  <li data-for="{ const doc of allDocs }">
-    <a href="/docs/{ doc.id }">{ doc.data.title }</a>
-  </li>
+	<li data-for="{ const doc of allDocs }">
+		<a href="/docs/{ doc.id }">{ doc.data.title }</a>
+	</li>
 </ul>
 ```
 
@@ -57,10 +58,10 @@ On a detail page, call `render()` to convert a collection item's Markdown body t
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-  import { render } from 'aero:content'
+	import { render } from 'aero:content'
 
-  const doc = Aero.props
-  const { html } = await render(doc)
+	const doc = Aero.props
+	const { html } = await render(doc)
 </script>
 
 <h1>{ doc.data.title }</h1>
@@ -76,19 +77,19 @@ For dynamic routes like `docs/[slug].html`, export `getStaticPaths()` from the p
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-  import { getCollection, render } from 'aero:content'
+	import { getCollection, render } from 'aero:content'
 
-  export async function getStaticPaths() {
-    const docs = await getCollection('docs')
+	export async function getStaticPaths() {
+	  const docs = await getCollection('docs')
 
-    return docs.map(doc => ({
-      params: { slug: doc.id },
-      props: doc,
-    }))
-  }
+	  return docs.map(doc => ({
+	    params: { slug: doc.id },
+	    props: doc,
+	  }))
+	}
 
-  const doc = Aero.props
-  const { html } = await render(doc)
+	const doc = Aero.props
+	const { html } = await render(doc)
 </script>
 
 <h1>{ doc.data.title }</h1>
@@ -113,5 +114,6 @@ For dynamic routes like `docs/[slug].html`, export `getStaticPaths()` from the p
 </Steps>
 
 <Tip>
-  In development, edits to Markdown files or `content.config.ts` trigger a hot update so Vite refreshes importers without a full page reload.
+	In development, edits to Markdown files or `content.config.ts` trigger a hot update so Vite
+	refreshes importers without a full page reload.
 </Tip>
