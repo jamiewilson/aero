@@ -14,59 +14,76 @@
 		}
 	},
 	"navigation": {
-		"tabs": [
-			{
-				"tab": "Documentation",
-				"groups": [
-					{
-						"group": "Get Started",
-						"pages": ["introduction", "quickstart", "project-structure"]
-					},
-					{
-						"group": "Core Concepts",
-						"pages": [
-							"concepts/layouts-slots",
-							"concepts/components",
-							"concepts/routing",
-							"concepts/scripts",
-							"concepts/templating"
-						]
-					},
-					{
-						"group": "Data & Content",
-						"pages": [
-							"data/props",
-							"data/content-collections",
-							"data/environment-variables",
-							"data/site-url"
-						]
-					},
-					{
-						"group": "Server & Interactivity",
-						"pages": ["server/nitro", "server/htmx-alpine", "server/middleware-redirects"]
-					},
-					{
-						"group": "Configuration",
-						"pages": [
-							"configuration/vite-plugin",
-							"configuration/aero-config",
-							"configuration/path-aliases",
-							"configuration/typescript"
-						]
-					},
-					{
-						"group": "Tooling",
-						"pages": [
-							"tooling/cli",
-							"tooling/vscode-extension",
-							"tooling/incremental-builds",
-							"tooling/image-optimization"
-						]
-					}
-				]
-			}
-		]
-	},
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Get Started",
+            "icon": "rocket-launch",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "project-structure"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "lightbulb",
+            "pages": [
+              "concepts/layouts-slots",
+              "concepts/components",
+              "concepts/routing",
+              "concepts/scripts",
+              "concepts/templating"
+            ]
+          },
+          {
+            "group": "Data & Content",
+            "icon": "brackets-curly",
+            "expanded": true,
+            "pages": [
+              "data/props",
+              "data/content-collections",
+              "data/environment-variables",
+              "data/site-url"
+            ]
+          },
+          {
+            "group": "Server & Interactivity",
+            "icon": "server",
+            "expanded": true,
+            "pages": [
+              "server/nitro",
+              "server/htmx-alpine",
+              "server/middleware-redirects"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "icon": "sliders-up",
+            "pages": [
+              "configuration/vite-plugin",
+              "configuration/aero-config",
+              "configuration/path-aliases",
+              "configuration/typescript"
+            ]
+          },
+          {
+            "group": "Tooling",
+            "icon": "hammer-brush",
+            "pages": [
+              "tooling/cli",
+              "tooling/vscode-extension",
+              "tooling/incremental-builds",
+              "tooling/image-optimization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
 	"styling": {
 		"codeblocks": "dark"
 	},
