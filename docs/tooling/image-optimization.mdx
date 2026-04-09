@@ -1,0 +1,54 @@
+---
+title: "Image Optimization"
+description: "Automatically compress images during your production build with Aero's built-in optimization pipeline."
+---
+
+Aero compresses images automatically as part of `pnpm build`. No extra configuration is required — the pipeline runs whenever you build for production.
+
+Under the hood, Aero uses [`vite-plugin-image-optimizer`](https://github.com/FatehAK/vite-plugin-image-optimizer) with [`sharp`](https://sharp.pixelplumbing.com/) for raster images and [`svgo`](https://github.com/svg/svgo) for SVGs.
+
+## Supported formats
+
+| Format | Extension(s) |
+| ------ | ------------ |
+| JPEG   | `.jpg`, `.jpeg` |
+| PNG    | `.png` |
+| WebP   | `.webp` |
+| AVIF   | `.avif` |
+| GIF    | `.gif` |
+| SVG    | `.svg` |
+
+## How it works
+
+Aero processes two sources of images:
+
+- **Static directory** — Images in your project's static folders are collected automatically.
+- **Imported images** — Images imported inside `<script is:build>` blocks are hashed by Vite and then passed through the optimization pipeline.
+
+```html
+<script is:build>
+  // Vite hashes this import; the optimizer compresses it on build.
+  import AboutImage from '@images/about.jpg'
+</script>
+
+<img src="{ AboutImage }" alt="About Us" />
+```
+
+Assets imported anywhere under `client/assets/images` (via the `@images/` alias) are automatically collected as Rollup entry points, even if they are only used during server-side template generation.
+
+## Build output
+
+During the build, the pipeline logs compression savings for every processed image:
+
+```bash
+[vite-plugin-image-optimizer] - optimized images successfully:
+dist/assets/about.jpg-[hash].jpg  -18%    525.59 kB ->  435.32 kB
+dist/favicon.svg                  -19%    0.28 kB ->  0.23 kB
+dist/aero.png                     -63%    20.88 kB ->  7.90 kB
+
+total savings = 103.30kB/546.75kB (~19%)
+```
+
+<Note>
+  Empty image files (0 bytes) are skipped with a warning rather than causing a hard build failure.
+</Note>

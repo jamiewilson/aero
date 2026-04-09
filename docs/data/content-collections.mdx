@@ -1,0 +1,117 @@
+---
+title: "Content Collections"
+description: "Define typed content schemas, query collections, and render Markdown with getCollection() and render()."
+---
+
+Content collections give you a type-safe way to work with structured content — blog posts, docs, changelogs, or any Markdown-and-frontmatter files. You define a schema, query items at build time, and render Markdown on demand.
+
+## Define a collection
+
+Declare your collections in `content.config.ts` at the project root. Use `defineCollection()` with a [Zod](https://zod.dev) schema to validate frontmatter:
+
+```ts
+// content.config.ts
+import { defineCollection, defineConfig } from '@aero-js/content'
+import { z } from 'zod'
+
+export const docs = defineCollection({
+  name: 'docs',
+  directory: 'client/content/docs',
+  schema: z.object({
+    title: z.string(),
+    date: z.date(),
+  }),
+})
+```
+
+<Note>
+  The content API uses [Standard Schema](https://standardschema.dev), so you can substitute Zod with ArkType, Valibot, or any spec-compliant validator.
+</Note>
+
+## Fetch a collection
+
+Use `getCollection()` inside a `<script is:build>` block to fetch all items in a collection. Items come back sorted by default in filesystem order — sort them yourself for date-based ordering:
+
+```html
+<!-- client/pages/docs/index.html -->
+<script is:build>
+  import { getCollection } from 'aero:content'
+
+  const allDocs = await getCollection('docs')
+  allDocs.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+</script>
+
+<ul>
+  <li data-for="{ const doc of allDocs }">
+    <a href="/docs/{ doc.id }">{ doc.data.title }</a>
+  </li>
+</ul>
+```
+
+Each item has an `id` (derived from the filename) and a `data` object with the validated frontmatter fields from your schema.
+
+## Render Markdown
+
+On a detail page, call `render()` to convert a collection item's Markdown body to HTML. Rendering is lazy — Aero only parses the Markdown AST when you call `render()`, not when the collection is first fetched:
+
+```html
+<!-- client/pages/docs/[slug].html -->
+<script is:build>
+  import { render } from 'aero:content'
+
+  const doc = Aero.props
+  const { html } = await render(doc)
+</script>
+
+<h1>{ doc.data.title }</h1>
+<article>{ html }</article>
+```
+
+`render()` returns `{ html: '' }` safely for empty inputs, so you don't need a null check.
+
+## Generate static paths
+
+For dynamic routes like `docs/[slug].html`, export `getStaticPaths()` from the page's `<script is:build>` block. Pass the whole document object as `props` so the detail page receives it directly via `Aero.props` — no extra fetch needed:
+
+```html
+<!-- client/pages/docs/[slug].html -->
+<script is:build>
+  import { getCollection, render } from 'aero:content'
+
+  export async function getStaticPaths() {
+    const docs = await getCollection('docs')
+
+    return docs.map(doc => ({
+      params: { slug: doc.id },
+      props: doc,
+    }))
+  }
+
+  const doc = Aero.props
+  const { html } = await render(doc)
+</script>
+
+<h1>{ doc.data.title }</h1>
+<article>{ html }</article>
+```
+
+## Putting it together
+
+<Steps>
+  <Step title="Define your schema">
+    Create `content.config.ts` in the project root and call `defineCollection()` with a name, directory, and Zod schema.
+  </Step>
+  <Step title="Build a list page">
+    Call `getCollection('name')` in your `<script is:build>` and loop over items with `data-for`.
+  </Step>
+  <Step title="Add a detail page">
+    Create a `[slug].html` dynamic route. Call `render(doc)` to get HTML from Markdown.
+  </Step>
+  <Step title="Wire up static paths">
+    Export `getStaticPaths()` that maps each item to `{ params, props }` so Aero knows which URLs to generate.
+  </Step>
+</Steps>
+
+<Tip>
+  In development, edits to Markdown files or `content.config.ts` trigger a hot update so Vite refreshes importers without a full page reload.
+</Tip>

@@ -5,10 +5,10 @@
 
 import type { AeroDiagnosticCode } from './types'
 
-const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs'
+const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs/drafts'
 
 /**
- * Full URL to a Markdown file under the repo `docs/` directory.
+ * Full URL to a Markdown file under the repo `docs/drafts/` directory.
  *
  * @param docsFile - Relative path, e.g. `interpolation.md`
  */

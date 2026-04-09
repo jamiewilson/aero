@@ -4,7 +4,7 @@ import { aeroIdeDocHref, aeroIdeDocsUrlForCode } from '../ide-catalog'
 describe('ide-catalog', () => {
 	it('aeroIdeDocHref joins repo docs path', () => {
 		expect(aeroIdeDocHref('interpolation.md')).toBe(
-			'https://github.com/jamiewilson/aero/blob/main/docs/interpolation.md'
+			'https://github.com/jamiewilson/aero/blob/main/docs/drafts/interpolation.md'
 		)
 	})
 

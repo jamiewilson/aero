@@ -23,7 +23,7 @@ The core package of the Aero static site generator. It provides the compiler, ru
 
 ## Script taxonomy
 
-Script blocks are classified by attributes (see [docs/script-taxonomy.md](https://github.com/jamiewilson/aero/blob/main/docs/script-taxonomy.md) in the repo):
+Script blocks are classified by attributes (see [script-taxonomy.md](https://github.com/jamiewilson/aero/blob/main/docs/drafts/script-taxonomy.md) in the repo):
 
 | Script type | Attribute              | When it runs      | Notes                                                                                     |
 | ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |

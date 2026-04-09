@@ -1,0 +1,87 @@
+---
+title: "Vite Plugin"
+description: "Configure Aero by passing options to the aero() plugin in your Vite config."
+---
+
+The `aero()` plugin is the core integration between Aero and Vite. You add it to `vite.config.ts` and pass options to enable features like content collections, the Nitro server, redirects, and more.
+
+For larger projects, consider using [`@aero-js/config`](/configuration/aero-config) to keep Aero options in a dedicated `aero.config.ts` file.
+
+## Install
+
+<Tabs>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @aero-js/vite
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install @aero-js/vite
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @aero-js/vite
+    ```
+  </Tab>
+</Tabs>
+
+## Configure
+
+Add `aero()` to the `plugins` array in your `vite.config.ts`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+  plugins: [aero()],
+})
+```
+
+## Plugin options
+
+Pass an options object to `aero()` to configure the framework:
+
+| Option | Type | Description |
+|---|---|---|
+| `content` | `boolean \| object` | Enable content collections. Default `false`. Pass `true` or an options object for `@aero-js/content`. |
+| `server` | `boolean` | Enable Nitro for API routes and an optional server. Default `false`. |
+| `site` | `string` | Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and `Aero.site` in templates. |
+| `redirects` | `Array<{ from, to, status? }>` | Path redirects applied in dev and passed to Nitro for production. For static-only deploys, use host redirect config instead. |
+| `middleware` | `Array` | Dev-only request handlers for redirects, rewrites, and custom responses. |
+| `dirs` | `object` | Override `client`, `server`, and `dist` directory names. Default `{ client, server, dist }`. |
+| `apiPrefix` | `string` | URL prefix for API routes. Default `'/api'`. |
+
+## Full example
+
+A `vite.config.ts` with common options enabled:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+  plugins: [
+    aero({
+      site: 'https://example.com',
+      content: true,
+      server: true,
+      redirects: [{ from: '/home', to: '/', status: 301 }],
+      dirs: {
+        client: 'client',
+        server: 'server',
+        dist: 'dist',
+      },
+      apiPrefix: '/api',
+    }),
+  ],
+})
+```
+
+<Note>
+  For projects with more complex configuration needs, use `@aero-js/config` to define options in a separate `aero.config.ts`. This keeps `vite.config.ts` minimal and gives you typed, env-aware config. See [Aero Config](/configuration/aero-config).
+</Note>

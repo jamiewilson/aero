@@ -33,4 +33,4 @@ export default defineHandler(async event => {
 })
 ```
 
-See [docs/nitro-overview.md](../../docs/nitro-overview.md) and [_reference/aero-principles-and-goals.md](../../_reference/aero-principles-and-goals.md).
+See [nitro-overview.md](../../docs/drafts/nitro-overview.md) and [_reference/aero-principles-and-goals.md](../../_reference/aero-principles-and-goals.md).

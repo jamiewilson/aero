@@ -1,6 +1,6 @@
 # Import and bundling demos
 
-These examples match the five options in [docs/importing-and-bundling.md](../../docs/importing-and-bundling.md). Use them to verify the instructions and to compare bundle size or load behavior.
+These examples match the five options in [importing-and-bundling.md](../../docs/drafts/importing-and-bundling.md). Use them to verify the instructions and to compare bundle size or load behavior.
 
 ## Prerequisites
 

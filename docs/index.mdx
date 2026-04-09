@@ -1,0 +1,50 @@
+---
+title: "Aero Documentation"
+description: "Build fast, HTML-first static sites and full-stack apps with a native web feel."
+---
+
+Aero is a static site generator and optional full-stack framework built around plain HTML. You write `.html` files, Aero compiles them at build time into static output, and you deploy anywhere — no runtime, no hydration, no framework overhead.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="bolt" href="/quickstart">
+    Scaffold your first project and have a site running in minutes.
+  </Card>
+  <Card title="Project Structure" icon="folder-open" href="/project-structure">
+    Understand how pages, layouts, components, and content are organized.
+  </Card>
+  <Card title="Routing" icon="route" href="/concepts/routing">
+    File-based routing — your file path is your URL.
+  </Card>
+  <Card title="Content Collections" icon="database" href="/data/content-collections">
+    Manage Markdown content with typed schemas and getCollection().
+  </Card>
+  <Card title="Nitro Server" icon="server" href="/server/nitro">
+    Add API routes and server-side logic when you need them.
+  </Card>
+  <Card title="CLI & Tooling" icon="terminal" href="/tooling/cli">
+    Validate templates, check types, and diagnose your project.
+  </Card>
+</CardGroup>
+
+## How Aero works
+
+Aero compiles your `.html` template files at build time. Build scripts run in Node and are stripped from the output — the browser only receives static HTML, bundled CSS, and the client scripts you explicitly ship.
+
+<Steps>
+  <Step title="Scaffold a project">
+    Run `pnpm create @aero-js my-app` to generate a new project from the minimal or fullstack template.
+  </Step>
+  <Step title="Build pages in HTML">
+    Create `.html` files in `client/pages/`. Use `{ }` expressions, `<script is:build>`, components, and layouts — all plain HTML syntax.
+  </Step>
+  <Step title="Run the dev server">
+    Run `pnpm dev` to start a Vite dev server with HMR for HTML, CSS, scripts, and content.
+  </Step>
+  <Step title="Build and deploy">
+    Run `pnpm build` to generate a static `dist/` folder. Deploy to any static host, or enable Nitro for API routes and a full server.
+  </Step>
+</Steps>
+
+<Note>
+  Aero is static-first. You get a plain HTML output with no framework runtime in the browser. Enable `server: true` only when you need API routes or a dynamic server.
+</Note>

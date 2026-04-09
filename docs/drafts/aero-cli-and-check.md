@@ -163,7 +163,7 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 | `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`.                                                        |
 | `LoadContentConfigResult`                                | Type for `loadContentConfigFileSync` results.                                                    |
 
-See [docs/content-api.md](content-api.md) for the broader content API.
+See [content-api.md](content-api.md) for the broader content API.
 
 ### `@aero-js/core/compile-check`
 
@@ -193,5 +193,5 @@ Use `--root` when the job’s working directory is not the app root.
 
 ## Related docs
 
-- [docs/content-api.md](content-api.md)
-- [packages/cli/README.md](../packages/cli/README.md)
+- [content-api.md](content-api.md)
+- [packages/cli/README.md](../../packages/cli/README.md)

@@ -1,0 +1,84 @@
+---
+title: "Incremental Builds"
+description: "Skip or narrow the static HTML prerender phase on repeat builds using Aero's build cache."
+---
+
+Incremental builds let Aero reuse the output from a previous build instead of re-rendering everything from scratch. When the cache is valid, Aero either skips the static prerender phase entirely or re-renders only the pages that depend on changed templates.
+
+## Enabling incremental builds
+
+There are three ways to opt in — pick whichever fits your workflow:
+
+<Tabs>
+  <Tab title="Environment variable">
+    Set `AERO_INCREMENTAL=1` before your build command. Aero also accepts `true` or `yes` (case-insensitive).
+
+    ```bash
+    AERO_INCREMENTAL=1 pnpm build
+    ```
+  </Tab>
+  <Tab title="aero.config.ts">
+    Set `incremental: true` in your Aero config. During `vite build`, Aero will set `AERO_INCREMENTAL` automatically — but an explicit environment variable always takes precedence.
+
+    ```ts
+    // aero.config.ts
+    import { defineConfig } from '@aero-js/config'
+
+    export default defineConfig({
+      incremental: true,
+    })
+    ```
+  </Tab>
+  <Tab title="aero build --incremental">
+    Pass the `--incremental` flag to the Aero CLI build command:
+
+    ```bash
+    pnpm exec aero build --incremental
+    ```
+  </Tab>
+</Tabs>
+
+## What gets cached
+
+After a successful incremental build, Aero writes two files under `.aero/cache/` (not committed to version control):
+
+- **`build-manifest.json`** — Fingerprints of your client template tree, the Vite output manifest, static build options, per-file template hashes, and which routes map to which output files.
+- **`content-collections.json`** — Per-markdown-file SHA-256 hash mapped to the parsed document after schema and transform. Invalidated when `content.config.ts` changes. Speeds up content loading on repeat builds when source files are unchanged.
+
+Incremental mode also disables Vite's `build.emptyOutDir`, so your `dist/` folder is not wiped before each build and unchanged outputs can be reused.
+
+## When Aero skips or narrows the prerender
+
+The behavior depends on whether your project has dynamic routes (`[param].html` style pages).
+
+### No dynamic routes
+
+Aero checks three conditions against the stored manifest:
+
+1. The hash of `dist/.vite/manifest.json` (the Vite/Rolldown client build graph)
+2. A fingerprint of every `*.html` file under your client directory (content and paths)
+3. A hash of static build options Aero cares about (site URL and redirects config)
+
+If all three match, **Aero skips the entire prerender phase** — no HTML is written.
+
+If those hashes don't all match but the Vite output manifest hash and static build options hash do match, Aero runs **partial prerender**: it re-renders only pages whose template dependency closure intersects a changed `.html` file. If no page depends on a changed template, nothing is written.
+
+### Dynamic routes present
+
+If any page is a dynamic route (`[slug].html` style), `getStaticPaths()` must run every build. Whole-phase skip is disabled, and partial prerender is also disabled — the full prerender path runs.
+
+<Warning>
+  Dynamic routes opt your project out of whole-phase and partial prerender skipping. If build speed matters, consider whether all parameterized pages need to be dynamic.
+</Warning>
+
+## Troubleshooting
+
+Set `AERO_LOG=debug` to print prerender decisions and timings to the console:
+
+```bash
+AERO_INCREMENTAL=1 AERO_LOG=debug pnpm build
+```
+
+## When to disable incremental builds
+
+Turn incremental builds off when you need a completely clean `dist/` every time — for example, during reproducibility checks or when debugging stale output. Omit `AERO_INCREMENTAL`, or remove `dist/` manually before running a standard `pnpm build`.

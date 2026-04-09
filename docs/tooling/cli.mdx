@@ -1,0 +1,97 @@
+---
+title: "CLI"
+description: "Validate templates, check types, and diagnose your project with the Aero CLI."
+---
+
+Install the Aero CLI as a dev dependency in your project:
+
+```bash
+pnpm add -D @aero-js/cli
+```
+
+Once installed, run any command from your project root using `pnpm exec aero <command>`. Use the `--root` flag if your app lives in a subdirectory:
+
+```bash
+pnpm exec aero check --root packages/my-app
+```
+
+## Commands
+
+### aero check
+
+`aero check` validates your project without starting a dev server or running a full build. It checks your Aero config, content collections, and compiles every `.html` template to catch parse and codegen errors.
+
+```bash
+pnpm exec aero check
+```
+
+Add `--types` to also run TypeScript checking against your build scripts and `{ }` expression sites:
+
+```bash
+pnpm exec aero check --types
+```
+
+With `--types`, the CLI writes `.aero/cache/types/components.d.ts` so cross-file component references resolve correctly during the check. Resolution uses your workspace `tsconfig.json`, including path aliases and `strict` mode.
+
+#### Exit codes
+
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | No error-level diagnostics |
+| `10` | Config error |
+| `12` | Compile, resolve, or build-script error |
+| `13` | Content schema error |
+| `14` | Route error |
+
+### aero doctor
+
+`aero doctor` prints a short environment checklist for your project:
+
+- Node.js version (exits `1` if below the minimum, currently Node 18)
+- `vite` presence in `package.json`
+- `@aero-js/core` or `@aero-js/vite` presence in `package.json`
+- `@aero-js/cli` version
+- A reminder about the Aero VS Code extension
+
+Each line is prefixed with one of `[ok]`, `[warn]`, `[info]`, or `[fail]`. Warnings still exit `0`.
+
+```bash
+pnpm exec aero doctor
+```
+
+### aero build
+
+`aero build` runs `vite build` using your project's Aero Vite config. Use `--incremental` to enable [incremental builds](/tooling/incremental-builds) for that run:
+
+```bash
+pnpm exec aero build
+pnpm exec aero build --incremental
+```
+
+## CI usage
+
+Use `aero check` in CI to catch template and content errors before deploying. Add `--types` to also fail the pipeline on TypeScript errors.
+
+<CodeGroup>
+
+```yaml aero check
+- run: pnpm install
+- run: pnpm exec aero check
+```
+
+```yaml aero check --types
+- run: pnpm install
+- run: pnpm exec aero check --types
+```
+
+</CodeGroup>
+
+Use `--root` when your CI job's working directory is not the app root:
+
+```yaml
+- run: pnpm exec aero check --root packages/my-app
+```
+
+<Note>
+  `aero check` validates config, content, and template compilation. It does not execute SSR, Nitro, or a full Vite build, so it runs faster than `vite build` in CI.
+</Note>
