@@ -126,7 +126,7 @@ export function writeReadme(targetDir, projectName, template) {
 			'',
 			'## Learn More',
 			'',
-			'- [Nitro in Aero guide](https://github.com/jamiewilson/aero/blob/main/docs/nitro-overview.md)',
+			'- [Nitro in Aero guide](https://github.com/jamiewilson/aero/blob/main/docs/drafts/nitro-overview.md)',
 			'',
 		]
 

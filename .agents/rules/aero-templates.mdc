@@ -8,7 +8,7 @@ alwaysApply: false
 
 Document discoveries from code exploration in [_reference/DISCOVERY.md](_reference/DISCOVERY.md).
 
-Full script taxonomy: [docs/script-taxonomy.md](docs/script-taxonomy.md). Legacy `on:build` / `on:client` were replaced by `is:build` and plain `<script>` (client).
+Full script taxonomy: [script-taxonomy.md](docs/drafts/script-taxonomy.md). Legacy `on:build` / `on:client` were replaced by `is:build` and plain `<script>` (client).
 
 ## TDD (red-to-green)
 
@@ -31,13 +31,13 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 - Plain `<script>` (no `is:*`) — Client module; Vite bundles as a virtual module. Use `props` / `data-props` to pass values into the module.
 - `<script is:inline>` — Left in the DOM where written; not bundled by Vite; runs as classic inline script in the browser.
 - `<script is:blocking>` — Emitted in `<head>` to run before the rest of the page.
-- `<script src="...">` — External or resolved local scripts per [docs/script-taxonomy.md](docs/script-taxonomy.md).
+- `<script src="...">` — External or resolved local scripts per [script-taxonomy.md](docs/drafts/script-taxonomy.md).
 
 Use one of these for **executable** script bodies: `is:build`, plain `<script>` (client module), `is:inline`, or `is:blocking`. Do not use deprecated `on:build` / `on:client`.
 
 ## Props
 
-- Pass: attributes, `props` / `data-props` (including spreads), as in [docs/interpolation.md](docs/interpolation.md).
+- Pass: attributes, `props` / `data-props` (including spreads), as in [interpolation.md](docs/drafts/interpolation.md).
 - Receive: destructure `Aero.props` in `<script is:build>`.
 
 ```html

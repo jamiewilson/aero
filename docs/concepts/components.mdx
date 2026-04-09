@@ -1,0 +1,149 @@
+---
+title: "Components"
+description: "Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts."
+---
+
+A component is a `.html` file in `client/components/`. You import it in a `<script is:build>` block and use it in markup with a `-component` suffix — `header.html` becomes `<header-component>`, `card.html` becomes `<card-component>`, and so on.
+
+## Creating a component
+
+Here is a complete example. Create the file `client/components/greeting.html`:
+
+```html
+<!-- client/components/greeting.html -->
+<script is:build>
+  const { name } = Aero.props
+</script>
+
+<h2>Hello, { name }!</h2>
+```
+
+The component reads its `name` prop from `Aero.props`, then uses it in a `{ }` expression.
+
+## Using a component
+
+Import the component in your page's `<script is:build>` block, then use `<greeting-component>` in markup:
+
+```html
+<!-- client/pages/index.html -->
+<script is:build>
+  import base from '@layouts/base'
+  import greeting from '@components/greeting'
+</script>
+
+<base-layout>
+  <greeting-component name="World" />
+</base-layout>
+```
+
+<Note>
+  Import the file without its extension: `import greeting from '@components/greeting'` resolves to `client/components/greeting.html`.
+</Note>
+
+## Passing props
+
+Pass data to a component via attributes. Use `{ }` expressions to pass dynamic values from the build scope.
+
+```html
+<!-- String literal -->
+<greeting-component name="World" />
+
+<!-- Expression from build scope -->
+<greeting-component name="{ site.author }" />
+
+<!-- Spread an object -->
+<greeting-component props="{ ...myProps }" />
+```
+
+Inside the component, read every attribute from `Aero.props`:
+
+```html
+<script is:build>
+  const { name, greeting = 'Hello' } = Aero.props
+</script>
+
+<h2>{ greeting }, { name }!</h2>
+```
+
+### Props shorthand
+
+If you have a variable called `props` in the build script, the bare `props` attribute passes it to the component with no extra syntax:
+
+```html
+<!-- Page -->
+<script is:build>
+  import card from '@components/card'
+  const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
+</script>
+
+<card-component props />
+```
+
+### Spreading an object
+
+Use `props="{ ...obj }"` to pass any object as the component's props, or build the object inline:
+
+```html
+<card-component props="{ ...cardProps }" />
+<card-component props="{ title: site.title, subtitle: site.tagline }" />
+```
+
+## A full component example
+
+Here is a card component that uses props for content and passes theme data into a scoped `<style>`:
+
+```html
+<!-- client/components/card.html -->
+<script is:build>
+  const { title, subtitle, accent } = Aero.props
+  const theme = { fg: '#111', bg: '#fff', accent }
+</script>
+
+<div class="card">
+  <h2>{ title }</h2>
+  <p>{ subtitle }</p>
+</div>
+
+<style props="{ ...theme }">
+  .card {
+    color: var(--fg);
+    background: var(--bg);
+    border: 4px solid var(--accent);
+  }
+</style>
+```
+
+Use it on a page:
+
+```html
+<script is:build>
+  import base from '@layouts/base'
+  import card from '@components/card'
+</script>
+
+<base-layout>
+  <card-component title="Getting started" subtitle="Learn the basics." accent="blue" />
+</base-layout>
+```
+
+## Self-closing vs wrapping
+
+Use self-closing syntax (`/>`) when the component does not need to receive slot content:
+
+```html
+<greeting-component name="World" />
+```
+
+Use opening and closing tags when you want to pass child content into the component's `<slot>`:
+
+```html
+<card-component title="Note">
+  <p>This content fills the card's default slot.</p>
+</card-component>
+```
+
+See [Layouts & Slots](/concepts/layouts-slots) for a full explanation of how slots work.
+
+<Tip>
+  All custom attributes — `props`, `for`, `if`, `else`, etc. — also accept a `data-` prefix (e.g. `data-props`, `data-for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
+</Tip>

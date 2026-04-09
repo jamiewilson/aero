@@ -1,0 +1,196 @@
+---
+title: "Props"
+description: "Pass data into components and receive it with Aero.props."
+---
+
+Props let you pass data from a page into a component via HTML attributes. Inside the component, you read everything from `Aero.props`.
+
+## Passing props
+
+You can pass props three ways: as plain string attributes, as JavaScript expressions wrapped in `{ }`, or by spreading an object with the `props` attribute.
+
+### String attributes
+
+Attribute values without braces are always treated as string literals:
+
+```html
+<greeting-component name="World" />
+<card-component title="Hello" count="42" />
+```
+
+### Expression attributes
+
+Wrap a value in `{ }` to evaluate it as JavaScript — booleans, numbers, variables, and computed values all work:
+
+```html
+<header-component title="{ site.meta.title }" count="{ 2 * 21 }" />
+```
+
+You can also interpolate expressions inside a string:
+
+```html
+<my-component title="Slug: { Aero.page.params.slug }" />
+```
+
+### Spreading an object
+
+Use `props="{ ...obj }"` to pass every key in an object as a separate prop:
+
+```html
+<script is:build>
+  const headerProps = {
+    title: site.home.title,
+    subtitle: site.home.subtitle.toUpperCase(),
+  }
+</script>
+
+<header-component props="{ ...headerProps }" />
+```
+
+You can also define the object inline:
+
+```html
+<card-component props="{ title: site.meta.title, count: 42 }" />
+```
+
+### Props shorthand
+
+If you have a variable named `props` in scope, use the bare `props` attribute — no value needed. Aero spreads it automatically:
+
+```html
+<script is:build>
+  import card from '@components/card'
+  const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
+</script>
+
+<card-component props />
+<!-- equivalent to: props="{ ...props }" -->
+```
+
+### Mixing approaches
+
+Combine `props` with individual attributes to override or extend:
+
+```html
+<my-component props="{ ...baseProps }" extra="static value" override="{ computed }" />
+```
+
+## Receiving props
+
+Inside a component, destructure what you need from `Aero.props` in your build script:
+
+```html
+<!-- client/components/card.html -->
+<script is:build>
+  const { title, subtitle } = Aero.props
+</script>
+
+<div class="card">
+  <h2>{ title }</h2>
+  <p>{ subtitle }</p>
+</div>
+```
+
+You can set defaults using standard JavaScript destructuring syntax:
+
+```html
+<script is:build>
+  const { title = 'Default Title', subtitle } = Aero.props
+</script>
+```
+
+And fall back to site-wide data when a prop isn't provided:
+
+```html
+<script is:build>
+  const { title, description } = Aero.props
+</script>
+
+<meta property="og:title" content="{ title || site.meta.title }" />
+<meta property="og:description" content="{ description || site.meta.description }" />
+```
+
+## Passing props into client scripts and styles
+
+You can bridge build-time data into client `<script>` and `<style>` blocks using the same `props` attribute. The expression is evaluated at build time and the result is serialized for the client.
+
+### Script: data becomes globals
+
+Each key in the object you pass becomes an available variable inside the script:
+
+```html
+<script is:build>
+  const envStatus = process.env.STATUS
+</script>
+
+<script props="{ { envStatus } }">
+  import { Application } from './client/app'
+  Application.boot(envStatus)
+</script>
+```
+
+For `is:inline` scripts, Aero block-scopes the injected variables so they don't pollute `window`:
+
+```html
+<script is:build>
+  const systemConfig = { timeout: 5000, theme: 'light' }
+  const API_KEY = '1234abcd'
+</script>
+
+<script is:inline props="{ { systemConfig, key: API_KEY } }">
+  console.log(systemConfig.theme) // "light"
+  console.log(key)                // "1234abcd"
+</script>
+```
+
+### Style: data becomes CSS custom properties
+
+Each key in the object you spread becomes a CSS custom property (`--keyName`):
+
+```html
+<script is:build>
+  const { title, subtitle, accent } = Aero.props
+  const theme = { fg: '#111', bg: '#fff', accent }
+</script>
+
+<div class="card">
+  <h2>{ title }</h2>
+  <p>{ subtitle }</p>
+</div>
+
+<style props="{ ...theme }">
+  .card {
+    color: var(--fg);
+    background: var(--bg);
+    border: 4px solid var(--accent);
+  }
+</style>
+
+<script props="{ title, accent }">
+  console.log('Card:', title, accent)
+</script>
+```
+
+Aero compiles the spread into `:root` custom properties at build time:
+
+```css
+:root {
+  --fg: #111;
+  --bg: #fff;
+  --accent: blue;
+}
+```
+
+<Tip>
+  Pass `props="{ ...theme }"` (spread) to get one CSS variable per key. Pass `props="{ { theme } }"` (object wrap) and you get a single `--theme` variable holding the whole object — not individual properties.
+</Tip>
+
+## HTML spec-compliant alternatives
+
+All Aero directives accept a `data-` prefix if you want strictly valid HTML:
+
+```html
+<card-component data-props="{ ...cardProps }" />
+```
+
+`data-props`, `data-for`, and `data-if` are fully equivalent to the shorthand forms. The shorthand is preferred for readability.

@@ -1,0 +1,103 @@
+---
+title: "Path Aliases"
+description: "Use short import paths like @components/header instead of relative paths. Aero provides defaults — no tsconfig required."
+---
+
+Path aliases let you write `import header from '@components/header'` instead of `../../components/header`. Aero injects a set of default aliases at build time so they work immediately — no `tsconfig.json` required for basic use.
+
+## Default aliases
+
+These aliases are available in every Aero project with no configuration:
+
+| Alias | Resolves to |
+|---|---|
+| `@components/*` | `client/components/*` |
+| `@layouts/*` | `client/layouts/*` |
+| `@pages/*` | `client/pages/*` |
+| `@content/*` | `content/*` |
+| `@styles/*` | `client/assets/styles/*` |
+| `@scripts/*` | `client/assets/scripts/*` |
+| `@images/*` | `client/assets/images/*` |
+
+You can use these in `<script is:build>` imports, client scripts, `href` and `src` attributes, and anywhere else Vite resolves module specifiers.
+
+```html
+<script is:build>
+  import base from '@layouts/base'
+  import header from '@components/header'
+  import site from '@content/site'
+</script>
+
+<link rel="stylesheet" href="@styles/global.css" />
+```
+
+<Note>
+  `tsconfig.json` is optional. If your project has no `tsconfig.json`, or if `compilerOptions.paths` is empty, Aero injects all the defaults above automatically.
+</Note>
+
+## Adding custom aliases
+
+To add your own aliases — or override a default — define them under `compilerOptions.paths` in `tsconfig.json`. Aero merges tsconfig paths with the defaults, and tsconfig values take precedence for any key that overlaps:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@utils/*": ["./client/utils/*"],
+      "@pages/*": ["./src/views/*"]
+    }
+  }
+}
+```
+
+In this example, `@utils/*` is a new alias, and `@pages/*` is overridden to resolve to `src/views/` instead of the default `client/pages/`. The other defaults (`@components/*`, `@layouts/*`, etc.) continue to work unchanged.
+
+## Custom directory layout
+
+If you rename your top-level directories (for example, using `frontend/` instead of `client/`), set `dirs` in your Aero config. The injected defaults will use your custom directory names:
+
+<CodeGroup>
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+  dirs: {
+    client: 'frontend',
+  },
+})
+```
+
+```ts vite.config.ts (inline)
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+  plugins: [aero({ dirs: { client: 'frontend' } })],
+})
+```
+
+</CodeGroup>
+
+With `dirs.client` set to `frontend`, `@components/*` resolves to `frontend/components/*`, `@layouts/*` to `frontend/layouts/*`, and so on.
+
+<Warning>
+  When you use custom dirs and a `tsconfig.json` is present, keep your `tsconfig.json` paths in sync with the actual directory names. Aero prints a one-time warning during dev if they appear to be out of sync, but does not modify your tsconfig automatically.
+</Warning>
+
+Update `tsconfig.json` to match:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@components/*": ["./frontend/components/*"],
+      "@layouts/*": ["./frontend/layouts/*"],
+      "@pages/*": ["./frontend/pages/*"],
+      "@styles/*": ["./frontend/assets/styles/*"],
+      "@scripts/*": ["./frontend/assets/scripts/*"],
+      "@images/*": ["./frontend/assets/images/*"]
+    }
+  }
+}
+```

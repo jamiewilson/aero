@@ -42,7 +42,7 @@ For the full canonical list of product goals, web-platform stance, toolchain com
 
 - **Vite** — Dev server, HMR, production build via the Aero Vite plugin.
 - **Static build** — Output to `dist/` with minification and optional Nitro output in `.output/`.
-- **@aero-js/create** — Scaffold from the minimal or fullstack template. See [docs/monorepo.md](../docs/monorepo.md). Full demo in [examples/kitchen-sink](../examples/kitchen-sink).
+- **@aero-js/create** — Scaffold from the minimal or fullstack template. See [monorepo.md](monorepo.md). Full demo in [examples/kitchen-sink](../examples/kitchen-sink).
 
 ### Routing and layouts
 

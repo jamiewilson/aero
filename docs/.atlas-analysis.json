@@ -1,0 +1,113 @@
+{
+  "projectType": "framework",
+  "projectName": "Aero",
+  "projectDescription": "An HTML-first static site generator and optional full-stack framework that compiles .html templates to static output while preserving a native web-platform feel.",
+  "theme": "palm",
+  "primaryColor": "#3B82F6",
+  "lightColor": "#EFF6FF",
+  "darkColor": "#1E3A5F",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "project-structure"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/routing",
+              "concepts/components",
+              "concepts/layouts-slots",
+              "concepts/templating",
+              "concepts/scripts"
+            ]
+          },
+          {
+            "group": "Data & Content",
+            "pages": [
+              "data/props",
+              "data/content-collections",
+              "data/environment-variables",
+              "data/site-url"
+            ]
+          },
+          {
+            "group": "Server & Interactivity",
+            "pages": [
+              "server/nitro",
+              "server/htmx-alpine",
+              "server/middleware-redirects"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/vite-plugin",
+              "configuration/aero-config",
+              "configuration/path-aliases",
+              "configuration/typescript"
+            ]
+          },
+          {
+            "group": "Tooling",
+            "pages": [
+              "tooling/cli",
+              "tooling/vscode-extension",
+              "tooling/incremental-builds",
+              "tooling/image-optimization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "HTML-first template engine with { } expressions, no JSX required",
+    "File-based routing via client/pages/*.html",
+    "Single-file components and layouts with <slot> support",
+    "Build-time scripts (<script is:build>) stripped from output",
+    "Content collections with getCollection() and render() for Markdown",
+    "Optional Nitro server for API routes and full-stack deployment",
+    "Native HTMX and Alpine.js compatibility",
+    "Zero-runtime static HTML output — deploy anywhere",
+    "Hot module replacement (HMR) in dev for HTML, CSS, scripts, and content",
+    "TypeScript support with path aliases and aero check --types for CI"
+  ],
+  "publicApiSurface": [
+    "pnpm create @aero-js (project scaffolding)",
+    "aero() — Vite plugin from @aero-js/vite",
+    "defineConfig() — from @aero-js/config",
+    "createViteConfig() — from @aero-js/config/vite",
+    "Aero.props — read component props in build scripts",
+    "Aero.page.params — dynamic route parameters",
+    "Aero.page.url — current page URL object",
+    "Aero.site — canonical site URL",
+    "getCollection(name) — from aero:content",
+    "render(doc) — lazy Markdown to HTML, from aero:content",
+    "defineCollection() — from @aero-js/content",
+    "getStaticPaths() — exported from dynamic page build scripts",
+    "<script is:build> — build-time script block",
+    "<script is:inline> — inlined browser script",
+    "<script is:blocking> — blocking head script",
+    "for / data-for directive — loop over arrays in templates",
+    "if / else-if / else directives — conditionals in templates",
+    "switch / case / default directives — switch conditionals in templates",
+    "{ } interpolation — expression syntax in templates",
+    "props / data-props attribute — pass data to components and scripts",
+    "aero check — CLI template validation",
+    "aero check --types — TypeScript type checking for build scripts",
+    "aero doctor — project health diagnostics",
+    "aero build --incremental — faster repeat production builds",
+    "AERO_INCREMENTAL env var — enable incremental static builds",
+    "import.meta.env.SITE — injected canonical URL",
+    "AeroMiddleware type — middleware handler signature",
+    "pathFor() — typed route helper from .aero/generated/route-helpers"
+  ]
+}

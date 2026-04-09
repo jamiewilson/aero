@@ -1,0 +1,26 @@
+---
+title: "VS Code Extension"
+description: "Get syntax highlighting, completions, hover info, and inline diagnostics for Aero templates in VS Code."
+---
+
+The Aero VS Code extension adds first-class editor support for `.html` template files. Install it to get feedback in your editor as you write — without running a build.
+
+## Install
+
+Install from the VS Code Marketplace:
+
+[**aero-js.aero-vscode** on the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
+
+Or search for **Aero** in the VS Code Extensions panel.
+
+## What you get
+
+- **Syntax highlighting** — Aero expressions, `<script is:build>`, and component syntax are highlighted correctly inside `.html` files.
+- **Completions** — Component names and attributes are suggested as you type.
+- **Hover info** — Hover over components and expressions to see type information.
+- **Go to definition** — Jump from a component reference in a template to its source `.html` file.
+- **Diagnostics** — Template errors and type issues are underlined inline, matching what `aero check --types` reports on the command line.
+
+<Tip>
+  If you see false positives or missing diagnostics, run `aero doctor` in your project root to confirm the extension can find a supported version of `@aero-js/core`.
+</Tip>
