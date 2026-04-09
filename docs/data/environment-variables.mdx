@@ -3,7 +3,7 @@ title: 'Environment Variables'
 description: 'Use .env files to manage build-time and client-exposed variables in Aero.'
 ---
 
-Aero uses Vite's environment variable system. Variables are available in build-time code by default; you opt specific ones into the client bundle by prefixing them with `VITE_`.
+API keys, feature flags, and endpoint URLs vary between environments. You need a way to inject these values at build time without hard-coding them into your source. Aero uses Vite's environment variable system: variables are available in build-time code by default, and you opt specific ones into the client bundle by prefixing them with `VITE_`.
 
 ## Client vs. build-only variables
 

@@ -1,0 +1,73 @@
+---
+title: 'Philosophy'
+description: "What makes Aero different from typical frameworks, and how it relates to Web Components."
+---
+
+Aero makes deliberate tradeoffs that separate it from most modern web frameworks. This page explains the design decisions behind the framework and when they work in your favor.
+
+## HTML-first authoring
+
+Many tools use custom file extensions (`.astro`, `.svelte`, `.jsx`, `.vue`). Aero uses plain `.html` files. Pages, components, and layouts use standard HTML syntax plus a thin `{ }` interpolation layer. You stay in the native language of the web.
+
+## No heavy client framework runtime
+
+Aero does not compile React, Svelte, or Vue into your app. It is a string-to-HTML template compiler. That avoids Virtual DOM runtimes and large framework dependency trees for sites that do not need them.
+
+## Clear build vs client separation
+
+- `<script is:build>` runs only at build time (or server request time when applicable). It is stripped from the output.
+- `<script>` without `is:*` is a standard module, bundled for the browser.
+- `<script is:inline>` stays in the HTML as-is.
+
+There are no `client:load`-style directives. A standard script tag behaves like a standard script tag.
+
+## No hydration orchestrators
+
+Aero outputs static HTML. If you want interactivity, you use Alpine.js, HTMX, or standard browser APIs. The HTML parser applies the document as it loads.
+
+## Pass-through by default
+
+Attributes like `x-transition:enter="opacity-0"` or `hx-post="/api/submit"` are passed through to the output. Aero does not parse or transform them. Alpine and HTMX work without Aero-specific plugins.
+
+## Standing on existing tools
+
+Aero stays small by adopting ecosystem tools instead of reinventing them:
+
+- **Vite** — Dev server, HMR, bundling. Aero is primarily a Vite plugin. Asset resolution and PostCSS (for example Tailwind) use normal Vite configuration.
+- **Nitro** — When you need more than a static `dist/` folder, Nitro provides file-based API routes (`server/api/`), deployment presets, middleware, storage, and related server features.
+- **Web standards** — Styling is normal CSS; interactivity can stay in the DOM with small libraries rather than a bespoke reactivity system.
+
+---
+
+## Why not Web Components?
+
+Aero and Web Components both care about standards, but they optimize for different experiences.
+
+### What Aero optimizes for
+
+Aero targets **HTML-first authoring** and **static-first delivery**:
+
+- **Authoring in HTML, not only in JS** — Components are `.html` files. You do not need `class MyElement extends HTMLElement`, shadow roots, or imperative DOM updates for everyday pages.
+- **No client JS required for templating** — `{ site.title }`, `if` / `else`, and `for` run at build time. Users receive plain HTML.
+- **Global styling** — Components render in the light DOM, so global CSS and utility frameworks apply naturally.
+- **Clear build vs client split** — `<script is:build>` for data and imports; plain `<script>` for browser code.
+- **HTML over the wire** — Output is standard DOM nodes that HTMX and Alpine can target.
+
+### Where Web Components are often awkward for full sites
+
+- **Authoring in JavaScript** — Custom elements are defined in JS with lifecycle methods unless you add another library for templating.
+- **Shadow DOM and styling** — Strong encapsulation makes sharing a site's design system harder unless you standardize on CSS custom properties or `::part()`.
+- **SSR complexity** — Server rendering custom elements historically required extra setup compared to HTML-first SSG tools.
+- **Forms** — Custom controls inside shadow roots historically struggled with native form participation (improving over time, often with more JS).
+- **Reactivity** — Attribute changes require `observedAttributes` and manual updates unless you add a library.
+
+### When Web Components are a good fit
+
+Web Components excel at **portable, encapsulated widgets**:
+
+- A design system consumed by React, Vue, Angular, and vanilla teams from one library.
+- **Strict style isolation** for embeddable widgets (chat bubbles, checkout) on third-party sites.
+- **Heavy client-side rendering** when static HTML generation is not the priority.
+- **Published primitives** dropped into any page with a script tag and no build step.
+
+**Summary:** Aero is aimed at building the **site** with fast static HTML and straightforward ergonomics. Web Components are low-level primitives for **embeddable, highly encapsulated widgets** that run in many environments.

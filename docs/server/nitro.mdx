@@ -3,7 +3,17 @@ title: 'Nitro'
 description: 'Add API routes, storage, caching, and server-side features to your Aero site.'
 ---
 
-Aero is static-first: `pnpm build` produces a plain `dist/` you can deploy anywhere. When you need API routes, server-side logic, or a dynamic server, you can opt in to [Nitro](https://nitro.build) with a single config flag. Nitro wraps your built HTML — it does not replace Aero's page compiler.
+## The problem
+
+Static sites work well until you need server-side behavior — form submissions, authenticated API routes, server-side caching, or a database. At that point, you either bolt on a separate backend project or rewrite with a full-stack framework.
+
+## What this looks like without Aero
+
+You set up a separate API server, manage CORS between your static site and the API, and deploy two services instead of one. The frontend and backend have no shared project structure or deployment pipeline.
+
+## How Aero helps
+
+Aero is static-first: `pnpm build` produces a plain `dist/` you can deploy anywhere. When you need API routes, server-side logic, or a dynamic server, opt in to [Nitro](https://nitro.build) with a single config flag. Nitro wraps your built HTML — it does not replace Aero's page compiler. You get API routes, storage, caching, and deployment presets from the same project.
 
 <Note>Enable Nitro only when you need it. Static sites have no server to manage or pay for.</Note>
 

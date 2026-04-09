@@ -3,7 +3,25 @@ title: 'Props'
 description: 'Pass data into components and receive it with Aero.props.'
 ---
 
-Props let you pass data from a page into a component via HTML attributes. Inside the component, you read everything from `Aero.props`.
+## The problem
+
+HTML elements accept attributes, but there is no built-in mechanism to pass structured data from one HTML file into another and have it available at render time. If you want to build a card component that accepts a title and description, you have no native way to parameterize markup across files.
+
+## What this looks like without Aero
+
+You either duplicate the markup with different hard-coded values in each file, or you write client-side JavaScript that reads `data-*` attributes and builds DOM nodes:
+
+```html
+<!-- Repeated in every page that needs a card -->
+<div class="card">
+  <h2>Hard-coded Title</h2>
+  <p>Hard-coded description for this page.</p>
+</div>
+```
+
+## How Aero helps
+
+Props let you pass data from a page into a component via HTML attributes. Inside the component, you read everything from `Aero.props`. This works at build time — no client JavaScript involved.
 
 ## Passing props
 

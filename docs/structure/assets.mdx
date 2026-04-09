@@ -1,0 +1,19 @@
+---
+title: 'Assets'
+description: 'Client styles and scripts under client/assets, referenced via Vite and path aliases.'
+sidebarTitle: 'Assets'
+---
+
+CSS and client-side scripts live under `client/assets/`, usually organized as `styles/` and `scripts/`. Reference them with path aliases:
+
+```html
+<link rel="stylesheet" href="@styles/global.css" />
+```
+
+```html
+<script is:build>
+	import someFunction from '@scripts/someModule'
+</script>
+```
+
+Vite handles bundling, autoprefixing, and minification for assets that go through the pipeline. For bundling choices (single bundle, CDN, externals), see [Importing and bundling](/guide/importing-and-bundling).

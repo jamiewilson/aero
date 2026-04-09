@@ -3,7 +3,13 @@ title: 'HTMX & Alpine'
 description: 'Add server-driven interactivity and reactive client behavior to your Aero pages.'
 ---
 
-Aero passes `hx-*` and `x-*` attributes through unchanged, so you can use [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) directly in your HTML templates. No wrappers, no adapters — just the libraries as they are.
+## The problem
+
+Static HTML pages have no built-in mechanism for partial updates, form submissions without full reloads, or reactive UI state. Reaching for a full JavaScript framework (React, Vue, Svelte) adds a heavy runtime, a Virtual DOM, and a build-time compilation step that replaces your HTML authoring model.
+
+## How Aero helps
+
+Aero passes `hx-*` and `x-*` attributes through unchanged, so you can use [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) directly in your HTML templates. No wrappers, no adapters — just the libraries as they are. HTMX handles server-driven updates; Alpine handles client-side reactivity. Both work with the static HTML Aero produces.
 
 <Tabs>
   <Tab title="HTMX">

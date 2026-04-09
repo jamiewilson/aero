@@ -3,7 +3,23 @@ title: 'Scripts'
 description: "Understand Aero's four script types and when to use each one."
 ---
 
-Aero has a clear taxonomy for `<script>` tags. Each type has a distinct execution context and purpose — knowing which one to use determines whether your code runs at build time, in the browser, or both.
+## The problem
+
+In a typical web project, there is no clear boundary between code that prepares data for the page and code that runs in the browser. Build tools bundle everything together, and it is easy to accidentally ship server-side logic to the client or load heavy scripts that block rendering.
+
+## What this looks like without Aero
+
+In vanilla HTML, a `<script>` tag always runs in the browser. If you want to generate content from data at build time, you need a separate build step outside the HTML file. If you want a blocking script in `<head>` and a deferred module at the end of `<body>`, you manage placement yourself.
+
+```html
+<!-- All scripts run in the browser — no build-time option -->
+<script src="/scripts/data-fetcher.js"></script>
+<script type="module" src="/scripts/app.js"></script>
+```
+
+## How Aero helps
+
+Aero gives each `<script>` tag a clear execution context via attributes. `is:build` runs at build time and is stripped from output. Plain `<script>` is bundled for the browser. `is:inline` stays in place as-is. `is:blocking` is hoisted to `<head>`. You always know what runs where.
 
 ## Script types at a glance
 
@@ -87,7 +103,6 @@ Use it for:
 
 ```html
 <script is:inline>
-	// Reads theme preference before the page renders — prevents FOUC
 	const theme = localStorage.getItem('theme')
 	document.documentElement.setAttribute('data-theme', theme)
 </script>

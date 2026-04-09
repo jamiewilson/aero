@@ -3,7 +3,34 @@ title: 'Layouts & Slots'
 description: 'Wrap pages in shared structure using layouts, and control where content lands with slots.'
 ---
 
-A layout is a `.html` file in `client/layouts/`. It wraps your page content with shared structure — an HTML shell, navigation, footer, or any markup you want every page to share. Layouts expose `<slot />` to mark where the page's content goes.
+## The problem
+
+Most websites share common structure across pages — a `<head>` with metadata, a site header, a footer, a sidebar. In plain HTML, you copy that shared shell into every page file. When the header design changes, you update every page by hand and hope you do not miss one.
+
+## What this looks like without Aero
+
+You duplicate the outer HTML in every page:
+
+```html
+<!-- about.html -->
+<html lang="en">
+<head><title>About</title></head>
+<body>
+  <header>Site header</header>
+  <h1>About</h1>
+  <p>About content here.</p>
+  <footer>Site footer</footer>
+</body>
+</html>
+
+<!-- contact.html — same header and footer, copied again -->
+```
+
+Server-side includes or build-time partials help, but they lack a clean contract for where content lands and how to pass data to the shell.
+
+## How Aero helps
+
+A layout is a `.html` file in `client/layouts/` that wraps your page content with shared structure. Layouts use `<slot />` to mark where the page's content goes. You import the layout, wrap your markup, and Aero does the rest at build time.
 
 ## The default slot
 

@@ -3,7 +3,28 @@ title: 'Templating'
 description: 'Use { } expressions, loops, conditionals, and switch/case to generate HTML at build time.'
 ---
 
-Aero's template engine lives entirely in `.html` files. You write standard HTML with `{ }` expressions for dynamic values, and use directives like `for`, `if`, and `switch` directly on elements as attributes. All of this runs at build time — the output is plain static HTML.
+## The problem
+
+Static HTML has no way to inject dynamic values, repeat elements from a list, or conditionally show content. If you want a page title pulled from a data file, or a list of blog posts generated from a collection, you either hand-write every line or reach for a full framework.
+
+## What this looks like without Aero
+
+In plain HTML, you would duplicate markup by hand or write client-side JavaScript that builds DOM nodes after the page loads:
+
+```html
+<ul>
+  <li>Post one</li>
+  <li>Post two</li>
+  <li>Post three</li>
+  <!-- add a fourth? edit the HTML -->
+</ul>
+```
+
+If the list comes from a CMS or data file, you need a build tool or a client-side fetch-and-render step.
+
+## How Aero helps
+
+Aero adds a thin template layer to `.html` files: `{ }` expressions for dynamic values, and `for`, `if`, and `switch` directives as attributes on elements. All of this runs at build time — the output is plain static HTML with no runtime overhead.
 
 ## Expressions
 

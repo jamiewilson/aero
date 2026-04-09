@@ -3,11 +3,30 @@ title: 'Content Collections'
 description: 'Define typed content schemas, query collections, and render Markdown with getCollection() and render().'
 ---
 
-Content collections give you a type-safe way to work with structured content — blog posts, docs, changelogs, or any Markdown-and-frontmatter files. You define a schema, query items at build time, and render Markdown on demand.
+## The problem
+
+Sites driven by Markdown content — blogs, docs, changelogs — need a way to load, validate, and render those files at build time. Without structure, you end up with ad-hoc scripts that glob for `.md` files, parse frontmatter manually, and hope the fields match what your templates expect.
+
+## What this looks like without Aero
+
+You write a custom build script that reads a directory, parses YAML frontmatter, and feeds it into your template. There is no schema validation, no type safety, and no hot reload when content changes:
+
+```js
+const files = glob.sync('content/posts/*.md')
+for (const file of files) {
+  const { data, content } = parseFrontmatter(readFileSync(file))
+  // hope data.title exists, hope data.date is a Date...
+  renderTemplate('post.html', { ...data, html: markdownToHtml(content) })
+}
+```
+
+## How Aero helps
+
+Content collections give you a type-safe way to work with structured content. You define a schema with [Zod](https://zod.dev) (or any [Standard Schema](https://standardschema.dev)-compatible validator), query items at build time with `getCollection()`, and render Markdown on demand with `render()`. Aero validates frontmatter against your schema and hot-reloads when content changes.
 
 ## Define a collection
 
-Declare your collections in `content.config.ts` at the project root. Use `defineCollection()` with a [Zod](https://zod.dev) schema to validate frontmatter:
+Declare your collections in `content.config.ts` at the project root. Use `defineCollection()` with a schema to validate frontmatter:
 
 ```ts
 // content.config.ts

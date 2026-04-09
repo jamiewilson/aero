@@ -43,7 +43,7 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 - `<script is:inline>` - Left in place in HTML; not bundled by Vite; runs in browser immediately.
 - `<script is:blocking>` - Extracted and emitted in `<head>` (e.g. blocking scripts).
 - `<script src="...">` - External scripts allowed without attributes.
-- See [script-taxonomy.md](docs/drafts/script-taxonomy.md) for full taxonomy.
+- See [Scripts](docs/concepts/scripts.mdx) for the full script taxonomy.
 
 ### Props System
 
@@ -119,9 +119,9 @@ In dev, HMR re-renders use **fetch** to get HTML from the dev server for all rou
 
 ## Configuration (site URL)
 
-Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be set in `aero.config.ts` or passed to `aero({ site: { url: '...' } })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site.url` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [site-url.md](docs/drafts/site-url.md).
+Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be set in `aero.config.ts` or passed to `aero({ site: { url: '...' } })`. It is exposed as `import.meta.env.SITE` at build time and as `Aero.site.url` in templates. Used for sitemap, RSS, and canonical/Open Graph URLs. See [Site URL](docs/data/site-url.mdx).
 
-- **Environment variables:** Vite’s `import.meta.env`; use `VITE_` prefix for client-exposed vars. Aero injects `SITE` when `site` is set. Optional `env.d.ts` for types. See [environment-variables.md](docs/drafts/environment-variables.md).
+- **Environment variables:** Vite’s `import.meta.env`; use `VITE_` prefix for client-exposed vars. Aero injects `SITE` when `site` is set. Optional `env.d.ts` for types. See [Environment variables](docs/data/environment-variables.mdx).
 - **Middleware/hooks:** Optional `middleware` in `aero.config.ts` or `aero({ middleware: [...] })` runs at request time (dev only) for redirects, rewrites, or custom responses. See [\_reference/middleware.md](_reference/middleware.md).
 
 ## File Structure
@@ -151,4 +151,4 @@ When adding or refactoring comments in TypeScript files, use **block-style TSDoc
 - Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
 - `for` / `data-for` loops: `<li data-for="{ const item of items }">{ item.name }</li>`
 - All custom attributes (`props`, `for`, `if`, etc.) also accept a `data-` prefix for HTML spec compliance
-- `props` on script/style takes one braced expression (same as rest of interpolation); use `props="{ ...theme }"` for object properties as CSS vars, not `{ theme }` (which passes one key). See [interpolation.md](docs/drafts/interpolation.md).
+- `props` on script/style takes one braced expression (same as rest of interpolation); use `props="{ ...theme }"` for object properties as CSS vars, not `{ theme }` (which passes one key). See [Props](docs/data/props.mdx) and [Templating](docs/concepts/templating.mdx).

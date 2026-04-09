@@ -3,11 +3,37 @@ title: 'Components'
 description: 'Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts.'
 ---
 
-A component is a `.html` file in `client/components/`. You import it in a `<script is:build>` block and use it in markup with a `-component` suffix — `header.html` becomes `<header-component>`, `card.html` becomes `<card-component>`, and so on.
+## The problem
+
+HTML has no built-in way to define a reusable chunk of markup and use it across multiple pages. If you have a card, a header, or a navigation bar that appears on every page, you copy and paste it — and when the design changes, you update every copy by hand.
+
+## What this looks like without Aero
+
+You either duplicate markup across files and hope nothing drifts:
+
+```html
+<!-- page-one.html -->
+<div class="card">
+  <h2>Title One</h2>
+  <p>Description one</p>
+</div>
+
+<!-- page-two.html -->
+<div class="card">
+  <h2>Title Two</h2>
+  <p>Description two</p>
+</div>
+```
+
+Or you write client-side JavaScript that builds DOM nodes, which adds runtime cost and removes the markup from the initial HTML.
+
+## How Aero helps
+
+Components in Aero are plain `.html` files. You import a file, use it as a custom element in your markup, and pass data through attributes. The component is rendered at build time into static HTML — no runtime, no JavaScript, no shadow DOM.
 
 ## Creating a component
 
-Here is a complete example. Create the file `client/components/greeting.html`:
+Create a `.html` file in `client/components/`. The component reads its data from `Aero.props`:
 
 ```html
 <!-- client/components/greeting.html -->
@@ -17,8 +43,6 @@ Here is a complete example. Create the file `client/components/greeting.html`:
 
 <h2>Hello, { name }!</h2>
 ```
-
-The component reads its `name` prop from `Aero.props`, then uses it in a `{ }` expression.
 
 ## Using a component
 

@@ -1,0 +1,89 @@
+---
+title: 'Config files'
+description: 'vite.config.ts, aero.config.ts, tsconfig.json, and optional nitro.config.ts at the project root.'
+sidebarTitle: 'Config files'
+---
+
+## vite.config.ts
+
+Entry point for Aero's Vite plugin. At minimum it registers the `aero()` plugin:
+
+```ts vite.config.ts
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+	plugins: [aero()],
+})
+```
+
+You can pass options directly to `aero()` for site URL, redirects, content collections, or Nitro:
+
+```ts
+plugins: [
+	aero({
+		site: { url: 'https://example.com' },
+		content: true,
+		server: true,
+	}),
+]
+```
+
+See [Vite plugin](/configuration/vite-plugin) for the full surface.
+
+## aero.config.ts
+
+Projects using `@aero-js/config` (included in the fullstack template) can put Aero options in `aero.config.ts` for typed, env-aware config and a smaller `vite.config.ts`:
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	site: { url: 'https://example.com' },
+	content: true,
+	server: true,
+})
+```
+
+```ts vite.config.ts
+import { createViteConfig } from '@aero-js/config/vite'
+import aeroConfig from './aero.config.ts'
+
+export default createViteConfig(aeroConfig)
+```
+
+See [Configuration](/configuration/aero-config) for all options.
+
+## tsconfig.json
+
+Provides TypeScript compiler options and path aliases for your editor and `tsc`. The scaffold sets up aliases for standard directories:
+
+| Alias           | Resolves to               |
+| --------------- | ------------------------- |
+| `@components/*` | `client/components/*`     |
+| `@layouts/*`    | `client/layouts/*`        |
+| `@pages/*`      | `client/pages/*`          |
+| `@content/*`    | `content/*`               |
+| `@styles/*`     | `client/assets/styles/*`  |
+| `@scripts/*`    | `client/assets/scripts/*` |
+
+<Note>
+	`tsconfig.json` is optional for Aero's build — the framework provides standard path aliases at build
+	time. Add it when you need compiler options, IDE type checking, or custom aliases.
+</Note>
+
+See [Path aliases](/configuration/path-aliases) and [TypeScript](/configuration/typescript).
+
+## nitro.config.ts
+
+Fullstack or `server: true` projects use a root `nitro.config.ts` for Nitro-native options: storage, cache, database, tasks, plugins, deployment presets, and more:
+
+```ts nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	preset: 'cloudflare_pages',
+})
+```
+
+See [Nitro](/server/nitro) for how Aero merges this with generated config.

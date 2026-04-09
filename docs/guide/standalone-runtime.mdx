@@ -1,14 +1,13 @@
-# Standalone runtime
+---
+title: 'Standalone runtime'
+description: 'Render Aero templates outside a full Vite app using @aero-js/core/runtime/standalone.'
+---
 
 ## The problem
 
-Sometimes you want Aero templating outside a full Aero app + Vite runtime. Common examples:
+Sometimes you want Aero templating outside a full Aero app and Vite runtime. Examples include rendering HTML in scripts or tools, generating email-like output from templates, or using Aero in a Node ESM service without booting Vite.
 
-- rendering HTML in scripts/tools,
-- generating email-like output from Aero templates,
-- using Aero templates in a Node ESM service without booting Vite.
-
-Without a dedicated entrypoint, users have to stitch compiler output, module loading, and runtime rendering together manually.
+Without a dedicated entrypoint, you stitch compiler output, module loading, and runtime rendering together yourself.
 
 ## What this looks like without Aero helpers
 
@@ -16,16 +15,14 @@ You compile template source, then still need to load generated module code, brid
 
 ## How Aero helps
 
-`@aero-js/core/runtime/standalone` provides an ESM-first execution bridge and one-shot render helper:
+`@aero-js/core/runtime/standalone` provides an ESM-first execution bridge and one-shot render helpers:
 
 - `loadCompiledTemplateModule(...)`
 - `renderTemplate(...)`
 
-These helpers keep the same template contract but avoid requiring the full dev server flow.
+These keep the same template contract but avoid requiring the full dev server flow.
 
-## Using standalone runtime
-
-## What to import
+## Imports
 
 ```ts
 import { loadCompiledTemplateModule, renderTemplate } from '@aero-js/core/runtime/standalone'
@@ -51,8 +48,8 @@ const html = await renderTemplate({
 
 - `templateSource` (required): HTML template source
 - `root` (required): project root for import resolution
-- `importer` (required): virtual/real source path used as importer for relative imports
-- `resolvePath` (optional): alias/path resolver `(specifier, importer) => string`
+- `importer` (required): virtual or real source path used as importer for relative imports
+- `resolvePath` (optional): alias and path resolver `(specifier, importer) => string`
 - `globals` (optional): values registered via `Aero.global(name, value)`
 - `input` (optional): forwarded to `Aero.render(...)`
 
@@ -77,17 +74,16 @@ const pageModule = await loadCompiledTemplateModule({
 })
 ```
 
-`pageModule` can then be registered/rendered through the runtime in advanced flows.
+`pageModule` can then be registered or rendered through the runtime in advanced flows.
 
 ## Boundaries and constraints
 
 - Standalone helpers are currently **ESM-first**.
-- `root` + `importer` are required; these are needed for import resolution.
-- Bundled client-script workflows still belong to the normal Aero + Vite path.
+- `root` and `importer` are required for import resolution.
+- Bundled client-script workflows still belong to the normal Aero and Vite path.
 - For normal app runtime, keep using standard Aero entrypoints; standalone is for out-of-band execution flows.
 
 ## Related docs
 
-- [Monorepo guide](monorepo.md)
-- [Script taxonomy](script-taxonomy.md)
-- [Interpolation](interpolation.md)
+- [Scripts](/getting-started/scripts)
+- [Templates](/getting-started/templates)

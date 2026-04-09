@@ -53,7 +53,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props`, `data-props`). The source looks like HTML, the output is HTML.
 
-> Also check out: [What Makes Aero Different?](docs/drafts/what-makes-aero-different.md) and [Why Not Web Components?](docs/drafts/why-not-web-components.md)
+> Also check out: [Philosophy](docs/get-started/philosophy.mdx) (what makes Aero different and how it relates to Web Components).
 
 ## File-based routing
 
@@ -83,7 +83,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Path aliases**: For convenience, `@aero-js/create` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
 > [!NOTE]  
-> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page’s build script so the build knows which paths to generate. See [Conventions](#conventions) and [content-api.md](docs/drafts/content-api.md).
+> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page’s build script so the build knows which paths to generate. See [Conventions](#conventions) and [Content collections](docs/data/content-collections.mdx).
 
 ## Components & Layouts
 
@@ -302,7 +302,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 
 ## Content Collections
 
-Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [content-api.md](docs/drafts/content-api.md).
+Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](docs/data/content-collections.mdx).
 
 ```html
 <script is:build>
@@ -457,7 +457,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 ## More Documentation
 
-For more documentation, see the [`/docs`](/docs) directory, starting with the [Table of Contents](docs/drafts/README.md).
+For more documentation, see the [`/docs`](/docs) directory, starting with [index.mdx](docs/index.mdx) and [introduction.mdx](docs/introduction.mdx).
 
 ## Links
 

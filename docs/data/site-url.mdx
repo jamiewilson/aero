@@ -3,7 +3,7 @@ title: 'Site URL'
 description: 'Set your canonical site URL in Aero config to power sitemaps, canonical links, and Open Graph tags.'
 ---
 
-Setting a canonical site URL in your Aero config gives you an absolute base URL you can use for sitemaps, RSS feeds, canonical `<link>` tags, and Open Graph metadata. Without it, Aero can only generate relative URLs.
+Sitemaps, RSS feeds, canonical `<link>` tags, and Open Graph metadata all need absolute URLs. A static site built with relative paths has no way to produce these without knowing where it will be deployed. Setting a canonical site URL in your Aero config gives you an absolute base URL for all of these.
 
 ## Configuration
 

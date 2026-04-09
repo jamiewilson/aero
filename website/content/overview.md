@@ -17,8 +17,8 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server                                                                                              |
 | 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                                                                                                             |
 | 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback                                                                                    |
-| ✅ CI type-check           | [`aero check --types`](https://github.com/jamiewilson/aero/blob/main/docs/drafts/aero-cli-and-check.md) — TypeScript on build scripts and `{ }` like the editor |
-| ⚡ Incremental builds      | Optional [`AERO_INCREMENTAL`](https://github.com/jamiewilson/aero/blob/main/docs/drafts/build-performance.md) for faster repeat static prerender                |
+| ✅ CI type-check           | [`aero check --types`](https://github.com/jamiewilson/aero/blob/main/docs/tooling/cli.mdx) — TypeScript on build scripts and `{ }` like the editor |
+| ⚡ Incremental builds      | Optional [`AERO_INCREMENTAL`](https://github.com/jamiewilson/aero/blob/main/docs/tooling/incremental-builds.mdx) for faster repeat static prerender                |
 
 ## [Try it out](#try-it-out)
 
@@ -57,7 +57,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props` on components and script/style). The source looks like HTML, the output is HTML.
 
-> Also check out: [What Makes Aero Different?](https://github.com/jamiewilson/aero/blob/main/docs/drafts/what-makes-aero-different.md) and [Why Not Web Components?](https://github.com/jamiewilson/aero/blob/main/docs/drafts/why-not-web-components.md)
+> Also check out: [Philosophy](https://github.com/jamiewilson/aero/blob/main/docs/get-started/philosophy.mdx) (what makes Aero different and how it relates to Web Components).
 
 ## [File-based routing](#file-based-routing)
 
@@ -86,7 +86,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Components** live in `client/components/`; use `<name-component>` (e.g. `header.html` → `<header-component>`).
 - **Path aliases**: For convenience, `@aero-js/create` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
-> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/drafts/content-api.md).
+> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/data/content-collections.mdx).
 
 ## [Components & Layouts](#components--layouts)
 
@@ -304,7 +304,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 
 ## [Content Collections](#content-collections)
 
-Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content API](https://github.com/jamiewilson/aero/blob/main/docs/drafts/content-api.md).
+Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/data/content-collections.mdx).
 
 ```html
 <script is:build>
@@ -449,7 +449,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 ## [More Documentation](#more-documentation)
 
-For more documentation, see the `/docs` directory, starting with the [Table of Contents](https://github.com/jamiewilson/aero/blob/main/docs/drafts/README.md).
+For more documentation, see the `/docs` directory, starting with [index.mdx](https://github.com/jamiewilson/aero/blob/main/docs/index.mdx) and [introduction.mdx](https://github.com/jamiewilson/aero/blob/main/docs/introduction.mdx).
 
 ### Links
 

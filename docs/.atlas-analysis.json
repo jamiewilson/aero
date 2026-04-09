@@ -13,7 +13,7 @@
 				"groups": [
 					{
 						"group": "Get Started",
-						"pages": ["introduction", "quickstart", "project-structure"]
+						"pages": ["introduction", "quickstart", "structure"]
 					},
 					{
 						"group": "Core Concepts",

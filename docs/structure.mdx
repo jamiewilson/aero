@@ -1,0 +1,72 @@
+---
+title: 'Structure'
+description: 'How a scaffolded Aero project is laid out: client, content, public, optional server, and config files.'
+---
+
+When you run `pnpm create @aero-js my-app`, Aero scaffolds a **minimal** tree. The **fullstack** template adds Nitro under `server/` and a root `nitro.config.ts`.
+
+Use the pages below like a directory map: each one describes **what belongs in that folder** and how it maps to URLs or aliases. For how routing, layouts, and templates behave in depth, follow the links into the Guide.
+
+## Minimal template
+
+```
+my-app/
+├── client/
+│   ├── assets/
+│   │   ├── scripts/        # Client-side TypeScript/JavaScript
+│   │   └── styles/         # CSS files
+│   ├── components/         # Reusable .html components
+│   ├── layouts/            # Layout wrappers with <slot>
+│   └── pages/              # File-based routing
+├── content/
+│   └── site.ts             # Global site data
+├── public/                 # Static assets (copied as-is)
+├── vite.config.ts          # Aero Vite plugin
+└── tsconfig.json           # Path aliases
+```
+
+## Fullstack template
+
+Adds server output and Nitro configuration:
+
+```
+my-app/
+├── server/
+│   └── api/                # Nitro API route handlers
+└── nitro.config.ts         # Nitro configuration
+```
+
+<Note>
+	If you rename top-level folders (for example `frontend/` instead of `client/`), set `dirs` in config
+	and read [Path aliases](/configuration/path-aliases).
+</Note>
+
+## Directory reference
+
+<CardGroup cols={2}>
+	<Card title="Pages" icon="file" href="/structure/pages">
+		File-based routes under <code>client/pages/</code>.
+	</Card>
+	<Card title="Layouts" icon="layout-template" href="/structure/layouts">
+		Shared shells with <code>&lt;slot /&gt;</code> under <code>client/layouts/</code>.
+	</Card>
+	<Card title="Components" icon="puzzle-piece" href="/structure/components">
+		Reusable <code>.html</code> partials under <code>client/components/</code>.
+	</Card>
+	<Card title="Assets" icon="image" href="/structure/assets">
+		Styles and client scripts under <code>client/assets/</code>.
+	</Card>
+	<Card title="Content" icon="database" href="/structure/content">
+		Data modules and collections under <code>content/</code>.
+	</Card>
+	<Card title="Public" icon="globe" href="/structure/public">
+		Unprocessed static files copied to <code>dist/</code>.
+	</Card>
+	<Card title="Server" icon="server" href="/structure/server">
+		Optional Nitro handlers under <code>server/</code> (fullstack or <code>server: true</code>).
+	</Card>
+	<Card title="Config files" icon="sliders" href="/structure/config">
+		<code>vite.config.ts</code>, <code>aero.config.ts</code>, <code>tsconfig.json</code>,{' '}
+		<code>nitro.config.ts</code>.
+	</Card>
+</CardGroup>

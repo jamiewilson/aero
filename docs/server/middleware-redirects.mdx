@@ -3,7 +3,13 @@ title: 'Middleware & Redirects'
 description: "Handle redirects and request-time logic in Aero's dev server and Nitro."
 ---
 
-Aero gives you two request-time mechanisms depending on where you need them to run: **redirects** work in dev and in the Nitro server, while **middleware** runs in dev only.
+## The problem
+
+Sites outgrow their original URL structure. Old URLs still get traffic from bookmarks, search engines, and external links. You need redirects, and sometimes you need request-time logic like rewrites or feature flags — but static HTML files can't handle requests on their own.
+
+## How Aero helps
+
+Aero gives you two request-time mechanisms depending on where you need them to run: **redirects** work in dev and in the Nitro server, while **middleware** runs in dev only (for local testing of rewrites, A/B tests, and custom responses).
 
 | Mechanism           | Dev | Nitro server (preview:api / production) | Static build                |
 | ------------------- | --- | --------------------------------------- | --------------------------- |
@@ -12,7 +18,7 @@ Aero gives you two request-time mechanisms depending on where you need them to r
 
 ## Redirects
 
-Use `redirects` when you want a path → URL redirect that works in dev and stays consistent when you deploy with Nitro.
+Use `redirects` when you want a path-to-URL redirect that works in dev and stays consistent when you deploy with Nitro.
 
 ```ts
 // aero.config.ts
@@ -167,7 +173,7 @@ Handlers run in order. The first `redirect` or `response` result wins. Multiple 
 Use **`redirects`** when:
 
 - You need the redirect to work in production (not just dev).
-- The logic is a straightforward path → URL mapping.
+- The logic is a straightforward path-to-URL mapping.
 
 Use **`middleware`** when:
 

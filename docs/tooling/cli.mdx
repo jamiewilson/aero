@@ -96,3 +96,36 @@ Use `--root` when your CI job's working directory is not the app root:
 	`aero check` validates config, content, and template compilation. It does not execute SSR, Nitro,
 	or a full Vite build, so it runs faster than `vite build` in CI.
 </Note>
+
+## Why the CLI is a separate package
+
+`@aero-js/config` already depends on `@aero-js/core` for alias resolution. Putting the CLI inside core and importing config loading would risk a circular dependency. The CLI lives in `packages/cli`, depends on `@aero-js/core`, `@aero-js/config`, and `@aero-js/content`, and publishes the `aero` binary.
+
+## How `aero check` works (summary)
+
+- **Config** — `loadAeroConfig(root)` from `@aero-js/config` loads `aero.config.ts`, `.js`, or `.mjs` with the same behavior as Vite. If the config is missing or fails to load in some edge cases, behavior may fall back to default `dirs`; use `vite build` or `DEBUG=aero` if templates under a custom client directory seem skipped.
+- **Content** — When `aero.content` is enabled or a `content.config.ts` exists, collections are loaded and validated. See [Content](/getting-started/content).
+- **Templates** — Every `.html` under `client/pages`, `client/components`, and `client/layouts` (per `dirs`) is passed through `compileTemplate` for parse and codegen checks, **without** a full Vite build.
+
+`vite.config.ts` should import `createViteConfig` from `@aero-js/config/vite` so `aero.config.ts` can load without pulling Vite into the config entrypoint.
+
+<AccordionGroup>
+	<Accordion title="Programmatic APIs for tooling">
+		**`@aero-js/cli`** — The `aero` binary is the supported entry. `runAeroCheck` and `runAeroDoctor`
+		implement `aero check` and `aero doctor`; they are not necessarily exported as stable
+		programmatic APIs for apps — prefer invoking the CLI in CI.
+
+		**`@aero-js/config`** — `loadAeroConfig(root)` loads project config. Effect-based loaders exist for
+		stricter failure handling where you need them.
+
+		**`@aero-js/content`** — `loadContentConfigFileSync`, `loadAllCollections`, and
+		`contentSchemaIssuesToAeroDiagnostics` support the same content pipeline as the CLI.
+
+		**`@aero-js/core/compile-check`** — `compileTemplate` for Node-only tooling that needs compile
+		checks without browser-oriented entrypoints.
+
+		**`@aero-js/core/diagnostics`** — `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`,
+		`AeroDiagnostic`, and related helpers; `aero check` uses the same diagnostics contract as other
+		tooling surfaces.
+	</Accordion>
+</AccordionGroup>

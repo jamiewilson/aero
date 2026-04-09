@@ -3,7 +3,28 @@ title: 'Pages & Routing'
 description: "Map HTML files to URLs using Aero's file-based router. No config required — your file path is your URL."
 ---
 
-Every `.html` file you create in `client/pages/` becomes a route. There is no router configuration — the file system is the router.
+## The problem
+
+Most web projects need a routing layer to map URLs to pages. In vanilla HTML, you manage this by hand — placing files in the right directories and linking between them with no tooling to catch broken links or generate routes from data. Framework routers add capability but also complexity: config files, route objects, and abstractions that sit between you and the URL.
+
+## What this looks like without Aero
+
+You either maintain a flat directory of `.html` files (which works until you need dynamic content like blog posts from a CMS), or you adopt a framework router that requires learning a DSL for route definitions:
+
+```js
+// Framework router config
+const routes = [
+  { path: '/', component: Home },
+  { path: '/about', component: About },
+  { path: '/docs/:slug', component: DocPage },
+]
+```
+
+For a static site, you still need to generate one HTML file per URL yourself.
+
+## How Aero helps
+
+Every `.html` file in `client/pages/` becomes a route automatically. There is no router configuration — the file system is the router. For dynamic content, export `getStaticPaths()` to tell Aero which concrete URLs to generate at build time.
 
 ## Static pages
 
