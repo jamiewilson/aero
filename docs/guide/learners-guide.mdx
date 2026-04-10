@@ -1,0 +1,173 @@
+---
+title: "Learner's guide: native web vs Aero"
+description: 'Which parts of an Aero file are plain HTML and which are interpreted by Aero at build time.'
+---
+
+## The problem
+
+When you are new to HTML and CSS, Aero can be confusing at first because Aero files look very close to normal web files. That is a strength, but it is easy to miss which parts come from the browser and which parts only work because Aero interprets them.
+
+For example, all of this can appear in one file:
+
+```html
+<script is:build>
+	import card from '@components/card'
+	const title = 'Hello'
+</script>
+
+<card-component>
+	<h1>{ title }</h1>
+</card-component>
+```
+
+Some of it is close to normal HTML. Some of it is Aero-only.
+
+## What this looks like without Aero
+
+In plain web development, the browser understands HTML elements, CSS rules, and ordinary client-side JavaScript. It does not understand things like:
+
+- `{ title }` inside HTML
+- `<script is:build>`
+- `if`, `for`, `switch`, or `props` as template directives
+- File-based routing from your `client/pages/` folder
+- Importing an `.html` file and then writing `<card-component>`
+
+Without a guide, you can accidentally learn "HTML" and "Aero" as if they were the same thing.
+
+## How Aero helps
+
+Aero keeps most of your authoring model close to the web platform:
+
+- Your files are still `.html`
+- Your styles are still CSS
+- Your client scripts are still browser JavaScript
+- HTMX and Alpine attributes are preserved
+- The framework adds a small template and build layer on top
+
+This guide shows where that extra layer begins.
+
+## What stays native in Aero
+
+These things are still ordinary web-platform features:
+
+- Normal HTML elements like `<div>`, `<p>`, `<a>`, `<img>`, `<form>`, and `<template>`
+- Normal CSS inside `<style>`
+- Normal browser JavaScript inside a plain `<script>`
+- Normal HTML attributes like `class`, `id`, `href`, `src`, `alt`, `aria-*`, and `data-*`
+- Normal URLs and links
+- Normal HTMX attributes like `hx-get` and `hx-post`
+- Normal Alpine attributes like `x-data`, `x-show`, `:class`, and `@click`
+
+If the browser could understand it in a regular HTML file by itself, it is probably native web.
+
+### Quick rule of thumb
+
+- If the browser can understand it on its own, it is native web.
+- If Aero evaluates it during build time or render time, it is Aero behavior.
+
+Mixed cases:
+
+- `<slot>` is a native HTML element, but Aero uses it as part of its layout and component system.
+- `data-*` is native HTML syntax, but `data-if`, `data-for`, `data-switch`, and `data-props` are Aero directives.
+- Plain `<script>` is native, but Aero can still bundle local scripts and pass data into them with `props`.
+
+## Aero-only template syntax
+
+### `{ }` interpolation
+
+Plain HTML has no built-in way to evaluate JavaScript expressions inside markup at build time. With Aero, `{ expression }` is evaluated and the result is inserted into the output. See [Templates](/getting-started/templates).
+
+### `if`, `else-if`, and `else`
+
+HTML has no native conditional rendering syntax. Aero adds conditional directives on elements. See [Templates](/getting-started/templates).
+
+### `for` and `data-for`
+
+HTML has no native loop syntax. Aero adds loop directives so one element or fragment can repeat. See [Templates](/getting-started/templates).
+
+### `switch`, `case`, and `default`
+
+Aero adds `switch`, `case`, and `default` directives for matching one value against several cases. See [Templates](/getting-started/templates).
+
+### `props` and `data-props`
+
+Aero adds `props` for components, client scripts, and styles. See [Templates](/getting-started/templates).
+
+### `<script is:build>`
+
+In plain HTML, a `<script>` tag is a browser script. Aero adds `is:build` so code runs in Node at build time (or request time when applicable), not in the browser. See [Scripts](/getting-started/scripts).
+
+### `<script is:inline>` and `<script is:blocking>`
+
+Aero adds `is:inline` to leave a script in place and `is:blocking` to hoist a script into `<head>`. See [Scripts](/getting-started/scripts).
+
+### Imported `.html` components and layouts
+
+HTML does not have a native file-import-based component system. In Aero you import `.html` templates and use them as components or layouts. See [Templates](/getting-started/templates).
+
+### Slots and slot passthrough
+
+`<slot>` is native HTML; using it in Aero's layout and component model, including slot passthrough across nested layouts, is Aero behavior. See [Templates](/getting-started/templates).
+
+### Wrapperless `<template>` directives
+
+Plain `<template>` is native and stays inert in the browser. `<template if>`, `<template data-for>`, and `<template switch>` get special compiler behavior. See [The HTML template element](/guide/html-template).
+
+## Framework features beyond native web
+
+### File-based routing and `getStaticPaths()`
+
+Files in `client/pages/` become URLs; bracket routes use `getStaticPaths()` for static generation. See [Routing](/getting-started/routing).
+
+### Content collections
+
+Validated collections, `getCollection()`, and `render()`. See [Content](/getting-started/content).
+
+### Optional Nitro
+
+With `server: true`, Nitro provides API routes, middleware, storage, tasks, and deployment presets. See [Server](/getting-started/server).
+
+### Vite bundling and HMR
+
+Bundled local scripts, asset processing, and HMR in development. See [Importing and bundling](/guide/importing-and-bundling).
+
+### Tooling
+
+VS Code extension, `aero check`, and path aliases. See [CLI](/tooling/cli) and [Configuration](/getting-started/configuration).
+
+### Optional image optimization and incremental builds
+
+See [Image optimization](/tooling/image-optimization) and [Incremental builds](/tooling/incremental-builds).
+
+## Native vs Aero cheat sheet
+
+| What you see                            | Native web or Aero? | What handles it                                      |
+| --------------------------------------- | --------------------- | ---------------------------------------------------- |
+| `<div>`, `<p>`, `<a>`                   | Native web            | Browser                                              |
+| `<style>` with normal CSS               | Native web            | Browser                                              |
+| Plain `<script>`                        | Native web            | Browser (Vite bundles local modules)                 |
+| `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax       | HTMX or Alpine in the browser                        |
+| `{ title }`                             | Aero                  | Aero template engine                                 |
+| `if`, `else-if`, `else`                 | Aero                  | Aero template engine                                 |
+| `for`, `data-for`                       | Aero                  | Aero template engine                                 |
+| `switch`, `case`, `default`             | Aero                  | Aero template engine                                 |
+| `props`, `data-props`                   | Aero                  | Aero template engine                                 |
+| `<script is:build>`                     | Aero                  | Build or SSR runtime                                 |
+| `<script is:inline>` / `is:blocking`    | Aero on native element| Aero compiler                                        |
+| `<header-component>` from `header.html` | Aero                  | Aero component system                                |
+| `<slot>` in an Aero layout              | Mixed                 | Native element used by Aero composition              |
+| `<template data-for>`                   | Mixed                 | Native element with Aero directive behavior          |
+| `client/pages/about.html` → `/about`    | Aero                  | Aero routing                                         |
+| `[slug].html` + `getStaticPaths()`      | Aero                  | Aero routing and build                               |
+| `getCollection()` and `render()`        | Aero                  | Aero content layer                                   |
+| `server/api/*` with `server: true`      | Aero app capability   | Nitro                                                |
+| `@components/header`                    | Aero                  | Toolchain path alias                                 |
+| HMR, build output, asset hashing        | Aero app capability   | Vite                                                 |
+
+## Mental model
+
+- The browser still handles normal HTML, CSS, and client JavaScript.
+- Aero adds a template layer, a file-based project structure, and a build pipeline.
+- When you are unsure, ask: "Would this still mean anything in a plain HTML file opened directly by the browser?"
+
+If the answer is no, you are probably looking at an Aero feature.

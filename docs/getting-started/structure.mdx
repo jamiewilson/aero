@@ -1,0 +1,76 @@
+---
+title: 'Structure'
+description: 'How a scaffolded Aero project is laid out: client, content, public, optional server, and config files.'
+icon: 'folder-open'
+---
+
+## Minimal template
+
+When you run `pnpm create @aero-js my-app`, Aero scaffolds a **minimal** tree. The **fullstack** template adds Nitro under `server/` and a root `nitro.config.ts`.
+
+<Card title="/your-project">
+	<Tree>
+		<Tree.Folder name="client" defaultOpen>
+			<Tree.Folder name="assets" defaultOpen>
+				<Tree.Folder name="scripts" />
+				<Tree.Folder name="styles" />
+				<Tree.Folder name="images" />
+			</Tree.Folder>
+			<Tree.Folder name="components" />
+			<Tree.Folder name="layouts" />
+			<Tree.Folder name="pages" />
+		</Tree.Folder>
+		<Tree.Folder name="content" defaultOpen>
+			<Tree.File name="site.ts" />
+		</Tree.Folder>
+		<Tree.Folder name="public">
+			<Tree.File name="favicon.ico" />
+			<Tree.File name="robots.txt" />
+			<Tree.Folder name="..." />
+		</Tree.Folder>
+		<Tree.File name="vite.config.ts" />
+		<Tree.File name="tsconfig.json" />
+		<Tree.File name="package.json" />
+	</Tree>
+</Card>
+
+## Fullstack template
+
+Adds server output and Nitro configuration:
+
+<Card>
+	<Tree>
+		<Tree.Folder name="server" defaultOpen>
+			<Tree.Folder name="api" />
+		</Tree.Folder>
+		<Tree.File name="nitro.config.ts" />
+	</Tree>
+</Card>
+
+## Directory overview
+
+| Directory                | Purpose                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `client/pages/`          | File-based routing — each `.html` file becomes a URL. See [Routing](/getting-started/routing).            |
+| `client/layouts/`        | Shared page shells with `<slot />`. See [Templates](/getting-started/templates).                          |
+| `client/components/`     | Reusable `.html` partials. See [Templates](/getting-started/templates).                                   |
+| `client/assets/styles/`  | CSS files, referenced via `@styles/` alias. See [Styling](/getting-started/styling).                      |
+| `client/assets/scripts/` | Client-side TS/JS, referenced via `@scripts/` alias. See [Scripts](/getting-started/scripts).             |
+| `content/`               | Data modules and content collections. See [Content](/getting-started/content).                            |
+| `public/`                | Static files copied to `dist/` unchanged (favicons, `robots.txt`). See [Assets](/getting-started/assets). |
+| `server/`                | Nitro API handlers (fullstack only). See [Server](/getting-started/server).                               |
+
+## Config files
+
+| File                | Purpose                                                    |
+| ------------------- | ---------------------------------------------------------- |
+| `vite.config.ts`    | Vite config with the `aero()` plugin                       |
+| `aero.config.ts`    | Optional dedicated Aero config via `defineConfig()`        |
+| `tsconfig.json`     | TypeScript settings and path aliases                       |
+| `nitro.config.ts`   | Nitro config (fullstack only)                              |
+| `content.config.ts` | Content collection schemas (when using `@aero-js/content`) |
+
+<Note>
+	If you rename top-level folders (for example `frontend/` instead of `client/`), set `dirs` in your
+	Aero config. See [Configuration](/getting-started/configuration).
+</Note>

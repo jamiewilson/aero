@@ -1,0 +1,227 @@
+---
+title: 'Templates'
+description: 'Pages, components, and layouts are all .html templates. Learn the shared syntax and the three roles a template can play.'
+icon: 'code'
+---
+
+Every `.html` file in Aero is a template. The same syntax — `{ }` expressions, directives, `<script is:build>` — works in all of them. The difference is where the file lives and what role it plays:
+
+| Role | Directory | Purpose |
+| --- | --- | --- |
+| **Page** | `client/pages/` | Becomes a URL via file-based routing |
+| **Component** | `client/components/` | Reusable markup, imported into pages and layouts |
+| **Layout** | `client/layouts/` | Shared page shell with `<slot />` for content |
+
+## Pages
+
+Every `.html` file in `client/pages/` becomes a route. `index.html` maps to `/`, `about.html` maps to `/about`. See [Routing](/getting-started/routing) for dynamic routes and `getStaticPaths`.
+
+```html client/pages/about.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<h1>About</h1>
+	<p>This is a page.</p>
+</base-layout>
+```
+
+## Components
+
+Components are `.html` files in `client/components/`. Import one in a `<script is:build>` block and use it as a custom element:
+
+```html client/components/greeting.html
+<script is:build>
+	const { name } = Aero.props
+</script>
+
+<h2>Hello, { name }!</h2>
+```
+
+```html client/pages/index.html
+<script is:build>
+	import greeting from '@components/greeting'
+</script>
+
+<greeting-component name="World" />
+```
+
+<Note>
+	Import without the `.html` extension: `import greeting from '@components/greeting'`
+	resolves to `client/components/greeting.html`.
+</Note>
+
+### Props
+
+Pass data to a component via attributes. Use `{ }` for dynamic values:
+
+```html
+<greeting-component name="World" />
+
+<greeting-component name="{ site.author }" />
+```
+
+Inside the component, destructure from `Aero.props`:
+
+```html
+<script is:build>
+	const { name, greeting = 'Hello' } = Aero.props
+</script>
+
+<h2>{ greeting }, { name }!</h2>
+```
+
+Spread an object with `props="{ ...obj }"` to pass every key as a separate prop:
+
+```html
+<card-component props="{ ...cardProps }" />
+```
+
+Use self-closing syntax (`/>`) when a component has no slot content. Use opening and closing tags to pass children into its `<slot>`:
+
+```html
+<card-component title="Note">
+	<p>This fills the card's default slot.</p>
+</card-component>
+```
+
+## Layouts
+
+Layouts are `.html` files in `client/layouts/` that wrap page content. Use `<slot />` to mark where the content goes:
+
+```html client/layouts/base.html
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>My Site</title>
+	</head>
+	<body>
+		<header>Site header</header>
+		<slot />
+		<footer>Site footer</footer>
+	</body>
+</html>
+```
+
+```html client/pages/about.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<h1>About</h1>
+	<p>This fills the default slot.</p>
+</base-layout>
+```
+
+### Nested layouts
+
+A layout can use another layout. Content flows from page to inner layout to outer layout:
+
+```html client/layouts/docs.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<nav>Docs sidebar</nav>
+	<main>
+		<slot />
+	</main>
+</base-layout>
+```
+
+### Named slots
+
+Define named slots with the `name` attribute. Pages target them with `slot`:
+
+```html client/layouts/base.html
+<nav>
+	<slot name="nav" />
+</nav>
+<main>
+	<slot />
+</main>
+```
+
+```html client/pages/home.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<a href="/docs" slot="nav">Docs</a>
+	<h1>Welcome</h1>
+</base-layout>
+```
+
+## Expressions
+
+Wrap any JavaScript expression in single braces to interpolate it into text or attributes:
+
+```html
+<script is:build>
+	const title = 'Hello from Aero'
+</script>
+
+<h1>{ title }</h1>
+```
+
+Text interpolations are HTML-escaped by default. Use `raw()` for intentional unescaped HTML:
+
+```html
+<p>{ raw(htmlString) }</p>
+```
+
+## Loops
+
+Use `for` (or `data-for`) with a `for…of` expression to repeat an element:
+
+```html
+<ul>
+	<li data-for="{ const item of items }">{ item }</li>
+</ul>
+```
+
+Inside the loop body, Aero provides `index`, `first`, `last`, and `length` as automatic variables.
+
+## Conditionals
+
+Use `if`, `else-if`, and `else` as attributes:
+
+```html
+<div if="{ user }">Hello, { user.name }</div>
+<p else>Not logged in.</p>
+```
+
+## Switch / case
+
+Match a value against multiple alternatives:
+
+```html
+<div switch="{ status }">
+	<p case="loading">Loading…</p>
+	<p case="ready">Ready</p>
+	<p default>Other</p>
+</div>
+```
+
+## Wrapperless output with `<template>`
+
+Put a directive on `<template>` to emit only the children without a wrapper element:
+
+```html
+<ul>
+	<template for="{ const item of items }">
+		<li>{ item.name }</li>
+	</template>
+</ul>
+```
+
+This works with `if`, `for`, and `switch`. It is especially useful inside `<table>` or `<select>` where an extra `<div>` would be invalid.
+
+<Note>
+	All directive attributes also accept a `data-` prefix for strict HTML spec compliance:
+	`data-for`, `data-if`, `data-else`, etc.
+</Note>

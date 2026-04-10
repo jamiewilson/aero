@@ -3,7 +3,13 @@ title: 'TypeScript'
 description: 'Add type safety to build scripts, component props, content collections, and environment variables.'
 ---
 
-Aero supports TypeScript in `<script is:build lang="ts">` blocks, content files, and shared type modules. The VS Code extension and language server provide IntelliSense and diagnostics for build scripts automatically — you get autocomplete and type errors in your HTML templates without any extra setup.
+## The problem
+
+Build scripts, component props, and content frontmatter are all dynamic data that moves between files. Without types, a misspelled prop name or a missing frontmatter field only shows up as a broken page at runtime — not as a compile-time error.
+
+## How Aero helps
+
+Aero supports TypeScript in `<script is:build lang="ts">` blocks, content config files, and shared type modules. The VS Code extension provides IntelliSense and diagnostics for build scripts automatically. You can type component props, validate content schemas, and run `aero check --types` in CI to catch errors before they reach production.
 
 ## Typing component props
 
@@ -189,7 +195,6 @@ Create an `env.d.ts` in your project root to add types for `import.meta.env.SITE
 interface ImportMetaEnv {
 	readonly SITE: string
 	readonly VITE_API_URL: string
-	// add more VITE_ variables here
 }
 
 interface ImportMeta {

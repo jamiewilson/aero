@@ -1,0 +1,92 @@
+---
+title: 'Server'
+description: 'Add API routes, server-side logic, and full-stack capabilities with Nitro.'
+icon: 'server'
+---
+
+Aero is static-first: `pnpm build` produces a plain `dist/` you can deploy anywhere. When you need API routes, server-side logic, or deployment adapters, opt in to [Nitro](https://nitro.build) with a single config flag. Nitro wraps your built HTML — it does not replace Aero's page compiler.
+
+<Note>Enable Nitro only when you need it. Static sites have no server to manage or pay for.</Note>
+
+## Enable Nitro
+
+Set `server: true` in your config:
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	server: true,
+})
+```
+
+Then add a `nitro.config.ts` at the project root:
+
+```ts nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	runtimeConfig: {
+		appName: 'My Aero App',
+	},
+})
+```
+
+## File conventions
+
+Place server files under `server/`:
+
+```plaintext
+server/
+├── api/           → API handlers at /api/*
+├── routes/        → Additional route handlers
+├── middleware/     → Nitro request-time middleware
+├── plugins/       → Nitro lifecycle hooks
+└── tasks/         → Runnable server tasks
+```
+
+## API handlers
+
+Files in `server/api/` are served at `/api/...`. The filename determines the route and HTTP method:
+
+```ts server/api/submit.post.ts
+import { defineHandler, readBody } from 'nitro/h3'
+
+export default defineHandler(async event => {
+	const body = await readBody(event)
+	return { ok: true, message: body.message }
+})
+```
+
+Use route parameters with `[param]` in the filename:
+
+```ts server/api/users/[id].ts
+import { defineHandler, getRouterParam } from 'nitro/h3'
+
+export default defineHandler(event => {
+	const id = getRouterParam(event, 'id')
+	return { id, name: `User ${id}` }
+})
+```
+
+## Preview commands
+
+| Command            | What runs                         |
+| ------------------ | --------------------------------- |
+| `pnpm preview`     | Static files only — no Nitro APIs |
+| `pnpm preview:api` | Full Nitro server from `.output/` |
+
+## HTMX and Alpine.js
+
+Aero works naturally with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for adding interactivity. Because Aero outputs plain HTML with no framework runtime, these libraries integrate without conflicts. Include them via `<script>` tags — no special configuration needed.
+
+{/* TODO: Link to HTMX & Alpine guide when available */}
+
+## When to use server vs static
+
+| Need                              | Approach                            |
+| --------------------------------- | ----------------------------------- |
+| Marketing site, blog, docs        | Static only (`server: false`)       |
+| Form submissions, auth, API calls | Enable Nitro (`server: true`)       |
+| Database access, server caching   | Enable Nitro + configure storage/DB |
+| HTMX partial responses            | Enable Nitro + server routes        |

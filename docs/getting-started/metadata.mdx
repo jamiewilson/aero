@@ -1,0 +1,114 @@
+---
+title: 'Metadata'
+description: 'Configure your site URL, manage head tags, and set up SEO basics for your Aero site.'
+icon: 'tag'
+---
+
+Metadata covers everything that goes in `<head>` and anything that helps search engines and social platforms understand your site — titles, descriptions, canonical URLs, Open Graph tags, and sitemaps.
+
+## Site URL
+
+Set your canonical site URL in the Aero config. This powers sitemaps, canonical links, and `import.meta.env.SITE`:
+
+<Tabs>
+  <Tab title="aero.config.ts">
+    ```ts aero.config.ts
+    import { defineConfig } from '@aero-js/config'
+
+    export default defineConfig({
+      site: { url: 'https://example.com' },
+    })
+    ```
+
+  </Tab>
+  <Tab title="vite.config.ts">
+    ```ts vite.config.ts
+    import { defineConfig } from 'vite'
+    import { aero } from '@aero-js/vite'
+
+    export default defineConfig({
+      plugins: [
+        aero({ site: { url: 'https://example.com' } }),
+      ],
+    })
+    ```
+
+  </Tab>
+</Tabs>
+
+Once set, the URL is available in two places:
+
+| Context                     | Access                 |
+| --------------------------- | ---------------------- |
+| Build scripts and templates | `Aero.site.url`        |
+| Client scripts              | `import.meta.env.SITE` |
+
+## Head tags in layouts
+
+Manage `<head>` content in your base layout. Use props to let pages customize their title and description:
+
+```html client/layouts/base.html
+<script is:build>
+	const { title, description } = Aero.props
+	const base = Aero.site.url || ''
+</script>
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>{ title }</title>
+		<meta name="description" content="{ description }" />
+		<link rel="canonical" href="{ base }{ Aero.page.url.pathname }" />
+		<meta property="og:title" content="{ title }" />
+		<meta property="og:url" content="{ base }{ Aero.page.url.pathname }" />
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+```
+
+Pages pass metadata as props through the layout:
+
+```html client/pages/about.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout title="About" description="Learn more about us.">
+	<h1>About</h1>
+</base-layout>
+```
+
+## Sitemap
+
+When `site.url` is set, Aero automatically generates `sitemap.xml` in `dist/` during a static build. It includes all pre-rendered routes as absolute URLs and excludes the 404 page.
+
+Link to it from your layout's `<head>`:
+
+```html
+<link
+	rel="sitemap"
+	type="application/xml"
+	href="{ Aero.site.url }/sitemap.xml"
+	if="{ Aero.site.url }" />
+```
+
+## robots.txt
+
+Place a `robots.txt` in the `public/` directory. It is copied to `dist/` unchanged:
+
+```
+User-agent: *
+Allow: /
+Sitemap: https://example.com/sitemap.xml
+```
+
+## Favicon
+
+Place favicon files in `public/` and reference them in your layout's `<head>`:
+
+```html
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+```

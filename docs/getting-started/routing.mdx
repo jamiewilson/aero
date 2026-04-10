@@ -1,0 +1,76 @@
+---
+title: 'Routing'
+description: "Map HTML files to URLs using Aero's file-based router. Your file path is your URL."
+icon: 'route'
+---
+
+Every `.html` file in `client/pages/` becomes a route automatically. There is no router configuration — the file system is the router. For dynamic content, export `getStaticPaths()` to tell Aero which URLs to generate at build time.
+
+## Static pages
+
+Drop an `.html` file in `client/pages/` and Aero turns it into a URL:
+
+| File                           | URL        | Build output            |
+| ------------------------------ | ---------- | ----------------------- |
+| `client/pages/index.html`      | `/`        | `dist/index.html`       |
+| `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
+| `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
+| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
+
+Subdirectories map to URL segments. Place an `index.html` inside a directory to serve that segment's root.
+
+## Dynamic routes
+
+Bracket-delimited filenames create dynamic routes. The bracket content becomes the parameter name:
+
+| File                            | Pattern       | Example URLs      |
+| ------------------------------- | ------------- | ----------------- |
+| `client/pages/[id].html`        | `/:id`        | `/alpha`, `/beta` |
+| `client/pages/docs/[slug].html` | `/docs/:slug` | `/docs/intro`     |
+
+In dev, dynamic routes resolve at request time. For static builds, you must export `getStaticPaths()`.
+
+## getStaticPaths
+
+Export `getStaticPaths()` from `<script is:build>` to tell Aero which paths to generate:
+
+```html client/pages/[id].html
+<script is:build>
+	import base from '@layouts/base'
+
+	export function getStaticPaths() {
+		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }]
+	}
+</script>
+
+<base-layout>
+	<h1>{ Aero.page.params.id }</h1>
+</base-layout>
+```
+
+`getStaticPaths` can be `async` for fetching from APIs or content collections at build time.
+
+<Warning>
+	If a dynamic page does not export `getStaticPaths`, it is skipped during build with a warning. The
+	page still works in dev but produces no output files.
+</Warning>
+
+## Template context
+
+Inside build scripts and expressions, every page has access to:
+
+| Value                    | Description                                       |
+| ------------------------ | ------------------------------------------------- |
+| `Aero.page.params`       | Dynamic route parameters (e.g. `{ id: 'alpha' }`) |
+| `Aero.page.url`          | Full URL object for the current page              |
+| `Aero.page.url.pathname` | The URL path (e.g. `'/alpha'`)                    |
+
+## Linking between pages
+
+Use standard `<a href>` tags with absolute paths:
+
+```html
+<a href="/">Home</a> <a href="/about">About</a>
+```
+
+Aero rewrites absolute `href` values to relative paths during build so your site works at any base path.

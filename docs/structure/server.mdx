@@ -1,0 +1,21 @@
+---
+title: 'Server'
+description: 'Optional Nitro server directory for API routes and server-side code.'
+sidebarTitle: 'Server'
+---
+
+API route handlers live under `server/api/` when you use the fullstack template or set `server: true` in Aero config. Each file maps to a URL under `/api/` by default. File names can include HTTP method suffixes:
+
+```ts server/api/submit.post.ts
+// POST /api/submit
+import { defineHandler, readBody } from 'nitro/h3'
+
+export default defineHandler(async event => {
+	const body = await readBody(event)
+	return { ok: true, message: body.message }
+})
+```
+
+Nitro also supports `server/routes/`, `server/middleware/`, `server/plugins/`, tasks, and more. This tree only appears when the server is enabled.
+
+For Nitro behavior, file conventions, and Aero's integration, see [Nitro](/server/nitro). For shipping `.output/` and presets, see [Deploy with Nitro](/deploy/nitro).

@@ -7,70 +7,91 @@
 		"light": "#fa8072",
 		"dark": "#fa8072"
 	},
-	"navbar": {
-		"primary": {
-			"type": "github",
-			"href": "https://github.com/jamiewilson/aero"
-		}
+	"icons": {
+		"library": "lucide"
 	},
+
 	"navigation": {
 		"tabs": [
 			{
-				"tab": "Documentation",
+				"tab": "Get Started",
+				"icon": "rocket",
+				"pages": [
+					"index",
+					"getting-started/installation",
+					"getting-started/structure",
+					"getting-started/configuration",
+					"getting-started/templates",
+					"getting-started/routing",
+					"getting-started/scripts",
+					"getting-started/styling",
+					"getting-started/assets",
+					"getting-started/content",
+					"getting-started/metadata",
+					"getting-started/server",
+					"getting-started/deployment"
+				]
+			},
+			{
+				"tab": "Guide",
 				"icon": "book-open",
 				"groups": [
 					{
-						"group": "Get Started",
-						"icon": "rocket-launch",
-						"pages": ["introduction", "quickstart", "project-structure"]
-					},
-					{
-						"group": "Core Concepts",
+						"group": "Concepts",
 						"icon": "lightbulb",
-						"pages": [
-							"concepts/templating",
-							"concepts/layouts-slots",
-							"concepts/routing",
-							"concepts/components",
-							"concepts/scripts"
-						]
+						"pages": ["guide/philosophy", "guide/html-template", "guide/learners-guide"]
 					},
 					{
-						"group": "Data & Content",
-						"icon": "brackets-curly",
+						"group": "Practical guidance",
+						"icon": "compass",
 						"pages": [
-							"data/props",
-							"data/content-collections",
-							"data/environment-variables",
-							"data/site-url"
-						]
-					},
-					{
-						"group": "Server & Interactivity",
-						"icon": "server",
-						"pages": ["server/nitro", "server/htmx-alpine", "server/middleware-redirects"]
-					},
-					{
-						"group": "Configuration",
-						"icon": "sliders-up",
-						"pages": [
-							"configuration/vite-plugin",
-							"configuration/aero-config",
-							"configuration/path-aliases",
-							"configuration/typescript"
-						]
-					},
-					{
-						"group": "Tooling",
-						"icon": "hammer-brush",
-						"pages": [
-							"tooling/cli",
-							"tooling/vscode-extension",
-							"tooling/incremental-builds",
-							"tooling/image-optimization"
+							"guide/typescript",
+							"guide/importing-and-bundling",
+							"guide/dependency-policy",
+							"guide/standalone-runtime"
 						]
 					}
 				]
+			},
+			{
+				"tab": "Tooling",
+				"icon": "terminal",
+				"pages": [
+					"tooling/cli",
+					"tooling/vscode-extension",
+					"tooling/incremental-builds",
+					"tooling/image-optimization"
+				]
+			},
+			{
+				"tab": "Examples",
+				"icon": "app-window",
+				"groups": [
+					{
+						"group": "Examples",
+						"icon": "boxes",
+						"pages": ["examples/index"]
+					}
+				]
+			}
+		]
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "GitHub",
+				"icon": "github",
+				"href": "https://github.com/jamiewilson/aero"
+			},
+			{
+				"label": "npm",
+				"icon": "npm",
+				"href": "https://www.npmjs.com/~aero-js"
+			},
+			{
+				"label": "VS Code",
+				"icon": "code",
+				"href": "https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode"
 			}
 		]
 	},

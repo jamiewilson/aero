@@ -1,8 +1,11 @@
-# Single-File Markdown Import
+---
+title: 'Single-file Markdown import'
+description: 'Import one .md file from content/ and render it with render() without defining a collection.'
+---
 
-You can import individual `.md` files from the `content/` directory and render them with `render()`, without using collections.
+Sometimes you have a single Markdown file — an about page, a changelog, a legal notice — that does not belong to a collection. Setting up a full content collection for one file is unnecessary overhead. Aero lets you import individual `.md` files from the `content/` directory and render them with `render()` directly.
 
-## Minimal Usage
+## Minimal usage
 
 No `content.config.ts` is required for the basic case:
 
@@ -22,18 +25,18 @@ No `content.config.ts` is required for the basic case:
 
 Files must live under the project's `content/` directory. The `@content` alias resolves to `content/`.
 
-## Content Document Shape
+## Content document shape
 
 Each imported `.md` file returns a `ContentDocument`:
 
-- **`id`** – Path relative to `content/` (e.g. `docs/overview`)
-- **`data`** – Parsed frontmatter
-- **`body`** – Raw markdown after the frontmatter
-- **`_meta`** – `{ path, slug, filename, extension }`
+- **`id`** — Path relative to `content/` (for example `docs/overview`)
+- **`data`** — Parsed frontmatter
+- **`body`** — Raw markdown after the frontmatter
+- **`_meta`** — `{ path, slug, filename, extension }`
 
-## Schema Matching
+## Schema matching
 
-When `content.config.ts` exists and the file is inside a collection's `directory` + `include`:
+When `content.config.ts` exists and the file is inside a collection's `directory` and `include`:
 
 - The collection's schema is used to validate frontmatter
 - Any `transform` on the collection is applied
@@ -43,9 +46,9 @@ When the file is outside all collections (or there is no config):
 - Frontmatter is passed through without validation
 - No transform is applied
 
-## Markdown Plugins
+## Markdown plugins
 
-To use remark/rehype plugins (e.g. GFM, Shiki), add `content.config.ts` with a `markdown` section:
+To use remark or rehype plugins (for example GFM, Shiki), add `content.config.ts` with a `markdown` section:
 
 ```ts
 import { defineConfig } from '@aero-js/content'
@@ -61,3 +64,5 @@ export default defineConfig({
 ```
 
 The same markdown pipeline applies to both collection documents and single-file imports.
+
+See also [Content collections](/data/content-collections).

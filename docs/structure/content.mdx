@@ -1,0 +1,32 @@
+---
+title: 'Content directory'
+description: 'TypeScript and JavaScript modules under content/, plus Markdown collections.'
+sidebarTitle: 'Content'
+---
+
+Put TypeScript or JavaScript data modules under `content/`. The scaffold creates `content/site.ts` as a place for global site data:
+
+```ts content/site.ts
+export default {
+	meta: {
+		title: 'My Site',
+		description: 'Built with Aero',
+	},
+	nav: [
+		{ label: 'Home', path: '/' },
+		{ label: 'About', path: '/about' },
+	],
+}
+```
+
+Import using the `@content/` alias:
+
+```html
+<script is:build>
+	import site from '@content/site'
+</script>
+
+<title>{ site.meta.title }</title>
+```
+
+For Markdown collections, schemas, `getCollection()`, `render()`, and single-file `.md` imports, see [Content collections](/data/content-collections) and [Single-file Markdown import](/data/single-markdown-import).

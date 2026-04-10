@@ -1,0 +1,84 @@
+---
+title: 'Content'
+description: 'Define typed content collections, query them at build time, and render Markdown to HTML.'
+icon: 'file-text'
+---
+
+Content collections give you a type-safe way to work with structured content in Aero. Define a schema, query items at build time with `getCollection()`, and render Markdown with `render()`. Aero validates frontmatter against your schema and hot-reloads when content changes.
+
+## Define a collection
+
+Declare collections in `content.config.ts` at the project root:
+
+```ts content.config.ts
+import { defineCollection, defineConfig } from '@aero-js/content'
+import { z } from 'zod'
+
+export const docs = defineCollection({
+	name: 'docs',
+	directory: 'client/content/docs',
+	schema: z.object({
+		title: z.string(),
+		date: z.date(),
+	}),
+})
+```
+
+<Note>
+	The content API uses [Standard Schema](https://standardschema.dev), so you can use Zod, ArkType,
+	Valibot, or any spec-compliant validator.
+</Note>
+
+## Query a collection
+
+Use `getCollection()` inside a `<script is:build>` block to fetch all items:
+
+```html client/pages/docs/index.html
+<script is:build>
+	import { getCollection } from 'aero:content'
+
+	const allDocs = await getCollection('docs')
+	allDocs.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+</script>
+
+<ul>
+	<li data-for="{ const doc of allDocs }">
+		<a href="/docs/{ doc.id }">{ doc.data.title }</a>
+	</li>
+</ul>
+```
+
+Each item has an `id` (derived from the filename) and a `data` object with validated frontmatter fields.
+
+## Render Markdown
+
+Call `render()` to convert a collection item's Markdown body to HTML:
+
+```html client/pages/docs/[slug].html
+<script is:build>
+	import { getCollection, render } from 'aero:content'
+
+	export async function getStaticPaths() {
+		const docs = await getCollection('docs')
+		return docs.map(doc => ({
+			params: { slug: doc.id },
+			props: doc,
+		}))
+	}
+
+	const doc = Aero.props
+	const { html } = await render(doc)
+</script>
+
+<h1>{ doc.data.title }</h1>
+<article>{ html }</article>
+```
+
+## Single-file Markdown import
+
+For simple cases where you need to import a single Markdown file without defining a full collection, Aero supports direct Markdown imports in build scripts. See the content collections guide for details.
+
+<Tip>
+	In development, edits to Markdown files or `content.config.ts` trigger a hot update so Vite
+	refreshes importers without a full page reload.
+</Tip>

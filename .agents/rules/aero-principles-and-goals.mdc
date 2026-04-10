@@ -10,7 +10,7 @@ globs: "**/*"
 
 **Scope:** **Durable principles** (§2) are stable values—they should not need rewrites when implementation catches up. **Current baseline and evolution** (§3) is a snapshot; update it when behavior or roadmap emphasis changes. This rule is a **summary and index**, not a full spec.
 
-**Related deep dives:** [what-makes-aero-different.md](docs/drafts/what-makes-aero-different.md), [overview.md](docs/drafts/overview.md), [why-not-web-components.md](docs/drafts/why-not-web-components.md), [.agents/rules/aero-coding-principles.mdc](.agents/rules/aero-coding-principles.mdc), [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md).
+**Related deep dives:** [Philosophy](docs/get-started/philosophy.mdx), [Overview](docs/get-started/overview.mdx), [.agents/rules/aero-coding-principles.mdc](.agents/rules/aero-coding-principles.mdc), [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md).
 
 ---
 
@@ -35,15 +35,15 @@ Intentional tradeoffs and product identity that should survive compiler and runt
 ### Aero vs Nitro (boundary)
 
 - **Aero owns** generating site **HTML into `dist/`** (the template and static pipeline). **Nitro** is the **optional** server and deployment layer—exposed in a **thin**, **Nitro-native** way (e.g. `server: true`, project `nitro.config.ts`), not re-abstracted into a parallel Aero-specific server API.
-- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md), [nitro-overview.md](docs/drafts/nitro-overview.md).
+- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md), [Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx).
 
 ### Web platform and author experience
 
 - **Stay close to the web platform:** HTML, CSS, and JS/TS as users already know them—not JSX or a proprietary single-file format. The **thin layer** is documented in [README.md](README.md): expressions, script kinds, directives, `-component` / `-layout`, props.
 - **Source and output match mental models:** What you write looks like HTML; build-time code is stripped or isolated; **plain `<script>`** behaves like a normal module for the browser.
 - **Type safety as a durable product priority:** Framework-managed contracts should be statically representable and checkable where possible. Routes, params, props, content shapes, loader outputs, route context, generated navigation helpers, and compiler-visible template boundaries should converge toward end-to-end type safety by default. Compile-time goal—not a claim that runtime inputs never need validation.
-- **Pass-through by default:** Attributes for libraries such as Alpine (`x-*`, `:`, `@`, `.`) and HTMX (`hx-*`) are **not** reinterpreted by Aero's expression layer where designed—they reach the DOM so those tools work without Aero-specific plugins ([what-makes-aero-different.md](docs/drafts/what-makes-aero-different.md)).
-- **Light DOM / static-first:** Templates compile to ordinary markup; global CSS and design systems apply naturally. Aero optimizes for **sites** and **documents**, not encapsulated widget distribution ([why-not-web-components.md](docs/drafts/why-not-web-components.md)).
+- **Pass-through by default:** Attributes for libraries such as Alpine (`x-*`, `:`, `@`, `.`) and HTMX (`hx-*`) are **not** reinterpreted by Aero's expression layer where designed—they reach the DOM so those tools work without Aero-specific plugins ([Philosophy](docs/get-started/philosophy.mdx)).
+- **Light DOM / static-first:** Templates compile to ordinary markup; global CSS and design systems apply naturally. Aero optimizes for **sites** and **documents**, not encapsulated widget distribution ([Philosophy](docs/get-started/philosophy.mdx)).
 - **Progressive enhancement and runtime cost:** Default toward documents and **minimal mandatory JavaScript**. Richer behavior (partial updates, islands, client navigation, etc.) should remain **opt-in** so users do not pay for SPA-scale infrastructure when they do not need it.
 - **One authoring surface:** Avoid a **second** client-only template language. Build, server, and client-oriented execution modes should share a **compiler contract or IR** derived from Aero templates—the same HTML-first source, with runtime depth chosen later ([_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md)).
 
@@ -60,7 +60,7 @@ Intentional tradeoffs and product identity that should survive compiler and runt
 
 - Prefer **narrow, explicit** render contracts (e.g. compiled templates as **async functions returning HTML strings** with data passed in) so embedding in servers and tools does not require **framework-specific view adapters** when avoidable. Rationale: [_reference/exploration/adapterless/eliminating-server-adapters.md](_reference/exploration/adapterless/eliminating-server-adapters.md).
 
-### Product design goals (from [overview.md](docs/drafts/overview.md))
+### Product design goals (from [Overview](docs/get-started/overview.mdx))
 
 - **Native HTML feel** — File-based routes with `.html` under the configured client directory; components and layouts are HTML templates.
 - **Clear execution model** — `<script is:build>` runs only at build (or SSR) time; unmarked `<script type="module">` is client bundling.
@@ -86,7 +86,7 @@ What exists today, what is exploratory, and where plans live. Update as features
 
 ### Client interactivity and Aero-native behavior
 
-- **Today:** Most client behavior is **delegated** to the **browser**, **HTMX**, **Alpine.js**, **vanilla JS**, or **Web Components** where appropriate. **Aero does not own the DOM** after delivery in the default mental model ([overview.md](docs/drafts/overview.md)).
+- **Today:** Most client behavior is **delegated** to the **browser**, **HTMX**, **Alpine.js**, **vanilla JS**, or **Web Components** where appropriate. **Aero does not own the DOM** after delivery in the default mental model ([Overview](docs/get-started/overview.mdx)).
 - **Exploratory / planned:** Opt-in **hypermedia**, **islands**, **hydration**, and **Aero-native** navigation or reactivity are **not** forbidden by principles; they are **not** production commitments until shipped. [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md).
 
 ### Optional builtins and async
@@ -95,7 +95,7 @@ What exists today, what is exploratory, and where plans live. Update as features
 
 ### Standalone template runtime
 
-- Compiled templates and `@aero-js/core` **runtime** are intended to be usable **outside** a full Vite-first app (standalone render path, ESM-first). [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [monorepo.md](docs/drafts/monorepo.md).
+- Compiled templates and `@aero-js/core` **runtime** are intended to be usable **outside** a full Vite-first app (standalone render path, ESM-first). [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md).
 
 ### Nitro configuration
 
@@ -109,12 +109,12 @@ Deliberate dependencies and patterns; change only for strong reasons (security, 
 
 | Area | Commitment | Role |
 | --- | --- | --- |
-| **Vite** | Primary dev server, bundler, and **plugin** surface | HMR, asset pipeline, ecosystem plugins (e.g. PostCSS/Tailwind) without Aero wrapping everything ([overview.md](docs/drafts/overview.md)) |
-| **Nitro** | Optional **server** and deployment | API routes, presets, and adapters without replacing Aero’s static HTML pipeline ([nitro-overview.md](docs/drafts/nitro-overview.md)) |
+| **Vite** | Primary dev server, bundler, and **plugin** surface | HMR, asset pipeline, ecosystem plugins (e.g. PostCSS/Tailwind) without Aero wrapping everything ([Overview](docs/get-started/overview.mdx)) |
+| **Nitro** | Optional **server** and deployment | API routes, presets, and adapters without replacing Aero’s static HTML pipeline ([Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx)) |
 | **Oxc** (`oxc-parser`, `oxc-transform`, `oxc-resolver`) | JS/TS **parsing**, transform, and resolution in compiler/core | Fast, modern toolchain aligned with the broader JS ecosystem |
 | **tsdown** | **Building** published `@aero-js/*` packages | ESM + typings for framework packages |
 | **Vitest** | **Testing** the framework | Fast unit/integration tests in CI |
-| **pnpm** | **Workspaces** and dependency management | Monorepo layout; shared versions via [pnpm-workspace.yaml](pnpm-workspace.yaml) ([dependency-policy.md](docs/drafts/dependency-policy.md)) |
+| **pnpm** | **Workspaces** and dependency management | Monorepo layout; shared versions via [pnpm-workspace.yaml](pnpm-workspace.yaml) ([Dependency policy](docs/guide/dependency-policy.mdx)) |
 
 **Inferred from codebase** _(revisit if strategy changes)_
 
@@ -145,22 +145,22 @@ Day-to-day code and architecture follow **[.agents/rules/aero-coding-principles.
 
 | Topic | Primary sources |
 | --- | --- |
-| Product pitch & thin layer | [README.md](README.md), [what-makes-aero-different.md](docs/drafts/what-makes-aero-different.md) |
-| Design goals & stack table | [overview.md](docs/drafts/overview.md) |
-| Routing vision and boundaries | [_reference/exploration/aero-routing-vision.md](_reference/exploration/aero-routing-vision.md), [routing.md](docs/drafts/routing.md) |
-| Web Components tradeoff | [why-not-web-components.md](docs/drafts/why-not-web-components.md) |
+| Product pitch & thin layer | [README.md](README.md), [Philosophy](docs/get-started/philosophy.mdx) |
+| Design goals & stack table | [Overview](docs/get-started/overview.mdx) |
+| Routing vision and boundaries | [_reference/exploration/aero-routing-vision.md](_reference/exploration/aero-routing-vision.md), [Pages & routing](docs/concepts/routing.mdx) |
+| Web Components tradeoff | [Philosophy](docs/get-started/philosophy.mdx) |
 | Hypermedia, reactivity, SPA/islands | [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md) |
-| Nitro in Aero | [nitro-overview.md](docs/drafts/nitro-overview.md), [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md) |
-| Scripts & execution | [script-taxonomy.md](docs/drafts/script-taxonomy.md), [.agents/AGENTS.md](.agents/AGENTS.md) |
+| Nitro in Aero | [Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx), [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md) |
+| Scripts & execution | [Scripts](docs/concepts/scripts.mdx), [.agents/AGENTS.md](.agents/AGENTS.md) |
 | Monorepo & compilation pipeline | [.agents/AGENTS.md](.agents/AGENTS.md), [_reference/refactors/compilation/compilation-review.md](_reference/refactors/compilation/compilation-review.md), [_reference/plans/_archive/compilation-refactor.md](_reference/plans/_archive/compilation-refactor.md) |
 | Incremental builds | [_reference/refactors/incremental/incremental-builds.md](_reference/refactors/incremental/incremental-builds.md) |
-| Standalone runtime | [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [monorepo.md](docs/drafts/monorepo.md) |
+| Standalone runtime | [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md) |
 | Template portability / adapters | [_reference/exploration/adapterless/eliminating-server-adapters.md](_reference/exploration/adapterless/eliminating-server-adapters.md) |
 | Optional builtins / async | [_reference/exploration/async/async-support-plan.md](_reference/exploration/async/async-support-plan.md), [_reference/exploration/builtins/aero-builtins-exporation.md](_reference/exploration/builtins/aero-builtins-exporation.md) |
 | Browser E2E | [_reference/plans/_archive/e2e-testing.md](_reference/plans/_archive/e2e-testing.md) |
 | Coding principles | [.agents/rules/aero-coding-principles.mdc](.agents/rules/aero-coding-principles.mdc) |
 | Type-system proposals (planned) | [_reference/exploration/type-system/index.md](_reference/exploration/type-system/index.md) — must stay consistent with §2–§3 here |
-| Dependencies & catalog | [dependency-policy.md](docs/drafts/dependency-policy.md), [pnpm-workspace.yaml](pnpm-workspace.yaml) |
+| Dependencies & catalog | [Dependency policy](docs/guide/dependency-policy.mdx), [pnpm-workspace.yaml](pnpm-workspace.yaml) |
 
 ---
 

@@ -1,0 +1,89 @@
+---
+title: 'Styling'
+description: 'Use standard CSS in Aero — linked stylesheets, inline styles, and CSS frameworks all work as expected.'
+icon: 'palette'
+---
+
+Aero treats CSS as a first-class web standard. There is no proprietary scoping, no CSS-in-JS runtime, and no special file extensions. Write CSS the way you already know — Vite handles bundling, autoprefixing, and minification.
+
+## Linking stylesheets
+
+Reference CSS files with the `@styles/` alias in any template:
+
+```html
+<link rel="stylesheet" href="@styles/global.css" />
+```
+
+This resolves to `client/assets/styles/global.css`. Vite processes the file through its CSS pipeline (PostCSS, autoprefixer, minification) and outputs a hashed asset.
+
+## `<style>` blocks
+
+Add `<style>` tags directly in components and layouts. They are extracted and bundled by Vite:
+
+```html client/components/card.html
+<div class="card">
+	<h2>{ title }</h2>
+</div>
+
+<style>
+	.card {
+		border: 1px solid #ddd;
+		padding: 1rem;
+		border-radius: 0.5rem;
+	}
+</style>
+```
+
+### Dynamic CSS custom properties
+
+Use the `props` attribute on `<style>` to inject build-time values as CSS custom properties:
+
+```html
+<script is:build>
+	const { accent } = Aero.props
+	const theme = { fg: '#111', bg: '#fff', accent }
+</script>
+
+<style props="{ ...theme }">
+	.card {
+		color: var(--fg);
+		background: var(--bg);
+		border-color: var(--accent);
+	}
+</style>
+```
+
+Each key in the spread becomes a `--keyName` custom property.
+
+## CSS frameworks
+
+{/* TODO: Verify Tailwind v4 setup steps with Aero */}
+
+Because Aero uses Vite, CSS frameworks that integrate with PostCSS or Vite work out of the box. Install the framework, configure it in your Vite or PostCSS config, and import or link the styles:
+
+```html
+<link rel="stylesheet" href="@styles/tailwind.css" />
+```
+
+## No scoped styles
+
+Aero does not provide built-in style scoping (like `scoped` attributes or CSS Modules). This is intentional — Aero's HTML-first philosophy keeps CSS standard and predictable. Use naming conventions (BEM, utility classes) or CSS nesting/layers to manage specificity.
+
+## Organization
+
+A typical style setup:
+
+```
+client/assets/styles/
+├── global.css          # Reset, typography, variables
+├── components.css      # Shared component styles
+└── utilities.css       # Helper classes
+```
+
+Link the global stylesheet in your base layout so it applies to every page:
+
+```html client/layouts/base.html
+<head>
+	<link rel="stylesheet" href="@styles/global.css" />
+</head>
+```

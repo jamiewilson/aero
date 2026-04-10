@@ -1,0 +1,19 @@
+---
+title: 'Components'
+description: 'Reusable HTML components under client/components and the -component tag convention.'
+sidebarTitle: 'Components'
+---
+
+Components are reusable `.html` files under `client/components/`. Import them in a page or layout and use them as `<name-component>`. Pass data via attributes or the `props` attribute; read values with `Aero.props` in the component's build script:
+
+```html components/greeting.html
+<script is:build>
+	const { name } = Aero.props
+</script>
+
+<h2>Hello, { name }!</h2>
+```
+
+The file name determines the tag name: `greeting.html` maps to `<greeting-component>`.
+
+For props patterns, imports, and composition, see [Components](/concepts/components) and [Props](/data/props).

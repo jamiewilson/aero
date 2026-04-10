@@ -1,0 +1,72 @@
+---
+title: 'Assets'
+description: 'Manage client scripts, styles, images, and static files in your Aero project.'
+icon: 'image'
+---
+
+Aero distinguishes between two kinds of assets: **processed assets** under `client/assets/` that go through Vite's build pipeline, and **static files** in `public/` that are copied to `dist/` unchanged.
+
+## Processed assets (`client/assets/`)
+
+Files under `client/assets/` are resolved by Vite — they get bundled, minified, and output with hashed filenames. The default directory layout is:
+
+```
+client/assets/
+├── scripts/        # Client-side TypeScript/JavaScript
+├── styles/         # CSS files
+└── images/         # Images processed by Vite
+```
+
+Reference these files using path aliases:
+
+```html
+<link rel="stylesheet" href="@styles/global.css" />
+```
+
+```html
+<script is:build>
+	import someFunction from '@scripts/someModule'
+</script>
+```
+
+```html
+<img src="@images/hero.png" alt="Hero image" />
+```
+
+| Alias        | Resolves to               |
+| ------------ | ------------------------- |
+| `@styles/*`  | `client/assets/styles/*`  |
+| `@scripts/*` | `client/assets/scripts/*` |
+| `@images/*`  | `client/assets/images/*`  |
+
+## Static files (`public/`)
+
+Files in `public/` are copied to `dist/` as-is without processing. Use this for:
+
+- Favicons and app icons
+- `robots.txt` and similar fixed-name files
+- Large or binary assets that should not be hashed
+
+```
+public/
+├── favicon.ico
+├── robots.txt
+└── og-image.png
+```
+
+These are served from the site root: `public/favicon.ico` becomes `dist/favicon.ico`.
+
+<Note>
+	Assets that need bundling, imports, or optimization belong under `client/assets/` rather than
+	`public/`. Vite cannot process files in `public/`.
+</Note>
+
+## Images
+
+Images under `client/assets/images/` go through Vite's asset pipeline and receive hashed filenames for cache busting. Use the `@images/` alias to reference them:
+
+```html
+<img src="@images/logo.svg" alt="Logo" />
+```
+
+For image optimization strategies (responsive images, format conversion), see [Image optimization](/tooling/image-optimization).

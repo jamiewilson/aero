@@ -1,0 +1,27 @@
+---
+title: 'Dependency policy'
+description: 'How the Aero monorepo pins shared dependency versions for reproducible builds and intentional upgrades.'
+---
+
+This page describes how the **Aero framework repository** manages dependency versions. If you are building an app with Aero, you normally use normal `dependencies` and `devDependencies` in your own `package.json`; this policy is mainly relevant for **contributors** and for understanding how Aero's packages stay aligned.
+
+## pnpm catalog
+
+Shared versions for framework development live in the root [`pnpm-workspace.yaml`](https://github.com/jamiewilson/aero/blob/main/pnpm-workspace.yaml) under `catalog:`. Packages reference them with the `catalog:` protocol in `package.json` (for example `"vite": "catalog:"`).
+
+Prefer **catalog** entries for tooling that should move together across packages (TypeScript, Vite, Vitest, tsdown, Nitro, and so on).
+
+## Root overrides
+
+The root [`package.json`](https://github.com/jamiewilson/aero/blob/main/package.json) may define `pnpm.overrides` for security fixes or to align a transitive dependency with a known-good version. Treat overrides as **explicit exceptions** — document why in the commit or a short comment when non-obvious.
+
+## Explicit versions
+
+When a package needs a version **different** from the catalog (for example a single package requires a newer patch), use an explicit semver range in that package's `package.json` and prefer a short note in the PR if the reason is not obvious.
+
+## CI and guardrails
+
+- **`pnpm install`** with a locked lockfile is the source of truth for CI.
+- Keep `packageManager` in root `package.json` aligned with the pnpm version contributors should use.
+
+For product-level principles that include staying aligned with Vite and modern JS tooling, see [Aero principles and goals](https://github.com/jamiewilson/aero/blob/main/_reference/guides/aero-principles-and-goals.md).

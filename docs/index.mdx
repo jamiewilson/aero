@@ -1,51 +1,109 @@
 ---
-title: 'Aero Documentation'
+title: 'Introduction'
 description: 'Build fast, HTML-first static sites and full-stack apps with a native web feel.'
+icon: 'info'
 ---
 
-Aero is a static site generator and optional full-stack framework built around plain HTML. You write `.html` files, Aero compiles them at build time into static output, and you deploy anywhere — no runtime, no hydration, no framework overhead.
+Aero is a static site generator (and optional full-stack framework) built around plain HTML. You write `.html` files with optional `<script>` and `<style>` blocks, Aero compiles them at build time, and you get a `dist/` folder you can deploy anywhere. When you need more — API routes, server-side logic, deployment adapters — you opt into Nitro. Nothing is forced on you.
+
+**It looks like this:**
+
+```html pages/index.html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+</script>
+
+<base-layout>
+	<header-component title="{ site.title }" subtitle="{ site.subtitle }" />
+	<p>{ site.description }</p>
+</base-layout>
+
+<script>
+	import someFunction from '@scripts/someModule'
+	someFunction()
+</script>
+```
+
+## Key features
 
 <CardGroup cols={2}>
-	<Card title="Quick Start" icon="bolt" href="/quickstart">
-		Scaffold your first project and have a site running in minutes.
-	</Card>
-	<Card title="Project Structure" icon="folder-open" href="/project-structure">
-		Understand how pages, layouts, components, and content are organized.
-	</Card>
-	<Card title="Routing" icon="route" href="/concepts/routing">
-		File-based routing — your file path is your URL.
-	</Card>
-	<Card title="Content Collections" icon="database" href="/data/content-collections">
-		Manage Markdown content with typed schemas and getCollection().
-	</Card>
-	<Card title="Nitro Server" icon="server" href="/server/nitro">
-		Add API routes and server-side logic when you need them.
-	</Card>
-	<Card title="CLI & Tooling" icon="terminal" href="/tooling/cli">
-		Validate templates, check types, and diagnose your project.
-	</Card>
+  <Card title="File-based routing" icon="route">
+    `client/pages/about.html` becomes `/about`. Dynamic routes use `[param].html` and `getStaticPaths()`.
+  </Card>
+  <Card title="Components & layouts" icon="puzzle">
+    Import `.html` templates and use them as `<name-component>` or `<name-layout>` in your markup.
+  </Card>
+  <Card title="Loops & conditionals" icon="repeat">
+    Use `for`, `if`, `else-if`, `else`, and `switch` directives with `{ }` expressions directly in markup.
+  </Card>
+  <Card title="Content collections" icon="database">
+    Put data in `content/`. Use `getCollection()` and `render()` for Markdown-driven pages.
+  </Card>
+  <Card title="Slots" icon="between-horizontal-start">
+    Layouts expose `<slot>` for page content. Named slots and slot passthrough let you thread content through nested layouts.
+  </Card>
+  <Card title="HMR everywhere" icon="zap">
+    CSS, HTML, content, and client scripts all hot-reload in dev. Powered by Vite.
+  </Card>
 </CardGroup>
 
-## How Aero works
+## Who it's for
 
-Aero compiles your `.html` template files at build time. Build scripts run in Node and are stripped from the output — the browser only receives static HTML, bundled CSS, and the client scripts you explicitly ship.
+Aero is a good fit if you:
 
-<Steps>
-  <Step title="Scaffold a project">
-    Run `pnpm create @aero-js my-app` to generate a new project from the minimal or fullstack template.
-  </Step>
-  <Step title="Build pages in HTML">
-    Create `.html` files in `client/pages/`. Use `{ }` expressions, `<script is:build>`, components, and layouts — all plain HTML syntax.
-  </Step>
-  <Step title="Run the dev server">
-    Run `pnpm dev` to start a Vite dev server with HMR for HTML, CSS, scripts, and content.
-  </Step>
-  <Step title="Build and deploy">
-    Run `pnpm build` to generate a static `dist/` folder. Deploy to any static host, or enable Nitro for API routes and a full server.
-  </Step>
-</Steps>
+- Want to write HTML, CSS, and JavaScript without a framework abstraction in the way
+- Need a fast static site with no runtime or hydration overhead
+- Want to use HTMX or Alpine.js for interactivity without fighting a compiler
+- Occasionally need API routes but don't want to commit to a full server framework
+
+## Core ideas
+
+**HTML-first authoring.** Pages, layouts, and components are `.html` files. The only additions are `{ }` expressions for interpolation and a handful of directives (`if`, `for`, `slot`). The source looks like HTML; the output is HTML.
+
+**Static by default.** `pnpm build` produces a plain `dist/` folder. No framework runtime ships to the browser. Deploy to any static host, or open via `file://`.
+
+**Optional full-stack with Nitro.** Set `server: true` in your config to enable [Nitro](https://nitro.build/) — file-based API routes under `server/api/`, universal deployment presets, and a `preview:api` command. You get API routes from the same project without changing how you write pages.
+
+**Zero runtime.** Build-time code lives in `<script is:build>` and is completely stripped from output. Client scripts are plain `<script>` tags, bundled by Vite. No hydration orchestrator, no Virtual DOM.
+
+## Core stack
+
+| Tool       | Role                        | Why it helps                                   |
+| ---------- | --------------------------- | ---------------------------------------------- |
+| **Vite**   | Dev server and bundler      | Fast HMR, plugin system, asset bundling        |
+| **Nitro**  | Server engine (optional)    | API routes, server deployment                  |
+| **HTMX**   | Server-driven interactivity | Dynamic HTML updates without full page reloads |
+| **Alpine** | Lightweight JS in markup    | Declarative UI directly in HTML                |
+
+External references: [Vite](https://vitejs.dev/), [Nitro](https://nitro.build/), [HTMX](https://htmx.org/), [Alpine.js](https://alpinejs.dev/).
+
+## Packages
+
+Aero is published as a set of focused packages:
+
+| Package            | Description                                                            |
+| ------------------ | ---------------------------------------------------------------------- |
+| `@aero-js/core`    | Runtime, Vite integration, and Aero orchestration                      |
+| `@aero-js/create`  | Scaffold new projects from the minimal or fullstack template           |
+| `@aero-js/vite`    | The Aero Vite plugin                                                   |
+| `@aero-js/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
+| `@aero-js/content` | Content collections — `getCollection()`, `render()`, schema validation |
+| `@aero-js/cli`     | `aero check` and `aero doctor` for type-checking and diagnostics       |
 
 <Note>
-	Aero is static-first. You get a plain HTML output with no framework runtime in the browser. Enable
-	`server: true` only when you need API routes or a dynamic server.
+	Most projects only need `@aero-js/core` and `@aero-js/vite` (or `@aero-js/create` to scaffold).
+	The other packages are opt-in.
 </Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+	<Card title="Installation" icon="download" href="/getting-started/installation">
+		Scaffold your first project and have a site running in minutes.
+	</Card>
+	<Card title="Project structure" icon="folder-open" href="/getting-started/structure">
+		Learn how pages, layouts, components, and content are organized.
+	</Card>
+</CardGroup>

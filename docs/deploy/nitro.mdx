@@ -1,0 +1,64 @@
+---
+title: 'Deploy with Nitro'
+description: 'Preview and ship the Nitro server output (.output/) alongside Aero’s static dist/.'
+---
+
+When you enable `server: true`, `pnpm build` produces both:
+
+- **Static HTML** — Aero's usual `dist/` (or your configured output)
+- **Server bundle** — Nitro output under `.output/` for API routes, middleware, storage, tasks, and deployment adapters
+
+Conceptual overview of Nitro in Aero (handlers, file layout, `nitro.config.ts`) lives in [Nitro](/server/nitro). This page focuses on **previewing** and **deploying** that server.
+
+## Preview: static vs full server
+
+After a production build, choose how you preview:
+
+| Command | What runs |
+| ------- | --------- |
+| `pnpm preview` (typically static preview) | Static files only — no Nitro APIs |
+| `pnpm preview:api` (or your project's equivalent) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, and so on |
+
+Check `package.json` in your app for exact script names.
+
+## Nitro deployment presets
+
+Nitro uses **presets** to target platforms (Node, serverless, workers, and so on). Configure them in `nitro.config.ts` at the project root:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	preset: 'cloudflare_pages',
+})
+```
+
+Provider-specific behavior is documented in [Nitro](https://nitro.build/) terms. Aero does not add a separate provider abstraction unless Aero itself needs provider-specific code.
+
+### What Aero injects
+
+Aero generates a small `.aero/nitro.config.mjs` during build that **extends** your root `nitro.config.ts`. Aero injects only what it must (for example `rootDir`, output dir, scan dirs, static catch-all for `dist/`). You still own presets, `routeRules`, `runtimeConfig`, and other Nitro options in your own `nitro.config.ts`.
+
+## Recommended mental model
+
+- Use Aero for pages, layouts, components, content, and static generation.
+- Use Nitro for APIs, middleware, storage, cache, database hooks, tasks, and deployment targets.
+- Configure Nitro in `nitro.config.ts`.
+- Reach for Nitro APIs first; add Aero-level helpers only if the same pattern repeats across apps.
+
+## Constraints
+
+These Nitro capabilities are valid but **not** Aero's primary path:
+
+- Using Nitro as the main **renderer** for Aero pages
+- Nitro prerender for Aero page generation
+- Nitro public-asset serving **as the main** asset pipeline
+
+Aero already compiles pages to static HTML during the Vite build. `server: true` wraps that output; it does not replace the page compiler.
+
+## Related docs
+
+- [Nitro](/server/nitro) — Enable server mode, handlers, storage, and file layout
+- [Static hosting](/deploy/static) — Hosting `dist/` without a server
+- [Middleware & redirects](/server/middleware-redirects) — Aero dev middleware vs Nitro middleware

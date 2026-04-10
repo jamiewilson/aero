@@ -21,4 +21,4 @@ Full-stack Aero template with Nitro enabled from day one. Includes `nitro.config
 
 ## Learn More
 
-- [Nitro in Aero guide](https://github.com/jamiewilson/aero/blob/main/docs/drafts/nitro-overview.md)
+- [Nitro](https://github.com/jamiewilson/aero/blob/main/docs/server/nitro.mdx) · [Deploy with Nitro](https://github.com/jamiewilson/aero/blob/main/docs/deploy/nitro.mdx)

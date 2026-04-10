@@ -1,0 +1,39 @@
+---
+title: 'Static hosting'
+description: 'Ship the dist/ folder from pnpm build to any static host or CDN.'
+---
+
+## The problem
+
+You want users to download HTML, CSS, and JS from a fast global edge or a simple file host, without running a Node server.
+
+## What you get from Aero
+
+`pnpm build` (or `vite build` with the Aero plugin) writes a static site to `dist/` by default. That folder is plain files: HTML, hashed assets, and anything from `public/` copied through. There is no Aero runtime in the browser.
+
+## Local preview
+
+Use `pnpm preview` (typically static preview only) to verify the build before upload. See your project's `package.json` scripts for the exact command.
+
+<Tip>
+	With Nitro disabled (`server: false` or omitted), you do not need Node in production — only static file hosting.
+</Tip>
+
+## Deploying `dist/`
+
+1. Run `pnpm build` from your app root.
+2. Upload the contents of `dist/` to your host, or point the host's output directory at `dist/`.
+
+Works with:
+
+- **Object storage + CDN** (for example S3, R2, GCS) with `index.html` default documents where supported
+- **Git hosting pages** (GitHub Pages, GitLab Pages, Cloudflare Pages static mode)
+- **Traditional static hosts** and any server that serves files from disk
+
+## Base path
+
+If your site is served from a subpath (for example `https://example.com/docs/`), configure your base URL in Vite and Aero so asset URLs and internal links resolve correctly. See [Site URL](/data/site-url) and [Vite plugin](/configuration/vite-plugin).
+
+## When you need a server
+
+If you need API routes, server middleware, or Nitro deployment presets, enable Nitro and follow [Deploy with Nitro](/deploy/nitro). The static `dist/` output is still produced; Nitro wraps it for dynamic behavior.

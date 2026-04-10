@@ -5,31 +5,31 @@
 
 import type { AeroDiagnosticCode } from './types'
 
-const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs/drafts'
+const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs'
 
 /**
- * Full URL to a Markdown file under the repo `docs/drafts/` directory.
+ * Full URL to a documentation file under the repo `docs/` directory (MDX source).
  *
- * @param docsFile - Relative path, e.g. `interpolation.md`
+ * @param docsFile - Relative path under `docs/`, e.g. `concepts/templating.mdx`
  */
 export function aeroIdeDocHref(docsFile: string): string {
 	const trimmed = docsFile.replace(/^\/+/, '')
 	return `${REPO_DOCS_BASE}/${trimmed}`
 }
 
-const DEFAULT_DOC = 'README.md'
+const DEFAULT_DOC = 'introduction.mdx'
 
 /** Default docs page per stable {@link AeroDiagnosticCode} (Problems “Learn more”). */
 const CODE_DOC: Record<AeroDiagnosticCode, string> = {
-	AERO_COMPILE: 'interpolation.md',
-	AERO_PARSE: 'interpolation.md',
-	AERO_RESOLVE: 'importing-and-bundling.md',
-	AERO_ROUTE: 'routing.md',
-	AERO_TEMPLATE: 'html-template-element.md',
-	AERO_SWITCH: 'html-template-element.md',
-	AERO_CONTENT_SCHEMA: 'content-api.md',
-	AERO_CONFIG: 'getting-started.md',
-	AERO_BUILD_SCRIPT: 'script-taxonomy.md',
+	AERO_COMPILE: 'concepts/templating.mdx',
+	AERO_PARSE: 'concepts/templating.mdx',
+	AERO_RESOLVE: 'guide/importing-and-bundling.mdx',
+	AERO_ROUTE: 'concepts/routing.mdx',
+	AERO_TEMPLATE: 'concepts/html-template.mdx',
+	AERO_SWITCH: 'concepts/html-template.mdx',
+	AERO_CONTENT_SCHEMA: 'data/content-collections.mdx',
+	AERO_CONFIG: 'quickstart.mdx',
+	AERO_BUILD_SCRIPT: 'concepts/scripts.mdx',
 	AERO_INTERNAL: DEFAULT_DOC,
 }
 
