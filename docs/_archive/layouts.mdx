@@ -1,0 +1,117 @@
+---
+title: 'Layouts'
+description: 'Wrap pages in shared structure using layouts, and control where content lands with slots.'
+---
+
+A layout is a `.html` file in `client/layouts/` that wraps your page content with shared structure. Layouts use `<slot />` to mark where page content goes. Import a layout, wrap your markup, and Aero does the rest at build time.
+
+## The default slot
+
+Define a layout with a `<slot />` placeholder:
+
+```html client/layouts/base.html
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>My Site</title>
+	</head>
+	<body>
+		<header>Site header</header>
+		<slot />
+		<footer>Site footer</footer>
+	</body>
+</html>
+```
+
+Use it in a page by importing and wrapping content:
+
+```html client/pages/about.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<h1>About</h1>
+	<p>This paragraph fills the default slot.</p>
+</base-layout>
+```
+
+Everything between `<base-layout>` and `</base-layout>` renders where `<slot />` appears.
+
+<Note>
+	Import layouts without the `.html` extension: `import base from '@layouts/base'` resolves to
+	`client/layouts/base.html`.
+</Note>
+
+## Nested layouts
+
+A layout can use another layout. The inner layout's `<slot>` receives page content; the outer layout's `<slot>` receives the inner layout's rendered output:
+
+```html client/layouts/docs.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<nav>Docs sidebar</nav>
+	<main>
+		<slot />
+	</main>
+</base-layout>
+```
+
+```html client/pages/docs/intro.html
+<script is:build>
+	import docs from '@layouts/docs'
+</script>
+
+<docs-layout>
+	<h1>Getting started</h1>
+</docs-layout>
+```
+
+## Named slots
+
+A layout can define named slots using the `name` attribute. Pages pass content into them with the `slot` attribute:
+
+```html client/layouts/base.html
+<nav>
+	<slot name="nav" />
+</nav>
+<main>
+	<slot />
+</main>
+```
+
+```html client/pages/home.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<a href="/docs" slot="nav">Docs</a>
+	<h1>Welcome</h1>
+</base-layout>
+```
+
+The `<a>` with `slot="nav"` fills the named slot. The `<h1>` fills the default slot.
+
+## Slot passthrough
+
+In a three-level hierarchy (page, sub-layout, base layout), use both `name` and `slot` on a `<slot>` element to forward content from a page through to a parent layout's named slot:
+
+```html client/layouts/sub.html
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<base-layout>
+	<slot name="page-nav" slot="nav" />
+	<slot />
+</base-layout>
+```
+
+<Tip>
+	Slot passthrough lets deep page content reach ancestor layout slots without every layout in between
+	having to manually wire it up.
+</Tip>

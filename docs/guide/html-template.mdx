@@ -1,0 +1,93 @@
+---
+title: 'The HTML template element'
+description: 'Wrapperless structural directives, literal inert templates, and attributes on wrapperless template tags.'
+---
+
+When you use `if`, `for`, or `switch` on a regular element like `<div>`, the element itself appears in the output. Sometimes you need the directive logic without an extra wrapper in the DOM — for example, inside a `<table>` where only `<tr>` elements are valid children.
+
+Aero treats **`<template>`** in two different ways, depending on whether you use **structural directives** on the tag (`if`, `else-if`, `else`, `for`, `data-for`, `switch`):
+
+| Usage | What appears in the generated HTML |
+| ----- | ----------------------------------- |
+| **Structural directive on `<template>`** | **Only the inner markup** — the `<template>` wrapper is **not** emitted. Wrapperless pattern: same logic as `<div if>` / `<li data-for>`, without an extra element in the tree. |
+| **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** until script moves or clones it — standard HTML behavior. |
+
+Use this page when you choose between a **wrapperless group** (no extra tag), a **literal inert** template (for JS), or a **restricted HTML context** where only certain tags are allowed.
+
+For shorter examples of wrapperless patterns, see [Templates](/getting-started/templates).
+
+## Why wrapperless `<template>` exists
+
+**Correctness:** If Aero left a real `<template>` in the document for a conditional, loop, or `switch`, the browser would keep the inner nodes **inert** — they would not behave like normal rendered content. For `if` / `for` / `switch` on `<template>`, the compiler **erases** the wrapper and emits only the children.
+
+**Ergonomics:** You get a **single logical block** (multiple siblings, table rows, and so on) without a non-standard tag. `<template>` is parser-recognized and often allowed where an extra `<div>` would break the content model (for example around `<tr>` in tables, or inside `<select>`).
+
+## Wrapperless conditionals (`if` / `else-if` / `else`)
+
+Use the same directives as on any other element; optional `data-` prefixes work the same.
+
+```html
+<template if="{ showDetails }">
+	<dl class="details">…</dl>
+</template>
+
+<template else-if="{ showSummary }">
+	<p class="summary">…</p>
+</template>
+
+<template else>
+	<p>Default.</p>
+</template>
+```
+
+**Mixed chains:** Branches do not all have to be `<template>`. You can pair a wrapperless `<template if>` with a `<section else-if>` that keeps its outer tag, and so on.
+
+## Wrapperless loops (`for` / `data-for`)
+
+Put the loop directive on `<template>` to repeat **only the inner fragment** without a wrapper element:
+
+```html
+<ul>
+	<template for="{ const item of items }">
+		<li>{ item.name }</li>
+	</template>
+</ul>
+```
+
+The list items are emitted as direct children of `<ul>`; no `<template>` node appears in the output.
+
+## Wrapperless `switch` / `case` / `default`
+
+Put `switch` / `data-switch` on **`<template>`** to match a discriminant against **`case`** branches without emitting an extra wrapper. Direct children of the container must be branch elements (`case` or `default`); see [Templates](/getting-started/templates) for expression rules.
+
+```html
+<template switch="{ state }">
+	<p case="loading">Loading…</p>
+	<section case="ready">…</section>
+	<p default>Fallback</p>
+</template>
+```
+
+You can use the same pattern on a normal element (for example `<div switch="{ state }">`); the outer tag is preserved and only one branch's children render inside it. Grouped matches use array syntax: `case="{ ['a', 'b'] }"`.
+
+## Plain `<template>` (inert markup)
+
+If you **do not** put `if` / `else-if` / `else` / `for` / `data-for` / `switch` on the `<template>` tag, Aero compiles it like a normal element: the generated HTML includes **`<template>...</template>`**. The inner markup is still compiled (interpolation, nested components, and so on); in the live DOM that subtree remains **inert** until your client code clones or adopts it.
+
+Use that when you intentionally keep markup **out of the visible tree** (prototypes, dialog bodies, chunks for `cloneNode`, and similar patterns).
+
+## When to prefer `<template>` over `<div>`
+
+- **Wrapperless structural directives** — You want a group of nodes **without** an extra wrapper in the output; use `<template if>` / `<template data-for>` / `<template switch>` as above.
+- **Content models** — HTML only allows certain children in contexts like `<table>`, `<tbody>`, `<select>`, or lists. `<template>` is often valid where an extra `<div>` is not.
+- **Inert markup for JavaScript** — You keep markup in a real `<template>` (no structural directive on the tag) until a script clones it.
+- **No extra semantics** — Unlike `<div>`, `<template>` does not imply a generic block box; it is explicitly a non-rendered holder when used as a literal element.
+
+## Attributes on wrapperless `<template>`
+
+Directive attributes (`if`, `for`, `switch`, `case`, `default`, and so on) are compile-time only. **Normal** attributes on a wrapperless `<template>` (for example `class`) do **not** appear in the final HTML — there is no element to attach them to. Put classes and ARIA on a real element **inside** the fragment.
+
+## See also
+
+- [Templates](/getting-started/templates) — Loops, conditionals, and `switch`
+- [Templates](/getting-started/templates) — Components, layouts, props, and directive expression rules

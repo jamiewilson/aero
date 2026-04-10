@@ -1,0 +1,104 @@
+---
+title: 'Components'
+description: 'Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts.'
+---
+
+Components in Aero are plain `.html` files in `client/components/`. Import one, use it as a custom element in markup, and pass data through attributes. Components render at build time — no runtime JavaScript, no shadow DOM.
+
+## Creating a component
+
+Create a `.html` file in `client/components/`. The component reads data from `Aero.props`:
+
+```html client/components/greeting.html
+<script is:build>
+	const { name } = Aero.props
+</script>
+
+<h2>Hello, { name }!</h2>
+```
+
+## Using a component
+
+Import the component in a `<script is:build>` block, then use `<name-component>` in markup:
+
+```html client/pages/index.html
+<script is:build>
+	import base from '@layouts/base'
+	import greeting from '@components/greeting'
+</script>
+
+<base-layout>
+	<greeting-component name="World" />
+</base-layout>
+```
+
+<Note>
+	Import files without the `.html` extension: `import greeting from '@components/greeting'`
+	resolves to `client/components/greeting.html`.
+</Note>
+
+## Passing props
+
+Pass data via attributes. Use `{ }` expressions for dynamic values from the build scope:
+
+```html
+<greeting-component name="World" />
+
+<greeting-component name="{ site.author }" />
+
+<greeting-component props="{ ...myProps }" />
+```
+
+Inside the component, destructure from `Aero.props`:
+
+```html
+<script is:build>
+	const { name, greeting = 'Hello' } = Aero.props
+</script>
+
+<h2>{ greeting }, { name }!</h2>
+```
+
+### Spreading an object
+
+Use `props="{ ...obj }"` to pass every key in an object as a separate prop:
+
+```html
+<script is:build>
+	import card from '@components/card'
+	const cardProps = { title: 'Hello', subtitle: 'World' }
+</script>
+
+<card-component props="{ ...cardProps }" />
+```
+
+### Props shorthand
+
+If you have a variable named `props` in scope, the bare `props` attribute spreads it:
+
+```html
+<script is:build>
+	import card from '@components/card'
+	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
+</script>
+
+<card-component props />
+```
+
+## Self-closing vs wrapping
+
+Use self-closing syntax when the component does not receive slot content:
+
+```html
+<greeting-component name="World" />
+```
+
+Use opening and closing tags to pass children into the component's `<slot>`:
+
+```html
+<card-component title="Note">
+	<p>This content fills the card's default slot.</p>
+</card-component>
+```
+
+See [Layouts](/layouts) for how slots work.

@@ -1,0 +1,163 @@
+---
+title: 'Scripts'
+description: "Understand Aero's four script types and when to use each one."
+---
+
+## The problem
+
+In a typical web project, there is no clear boundary between code that prepares data for the page and code that runs in the browser. Build tools bundle everything together, and it is easy to accidentally ship server-side logic to the client or load heavy scripts that block rendering.
+
+## What this looks like without Aero
+
+In vanilla HTML, a `<script>` tag always runs in the browser. If you want to generate content from data at build time, you need a separate build step outside the HTML file. If you want a blocking script in `<head>` and a deferred module at the end of `<body>`, you manage placement yourself.
+
+```html
+<!-- All scripts run in the browser — no build-time option -->
+<script src="/scripts/data-fetcher.js"></script>
+<script type="module" src="/scripts/app.js"></script>
+```
+
+## How Aero helps
+
+Aero gives each `<script>` tag a clear execution context via attributes. `is:build` runs at build time and is stripped from output. Plain `<script>` is bundled for the browser. `is:inline` stays in place as-is. `is:blocking` is hoisted to `<head>`. You always know what runs where.
+
+## Script types at a glance
+
+| Type                   | Bundled | Hoisted         | When it runs                          |
+| ---------------------- | ------- | --------------- | ------------------------------------- |
+| `<script is:build>`    | No      | —               | Build time only; stripped from output |
+| `<script>` (plain)     | Yes     | End of `<body>` | Browser; bundled by Vite              |
+| `<script is:inline>`   | No      | No              | Browser; runs in place immediately    |
+| `<script is:blocking>` | No      | `<head>`        | Browser; blocks page render           |
+
+---
+
+## `<script is:build>`
+
+The build script defines the server-side render body of your component or page. It runs in Node.js at build time (or request time for SSR) and is **never** sent to the browser.
+
+Use it to:
+
+- Import components and layouts
+- Fetch data or read content collections
+- Prepare variables for `{ }` expressions
+- Export `getStaticPaths()` for dynamic routes
+
+```html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+
+	const title = site.meta.title
+</script>
+
+<base-layout>
+	<header-component title="{ title }" />
+</base-layout>
+```
+
+<Note>
+  You can only have one `<script is:build>` per template file. Build-time code is stripped from the HTML output entirely — it never reaches the browser.
+</Note>
+
+---
+
+## Plain `<script>` (client)
+
+A `<script>` tag with no attribute is a client-side module script. Aero hands it to Vite, which bundles, minifies, and optimizes it. It runs in the browser with HMR in dev.
+
+```html
+<script>
+	console.log('This runs in the browser')
+	document.querySelector('#app').classList.add('loaded')
+</script>
+```
+
+Plain scripts are deduplicated and moved to the end of `<body>` with `type="module"` added when absent.
+
+### Passing build data to a client script
+
+Use the `props` attribute to inject build-scope values as globals inside the client script:
+
+```html
+<script props="{ apiToken }">
+	import { initAnalytics } from 'my-analytics'
+	initAnalytics(apiToken)
+</script>
+```
+
+`apiToken` becomes a global variable available within the script. When the same component is used multiple times with different `props`, each instance gets unique data and the bundled module receives the correct values — instances do not clash.
+
+---
+
+## `<script is:inline>`
+
+An inline script is left in the HTML exactly as-is and runs immediately when the browser's parser reaches it. Vite does not bundle, minify, or process it.
+
+Use it for:
+
+- Theme detection to prevent flash-of-unstyled-content (FOUC)
+- Third-party snippet embeds (analytics, chat widgets)
+- Any script that must run synchronously before the page finishes loading
+
+```html
+<script is:inline>
+	const theme = localStorage.getItem('theme')
+	document.documentElement.setAttribute('data-theme', theme)
+</script>
+```
+
+---
+
+## `<script is:blocking>`
+
+A blocking script is moved into `<head>` and runs before the rest of the page. Use it for critical initialization that must happen before the body renders.
+
+```html
+<script is:blocking>
+	window.__APP_CONFIG__ = { env: 'production' }
+</script>
+```
+
+<Warning>
+	Contradictory attributes like `type="module"` or `defer` are ignored or warned on when used with
+	`is:blocking`.
+</Warning>
+
+---
+
+## Scripts with `src`
+
+### External URLs
+
+Scripts with an external `src` (starting with `https://`) are left in the template untouched — Aero and Vite do not process them:
+
+```html
+<script src="https://cdn.example.com/library.js"></script>
+```
+
+### Local scripts
+
+Scripts with a local `src` (using path aliases or relative paths) go through the **asset pipeline**, not the virtual client script pipeline. At build time they are discovered, resolved, added as Rollup entry points, bundled, and their `src` is rewritten to the hashed output path:
+
+```html
+<!-- Resolved, bundled, and rewritten to hashed filename at build -->
+<script src="@scripts/main.ts"></script>
+```
+
+Aero adds `type="module"` when it is absent from a local `<script src>`.
+
+<CodeGroup>
+
+```html External script
+<!-- Left as-is; not bundled -->
+<script src="https://cdn.example.com/htmx.min.js"></script>
+```
+
+```html Local script
+<!-- Resolved via path alias, bundled by Vite, src rewritten to hashed asset -->
+<script src="@scripts/app.ts"></script>
+```
+
+</CodeGroup>

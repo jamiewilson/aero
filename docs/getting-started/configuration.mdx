@@ -1,0 +1,131 @@
+---
+title: 'Configuration'
+description: 'Configure Aero through the Vite plugin or a dedicated aero.config.ts file.'
+icon: 'settings-2'
+---
+
+Aero is configured through the `aero()` Vite plugin. For larger projects, you can move Aero options into a dedicated `aero.config.ts`.
+
+## The Vite plugin
+
+Add `aero()` to `vite.config.ts`:
+
+```ts vite.config.ts
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+	plugins: [aero()],
+})
+```
+
+### Plugin options
+
+| Option       | Type                           | Description                                                            |
+| ------------ | ------------------------------ | ---------------------------------------------------------------------- |
+| `content`    | `boolean \| object`            | Enable content collections. Default `false`.                           |
+| `server`     | `boolean`                      | Enable Nitro for API routes. Default `false`.                          |
+| `site`       | `string \| object`             | Canonical site URL. Exposed as `import.meta.env.SITE` and `Aero.site`. |
+| `redirects`  | `Array<{ from, to, status? }>` | Path redirects for dev and production.                                 |
+| `middleware` | `Array`                        | Dev-only request handlers.                                             |
+| `dirs`       | `object`                       | Override `client`, `server`, and `dist` directory names.               |
+| `apiPrefix`  | `string`                       | URL prefix for API routes. Default `'/api'`.                           |
+
+```ts vite.config.ts
+import { defineConfig } from 'vite'
+import { aero } from '@aero-js/vite'
+
+export default defineConfig({
+	plugins: [
+		aero({
+			site: 'https://example.com',
+			content: true,
+			server: true,
+		}),
+	],
+})
+```
+
+## Dedicated aero.config.ts
+
+For projects with more complex configuration, use `@aero-js/config` to keep Aero options separate from Vite:
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	site: { url: 'https://example.com' },
+	content: true,
+	server: true,
+})
+```
+
+```ts vite.config.ts
+import { createViteConfig } from '@aero-js/config/vite'
+
+export default createViteConfig()
+```
+
+`createViteConfig()` with no arguments auto-loads `aero.config.ts` from the project root.
+
+### Env-aware config
+
+Pass a function to `defineConfig()` to vary options by mode:
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig(env => ({
+	site: env.mode === 'production' ? 'https://example.com' : 'http://localhost:5173',
+	content: true,
+	server: true,
+}))
+```
+
+## Path aliases
+
+Aero injects default path aliases so imports work without `tsconfig.json` configuration:
+
+| Alias           | Resolves to               |
+| --------------- | ------------------------- |
+| `@components/*` | `client/components/*`     |
+| `@layouts/*`    | `client/layouts/*`        |
+| `@pages/*`      | `client/pages/*`          |
+| `@content/*`    | `content/*`               |
+| `@styles/*`     | `client/assets/styles/*`  |
+| `@scripts/*`    | `client/assets/scripts/*` |
+| `@images/*`     | `client/assets/images/*`  |
+
+```html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+</script>
+
+<link rel="stylesheet" href="@styles/global.css" />
+```
+
+Add custom aliases in `tsconfig.json` under `compilerOptions.paths`. They merge with the defaults.
+
+## Environment variables
+
+Aero uses Vite's environment variable system. Variables in `.env` files are available in build scripts by default. Prefix with `VITE_` to expose them to client scripts:
+
+| Prefix  | Available in                     |
+| ------- | -------------------------------- |
+| (none)  | Build scripts and server only    |
+| `VITE_` | Build scripts and client scripts |
+
+```bash .env
+API_SECRET=xxx
+VITE_PUBLIC_API=https://api.example.com
+```
+
+```html
+<script is:build>
+	const secret = import.meta.env.API_SECRET
+	const publicApi = import.meta.env.VITE_PUBLIC_API
+</script>
+```
+
+Vite loads `.env`, `.env.local`, `.env.[mode]`, and `.env.[mode].local` in order. Shell variables override file values.

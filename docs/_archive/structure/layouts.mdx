@@ -1,0 +1,22 @@
+---
+title: 'Layouts'
+description: 'HTML layout files under client/layouts that wrap pages with slots.'
+sidebarTitle: 'Layouts'
+---
+
+Layouts are `.html` files under `client/layouts/` that wrap pages. They expose a `<slot />` where page content is inserted. Import a layout in your page's `<script is:build>` and use it as `<name-layout>`:
+
+```html layouts/base.html
+<html lang="en">
+	<head>
+		...
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+```
+
+The file name determines the custom element tag: `base.html` becomes `<base-layout>`.
+
+For nested layouts, named slots, and slot passthrough, see [Layouts & slots](/concepts/layouts-slots).

@@ -1,0 +1,102 @@
+---
+title: 'Scripts'
+description: "Understand Aero's four script types and when to use each one."
+icon: 'scroll'
+---
+
+Aero gives each `<script>` tag a clear execution context via attributes. You always know what runs where: build time or browser, bundled or inline, deferred or blocking.
+
+## Script types at a glance
+
+| Type                   | Bundled | Hoisted         | When it runs                          |
+| ---------------------- | ------- | --------------- | ------------------------------------- |
+| `<script is:build>`    | No      | —               | Build time only; stripped from output |
+| `<script>` (plain)     | Yes     | End of `<body>` | Browser; bundled by Vite              |
+| `<script is:inline>`   | No      | No              | Browser; runs in place immediately    |
+| `<script is:blocking>` | No      | `<head>`        | Browser; blocks page render           |
+
+## `<script is:build>`
+
+The build script runs in Node.js at build time and is never sent to the browser. Use it to import components, fetch data, and prepare variables for `{ }` expressions:
+
+```html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+
+	const title: string = site.meta.title
+</script>
+
+<base-layout>
+	<header-component title="{ title }" />
+</base-layout>
+```
+
+Build scripts are **TypeScript by default**. You can use type annotations, interfaces, and `import type` without any extra configuration. The VS Code extension provides full IntelliSense and diagnostics.
+
+To opt out of TypeScript for a specific build script, add `type="js"`:
+
+```html
+<script is:build type="js">
+	const title = site.meta.title
+</script>
+```
+
+<Note>
+	Only one `<script is:build>` per template file. Build-time code is completely stripped from
+	the HTML output.
+</Note>
+
+For typing component props, content schemas, and environment variables in depth, see the [TypeScript guide](/guide/typescript).
+
+## Plain `<script>` (client)
+
+A `<script>` with no attribute is a client-side module script. Vite bundles, minifies, and optimizes it. It runs in the browser with HMR in dev:
+
+```html
+<script>
+	console.log('This runs in the browser')
+	document.querySelector('#app').classList.add('loaded')
+</script>
+```
+
+Use the `props` attribute to inject build-scope values into a client script:
+
+```html
+<script props="{ apiToken }">
+	import { initAnalytics } from 'my-analytics'
+	initAnalytics(apiToken)
+</script>
+```
+
+## `<script is:inline>`
+
+Left in the HTML exactly as-is. Vite does not process it. Use it for theme detection, third-party snippets, or any script that must run synchronously:
+
+```html
+<script is:inline>
+	const theme = localStorage.getItem('theme')
+	document.documentElement.setAttribute('data-theme', theme)
+</script>
+```
+
+## `<script is:blocking>`
+
+Moved into `<head>` and runs before the body renders. Use for critical initialization:
+
+```html
+<script is:blocking>
+	window.__APP_CONFIG__ = { env: 'production' }
+</script>
+```
+
+## Scripts with `src`
+
+External URLs are left untouched. Local paths (using aliases or relative paths) go through Vite's asset pipeline and get bundled with hashed filenames:
+
+```html
+<script src="https://cdn.example.com/htmx.min.js"></script>
+
+<script src="@scripts/app.ts"></script>
+```

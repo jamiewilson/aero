@@ -1,0 +1,66 @@
+---
+title: 'Deployment'
+description: 'Deploy your Aero site to any static host or ship a full-stack Nitro server.'
+icon: 'cloud-upload'
+---
+
+Aero produces a static `dist/` folder by default. When Nitro is enabled, you also get a `.output/` server bundle. Choose the deployment path that fits your project.
+
+## Static hosting
+
+Run `pnpm build` and upload the `dist/` folder. That's it — no runtime needed.
+
+```bash
+pnpm build
+```
+
+Works with any static host:
+
+- **Git hosting pages** — GitHub Pages, GitLab Pages, Cloudflare Pages (static mode)
+- **Object storage + CDN** — S3, R2, GCS with `index.html` default documents
+- **Traditional static hosts** — any server that serves files from disk
+
+<Tip>
+	With Nitro disabled (`server: false` or omitted), you do not need Node in production — only static
+	file hosting.
+</Tip>
+
+### Base path
+
+If your site is served from a subpath (e.g. `https://example.com/docs/`), set your site URL in the Aero config and configure `base` in Vite so asset URLs and internal links resolve correctly. See [Metadata](/getting-started/metadata) and [Configuration](/getting-started/configuration).
+
+## Nitro deployment
+
+When `server: true` is enabled, `pnpm build` produces both:
+
+- **`dist/`** — Static HTML (Aero's usual output)
+- **`.output/`** — Nitro server bundle with API routes, middleware, and deployment adapters
+
+### Deployment presets
+
+Nitro uses presets to target platforms. Set one in `nitro.config.ts`:
+
+```ts nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	preset: 'cloudflare_pages',
+})
+```
+
+Nitro supports presets for Cloudflare Pages, Vercel, AWS Lambda, Deno Deploy, and more. See the [Nitro deployment docs](https://nitro.build/deploy) for the full list.
+
+### What Aero injects
+
+Aero generates a small `.aero/nitro.config.mjs` during build that extends your `nitro.config.ts`. Aero injects only what it must (output dirs, scan dirs, static catch-all). You own presets, `routeRules`, `runtimeConfig`, and other Nitro options.
+
+## Preview
+
+After a production build:
+
+| Command            | What runs                         |
+| ------------------ | --------------------------------- |
+| `pnpm preview`     | Static files only — no Nitro APIs |
+| `pnpm preview:api` | Full Nitro server from `.output/` |
+
+<Tip>Use `pnpm preview:api` to test API routes locally before deploying.</Tip>

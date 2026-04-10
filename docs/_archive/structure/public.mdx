@@ -1,0 +1,13 @@
+---
+title: 'Public'
+description: 'Files in public/ are copied to dist/ unchanged by the build.'
+sidebarTitle: 'Public'
+---
+
+Files in `public/` are copied to `dist/` as-is without going through Vite's transform pipeline. Use this for:
+
+- Favicons and app icons
+- `robots.txt` and similar fixed-name files at the site root
+- Large or binary assets that should not be hashed or processed as modules
+
+Assets that need bundling, imports, or optimization usually belong under `client/assets/` or your configured client directory instead. See [Assets](/structure/assets).

@@ -1,0 +1,132 @@
+---
+title: 'Quick Start'
+description: 'Scaffold your first Aero project and have a site running in minutes.'
+---
+
+The fastest way to start is with `@aero-js/create`, which scaffolds a project, installs dependencies, and prints next steps.
+
+<Steps>
+  <Step title="Scaffold a project">
+    Run the create command with your project name:
+
+    <CodeGroup>
+      ```bash pnpm
+      pnpm create @aero-js my-app
+      ```
+
+      ```bash pnpm dlx
+      pnpm dlx @aero-js/create@latest my-app
+      ```
+
+      ```bash npm
+      npx @aero-js/create@latest my-app
+      ```
+
+      ```bash yarn
+      yarn create @aero-js my-app
+      ```
+    </CodeGroup>
+
+    This copies the minimal template into `my-app/`, rewrites `package.json` with your project name, and installs dependencies.
+
+    <Tip>
+      To scaffold with Nitro pre-configured for API routes and server deployment, add `--template fullstack`:
+
+      ```bash
+      pnpm create @aero-js my-app --template fullstack
+      ```
+
+      The fullstack template adds `@aero-js/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
+    </Tip>
+
+  </Step>
+
+  <Step title="Start the dev server">
+    ```bash
+    cd my-app
+    pnpm dev
+    ```
+
+    Open `http://localhost:5173` to see your site. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
+
+  </Step>
+
+  <Step title="Create your first page">
+    Every `.html` file in `client/pages/` becomes a route. Create `client/pages/about.html`:
+
+    ```html about.html
+    <h1>About</h1>
+    <p>This is a new page.</p>
+    ```
+
+    Visit `http://localhost:5173/about` — no routing config needed.
+
+    To add a layout, import it in a `<script is:build>` block and wrap your content:
+
+    ```html pages/about.html
+    <script is:build>
+      import base from '@layouts/base'
+    </script>
+
+    <base-layout>
+      <h1>About</h1>
+      <p>This is a new page.</p>
+    </base-layout>
+    ```
+
+    The layout's `<slot />` is replaced with your page content at build time.
+
+  </Step>
+
+  <Step title="Build for production">
+    ```bash
+    pnpm build
+    ```
+
+    This produces a static `dist/` folder. Deploy it to any static host.
+
+    To preview the build locally:
+
+    <Tabs>
+      <Tab title="Static preview">
+        ```bash
+        pnpm preview
+        ```
+      </Tab>
+      <Tab title="Fullstack preview (Nitro)">
+        ```bash
+        pnpm preview:api
+        ```
+
+        Serves both the static files and API routes from one origin. Available in the fullstack template or when `server: true` is set.
+      </Tab>
+    </Tabs>
+
+  </Step>
+</Steps>
+
+## Commands reference
+
+| Command            | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `pnpm dev`         | Start the dev server with HMR                |
+| `pnpm build`       | Build to `dist/` (and `.output/` with Nitro) |
+| `pnpm preview`     | Preview the static build                     |
+| `pnpm preview:api` | Preview static + API from one origin (Nitro) |
+
+## Next steps
+
+<CardGroup cols={2}>
+	<Card title="Project structure" icon="folder-open" href="/structure">
+		Understand how your scaffolded project is organized.
+	</Card>
+	<Card title="Routing" icon="route" href="/concepts/routing">
+		File-based routing, dynamic routes, and `getStaticPaths`.
+	</Card>
+	<Card title="Components" icon="puzzle-piece" href="/concepts/components">
+		Build reusable `.html` components with props.
+	</Card>
+	<Card title="Nitro Server" icon="server" href="/server/nitro">
+		Add API routes and server-side logic when you need them.
+	</Card>
+</CardGroup>

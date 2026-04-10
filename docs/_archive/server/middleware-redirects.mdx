@@ -1,0 +1,183 @@
+---
+title: 'Middleware & Redirects'
+description: "Handle redirects and request-time logic in Aero's dev server and Nitro."
+---
+
+## The problem
+
+Sites outgrow their original URL structure. Old URLs still get traffic from bookmarks, search engines, and external links. You need redirects, and sometimes you need request-time logic like rewrites or feature flags — but static HTML files can't handle requests on their own.
+
+## How Aero helps
+
+Aero gives you two request-time mechanisms depending on where you need them to run: **redirects** work in dev and in the Nitro server, while **middleware** runs in dev only (for local testing of rewrites, A/B tests, and custom responses).
+
+| Mechanism           | Dev | Nitro server (preview:api / production) | Static build                |
+| ------------------- | --- | --------------------------------------- | --------------------------- |
+| `redirects` config  | Yes | Yes (via Nitro `routeRules`)            | No — configure on your host |
+| `middleware` config | Yes | No                                      | No                          |
+
+## Redirects
+
+Use `redirects` when you want a path-to-URL redirect that works in dev and stays consistent when you deploy with Nitro.
+
+```ts
+// aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	site: { url: 'https://example.com' },
+	redirects: [
+		{ from: '/home', to: '/', status: 301 },
+		{ from: '/old-page', to: '/new-page', status: 302 },
+	],
+	server: true,
+})
+```
+
+Each entry takes a `from` path, a `to` URL, and an optional `status` (defaults to `302`).
+
+**How matching works:**
+
+- Matching is exact — `from` is compared against the request pathname.
+- Add separate entries for `/path` and `/path/` if you need both to redirect.
+- In production with Nitro, redirects are translated to `routeRules`. If you define the same path explicitly in `nitro.config.ts`, your explicit rule wins.
+
+<Warning>
+	For static-only deploys (no Nitro), `redirects` has no effect. Configure redirects on your host
+	instead — Netlify `_redirects`, Vercel `redirects` in `vercel.json`, etc.
+</Warning>
+
+## Middleware
+
+Use `middleware` for request-time logic that only needs to run during development — rewrites, feature flags, or custom responses you want to test locally without shipping to production.
+
+<Note>
+	Middleware does not run in the Nitro server (`preview:api` or production). For production
+	request-time logic, use [Nitro middleware](https://nitro.build/guide/middleware) in
+	`server/middleware/`.
+</Note>
+
+### Configuration
+
+```ts
+// aero.config.ts
+import { defineConfig } from '@aero-js/config'
+import type { AeroMiddleware } from '@aero-js/core/types'
+
+const redirectHome: AeroMiddleware = ctx => {
+	if (ctx.routePath === '/home') {
+		return { redirect: { url: '/', status: 301 } }
+	}
+	return
+}
+
+export default defineConfig({
+	site: { url: 'https://example.com' },
+	middleware: [redirectHome],
+})
+```
+
+### Handler contract
+
+Each middleware function receives an `AeroRequestContext`:
+
+| Property    | Type                  | Description                                      |
+| ----------- | --------------------- | ------------------------------------------------ |
+| `url`       | `URL`                 | Full URL of the request                          |
+| `request`   | `Request`             | Standard Fetch `Request`                         |
+| `routePath` | `string`              | Pathname, e.g. `'/about'`, `'/blog/[id]'`        |
+| `pageName`  | `string`              | Resolved page key, e.g. `'about'`, `'blog/post'` |
+| `site`      | `string \| undefined` | Canonical site URL from config                   |
+
+Return one of these values (sync or async):
+
+| Return value                                 | Effect                                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `undefined` / nothing                        | Continue to the next handler, then render as usual                                          |
+| `{ redirect: { url, status? } }`             | Respond with `Location` and status (default `302`). Stop.                                   |
+| `{ rewrite: { pageName?, ...renderInput } }` | Render with the given page name and/or overridden `url`, `request`, `params`, `props`, etc. |
+| `{ response: Response }`                     | Send the `Response` directly. Stop.                                                         |
+
+Handlers run in order. The first `redirect` or `response` result wins. Multiple `rewrite` results are merged, with later handlers overriding earlier ones.
+
+## Examples
+
+<Steps>
+  <Step title="Redirect with a permanent status">
+
+    Send a 301 to move a route permanently:
+
+    ```ts
+    const redirectHome: AeroMiddleware = ctx => {
+      if (ctx.routePath === '/legacy') {
+        return { redirect: { url: '/new-page', status: 301 } }
+      }
+      return
+    }
+    ```
+
+  </Step>
+  <Step title="Rewrite for A/B testing">
+
+    Serve a different page without changing the URL. Useful for feature flags and experiments:
+
+    ```ts
+    const abTest: AeroMiddleware = ctx => {
+      if (ctx.routePath === '/') {
+        return { rewrite: { pageName: 'landing-v2' } }
+      }
+      return
+    }
+    ```
+
+  </Step>
+  <Step title="Custom 410 response">
+
+    Return a custom response for retired routes:
+
+    ```ts
+    const gone: AeroMiddleware = ctx => {
+      if (ctx.routePath === '/retired') {
+        return {
+          response: new Response('Gone', {
+            status: 410,
+            headers: { 'Content-Type': 'text/plain' },
+          }),
+        }
+      }
+      return
+    }
+    ```
+
+  </Step>
+  <Step title="Trailing-slash redirect">
+
+    Normalize URLs by stripping trailing slashes:
+
+    ```ts
+    const noTrailingSlash: AeroMiddleware = ctx => {
+      if (ctx.routePath !== '/' && ctx.routePath.endsWith('/')) {
+        return {
+          redirect: { url: ctx.routePath.replace(/\/$/, '') || '/', status: 301 },
+        }
+      }
+      return
+    }
+    ```
+
+  </Step>
+</Steps>
+
+## When to use redirects vs. middleware
+
+Use **`redirects`** when:
+
+- You need the redirect to work in production (not just dev).
+- The logic is a straightforward path-to-URL mapping.
+
+Use **`middleware`** when:
+
+- You only need the behavior during local development.
+- You need rewrites, custom responses, or conditional logic beyond a simple redirect.
+
+For production request-time behavior that goes beyond redirects, write [Nitro middleware](https://nitro.build/guide/middleware) in `server/middleware/` instead. Unlike Aero's `middleware` config, Nitro middleware runs in the deployed server.

@@ -1,0 +1,195 @@
+---
+title: 'Templating'
+description: 'Use { } expressions, loops, conditionals, and switch/case to generate HTML at build time.'
+---
+
+## The problem
+
+Static HTML has no way to inject dynamic values, repeat elements from a list, or conditionally show content. If you want a page title pulled from a data file, or a list of blog posts generated from a collection, you either hand-write every line or reach for a full framework.
+
+## What this looks like without Aero
+
+In plain HTML, you would duplicate markup by hand or write client-side JavaScript that builds DOM nodes after the page loads:
+
+```html
+<ul>
+  <li>Post one</li>
+  <li>Post two</li>
+  <li>Post three</li>
+  <!-- add a fourth? edit the HTML -->
+</ul>
+```
+
+If the list comes from a CMS or data file, you need a build tool or a client-side fetch-and-render step.
+
+## How Aero helps
+
+Aero adds a thin template layer to `.html` files: `{ }` expressions for dynamic values, and `for`, `if`, and `switch` directives as attributes on elements. All of this runs at build time — the output is plain static HTML with no runtime overhead.
+
+## Expressions
+
+Wrap any JavaScript expression in single braces to interpolate it into text content or an attribute value:
+
+```html
+<script is:build>
+	const title = 'Hello from Aero'
+	const href = '/docs'
+</script>
+
+<h1>{ title }</h1>
+<a href="{ href }">Read the docs</a>
+```
+
+Text interpolations are automatically HTML-escaped to prevent XSS:
+
+```html
+<script is:build>
+  const name = '<script>alert("xss")</script>'
+</script>
+<p>Hello { name }</p>
+<!-- Output: <p>Hello &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;</p> -->
+```
+
+Use `raw()` when you intentionally need to output unescaped HTML:
+
+```html
+<script is:build>
+	const html = '<strong>bold</strong>'
+</script>
+<p>{ raw(html) }</p>
+<!-- Output: <p><strong>bold</strong></p> -->
+```
+
+### Escaping literal braces
+
+Inside attribute values, `{{` and `}}` produce literal `{` and `}` characters:
+
+```html
+<div data-value="{{ literal braces }}">…</div>
+```
+
+## Loops
+
+Use `for` or `data-for` with a JavaScript `for…of` head to repeat an element. Destructuring is supported:
+
+```html
+<script is:build>
+	const items = ['a', 'b', 'c']
+</script>
+
+<ul>
+	<li data-for="{ const item of items }">{ item }</li>
+</ul>
+```
+
+Inside the loop body, Aero injects these variables automatically:
+
+| Variable | Description                                      |
+| -------- | ------------------------------------------------ |
+| `index`  | 0-based position in the iterable                 |
+| `first`  | `true` on the first iteration                    |
+| `last`   | `true` on the last iteration                     |
+| `length` | The iterable's `.length` (meaningful for arrays) |
+
+```html
+<li data-for="{ const item of items }">
+	{ item } (index: { index }, first: { first }, last: { last }, length: { length })
+</li>
+```
+
+<Note>
+	If your binding pattern declares a name that collides with an injected variable (e.g. `const{' '}
+	{length} of rows`), it shadows the injected value inside that iteration.
+</Note>
+
+## Conditionals
+
+Use `if`, `else-if`, and `else` as attributes to conditionally render elements:
+
+```html
+<div if="{ user }">Hello, { user.name }</div>
+<p else>Not logged in.</p>
+```
+
+Chain multiple conditions with `else-if`:
+
+```html
+<p if="{ status === 'loading' }">Loading…</p>
+<p else-if="{ status === 'error' }">Something went wrong.</p>
+<p else>{ data.message }</p>
+```
+
+## Switch / case / default
+
+For matching one value against multiple alternatives, use `switch` on a container element and `case` on its children:
+
+```html
+<div switch="{ status }">
+	<p case="loading">Loading…</p>
+	<p case="ready">Ready</p>
+	<p default>Other</p>
+</div>
+```
+
+To match against multiple values with one `case`, use array syntax:
+
+```html
+<div switch="{ role }">
+	<p case="{ ['admin', 'moderator'] }">Elevated access</p>
+	<p default>Standard access</p>
+</div>
+```
+
+## Wrapperless output with `<template>`
+
+By default, `for`, `if`, and `switch` preserve their host element in the output — `<div if="{ x }">` renders a `<div>` when the condition is true. When you need only the inner markup without an extra wrapper element, put the directive on `<template>` instead. Aero erases the `<template>` tag and emits only the children.
+
+### Wrapperless conditionals
+
+```html
+<template if="{ showDetails }">
+	<dl class="details">…</dl>
+</template>
+
+<template else-if="{ showSummary }">
+	<p class="summary">…</p>
+</template>
+
+<template else>
+	<p>Default.</p>
+</template>
+```
+
+### Wrapperless loops
+
+```html
+<ul>
+	<template for="{ const item of items }">
+		<li>{ item.name }</li>
+	</template>
+</ul>
+```
+
+The list items become direct children of `<ul>` with no extra element in the tree.
+
+### Wrapperless switch
+
+```html
+<template switch="{ state }">
+	<p case="loading">Loading…</p>
+	<section case="ready">…</section>
+	<p default>Fallback</p>
+</template>
+```
+
+<Tip>
+  `<template>` is particularly useful in restricted HTML contexts — like inside `<table>`, `<tbody>`, or `<select>` — where an extra `<div>` would be invalid markup.
+</Tip>
+
+<Note>
+  A `<template>` tag **without** a structural directive (`if`, `for`, `switch`) is passed through as a real `<template>` element in the HTML output. The browser keeps its contents inert until your client script clones or adopts them.
+</Note>
+
+## data- prefix
+
+All custom directive attributes (`for`, `if`, `else`, `switch`, `case`, `default`, `props`) also accept a `data-` prefix for strict HTML spec compliance: `data-for`, `data-if`, `data-else`, etc. Both forms are equivalent; the shorthand is preferred for readability.

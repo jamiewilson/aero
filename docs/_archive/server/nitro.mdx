@@ -1,0 +1,343 @@
+---
+title: 'Nitro'
+description: 'Add API routes, storage, caching, and server-side features to your Aero site.'
+---
+
+## The problem
+
+Static sites work well until you need server-side behavior — form submissions, authenticated API routes, server-side caching, or a database. At that point, you either bolt on a separate backend project or rewrite with a full-stack framework.
+
+## What this looks like without Aero
+
+You set up a separate API server, manage CORS between your static site and the API, and deploy two services instead of one. The frontend and backend have no shared project structure or deployment pipeline.
+
+## How Aero helps
+
+Aero is static-first: `pnpm build` produces a plain `dist/` you can deploy anywhere. When you need API routes, server-side logic, or a dynamic server, opt in to [Nitro](https://nitro.build) with a single config flag. Nitro wraps your built HTML — it does not replace Aero's page compiler. You get API routes, storage, caching, and deployment presets from the same project.
+
+<Note>Enable Nitro only when you need it. Static sites have no server to manage or pay for.</Note>
+
+## Enable Nitro
+
+Set `server: true` in your `aero.config.ts`:
+
+```ts
+// aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	server: true,
+})
+```
+
+Then add a `nitro.config.ts` at the project root for any Nitro-specific configuration:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	runtimeConfig: {
+		appName: 'My Aero App',
+	},
+	routeRules: {
+		'/api/cache/**': { swr: 60 },
+	},
+})
+```
+
+## File conventions
+
+Nitro's normal project structure works in Aero. Place server files under `server/`:
+
+```plaintext
+.
+├── client/
+├── content/
+├── server/
+│   ├── api/           → API handlers at /api/*
+│   ├── routes/        → Additional route handlers
+│   ├── middleware/    → Nitro request-time middleware (runs in production)
+│   ├── plugins/       → Nitro lifecycle hooks
+│   ├── tasks/         → Runnable server tasks
+│   └── entry.ts       → Custom server entry point
+├── aero.config.ts
+├── nitro.config.ts
+└── vite.config.ts
+```
+
+<Info>
+	`server/middleware/` is for Nitro middleware that runs in production. Aero's `middleware` config
+	option is separate and only runs in dev. See [Middleware &
+	Redirects](/server/middleware-redirects) for details.
+</Info>
+
+## API handlers
+
+Files in `server/api/` are served at `/api/...`. The filename determines the route and HTTP method — `submit.post.ts` handles `POST /api/submit`.
+
+```ts
+// server/api/submit.post.ts
+import { defineHandler, readBody } from 'nitro/h3'
+
+export default defineHandler(async event => {
+	const body = await readBody(event)
+	return { ok: true, message: body.message }
+})
+```
+
+Use route parameters with `[param]` in the filename:
+
+```ts
+// server/api/users/[id].ts
+import { createError, defineHandler, getRouterParam } from 'nitro/h3'
+
+export default defineHandler(event => {
+	const id = getRouterParam(event, 'id')
+
+	if (!id) {
+		throw createError({
+			statusCode: 400,
+			message: 'User ID is required',
+		})
+	}
+
+	return { id, name: `User ${id}` }
+})
+```
+
+## KV storage
+
+Use Nitro's storage layer via `useStorage`. Configure storage drivers in `nitro.config.ts`:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	storage: {
+		data: {
+			driver: 'fs',
+			base: './.data/kv',
+		},
+	},
+	devStorage: {
+		cache: {
+			driver: 'fs',
+			base: './.data/cache',
+		},
+	},
+})
+```
+
+Then read and write from any handler:
+
+```ts
+// server/api/kv/[key].ts
+import { defineHandler, getRouterParam } from 'nitro/h3'
+import { useStorage } from 'nitro/storage'
+
+export default defineHandler(async event => {
+	const key = getRouterParam(event, 'key')
+	const storage = useStorage('data')
+
+	return {
+		key,
+		value: key ? await storage.getItem(key) : null,
+	}
+})
+```
+
+## Caching
+
+Use `defineCachedHandler` to cache a handler's response, or `defineCachedFunction` to cache an arbitrary async function:
+
+<CodeGroup>
+
+```ts server/api/cache/time.ts
+import { defineCachedHandler } from 'nitro/cache'
+
+export default defineCachedHandler(
+	() => ({
+		now: new Date().toISOString(),
+	}),
+	{
+		maxAge: 60,
+		name: 'time',
+	}
+)
+```
+
+```ts server/api/cache/summary.ts
+import { defineCachedFunction } from 'nitro/cache'
+import { defineHandler } from 'nitro/h3'
+
+const cachedSummary = defineCachedFunction(
+	async (section: string) => ({
+		section,
+		generatedAt: new Date().toISOString(),
+	}),
+	{
+		maxAge: 60,
+		name: 'summary',
+		getKey: section => section,
+	}
+)
+
+export default defineHandler(async () => cachedSummary('docs'))
+```
+
+</CodeGroup>
+
+You can also apply cache rules to entire route patterns via `routeRules` in `nitro.config.ts`:
+
+```ts
+// nitro.config.ts
+routeRules: {
+  '/api/cache/**': { swr: 60 },
+},
+```
+
+## Database
+
+Nitro's built-in SQL layer is available behind an experimental flag. Enable it in `nitro.config.ts`, then use `useDatabase` in your handlers:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	experimental: {
+		database: true,
+	},
+	database: {
+		default: {
+			connector: 'sqlite',
+			options: { name: 'db' },
+		},
+	},
+	devDatabase: {
+		default: {
+			connector: 'sqlite',
+			options: { name: 'db-dev' },
+		},
+	},
+})
+```
+
+```ts
+// server/api/users/index.ts
+import { defineHandler } from 'nitro/h3'
+import { useDatabase } from 'nitro/database'
+
+export default defineHandler(async () => {
+	const db = useDatabase()
+
+	await db.sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `
+
+	const { rows } = await db.sql`SELECT * FROM users ORDER BY created_at DESC`
+	return rows
+})
+```
+
+## Plugins and tasks
+
+Plugins let you hook into Nitro's lifecycle. Tasks let you run server-side work on demand.
+
+<CodeGroup>
+
+```ts server/plugins/runtime.ts
+import { definePlugin } from 'nitro'
+
+export default definePlugin(nitroApp => {
+	nitroApp.hooks.hook('response', response => {
+		response.headers.set('x-aero-nitro', 'true')
+	})
+})
+```
+
+```ts server/tasks/cache/warm.ts
+import { defineTask } from 'nitro/task'
+
+export default defineTask({
+	meta: {
+		description: 'Warm the demo cache',
+	},
+	run() {
+		return {
+			result: { warmedAt: new Date().toISOString() },
+		}
+	},
+})
+```
+
+</CodeGroup>
+
+Trigger a task from an API handler using `runTask`:
+
+```ts
+// server/api/tasks/cache-warm.post.ts
+import { defineHandler } from 'nitro/h3'
+import { runTask } from 'nitro/task'
+
+export default defineHandler(async () => {
+	const { result } = await runTask('cache:warm')
+	return { result }
+})
+```
+
+## Route rules and runtime config
+
+Use `routeRules` for cache headers, CORS, auth, or proxying. Use `runtimeConfig` for secrets and environment values:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	runtimeConfig: {
+		apiSecret: process.env.NITRO_API_SECRET,
+	},
+	routeRules: {
+		'/api/**': { cors: true },
+		'/docs/**': { headers: { 'cache-control': 'public, max-age=300' } },
+		'/admin/**': { basicAuth: { username: 'admin', password: 'secret' } },
+	},
+})
+```
+
+## Deployment presets
+
+Set a `preset` in `nitro.config.ts` to target your deployment platform:
+
+```ts
+// nitro.config.ts
+import { defineNitroConfig } from 'nitro/config'
+
+export default defineNitroConfig({
+	preset: 'cloudflare_pages',
+})
+```
+
+Nitro supports presets for Cloudflare Pages, Vercel, AWS Lambda, and many more. See the [Nitro deployment docs](https://nitro.build/deploy) for the full list.
+
+## Preview commands
+
+After a production build, choose how to preview:
+
+| Command            | What runs                                                                        |
+| ------------------ | -------------------------------------------------------------------------------- |
+| `pnpm preview`     | Static files only — no Nitro APIs                                                |
+| `pnpm preview:api` | Full Nitro server from `.output/`, including API routes, middleware, and storage |
+
+<Tip>
+	Use `pnpm preview:api` to test your API routes locally before deploying. The `.output/` bundle
+	contains both your static HTML and the Nitro server.
+</Tip>

@@ -1,0 +1,31 @@
+---
+title: 'Pages'
+description: 'The client/pages directory maps HTML files to URLs with no router config.'
+sidebarTitle: 'Pages'
+---
+
+Every `.html` file under `client/pages/` becomes a route. The file path maps directly to the URL:
+
+| File                            | URL           |
+| ------------------------------- | ------------- |
+| `client/pages/index.html`       | `/`           |
+| `client/pages/about.html`       | `/about`      |
+| `client/pages/docs/index.html`  | `/docs`       |
+| `client/pages/blog/[slug].html` | `/blog/:slug` |
+
+A page can be plain HTML, or include a `<script is:build>` block to import layouts, components, and data:
+
+```html
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+	import site from '@content/site'
+</script>
+
+<base-layout>
+	<header-component title="{ site.title }" />
+	<p>{ site.description }</p>
+</base-layout>
+```
+
+For dynamic segments, `getStaticPaths()`, and generated route helpers, see [Pages & routing](/concepts/routing).
