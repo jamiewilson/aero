@@ -16,7 +16,10 @@ export {
 } from './escapes'
 
 /** Compute line and column from a byte offset in source text (1-based line, 0-based column). */
-function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
+export function lineColumnAtOffset(
+	source: string,
+	offset: number
+): { line: number; column: number } {
 	const o = Math.max(0, Math.min(offset, source.length))
 	let line = 1
 	let lineStart = 0

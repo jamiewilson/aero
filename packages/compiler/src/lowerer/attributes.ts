@@ -7,44 +7,145 @@ import * as Helper from '../helpers'
 import { isDirectiveAttr } from '../directive-attributes'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
+import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, type ParsedForDirective } from '../for-directive'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
-function isTemplateDirectiveAttr(attrName: string): boolean {
-	return (
-		Helper.isAttr(attrName, CONST.ATTR_IF, CONST.ATTR_PREFIX) ||
-		Helper.isAttr(attrName, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX) ||
-		Helper.isAttr(attrName, CONST.ATTR_ELSE, CONST.ATTR_PREFIX) ||
-		Helper.isAttr(attrName, CONST.ATTR_FOR, CONST.ATTR_PREFIX) ||
-		Helper.isAttr(attrName, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)
+type AttrLike = { name: string; value?: string | null }
+type NodeLike = {
+	nodeType?: number
+	tagName?: string
+	attributes?: ArrayLike<AttrLike>
+	hasAttribute?: (name: string) => boolean
+}
+
+const TEMPLATE_DIRECTIVE_ATTRS = [
+	CONST.ATTR_IF,
+	CONST.ATTR_ELSE_IF,
+	CONST.ATTR_ELSE,
+	CONST.ATTR_FOR,
+	CONST.ATTR_SWITCH,
+] as const
+
+const NON_PROP_COMPONENT_DIRECTIVE_ATTRS = [
+	...TEMPLATE_DIRECTIVE_ATTRS,
+	CONST.ATTR_CASE,
+	CONST.ATTR_DEFAULT,
+] as const
+
+const NON_EMIT_ELEMENT_DIRECTIVE_ATTRS = [
+	CONST.ATTR_IF,
+	CONST.ATTR_ELSE_IF,
+	CONST.ATTR_ELSE,
+	CONST.ATTR_CASE,
+	CONST.ATTR_DEFAULT,
+] as const
+
+function hasDirectiveAttr(node: NodeLike, directiveName: string): boolean {
+	return Boolean(
+		node?.hasAttribute?.(directiveName) || node?.hasAttribute?.(CONST.ATTR_PREFIX + directiveName)
 	)
 }
 
-export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: any): void {
+function isDirectiveAttrName(attrName: string, directives: readonly string[]): boolean {
+	for (const directive of directives) {
+		if (Helper.isAttr(attrName, directive, CONST.ATTR_PREFIX)) return true
+	}
+	return false
+}
+
+function getTagName(node: NodeLike): string {
+	return node?.tagName?.toLowerCase?.() || 'element'
+}
+
+function forEachAttribute(node: NodeLike, visit: (attr: AttrLike) => void): void {
+	const attrs = node?.attributes
+	if (!attrs || attrs.length === 0) return
+	for (let i = 0; i < attrs.length; i++) {
+		visit(attrs[i])
+	}
+}
+
+function validateBracedDirectiveValue(
+	node: NodeLike,
+	diag: LowererDiag,
+	attrName: string,
+	value: string
+): string {
+	return Helper.validateSingleBracedExpression(value, {
+		directive: attrName,
+		tagName: getTagName(node),
+		diagnosticSource: diag?.source,
+		diagnosticFile: diag?.file,
+		positionNeedle: diag ? `${attrName}="${value}"` : undefined,
+	})
+}
+
+function parseForAttribute(
+	node: NodeLike,
+	diag: LowererDiag,
+	attr: AttrLike
+): { binding: string; items: string } | null {
+	if (!Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) return null
+	const rawValue = attr.value || ''
+	const content = Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, rawValue))
+	let parsed: ParsedForDirective
+	try {
+		parsed = parseForDirective(content)
+	} catch (e) {
+		const msg =
+			e instanceof Error
+				? e.message
+				: `Directive \`${attr.name}\` on <${getTagName(node)}> must be a valid for…of head: const … of …`
+		const needle = `${attr.name}="${rawValue}"`
+		if (diag?.source && needle.length > 0) {
+			const idx = diag.source.indexOf(needle)
+			if (idx >= 0) {
+				const { line, column } = Helper.lineColumnAtOffset(diag.source, idx)
+				throw new CompileError({
+					message: msg,
+					file: diag.file,
+					line,
+					column,
+				})
+			}
+		}
+		if (diag?.file) {
+			throw new CompileError({ message: msg, file: diag.file })
+		}
+		throw new Error(msg)
+	}
+	return { binding: parsed.binding, items: parsed.iterable }
+}
+
+function buildEmittedAttribute(resolver: Resolver, attr: AttrLike): string | null {
+	if (attr.name === CONST.ATTR_IS_INLINE) return null
+	let val = resolver.resolveAttrValue(attr.value ?? '')
+	if (!isDirectiveAttr(attr.name)) {
+		val = Helper.compileAttributeInterpolation(val)
+	}
+	return `${attr.name}="${val}"`
+}
+
+export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: NodeLike): void {
 	if (!diag?.onWarning) return
 	if (node?.nodeType !== 1) return
-	if (typeof node.tagName !== 'string' || node.tagName.toLowerCase() !== CONST.TAG_TEMPLATE) return
+	if (typeof node.tagName !== 'string' || getTagName(node) !== CONST.TAG_TEMPLATE) return
 	if (!node.attributes || node.attributes.length === 0) return
 	const isWrapperlessTemplate =
-		node.hasAttribute(CONST.ATTR_IF) ||
-		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_IF) ||
-		node.hasAttribute(CONST.ATTR_ELSE_IF) ||
-		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE_IF) ||
-		node.hasAttribute(CONST.ATTR_ELSE) ||
-		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE) ||
-		node.hasAttribute(CONST.ATTR_FOR) ||
-		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_FOR) ||
-		node.hasAttribute(CONST.ATTR_SWITCH) ||
-		node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_SWITCH)
+		hasDirectiveAttr(node, CONST.ATTR_IF) ||
+		hasDirectiveAttr(node, CONST.ATTR_ELSE_IF) ||
+		hasDirectiveAttr(node, CONST.ATTR_ELSE) ||
+		hasDirectiveAttr(node, CONST.ATTR_FOR) ||
+		hasDirectiveAttr(node, CONST.ATTR_SWITCH)
 	if (!isWrapperlessTemplate) return
 
 	const invalid: string[] = []
-	for (let i = 0; i < node.attributes.length; i++) {
-		const attr = node.attributes[i]
-		if (!attr?.name) continue
-		if (isTemplateDirectiveAttr(attr.name)) continue
+	forEachAttribute(node, attr => {
+		if (!attr?.name) return
+		if (isDirectiveAttrName(attr.name, TEMPLATE_DIRECTIVE_ATTRS)) return
 		invalid.push(attr.name)
-	}
+	})
 	if (invalid.length === 0) return
 	const unique = [...new Set(invalid)].sort()
 	diag.onWarning({
@@ -55,92 +156,52 @@ export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: any):
 	})
 }
 
-function lineColumnAtOffset(source: string, offset: number): { line: number; column: number } {
-	const o = Math.max(0, Math.min(offset, source.length))
-	let line = 1
-	let lineStart = 0
-	for (let i = 0; i < o; i++) {
-		if (source.charCodeAt(i) === 10) {
-			line++
-			lineStart = i + 1
-		}
-	}
-	return { line, column: o - lineStart }
-}
-
 export function isSingleWrappedExpression(value: string): boolean {
 	const trimmed = value.trim()
-	if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return false
-	if (trimmed.startsWith('{{') || trimmed.endsWith('}}')) return false
-
-	let depth = 0
-	for (let i = 0; i < trimmed.length; i++) {
-		const char = trimmed[i]
-		if (char === '{') depth++
-		if (char === '}') {
-			depth--
-			if (depth < 0) return false
-			if (depth === 0 && i !== trimmed.length - 1) {
-				return false
-			}
-		}
-	}
-
-	return depth === 0
+	if (!trimmed) return false
+	const segments = tokenizeCurlyInterpolation(trimmed, { attributeMode: true })
+	return (
+		segments.length === 1 &&
+		segments[0].kind === 'interpolation' &&
+		segments[0].start === 0 &&
+		segments[0].end === trimmed.length
+	)
 }
 
 /** Parses component attributes, extracting props and data-props */
-export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedComponentAttrs {
+export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): ParsedComponentAttrs {
 	const propsEntries: string[] = []
 	let dataPropsExpression: string | null = null
 
-	if (node.attributes) {
-		for (let i = 0; i < node.attributes.length; i++) {
-			const attr = node.attributes[i]
-			if (Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_CASE, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_DEFAULT, CONST.ATTR_PREFIX)) continue
+	forEachAttribute(node, attr => {
+		if (isDirectiveAttrName(attr.name, NON_PROP_COMPONENT_DIRECTIVE_ATTRS)) return
 
-			if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
-				const value = attr.value?.trim() || ''
-				if (!value) {
-					dataPropsExpression = '...props'
-				} else {
-					const tagName = node?.tagName?.toLowerCase?.() || 'element'
-					const needle = `${attr.name}="${value}"`
-					dataPropsExpression = Helper.stripBraces(
-						Helper.validateSingleBracedExpression(value, {
-							directive: attr.name,
-							tagName,
-							diagnosticSource: diag?.source,
-							diagnosticFile: diag?.file,
-							positionNeedle: diag ? needle : undefined,
-						})
-					)
-				}
-				continue
-			}
-
-			const rawValue = attr.value ?? ''
-			const escapedLiteral = Helper.escapeBackticks(rawValue)
-			let propVal: string
-
-			if (isSingleWrappedExpression(rawValue)) {
-				propVal = Helper.stripBraces(escapedLiteral)
+		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+			const value = attr.value?.trim() || ''
+			if (!value) {
+				dataPropsExpression = '...props'
 			} else {
-				const compiled = Helper.compileAttributeInterpolation(rawValue)
-				const hasInterpolation =
-					compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
-				propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
+				dataPropsExpression = Helper.stripBraces(
+					validateBracedDirectiveValue(node, diag, attr.name, value)
+				)
 			}
-
-			propsEntries.push(`${attr.name}: ${propVal}`)
+			return
 		}
-	}
+
+		const rawValue = attr.value ?? ''
+		let propVal: string
+
+		if (isSingleWrappedExpression(rawValue)) {
+			propVal = Helper.stripBraces(rawValue)
+		} else {
+			const compiled = Helper.compileAttributeInterpolation(rawValue)
+			const hasInterpolation =
+				compiled.includes('${') || rawValue.includes('{{') || rawValue.includes('}}')
+			propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
+		}
+
+		propsEntries.push(`${JSON.stringify(attr.name)}: ${propVal}`)
+	})
 
 	const propsString = Helper.buildPropsString(propsEntries, dataPropsExpression)
 	return { propsString }
@@ -150,105 +211,41 @@ export function parseComponentAttributes(node: any, diag: LowererDiag): ParsedCo
 export function parseElementAttributes(
 	resolver: Resolver,
 	diag: LowererDiag,
-	node: any
+	node: NodeLike
 ): ParsedElementAttrs {
 	const attributes: string[] = []
 	let loopData: { binding: string; items: string } | null = null
 	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
 
-	if (node.attributes) {
-		for (let i = 0; i < node.attributes.length; i++) {
-			const attr = node.attributes[i]
-			if (Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) {
-				const tagName = node?.tagName?.toLowerCase?.() || 'element'
-				const needle = `${attr.name}="${attr.value ?? ''}"`
-				const content = Helper.stripBraces(
-					Helper.validateSingleBracedExpression(attr.value || '', {
-						directive: attr.name,
-						tagName,
-						diagnosticSource: diag?.source,
-						diagnosticFile: diag?.file,
-						positionNeedle: diag ? needle : undefined,
-					})
-				)
-				let parsed: ParsedForDirective
-				try {
-					parsed = parseForDirective(content)
-				} catch (e) {
-					const msg =
-						e instanceof Error
-							? e.message
-							: `Directive \`${attr.name}\` on <${node?.tagName?.toLowerCase?.() || 'element'}> must be a valid for…of head: const … of …`
-					if (diag?.source && needle.length > 0) {
-						const idx = diag.source.indexOf(needle)
-						if (idx >= 0) {
-							const { line, column } = lineColumnAtOffset(diag.source, idx)
-							throw new CompileError({
-								message: msg,
-								file: diag.file,
-								line,
-								column,
-							})
-						}
-					}
-					if (diag?.file) {
-						throw new CompileError({ message: msg, file: diag.file })
-					}
-					throw new Error(msg)
-				}
-				loopData = { binding: parsed.binding, items: parsed.iterable }
-				continue
-			}
-
-			if (Helper.isAttr(attr.name, CONST.ATTR_IF, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE_IF, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_ELSE, CONST.ATTR_PREFIX)) continue
-
-			if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
-				const tagName = node?.tagName?.toLowerCase?.() || 'element'
-				const needle = `${attr.name}="${attr.value ?? ''}"`
-				switchExpr = Helper.stripBraces(
-					Helper.validateSingleBracedExpression(attr.value || '', {
-						directive: attr.name,
-						tagName,
-						diagnosticSource: diag?.source,
-						diagnosticFile: diag?.file,
-						positionNeedle: diag ? needle : undefined,
-					})
-				)
-				continue
-			}
-
-			if (Helper.isAttr(attr.name, CONST.ATTR_CASE, CONST.ATTR_PREFIX)) continue
-			if (Helper.isAttr(attr.name, CONST.ATTR_DEFAULT, CONST.ATTR_PREFIX)) continue
-
-			if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
-				const value = attr.value?.trim() || ''
-				passDataExpr = value
-					? Helper.validateSingleBracedExpression(value, {
-							directive: attr.name,
-							tagName: node?.tagName?.toLowerCase?.() || 'element',
-							diagnosticSource: diag?.source,
-							diagnosticFile: diag?.file,
-							positionNeedle: diag ? `${attr.name}="${value}"` : undefined,
-						})
-					: '{ ...props }'
-				continue
-			}
-
-			if (attr.name === CONST.ATTR_IS_INLINE) {
-				continue
-			}
-
-			let val = resolver.resolveAttrValue(attr.value ?? '')
-
-			if (!isDirectiveAttr(attr.name)) {
-				val = Helper.compileAttributeInterpolation(val)
-			}
-			attributes.push(`${attr.name}="${val}"`)
+	forEachAttribute(node, attr => {
+		const parsedFor = parseForAttribute(node, diag, attr)
+		if (parsedFor) {
+			loopData = parsedFor
+			return
 		}
-	}
+
+		if (isDirectiveAttrName(attr.name, NON_EMIT_ELEMENT_DIRECTIVE_ATTRS)) return
+
+		if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
+			switchExpr = Helper.stripBraces(
+				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+			)
+			return
+		}
+
+		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+			const value = attr.value?.trim() || ''
+			passDataExpr = value
+				? validateBracedDirectiveValue(node, diag, attr.name, value)
+				: '{ ...props }'
+			return
+		}
+
+		const emitted = buildEmittedAttribute(resolver, attr)
+		if (!emitted) return
+		attributes.push(emitted)
+	})
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
 	return { attrString, loopData, switchExpr, passDataExpr }

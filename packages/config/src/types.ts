@@ -7,7 +7,7 @@
  */
 import type { UserConfig } from 'vite'
 import type { AeroContentOptions } from '@aero-js/content/vite'
-import type { AeroDirs, AeroMiddleware, RedirectRule } from '@aero-js/core/types'
+import type { AeroDirs, AeroOptions, RedirectRule } from '@aero-js/core/types'
 
 /** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
 export interface AeroConfig {
@@ -36,7 +36,7 @@ export interface AeroConfig {
 	 * Request-time middleware (rewrites, custom responses). Runs in dev only.
 	 * For redirects use `redirects` so they apply in dev and server.
 	 */
-	middleware?: AeroMiddleware[]
+	middleware?: NonNullable<AeroOptions['middleware']>
 
 	/** Vite configuration merged with Aero defaults (plugins, build, etc.). */
 	vite?: UserConfig
