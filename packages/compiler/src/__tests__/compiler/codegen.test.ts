@@ -471,6 +471,48 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ count: 42, enabled: true })
 	})
 
+	it('should allow hyphenated component prop names', async () => {
+		const html = `<script is:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component aria-label="Greeting" data-test-id="{ 'abc-123' }" />`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const renderedProps: any[] = []
+		const Aero = {
+			renderComponent: async (_comp: any, props: any) => {
+				renderedProps.push(props)
+				return ''
+			},
+		}
+
+		await execute(code, Aero)
+		expect(renderedProps[0]).toEqual({ 'aria-label': 'Greeting', 'data-test-id': 'abc-123' })
+	})
+
+	it('should preserve backticks in single braced component prop expressions', async () => {
+		const html = `<script is:build>
+										const myComp = { name: 'comp' };
+									</script>
+									<my-comp-component title="{ \`Hello\` }" />`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+
+		const renderedProps: any[] = []
+		const Aero = {
+			renderComponent: async (_comp: any, props: any) => {
+				renderedProps.push(props)
+				return ''
+			},
+		}
+
+		await execute(code, Aero)
+		expect(renderedProps[0]).toEqual({ title: 'Hello' })
+	})
+
 	it('should support escaped literal braces in component prop strings via double braces', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };

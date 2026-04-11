@@ -51,8 +51,7 @@ export interface AeroOptions {
 }
 
 /** Request context passed to middleware (url, request, route path, resolved page name, site). */
-// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
-interface AeroRequestContext {
+export interface AeroRequestContext {
 	url: URL
 	request: Request
 	routePath: string
@@ -68,8 +67,7 @@ export type AeroMiddlewareResult =
 	| void
 
 /** Middleware handler: receives request context; returns redirect/rewrite/response or nothing to continue. */
-// fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
-type AeroMiddleware = (
+export type AeroMiddleware = (
 	ctx: AeroRequestContext
 ) => AeroMiddlewareResult | Promise<AeroMiddlewareResult>
 

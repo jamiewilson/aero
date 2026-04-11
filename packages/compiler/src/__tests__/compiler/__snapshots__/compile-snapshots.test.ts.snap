@@ -13,7 +13,7 @@ export default async function(Aero) {
 		
 		let __out = '';
 		let __slot_0 = '';
-__out += await Aero.renderComponent(my, { title: "a\\"b", data-x: x }, { "default": __slot_0 }, { page: Aero.page, site: Aero.site, styles, scripts, headScripts });
+__out += await Aero.renderComponent(my, { "title": "a\\"b", "data-x": x }, { "default": __slot_0 }, { page: Aero.page, site: Aero.site, styles, scripts, headScripts });
 return __out;
 	}"
 `;
