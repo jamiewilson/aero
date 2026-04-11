@@ -29,10 +29,6 @@ Shared **parsing and codegen** live in **`packages/compiler`** (`@aero-js/compil
 
 Use named constants: `ATTR_PROPS`, `ATTR_FOR`, `ATTR_IF`, `ATTR_ELSE_IF`, `ATTR_ELSE`, `ATTR_IS_BUILD`, `ATTR_IS_INLINE`, `ATTR_IS_BLOCKING`, `TAG_SLOT`, `SLOT_NAME_DEFAULT`, `COMPONENT_SUFFIX_REGEX`, `CURLY_INTERPOLATION_REGEX`, `ALPINE_ATTR_REGEX`, `VOID_TAGS`.
 
-## TDD (red-to-green)
-
-When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
-
 ## Tests
 
 - **packages/compiler** — `src/__tests__/` (parser, codegen, build-script-analysis, etc.).
@@ -42,8 +38,6 @@ When implementing new features or tracking down bugs, use TDD: (1) write or run 
 ## Documentation and discoveries
 
 Document any discoveries made during code exploration in [_reference/DISCOVERY.md](../../_reference/DISCOVERY.md).
-
-Canonical principles: [_reference/aero-principles-and-goals.md](../../_reference/aero-principles-and-goals.md).
 
 ## Gotchas
 

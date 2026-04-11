@@ -10,10 +10,6 @@ Document discoveries from code exploration in [_reference/DISCOVERY.md](_referen
 
 Full script taxonomy: [Scripts](docs/concepts/scripts.mdx). Legacy `on:build` / `on:client` were replaced by `is:build` and plain `<script>` (client).
 
-## TDD (red-to-green)
-
-When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
-
 ## Component Naming
 
 Use `-component` or `-layout` suffix in markup; import without suffix (resolves to .html):
