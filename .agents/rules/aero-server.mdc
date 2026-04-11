@@ -12,10 +12,6 @@ Document discoveries from code exploration in [_reference/DISCOVERY.md](../../_r
 
 API handlers and Nitro routes live in the **app’s** server directory—commonly `server/` (e.g. `packages/starters/fullstack/server/`) or `backend/` when configured (e.g. `examples/kitchen-sink/backend/`). Nitro is configured at the **app root** (`nitro.config.ts`) alongside `aero.config.ts` / Vite config.
 
-## TDD (red-to-green)
-
-When implementing new features or tracking down bugs, use TDD: (1) write or run a failing test that captures the behavior or reproduces the bug (red); (2) implement the minimal change to make the test pass (green); (3) refactor if needed. For bugs, always add or adjust a failing test first; do not skip to the fix.
-
 ## API handlers
 
 - Use Nitro/H3: `defineHandler`, `readBody`, etc. from `nitro/h3`.
@@ -33,4 +29,4 @@ export default defineHandler(async event => {
 })
 ```
 
-See [Nitro](../../docs/server/nitro.mdx), [Deploy with Nitro](../../docs/deploy/nitro.mdx), and [_reference/aero-principles-and-goals.md](../../_reference/aero-principles-and-goals.md).
+See [Nitro](../../docs/server/nitro.mdx) and [Deploy with Nitro](../../docs/deploy/nitro.mdx).
