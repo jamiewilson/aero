@@ -142,6 +142,21 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(resultDataProps.clientScripts[0].passDataExpr).toBe('{ { theme } }')
 	})
 
+	it('should treat bare props attribute as props spread shorthand', () => {
+		const input = `<script props>console.log(props)</script>`
+		const result = parse(input)
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].passDataExpr).toBe('{ ...props }')
+	})
+
+	it('should strip a UTF-8 BOM prefix before parsing', () => {
+		const htmlWithBom = `\uFEFF<script is:build>const ready = true;</script><div>ok</div>`
+		const result = parse(htmlWithBom)
+		expect(result.buildScript).not.toBeNull()
+		expect(result.buildScript!.content).toContain('const ready = true;')
+		expect(result.template).toContain('<div>ok</div>')
+	})
+
 	it('should extract props expression from is:inline scripts', () => {
 		const input = `
             <script is:inline props="{ { config } }">

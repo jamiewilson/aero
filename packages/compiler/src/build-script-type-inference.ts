@@ -39,6 +39,63 @@ function createProgramForScript(script: string): {
 	return { program, sourceFile }
 }
 
+function recordTypeIfMissing(
+	out: Map<string, string>,
+	id: ts.Identifier,
+	checker: ts.TypeChecker
+): void {
+	const name = id.text
+	if (!name || out.has(name)) return
+	const symbol = checker.getSymbolAtLocation(id)
+	if (!symbol) return
+	const type = checker.getTypeAtLocation(id)
+	out.set(name, checker.typeToString(type))
+}
+
+function recordBindingPatternNames(
+	name: ts.BindingName,
+	record: (id: ts.Identifier) => void
+): void {
+	if (ts.isIdentifier(name)) {
+		record(name)
+		return
+	}
+	if (ts.isObjectBindingPattern(name) || ts.isArrayBindingPattern(name)) {
+		for (const el of name.elements) {
+			if (ts.isOmittedExpression(el)) continue
+			recordBindingPatternNames(el.name, record)
+		}
+	}
+}
+
+function recordImportBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+	for (const stmt of sourceFile.statements) {
+		if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue
+		const cl = stmt.importClause
+		if (cl.name) record(cl.name)
+		if (!cl.namedBindings) continue
+		if (ts.isNamespaceImport(cl.namedBindings)) {
+			record(cl.namedBindings.name)
+			continue
+		}
+		if (ts.isNamedImports(cl.namedBindings)) {
+			for (const el of cl.namedBindings.elements) record(el.name)
+		}
+	}
+}
+
+function recordDeclarationBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+	function visit(node: ts.Node) {
+		if (ts.isVariableDeclaration(node)) {
+			recordBindingPatternNames(node.name, record)
+		} else if (ts.isFunctionDeclaration(node) && node.name) {
+			record(node.name)
+		}
+		ts.forEachChild(node, visit)
+	}
+	ts.forEachChild(sourceFile, visit)
+}
+
 /**
  * All simple bindings in `script` mapped to checker-printed types (first occurrence wins).
  * Includes imports, `const`/`let`/`var` (incl. destructuring), and `function` declarations.
@@ -50,60 +107,11 @@ export function collectBindingTypeStringsFromBuildScript(script: string): Map<st
 	const { program, sourceFile } = createProgramForScript(script)
 	const checker = program.getTypeChecker()
 
-	function record(id: ts.Identifier) {
-		const name = id.text
-		if (!name || out.has(name)) return
-		const symbol = checker.getSymbolAtLocation(id)
-		if (!symbol) return
-		const type = checker.getTypeAtLocation(id)
-		out.set(name, checker.typeToString(type))
+	const record = (id: ts.Identifier): void => {
+		recordTypeIfMissing(out, id, checker)
 	}
-
-	function recordPattern(name: ts.BindingName) {
-		if (ts.isIdentifier(name)) {
-			record(name)
-			return
-		}
-		if (ts.isObjectBindingPattern(name)) {
-			for (const el of name.elements) {
-				if (ts.isOmittedExpression(el)) continue
-				if (ts.isIdentifier(el.name)) record(el.name)
-				else recordPattern(el.name)
-			}
-			return
-		}
-		if (ts.isArrayBindingPattern(name)) {
-			for (const el of name.elements) {
-				if (ts.isOmittedExpression(el)) continue
-				if (ts.isIdentifier(el.name)) record(el.name)
-				else recordPattern(el.name)
-			}
-		}
-	}
-
-	for (const stmt of sourceFile.statements) {
-		if (ts.isImportDeclaration(stmt) && stmt.importClause) {
-			const cl = stmt.importClause
-			if (cl.name) record(cl.name)
-			if (cl.namedBindings) {
-				if (ts.isNamespaceImport(cl.namedBindings)) record(cl.namedBindings.name)
-				else if (ts.isNamedImports(cl.namedBindings)) {
-					for (const el of cl.namedBindings.elements) record(el.name)
-				}
-			}
-		}
-	}
-
-	function visit(node: ts.Node) {
-		if (ts.isVariableDeclaration(node)) {
-			recordPattern(node.name)
-		} else if (ts.isFunctionDeclaration(node) && node.name) {
-			record(node.name)
-		}
-		ts.forEachChild(node, visit)
-	}
-
-	ts.forEachChild(sourceFile, visit)
+	recordImportBindings(sourceFile, record)
+	recordDeclarationBindings(sourceFile, record)
 	return out
 }
 

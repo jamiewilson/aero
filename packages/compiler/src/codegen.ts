@@ -8,16 +8,105 @@
  * then a single emitter turns IR → JS. Aero/Vite adds client scripts, blocking scripts, and virtual
  * client URLs via the same entry (no duplicate pipeline in core).
  */
+import type { CompileOptions, CompileWarning, ParseResult, ScriptEntry } from './types'
 
-import type { ParseResult, CompileOptions, CompileWarning } from './types'
-import { CodeBuilder } from './code-builder'
-import * as Helper from './helpers'
 import { stripBuildScriptTypes } from './build-script-analysis'
+import { CodeBuilder } from './code-builder'
+import { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
+import {
+	emitRenderFunction,
+	escapeTemplateLiteralContent,
+	validateSingleBracedExpression,
+} from './helpers'
+import { Lowerer } from './lowerer/lowerer'
 import { parse } from './parser'
 import { Resolver } from './resolver'
-import { Lowerer } from './lowerer/lowerer'
 import { buildTemplateAnalysis } from './template-analysis'
-import { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
+
+function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {
+	const hasVirtualClientScripts =
+		clientScripts?.some(clientScript => clientScript.content.startsWith(VIRTUAL_PREFIX)) ?? false
+
+	if (!hasVirtualClientScripts) {
+		return script
+	}
+
+	return new CodeBuilder()
+		.raw(`function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n`)
+		.raw(script)
+		.toString()
+}
+
+function collectClientScriptLines(clientScripts?: ScriptEntry[]): {
+	rootScripts: string[]
+	headScripts: string[]
+} {
+	const rootScripts: string[] = []
+	const headScripts: string[] = []
+
+	if (!clientScripts || clientScripts.length === 0) {
+		return { rootScripts, headScripts }
+	}
+
+	for (const clientScript of clientScripts) {
+		const { head, root } = emitClientScriptTag(clientScript, VIRTUAL_PREFIX)
+		headScripts.push(...head)
+		rootScripts.push(...root)
+	}
+	return { rootScripts, headScripts }
+}
+
+function findBlockingPropsNeedle(
+	source: string | undefined,
+	passDataExpr: string
+): string | undefined {
+	if (!source) return undefined
+
+	for (const needle of [`props="${passDataExpr}"`, `data-props="${passDataExpr}"`]) {
+		if (source.includes(needle)) {
+			return needle
+		}
+	}
+
+	return undefined
+}
+
+function renderBlockingScriptTag(blockingScript: ScriptEntry, options: CompileOptions): string {
+	const strippedContent = stripBuildScriptTypes(blockingScript.content, 'blocking.ts')
+	const escapedAttrs = blockingScript.attrs
+		? ` ${escapeTemplateLiteralContent(blockingScript.attrs)}`
+		: ''
+
+	if (!blockingScript.passDataExpr) {
+		const escapedContent = escapeTemplateLiteralContent(strippedContent)
+		return `\`<script${escapedAttrs}>${escapedContent}</script>\``
+	}
+
+	const blockingPropsNeedle = findBlockingPropsNeedle(
+		options.diagnosticTemplateSource,
+		blockingScript.passDataExpr
+	)
+
+	const passDataExpr = validateSingleBracedExpression(blockingScript.passDataExpr, {
+		directive: 'props',
+		tagName: 'script',
+		diagnosticSource: options.diagnosticTemplateSource,
+		diagnosticFile: options.importer,
+		positionNeedle: blockingPropsNeedle,
+	})
+
+	const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
+
+	return `\`<script${escapedAttrs}>\${${jsMapExpr}}${escapeTemplateLiteralContent(strippedContent)}</script>\``
+}
+
+function collectBlockingHeadScripts(
+	blockingScripts: ScriptEntry[] | undefined,
+	options: CompileOptions
+): string[] {
+	if (!blockingScripts || blockingScripts.length === 0) return []
+	return blockingScripts.map(blockingScript => renderBlockingScriptTag(blockingScript, options))
+}
 
 /**
  * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
@@ -29,84 +118,36 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		importer: options.importer,
 	})
 
-	const lowerer = new Lowerer(
-		resolver,
-		options.diagnosticTemplateSource !== undefined || options.onWarning
-			? {
-					source: options.diagnosticTemplateSource ?? '',
-					file: options.importer,
-					onWarning: options.onWarning
-						? (warning: CompileWarning) => {
-								options.onWarning?.({
-									...warning,
-									file: options.importer,
-								})
-							}
-						: undefined,
-				}
-			: undefined
-	)
-
-	const ta = buildTemplateAnalysis(parsed, options, resolver, lowerer)
-	let script = ta.scriptBody
-
-	const rootScripts: string[] = []
-	const headScripts: string[] = []
-
-	const virtualPrefix = VIRTUAL_PREFIX
-	const hasVirtualClientScripts =
-		options.clientScripts?.some(c => c.content.startsWith(virtualPrefix)) ?? false
-	if (hasVirtualClientScripts) {
-		script = new CodeBuilder()
-			.raw(`function __aeroScriptUrl(p){return '/'+'@aero/client/'+p}\n`)
-			.raw(script)
-			.toString()
-	}
-	if (options.clientScripts && options.clientScripts.length > 0) {
-		for (const clientScript of options.clientScripts) {
-			const { head, root } = emitClientScriptTag(clientScript, virtualPrefix)
-			headScripts.push(...head)
-			rootScripts.push(...root)
+	function buildLowererDiagnostics(options: CompileOptions) {
+		if (options.diagnosticTemplateSource === undefined && !options.onWarning) {
+			return undefined
 		}
-	}
 
-	if (options.blockingScripts) {
-		for (const blockingScript of options.blockingScripts) {
-			const strippedContent = stripBuildScriptTypes(blockingScript.content, 'blocking.ts')
-			const escapedAttrs = blockingScript.attrs
-				? ` ${Helper.escapeTemplateLiteralContent(blockingScript.attrs)}`
-				: ''
-			if (blockingScript.passDataExpr) {
-				let blockingPropsNeedle: string | undefined
-				if (options.diagnosticTemplateSource && blockingScript.passDataExpr) {
-					const src = options.diagnosticTemplateSource
-					const expr = blockingScript.passDataExpr
-					for (const n of [`props="${expr}"`, `data-props="${expr}"`]) {
-						if (src.includes(n)) {
-							blockingPropsNeedle = n
-							break
-						}
-					}
-				}
-				const passDataExpr = Helper.validateSingleBracedExpression(blockingScript.passDataExpr, {
-					directive: 'props',
-					tagName: 'script',
-					diagnosticSource: options.diagnosticTemplateSource,
-					diagnosticFile: options.importer,
-					positionNeedle: blockingPropsNeedle,
+		let onWarning: ((warning: CompileWarning) => void) | undefined
+		if (options.onWarning) {
+			onWarning = (warning: CompileWarning) => {
+				options.onWarning?.({
+					...warning,
+					file: options.importer,
 				})
-				const jsMapExpr = `Object.entries(${passDataExpr}).map(([k, v]) => "\\nconst " + k + " = " + escapeScriptJson(v) + ";").join("")`
-				headScripts.push(
-					`\`<script${escapedAttrs}>\${${jsMapExpr}}${Helper.escapeTemplateLiteralContent(strippedContent)}</script>\``
-				)
-			} else {
-				const escapedContent = Helper.escapeTemplateLiteralContent(strippedContent)
-				headScripts.push(`\`<script${escapedAttrs}>${escapedContent}</script>\``)
 			}
 		}
+
+		return {
+			source: options.diagnosticTemplateSource ?? '',
+			file: options.importer,
+			onWarning,
+		}
 	}
 
-	const renderFn = Helper.emitRenderFunction(script, ta.bodyCode, {
+	const lowerer = new Lowerer(resolver, buildLowererDiagnostics(options))
+
+	const ta = buildTemplateAnalysis(parsed, options, resolver, lowerer)
+	const script = addVirtualClientScriptHelper(ta.scriptBody, options.clientScripts)
+	const { rootScripts, headScripts } = collectClientScriptLines(options.clientScripts)
+	headScripts.push(...collectBlockingHeadScripts(options.blockingScripts, options))
+
+	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
 		styleCode: ta.styleCode,
 		rootScriptsLines: rootScripts,

@@ -31,16 +31,18 @@ function extractBindingsFromStaticImport(
 	bindingRanges?: Record<string, [number, number]>
 } {
 	let defaultBinding: string | null = null
-	const namedBindings: Array<{ imported: string; local: string }> = []
 	let namespaceBinding: string | null = null
+	const namedBindings: Array<{ imported: string; local: string }> = []
 	const bindingRanges: Record<string, [number, number]> | undefined = includeRanges ? {} : undefined
 
 	for (const entry of imp.entries) {
 		if (entry.isType) continue
+
 		const local = entry.localName.value
 		if (bindingRanges) {
 			bindingRanges[local] = [entry.localName.start, entry.localName.end]
 		}
+
 		switch (entry.importName.kind) {
 			case ImportNameKind.Default:
 				defaultBinding = local
@@ -82,6 +84,100 @@ export interface BuildScriptAnalysisResult {
 }
 
 const BUILD_SCRIPT_FILENAME = 'build.ts'
+const BUILD_SCRIPT_PARSE_OPTIONS = {
+	sourceType: 'module',
+	range: true,
+	lang: 'ts',
+} as const
+
+type BuildScriptParseResult = ReturnType<typeof parseSync>
+
+function parseBuildScript(script: string): BuildScriptParseResult {
+	return parseSync(BUILD_SCRIPT_FILENAME, script, BUILD_SCRIPT_PARSE_OPTIONS)
+}
+
+function throwIfBuildScriptParseErrors(result: BuildScriptParseResult): void {
+	const errors = result.errors
+	if (errors.length === 0) return
+	const first = errors[0]
+	throw new Error(
+		`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`
+	)
+}
+
+interface BuildScriptStaticImportLike {
+	start: number
+	end: number
+	moduleRequest: { value: string; start: number; end: number }
+	entries: Iterable<{
+		isType: boolean
+		localName: { value: string; start: number; end: number }
+		importName: { kind: ImportNameKind; name?: string | null }
+	}>
+}
+
+interface BuildScriptImportCollected extends BuildScriptImport {
+	range: [number, number]
+	specifierRange: [number, number]
+	bindingRanges?: Record<string, [number, number]>
+}
+
+function collectBuildScriptImports(
+	staticImports: Iterable<BuildScriptStaticImportLike>,
+	includeRanges: boolean
+): BuildScriptImportCollected[] {
+	const imports: BuildScriptImportCollected[] = []
+	for (const imp of staticImports) {
+		const extracted = extractBindingsFromStaticImport(imp, includeRanges)
+		const { bindingRanges, ...bindings } = extracted
+		imports.push({
+			specifier: imp.moduleRequest.value,
+			...bindings,
+			range: [imp.start, imp.end],
+			specifierRange: [imp.moduleRequest.start, imp.moduleRequest.end],
+			...(bindingRanges ? { bindingRanges } : {}),
+		})
+	}
+	return imports
+}
+
+function findGetStaticPathsRange(program: unknown): [number, number] | null {
+	const body = (
+		program as {
+			body?: Array<{
+				type: string
+				declaration?: { type: string; id?: { name: string } }
+				range?: [number, number]
+			}>
+		}
+	).body
+	if (!body) return null
+	for (const stmt of body) {
+		if (stmt.type !== 'ExportNamedDeclaration') continue
+		const decl = stmt.declaration
+		if (!decl || decl.type !== 'FunctionDeclaration') continue
+		if (decl.id?.name !== 'getStaticPaths') continue
+		if (stmt.range) return stmt.range
+	}
+	return null
+}
+
+function removeRangesFromSource(source: string, ranges: Array<[number, number]>): string {
+	if (ranges.length === 0) return source.trim()
+	const sortedRanges = [...ranges].sort((a, b) => a[0] - b[0])
+	const parts: string[] = []
+	let lastEnd = 0
+	for (const [start, end] of sortedRanges) {
+		if (start > lastEnd) {
+			parts.push(source.slice(lastEnd, start))
+		}
+		lastEnd = end
+	}
+	if (lastEnd < source.length) {
+		parts.push(source.slice(lastEnd))
+	}
+	return parts.join('').trim()
+}
 
 /**
  * Analyze build script source: parse with oxc, extract static imports and
@@ -99,64 +195,19 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 		}
 	}
 
-	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
-
-	const errors = result.errors
-	if (errors.length > 0) {
-		const first = errors[0]
-		throw new Error(
-			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`
-		)
-	}
+	const result = parseBuildScript(script)
+	throwIfBuildScriptParseErrors(result)
 
 	const mod = result.module
-	const program = result.program
 
 	// 1. Build imports from ESM module info (skip type-only imports for runtime rewrite)
-	const imports: BuildScriptImport[] = []
-	for (const imp of mod.staticImports) {
-		const specifier = imp.moduleRequest.value
-		const { defaultBinding, namedBindings, namespaceBinding } = extractBindingsFromStaticImport(
-			imp,
-			false
-		)
-		imports.push({
-			specifier,
-			defaultBinding,
-			namedBindings,
-			namespaceBinding,
-		})
-	}
+	const imports = collectBuildScriptImports(mod.staticImports, false).map(
+		({ range: _range, specifierRange: _specifierRange, bindingRanges: _bindingRanges, ...imp }) =>
+			imp
+	)
 
 	// 2. Find export function getStaticPaths in program body (ESTree/TS-ESTree shape)
-	let getStaticPathsRange: [number, number] | null = null
-	const body = (
-		program as {
-			body?: Array<{
-				type: string
-				declaration?: { type: string; id?: { name: string }; async?: boolean }
-				range?: [number, number]
-			}>
-		}
-	).body
-	if (body) {
-		for (const stmt of body) {
-			if (stmt.type !== 'ExportNamedDeclaration') continue
-			const decl = stmt.declaration
-			if (!decl || decl.type !== 'FunctionDeclaration') continue
-			const name = decl.id?.name
-			if (name !== 'getStaticPaths') continue
-			const range = stmt.range
-			if (range) {
-				getStaticPathsRange = range
-				break
-			}
-		}
-	}
+	const getStaticPathsRange = findGetStaticPathsRange(result.program)
 
 	const getStaticPathsFn =
 		getStaticPathsRange !== null
@@ -171,20 +222,7 @@ export function analyzeBuildScript(script: string): BuildScriptAnalysisResult {
 	for (const imp of mod.staticImports) {
 		rangesToRemove.push([imp.start, imp.end])
 	}
-	rangesToRemove.sort((a, b) => a[0] - b[0])
-
-	const parts: string[] = []
-	let lastEnd = 0
-	for (const [start, end] of rangesToRemove) {
-		if (start > lastEnd) {
-			parts.push(script.slice(lastEnd, start))
-		}
-		lastEnd = end
-	}
-	if (lastEnd < script.length) {
-		parts.push(script.slice(lastEnd))
-	}
-	const scriptWithoutImportsAndGetStaticPaths = parts.join('').trim()
+	const scriptWithoutImportsAndGetStaticPaths = removeRangesFromSource(script, rangesToRemove)
 
 	return {
 		imports,
@@ -224,11 +262,7 @@ export interface PropsTypeResult {
 export function getPropsTypeFromBuildScript(script: string): PropsTypeResult | null {
 	if (!script.trim()) return null
 
-	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
+	const result = parseBuildScript(script)
 
 	if (result.errors.length > 0) return null
 
@@ -242,14 +276,44 @@ export function getPropsTypeFromBuildScript(script: string): PropsTypeResult | n
 	return null
 }
 
-function findPropsTypeInNode(node: unknown): PropsTypeResult | null {
-	if (!node || typeof node !== 'object') return null
-	const n = node as Record<string, unknown>
+type AstNodeLike = Record<string, unknown>
+const PROPS_TYPE_CHILD_KEYS = ['init', 'expression', 'argument', 'body', 'consequent', 'alternate']
 
-	if (n.type === 'TSAsExpression') {
-		const expr = n.expression as Record<string, unknown>
-		const typeAnnotation = n.typeAnnotation as Record<string, unknown>
-		if (isAeroProps(expr)) {
+function asAstNodeLike(value: unknown): AstNodeLike | null {
+	return value && typeof value === 'object' ? (value as AstNodeLike) : null
+}
+
+function hasNodeType(node: AstNodeLike, type: string): boolean {
+	return node.type === type
+}
+
+function isTSAsExpressionNode(node: AstNodeLike): boolean {
+	return hasNodeType(node, 'TSAsExpression')
+}
+
+function isVariableDeclarationNode(node: AstNodeLike): boolean {
+	return hasNodeType(node, 'VariableDeclaration')
+}
+
+function isObjectPatternNode(node: unknown): boolean {
+	const n = asAstNodeLike(node)
+	return !!n && hasNodeType(n, 'ObjectPattern')
+}
+
+function getIdentifierName(node: unknown): string | null {
+	const n = asAstNodeLike(node)
+	if (!n) return null
+	const name = n.name
+	return typeof name === 'string' ? name : null
+}
+
+function findPropsTypeInNode(node: unknown): PropsTypeResult | null {
+	const n = asAstNodeLike(node)
+	if (!n) return null
+
+	if (isTSAsExpressionNode(n)) {
+		if (isAeroProps(n.expression)) {
+			const typeAnnotation = asAstNodeLike(n.typeAnnotation)
 			const typeName = getTypeNameFromAnnotation(typeAnnotation)
 			if (typeName) {
 				return { typeName, isFromDestructuring: false }
@@ -258,25 +322,23 @@ function findPropsTypeInNode(node: unknown): PropsTypeResult | null {
 		return null
 	}
 
-	if (n.type === 'VariableDeclaration') {
+	if (isVariableDeclarationNode(n)) {
 		const declarations = n.declarations as unknown[]
 		for (const decl of declarations ?? []) {
-			const d = decl as Record<string, unknown>
+			const d = asAstNodeLike(decl)
+			if (!d) continue
+			const isDestructuring = isObjectPatternNode(d.id)
 			const init = d.init
-			const id = d.id
-			const isDestructuring =
-				id && typeof id === 'object' && (id as Record<string, unknown>).type === 'ObjectPattern'
 			const found = findPropsTypeInNode(init)
 			if (found) {
-				return { ...found, isFromDestructuring: !!isDestructuring }
+				return { ...found, isFromDestructuring: isDestructuring }
 			}
 		}
 		return null
 	}
 
 	// Recurse into expression/statement children
-	const childKeys = ['init', 'expression', 'argument', 'body', 'consequent', 'alternate']
-	for (const key of childKeys) {
+	for (const key of PROPS_TYPE_CHILD_KEYS) {
 		const child = n[key]
 		if (Array.isArray(child)) {
 			for (const c of child) {
@@ -291,22 +353,17 @@ function findPropsTypeInNode(node: unknown): PropsTypeResult | null {
 	return null
 }
 
-function isAeroProps(expr: Record<string, unknown>): boolean {
-	if (expr?.type !== 'MemberExpression') return false
-	const obj = expr.object as Record<string, unknown>
-	const prop = expr.property as Record<string, unknown>
-	const objName = obj?.type === 'Identifier' ? obj.name : (obj as { name?: string })?.name
-	const propName = prop?.type === 'Identifier' ? prop.name : (prop as { name?: string })?.name
+function isAeroProps(expr: unknown): boolean {
+	const n = asAstNodeLike(expr)
+	if (!n || !hasNodeType(n, 'MemberExpression')) return false
+	const objName = getIdentifierName(n.object)
+	const propName = getIdentifierName(n.property)
 	return objName === 'Aero' && propName === 'props'
 }
 
-function getTypeNameFromAnnotation(annotation: Record<string, unknown>): string | null {
-	if (!annotation) return null
-	if (annotation.type === 'TSTypeReference') {
-		const typeName = annotation.typeName as Record<string, unknown>
-		return typeName?.name as string
-	}
-	return null
+function getTypeNameFromAnnotation(annotation: AstNodeLike | null): string | null {
+	if (!annotation || !hasNodeType(annotation, 'TSTypeReference')) return null
+	return getIdentifierName(annotation.typeName)
 }
 
 const TYPE_DECL_IN_EXPORT = new Set([
@@ -314,6 +371,14 @@ const TYPE_DECL_IN_EXPORT = new Set([
 	'TSTypeAliasDeclaration',
 	'TSEnumDeclaration',
 ])
+
+function pushRangeSliceIfPresent(
+	out: string[],
+	source: string,
+	range: [number, number] | undefined
+): void {
+	if (range) out.push(source.slice(range[0], range[1]))
+}
 
 /**
  * Extract verbatim source slices for top-level `interface` / `type` / `enum` declarations
@@ -325,12 +390,7 @@ const TYPE_DECL_IN_EXPORT = new Set([
 export function extractBuildScriptTypeDeclarationTexts(script: string): string[] {
 	if (!script.trim()) return []
 
-	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
-
+	const result = parseBuildScript(script)
 	if (result.errors.length > 0) return []
 
 	const body = (result.program as { body?: unknown[] }).body
@@ -339,20 +399,20 @@ export function extractBuildScriptTypeDeclarationTexts(script: string): string[]
 	const out: string[] = []
 	for (const stmt of body) {
 		if (!stmt || typeof stmt !== 'object') continue
+
 		const s = stmt as Record<string, unknown>
 		if (s.type === 'ExportNamedDeclaration') {
 			const decl = s.declaration as Record<string, unknown> | undefined
 			const dt = decl?.type as string | undefined
 			if (decl && dt && TYPE_DECL_IN_EXPORT.has(dt)) {
-				const range = s.range as [number, number] | undefined
-				if (range) out.push(script.slice(range[0], range[1]))
+				pushRangeSliceIfPresent(out, script, s.range as [number, number] | undefined)
 			}
 			continue
 		}
+
 		const t = s.type as string
 		if (t && TYPE_DECL_IN_EXPORT.has(t)) {
-			const range = s.range as [number, number] | undefined
-			if (range) out.push(script.slice(range[0], range[1]))
+			pushRangeSliceIfPresent(out, script, s.range as [number, number] | undefined)
 		}
 	}
 	return out
@@ -370,35 +430,17 @@ export function analyzeBuildScriptForEditor(script: string): BuildScriptAnalysis
 		return { imports: [] }
 	}
 
-	const result = parseSync(BUILD_SCRIPT_FILENAME, script, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
-
-	const errors = result.errors
-	if (errors.length > 0) {
-		const first = errors[0]
-		throw new Error(
-			`[aero] Build script parse error: ${first.message}${first.codeframe ? '\n' + first.codeframe : ''}`
-		)
-	}
+	const result = parseBuildScript(script)
+	throwIfBuildScriptParseErrors(result)
 
 	const mod = result.module
-	const imports: BuildScriptImportForEditor[] = []
-
-	for (const imp of mod.staticImports) {
-		const specifier = imp.moduleRequest.value
-		const extracted = extractBindingsFromStaticImport(imp, true)
-		const { bindingRanges, ...bindings } = extracted
-		imports.push({
-			specifier,
-			...bindings,
-			range: [imp.start, imp.end],
-			specifierRange: [imp.moduleRequest.start, imp.moduleRequest.end],
-			bindingRanges: bindingRanges ?? {},
-		})
-	}
+	const imports: BuildScriptImportForEditor[] = collectBuildScriptImports(
+		mod.staticImports,
+		true
+	).map(({ bindingRanges, ...imp }) => ({
+		...imp,
+		bindingRanges: bindingRanges ?? {},
+	}))
 
 	return { imports }
 }

@@ -183,33 +183,31 @@ import type { EmitRenderFunctionOptions } from './types'
 export type { EmitRenderFunctionOptions as RenderFunctionOptions }
 
 /** `styles?.add(…)` / `scripts?.add(…)` lines joined with `\\n\\t\\t` (render function body slot). */
-function joinRenderFnRootAdds(kind: 'styles' | 'scripts', items: string[]): string {
+function joinRenderFnIndentedLines(
+	lines: string[],
+	mapLine: (line: string) => string = line => line
+): string {
 	const b = new CodeBuilder()
-	for (let i = 0; i < items.length; i++) {
+	for (let i = 0; i < lines.length; i++) {
 		if (i > 0) b.raw('\n\t\t')
-		b.raw(`${kind}?.add(${JSON.stringify(items[i])});`)
+		b.raw(mapLine(lines[i]))
 	}
 	return b.toString()
+}
+
+/** `styles?.add(…)` / `scripts?.add(…)` lines joined with `\\n\\t\\t` (render function body slot). */
+function joinRenderFnRootAdds(kind: 'styles' | 'scripts', items: string[]): string {
+	return joinRenderFnIndentedLines(items, item => `${kind}?.add(${JSON.stringify(item)});`)
 }
 
 /** `headScripts?.add(expr)` lines joined with `\\n\\t\\t`. */
 function joinRenderFnHeadScripts(lines: string[]): string {
-	const b = new CodeBuilder()
-	for (let i = 0; i < lines.length; i++) {
-		if (i > 0) b.raw('\n\t\t')
-		b.raw(`headScripts?.add(${lines[i]});`)
-	}
-	return b.toString()
+	return joinRenderFnIndentedLines(lines, line => `headScripts?.add(${line});`)
 }
 
 /** `rootScriptsLines` joined with `\\n\\t\\t`. */
 function joinRenderFnRootScriptLines(lines: string[]): string {
-	const b = new CodeBuilder()
-	for (let i = 0; i < lines.length; i++) {
-		if (i > 0) b.raw('\n\t\t')
-		b.raw(lines[i]!)
-	}
-	return b.toString()
+	return joinRenderFnIndentedLines(lines)
 }
 
 /**

@@ -5,6 +5,8 @@
 
 import { escapeCodegenTemplateBody, escapeTemplateLiteralContent } from './escapes'
 
+const DEFAULT_OUT_VAR = '__out'
+
 /**
  * Incrementally builds template-literal body text for `emitAppend` / `__out += \`…\`;`.
  */
@@ -29,7 +31,7 @@ export class CodeBuilder {
 	// --- Statements (same strings as helpers `emit*`; enables one backend for IR emission) ---
 
 	/** `outVar += \`content\`;\n` */
-	stmtAppendOut(content: string, outVar = '__out'): this {
+	stmtAppendOut(content: string, outVar = DEFAULT_OUT_VAR): this {
 		return this.raw(`${outVar} += \`${content}\`;\n`)
 	}
 
@@ -39,7 +41,7 @@ export class CodeBuilder {
 	}
 
 	/** `outVar += slots[…] ?? \`default\`;\n` */
-	stmtSlotOutput(name: string, defaultContent: string, outVar = '__out'): this {
+	stmtSlotOutput(name: string, defaultContent: string, outVar = DEFAULT_OUT_VAR): this {
 		const key = JSON.stringify(name)
 		const body = escapeCodegenTemplateBody(defaultContent)
 		return this.raw(`${outVar} += slots[${key}] ?? \`${body}\`;\n`)
@@ -62,7 +64,7 @@ export class CodeBuilder {
 
 	/** `}\n` */
 	stmtEnd(): this {
-		return this.raw(`}\n`)
+		return this.raw('}\n')
 	}
 
 	/** `targetVar += await Aero.renderComponent(…);\n` */
