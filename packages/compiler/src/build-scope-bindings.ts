@@ -9,6 +9,11 @@ import {
 } from './build-script-analysis'
 import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
 
+const SIMPLE_DECL_REGEX =
+	/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
+const DESTRUCTURING_DECL_REGEX = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
+const FUNCTION_DECL_REGEX = /\bfunction\s+\*?\s*([A-Za-z_$][\w$]*)\s*\(/g
+
 function maskJsComments(text: string): string {
 	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
 }
@@ -47,56 +52,54 @@ export type IterateBuildScriptBindingsOptions = {
 	skipImports?: boolean
 }
 
-/**
- * Yields value-like bindings in document order: imports, simple const/let/var, destructuring, then `function` declarations.
- *
- * @param content - Inner text of a `<script>` block.
- */
-export function* iterateBuildScriptBindings(
-	content: string,
-	options: IterateBuildScriptBindingsOptions = {}
-): Generator<BuildScriptBinding> {
-	if (!content.trim()) return
-
-	const masked = maskJsComments(content)
-	const skipImports = options.skipImports === true
-
-	if (!skipImports) {
-		try {
-			const { imports } = analyzeBuildScriptForEditor(content)
-			for (const imp of imports) {
-				const bindingRanges = imp.bindingRanges ?? {}
-				for (const [localName, range] of Object.entries(bindingRanges)) {
-					if (!localName) continue
-					const [start, end] = range as [number, number]
-					yield { name: localName, start, end, kind: 'import' }
-				}
-			}
-		} catch {
-			// Parse errors: regex passes below may still find declarations.
-		}
+function toBinding(
+	name: string,
+	start: number,
+	kind: BuildScriptBindingKind,
+	properties?: ReadonlySet<string>
+): BuildScriptBinding {
+	return {
+		name,
+		start,
+		end: start + name.length,
+		kind,
+		...(properties && properties.size > 0 ? { properties } : {}),
 	}
+}
 
-	const simpleDeclRegex =
-		/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
+function* iterateImportBindings(content: string): Generator<BuildScriptBinding> {
+	try {
+		const { imports } = analyzeBuildScriptForEditor(content)
+		for (const imp of imports) {
+			const bindingRanges = imp.bindingRanges ?? {}
+			for (const [localName, range] of Object.entries(bindingRanges)) {
+				if (!localName) continue
+				const [start] = range as [number, number]
+				yield toBinding(localName, start, 'import')
+			}
+		}
+	} catch {
+		// Parse errors: regex passes below may still find declarations.
+	}
+}
+
+function* iterateSimpleDeclarationBindings(maskedContent: string): Generator<BuildScriptBinding> {
+	const simpleDeclRegex = new RegExp(SIMPLE_DECL_REGEX)
 	let declMatch: RegExpExecArray | null
-	while ((declMatch = simpleDeclRegex.exec(masked)) !== null) {
+	while ((declMatch = simpleDeclRegex.exec(maskedContent)) !== null) {
 		const name = declMatch[1]
 		const initializer = declMatch[2]
 		const nameOffsetInFullMatch = declMatch[0].indexOf(name)
 		const start = declMatch.index + nameOffsetInFullMatch
-		const end = start + name.length
-
-		const binding: BuildScriptBinding = { name, start, end, kind: 'declaration' }
-		if (initializer) {
-			const properties = collectObjectLiteralKeys(initializer)
-			if (properties.size > 0) binding.properties = properties
-		}
-		yield binding
+		const properties = initializer ? collectObjectLiteralKeys(initializer) : undefined
+		yield toBinding(name, start, 'declaration', properties)
 	}
+}
 
-	const destructuringRegex = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
-	while ((declMatch = destructuringRegex.exec(masked)) !== null) {
+function* iterateDestructuringBindings(maskedContent: string): Generator<BuildScriptBinding> {
+	const destructuringRegex = new RegExp(DESTRUCTURING_DECL_REGEX)
+	let declMatch: RegExpExecArray | null
+	while ((declMatch = destructuringRegex.exec(maskedContent)) !== null) {
 		const body = declMatch[1]
 		const bodyStart = declMatch.index + declMatch[0].indexOf(body)
 
@@ -120,24 +123,45 @@ export function* iterateBuildScriptBindings(
 			const absStart = bodyStart + partIndex + localIndex
 
 			if (localName.length > 0) {
-				yield {
-					name: localName,
-					start: absStart,
-					end: absStart + localName.length,
-					kind: 'declaration',
-				}
+				yield toBinding(localName, absStart, 'declaration')
 			}
 			currentOffset = partIndex + part.length
 		}
 	}
+}
 
-	const fnRegex = /\bfunction\s+\*?\s*([A-Za-z_$][\w$]*)\s*\(/g
+function* iterateFunctionBindings(maskedContent: string): Generator<BuildScriptBinding> {
+	const fnRegex = new RegExp(FUNCTION_DECL_REGEX)
 	let fnMatch: RegExpExecArray | null
-	while ((fnMatch = fnRegex.exec(masked)) !== null) {
+	while ((fnMatch = fnRegex.exec(maskedContent)) !== null) {
 		const name = fnMatch[1]
 		const start = fnMatch.index + fnMatch[0].indexOf(name)
-		yield { name, start, end: start + name.length, kind: 'function' }
+		yield toBinding(name, start, 'function')
 	}
+}
+
+/**
+ * Yields value-like bindings in document order: imports, simple const/let/var, destructuring, then `function` declarations.
+ * Uses comment-masking + regex passes as a lightweight fallback when full parse data is unavailable.
+ *
+ * @param content - Inner text of a `<script>` block.
+ */
+export function* iterateBuildScriptBindings(
+	content: string,
+	options: IterateBuildScriptBindingsOptions = {}
+): Generator<BuildScriptBinding> {
+	if (!content.trim()) return
+
+	const masked = maskJsComments(content)
+	const skipImports = options.skipImports === true
+
+	if (!skipImports) {
+		yield* iterateImportBindings(content)
+	}
+
+	yield* iterateSimpleDeclarationBindings(masked)
+	yield* iterateDestructuringBindings(masked)
+	yield* iterateFunctionBindings(masked)
 }
 
 /**

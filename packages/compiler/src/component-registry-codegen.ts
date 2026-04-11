@@ -24,13 +24,35 @@ export type ComponentRegistryEntry = {
 	readonly typeDeclarationText: string
 }
 
+const EMPTY_COMPONENT_REGISTRY_DTS =
+	`/** Auto-generated stub — no components found. */\n` +
+	`declare namespace Aero {\n` +
+	`\tinterface ComponentRegistry {}\n` +
+	`}\n`
+
 function kebabBasename(filePath: string): string {
 	const base = path.basename(filePath, path.extname(filePath))
-	return base.replace(/\\/g, '/').split('/').pop() ?? base
+	return base
 }
 
 function toNsId(tag: string): string {
 	return `__tag_${tag.replace(/[^a-zA-Z0-9]+/g, '_')}`
+}
+
+function collectComponentRegistryEntry(fullPath: string): ComponentRegistryEntry {
+	const source = fs.readFileSync(fullPath, 'utf-8')
+	const parsed = parse(source)
+	const script = parsed.buildScript?.content ?? ''
+	const tag = kebabBasename(fullPath)
+	const props = getPropsTypeFromBuildScript(script)
+	const typeTexts = collectBuildScriptTypeDeclarationTexts(script.trim() ? [script] : [])
+	return {
+		relPath: fullPath,
+		tag,
+		namespaceId: toNsId(tag),
+		propsTypeName: props?.typeName ?? null,
+		typeDeclarationText: typeTexts.join('\n\n'),
+	}
 }
 
 /**
@@ -49,20 +71,7 @@ export function collectComponentRegistryEntries(componentsDir: string): Componen
 			}
 			if (!name.isFile() || !name.name.endsWith('.html')) continue
 
-			const source = fs.readFileSync(full, 'utf-8')
-			const parsed = parse(source)
-			const script = parsed.buildScript?.content ?? ''
-			const tag = kebabBasename(full)
-			const props = getPropsTypeFromBuildScript(script)
-			const typeTexts = collectBuildScriptTypeDeclarationTexts(script.trim() ? [script] : [])
-			const relPath = full
-			out.push({
-				relPath,
-				tag,
-				namespaceId: toNsId(tag),
-				propsTypeName: props?.typeName ?? null,
-				typeDeclarationText: typeTexts.join('\n\n'),
-			})
+			out.push(collectComponentRegistryEntry(full))
 		}
 	}
 
@@ -123,10 +132,7 @@ export function writeComponentRegistryDts(
 	outPath = path.join(root, DEFAULT_COMPONENT_REGISTRY_REL)
 ): { path: string; entryCount: number } {
 	const entries = collectComponentRegistryEntries(componentsDir)
-	const text =
-		entries.length === 0
-			? `/** Auto-generated stub — no components found. */\ndeclare namespace Aero {\n\tinterface ComponentRegistry {}\n}\n`
-			: renderComponentRegistryDts(entries)
+	const text = entries.length === 0 ? EMPTY_COMPONENT_REGISTRY_DTS : renderComponentRegistryDts(entries)
 	const withProps = entries.filter(e => e.propsTypeName)
 	fs.mkdirSync(path.dirname(outPath), { recursive: true })
 	fs.writeFileSync(outPath, text, 'utf-8')

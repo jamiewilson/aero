@@ -1,40 +1,43 @@
 /**
  * @aero-js/compiler - Standalone HTML template compiler
  *
- * A fast, HTML-first template engine that compiles templates to JavaScript render functions.
- * No custom file extensions, no framework lock-in.
+ * A fast, HTML-first template compiler that compiles templates to JavaScript render functions.
  */
 
-// Compiler
 export { CodeBuilder } from './code-builder'
 export { compile, compileTemplate } from './codegen'
-export type { TemplateAnalysis } from './template-analysis'
-export { buildTemplateAnalysis } from './template-analysis'
-export type { TemplateEditorAmbient } from './template-editor-context'
+export { buildTemplateAnalysis, type TemplateAnalysis } from './template-analysis'
+
 export {
 	buildTemplateEditorAmbient,
 	getTemplateEditorAmbientFromParsed,
+	type TemplateEditorAmbient,
 } from './template-editor-context'
-export type {
-	BuildScriptTypeIssue,
-	TemplateTypeIssue,
-	TemplateTypeIssueKind,
-	CheckTemplateTypesOptions,
-} from './template-type-check'
+
 export {
 	checkTemplateTypes,
 	checkTemplateTypesWithFile,
 	checkTemplateBuildScriptTypes,
 	checkTemplateBuildScriptTypesWithFile,
+	type BuildScriptTypeIssue,
+	type TemplateTypeIssue,
+	type TemplateTypeIssueKind,
+	type CheckTemplateTypesOptions,
 } from './template-type-check'
-export type { LoadedProjectTsConfig } from './project-tsconfig'
-export { loadProjectTsConfig, compilerOptionsForVirtualCheck } from './project-tsconfig'
+
+export {
+	loadProjectTsConfig,
+	compilerOptionsForVirtualCheck,
+	type LoadedProjectTsConfig,
+} from './project-tsconfig'
+
 export {
 	collectTemplateInterpolationSites,
 	formatInterpolationBinderPrelude,
 	formatInterpolationBinderPreludeFromTemplate,
 	type TemplateInterpolationSite,
 } from './template-interpolation-sites'
+
 export {
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,
@@ -56,6 +59,7 @@ export type {
 	EmitRenderFunctionOptions,
 	CompileErrorOptions,
 } from './types'
+
 export { CompileError } from './types'
 
 // IR
@@ -71,15 +75,66 @@ export type {
 	IRComponent,
 } from './ir'
 
-// Helpers (for advanced use cases)
-export * from './helpers'
+// Helpers
+export {
+	escapeCodegenTemplateBody,
+	escapeHtmlAttributeLiteral,
+	escapeTemplateLiteralContent,
+	escapeHtml,
+	escapeScriptJson,
+	validateSingleBracedExpression,
+	compileInterpolation,
+	compileAttributeInterpolation,
+	isAttr,
+	stripBraces,
+	kebabToCamelCase,
+	buildPropsString,
+	escapeBackticks,
+	raw,
+	emitSlotsObjectVars,
+	emitRenderFunction,
+	getRenderComponentContextArg,
+	getRenderContextDestructurePattern,
+	emitSlotVar,
+	emitAppend,
+	emitIf,
+	emitElseIf,
+	emitElse,
+	emitEnd,
+	emitSlotOutput,
+	emitRenderComponentStatement,
+	RENDER_INTERNAL_CONTEXT_KEYS,
+	type ValidateSingleBracedExpressionOptions,
+	type RenderFunctionOptions,
+} from './helpers'
 
 // Constants
-export * from './constants'
+export {
+	ATTR_PREFIX,
+	ATTR_PROPS,
+	ATTR_FOR,
+	ATTR_IF,
+	ATTR_ELSE_IF,
+	ATTR_ELSE,
+	ATTR_SWITCH,
+	ATTR_CASE,
+	ATTR_DEFAULT,
+	ATTR_NAME,
+	ATTR_SLOT,
+	ATTR_IS_BUILD,
+	ATTR_IS_INLINE,
+	ATTR_IS_BLOCKING,
+	ATTR_SRC,
+	TAG_SLOT,
+	TAG_TEMPLATE,
+	SLOT_NAME_DEFAULT,
+	COMPONENT_SUFFIX_REGEX,
+	VOID_TAGS,
+} from './constants'
 
 // for…of directive (editor + compiler)
 export { parseForDirective, collectForDirectiveBindingNames } from './for-directive'
-export type { ParsedForDirective } from './for-directive'
+export { type ParsedForDirective } from './for-directive'
 
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'

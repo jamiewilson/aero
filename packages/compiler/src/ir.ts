@@ -41,8 +41,14 @@ export interface IRIf {
 	kind: 'If'
 	condition: string
 	body: IRNode[]
-	elseIf?: { condition: string; body: IRNode[] }[]
+	elseIf?: IRElseIfBranch[]
 	else?: IRNode[]
+}
+
+/** Else-if branch in an if-chain. */
+export interface IRElseIfBranch {
+	condition: string
+	body: IRNode[]
 }
 
 /** One `case` branch: strict equality against any of `comparandExprs` (JS expression sources). */
@@ -84,19 +90,21 @@ export interface IRComponent {
 	outVar?: string
 }
 
-/** Inject props into a script tag. */
-export interface IRScriptPassData {
-	kind: 'ScriptPassData'
+/** Shared fields for pass-data IR nodes. */
+export interface IRPassDataBase {
 	passDataExpr: string
-	isModule: boolean
 	outVar: string
 }
 
+/** Inject props into a script tag. */
+export interface IRScriptPassData extends IRPassDataBase {
+	kind: 'ScriptPassData'
+	isModule: boolean
+}
+
 /** Inject props into a style tag (CSS custom properties). */
-export interface IRStylePassData {
+export interface IRStylePassData extends IRPassDataBase {
 	kind: 'StylePassData'
-	passDataExpr: string
-	outVar: string
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

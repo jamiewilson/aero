@@ -25,8 +25,15 @@ export type TemplateInterpolationSite = {
 }
 
 const FOR_ATTR_NAMES = new Set(['for', 'data-for'])
+const PROPS_ATTR_NAMES = new Set([ATTR_PROPS.toLowerCase(), `${ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase()])
+const FOR_LOOP_IMPLICIT_NAMES = ['index', 'first', 'last', 'length']
 
 type AttributeMask = { start: number; length: number }
+type AttributeInterpolation = {
+	expression: string
+	sourceOffset: number
+	wrapPropsObjectLiteral?: boolean
+}
 
 function maskScriptAndStyleInner(sourceText: string): string {
 	return sourceText.replace(
@@ -42,22 +49,18 @@ function maskForDirectiveValues(sourceText: string): string {
 	)
 }
 
+function isPropsLikeAttribute(name: string): boolean {
+	return PROPS_ATTR_NAMES.has(name.toLowerCase())
+}
+
 function collectAttributeInterpolations(
 	roots: Node[],
 	sourceText: string
 ): {
-	interpolations: {
-		expression: string
-		sourceOffset: number
-		wrapPropsObjectLiteral?: boolean
-	}[]
+	interpolations: AttributeInterpolation[]
 	masks: AttributeMask[]
 } {
-	const interpolations: {
-		expression: string
-		sourceOffset: number
-		wrapPropsObjectLiteral?: boolean
-	}[] = []
+	const interpolations: AttributeInterpolation[] = []
 	const masks: AttributeMask[] = []
 
 	const attrRegex = /(?:\s|^)([a-zA-Z0-9\-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
@@ -90,10 +93,7 @@ function collectAttributeInterpolations(
 
 			if (FOR_ATTR_NAMES.has(name)) continue
 
-			const nameLower = name.toLowerCase()
-			const wrapPropsObjectLiteral =
-				nameLower === ATTR_PROPS.toLowerCase() ||
-				nameLower === `${ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase()
+			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
 
 			const matchStartInAttrs = attrMatch.index
 			const nameStartInMatch = fullMatch.indexOf(name)
@@ -131,15 +131,26 @@ function applyMasks(text: string, masks: AttributeMask[]): string {
 	return result
 }
 
-const FOR_LOOP_IMPLICIT_NAMES = ['index', 'first', 'last', 'length']
-
 type ForDirectiveScope = {
 	startOffset: number
 	endOffset: number
 	bindingNames: string[]
 }
 
-function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirectiveScope[] {
+function normalizeForDirectiveValue(rawValue: string): string {
+	let value = rawValue
+	if (
+		value.length >= 2 &&
+		((value[0] === '"' && value[value.length - 1] === '"') ||
+			(value[0] === "'" && value[value.length - 1] === "'"))
+	) {
+		value = value.slice(1, -1)
+	}
+	const braceMatch = /^\s*\{([\s\S]*)\}\s*$/.exec(value)
+	return (braceMatch ? braceMatch[1] : value).trim()
+}
+
+function collectForDirectiveScopes(roots: Node[]): ForDirectiveScope[] {
 	const scopes: ForDirectiveScope[] = []
 
 	for (const node of walkHtmlNodes(roots)) {
@@ -149,17 +160,7 @@ function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirec
 		const rawValue = attrs['for'] ?? attrs['data-for'] ?? undefined
 		if (rawValue == null) continue
 
-		let value = rawValue
-		if (
-			value.length >= 2 &&
-			((value[0] === '"' && value[value.length - 1] === '"') ||
-				(value[0] === "'" && value[value.length - 1] === "'"))
-		) {
-			value = value.slice(1, -1)
-		}
-
-		const braceMatch = /^\s*\{([\s\S]*)\}\s*$/.exec(value)
-		const inner = braceMatch ? braceMatch[1].trim() : value.trim()
+		const inner = normalizeForDirectiveValue(rawValue)
 		if (!inner) continue
 
 		let bindingNames: string[]
@@ -202,7 +203,7 @@ export function formatInterpolationBinderPrelude(
 	buildScriptBodies: readonly string[]
 ): string {
 	const doc = parseMinimalHtmlFromText(sourceText)
-	const scopes = collectForDirectiveScopes(doc.roots, sourceText)
+	const scopes = collectForDirectiveScopes(doc.roots)
 	const forBindings = getForBindingsAtOffset(braceOffset, scopes)
 	const allBindings =
 		forBindings.size > 0 ? new Set([...buildBindingNames, ...forBindings]) : buildBindingNames

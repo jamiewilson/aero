@@ -8,6 +8,11 @@
 import { parseSync } from 'oxc-parser'
 
 const FOR_DIRECTIVE_FILE = 'for-directive.ts'
+const FOR_DIRECTIVE_PARSE_OPTIONS = {
+	sourceType: 'module',
+	range: true,
+	lang: 'ts',
+} as const
 
 export type ParsedForDirective = {
 	/** Binding pattern text only (e.g. `item`, `{ name, id }`). */
@@ -37,6 +42,28 @@ type EstNode = {
 function sliceRange(source: string, start?: number, end?: number): string {
 	if (start === undefined || end === undefined) return ''
 	return source.slice(start, end)
+}
+
+function wrapForDirective(inner: string): string {
+	return `for (${inner}) {}`
+}
+
+function parseForDirectiveWrapped(wrapped: string) {
+	return parseSync(FOR_DIRECTIVE_FILE, wrapped, FOR_DIRECTIVE_PARSE_OPTIONS)
+}
+
+function getFirstForOfStatement(result: ReturnType<typeof parseForDirectiveWrapped>): EstNode | undefined {
+	const program = result.program as unknown as { body?: EstNode[] }
+	const stmt = program.body?.[0]
+	return stmt?.type === 'ForOfStatement' ? stmt : undefined
+}
+
+function getFirstForDeclarationId(stmt: EstNode): EstNode | undefined {
+	const left = stmt.left as EstNode
+	if (left.type !== 'VariableDeclaration') return undefined
+	const decl0 = left.declarations?.[0] as EstNode | undefined
+	if (!decl0?.id) return undefined
+	return decl0.id as EstNode
 }
 
 function collectBindingIds(pattern: EstNode | null | undefined, out: Set<string>): void {
@@ -82,13 +109,8 @@ export function parseForDirective(inner: string): ParsedForDirective {
 		throw new Error('for directive value is empty')
 	}
 
-	const wrapped = `for (${trimmed}) {}`
-
-	const result = parseSync(FOR_DIRECTIVE_FILE, wrapped, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
+	const wrapped = wrapForDirective(trimmed)
+	const result = parseForDirectiveWrapped(wrapped)
 
 	if (result.errors.length > 0) {
 		const first = result.errors[0]
@@ -97,9 +119,8 @@ export function parseForDirective(inner: string): ParsedForDirective {
 		)
 	}
 
-	const program = result.program as unknown as { body?: EstNode[] }
-	const stmt = program.body?.[0]
-	if (!stmt || stmt.type !== 'ForOfStatement') {
+	const stmt = getFirstForOfStatement(result)
+	if (!stmt) {
 		throw new Error('for directive must be a single for…of statement head: const … of …')
 	}
 
@@ -136,24 +157,16 @@ export function collectForDirectiveBindingNames(inner: string): string[] {
 	const trimmed = inner.trim()
 	if (!trimmed) return []
 
-	const wrapped = `for (${trimmed}) {}`
-	const result = parseSync(FOR_DIRECTIVE_FILE, wrapped, {
-		sourceType: 'module',
-		range: true,
-		lang: 'ts',
-	})
+	const wrapped = wrapForDirective(trimmed)
+	const result = parseForDirectiveWrapped(wrapped)
 	if (result.errors.length > 0) return []
 
-	const program = result.program as unknown as { body?: EstNode[] }
-	const stmt = program.body?.[0]
-	if (!stmt || stmt.type !== 'ForOfStatement') return []
-
-	const left = stmt.left as EstNode
-	if (left.type !== 'VariableDeclaration') return []
-	const decl0 = left.declarations?.[0] as EstNode | undefined
-	if (!decl0?.id) return []
+	const stmt = getFirstForOfStatement(result)
+	if (!stmt) return []
+	const id = getFirstForDeclarationId(stmt)
+	if (!id) return []
 
 	const out = new Set<string>()
-	collectBindingIds(decl0.id as EstNode, out)
+	collectBindingIds(id, out)
 	return [...out]
 }

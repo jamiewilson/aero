@@ -8,18 +8,25 @@
  * {@link compileWrapperAwareBranch}; `data-for` / `for` on `<template>` via
  * {@link compileWrapperlessNode} for the loop body.
  */
-
 import type { IRNode } from '../ir'
+import type { LowererDiag } from './types'
+
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import {
-	parseElementAttributes,
 	parseComponentAttributes,
+	parseElementAttributes,
 	warnWrapperlessTemplateAttributes,
 } from './attributes'
 import { compileConditionalChain, hasElseAttr, hasElseIfAttr, hasIfAttr } from './conditionals'
+import {
+	compileElementDefaultContent,
+	compileSlot,
+	compileSlotDefaultContent,
+	type SlotDefaultContentDeps,
+} from './slots'
 import {
 	compileSwitchContainer,
 	hasCaseAttr,
@@ -27,13 +34,6 @@ import {
 	parentIsSwitchContainer,
 } from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
-import {
-	compileSlot,
-	compileSlotDefaultContent,
-	compileElementDefaultContent,
-	type SlotDefaultContentDeps,
-} from './slots'
-import type { LowererDiag } from './types'
 
 /** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
 export class Lowerer {
