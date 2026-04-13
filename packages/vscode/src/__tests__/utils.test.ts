@@ -1,10 +1,10 @@
 /**
- * Unit tests for scope.ts (isAeroDocument, getScopeMode) and pathResolver.ts (getResolver,
- * clearResolverCache). Mocks vscode workspace/Uri and node:fs so workspace detection and
- * config file presence are under test control.
+ * Unit tests for scope.ts and pathResolver.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const mockFiles: Record<string, string> = {}
 
 vi.mock('vscode', () => {
 	return {
@@ -15,7 +15,7 @@ vi.mock('vscode', () => {
 				}
 				return undefined
 			}),
-			getConfiguration: vi.fn(() => ({ get: vi.fn(() => 'auto') })),
+			getConfiguration: vi.fn(() => ({ get: vi.fn(() => false) })),
 		},
 		Uri: {
 			file: (s: string) => ({ fsPath: s, scheme: 'file' }),
@@ -24,65 +24,104 @@ vi.mock('vscode', () => {
 })
 
 vi.mock('node:fs', () => ({
-	existsSync: vi.fn((path: string) => {
-		if (
-			path.includes('vite.config.ts') ||
-			path.includes('package.json') ||
-			path.includes('tsconfig.json')
-		) {
-			if (path.includes('aero') || path.includes('workspace')) {
-				return true
-			}
-		}
-		return false
-	}),
-	readFileSync: vi.fn((path: string) => {
-		if (path.includes('vite.config.ts')) {
-			return "import { aero } from '@aero-js/core'"
-		}
-		if (path.includes('package.json')) {
-			return '{ "name": "test-project" }'
-		}
-		return '{}'
-	}),
+	existsSync: vi.fn((filePath: string) => Object.prototype.hasOwnProperty.call(mockFiles, filePath)),
+	readFileSync: vi.fn((filePath: string) => mockFiles[filePath] ?? ''),
 }))
+
+function setFile(path: string, content: string): void {
+	mockFiles[path] = content
+}
 
 describe('scope', () => {
 	beforeEach(() => {
+		for (const key of Object.keys(mockFiles)) delete mockFiles[key]
 		vi.clearAllMocks()
 	})
 
-	/** Aero documents: file scheme + HTML languageId; untitled and non-HTML are excluded. */
 	describe('isAeroDocument', () => {
-		it('should return false for non-HTML documents', async () => {
+		it('returns true only for file:// documents with languageId=aero', async () => {
 			const { isAeroDocument } = await import('../scope')
 
-			const doc = {
-				languageId: 'javascript',
-				uri: { scheme: 'file', fsPath: '/test.js' },
-			} as any
-
-			expect(isAeroDocument(doc)).toBe(false)
+			expect(
+				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
+			).toBe(true)
+			expect(
+				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
+			).toBe(false)
+			expect(
+				isAeroDocument({ languageId: 'aero', uri: { scheme: 'untitled', fsPath: '/x.html' } } as any)
+			).toBe(false)
 		})
 
-		it('should return false for non-file URIs', async () => {
-			const { isAeroDocument } = await import('../scope')
+		it('does not emit debug logs when provider gate returns false', async () => {
+			const { isAeroDocument, setScopeDebugLogger } = await import('../scope')
+			const log = vi.fn()
+			setScopeDebugLogger(log)
 
-			const doc = {
-				languageId: 'html',
-				uri: { scheme: 'untitled', fsPath: '/test.html' },
-			} as any
-
-			expect(isAeroDocument(doc)).toBe(false)
+			expect(
+				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
+			).toBe(false)
+			expect(log).not.toHaveBeenCalled()
+			setScopeDebugLogger(undefined)
 		})
 	})
 
-	/** Scope mode from workspace config (e.g. 'auto', 'always'); mock returns 'auto'. */
-	describe('getScopeMode', () => {
-		it('should return default mode as auto', async () => {
-			const { getScopeMode } = await import('../scope')
+	describe('shouldSwitchToAeroLanguage', () => {
+		it('switches html files in a detected Aero project', async () => {
+			setFile('/workspace/apps/site/vite.config.ts', "import { aero } from '@aero-js/vite'")
+			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			clearScopeCache()
 
-			expect(getScopeMode()).toBe('auto')
+			const doc = {
+				languageId: 'html',
+				uri: { scheme: 'file', fsPath: '/workspace/apps/site/client/pages/index.html' },
+			} as any
+
+			expect(shouldSwitchToAeroLanguage(doc)).toBe(true)
+		})
+
+		it('does not switch html files outside detected Aero projects', async () => {
+			setFile('/workspace/apps/other/package.json', '{"name":"other"}')
+			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			clearScopeCache()
+
+			const doc = {
+				languageId: 'html',
+				uri: { scheme: 'file', fsPath: '/workspace/apps/other/client/pages/index.html' },
+			} as any
+
+			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+		})
+
+		it('uses nearest project root candidate and stops there', async () => {
+			setFile('/workspace/package.json', '{"dependencies":{"@aero-js/core":"1.0.0"}}')
+			setFile('/workspace/apps/other/package.json', '{"name":"other"}')
+			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			clearScopeCache()
+
+			const doc = {
+				languageId: 'html',
+				uri: { scheme: 'file', fsPath: '/workspace/apps/other/client/pages/index.html' },
+			} as any
+
+			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+		})
+
+		it('does not log for non-html documents when debug logger is set', async () => {
+			const { shouldSwitchToAeroLanguage, setScopeDebugLogger, clearScopeCache } =
+				await import('../scope')
+			clearScopeCache()
+			const log = vi.fn()
+			setScopeDebugLogger(log)
+
+			const doc = {
+				languageId: 'json',
+				uri: { scheme: 'file', fsPath: '/workspace/package.json' },
+			} as any
+
+			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+			expect(log).not.toHaveBeenCalled()
+			setScopeDebugLogger(undefined)
 		})
 	})
 })
@@ -92,29 +131,23 @@ describe('pathResolver', () => {
 		vi.clearAllMocks()
 	})
 
-	/** Resolver is built from document's workspace folder; root and resolve() are used by providers. */
-	describe('getResolver', () => {
-		it('should return a resolver object with root and resolve method', async () => {
-			const { getResolver, clearResolverCache } = await import('../pathResolver')
-			clearResolverCache()
+	it('returns a resolver object with root and resolve method', async () => {
+		const { getResolver, clearResolverCache } = await import('../pathResolver')
+		clearResolverCache()
 
-			const doc = {
-				uri: { fsPath: '/workspace/test.html' },
-			} as any
+		const doc = {
+			uri: { fsPath: '/workspace/test.html' },
+		} as any
 
-			const resolver = getResolver(doc)
+		const resolver = getResolver(doc)
 
-			expect(resolver).toBeDefined()
-			expect(resolver!.root).toBe('/workspace')
-			expect(typeof resolver!.resolve).toBe('function')
-		})
+		expect(resolver).toBeDefined()
+		expect(resolver!.root).toBe('/workspace')
+		expect(typeof resolver!.resolve).toBe('function')
 	})
 
-	describe('clearResolverCache', () => {
-		it('should be exported function', async () => {
-			const { clearResolverCache } = await import('../pathResolver')
-
-			expect(typeof clearResolverCache).toBe('function')
-		})
+	it('exports clearResolverCache', async () => {
+		const { clearResolverCache } = await import('../pathResolver')
+		expect(typeof clearResolverCache).toBe('function')
 	})
 })
