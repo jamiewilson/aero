@@ -25,17 +25,15 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 - **Command palette**
   - **Aero: Run check (config, content, templates)** — runs `aero check` in the workspace (pnpm / yarn / npx depending on lockfiles). This matches the default compile check only; for **TypeScript** validation of build scripts and `{ }` interpolations in CI, use **`aero check --types`** from the terminal (see [CLI](../../docs/tooling/cli.mdx)).
 
-- **Scope mode** (`aero.scopeMode`)
-  - `auto` (default) — Features run in detected Aero projects and HTML files with Aero markers.
-  - `strict` — Features run only in detected Aero projects.
-  - `always` — Features run in all HTML files.
-  - Project detection uses Aero path aliases in `tsconfig.json`, Aero deps in `package.json`, and Aero-related `vite.config.*`.
+- **Project-only activation**
+  - The extension only switches `.html`/`.htm` files to the `aero` language inside detected Aero projects.
+  - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/config`, `@aero-js/vite`, or `@aero-js/*` deps).
 
 - **Cache invalidation**
-  - Caches cleared when `tsconfig.json` changes or `aero.scopeMode` is updated.
+  - Caches cleared when relevant project files change (`tsconfig.json`, `package.json`, `vite.config.*`, `aero.config.*`).
 
 - **Emmet**
-  - The extension sets **emmet.includeLanguages** so `aero` files use the same Emmet Abbreviations as HTML (expand tags/snippets in templates).
+  - The extension contributes a default `emmet.includeLanguages` mapping (`aero` → `html`), so Aero templates keep standard HTML Emmet abbreviations without manual settings changes.
 
 - **TypeScript in templates**
   - **`<script is:build>`** defaults to TypeScript (with `Aero` build ambients). Use **`lang="js"`** or **`lang="javascript"`** for JavaScript-only build scripts. For **client**, **inline**, and **blocking** scripts, add **`lang="ts"`** / **`lang="typescript"`** when you want TypeScript (otherwise they stay JavaScript). Curly interpolations `{ ... }` use small TypeScript virtual fragments that include the same build-scoped bindings as `<script is:build>` so expressions type-check in the editor.
@@ -60,13 +58,13 @@ Open an Aero template (e.g. `client/pages/about.html`, `client/components/meta.h
 - Completions, hovers, and definitions work for Aero components and props.
 - Diagnostics appear for invalid expressions or missing props.
 
-Plain HTML files without Aero markers do not get Aero features unless `aero.scopeMode` is set to `always`.
+Plain HTML files outside detected Aero projects are left untouched.
 
 ## Configuration
 
 In VS Code settings, search for **Aero**:
 
-- **aero.scopeMode** — Where Aero features are enabled: `auto`, `strict`, or `always`.
+- **aero.debug** — Default **`false`**. When enabled, writes project-detection and language-switch decisions to the **Aero** Output channel.
 
 - **aero.diagnostics.regexUndefinedVariables** — Default **`false`**. When **`false`**, the extension does **not** run regex-based “undefined variable inside `{ }`” diagnostics; use the Volar language server and, for CI, **`aero check --types`** for expression typing. Set to **`true`** only if you need that legacy heuristic without relying on the language server.
 
