@@ -1,7 +1,7 @@
 /**
  * Unit tests for VS Code language providers: AeroCompletionProvider, AeroHoverProvider,
  * AeroDefinitionProvider. Mocks vscode (Range, Position, workspace, languages, etc.),
- * pathResolver (getResolver), and scope (isAeroDocument, getScopeMode). Asserts completion
+ * pathResolver (getResolver), and scope (isAeroDocument). Asserts completion
  * items, hover null for non-Aero docs, and definition locations for content globals and components.
  */
 
@@ -125,7 +125,6 @@ vi.mock('../pathResolver', () => ({
 
 vi.mock('../scope', () => ({
 	isAeroDocument: vi.fn(() => true),
-	getScopeMode: vi.fn(() => 'auto'),
 	clearScopeCache: vi.fn(),
 }))
 

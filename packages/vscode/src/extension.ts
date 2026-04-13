@@ -6,9 +6,9 @@
  * @remarks
  * Starts a Volar language server for TypeScript IntelliSense inside script blocks, and
  * registers definition, completion, hover, and diagnostics for HTML/Aero files. Auto-switches
- * `.html` files to the `aero` language when they are in an Aero project so the custom grammar
- * (TypeScript in script blocks) applies. Clears path and scope caches when tsconfig or
- * aero.scopeMode changes.
+ * `.html` files to the `aero` language only when they are in a detected Aero project so the
+ * custom grammar (TypeScript in script blocks) applies. Clears path/scope caches on relevant
+ * project config changes.
  */
 import * as vscode from 'vscode'
 import * as fs from 'node:fs'
@@ -27,17 +27,50 @@ import { registerAeroCodeActions } from './aero-code-actions'
 import { registerAeroTasks } from './aero-tasks'
 import { registerRunAeroCheck } from './runCheck'
 import { clearResolverCache } from './pathResolver'
-import { clearScopeCache, shouldSwitchToAeroLanguage } from './scope'
+import {
+	clearScopeCache,
+	setScopeDebugLogger,
+	shouldSwitchToAeroLanguage,
+} from './scope'
 import { HTML_SELECTOR } from './constants'
 
 let languageClient: LanguageClient | undefined
+let outputChannel: vscode.OutputChannel | undefined
+const languageSwitchInFlight = new Set<string>()
+let reindexTimer: ReturnType<typeof setTimeout> | undefined
+
+function isDebugEnabled(): boolean {
+	return vscode.workspace.getConfiguration('aero').get<boolean>('debug', false) === true
+}
+
+function configureScopeLogger(): void {
+	const enabled = isDebugEnabled()
+	if (!enabled) {
+		setScopeDebugLogger(undefined)
+		return
+	}
+	if (!outputChannel) outputChannel = vscode.window.createOutputChannel('Aero')
+	setScopeDebugLogger(message => {
+		outputChannel?.appendLine(`[scope] ${message}`)
+	})
+	outputChannel.appendLine('[scope] debug logging enabled')
+}
 
 async function trySetAeroLanguage(document: vscode.TextDocument): Promise<void> {
 	if (!shouldSwitchToAeroLanguage(document)) return
+	const key = document.uri.toString()
+	if (languageSwitchInFlight.has(key)) return
+	languageSwitchInFlight.add(key)
 	try {
 		await vscode.languages.setTextDocumentLanguage(document, 'aero')
-	} catch {
+		outputChannel?.appendLine(`[scope] switch success: ${document.uri.fsPath || key}`)
+	} catch (error) {
+		outputChannel?.appendLine(
+			`[scope] switch error: ${document.uri.fsPath || key} ${(error as Error)?.message || String(error)}`
+		)
 		// Document may have been closed between check and switch
+	} finally {
+		languageSwitchInFlight.delete(key)
 	}
 }
 
@@ -49,6 +82,9 @@ async function runTrySetAeroForAllOpenDocs(): Promise<void> {
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+	configureScopeLogger()
+	outputChannel?.appendLine('[scope] extension activated')
+
 	// Switch matching .html docs to `aero` before any other async work so TextMate scopes
 	// (source.ts in is:build) apply before built-in embedded JavaScript validation runs.
 	await runTrySetAeroForAllOpenDocs()
@@ -142,25 +178,39 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	)
 
 	// ---- Cache invalidation ----
-	const tsconfigWatcher = vscode.workspace.createFileSystemWatcher('**/tsconfig.json')
-	tsconfigWatcher.onDidChange(() => {
+	const invalidateScope = (reason: string): void => {
+		outputChannel?.appendLine(`[scope] invalidate: ${reason}`)
 		clearResolverCache()
 		clearScopeCache()
-	})
-	tsconfigWatcher.onDidCreate(() => {
-		clearResolverCache()
-		clearScopeCache()
-	})
-	tsconfigWatcher.onDidDelete(() => {
-		clearResolverCache()
-		clearScopeCache()
-	})
-	context.subscriptions.push(tsconfigWatcher)
+		if (reindexTimer) clearTimeout(reindexTimer)
+		reindexTimer = setTimeout(() => {
+			void runTrySetAeroForAllOpenDocs()
+		}, 100)
+	}
+
+	for (const pattern of [
+		'**/tsconfig.json',
+		'**/package.json',
+		'**/vite.config.ts',
+		'**/vite.config.js',
+		'**/vite.config.mts',
+		'**/vite.config.mjs',
+		'**/aero.config.ts',
+		'**/aero.config.js',
+		'**/aero.config.mts',
+		'**/aero.config.mjs',
+	]) {
+		const watcher = vscode.workspace.createFileSystemWatcher(pattern)
+		watcher.onDidChange(uri => invalidateScope(`change ${uri.fsPath}`))
+		watcher.onDidCreate(uri => invalidateScope(`create ${uri.fsPath}`))
+		watcher.onDidDelete(uri => invalidateScope(`delete ${uri.fsPath}`))
+		context.subscriptions.push(watcher)
+	}
 
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration(event => {
-			if (event.affectsConfiguration('aero.scopeMode')) {
-				clearScopeCache()
+			if (event.affectsConfiguration('aero.debug')) {
+				configureScopeLogger()
 			}
 		})
 	)
@@ -172,4 +222,7 @@ export async function deactivate(): Promise<void> {
 	languageClient = undefined
 	clearResolverCache()
 	clearScopeCache()
+	if (reindexTimer) clearTimeout(reindexTimer)
+	outputChannel?.dispose()
+	outputChannel = undefined
 }

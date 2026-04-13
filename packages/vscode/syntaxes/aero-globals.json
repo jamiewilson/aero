@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.globals.injection",
-	"injectionSelector": "L:source.js -comment -source.css.embedded.html, L:source.ts -comment -source.css.embedded.html",
+	"injectionSelector": "L:text.html.aero source.js -comment -source.css.embedded.html, L:text.html.aero source.ts -comment -source.css.embedded.html",
 	"patterns": [
 		{
 			"match": "\\bAero\\b",

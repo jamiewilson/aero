@@ -95,21 +95,21 @@
 		"configuration": {
 			"title": "Aero",
 			"properties": {
-				"aero.scopeMode": {
-					"type": "string",
-					"enum": [
-						"auto",
-						"strict",
-						"always"
-					],
-					"default": "auto",
-					"markdownDescription": "Controls where Aero language features run for HTML files. `auto` enables features in Aero projects and files with Aero markers, `strict` only in detected Aero projects, and `always` in all HTML files."
+				"aero.debug": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
 				},
 				"aero.diagnostics.regexUndefinedVariables": {
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "When false (default), skip regex-based “undefined variable in `{ }`” diagnostics — rely on the Volar language server and `aero check --types` for expression typing. Enable only if you need the legacy heuristic without the LS."
 				}
+			}
+		},
+		"configurationDefaults": {
+			"emmet.includeLanguages": {
+				"aero": "html"
 			}
 		},
 		"grammars": [
@@ -129,8 +129,6 @@
 				"path": "./syntaxes/aero-expressions.json",
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
-					"text.html.basic",
-					"text.html.derivative",
 					"text.html.aero"
 				],
 				"embeddedLanguages": {
@@ -141,8 +139,6 @@
 				"path": "./syntaxes/aero-attributes.json",
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
-					"text.html.basic",
-					"text.html.derivative",
 					"text.html.aero"
 				]
 			},
@@ -150,8 +146,6 @@
 				"path": "./syntaxes/aero-globals.json",
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
-					"text.html.basic",
-					"text.html.derivative",
 					"text.html.aero"
 				]
 			}

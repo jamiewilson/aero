@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.attributes.injection",
-	"injectionSelector": "L:meta.tag -comment",
+	"injectionSelector": "L:text.html.aero meta.tag -comment",
 	"patterns": [
 		{ "include": "#aero-script-type-attributes" },
 		{ "include": "#aero-control-flow-attributes" },
