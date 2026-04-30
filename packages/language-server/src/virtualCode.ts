@@ -51,6 +51,17 @@ const BUILD_SCRIPT_FEATURES: CodeInformation = {
 	},
 }
 
+/**
+ * Each Volar extra service script is its own root file. Without a module marker, TypeScript treats
+ * them as classic scripts sharing one global scope (`module: None`), so a build-script `const
+ * props` collides with `declare const props` in expression virtuals (TS2451).
+ */
+const EMBEDDED_MODULE_CLOSURE = '\nexport {}\n'
+
+function asEmbeddedModuleSnapshot(source: string): IScriptSnapshot {
+	return createSnapshot(source + EMBEDDED_MODULE_CLOSURE)
+}
+
 const ambientSnapshot: IScriptSnapshot = {
 	getText: (start, end) => AMBIENT_DECLARATIONS.substring(start, end),
 	getLength: () => AMBIENT_DECLARATIONS.length,
@@ -602,7 +613,7 @@ export class AeroVirtualCode implements VirtualCode {
 			return {
 				id: `expr_${exprIdx++}`,
 				languageId: 'typescript',
-				snapshot: createSnapshot(virtualText),
+				snapshot: asEmbeddedModuleSnapshot(virtualText),
 				mappings: [
 					{
 						sourceOffsets: [sourceOffset],
@@ -671,7 +682,7 @@ export class AeroVirtualCode implements VirtualCode {
 					yield {
 						id: `build_${buildIdx++}`,
 						languageId: 'typescript',
-						snapshot: createSnapshot(virtualText),
+						snapshot: asEmbeddedModuleSnapshot(virtualText),
 						mappings: [
 							{
 								sourceOffsets: [node.startTagEnd],
@@ -686,7 +697,7 @@ export class AeroVirtualCode implements VirtualCode {
 					yield {
 						id: `build_${buildIdx++}`,
 						languageId: 'javascript',
-						snapshot: createSnapshot(scriptContent),
+						snapshot: asEmbeddedModuleSnapshot(scriptContent),
 						mappings: [
 							{
 								sourceOffsets: [node.startTagEnd],
@@ -702,7 +713,7 @@ export class AeroVirtualCode implements VirtualCode {
 				yield {
 					id: `inline_${inlineIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: createSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(scriptContent),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
@@ -717,7 +728,7 @@ export class AeroVirtualCode implements VirtualCode {
 				yield {
 					id: `client_${clientIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: createSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(scriptContent),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
@@ -732,7 +743,7 @@ export class AeroVirtualCode implements VirtualCode {
 				yield {
 					id: `blocking_${blockingIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: createSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(scriptContent),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
