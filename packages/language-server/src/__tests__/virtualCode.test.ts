@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import ts from 'typescript'
 import { AeroVirtualCode } from '../virtualCode'
 import type { IScriptSnapshot } from '@volar/language-core'
 
@@ -21,6 +22,44 @@ function getEmbeddedText(code: AeroVirtualCode, id: string) {
 }
 
 describe('AeroVirtualCode', () => {
+	it('does not produce cross-file TS2451 when build script declares props and interpolations use props (starter-minimal header pattern)', () => {
+		const html = `<script is:build>
+	const props = Aero.props
+</script>
+
+<header>
+	<h1>{ props.title || 'Fallback Title' }</h1>
+	<p class="subtitle">{ props.subtitle }</p>
+</header>
+`
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const build = getEmbeddedText(code, 'build_0')!
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(build).toContain('export {}')
+		expect(expr0).toContain('export {}')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const fBuild = ts.createSourceFile('x.build.ts', build, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const fExpr = ts.createSourceFile('x.expr.ts', expr0, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const orig = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('x.build.ts')) return fBuild
+			if (fileName.endsWith('x.expr.ts')) return fExpr
+			return orig(fileName, languageVersion, ...rest)
+		}
+		const prog = ts.createProgram(['x.build.ts', 'x.expr.ts'], opts, host)
+		const diags = [...prog.getSemanticDiagnostics(fBuild), ...prog.getSemanticDiagnostics(fExpr)]
+		const codes = diags.map(d => d.code)
+		expect(codes).not.toContain(2451)
+	})
+
 	it('extracts build script as typescript virtual code when lang="ts"', () => {
 		const html = `<script is:build lang="ts">
 const { title } = Aero.props
