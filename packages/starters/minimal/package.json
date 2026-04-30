@@ -1,6 +1,7 @@
 {
 	"name": "@aero-js/starter-minimal",
-	"version": "0.3.5",
+	"version": "0.4.0",
+	"private": false,
 	"homepage": "https://github.com/jamiewilson/aero",
 	"license": "MIT",
 	"author": "Jamie Wilson",
@@ -10,10 +11,21 @@
 		"directory": "packages/starters/minimal"
 	},
 	"type": "module",
+	"files": [
+		"client",
+		"content",
+		"public",
+		"package-template.json",
+		"README.md",
+		"tsconfig.json",
+		"vite.config.ts",
+		".gitignore"
+	],
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"preview": "vite build && vite preview",
+		"prepack": "cp ../../../LICENSE ."
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",

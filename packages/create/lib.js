@@ -33,7 +33,7 @@ const PACKAGE_TEMPLATE = 'package-template.json'
 
 /**
  * Write package.json in targetDir from the template's package-template.json, with name and @aero-js/core version filled in.
- * @param {string} templatePath - Path to the template directory (e.g. packages/templates/minimal)
+ * @param {string} templatePath - Path to the template directory (e.g. packages/starters/minimal)
  * @param {string} targetDir - Path to the scaffolded project directory
  * @param {string} projectName - Project name for package.json "name"
  * @param {boolean} inMonorepo - If true, use workspace:* for @aero-js/core; otherwise use coreVersion

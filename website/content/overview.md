@@ -458,7 +458,8 @@ For more documentation, see the `/docs` directory, starting with [index.mdx](htt
 - [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
 - [@aero-js/config](https://www.npmjs.com/package/@aero-js/config)
 - [@aero-js/vite](https://www.npmjs.com/package/@aero-js/vite)
-- [@aero-js/template-minimal](https://www.npmjs.com/package/@aero-js/template-minimal)
+- [@aero-js/starter-minimal](https://www.npmjs.com/package/@aero-js/starter-minimal)
+- [@aero-js/starter-fullstack](https://www.npmjs.com/package/@aero-js/starter-fullstack)
 - [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ### Inspiration
