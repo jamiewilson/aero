@@ -1,4 +1,4 @@
-# Aero Project Instructions (Pi Agents)
+# Aero Project Instructions
 
 Use this file as the default instruction set for all work in this repo.
 
