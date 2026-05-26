@@ -3,7 +3,7 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"types": ["vite/client"],
+		"types": ["@aero-js/core/env", "vite/client"],
 		"paths": {
 			"@pages/*": ["./client/pages/*"],
 			"@layouts/*": ["./client/layouts/*"],

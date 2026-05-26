@@ -1,7 +1,7 @@
 {
 	"extends": ["nitro/tsconfig"],
 	"compilerOptions": {
-		"types": ["vite/client"],
+		"types": ["@aero-js/core/env", "vite/client"],
 		"moduleResolution": "bundler",
 		"paths": {
 			"@pages/*": ["./client/pages/*"],
