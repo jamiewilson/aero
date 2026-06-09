@@ -1,10 +1,21 @@
 <script is:build>
 	import site from '@content/site'
+	const { meta } = site
+	const {
+		title = meta.title,
+		description = meta.description,
+		image = Aero.site.url + meta.ogImage,
+	} = Aero.props
+	const { svg: favicon } = meta.icon
+</script>
+
+<!--<script is:build>
+	import site from '@content/site'
 	const title = Aero.props.title || site.meta.title
 	const description = Aero.props.description || site.meta.description
 	const image = Aero.props.image || Aero.site.url + site.meta.ogImage
 	const favicon = site.meta.icon.svg
-</script>
+</script>-->
 
 <!-- Display -->
 <meta charset="utf-8" />
