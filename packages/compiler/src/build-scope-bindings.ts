@@ -96,6 +96,29 @@ function* iterateSimpleDeclarationBindings(maskedContent: string): Generator<Bui
 	}
 }
 
+function stripDestructuringDefault(pattern: string): string {
+	let depth = 0
+	for (let i = 0; i < pattern.length; i++) {
+		const ch = pattern[i]
+		if (ch === '{' || ch === '[' || ch === '(') depth++
+		else if (ch === '}' || ch === ']' || ch === ')') depth--
+		else if (ch === '=' && depth === 0) return pattern.slice(0, i).trim()
+	}
+	return pattern
+}
+
+function destructuringPartLocalName(part: string): string {
+	const trimmed = part.trim()
+	if (!trimmed) return ''
+
+	const withoutDefault = stripDestructuringDefault(trimmed)
+	const colonIndex = withoutDefault.indexOf(':')
+	if (colonIndex > -1) {
+		return withoutDefault.slice(colonIndex + 1).trim()
+	}
+	return withoutDefault
+}
+
 function* iterateDestructuringBindings(maskedContent: string): Generator<BuildScriptBinding> {
 	const destructuringRegex = new RegExp(DESTRUCTURING_DECL_REGEX)
 	let declMatch: RegExpExecArray | null
@@ -106,25 +129,17 @@ function* iterateDestructuringBindings(maskedContent: string): Generator<BuildSc
 		const parts = body.split(',')
 		let currentOffset = 0
 		for (const part of parts) {
-			const trimmed = part.trim()
-			if (!trimmed) {
+			const localName = destructuringPartLocalName(part)
+			if (!localName) {
 				currentOffset += part.length + 1
 				continue
-			}
-
-			const colonIndex = trimmed.indexOf(':')
-			let localName = trimmed
-			if (colonIndex > -1) {
-				localName = trimmed.slice(colonIndex + 1).trim()
 			}
 
 			const partIndex = body.indexOf(part, currentOffset)
 			const localIndex = part.lastIndexOf(localName)
 			const absStart = bodyStart + partIndex + localIndex
 
-			if (localName.length > 0) {
-				yield toBinding(localName, absStart, 'declaration')
-			}
+			yield toBinding(localName, absStart, 'declaration')
 			currentOffset = partIndex + part.length
 		}
 	}

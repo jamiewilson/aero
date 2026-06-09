@@ -2,13 +2,12 @@
 	import base from '@layouts/base'
 	import logo from '@components/logo'
 	import toc from '@components/toc'
-
-	import { render } from 'aero:content'
 	import overview from '@content/overview.md'
+	import { render } from 'aero:content'
 	const { html } = await render(overview)
 </script>
 
-<base-layout title="{ overview.data.title }" description="{ overview.data.subtitle }">
+<base-layout>
 	<toc-component />
 
 	<article class="prose">

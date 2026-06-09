@@ -35,6 +35,25 @@ function helper() {}
 		expect(names).toContainEqual(['helper', 'function'])
 	})
 
+	it('collects destructured bindings with default values', () => {
+		const script = `const { meta } = site
+const {
+	title = meta.title,
+	description = meta.description,
+	image = Aero.site.url + meta.ogImage,
+} = Aero.props
+const { svg: favicon } = meta.icon
+`
+		const bindings = [...iterateBuildScriptBindings(script)]
+		expect(bindings.map(b => b.name)).toEqual([
+			'meta',
+			'title',
+			'description',
+			'image',
+			'favicon',
+		])
+	})
+
 	it('records object literal keys on simple declarations', () => {
 		const script = `const o = { a: 1, b, c: 2 }`
 		const bindings = [...iterateBuildScriptBindings(script)]
