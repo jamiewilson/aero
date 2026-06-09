@@ -1,4 +1,4 @@
-<script is:build>
+<script is:build lang="ts">
 	import sub from '@layouts/sub'
 	import header from '@components/header'
 	import aboutImage from '@images/about.jpg'
@@ -14,10 +14,15 @@
 		subtitle: site.about.subtitle,
 	}
 
-	enum AuthState {
-		SignedIn,
-		SignedOut
-	}
+	const AuthState = {
+		Initializing: 'Initializing',
+		Registering: 'Registering',
+		Authenticating: 'Authenticating',
+		SignedIn: 'SignedIn',
+		SignedOut: 'SignedOut',
+	} as const
+
+	type AuthState = (typeof AuthState)[keyof typeof AuthState]
 
 	const auth = { state: AuthState.SignedOut }
 </script>
@@ -26,10 +31,13 @@
 	<img src="{ aboutImage }" class="fullscreen" alt="About" />
 
 	<!-- FIXME:  slot="thru-sub" should be stripped on compile -->
-	<div switch="{ auth.state }" slot="thru-sub">
-		<a href="#" case="{ AuthState.SignedIn }">Sign Out</a>
-		<a href="#" case="{ AuthState.SignedOut }">Sign In</a>
-		<span default>Defeault</span>
+	<div class="h-stack" slot="thru-sub">
+		<a href="/register">Register</a>
+		<div switch="{ auth.state }">
+			<a href="/logout" case="{ AuthState.SignedIn }">Log Out</a>
+			<a href="/login" case="{ AuthState.SignedOut }">Log In</a>
+			<span default>Default</span>
+		</div>
 	</div>
 
 	<header-component props />

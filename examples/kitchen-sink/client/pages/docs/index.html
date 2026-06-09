@@ -1,10 +1,9 @@
-<script is:build>
+<script is:build lang="ts">
 	import base from '@layouts/base'
 	import badge from '@components/badge'
 	import { getCollection } from 'aero:content'
 
-	const docs = (await getCollection('docs'))
-		.sort((a, b) => b.data.published - a.data.published)
+	const docs = (await getCollection('docs')).sort((a, b) => b.data.published - a.data.published)
 </script>
 
 <base-layout title="Docs" description="Learn about Aero">
