@@ -15,7 +15,7 @@
 		}
 
 		:not(header) * + * {
-			margin-block-start: var(--vertical-spacing);
+			margin-block-start: 1em;
 		}
 
 		ul,
