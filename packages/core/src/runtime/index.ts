@@ -124,6 +124,21 @@ export class Aero {
 			return String(s)
 		}
 
+		const trim = (s: unknown): string => {
+			if (s == null) return ''
+			return String(s).trim()
+		}
+
+		const trimStart = (s: unknown): string => {
+			if (s == null) return ''
+			return String(s).trimStart()
+		}
+
+		const trimEnd = (s: unknown): string => {
+			if (s == null) return ''
+			return String(s).trimEnd()
+		}
+
 		const createScriptTag = (attrs: string, src: string): string => {
 			const normalizedAttrs = attrs.trim()
 			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${escapeHtml(src)}"></script>`
@@ -148,6 +163,9 @@ export class Aero {
 			escapeHtml,
 			escapeScriptJson,
 			raw,
+			trim,
+			trimStart,
+			trimEnd,
 		} as AeroTemplateContext
 
 		return context

@@ -21,6 +21,17 @@ export type ParsedForDirective = {
 	iterable: string
 }
 
+/** Loop metadata injected into each `for` / `data-for` body by codegen. */
+export const FOR_LOOP_IMPLICIT_NAMES = ['index', 'first', 'last', 'length'] as const
+
+const FOR_LOOP_IMPLICIT_NAME_SET = new Set<string>(FOR_LOOP_IMPLICIT_NAMES)
+
+/** Binding names in a `for` head that shadow injected loop metadata. */
+export function findForLoopImplicitNameShadows(inner: string): string[] {
+	const names = collectForDirectiveBindingNames(inner)
+	return names.filter(name => FOR_LOOP_IMPLICIT_NAME_SET.has(name)).sort()
+}
+
 type EstNode = {
 	type: string
 	start?: number

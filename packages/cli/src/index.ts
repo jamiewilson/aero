@@ -7,6 +7,7 @@ import { runAeroCheck } from './check'
 import { runAeroDoctor } from './doctor'
 import { parseGraphFormat, runAeroGraph } from './graph'
 import { parseRootArgs } from './parse-cli-args'
+import { exitCodeForThrown } from '@aero-js/core/diagnostics'
 
 function printHelp(): void {
 	process.stdout.write(`Aero — HTML-first static sites
@@ -55,8 +56,8 @@ async function main(): Promise<void> {
 	if (cmd === 'build') {
 		const buildRest = rest.slice(1)
 		const incremental = buildRest.includes('--incremental')
-		await runAeroBuild(root, { incremental })
-		process.exit(0)
+		const code = await runAeroBuild(root, { incremental })
+		process.exit(code)
 	}
 	if (cmd === 'graph') {
 		const graphRest = rest.slice(1)
@@ -75,5 +76,5 @@ async function main(): Promise<void> {
 
 main().catch(err => {
 	process.stderr.write(String(err?.stack ?? err) + '\n')
-	process.exit(1)
+	process.exit(exitCodeForThrown(err))
 })

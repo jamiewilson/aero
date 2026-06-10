@@ -8,7 +8,7 @@ import { isDirectiveAttr } from '../directive-attributes'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
-import { parseForDirective, type ParsedForDirective } from '../for-directive'
+import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
@@ -81,6 +81,35 @@ function validateBracedDirectiveValue(
 	})
 }
 
+function warnForLoopImplicitNameShadow(
+	diag: LowererDiag,
+	attr: AttrLike,
+	inner: string
+): void {
+	if (!diag?.onWarning) return
+	const shadowed = findForLoopImplicitNameShadows(inner)
+	if (shadowed.length === 0) return
+	const rawValue = attr.value || ''
+	const needle = `${attr.name}="${rawValue}"`
+	let line: number | undefined
+	let column: number | undefined
+	if (diag.source && needle.length > 0) {
+		const idx = diag.source.indexOf(needle)
+		if (idx >= 0) {
+			const pos = Helper.lineColumnAtOffset(diag.source, idx)
+			line = pos.line
+			column = pos.column
+		}
+	}
+	diag.onWarning({
+		code: 'AERO_TEMPLATE',
+		message:
+			`for loop binding shadows built-in loop metadata (${shadowed.join(', ')}). ` +
+			'Rename the binding to avoid shadowing index, first, last, or length.',
+		...(line !== undefined && column !== undefined ? { line, column } : {}),
+	})
+}
+
 function parseForAttribute(
 	node: NodeLike,
 	diag: LowererDiag,
@@ -115,6 +144,7 @@ function parseForAttribute(
 		}
 		throw new Error(msg)
 	}
+	warnForLoopImplicitNameShadow(diag, attr, content)
 	return { binding: parsed.binding, items: parsed.iterable }
 }
 

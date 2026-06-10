@@ -110,6 +110,10 @@ function collectBlockingHeadScripts(
 
 /**
  * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
+ *
+ * @remarks
+ * Prefer {@link compileTemplate} for new entry points — it sets `diagnosticTemplateSource` from the HTML
+ * so directive warnings and compile errors can include line/column spans.
  */
 export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const resolver = new Resolver({
@@ -159,6 +163,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 /**
  * Compile an HTML template source into a JavaScript module string. Single entry for parse + compile.
+ *
+ * @remarks
+ * Sets `diagnosticTemplateSource` from `htmlSource` when omitted so warnings and errors include locations.
  */
 export function compileTemplate(
 	htmlSource: string,

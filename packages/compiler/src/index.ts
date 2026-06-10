@@ -91,6 +91,9 @@ export {
 	buildPropsString,
 	escapeBackticks,
 	raw,
+	trim,
+	trimStart,
+	trimEnd,
 	emitSlotsObjectVars,
 	emitRenderFunction,
 	getRenderComponentContextArg,
@@ -133,7 +136,12 @@ export {
 } from './constants'
 
 // for…of directive (editor + compiler)
-export { parseForDirective, collectForDirectiveBindingNames } from './for-directive'
+export {
+	parseForDirective,
+	collectForDirectiveBindingNames,
+	findForLoopImplicitNameShadows,
+	FOR_LOOP_IMPLICIT_NAMES,
+} from './for-directive'
 export { type ParsedForDirective } from './for-directive'
 
 // Directive attributes

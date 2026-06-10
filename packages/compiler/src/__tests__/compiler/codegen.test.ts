@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
-import { getRenderComponentContextArg, escapeHtml, escapeScriptJson, raw } from '../../helpers'
+import { getRenderComponentContextArg, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } from '../../helpers'
 import { analyzeBuildScript } from '../../build-script-analysis'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
@@ -50,6 +50,9 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		escapeHtml,
 		escapeScriptJson,
 		raw,
+		trim,
+		trimStart,
+		trimEnd,
 		...context,
 	}
 	return await renderFn(aeroContext)
@@ -86,6 +89,18 @@ describe('Codegen', () => {
 
 		const output = await execute(code)
 		expect(output).toContain('<h1><b>bold</b></h1>')
+	})
+
+	it('should support trim helpers in interpolations', async () => {
+		const html = `<script is:build>
+										const text = '  hello  ';
+									</script>
+									<p>{ trim(text) }|{ trimStart(text) }|{ trimEnd(text) }</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code)
+		expect(output).toContain('<p>hello|hello  |  hello</p>')
 	})
 
 	it('should provide loop metadata (index, first, last, length)', async () => {
@@ -1435,6 +1450,21 @@ describe('Codegen', () => {
 			expect(
 				warnings.some(w => w.code === 'AERO_SWITCH' && w.message.includes('no `default` branch'))
 			).toBe(true)
+		})
+
+		it('collects warning when for loop binding shadows loop metadata', () => {
+			const html = `<ul><li data-for="{ const index of items }">{ index }</li></ul>`
+			const parsed = parse(html)
+			const warnings: Array<{ code: string; message: string }> = []
+			compile(parsed, {
+				...mockOptions,
+				diagnosticTemplateSource: html,
+				onWarning: w => warnings.push({ code: w.code, message: w.message }),
+			})
+			expect(warnings).toHaveLength(1)
+			expect(warnings[0]?.code).toBe('AERO_TEMPLATE')
+			expect(warnings[0]?.message).toContain('shadows built-in loop metadata')
+			expect(warnings[0]?.message).toContain('index')
 		})
 	})
 
