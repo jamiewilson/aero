@@ -1,4 +1,4 @@
-<script is:build>
+<script is:build lang="ts">
 	import logo from '@components/logo'
 	const isHomepage = Aero.page.url.pathname === '/'
 
@@ -45,7 +45,7 @@
 	}
 </style>
 
-<!-- TODO: Flag usage a is:build symbols without props passing it in -->
+<!-- TODO: Flag usage of is:build symbols without it being passed in as props -->
 <script props="{ isHomepage }">
 	import { allCaps } from '@scripts/utils/transform'
 	// This comment will get stripped from build output

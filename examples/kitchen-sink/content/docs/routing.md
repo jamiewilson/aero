@@ -56,7 +56,7 @@ Pages with bracket-delimited filenames create dynamic routes. The bracket conten
 </script>
 
 <base-layout title="Page: { Aero.page.params.id }">
-	<h1>{Aero.page.params.id}</h1>
+	<h1>{ Aero.page.params.id }</h1>
 </base-layout>
 ```
 

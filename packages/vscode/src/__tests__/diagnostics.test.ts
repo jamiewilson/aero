@@ -280,6 +280,45 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedDismissDiag).toBeUndefined()
 	})
 
+	it('should NOT flag destructured bindings with defaults as unused when used in template', () => {
+		const text = `
+<script is:build>
+	const { meta } = site
+	const {
+		title = meta.title,
+		description = meta.description,
+		image = Aero.site.url + meta.ogImage,
+	} = Aero.props
+</script>
+<title>{ title }</title>
+<meta name="description" content="{ description }" />
+<meta property="og:image" content="{ image }" />
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		for (const name of ['title', 'description', 'image']) {
+			const unusedDiag = reportedDiagnostics.find((d: any) =>
+				d.message.includes(`'${name}' is declared but its value is never read`)
+			)
+			expect(unusedDiag).toBeUndefined()
+		}
+	})
+
 	it('should NOT flag variable as unused when used in HTMX event handler', () => {
 		const text = `
 <script is:build>

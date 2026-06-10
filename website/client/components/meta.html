@@ -1,9 +1,11 @@
 <script is:build>
 	import site from '@content/site'
-	const title = Aero.props.title || site.meta.title
-	const description = Aero.props.description || site.meta.description
-	const image = Aero.props.image || Aero.site.url + site.meta.ogImage
-	const favicon = site.meta.icon.svg
+	const {
+		title = site.meta.title,
+		description = site.meta.description,
+		image = Aero.site.url + site.meta.ogImage,
+		favicon = site.meta.icon.svg,
+	} = Aero.props
 </script>
 
 <!-- Display -->
@@ -11,7 +13,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <!-- Content -->
-<title>{ title }</title>
+<title>{ title } — { description }</title>
 <meta name="description" content="{ description }" />
 <link rel="icon" type="image/svg+xml" href="{ favicon }" />
 <link rel="canonical" href="{ Aero.page.url }" />
