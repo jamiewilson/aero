@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+.output
+.aero
+coverage
+.cursor
+.gemini
+.agent
+pnpm-lock.yaml
+**/dist/**
+**/.output/**
+
+# Prettier plugin corrupts embedded TS in this dynamic route template (unstable write/check)
+examples/kitchen-sink/client/pages/docs/\[slug\].html

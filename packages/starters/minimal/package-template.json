@@ -5,7 +5,9 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"preview": "vite build && vite preview",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
 		"@aero-js/core": "<version>",

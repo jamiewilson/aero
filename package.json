@@ -3,9 +3,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"fmt": "oxfmt",
-		"fmt:aero": "prettier --write \"**/client/**/*.html\" \"packages/starters/**/*.html\"",
-		"fmt:check:aero": "prettier --check \"**/client/**/*.html\" \"packages/starters/**/*.html\"",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check .",
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
 		"dev": "pnpm --dir examples/kitchen-sink dev",
@@ -39,7 +38,6 @@
 		"@types/node": "catalog:",
 		"@vitest/ui": "4.1.2",
 		"@aero-js/prettier-plugin-aero": "workspace:*",
-		"oxfmt": "^0.43.0",
 		"oxlint": "^1.58.0",
 		"prettier": "^3.8.4",
 		"vitest": "catalog:"

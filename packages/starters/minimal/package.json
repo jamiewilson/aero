@@ -25,6 +25,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite build && vite preview",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check .",
 		"prepack": "cp ../../../LICENSE ."
 	},
 	"dependencies": {

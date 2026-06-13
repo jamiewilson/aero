@@ -8,6 +8,7 @@
 	"bracketSameLine": true,
 	"bracketSpacing": true,
 	"singleAttributePerLine": false,
+	"trailingComma": "es5",
 	"plugins": ["@aero-js/prettier-plugin-aero"],
 	"overrides": [
 		{

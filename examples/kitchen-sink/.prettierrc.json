@@ -1,5 +1,6 @@
 {
 	"semi": false,
+	"printWidth": 100,
 	"useTabs": true,
 	"tabWidth": 2,
 	"singleQuote": true,
@@ -13,8 +14,7 @@
 		{
 			"files": ["**/*.html"],
 			"options": {
-				"parser": "aero",
-				"aeroBracketSpacing": false
+				"parser": "aero"
 			}
 		}
 	]
