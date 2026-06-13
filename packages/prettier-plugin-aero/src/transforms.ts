@@ -135,6 +135,8 @@ async function collectBracketSpacingEdits(
 	const edits: TextEdit[] = []
 
 	for (const node of walkHtmlNodes(nodes)) {
+		if (node.tag === 'script' || node.tag === 'style') continue
+
 		if (node.attributes) {
 			for (const [name, rawValue] of Object.entries(node.attributes)) {
 				if (rawValue == null) continue

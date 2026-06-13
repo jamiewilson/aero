@@ -10,6 +10,4 @@ coverage
 pnpm-lock.yaml
 **/dist/**
 **/.output/**
-
-# Prettier plugin corrupts embedded TS in this dynamic route template (unstable write/check)
-examples/kitchen-sink/client/pages/docs/\[slug\].html
+**/.aero/**

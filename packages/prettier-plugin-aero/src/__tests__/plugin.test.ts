@@ -29,6 +29,7 @@ describe('prettier-plugin-aero integration', () => {
 
 	it('formats script is:build blocks with embedded typescript formatting', async () => {
 		const input = `<script is:build lang="ts">
+import { getCollection, render } from 'aero:content'
 const  foo={bar:1}
 </script>`
 		const output = await prettier.format(input, {
@@ -37,5 +38,6 @@ const  foo={bar:1}
 			singleQuote: true,
 		})
 		expect(output).toMatch(/const foo = \{ bar: 1 \}/)
+		expect(output).not.toContain(';(getCollection')
 	})
 })

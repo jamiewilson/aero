@@ -110,6 +110,15 @@ describe('applyAeroTransforms', () => {
 		expect(output).not.toContain('<h1>{title}\n\t\t\t<p')
 	})
 
+	it('does not corrupt import destructuring inside script is:build blocks', async () => {
+		const input = `<script is:build lang="ts">
+import { getCollection, render } from 'aero:content'
+</script>`
+		const output = await formatAero(input, { aeroBracketSpacing: true })
+		expect(output).toContain('import { getCollection, render } from')
+		expect(output).not.toContain(';(getCollection, render)')
+	})
+
 	it('expands self-closing *-component tags when option is false', async () => {
 		const input = '<nav-component />'
 		const output = await formatAero(input, { aeroSelfClosingComponents: false })
