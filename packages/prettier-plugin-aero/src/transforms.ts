@@ -283,6 +283,77 @@ function parseRoots(source: string): Node[] {
 	return parseMinimalHtmlFromText(source).roots
 }
 
+function getScriptOpenTag(source: string, node: Node): string | null {
+	if (node.startTagEnd == null) return null
+	const tagStart = source.lastIndexOf('<script', node.startTagEnd)
+	if (tagStart === -1) return null
+	return source.substring(tagStart, node.startTagEnd)
+}
+
+function isBuildScript(node: Node): boolean {
+	return node.tag === 'script' && node.attributes != null && 'is:build' in node.attributes
+}
+
+/** True if script has lang="ts" or lang="typescript". */
+function hasLangTs(node: Node, source: string): boolean {
+	const openTag = getScriptOpenTag(source, node)
+	return openTag != null && /\blang\s*=\s*["'](ts|typescript)["']/i.test(openTag)
+}
+
+/** True if script opts into JavaScript with lang="js" or lang="javascript". */
+function hasLangJs(node: Node, source: string): boolean {
+	const openTag = getScriptOpenTag(source, node)
+	return openTag != null && /\blang\s*=\s*["'](js|javascript)["']/i.test(openTag)
+}
+
+async function formatEmbeddedScriptBody(
+	scriptContent: string,
+	parser: 'babel-ts' | 'babel',
+	options: prettier.Options
+): Promise<string> {
+	if (!scriptContent.trim()) return scriptContent
+
+	const formatOptions: prettier.Options = {
+		...options,
+		parser,
+		semi: options.semi ?? false,
+	}
+
+	try {
+		const formatted = await prettier.format(scriptContent.trimEnd(), formatOptions)
+		const leadingNewline = scriptContent.startsWith('\n') ? '\n' : ''
+		const trailingNewline = scriptContent.endsWith('\n') ? '\n' : ''
+		return leadingNewline + formatted.trimEnd() + trailingNewline
+	} catch {
+		return scriptContent
+	}
+}
+
+async function collectBuildScriptEdits(
+	source: string,
+	nodes: Node[],
+	options: prettier.Options
+): Promise<TextEdit[]> {
+	const edits: TextEdit[] = []
+
+	for (const node of walkHtmlNodes(nodes)) {
+		if (!isBuildScript(node)) continue
+		if (node.startTagEnd == null || node.endTagStart == null) continue
+		if (hasLangTs(node, source)) continue
+
+		const scriptContent = source.substring(node.startTagEnd, node.endTagStart)
+		if (!scriptContent.trim()) continue
+
+		const parser = hasLangJs(node, source) ? 'babel' : 'babel-ts'
+		const formatted = await formatEmbeddedScriptBody(scriptContent, parser, options)
+		if (formatted !== scriptContent) {
+			edits.push({ start: node.startTagEnd, end: node.endTagStart, text: formatted })
+		}
+	}
+
+	return edits
+}
+
 export async function applyAeroTransforms(
 	source: string,
 	nodes: Node[],
@@ -311,6 +382,10 @@ export async function applyAeroTransforms(
 		options.aeroSelfClosingComponents
 	)
 	result = applyEdits(result, selfClosingEdits)
+	currentNodes = parseRoots(result)
+
+	const buildScriptEdits = await collectBuildScriptEdits(result, currentNodes, prettierOptions)
+	result = applyEdits(result, buildScriptEdits)
 
 	return result
 }

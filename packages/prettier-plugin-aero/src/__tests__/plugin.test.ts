@@ -40,4 +40,29 @@ const  foo={bar:1}
 		expect(output).toMatch(/const foo = \{ bar: 1 \}/)
 		expect(output).not.toContain(';(getCollection')
 	})
+
+	it('formats script is:build without lang as typescript by default', async () => {
+		const input = `<script is:build>
+import { getCollection, render } from 'aero:content'
+const  foo={bar:1}
+type X = { a: string }
+</script>`
+		const output = await prettier.format(input, {
+			...baseOptions,
+			semi: false,
+			singleQuote: true,
+		})
+		expect(output).toMatch(/const foo = \{ bar: 1 \}/)
+		expect(output).not.toContain(';(getCollection')
+		expect(output).not.toContain('lang="ts"')
+	})
+
+	it('does not add lang="ts" when formatting default build scripts', async () => {
+		const input = `<script is:build>
+const x=1
+</script>`
+		const output = await prettier.format(input, baseOptions)
+		expect(output).toContain('<script is:build>')
+		expect(output).not.toContain('lang="ts"')
+	})
 })
