@@ -1,0 +1,19 @@
+{
+	"semi": false,
+	"useTabs": true,
+	"tabWidth": 2,
+	"singleQuote": true,
+	"arrowParens": "avoid",
+	"bracketSameLine": true,
+	"bracketSpacing": true,
+	"singleAttributePerLine": false,
+	"plugins": ["@aero-js/prettier-plugin-aero"],
+	"overrides": [
+		{
+			"files": ["**/*.html"],
+			"options": {
+				"parser": "aero"
+			}
+		}
+	]
+}

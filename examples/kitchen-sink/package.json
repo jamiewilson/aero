@@ -22,10 +22,12 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
+		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.27",
 		"nitro": "catalog:",
+		"prettier": "^3.8.4",
 		"shiki": "^4.0.2",
 		"vite": "catalog:",
 		"zod": "^4.3.6"

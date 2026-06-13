@@ -4,14 +4,10 @@
 	import aboutImage from '@images/about.jpg'
 	import site from '@content/site'
 
-	const meta = {
-		title: 'About Meta Title',
-		image: Aero.site.url + aboutImage,
-	}
-
 	const props = {
-		custom: { title: 'About Page Title' },
+		title: 'About Page Title',
 		subtitle: site.about.subtitle,
+		requiredProp: true,
 	}
 
 	const AuthState = {
@@ -35,7 +31,7 @@
 		<a href="/register">Register</a>
 		<div switch="{ auth.state }">
 			<a href="/logout" case="{ AuthState.SignedIn }">Log Out</a>
-			<a href="/login" case="{ AuthState.SignedOut }">Log In</a>
+			<a href="/login" case="SignedOut">Log In</a>
 			<span default>Default</span>
 		</div>
 	</div>

@@ -14,6 +14,8 @@
 		"lume-js": "2.0.0-beta.1"
 	},
 	"devDependencies": {
+		"@aero-js/prettier-plugin-aero": "workspace:*",
+		"prettier": "^3.8.4",
 		"vite": "catalog:"
 	}
 }
