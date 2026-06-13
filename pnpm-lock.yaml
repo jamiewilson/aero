@@ -28,6 +28,9 @@ importers:
 
   .:
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:packages/prettier-plugin-aero
       '@playwright/test':
         specifier: ^1.59.0
         version: 1.59.0
@@ -43,6 +46,9 @@ importers:
       oxlint:
         specifier: ^1.58.0
         version: 1.58.0
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vitest:
         specifier: 'catalog:'
         version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
@@ -56,9 +62,15 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/vite
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -72,9 +84,15 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/vite
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -94,9 +112,15 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -116,9 +140,15 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -138,9 +168,15 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -157,6 +193,12 @@ importers:
         specifier: 2.0.0-beta.1
         version: 2.0.0-beta.1
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../../packages/prettier-plugin-aero
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       vite:
         specifier: 8.0.3
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
@@ -194,6 +236,9 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8
     devDependencies:
+      '@aero-js/prettier-plugin-aero':
+        specifier: workspace:*
+        version: link:../../packages/prettier-plugin-aero
       '@types/alpinejs':
         specifier: ^3.13.11
         version: 3.13.11
@@ -206,6 +251,9 @@ importers:
       nitro:
         specifier: 3.0.260311-beta
         version: 3.0.260311-beta(chokidar@4.0.3)(jiti@2.6.1)(rollup@4.59.0)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
       shiki:
         specifier: ^4.0.2
         version: 4.0.2
@@ -569,6 +617,34 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.2
+
+  packages/prettier-plugin-aero:
+    dependencies:
+      '@aero-js/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@aero-js/html-parser':
+        specifier: workspace:*
+        version: link:../html-parser
+      '@aero-js/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.5.0
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.21.7(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(oxc-resolver@11.19.1)(typescript@6.0.2)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/starters/fullstack:
     dependencies:
@@ -2988,6 +3064,11 @@ packages:
   postcss@8.5.8:
     resolution: {integrity: sha512-OW/rX8O/jXnm82Ey1k44pObPtdblfiuWnrd8X7GJ7emImCOstunGbXUpp7HdBrFQX6rJzn3sPT397Wp5aCwCHg==}
     engines: {node: ^10 || ^12 || >=14}
+
+  prettier@3.8.4:
+    resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
@@ -5481,6 +5562,8 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  prettier@3.8.4: {}
 
   property-information@7.1.0: {}
 

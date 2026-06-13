@@ -12,6 +12,8 @@
 		"@aero-js/vite": "<version>"
 	},
 	"devDependencies": {
-		"vite": "8.0.3"
+		"vite": "8.0.3",
+		"prettier": "^3.8.4",
+		"@aero-js/prettier-plugin-aero": "<version>"
 	}
 }

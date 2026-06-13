@@ -9,5 +9,12 @@
 	"bracketSpacing": true,
 	"singleAttributePerLine": false,
 	"trailingComma": "es5",
-	"ignorePatterns": [".cursor/**/*", ".gemini/**/*", ".agent/**/*"]
+	"ignorePatterns": [
+		".cursor/**/*",
+		".gemini/**/*",
+		".agent/**/*",
+		"**/client/**/*.html",
+		"examples/**/*.html",
+		"packages/starters/**/*.html"
+	]
 }
