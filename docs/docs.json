@@ -59,6 +59,7 @@
 				"pages": [
 					"tooling/cli",
 					"tooling/vscode-extension",
+					"tooling/formatting",
 					"tooling/incremental-builds",
 					"tooling/image-optimization"
 				]

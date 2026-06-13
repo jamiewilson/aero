@@ -20,8 +20,13 @@ Or search for **Aero** in the VS Code Extensions panel.
 - **Hover info** — Hover over components and expressions to see type information.
 - **Go to definition** — Jump from a component reference in a template to its source `.html` file.
 - **Diagnostics** — Template errors and type issues are underlined inline, matching what `aero check --types` reports on the command line.
+- **Formatting defaults** — Recommends the Prettier extension and sets `[aero]` files to format with Prettier (see [Formatting](/tooling/formatting)).
 
 <Tip>
 	If you see false positives or missing diagnostics, run `aero doctor` in your project root to
 	confirm the extension can find a supported version of `@aero-js/core`.
 </Tip>
+
+## Formatting
+
+Install [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) and add `@aero-js/prettier-plugin-aero` to your project. See [Formatting](/tooling/formatting) for `.prettierrc` setup and Aero-specific options.

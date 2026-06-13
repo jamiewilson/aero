@@ -1,0 +1,86 @@
+---
+title: 'Formatting'
+description: 'Format Aero HTML templates with Prettier and Aero-specific options; use oxfmt for JavaScript and TypeScript.'
+---
+
+Aero templates (`.html` files) use **[Prettier](https://prettier.io)** with [`@aero-js/prettier-plugin-aero`](https://www.npmjs.com/package/@aero-js/prettier-plugin-aero). JavaScript and TypeScript in your project can keep using **[oxfmt](https://oxc.rs/docs/guide/usage/formatter)** — the two tools coexist via per-language VS Code defaults.
+
+## Quick setup
+
+1. Install dev dependencies:
+
+```bash
+pnpm add -D prettier @aero-js/prettier-plugin-aero
+```
+
+2. Add `.prettierrc.json`:
+
+```json
+{
+  "semi": false,
+  "useTabs": true,
+  "tabWidth": 2,
+  "plugins": ["@aero-js/prettier-plugin-aero"],
+  "overrides": [
+    {
+      "files": ["**/*.html"],
+      "options": { "parser": "aero" }
+    }
+  ]
+}
+```
+
+3. Install the [Prettier VS Code extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode). The [Aero extension](/tooling/vscode-extension) recommends it and sets `[aero]` files to use Prettier by default.
+
+4. (Optional) Exclude Aero HTML from oxfmt so templates are not double-formatted. In `.oxfmtrc.json`:
+
+```json
+{
+  "ignorePatterns": ["**/client/**/*.html"]
+}
+```
+
+## Standard Prettier options
+
+All usual Prettier settings (`printWidth`, `useTabs`, `htmlWhitespaceSensitivity`, `singleAttributePerLine`, etc.) apply to Aero `.html` files. Embedded `<script is:build lang="ts">` and `<style>` blocks are formatted with Prettier's JS/TS/CSS rules.
+
+The plugin adds three **Aero-only** options (also set in `.prettierrc.json` or under `overrides`):
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `aeroAttributePrefix` | `false` | When `true`, emit `data-props`, `data-for`, `data-if`, … instead of bare `props`, `for`, `if`. Plain HTML attributes (e.g. `<label for="email">`) are never rewritten. |
+| `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Inner JS/TS still follows Prettier's `bracketSpacing` for object literals. |
+| `aeroSelfClosingComponents` | `true` | When `true`, prefer `<my-component />` for `*-component` tags with no element children. `*-layout` tags always keep explicit close tags. |
+
+Example with Aero options:
+
+```json
+{
+  "plugins": ["@aero-js/prettier-plugin-aero"],
+  "overrides": [
+    {
+      "files": ["**/*.html"],
+      "options": {
+        "parser": "aero",
+        "aeroAttributePrefix": true,
+        "aeroBracketSpacing": true,
+        "aeroSelfClosingComponents": true
+      }
+    }
+  ]
+}
+```
+
+## CLI
+
+Format templates from the project root:
+
+```bash
+pnpm exec prettier --write "**/*.html"
+```
+
+Projects scaffolded with `@aero-js/create` include `.prettierrc.json` and recommended VS Code extensions.
+
+<Tip>
+	Prettier config is the single source of truth for Aero format options. You do not need separate `aero.format.*` VS Code settings.
+</Tip>
