@@ -39,6 +39,7 @@ import {
 import { Effect, Exit } from 'effect'
 import { htmlCompileTry } from './compile-html-effect'
 import { compileHtmlSourceForVite } from './compile-html-for-vite'
+import { CompileWarningDeduper, type CompileWarningPayload } from './compile-warning-dedup'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
@@ -83,29 +84,53 @@ interface AeroPluginState {
 	dirs: ReturnType<typeof resolveDirs>
 	apiPrefix: string
 	options: AeroOptions
+	/** Dedupes compile warnings when unchanged templates are recompiled during dev HMR. */
+	compileWarningDeduper: CompileWarningDeduper
 }
 
 const AERO_DIR = '.aero'
 /** Filename for the generated runtime instance (uses app dirs for globs); written under .aero so Vite treats it as a real module. */
 const RUNTIME_INSTANCE_FILENAME = 'runtime-instance.mjs'
 
-interface CompileWarning {
-	line?: number
-	column?: number
-	file?: string
-	code: string
-	message: string
+function logCompileWarning(
+	resolvedConfig: ResolvedConfig,
+	fallbackFile: string,
+	warning: CompileWarningPayload
+): void {
+	const loc =
+		warning.line !== undefined && warning.column !== undefined
+			? `:${warning.line}:${warning.column}`
+			: ''
+	const where = warning.file ? `${warning.file}${loc}` : fallbackFile
+	resolvedConfig.logger.warn(`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`)
 }
 
-function createCompileWarningLogger(resolvedConfig: ResolvedConfig, fallbackFile: string) {
-	return (warning: CompileWarning): void => {
-		const loc =
-			warning.line !== undefined && warning.column !== undefined
-				? `:${warning.line}:${warning.column}`
-				: ''
-		const where = warning.file ? `${warning.file}${loc}` : fallbackFile
-		resolvedConfig.logger.warn(`[aero] [${warning.code}] ${where}\n  warning: ${warning.message}`)
-	}
+function compileHtmlWithDedupedWarnings(
+	code: string,
+	filePath: string,
+	params: {
+		resolvedConfig: ResolvedConfig
+		resolvePath: (specifier: string, importer: string) => string
+	},
+	clientScripts: Map<string, ScriptEntry>,
+	deduper: CompileWarningDeduper
+): string {
+	const warnings: CompileWarningPayload[] = []
+	const generated = compileHtmlSourceForVite(
+		code,
+		filePath,
+		{
+			...params,
+			onWarning: warning => {
+				warnings.push(warning)
+			},
+		},
+		clientScripts
+	)
+	deduper.flushWarnings(filePath, code, warnings, warning =>
+		logCompileWarning(params.resolvedConfig, filePath, warning)
+	)
+	return generated
 }
 
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
@@ -479,15 +504,15 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const exit = Effect.runSyncExit(
 					htmlCompileTry(filePath, () => {
 						const code = readFileSync(filePath, 'utf-8')
-						return compileHtmlSourceForVite(
+						return compileHtmlWithDedupedWarnings(
 							code,
 							filePath,
 							{
 								resolvedConfig,
 								resolvePath: resolvedAlias.resolve,
-								onWarning: createCompileWarningLogger(resolvedConfig, filePath),
 							},
-							state.clientScripts
+							state.clientScripts,
+							state.compileWarningDeduper
 						)
 					})
 				)
@@ -533,15 +558,15 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 
 			const exit = Effect.runSyncExit(
 				htmlCompileTry(id, () =>
-					compileHtmlSourceForVite(
+					compileHtmlWithDedupedWarnings(
 						code,
 						id,
 						{
 							resolvedConfig,
 							resolvePath: resolvedAlias.resolve,
-							onWarning: createCompileWarningLogger(resolvedConfig, id),
 						},
-						state.clientScripts
+						state.clientScripts,
+						state.compileWarningDeduper
 					)
 				)
 			)
@@ -598,6 +623,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		dirs,
 		apiPrefix,
 		options,
+		compileWarningDeduper: new CompileWarningDeduper(),
 	}
 
 	const aeroConfigPlugin = createAeroConfigPlugin(state)
