@@ -79,9 +79,12 @@ export function validateSingleBracedExpression(
 	return trimmed
 }
 
+const INTERPOLATION_PASSTHROUGH_CALL = /^(raw|trim|trimStart|trimEnd)\s*\(/
+
 /**
  * Compile text for use inside a template literal; replaces `{ expr }` with `${ escapeHtml(expr) }`.
- * Auto-escapes HTML to prevent XSS attacks. Use `raw(expr)` to bypass escaping.
+ * Auto-escapes HTML to prevent XSS attacks. Use `raw(expr)` to bypass escaping, or
+ * `trim(expr)` / `trimStart(expr)` / `trimEnd(expr)` for whitespace helpers.
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
@@ -91,9 +94,8 @@ export function compileInterpolation(text: string): string {
 			if (seg.kind === 'literal') {
 				return escapeTemplateLiteralContent(seg.value)
 			}
-			// raw(...) bypasses escaping - check with trimmed expression
 			const expr = seg.expression.trim()
-			if (/^raw\s*\(/.test(expr)) {
+			if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {
 				return `\${${seg.expression}}`
 			}
 			return `\${escapeHtml(${seg.expression})}`
@@ -154,6 +156,24 @@ export function escapeBackticks(s: string): string {
 export function raw(s: unknown): string {
 	if (s == null) return ''
 	return String(s)
+}
+
+/** Trim both ends of interpolated output (available in template render context). */
+export function trim(s: unknown): string {
+	if (s == null) return ''
+	return String(s).trim()
+}
+
+/** Trim start of interpolated output (available in template render context). */
+export function trimStart(s: unknown): string {
+	if (s == null) return ''
+	return String(s).trimStart()
+}
+
+/** Trim end of interpolated output (available in template render context). */
+export function trimEnd(s: unknown): string {
+	if (s == null) return ''
+	return String(s).trimEnd()
 }
 
 /** Emit code for a slots object whose values are variable names (e.g. `{ "default": __slot0 }`). */
@@ -281,7 +301,7 @@ export function getRenderComponentContextArg(): string {
 
 /** Build destructuring pattern for the render function. */
 export function getRenderContextDestructurePattern(): string {
-	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, raw`
+	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd`
 }
 
 // ============================================================================

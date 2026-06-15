@@ -7,7 +7,12 @@ export type LowererDiag =
 	| {
 			source: string
 			file?: string
-			onWarning?: (warning: { code: 'AERO_TEMPLATE' | 'AERO_SWITCH'; message: string }) => void
+			onWarning?: (warning: {
+				code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+				message: string
+				line?: number
+				column?: number
+			}) => void
 	  }
 	| undefined
 

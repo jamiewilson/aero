@@ -46,6 +46,13 @@ describe('compileInterpolation', () => {
 	it('should handle multiple interpolations', () => {
 		expect(compileInterpolation('{a} and {b}')).toBe('${escapeHtml(a)} and ${escapeHtml(b)}')
 	})
+
+	it('should passthrough raw(), trim(), trimStart(), and trimEnd() calls', () => {
+		expect(compileInterpolation('{ raw(html) }')).toBe('${ raw(html) }')
+		expect(compileInterpolation('{ trim(text) }')).toBe('${ trim(text) }')
+		expect(compileInterpolation('{ trimStart(text) }')).toBe('${ trimStart(text) }')
+		expect(compileInterpolation('{ trimEnd(text) }')).toBe('${ trimEnd(text) }')
+	})
 })
 
 describe('compileAttributeInterpolation', () => {

@@ -31,6 +31,7 @@ export interface CompileOptions {
 	blockingScripts?: ScriptEntry[]
 	resolvePath?: (specifier: string, importer: string) => string
 	importer?: string
+	/** Original HTML source for line/column diagnostics. Prefer {@link compileTemplate} to set this automatically. */
 	diagnosticTemplateSource?: string
 	onWarning?: (warning: CompileWarning) => void
 }

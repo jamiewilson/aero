@@ -8,7 +8,7 @@
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/html-parser'
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
-import { collectForDirectiveBindingNames } from './for-directive'
+import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import { ATTR_PREFIX, ATTR_PROPS } from './constants'
@@ -26,7 +26,6 @@ export type TemplateInterpolationSite = {
 
 const FOR_ATTR_NAMES = new Set(['for', 'data-for'])
 const PROPS_ATTR_NAMES = new Set([ATTR_PROPS.toLowerCase(), `${ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase()])
-const FOR_LOOP_IMPLICIT_NAMES = ['index', 'first', 'last', 'length']
 
 type AttributeMask = { start: number; length: number }
 type AttributeInterpolation = {
