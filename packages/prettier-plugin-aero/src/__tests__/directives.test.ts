@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	isBuildDirectiveAttribute,
+	isNativeBareAttribute,
 	isSelfClosingComponentTag,
 } from '../directives.js'
 
@@ -30,6 +31,20 @@ describe('directives', () => {
 	it('treats bare props as build directive', () => {
 		expect(isBuildDirectiveAttribute('props', '""')).toBe(true)
 		expect(isBuildDirectiveAttribute('data-props', '""')).toBe(true)
+	})
+
+	it('treats native bare attributes (for/switch/default) as native on their host tags', () => {
+		expect(isNativeBareAttribute('label', 'for', '"email"')).toBe(true)
+		expect(isNativeBareAttribute('output', 'for', '"a b"')).toBe(true)
+		expect(isNativeBareAttribute('input', 'switch', '""')).toBe(true)
+		expect(isNativeBareAttribute('track', 'default', '""')).toBe(true)
+	})
+
+	it('does not treat bare names as native on the wrong tag, when braced, or in data- form', () => {
+		expect(isNativeBareAttribute('li', 'for', '"const x of xs"')).toBe(false)
+		expect(isNativeBareAttribute('span', 'default', '""')).toBe(false)
+		expect(isNativeBareAttribute('label', 'for', '"{ const x of xs }"')).toBe(false)
+		expect(isNativeBareAttribute('track', 'data-default', '""')).toBe(false)
 	})
 
 	it('limits self-closing preference to *-component tags', () => {

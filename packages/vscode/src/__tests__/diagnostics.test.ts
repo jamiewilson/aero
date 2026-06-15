@@ -1260,6 +1260,41 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		)
 		expect(directiveDiag).toBeUndefined()
 	})
+
+	const makeDoc = (text: string) =>
+		({
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		}) as any
+
+	const findBraceDiag = () =>
+		mockSet.mock.calls[0][1].find((d: any) =>
+			d.message.includes('must use a braced expression')
+		)
+
+	it('should NOT flag bare for on <label> (native HTML attribute)', () => {
+		runDiagnostics(makeDoc(`\n<label for="email">Email</label>\n`))
+		expect(findBraceDiag()).toBeUndefined()
+	})
+
+	it('should NOT flag bare for on <output> (native HTML attribute)', () => {
+		runDiagnostics(makeDoc(`\n<output for="a b">x</output>\n`))
+		expect(findBraceDiag()).toBeUndefined()
+	})
+
+	it('should still flag a forgotten-brace loop (bare for on a non-native element)', () => {
+		runDiagnostics(makeDoc(`\n<li for="const item of items">x</li>\n`))
+		expect(findBraceDiag()).toBeDefined()
+	})
+
+	it('should still flag explicit data-for on <label> (always a directive)', () => {
+		runDiagnostics(makeDoc(`\n<label data-for="email">x</label>\n`))
+		expect(findBraceDiag()).toBeDefined()
+	})
 })
 
 /** Same name declared in same scope (e.g. import + const) → "declared multiple times". */

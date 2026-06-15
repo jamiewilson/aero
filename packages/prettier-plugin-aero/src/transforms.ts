@@ -7,6 +7,7 @@ import {
 	canonicalDirectiveName,
 	formatDirectiveName,
 	isBuildDirectiveAttribute,
+	isNativeBareAttribute,
 	isSelfClosingComponentTag,
 	quoteAttributeValue,
 	unwrapAttributeValue,
@@ -24,6 +25,9 @@ function collectAttributeEdits(source: string, nodes: Node[], usePrefix: boolean
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
+			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
+			// `data-` form would change their meaning.
+			if (isNativeBareAttribute(node.tag, name, effectiveValue)) continue
 			if (!isBuildDirectiveAttribute(name, effectiveValue)) continue
 			const canonical = canonicalDirectiveName(name)
 			const desired = formatDirectiveName(canonical, usePrefix)

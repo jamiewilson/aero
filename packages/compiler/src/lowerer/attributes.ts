@@ -5,6 +5,7 @@
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import { isDirectiveAttr } from '../directive-attributes'
+import { parentIsSwitchContainer } from './switch'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
@@ -33,13 +34,39 @@ const NON_PROP_COMPONENT_DIRECTIVE_ATTRS = [
 	CONST.ATTR_DEFAULT,
 ] as const
 
-const NON_EMIT_ELEMENT_DIRECTIVE_ATTRS = [
-	CONST.ATTR_IF,
-	CONST.ATTR_ELSE_IF,
-	CONST.ATTR_ELSE,
-	CONST.ATTR_CASE,
-	CONST.ATTR_DEFAULT,
-] as const
+/** A value is directive-shaped when it is a single brace-wrapped expression, e.g. `{ expr }`. */
+function looksBraced(raw: string | null | undefined): boolean {
+	if (!raw) return false
+	const trimmed = raw.trim()
+	return trimmed.startsWith('{') && trimmed.endsWith('}')
+}
+
+/**
+ * Elements on which a bare directive name is actually a real HTML attribute. A bare `for` is the
+ * native attribute on `<label>`/`<output>`, `switch` on `<input>` (Safari toggle), `default` on
+ * `<track>`. Anywhere else the bare name is an Aero directive (so a forgotten-brace loop like
+ * `<li for="const x of xs">` still fails loud). The `data-` form is always an explicit directive.
+ */
+const NATIVE_ATTR_ELEMENTS: Record<string, ReadonlySet<string>> = {
+	[CONST.ATTR_FOR]: new Set(['label', 'output']),
+	[CONST.ATTR_SWITCH]: new Set(['input']),
+	[CONST.ATTR_DEFAULT]: new Set(['track']),
+}
+
+/**
+ * True when a bare (non-`data-`) directive-named attribute should be left as a native HTML
+ * attribute: the name matches the directive, its value is not brace-shaped, and the tag is one
+ * where that attribute is genuinely native.
+ */
+function isNativeBareAttribute(
+	tagName: string,
+	name: string,
+	directive: string,
+	value: string | null
+): boolean {
+	if (name !== directive || looksBraced(value)) return false
+	return NATIVE_ATTR_ELEMENTS[directive]?.has(tagName) ?? false
+}
 
 function hasDirectiveAttr(node: NodeLike, directiveName: string): boolean {
 	return Boolean(
@@ -116,6 +143,10 @@ function parseForAttribute(
 	attr: AttrLike
 ): { binding: string; items: string } | null {
 	if (!Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) return null
+	// Bare `for` on <label>/<output> with a non-braced value is the native HTML attribute.
+	if (isNativeBareAttribute(getTagName(node), attr.name, CONST.ATTR_FOR, attr.value ?? null)) {
+		return null
+	}
 	const rawValue = attr.value || ''
 	const content = Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, rawValue))
 	let parsed: ParsedForDirective
@@ -255,13 +286,31 @@ export function parseElementAttributes(
 			return
 		}
 
-		if (isDirectiveAttrName(attr.name, NON_EMIT_ELEMENT_DIRECTIVE_ATTRS)) return
-
-		if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
-			switchExpr = Helper.stripBraces(
-				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
-			)
+		// Conditional directives are never emitted; conditional lowering owns the element.
+		if (isDirectiveAttrName(attr.name, [CONST.ATTR_IF, CONST.ATTR_ELSE_IF, CONST.ATTR_ELSE])) {
 			return
+		}
+
+		// `case` / `default` are switch-branch markers consumed by switch lowering. Outside a switch
+		// only a bare `default` on <track> survives (the native boolean); every other placement is a
+		// misplaced branch that the lowerer's switch guard reports.
+		if (isDirectiveAttrName(attr.name, [CONST.ATTR_CASE, CONST.ATTR_DEFAULT])) {
+			const nativeTrackDefault = isNativeBareAttribute(
+				getTagName(node),
+				attr.name,
+				CONST.ATTR_DEFAULT,
+				attr.value ?? null
+			)
+			if (parentIsSwitchContainer(node) || !nativeTrackDefault) return
+		} else if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
+			// Bare boolean `switch` on <input> is the native attribute; pass it through.
+			const tagName = getTagName(node)
+			if (!isNativeBareAttribute(tagName, attr.name, CONST.ATTR_SWITCH, attr.value ?? null)) {
+				switchExpr = Helper.stripBraces(
+					validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+				)
+				return
+			}
 		}
 
 		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {

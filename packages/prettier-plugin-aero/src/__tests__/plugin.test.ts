@@ -27,6 +27,18 @@ describe('prettier-plugin-aero integration', () => {
 		expect(output).toContain('{ title }')
 	})
 
+	it('leaves native HTML attributes (track default) untouched when prefixing directives', async () => {
+		const input = `<video><track default /></video>`
+		const output = await prettier.format(input, {
+			...baseOptions,
+			aeroAttributePrefix: true,
+			aeroBracketSpacing: true,
+			aeroSelfClosingComponents: false,
+		})
+		expect(output).toContain('<track default')
+		expect(output).not.toContain('data-default')
+	})
+
 	it('formats script is:build blocks with embedded typescript formatting', async () => {
 		const input = `<script is:build lang="ts">
 import { getCollection, render } from 'aero:content'

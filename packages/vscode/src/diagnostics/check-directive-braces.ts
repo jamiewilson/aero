@@ -23,6 +23,15 @@ const BRACED_DIRECTIVES = new Set([
 	'data-props',
 ])
 
+/**
+ * Tags where a bare directive name is actually a native HTML attribute, so a non-braced value is
+ * valid and must not be flagged (e.g. `<label for="email">`). The `data-` form is always a
+ * directive, so it is never exempt.
+ */
+const NATIVE_BARE_ATTR_TAGS: Record<string, ReadonlySet<string>> = {
+	for: new Set(['label', 'output']),
+}
+
 export function checkDirectiveExpressionBraces(
 	document: vscode.TextDocument,
 	text: string,
@@ -37,6 +46,7 @@ export function checkDirectiveExpressionBraces(
 		const tagStart = match.index
 		if (isInRanges(tagStart, ignoredRanges)) continue
 
+		const tagName = (match[1] || '').toLowerCase()
 		const attrs = match[2] || ''
 		if (!attrs) continue
 
@@ -48,6 +58,9 @@ export function checkDirectiveExpressionBraces(
 
 			if (!BRACED_DIRECTIVES.has(attrName)) continue
 			if (attrValue.startsWith('{') && attrValue.endsWith('}')) continue
+			// Bare directive names that are native HTML attributes on this tag (e.g. `for` on
+			// `<label>`) pass through; only the explicit `data-` form is always a directive.
+			if (NATIVE_BARE_ATTR_TAGS[attrName]?.has(tagName)) continue
 
 			const attrsStart = tagStart + match[0].indexOf(attrs)
 			const start = attrsStart + attrMatch.index

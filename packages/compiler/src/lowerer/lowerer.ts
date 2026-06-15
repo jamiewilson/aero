@@ -27,12 +27,7 @@ import {
 	compileSlotDefaultContent,
 	type SlotDefaultContentDeps,
 } from './slots'
-import {
-	compileSwitchContainer,
-	hasCaseAttr,
-	hasDefaultAttr,
-	parentIsSwitchContainer,
-} from './switch'
+import { compileSwitchContainer, hasCaseAttr, parentIsSwitchContainer } from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 
 /** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
@@ -189,7 +184,12 @@ export class Lowerer {
 			})
 		}
 
-		if ((hasCaseAttr(node) || hasDefaultAttr(node)) && !parentIsSwitchContainer(node)) {
+		// `case` (non-native) and misplaced `default` outside a switch are mistakes — fail loud.
+		// `default` is native only on `<track>`, so a bare one there passes through untouched.
+		const explicitDefault = node.hasAttribute?.(CONST.ATTR_PREFIX + CONST.ATTR_DEFAULT)
+		const bareDefaultOnNonTrack = node.hasAttribute?.(CONST.ATTR_DEFAULT) && tagName !== 'track'
+		const misplacedDefault = explicitDefault || bareDefaultOnNonTrack
+		if ((hasCaseAttr(node) || misplacedDefault) && !parentIsSwitchContainer(node)) {
 			throw new CompileError({
 				message:
 					'`case` and `default` must be direct children of an element with `switch` / `data-switch`.',

@@ -58,6 +58,13 @@ describe('applyAeroTransforms', () => {
 		expect(bare).toBe('<header-component props />')
 	})
 
+	it('does not rewrite plain html for attribute', async () => {
+		const input = '<label for="email">Email</label>'
+		const output = await formatAero(input, { aeroAttributePrefix: true })
+		expect(output).toContain('for="email"')
+		expect(output).not.toContain('data-for')
+	})
+
 	it('applies aeroBracketSpacing to directive values and text interpolation', async () => {
 		const input = '<p if="{ok}">{title}</p>'
 		const spaced = await formatAero(input, { aeroBracketSpacing: true })

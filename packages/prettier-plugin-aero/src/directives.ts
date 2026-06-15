@@ -25,6 +25,33 @@ export const BUILD_DIRECTIVES = [
 
 export type BuildDirective = (typeof BUILD_DIRECTIVES)[number]
 
+/**
+ * Tags where a bare directive name is actually a native HTML attribute (`<label for>`,
+ * `<input switch>`, `<track default>`). On these the bare name must be left alone — never
+ * prefix-rewritten — because `data-default` ≠ `default`. The `data-` form is always a directive.
+ */
+const NATIVE_BARE_ATTR_TAGS: Record<string, ReadonlySet<string>> = {
+	[ATTR_FOR]: new Set(['label', 'output']),
+	[ATTR_SWITCH]: new Set(['input']),
+	[ATTR_DEFAULT]: new Set(['track']),
+}
+
+/**
+ * True when an attribute should be treated as a native HTML attribute (not an Aero directive) for
+ * the given tag: a bare directive name whose value is not brace-shaped, on a tag where that name is
+ * genuinely native.
+ */
+export function isNativeBareAttribute(
+	tag: string | undefined,
+	name: string,
+	rawValue: string
+): boolean {
+	if (!tag) return false
+	const value = unwrapAttributeValue(rawValue).trim()
+	if (value.startsWith('{') && value.endsWith('}')) return false
+	return NATIVE_BARE_ATTR_TAGS[name]?.has(tag.toLowerCase()) ?? false
+}
+
 export function isBuildDirectiveName(name: string): name is BuildDirective {
 	for (const directive of BUILD_DIRECTIVES) {
 		if (isAttr(name, directive, ATTR_PREFIX)) return true
