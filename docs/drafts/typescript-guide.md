@@ -308,7 +308,11 @@ If you edit a shared types file (e.g. `types/props.ts`) and the new definitions 
 
 ### Prop validation when using components
 
-Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) and layout attributes. The VS Code extension reports missing required props when you pass a typed object via spread or when a layout passes props to a child component. Limitations: validation only applies when the component uses `Aero.props as SomeProps` with a resolvable interface; attribute-based props (e.g. `title="{ x }"`) are not yet validated. Type safety inside each component's build script (e.g. `Aero.props as MetaProps`) is always available.
+Cross-file prop validation is implemented for `props="{ ...varName }"` (spread), bare `props` / `data-props` (no value — equivalent to spreading local `props`), and layout attributes (individual or bare spread). The VS Code extension reports missing required props when you pass a typed object via spread or when a layout passes props to a child component. Limitations: validation only applies when the component uses `Aero.props as SomeProps` with a resolvable interface; attribute-based props (e.g. `title="{ x }"`) are not yet validated; object-literal key extraction does not use full TypeScript types. Type safety inside each component's build script (e.g. `Aero.props as MetaProps`) is always available.
+
+### Script `props` validation
+
+Client `<script>` blocks (plain, `is:inline`, `is:blocking`) only receive build-scope values as globals when you pass them through a `props` attribute (e.g. `props="{ storageKey, attribute }"`). The VS Code extension always checks that identifiers used in those script bodies are either declared locally or injected via `props`; build-scope names are not visible inside client scripts without `props`. The language server prepends `declare const` ambient bindings for props-injected names so Volar/TypeScript can squiggle and autocomplete inside embedded script virtual files.
 
 ---
 
@@ -316,7 +320,8 @@ Cross-file prop validation is implemented for `props="{ ...varName }"` (spread) 
 
 | Area                         | Approach                                                                                                                                                             |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Component props**          | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread and layout attributes (with limitations) |
+| **Component props**          | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread, bare `props`, and layout attributes (with limitations) |
+| **Script props**             | Pass build data with `props="{ ... }"` on client scripts; extension validates script-body refs; language server injects `declare const` for IntelliSense |
 | **Slot props (named slots)** | Optional `{Name}SlotProps` interface in the child; convention for future slot-body typing (see [Slot prop types](#slot-prop-types-convention))                       |
 | **Content globals**          | Export typed objects from `content/*.ts`; use `satisfies` for validation                                                                                             |
 | **Content collections**      | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data`                                                                             |

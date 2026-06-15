@@ -196,6 +196,22 @@ const theme = JSON.parse(localStorage.getItem(storageKey))
 		expect(inline!.languageId).toBe('javascript')
 	})
 
+	it('injects declare const preamble for props-injected script globals', () => {
+		const html = `<script is:build>
+const { storageKey, attribute } = site.theme
+</script>
+<script props="{ storageKey, attribute }">
+const theme = JSON.parse(localStorage.getItem(storageKey))
+document.documentElement.setAttribute(attribute, theme)
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'inline_0')!
+		expect(text).toContain('declare const storageKey: any;')
+		expect(text).toContain('declare const attribute: any;')
+		expect(text).toContain('localStorage.getItem(storageKey)')
+	})
+
 	it('extracts inline script as typescript when lang="ts"', () => {
 		const html = `<script is:inline lang="ts">
 const x: number = 1

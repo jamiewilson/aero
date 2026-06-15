@@ -14,12 +14,15 @@ import {
 	type HTMLDocument,
 	type Node,
 } from '@aero-js/html-parser'
-import { formatBuildScopeAmbientPrelude } from '@aero-js/compiler/build-scope-bindings'
+import { formatBuildScopeAmbientPrelude, iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import {
 	buildTemplateEditorAmbient,
 	collectForDirectiveBindingNames,
 	collectTemplateInterpolationSites,
 	parse,
+	parsePropsAttributeBindings,
+	formatPropsInjectedAmbientDecls,
+	type BuildBindingProperties,
 } from '@aero-js/compiler'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
@@ -234,6 +237,35 @@ function slotBindingNameForSlot(slotName: string): string | null {
 	if (!/^[A-Za-z_$][\w$]*$/.test(candidate)) return null
 	if (candidate === 'default') return 'defaultSlot'
 	return candidate
+}
+
+function collectBuildBindingProperties(buildScriptBodies: readonly string[]): BuildBindingProperties {
+	const out = new Map<string, ReadonlySet<string>>()
+	for (const body of buildScriptBodies) {
+		for (const binding of iterateBuildScriptBindings(body)) {
+			if (binding.properties && binding.properties.size > 0) {
+				out.set(binding.name, binding.properties)
+			}
+		}
+	}
+	return out
+}
+
+function scriptAttrsFromSource(node: Node, sourceText: string): string {
+	if (node.startTagEnd == null) return ''
+	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
+	if (tagStart === -1) return ''
+	return sourceText.substring(tagStart + '<script'.length, node.startTagEnd)
+}
+
+function propsInjectedPreamble(
+	node: Node,
+	sourceText: string,
+	buildBindingProperties: BuildBindingProperties
+): string {
+	const attrs = scriptAttrsFromSource(node, sourceText)
+	const { injectedNames } = parsePropsAttributeBindings(attrs, buildBindingProperties)
+	return formatPropsInjectedAmbientDecls(injectedNames)
 }
 
 function parseSlotPropsBindings(rawValue: string | undefined): string[] {
@@ -506,6 +538,7 @@ export class AeroVirtualCode implements VirtualCode {
 	embeddedCodes: VirtualCode[] = []
 	htmlDocument: HTMLDocument
 	htmlFilePath?: string
+	private readonly buildBindingProperties: BuildBindingProperties
 
 	constructor(
 		public snapshot: IScriptSnapshot,
@@ -537,6 +570,7 @@ export class AeroVirtualCode implements VirtualCode {
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
 		} = buildTemplateEditorAmbient(sourceText)
+		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
@@ -710,14 +744,16 @@ export class AeroVirtualCode implements VirtualCode {
 					}
 				}
 			} else if (scriptType === 'inline') {
+				const preamble = propsInjectedPreamble(node, sourceText, this.buildBindingProperties)
+				const virtualText = preamble + scriptContent
 				yield {
 					id: `inline_${inlineIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: asEmbeddedModuleSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
-							generatedOffsets: [0],
+							generatedOffsets: [preamble.length],
 							lengths: [scriptContent.length],
 							data: FULL_FEATURES,
 						},
@@ -725,14 +761,20 @@ export class AeroVirtualCode implements VirtualCode {
 					embeddedCodes: [],
 				}
 			} else if (scriptType === 'client') {
+				const attrs = node.attributes ?? {}
+				const hasProps = 'props' in attrs || 'data-props' in attrs
+				const preamble = hasProps
+					? propsInjectedPreamble(node, sourceText, this.buildBindingProperties)
+					: ''
+				const virtualText = preamble + scriptContent
 				yield {
 					id: `client_${clientIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: asEmbeddedModuleSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
-							generatedOffsets: [0],
+							generatedOffsets: [preamble.length],
 							lengths: [scriptContent.length],
 							data: FULL_FEATURES,
 						},
@@ -740,14 +782,20 @@ export class AeroVirtualCode implements VirtualCode {
 					embeddedCodes: [],
 				}
 			} else if (scriptType === 'blocking') {
+				const attrs = node.attributes ?? {}
+				const hasProps = 'props' in attrs || 'data-props' in attrs
+				const preamble = hasProps
+					? propsInjectedPreamble(node, sourceText, this.buildBindingProperties)
+					: ''
+				const virtualText = preamble + scriptContent
 				yield {
 					id: `blocking_${blockingIdx++}`,
 					languageId: isTs ? 'typescript' : 'javascript',
-					snapshot: asEmbeddedModuleSnapshot(scriptContent),
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
 					mappings: [
 						{
 							sourceOffsets: [node.startTagEnd],
-							generatedOffsets: [0],
+							generatedOffsets: [preamble.length],
 							lengths: [scriptContent.length],
 							data: FULL_FEATURES,
 						},

@@ -18,8 +18,46 @@ const COMPONENT_TAG_OPEN_REGEX =
 /** Matches props="{ ...varName }" to extract the variable name. */
 const PROPS_SPREAD_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
 
+/** Bare props / data-props attribute (no value) — equivalent to props="{ ...props }". */
+const BARE_PROPS_ATTR_REGEX = /(?:^|\s)(?:data-)?props(?!\s*=)(?:\s|\/|$)/
+
 /** Maximum layout chain depth to prevent infinite loops. */
 const MAX_LAYOUT_CHAIN_DEPTH = 10
+
+/**
+ * Resolve the variable name spread via a props attribute, or null when not a spread.
+ * Bare `props` / `data-props` (no value) maps to local variable `props`.
+ */
+export function resolvePropsSpreadVariable(attrs: string): string | null {
+	const propsSpreadMatch = attrs.match(/(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/)
+	if (propsSpreadMatch) {
+		const value = propsSpreadMatch[1].trim()
+		return value.match(PROPS_SPREAD_REGEX)?.[1] ?? null
+	}
+	if (BARE_PROPS_ATTR_REGEX.test(attrs)) {
+		return 'props'
+	}
+	return null
+}
+
+function validateSpreadProps(
+	document: vscode.TextDocument,
+	diagnostics: vscode.Diagnostic[],
+	tagStart: number,
+	tagLength: number,
+	spreadVar: string,
+	requiredProps: string[],
+	definedVars: Map<string, VariableDefinition>,
+	baseName: string,
+	suffix: string
+): void {
+	const def = definedVars.get(spreadVar)
+	const passedKeys = def?.properties ? Array.from(def.properties) : []
+	const missing = requiredProps.filter(req => !passedKeys.includes(req))
+	if (missing.length > 0) {
+		pushPropDiagnostic(document, diagnostics, tagStart, tagLength, missing, baseName, suffix)
+	}
+}
 
 export function checkComponentProps(
 	document: vscode.TextDocument,
@@ -60,23 +98,38 @@ export function checkComponentProps(
 
 		const suffix = suffixMatch[1] as string
 
-		// Layout with attributes: trace chain to sink component
+		// Layout: trace chain to sink component; validate bare/spread props or individual attrs
 		if (suffix === 'layout') {
-			const attrKeys = getAttributeKeysFromTag(attrs)
-			if (attrKeys.length > 0) {
-				const sink = traceLayoutToSinkProps(resolvedPath, resolver)
-				if (sink?.requiredProps?.length) {
-					const missing = sink.requiredProps.filter(req => !attrKeys.includes(req))
-					if (missing.length > 0) {
-						pushPropDiagnostic(
-							document,
-							diagnostics,
-							tagStart,
-							match[0].length,
-							missing,
-							baseName,
-							suffix
-						)
+			const sink = traceLayoutToSinkProps(resolvedPath, resolver)
+			if (sink?.requiredProps?.length) {
+				const spreadVar = resolvePropsSpreadVariable(attrs)
+				if (spreadVar) {
+					validateSpreadProps(
+						document,
+						diagnostics,
+						tagStart,
+						match[0].length,
+						spreadVar,
+						sink.requiredProps,
+						definedVars,
+						baseName,
+						suffix
+					)
+				} else {
+					const attrKeys = getAttributeKeysFromTag(attrs)
+					if (attrKeys.length > 0) {
+						const missing = sink.requiredProps.filter(req => !attrKeys.includes(req))
+						if (missing.length > 0) {
+							pushPropDiagnostic(
+								document,
+								diagnostics,
+								tagStart,
+								match[0].length,
+								missing,
+								baseName,
+								suffix
+							)
+						}
 					}
 				}
 			}
@@ -96,26 +149,19 @@ export function checkComponentProps(
 		)
 		if (!requiredProps || requiredProps.length === 0) continue
 
-		const propsSpreadMatch = attrs.match(/(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/)
-		if (propsSpreadMatch) {
-			const value = propsSpreadMatch[1].trim()
-			const spreadVar = value.match(PROPS_SPREAD_REGEX)?.[1]
-			if (spreadVar) {
-				const def = definedVars.get(spreadVar)
-				const passedKeys = def?.properties ? Array.from(def.properties) : []
-				const missing = requiredProps.filter(req => !passedKeys.includes(req))
-				if (missing.length > 0) {
-					pushPropDiagnostic(
-						document,
-						diagnostics,
-						tagStart,
-						match[0].length,
-						missing,
-						baseName,
-						suffix
-					)
-				}
-			}
+		const spreadVar = resolvePropsSpreadVariable(attrs)
+		if (spreadVar) {
+			validateSpreadProps(
+				document,
+				diagnostics,
+				tagStart,
+				match[0].length,
+				spreadVar,
+				requiredProps,
+				definedVars,
+				baseName,
+				suffix
+			)
 		}
 	}
 }
