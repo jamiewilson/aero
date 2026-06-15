@@ -3,6 +3,7 @@ import {
 	iterateBuildScriptBindings,
 	type BuildScriptBinding,
 } from '@aero-js/compiler/build-scope-bindings'
+import { parsePropsAttributeBindings } from '@aero-js/compiler'
 import { parseScriptBlocks } from '../script-tag'
 import { isInsideHtmlComment } from './helpers'
 import type { ScriptScope, VariableDefinition } from './types'
@@ -70,6 +71,53 @@ export function collectDefinedVariables(
 	return [vars, duplicates]
 }
 
+function buildBindingPropertiesFromVars(
+	vars: Map<string, VariableDefinition>
+): Map<string, ReadonlySet<string>> {
+	const out = new Map<string, ReadonlySet<string>>()
+	for (const [name, def] of vars) {
+		if (def.properties && def.properties.size > 0) {
+			out.set(name, def.properties)
+		}
+	}
+	return out
+}
+
+function addPropsInjectedVars(
+	document: vscode.TextDocument,
+	block: { attrs: string; tagStart: number },
+	buildBindingProperties: Map<string, ReadonlySet<string>>,
+	setVar: (name: string, def: VariableDefinition) => void
+): void {
+	const parsed = parsePropsAttributeBindings(block.attrs, buildBindingProperties)
+	if (parsed.injectedNames.length === 0) return
+
+	const propsMatch = block.attrs.match(/(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/i)
+	const attrsStart = block.tagStart + '<script'.length
+
+	for (const name of parsed.injectedNames) {
+		let rangeStart = attrsStart
+		if (propsMatch) {
+			const value = propsMatch[2]
+			const idx = value.indexOf(name)
+			if (idx >= 0) {
+				const valueStart =
+					attrsStart + propsMatch.index! + propsMatch[0].indexOf(propsMatch[1] + value + propsMatch[1]) + 1
+				rangeStart = valueStart + idx
+			}
+		}
+
+		setVar(name, {
+			name,
+			range: new vscode.Range(
+				document.positionAt(rangeStart),
+				document.positionAt(rangeStart + name.length)
+			),
+			kind: 'reference',
+		})
+	}
+}
+
 export function collectVariablesByScope(
 	document: vscode.TextDocument,
 	text: string,
@@ -85,33 +133,19 @@ export function collectVariablesByScope(
 		b => b.kind === scope && !isInsideHtmlComment(text, b.tagStart)
 	)
 
+	const buildBindingProperties =
+		scope === 'build'
+			? buildBindingPropertiesFromVars(vars)
+			: buildBindingPropertiesFromVars(
+					collectDefinedVariables(document, text)[0]
+				)
+
 	for (const block of scopeBlocks) {
 		const content = block.content
 		const contentStart = block.contentStart
-		const rawAttrs = block.attrs
 
-		if (scope === 'bundled') {
-			const propsRegex = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
-			let pdMatch: RegExpExecArray | null
-			while ((pdMatch = propsRegex.exec(rawAttrs)) !== null) {
-				const value = pdMatch[2]
-				const valueStartInAttrs = pdMatch.index + pdMatch[0].indexOf(value)
-				const rawAttrsStart = block.tagStart + '<script'.length
-				const idRegex = /\b([a-zA-Z_$][\w$]*)\b/g
-				let idMatch: RegExpExecArray | null
-				while ((idMatch = idRegex.exec(value)) !== null) {
-					const varName = idMatch[1]
-					const varIndex = rawAttrsStart + valueStartInAttrs + idMatch.index
-					setVar(varName, {
-						name: varName,
-						range: new vscode.Range(
-							document.positionAt(varIndex),
-							document.positionAt(varIndex + varName.length)
-						),
-						kind: 'reference',
-					})
-				}
-			}
+		if (scope === 'bundled' || scope === 'inline' || scope === 'blocking') {
+			addPropsInjectedVars(document, block, buildBindingProperties, setVar)
 		}
 
 		const skipImports = scope === 'inline'

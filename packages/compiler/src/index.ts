@@ -173,6 +173,13 @@ export {
 	getBindingTypeStringFromBuildScript,
 } from './build-script-type-inference'
 
+export {
+	parsePropsAttributeBindings,
+	formatPropsInjectedAmbientDecls,
+	type BuildBindingProperties,
+	type ParsedPropsAttribute,
+} from './parse-props-attribute-bindings'
+
 // Tokenizer (re-exported from @aero-js/interpolation)
 export {
 	tokenizeCurlyInterpolation,

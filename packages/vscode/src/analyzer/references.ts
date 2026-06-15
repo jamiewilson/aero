@@ -142,6 +142,18 @@ export function collectTemplateReferences(
 	return refs
 }
 
+/** Collect identifier references from a JS/TS fragment (script body or expression). */
+export function collectIdentifierReferences(
+	document: vscode.TextDocument,
+	content: string,
+	startOffset: number,
+	isAttribute = false
+): TemplateReference[] {
+	const refs: TemplateReference[] = []
+	extractIdentifiers(content, startOffset, document, refs, isAttribute)
+	return refs
+}
+
 function extractIdentifiers(
 	content: string,
 	startOffset: number,
