@@ -32,14 +32,18 @@ export function isBuildDirectiveName(name: string): name is BuildDirective {
 	return false
 }
 
-/** Bare sugar applies only when the value is braced or boolean (else). */
+/** Bare sugar: braced values, string `case`, boolean `else`/`default`, bare `props`. */
 export function isBuildDirectiveAttribute(name: string, rawValue: string): boolean {
 	if (!isBuildDirectiveName(name)) return false
 	const canonical = canonicalDirectiveName(name)
-	if (canonical === ATTR_ELSE) return true
+	if (canonical === ATTR_ELSE || canonical === ATTR_DEFAULT) return true
 	const value = unwrapAttributeValue(rawValue)
-	if (!value) return false
 	const trimmed = value.trim()
+	if (canonical === ATTR_PROPS && !trimmed) return true
+	if (canonical === ATTR_FOR) {
+		return trimmed.startsWith('{') && trimmed.endsWith('}')
+	}
+	if (canonical === ATTR_CASE) return trimmed.length > 0
 	return trimmed.startsWith('{') && trimmed.endsWith('}')
 }
 
