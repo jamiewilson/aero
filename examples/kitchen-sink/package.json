@@ -7,7 +7,9 @@
 		"dev": "vite dev",
 		"build": "AERO_INCREMENTAL=1 AERO_LOG=debug vite build",
 		"preview": "AERO_SERVER=false vite build && vite preview",
-		"preview:api": "vite build && node .output/server/index.mjs"
+		"preview:api": "vite build && node .output/server/index.mjs",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
 		"@aero-js/cli": "workspace:*",
@@ -22,10 +24,12 @@
 		"htmx.org": "^2.0.8"
 	},
 	"devDependencies": {
+		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.27",
 		"nitro": "catalog:",
+		"prettier": "^3.8.4",
 		"shiki": "^4.0.2",
 		"vite": "catalog:",
 		"zod": "^4.3.6"

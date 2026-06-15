@@ -1,5 +1,4 @@
 {
-	"$schema": "./node_modules/oxfmt/configuration_schema.json",
 	"semi": false,
 	"useTabs": true,
 	"tabWidth": 2,
@@ -8,6 +7,13 @@
 	"bracketSameLine": true,
 	"bracketSpacing": true,
 	"singleAttributePerLine": false,
-	"trailingComma": "es5",
-	"ignorePatterns": [".cursor/**/*", ".gemini/**/*", ".agent/**/*"]
+	"plugins": ["@aero-js/prettier-plugin-aero"],
+	"overrides": [
+		{
+			"files": ["**/*.html"],
+			"options": {
+				"parser": "aero"
+			}
+		}
+	]
 }

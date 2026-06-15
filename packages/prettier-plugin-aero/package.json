@@ -1,0 +1,44 @@
+{
+	"name": "@aero-js/prettier-plugin-aero",
+	"version": "0.4.0",
+	"private": false,
+	"description": "Prettier plugin for Aero HTML templates with Aero-specific formatting options",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jamiewilson/aero.git",
+		"directory": "packages/prettier-plugin-aero"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.mts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"default": "./dist/index.mjs"
+		}
+	},
+	"scripts": {
+		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --root ../.. packages/prettier-plugin-aero"
+	},
+	"dependencies": {
+		"@aero-js/compiler": "workspace:*",
+		"@aero-js/html-parser": "workspace:*",
+		"@aero-js/interpolation": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"prettier": "^3.8.4",
+		"tsdown": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	},
+	"peerDependencies": {
+		"prettier": "^3.0.0"
+	}
+}

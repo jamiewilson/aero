@@ -58,6 +58,11 @@ export function rewritePackageJson(templatePath, targetDir, projectName, inMonor
 			pkg.dependencies['@aero-js/vite'] = depVersion
 		}
 	}
+	if (pkg.devDependencies) {
+		if (pkg.devDependencies['@aero-js/prettier-plugin-aero'] !== undefined) {
+			pkg.devDependencies['@aero-js/prettier-plugin-aero'] = depVersion
+		}
+	}
 	writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
 }
 

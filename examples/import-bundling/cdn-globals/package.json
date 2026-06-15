@@ -6,14 +6,18 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"preview": "vite build && vite preview",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
 		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
+		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@types/alpinejs": "^3.13.11",
+		"prettier": "^3.8.4",
 		"vite": "catalog:"
 	}
 }

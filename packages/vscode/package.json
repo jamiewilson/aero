@@ -107,9 +107,12 @@
 				}
 			}
 		},
-		"configurationDefaults": {
+	"configurationDefaults": {
 			"emmet.includeLanguages": {
 				"aero": "html"
+			},
+			"[aero]": {
+				"editor.defaultFormatter": "esbenp.prettier-vscode"
 			}
 		},
 		"grammars": [
@@ -157,5 +160,6 @@
 	"icon": "images/logo.png",
 	"engines": {
 		"vscode": "^1.105.0"
-	}
+	},
+	"extensionRecommendations": ["esbenp.prettier-vscode"]
 }

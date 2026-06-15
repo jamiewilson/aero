@@ -6,7 +6,9 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "AERO_SERVER=false vite build && vite preview",
-		"preview:api": "vite build && node .output/server/index.mjs"
+		"preview:api": "vite build && node .output/server/index.mjs",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
 		"@aero-js/core": "<version>",
@@ -14,6 +16,8 @@
 	},
 	"devDependencies": {
 		"nitro": "beta",
-		"vite": "8.0.3"
+		"vite": "8.0.3",
+		"prettier": "^3.8.4",
+		"@aero-js/prettier-plugin-aero": "<version>"
 	}
 }

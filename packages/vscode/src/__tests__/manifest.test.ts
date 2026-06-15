@@ -14,4 +14,12 @@ describe('vscode manifest', () => {
 			aero: 'html',
 		})
 	})
+
+	it('defaults aero formatting to prettier-vscode', () => {
+		const manifest = readManifest()
+		expect(manifest?.contributes?.configurationDefaults?.['[aero]']).toEqual({
+			'editor.defaultFormatter': 'esbenp.prettier-vscode',
+		})
+		expect(manifest?.extensionRecommendations).toContain('esbenp.prettier-vscode')
+	})
 })
