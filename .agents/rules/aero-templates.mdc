@@ -24,7 +24,7 @@ Use `-component` or `-layout` suffix in markup; import without suffix (resolves 
 ## Script Types
 
 - `<script is:build>` — Build time; one per file; has `Aero.props`, `Aero.site`, `site`, imports. Add `lang="ts"` for IntelliSense/formatting when using TypeScript.
-- Plain `<script>` (no `is:*`) — Client module; Vite bundles as a virtual module. Use `props` / `data-props` to pass values into the module.
+- Plain `<script>` (no `is:*`) — Client module; Vite bundles as a virtual module. Use `props` / `aero-props` to pass values into the module.
 - `<script is:inline>` — Left in the DOM where written; not bundled by Vite; runs as classic inline script in the browser.
 - `<script is:blocking>` — Emitted in `<head>` to run before the rest of the page.
 - `<script src="...">` — External or resolved local scripts per [Scripts](docs/concepts/scripts.mdx).
@@ -33,7 +33,7 @@ Use one of these for **executable** script bodies: `is:build`, plain `<script>` 
 
 ## Props
 
-- Pass: attributes, `props` / `data-props` (including spreads), as in [Templating](docs/concepts/templating.mdx) and [Props](docs/data/props.mdx).
+- Pass: attributes, `props` / `aero-props` (including spreads), as in [Templating](docs/concepts/templating.mdx) and [Props](docs/data/props.mdx).
 - Receive: destructure `Aero.props` in `<script is:build>`.
 
 ```html
@@ -48,7 +48,7 @@ Use one of these for **executable** script bodies: `is:build`, plain `<script>` 
 
 ## Loops and Slots
 
-- Loops: `(data-)for="{ const item of items }"` then `{ item.name }` etc.
+- Loops: `for="{ const item of items }"` (or `aero-for` / `data-aero-for`) then `{ item.name }` etc.
 - Slots: use both `name` and `slot` attributes on `<slot>` elements
 
 ## Client Stack

@@ -308,7 +308,7 @@ If you edit a shared types file (e.g. `types/props.ts`) and the new definitions 
 
 ### Prop validation when using components
 
-Cross-file prop validation is implemented for `props="{ ...varName }"` (spread), bare `props` / `data-props` (no value — equivalent to spreading local `props`), and layout attributes (individual or bare spread). The VS Code extension reports missing required props when you pass a typed object via spread or when a layout passes props to a child component. Limitations: validation only applies when the component uses `Aero.props as SomeProps` with a resolvable interface; attribute-based props (e.g. `title="{ x }"`) are not yet validated; object-literal key extraction does not use full TypeScript types. Type safety inside each component's build script (e.g. `Aero.props as MetaProps`) is always available.
+Cross-file prop validation is implemented for `props="{ ...varName }"` (spread), bare `props` / `aero-props` (no value — equivalent to spreading local `props`), and layout attributes (individual or bare spread). The VS Code extension reports missing required props when you pass a typed object via spread or when a layout passes props to a child component. Limitations: validation only applies when the component uses `Aero.props as SomeProps` with a resolvable interface; attribute-based props (e.g. `title="{ x }"`) are not yet validated; object-literal key extraction does not use full TypeScript types. Type safety inside each component's build script (e.g. `Aero.props as MetaProps`) is always available.
 
 ### Script `props` validation
 

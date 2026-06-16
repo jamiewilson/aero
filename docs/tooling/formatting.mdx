@@ -48,7 +48,7 @@ The plugin adds three **Aero-only** options (also set in `.prettierrc.json` or u
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `aeroAttributePrefix` | `false` | When `true`, emit `data-props`, `data-for`, `data-if`, … instead of bare `props`, `for`, `if`. Plain HTML attributes (e.g. `<label for="email">`) are never rewritten. |
+| `aeroAttributePrefix` | `"none"` | Prefix form for Aero build directives: `"none"` (bare `props`, `for`, `if`), `"aero"` (`aero-props`, `aero-for`, …), or `"data-aero"` (`data-aero-props`, …). Plain HTML attributes (e.g. `<label for="email">`) are never rewritten. |
 | `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Inner JS/TS still follows Prettier's `bracketSpacing` for object literals. |
 | `aeroSelfClosingComponents` | `true` | When `true`, prefer `<my-component />` for `*-component` tags with no element children. `*-layout` tags always keep explicit close tags. |
 
@@ -62,7 +62,7 @@ Example with Aero options:
       "files": ["**/*.html"],
       "options": {
         "parser": "aero",
-        "aeroAttributePrefix": true,
+        "aeroAttributePrefix": "aero",
         "aeroBracketSpacing": true,
         "aeroSelfClosingComponents": true
       }

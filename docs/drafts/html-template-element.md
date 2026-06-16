@@ -1,10 +1,10 @@
 # The HTML `<template>` element in Aero
 
-Aero treats **`<template>`** in two different ways, depending on whether you use **structural directives** on the tag (`if`, `else-if`, `else`, `for`, `data-for`, `switch`):
+Aero treats **`<template>`** in two different ways, depending on whether you use **structural directives** on the tag (`if`, `else-if`, `else`, `for`, `for`, `switch`):
 
 | Usage                                        | What appears in the generated HTML                                                                                                                                                                  |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Structural directive on `<template>`**     | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li data-for>`, but without an extra element in the tree. |
+| **Structural directive on `<template>`**     | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li for>`, but without an extra element in the tree. |
 | **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** (contents are not normal page content) until script moves or clones them — standard HTML behavior.   |
 
 Use this page when you choose between a **wrapperless group** (no extra tag), a **literal inert** template (for JS), or a **restricted HTML context** where only certain tags are allowed.
@@ -41,7 +41,7 @@ Use the same directives as on any other element; optional `data-` prefixes work 
 
 ---
 
-## Wrapperless loops (`for` / `data-for`)
+## Wrapperless loops (`for` / `for`)
 
 Put the loop directive on `<template>` to repeat **only the inner fragment** without a wrapper element:
 
@@ -59,7 +59,7 @@ The list items are emitted as direct children of `<ul>`; no `<template>` node ap
 
 ## Wrapperless `switch` / `case` / `default`
 
-Put `switch` / `data-switch` on **`<template>`** to match a discriminant against **`case`** branches without emitting an extra wrapper. Direct children of the container must be branch elements (`case` or `default`); see [props](props.md) for expression rules.
+Put `switch` / `aero-switch` on **`<template>`** to match a discriminant against **`case`** branches without emitting an extra wrapper. Direct children of the container must be branch elements (`case` or `default`); see [props](props.md) for expression rules.
 
 ```html
 <template switch="{ state }">
@@ -75,7 +75,7 @@ You can use the same pattern on a normal element (for example `<div switch="{ st
 
 ## Plain `<template>` (inert markup)
 
-If you **do not** put `if` / `else-if` / `else` / `for` / `data-for` / `switch` on the `<template>` tag, Aero compiles it like a normal element: the generated HTML includes **`<template>...</template>`**. The inner markup is still compiled (interpolation, nested components, etc.) so build output and bundling stay consistent; in the live DOM that subtree remains **inert** until your client code clones or adopts it.
+If you **do not** put `if` / `else-if` / `else` / `for` / `for` / `switch` on the `<template>` tag, Aero compiles it like a normal element: the generated HTML includes **`<template>...</template>`**. The inner markup is still compiled (interpolation, nested components, etc.) so build output and bundling stay consistent; in the live DOM that subtree remains **inert** until your client code clones or adopts it.
 
 Use that when you intentionally keep markup **out of the visible tree** (prototypes, dialog bodies, chunks for `cloneNode`, and similar patterns).
 
@@ -83,7 +83,7 @@ Use that when you intentionally keep markup **out of the visible tree** (prototy
 
 ## When to prefer `<template>` over `<div>`
 
-- **Wrapperless structural directives** — You want a group of nodes **without** an extra wrapper in the output; use `<template if>` / `<template data-for>` / `<template switch>` as above.
+- **Wrapperless structural directives** — You want a group of nodes **without** an extra wrapper in the output; use `<template if>` / `<template for>` / `<template switch>` as above.
 - **Content models** — HTML only allows certain children in contexts like `<table>`, `<tbody>`, `<select>`, or lists. `<template>` is often valid where an extra `<div>` is not.
 - **Inert markup for JavaScript** — You keep markup in a real `<template>` (no structural directive on the tag) until a script clones it.
 - **No extra semantics** — Unlike `<div>`, `<template>` does not imply a generic block box; it is explicitly a non-rendered holder when used as a literal element.
@@ -99,7 +99,7 @@ Directive attributes (`if`, `for`, `switch`, `case`, `default`, etc.) are compil
 ## See also
 
 - [Getting started — Loops and Conditionals](getting-started.md#loops-and-conditionals) — Short examples and link here.
-- [Interpolation — Loops](interpolation.md#loops-for--data-for) — `for` / `data-for` syntax and loop metadata.
+- [Interpolation — Loops](interpolation.md#loops-for--for) — `for` / `for` syntax and loop metadata.
 - [Props](props.md) — Directive expression rules (`if="{ … }"`, `for="{ … }"`).
 
 For compiler internals (e.g. `template.content` vs `childNodes`), see [\_reference/refactors/wrapperless/template-lowering-in-compiler.md](../_reference/refactors/wrapperless/template-lowering-in-compiler.md).

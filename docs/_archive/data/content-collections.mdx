@@ -62,7 +62,7 @@ Use `getCollection()` inside a `<script is:build>` block to fetch all items in a
 </script>
 
 <ul>
-	<li data-for="{ const doc of allDocs }">
+	<li for="{ const doc of allDocs }">
 		<a href="/docs/{ doc.id }">{ doc.data.title }</a>
 	</li>
 </ul>
@@ -122,7 +122,7 @@ For dynamic routes like `docs/[slug].html`, export `getStaticPaths()` from the p
     Create `content.config.ts` in the project root and call `defineCollection()` with a name, directory, and Zod schema.
   </Step>
   <Step title="Build a list page">
-    Call `getCollection('name')` in your `<script is:build>` and loop over items with `data-for`.
+    Call `getCollection('name')` in your `<script is:build>` and loop over items with `for`.
   </Step>
   <Step title="Add a detail page">
     Create a `[slug].html` dynamic route. Call `render(doc)` to get HTML from Markdown.

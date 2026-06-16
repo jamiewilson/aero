@@ -31,7 +31,7 @@ Use `raw()` to bypass escaping when you need to output raw HTML:
 
 Output: `<p><strong>bold</strong></p>`
 
-## Loops (`for` / `data-for`)
+## Loops (`for` / `for`)
 
 Use a JavaScript **for…of** head inside braces: `for="{ const item of items }"`. Destructuring is supported (e.g. `const { name, id } of users`).
 
@@ -42,7 +42,7 @@ Inside the loop body, **`index`**, **`first`**, **`last`**, and **`length`** are
 	const items = ['a', 'b', 'c']
 </script>
 <ul>
-	<li data-for="{ const item of items }">
+	<li for="{ const item of items }">
 		{ item } (index: { index }, first: { first }, last: { last }, length: { length })
 	</li>
 </ul>
@@ -50,7 +50,7 @@ Inside the loop body, **`index`**, **`first`**, **`last`**, and **`length`** are
 
 If your binding pattern declares a name that collides with the injected metadata (e.g. `const { length } of rows`), it **shadows** the injected `length` inside that iteration.
 
-To repeat a fragment **without** an extra wrapper element, put `data-for` / `for` on **`<template>`** so only the inner markup is emitted — see [HTML `<template>` — Wrapperless loops](html-template-element.md).
+To repeat a fragment **without** an extra wrapper element, put `for` / `for` on **`<template>`** so only the inner markup is emitted — see [HTML `<template>` — Wrapperless loops](html-template-element.md).
 
 ## props (script and style)
 
