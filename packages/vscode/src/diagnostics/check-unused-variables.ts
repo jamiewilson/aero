@@ -53,7 +53,7 @@ function checkUnusedInScope(
 			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
 			const matches = maskedContent.match(usageRegex)
 			if (matches && matches.length > 1) continue
-		} else if (scope === 'bundled' || scope === 'blocking') {
+		} else if (scope === 'bundled' || scope === 'blocking' || scope === 'inline') {
 			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
 			const matches = maskedContent.match(usageRegex)
@@ -62,11 +62,6 @@ function checkUnusedInScope(
 			} else {
 				if (matches && matches.length > 1) continue
 			}
-		} else {
-			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
-			const matches = maskedContent.match(usageRegex)
-			if (matches && matches.length > 1) continue
 		}
 
 		const diagnostic = new vscode.Diagnostic(

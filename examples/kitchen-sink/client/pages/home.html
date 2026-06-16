@@ -13,22 +13,21 @@
 
 <base-layout>
 	<header-component props="{ ...headerProps }" />
-	<form-component />
 	<script is:inline>
 		console.debug('[AERO] <script is:inline> nested in <base-layout>')
 	</script>
+	<form-component />
 </base-layout>
 
 <script>
 	import { allCaps } from '@scripts/utils/transform'
-	const message = allCaps('[aero] plain <script> in <body>')
-	console.debug(message)
+	console.debug(allCaps('[aero] plain <script> in <body>'))
 </script>
 
 <script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
 
 <script is:blocking>
-	console.debug('[AERO] <script is:blocking> moved to <head>')
+	console.debug('[aero] <script is:blocking> moved to <head>')
 </script>
 
 <script src="@scripts/module.ts"></script>
