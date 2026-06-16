@@ -1,4 +1,4 @@
-import type { ThemeStore } from '../../../shared/types/theme'
+import type { ThemeStore } from '@shared/types/theme'
 import site from '@content/site'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
@@ -15,7 +15,7 @@ const withViewTransition = (update: () => void) => {
 }
 
 Alpine.store(site.theme.storageKey, {
-	current: Alpine.$persist(site.theme.default).as(site.theme.storageKey),
+	current: Alpine.$persist(site.theme.defaultTheme).as(site.theme.storageKey),
 
 	init(this: ThemeStore) {
 		Alpine.effect(() => {
