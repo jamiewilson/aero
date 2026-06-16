@@ -1,9 +1,9 @@
 <script is:build>
-	import logo from '@components/logo'
-	const isHomepage = Aero.page.url.pathname === '/'
 	import type { HeaderProps } from '@content/types/props'
+	import logo from '@components/logo'
 
 	const props = Aero.props as HeaderProps
+	const isHomepage = Aero.page.url.pathname === '/'
 </script>
 
 <header>
@@ -40,10 +40,8 @@
 	}
 </style>
 
-<!-- TODO: Flag usage of is:build symbols without it being passed in as props -->
 <script props="{ isHomepage }">
 	import { allCaps } from '@scripts/utils/transform'
-	// This comment will get stripped from build output
 	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
 </script>
 

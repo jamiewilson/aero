@@ -459,6 +459,38 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedAttribute).toBeUndefined()
 	})
 
+	it('should NOT flag props-injected variables as unused in is:inline scripts', () => {
+		const text = `<script is:build>
+	const isHomepage = Aero.page.url.pathname === '/'
+</script>
+<script is:inline props="{ isHomepage }">
+	console.debug('[aero] isHomepage', isHomepage)
+</script>`
+		const doc = {
+			uri: {
+				toString: () => 'file:///header.html',
+				fsPath: '/header.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/header.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const unusedIsHomepage = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'isHomepage' is declared but its value is never read")
+		)
+		expect(unusedIsHomepage).toBeUndefined()
+	})
+
 	it('should NOT flag render when used in getStaticPaths', () => {
 		const text = `
 <script is:build>
