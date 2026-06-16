@@ -12,7 +12,7 @@ export function checkUnusedVariables(
 		usedInTemplate.add(ref.content)
 	}
 
-	const propsValueRegex = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/gi
+	const propsValueRegex = /(?:(?:data-aero-|aero-)?props)\s*=\s*(['"])([\s\S]*?)\1/gi
 	let pdMatch: RegExpExecArray | null
 	while ((pdMatch = propsValueRegex.exec(parsed.text)) !== null) {
 		const value = pdMatch[2]

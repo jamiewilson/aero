@@ -15,55 +15,55 @@
 			}
 		},
 		"aero-control-flow-attributes": {
-			"comment": "Highlight Aero control flow attributes (shorthand and data-* forms) with consistent styling. Matches the full attribute (name=value) so the base HTML grammar does not wrap data-* forms in meta.attribute.data-x.",
+			"comment": "Highlight Aero control flow attributes (bare, aero-*, and data-aero-* forms) with consistent styling.",
 			"patterns": [
 				{
-					"comment": "Aero for / data-for with value",
-					"begin": "\\b(data-for|for)(?=[\\s=/>])",
+					"comment": "Aero for with value",
+					"begin": "\\b(?:(?:data-aero-|aero-)?for|for)(?=[\\s=/>])",
 					"beginCaptures": {
-						"1": { "name": "entity.other.attribute-name.html" }
+						"0": { "name": "entity.other.attribute-name.html" }
 					},
 					"end": "(?=\\s|/?>)",
 					"name": "meta.attribute.aero",
 					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"comment": "Aero if / data-if with value",
-					"begin": "\\b(data-if|if)(?=[\\s=/>])",
+					"comment": "Aero if with value",
+					"begin": "\\b(?:(?:data-aero-|aero-)?if|if)(?=[\\s=/>])",
 					"beginCaptures": {
-						"1": { "name": "entity.other.attribute-name.html" }
+						"0": { "name": "entity.other.attribute-name.html" }
 					},
 					"end": "(?=\\s|/?>)",
 					"name": "meta.attribute.aero",
 					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"comment": "Aero else-if / data-else-if with value",
-					"begin": "\\b(data-else-if|else-if)(?=[\\s=/>])",
+					"comment": "Aero else-if with value",
+					"begin": "\\b(?:(?:data-aero-|aero-)?else-if|else-if)(?=[\\s=/>])",
 					"beginCaptures": {
-						"1": { "name": "entity.other.attribute-name.html" }
+						"0": { "name": "entity.other.attribute-name.html" }
 					},
 					"end": "(?=\\s|/?>)",
 					"name": "meta.attribute.aero",
 					"patterns": [{ "include": "#aero-attribute-value" }]
 				},
 				{
-					"comment": "Aero else / data-else (valueless)",
-					"match": "\\b(data-else|else)(?=[\\s/>])",
+					"comment": "Aero else (valueless)",
+					"match": "\\b(?:(?:data-aero-|aero-)?else|else)(?=[\\s/>])",
 					"captures": {
-						"1": { "name": "entity.other.attribute-name.html" }
+						"0": { "name": "entity.other.attribute-name.html" }
 					},
 					"name": "meta.attribute.aero"
 				}
 			]
 		},
 		"aero-props-attribute": {
-			"comment": "Highlight props and data-props attributes",
+			"comment": "Highlight props and prefixed props attributes",
 			"patterns": [
 				{
-					"begin": "\\b(data-props|props)(?=[\\s=/>])",
+					"begin": "\\b(?:(?:data-aero-|aero-)?props|props)(?=[\\s=/>])",
 					"beginCaptures": {
-						"1": { "name": "entity.other.attribute-name.html" }
+						"0": { "name": "entity.other.attribute-name.html" }
 					},
 					"end": "(?=\\s|/?>)",
 					"name": "meta.attribute.aero",

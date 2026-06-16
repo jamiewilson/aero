@@ -92,7 +92,9 @@ function addPropsInjectedVars(
 	const parsed = parsePropsAttributeBindings(block.attrs, buildBindingProperties)
 	if (parsed.injectedNames.length === 0) return
 
-	const propsMatch = block.attrs.match(/(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/i)
+	const propsMatch = block.attrs.match(
+		/(?:(?:data-aero-|aero-)?props)\s*=\s*(['"])([\s\S]*?)\1/i
+	)
 	const attrsStart = block.tagStart + '<script'.length
 
 	for (const name of parsed.injectedNames) {

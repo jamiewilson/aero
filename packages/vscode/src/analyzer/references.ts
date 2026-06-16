@@ -3,9 +3,10 @@ import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseAeroHtmlDocument, walkHtmlNodes } from '@aero-js/html-parser'
 import { parseScriptBlocks } from '../script-tag'
 import { isInsideHtmlComment, maskJsComments } from './helpers'
+import { isJsReservedIdentifier } from './js-keywords'
 import type { TemplateReference } from './types'
 
-const STANDALONE_ATTR_VARIABLE_REFS = new Set(['props', 'data-props'])
+const STANDALONE_ATTR_VARIABLE_REFS = new Set(['props', 'aero-props', 'data-aero-props'])
 
 export function collectBuildScriptContentGlobalReferences(
 	document: vscode.TextDocument,
@@ -171,12 +172,7 @@ function extractIdentifiers(
 	let match: RegExpExecArray | null
 	while ((match = idRegex.exec(maskedContent)) !== null) {
 		const id = match[1]
-		if (
-			/^(if|else|return|function|var|let|const|import|from|as|in|of|true|false|null|undefined)$/.test(
-				id
-			)
-		)
-			continue
+		if (isJsReservedIdentifier(id)) continue
 
 		const indexInContent = match.index
 		const charBefore = indexInContent > 0 ? content[indexInContent - 1] : ''

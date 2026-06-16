@@ -11,7 +11,7 @@ const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
 
 /** Matches directive attributes with explicit values */
 const DIRECTIVE_ATTR_VALUE_REGEX =
-	/\b(data-if|if|data-else-if|else-if|data-for|for|data-props|props)\s*=\s*(['"])(.*?)\2/gi
+	/\b((?:data-aero-|aero-)?(?:if|else-if|for|props))\s*=\s*(['"])(.*?)\2/gi
 
 export function checkDirectiveExpressionBraces(
 	document: vscode.TextDocument,

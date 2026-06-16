@@ -379,7 +379,7 @@ const o = { a: 1 }
 	})
 
 	it('injects for-directive loop variable into interpolation virtual fragments', () => {
-		const html = `<ul><li data-for="{ const doc of docs }"><span>{ doc.id }</span><span>{ doc.data.title }</span></li></ul>`
+		const html = `<ul><li for="{ const doc of docs }"><span>{ doc.id }</span><span>{ doc.data.title }</span></li></ul>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
@@ -472,7 +472,7 @@ const o = { a: 1 }
 	})
 
 	it('injects for-directive bindings into attribute interpolation fragments', () => {
-		const html = `<li data-for="{ const doc of docs }"><a href="{ doc.path }">{ doc.title }</a></li>`
+		const html = `<li for="{ const doc of docs }"><a href="{ doc.path }">{ doc.title }</a></li>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
 		const expr0 = getEmbeddedText(code, 'expr_0')!
