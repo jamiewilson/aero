@@ -4,13 +4,14 @@ import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import prettier from 'prettier'
 import {
 	BUILD_DIRECTIVES,
-	canonicalBuildDirectiveName,
-	isBuildDirectiveAttribute,
+	canonicalBuildDirectiveNameForFormatting,
+	formatBuildDirectiveName,
+	isBuildDirectiveAttributeForFormatting,
 	isNativeBareAttribute,
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
+import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
 import {
-	formatDirectiveName,
 	isSelfClosingComponentTag,
 	quoteAttributeValue,
 } from './directives.js'
@@ -18,7 +19,11 @@ import type { AeroPluginOptions } from './options.js'
 
 type TextEdit = { start: number; end: number; text: string }
 
-function collectAttributeEdits(source: string, nodes: Node[], usePrefix: boolean): TextEdit[] {
+function collectAttributeEdits(
+	source: string,
+	nodes: Node[],
+	prefixMode: BuildDirectivePrefixMode
+): TextEdit[] {
 	const edits: TextEdit[] = []
 	for (const node of walkHtmlNodes(nodes)) {
 		if (!node.attributes || !node.tag) continue
@@ -28,11 +33,11 @@ function collectAttributeEdits(source: string, nodes: Node[], usePrefix: boolean
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
 			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
-			// `data-` form would change their meaning.
+			// prefixed form would change their meaning.
 			if (isNativeBareAttribute(node.tag, name, effectiveValue)) continue
-			if (!isBuildDirectiveAttribute(name, effectiveValue)) continue
-			const canonical = canonicalBuildDirectiveName(name)
-			const desired = formatDirectiveName(canonical, usePrefix)
+			if (!isBuildDirectiveAttributeForFormatting(name, effectiveValue)) continue
+			const canonical = canonicalBuildDirectiveNameForFormatting(name)
+			const desired = formatBuildDirectiveName(canonical, prefixMode)
 			if (name === desired) continue
 
 			const nameStart = findAttributeNameStart(source, tagStart, name)

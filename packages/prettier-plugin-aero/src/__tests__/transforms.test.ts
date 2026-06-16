@@ -14,55 +14,71 @@ async function formatAero(
 }
 
 describe('applyAeroTransforms', () => {
-	it('rewrites build directives between bare and data- prefix forms', async () => {
-		const input = '<div data-props="{ title }" data-for="{ const x of xs }"></div>'
-		const output = await formatAero(input, { aeroAttributePrefix: false })
+	it('rewrites build directives between bare and prefixed forms', async () => {
+		const input = '<div aero-props="{ title }" aero-for="{ const x of xs }"></div>'
+		const output = await formatAero(input, { aeroAttributePrefix: 'none' })
 		expect(output).toContain('props="{ title }"')
 		expect(output).toContain('for="{ const x of xs }"')
-		expect(output).not.toContain('data-props')
+		expect(output).not.toContain('aero-props')
 	})
 
-	it('adds data- prefix when aeroAttributePrefix is true', async () => {
+	it('adds aero- prefix when aeroAttributePrefix is aero', async () => {
 		const input = '<div props="{ title }" if="{ ok }"></div>'
-		const output = await formatAero(input, { aeroAttributePrefix: true })
-		expect(output).toContain('data-props="{ title }"')
-		expect(output).toContain('data-if="{ ok }"')
+		const output = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(output).toContain('aero-props="{ title }"')
+		expect(output).toContain('aero-if="{ ok }"')
+	})
+
+	it('adds data-aero- prefix when aeroAttributePrefix is data-aero', async () => {
+		const input = '<div props="{ title }" if="{ ok }"></div>'
+		const output = await formatAero(input, { aeroAttributePrefix: 'data-aero' })
+		expect(output).toContain('data-aero-props="{ title }"')
+		expect(output).toContain('data-aero-if="{ ok }"')
+	})
+
+	it('migrates legacy data- prefix to configured form', async () => {
+		const input = '<div data-props="{ title }" data-for="{ const x of xs }"></div>'
+		const output = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(output).toContain('aero-props="{ title }"')
+		expect(output).toContain('aero-for="{ const x of xs }"')
+		expect(output).not.toContain('data-props')
+		expect(output).not.toContain('data-for')
 	})
 
 	it('rewrites switch branch directives with string case and boolean default', async () => {
 		const input =
 			'<div switch="{ auth.state }"><a case="{ AuthState.SignedIn }">Out</a><a case="SignedOut">In</a><span default>Def</span></div>'
-		const prefixed = await formatAero(input, { aeroAttributePrefix: true })
-		expect(prefixed).toContain('data-switch="{ auth.state }"')
-		expect(prefixed).toContain('data-case="{ AuthState.SignedIn }"')
-		expect(prefixed).toContain('data-case="SignedOut"')
-		expect(prefixed).toContain('data-default')
+		const prefixed = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(prefixed).toContain('aero-switch="{ auth.state }"')
+		expect(prefixed).toContain('aero-case="{ AuthState.SignedIn }"')
+		expect(prefixed).toContain('aero-case="SignedOut"')
+		expect(prefixed).toContain('aero-default')
 		expect(prefixed).not.toMatch(/\scase=/)
 		expect(prefixed).not.toMatch(/\sdefault>/)
 
-		const bare = await formatAero(prefixed, { aeroAttributePrefix: false })
+		const bare = await formatAero(prefixed, { aeroAttributePrefix: 'none' })
 		expect(bare).toContain('switch="{ auth.state }"')
 		expect(bare).toContain('case="{ AuthState.SignedIn }"')
 		expect(bare).toContain('case="SignedOut"')
 		expect(bare).toContain('<span default>')
-		expect(bare).not.toContain('data-case')
-		expect(bare).not.toContain('data-default')
+		expect(bare).not.toContain('aero-case')
+		expect(bare).not.toContain('aero-default')
 	})
 
 	it('rewrites bare props attribute with prefix toggle', async () => {
 		const input = '<header-component props />'
-		const prefixed = await formatAero(input, { aeroAttributePrefix: true })
-		expect(prefixed).toBe('<header-component data-props />')
+		const prefixed = await formatAero(input, { aeroAttributePrefix: 'data-aero' })
+		expect(prefixed).toBe('<header-component data-aero-props />')
 
-		const bare = await formatAero(prefixed, { aeroAttributePrefix: false })
+		const bare = await formatAero(prefixed, { aeroAttributePrefix: 'none' })
 		expect(bare).toBe('<header-component props />')
 	})
 
 	it('does not rewrite plain html for attribute', async () => {
 		const input = '<label for="email">Email</label>'
-		const output = await formatAero(input, { aeroAttributePrefix: true })
+		const output = await formatAero(input, { aeroAttributePrefix: 'aero' })
 		expect(output).toContain('for="email"')
-		expect(output).not.toContain('data-for')
+		expect(output).not.toContain('aero-for')
 	})
 
 	it('applies aeroBracketSpacing to directive values and text interpolation', async () => {

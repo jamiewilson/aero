@@ -18,7 +18,7 @@ describe('prettier-plugin-aero integration', () => {
 </section>`
 		const output = await prettier.format(input, {
 			...baseOptions,
-			aeroAttributePrefix: false,
+			aeroAttributePrefix: 'none',
 			aeroBracketSpacing: true,
 			aeroSelfClosingComponents: true,
 		})
@@ -31,12 +31,12 @@ describe('prettier-plugin-aero integration', () => {
 		const input = `<video><track default /></video>`
 		const output = await prettier.format(input, {
 			...baseOptions,
-			aeroAttributePrefix: true,
+			aeroAttributePrefix: 'aero',
 			aeroBracketSpacing: true,
 			aeroSelfClosingComponents: false,
 		})
 		expect(output).toContain('<track default')
-		expect(output).not.toContain('data-default')
+		expect(output).not.toContain('aero-default')
 	})
 
 	it('formats script is:build blocks with embedded typescript formatting', async () => {
