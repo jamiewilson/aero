@@ -1,6 +1,7 @@
 /**
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
+import { requiresBracedDirectiveValue } from '@aero-js/compiler/build-directive-attributes'
 import * as vscode from 'vscode'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { getIgnoredRanges, isInRanges } from './helpers'
@@ -11,17 +12,6 @@ const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
 /** Matches directive attributes with explicit values */
 const DIRECTIVE_ATTR_VALUE_REGEX =
 	/\b(data-if|if|data-else-if|else-if|data-for|for|data-props|props)\s*=\s*(['"])(.*?)\2/gi
-
-const BRACED_DIRECTIVES = new Set([
-	'if',
-	'data-if',
-	'else-if',
-	'data-else-if',
-	'for',
-	'data-for',
-	'props',
-	'data-props',
-])
 
 export function checkDirectiveExpressionBraces(
 	document: vscode.TextDocument,
@@ -37,6 +27,7 @@ export function checkDirectiveExpressionBraces(
 		const tagStart = match.index
 		if (isInRanges(tagStart, ignoredRanges)) continue
 
+		const tagName = (match[1] || '').toLowerCase()
 		const attrs = match[2] || ''
 		if (!attrs) continue
 
@@ -46,8 +37,7 @@ export function checkDirectiveExpressionBraces(
 			const attrName = attrMatch[1]
 			const attrValue = (attrMatch[3] || '').trim()
 
-			if (!BRACED_DIRECTIVES.has(attrName)) continue
-			if (attrValue.startsWith('{') && attrValue.endsWith('}')) continue
+			if (!requiresBracedDirectiveValue(attrName, attrValue, tagName)) continue
 
 			const attrsStart = tagStart + match[0].indexOf(attrs)
 			const start = attrsStart + attrMatch.index

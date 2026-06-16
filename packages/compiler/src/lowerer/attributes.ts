@@ -4,7 +4,9 @@
 
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
+import { isNativeBareAttribute } from '../build-directive-attributes'
 import { isDirectiveAttr } from '../directive-attributes'
+import { parentIsSwitchContainer } from './switch'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
@@ -29,14 +31,6 @@ const TEMPLATE_DIRECTIVE_ATTRS = [
 
 const NON_PROP_COMPONENT_DIRECTIVE_ATTRS = [
 	...TEMPLATE_DIRECTIVE_ATTRS,
-	CONST.ATTR_CASE,
-	CONST.ATTR_DEFAULT,
-] as const
-
-const NON_EMIT_ELEMENT_DIRECTIVE_ATTRS = [
-	CONST.ATTR_IF,
-	CONST.ATTR_ELSE_IF,
-	CONST.ATTR_ELSE,
 	CONST.ATTR_CASE,
 	CONST.ATTR_DEFAULT,
 ] as const
@@ -116,6 +110,10 @@ function parseForAttribute(
 	attr: AttrLike
 ): { binding: string; items: string } | null {
 	if (!Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) return null
+	// Bare `for` on <label>/<output> with a non-braced value is the native HTML attribute.
+	if (isNativeBareAttribute(getTagName(node), attr.name, attr.value ?? null)) {
+		return null
+	}
 	const rawValue = attr.value || ''
 	const content = Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, rawValue))
 	let parsed: ParsedForDirective
@@ -255,13 +253,30 @@ export function parseElementAttributes(
 			return
 		}
 
-		if (isDirectiveAttrName(attr.name, NON_EMIT_ELEMENT_DIRECTIVE_ATTRS)) return
-
-		if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
-			switchExpr = Helper.stripBraces(
-				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
-			)
+		// Conditional directives are never emitted; conditional lowering owns the element.
+		if (isDirectiveAttrName(attr.name, [CONST.ATTR_IF, CONST.ATTR_ELSE_IF, CONST.ATTR_ELSE])) {
 			return
+		}
+
+		// `case` / `default` are switch-branch markers consumed by switch lowering. Outside a switch
+		// only a bare `default` on <track> survives (the native boolean); every other placement is a
+		// misplaced branch that the lowerer's switch guard reports.
+		if (isDirectiveAttrName(attr.name, [CONST.ATTR_CASE, CONST.ATTR_DEFAULT])) {
+			const nativeTrackDefault = isNativeBareAttribute(
+				getTagName(node),
+				attr.name,
+				attr.value ?? null
+			)
+			if (parentIsSwitchContainer(node) || !nativeTrackDefault) return
+		} else if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
+			// Bare boolean `switch` on <input> is the native attribute; pass it through.
+			const tagName = getTagName(node)
+			if (!isNativeBareAttribute(tagName, attr.name, attr.value ?? null)) {
+				switchExpr = Helper.stripBraces(
+					validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+				)
+				return
+			}
 		}
 
 		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {

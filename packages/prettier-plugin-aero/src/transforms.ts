@@ -4,12 +4,15 @@ import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import prettier from 'prettier'
 import {
 	BUILD_DIRECTIVES,
-	canonicalDirectiveName,
-	formatDirectiveName,
+	canonicalBuildDirectiveName,
 	isBuildDirectiveAttribute,
+	isNativeBareAttribute,
+	normalizeAttributeValue,
+} from '@aero-js/compiler/build-directive-attributes'
+import {
+	formatDirectiveName,
 	isSelfClosingComponentTag,
 	quoteAttributeValue,
-	unwrapAttributeValue,
 } from './directives.js'
 import type { AeroPluginOptions } from './options.js'
 
@@ -24,8 +27,11 @@ function collectAttributeEdits(source: string, nodes: Node[], usePrefix: boolean
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
+			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
+			// `data-` form would change their meaning.
+			if (isNativeBareAttribute(node.tag, name, effectiveValue)) continue
 			if (!isBuildDirectiveAttribute(name, effectiveValue)) continue
-			const canonical = canonicalDirectiveName(name)
+			const canonical = canonicalBuildDirectiveName(name)
 			const desired = formatDirectiveName(canonical, usePrefix)
 			if (name === desired) continue
 
@@ -140,7 +146,7 @@ async function collectBracketSpacingEdits(
 		if (node.attributes) {
 			for (const [name, rawValue] of Object.entries(node.attributes)) {
 				if (rawValue == null) continue
-				const value = unwrapAttributeValue(rawValue)
+				const value = normalizeAttributeValue(rawValue)
 				const valueStart = findAttributeValueContentStart(
 					source,
 					node.start ?? 0,
@@ -196,7 +202,7 @@ function findAttributeValueStart(
 	rawValue: string
 ): number | null {
 	const tagSlice = source.slice(tagStart)
-	const unquoted = unwrapAttributeValue(rawValue)
+	const unquoted = normalizeAttributeValue(rawValue)
 	const search = unquoted.startsWith('{')
 		? unquoted
 		: rawValue.startsWith('"') || rawValue.startsWith("'")
