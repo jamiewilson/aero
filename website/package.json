@@ -21,6 +21,8 @@
 		"remark-gfm": "^4.0.1"
 	},
 	"devDependencies": {
+		"@types/alpinejs": "^3.13.11",
+		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.4.27",
 		"shiki": "^4.0.2",
 		"vite": "catalog:",

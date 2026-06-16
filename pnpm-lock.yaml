@@ -758,6 +758,12 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1
     devDependencies:
+      '@types/alpinejs':
+        specifier: ^3.13.11
+        version: 3.13.11
+      '@types/alpinejs__persist':
+        specifier: ^3.13.4
+        version: 3.13.4
       autoprefixer:
         specifier: ^10.4.27
         version: 10.4.27(postcss@8.5.8)
