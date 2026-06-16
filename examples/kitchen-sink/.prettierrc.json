@@ -14,7 +14,10 @@
 		{
 			"files": ["**/*.html"],
 			"options": {
-				"parser": "aero"
+				"parser": "aero",
+				"aeroBracketSpacing": true,
+				"aeroAttributePrefix": false,
+				"aeroSelfClosingComponents": true
 			}
 		}
 	]

@@ -4,6 +4,7 @@
 		"types": ["vite/client"],
 		"moduleResolution": "bundler",
 		"paths": {
+			"@client/*": ["./client/*"],
 			"@pages/*": ["./client/pages/*"],
 			"@layouts/*": ["./client/layouts/*"],
 			"@components/*": ["./client/components/*"],
@@ -11,7 +12,7 @@
 			"@scripts/*": ["./client/assets/scripts/*"],
 			"@images/*": ["./client/assets/images/*"],
 			"@content/*": ["./content/*"],
-			"@lib/*": ["./lib/*"]
+			"@shared/*": ["./shared/*"]
 		}
 	}
 }

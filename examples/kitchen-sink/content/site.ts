@@ -1,4 +1,4 @@
-import { ThemeMode } from '@content/theme'
+import { ThemeMode } from '@shared/types/theme'
 
 export default {
 	meta: {

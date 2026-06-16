@@ -1,5 +1,5 @@
 import { defineCollection, defineConfig } from '@aero-js/content'
-import { customTheme } from './lib/custom-theme'
+import { customTheme } from '@shared/shiki/custom-theme'
 import { z } from 'zod'
 
 const docs = defineCollection({
