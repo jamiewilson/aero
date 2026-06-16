@@ -27,6 +27,6 @@ export type { AeroPluginOptions } from './options.js'
 export {
 	BUILD_DIRECTIVES,
 	isBuildDirectiveAttribute,
-	isSelfClosingComponentTag,
-} from './directives.js'
+} from '@aero-js/compiler/build-directive-attributes'
+export { isSelfClosingComponentTag } from './directives.js'
 export { applyAeroTransforms } from './transforms.js'

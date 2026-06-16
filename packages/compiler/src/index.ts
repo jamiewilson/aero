@@ -147,6 +147,20 @@ export { type ParsedForDirective } from './for-directive'
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'
 
+// Build directive classification (compiler, prettier, VSCode)
+export {
+	BUILD_DIRECTIVES,
+	NATIVE_BARE_ATTR_ELEMENTS,
+	normalizeAttributeValue,
+	looksBracedDirectiveValue,
+	isBuildDirectiveName,
+	canonicalBuildDirectiveName,
+	isNativeBareAttribute,
+	isBuildDirectiveAttribute,
+	requiresBracedDirectiveValue,
+	type BuildDirective,
+} from './build-directive-attributes'
+
 // Resolver
 export { Resolver } from './resolver'
 
