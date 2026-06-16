@@ -23,8 +23,8 @@ function collectAttributeEdits(source: string, nodes: Node[], usePrefix: boolean
 		if (tagStart == null) continue
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
-			if (rawValue == null) continue
-			if (!isBuildDirectiveAttribute(name, rawValue)) continue
+			const effectiveValue = rawValue ?? '""'
+			if (!isBuildDirectiveAttribute(name, effectiveValue)) continue
 			const canonical = canonicalDirectiveName(name)
 			const desired = formatDirectiveName(canonical, usePrefix)
 			if (name === desired) continue

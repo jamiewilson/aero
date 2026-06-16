@@ -16,6 +16,22 @@ describe('directives', () => {
 		expect(isBuildDirectiveAttribute('data-else', '""')).toBe(true)
 	})
 
+	it('treats default as build directive without braced value', () => {
+		expect(isBuildDirectiveAttribute('default', '""')).toBe(true)
+		expect(isBuildDirectiveAttribute('data-default', '""')).toBe(true)
+	})
+
+	it('treats case with string literal or braced expression as build directive', () => {
+		expect(isBuildDirectiveAttribute('case', '"SignedOut"')).toBe(true)
+		expect(isBuildDirectiveAttribute('data-case', '"SignedOut"')).toBe(true)
+		expect(isBuildDirectiveAttribute('case', '"{ AuthState.SignedIn }"')).toBe(true)
+	})
+
+	it('treats bare props as build directive', () => {
+		expect(isBuildDirectiveAttribute('props', '""')).toBe(true)
+		expect(isBuildDirectiveAttribute('data-props', '""')).toBe(true)
+	})
+
 	it('limits self-closing preference to *-component tags', () => {
 		expect(isSelfClosingComponentTag('nav-component')).toBe(true)
 		expect(isSelfClosingComponentTag('site-layout')).toBe(false)

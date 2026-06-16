@@ -29,11 +29,33 @@ describe('applyAeroTransforms', () => {
 		expect(output).toContain('data-if="{ ok }"')
 	})
 
-	it('does not rewrite plain html for attribute', async () => {
-		const input = '<label for="email">Email</label>'
-		const output = await formatAero(input, { aeroAttributePrefix: true })
-		expect(output).toContain('for="email"')
-		expect(output).not.toContain('data-for')
+	it('rewrites switch branch directives with string case and boolean default', async () => {
+		const input =
+			'<div switch="{ auth.state }"><a case="{ AuthState.SignedIn }">Out</a><a case="SignedOut">In</a><span default>Def</span></div>'
+		const prefixed = await formatAero(input, { aeroAttributePrefix: true })
+		expect(prefixed).toContain('data-switch="{ auth.state }"')
+		expect(prefixed).toContain('data-case="{ AuthState.SignedIn }"')
+		expect(prefixed).toContain('data-case="SignedOut"')
+		expect(prefixed).toContain('data-default')
+		expect(prefixed).not.toMatch(/\scase=/)
+		expect(prefixed).not.toMatch(/\sdefault>/)
+
+		const bare = await formatAero(prefixed, { aeroAttributePrefix: false })
+		expect(bare).toContain('switch="{ auth.state }"')
+		expect(bare).toContain('case="{ AuthState.SignedIn }"')
+		expect(bare).toContain('case="SignedOut"')
+		expect(bare).toContain('<span default>')
+		expect(bare).not.toContain('data-case')
+		expect(bare).not.toContain('data-default')
+	})
+
+	it('rewrites bare props attribute with prefix toggle', async () => {
+		const input = '<header-component props />'
+		const prefixed = await formatAero(input, { aeroAttributePrefix: true })
+		expect(prefixed).toBe('<header-component data-props />')
+
+		const bare = await formatAero(prefixed, { aeroAttributePrefix: false })
+		expect(bare).toBe('<header-component props />')
 	})
 
 	it('applies aeroBracketSpacing to directive values and text interpolation', async () => {

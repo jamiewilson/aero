@@ -162,7 +162,8 @@ function extractIdentifiers(
 	isAttribute: boolean,
 	isAlpine?: boolean
 ) {
-	const maskedContent = content.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
+	let maskedContent = maskJsComments(content)
+	maskedContent = maskedContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
 		' '.repeat(match.length)
 	)
 

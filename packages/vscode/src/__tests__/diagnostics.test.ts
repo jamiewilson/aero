@@ -1857,6 +1857,44 @@ describe('AeroDiagnostics Script props variables', () => {
 		const withoutDiags = mockSet.mock.calls[0]?.[1] ?? []
 		expect(withoutDiags.find((d: any) => d.message.includes("'token' is not defined"))).toBeDefined()
 	})
+
+	it('does not flag words inside line comments in client scripts', () => {
+		const text = `
+<script is:build>
+	const isHomepage = true
+</script>
+<script props="{ isHomepage }">
+	import { allCaps } from '@scripts/utils/transform'
+	// This comment will get stripped from build output
+	console.debug(allCaps('[aero]'), isHomepage)
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///header.html', fsPath: '/header.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/header.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const commentWordDiag = reportedDiagnostics.find(
+			(d: any) =>
+				d.message.includes('is not defined') &&
+				(d.message.includes("'This'") ||
+					d.message.includes("'comment'") ||
+					d.message.includes("'stripped'") ||
+					d.message.includes("'build'") ||
+					d.message.includes("'output'"))
+		)
+		expect(commentWordDiag).toBeUndefined()
+	})
 })
 
 describe('AeroDiagnostics Route Contract', () => {
