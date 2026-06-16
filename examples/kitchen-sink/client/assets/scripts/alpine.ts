@@ -1,4 +1,4 @@
-import type { ThemeStore } from '@content/theme'
+import type { ThemeStore } from '@lib/types/theme'
 import site from '@content/site'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'

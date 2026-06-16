@@ -4,23 +4,14 @@
 	import aboutImage from '@images/about.jpg'
 	import site from '@content/site'
 
+	import { AuthState } from '@shared/types/auth'
+	const auth = { state: AuthState.SignedOut }
+
 	const props = {
 		title: 'About Page Title',
 		subtitle: site.about.subtitle,
 		requiredProp: true,
 	}
-
-	const AuthState = {
-		Initializing: 'Initializing',
-		Registering: 'Registering',
-		Authenticating: 'Authenticating',
-		SignedIn: 'SignedIn',
-		SignedOut: 'SignedOut',
-	} as const
-
-	type AuthState = (typeof AuthState)[keyof typeof AuthState]
-
-	const auth = { state: AuthState.SignedOut }
 </script>
 
 <sub-layout title="About Meta Title" image="{ Aero.site.url + aboutImage }">
@@ -32,7 +23,7 @@
 		<div switch="{ auth.state }">
 			<a href="/logout" case="{ AuthState.SignedIn }">Log Out</a>
 			<a href="/login" case="SignedOut">Log In</a>
-			<span default>Default</span>
+			<!--<span default>Default</span>-->
 		</div>
 	</div>
 

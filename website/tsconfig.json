@@ -11,7 +11,8 @@
 			"@components/*": ["./client/components/*"],
 			"@styles/*": ["./client/assets/styles/*"],
 			"@scripts/*": ["./client/assets/scripts/*"],
-			"@content/*": ["./content/*"]
+			"@content/*": ["./content/*"],
+			"@shared/*": ["./shared/*"]
 		}
 	}
 }
