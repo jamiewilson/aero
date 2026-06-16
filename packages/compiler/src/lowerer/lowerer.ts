@@ -12,6 +12,7 @@ import type { IRNode } from '../ir'
 import type { LowererDiag } from './types'
 
 import * as CONST from '../constants'
+import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
@@ -186,13 +187,15 @@ export class Lowerer {
 
 		// `case` (non-native) and misplaced `default` outside a switch are mistakes — fail loud.
 		// `default` is native only on `<track>`, so a bare one there passes through untouched.
-		const explicitDefault = node.hasAttribute?.(CONST.ATTR_PREFIX + CONST.ATTR_DEFAULT)
-		const bareDefaultOnNonTrack = node.hasAttribute?.(CONST.ATTR_DEFAULT) && tagName !== 'track'
+		const defaultAttr = getBuildDirectiveAttribute(node, CONST.ATTR_DEFAULT)
+		const explicitDefault = defaultAttr != null && defaultAttr.name !== CONST.ATTR_DEFAULT
+		const bareDefaultOnNonTrack =
+			defaultAttr?.name === CONST.ATTR_DEFAULT && tagName !== 'track'
 		const misplacedDefault = explicitDefault || bareDefaultOnNonTrack
 		if ((hasCaseAttr(node) || misplacedDefault) && !parentIsSwitchContainer(node)) {
 			throw new CompileError({
 				message:
-					'`case` and `default` must be direct children of an element with `switch` / `data-switch`.',
+					'`case` and `default` must be direct children of an element with `switch` / `aero-switch`.',
 				file: this.diag?.file,
 			})
 		}

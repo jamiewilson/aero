@@ -78,31 +78,38 @@ function getFirstForDeclarationId(stmt: EstNode): EstNode | undefined {
 }
 
 function collectBindingIds(pattern: EstNode | null | undefined, out: Set<string>): void {
+	collectPatternBindings(pattern, binding => out.add(binding.name))
+}
+
+/** Yields `{ name, start }` for each identifier bound by a destructuring/parameter pattern. */
+export function collectPatternBindings(
+	pattern: EstNode | null | undefined,
+	onBinding: (binding: { name: string; start: number }) => void
+): void {
 	if (!pattern) return
 	switch (pattern.type) {
 		case 'Identifier':
-			if (pattern.name) out.add(pattern.name)
+			if (pattern.name) onBinding({ name: pattern.name, start: pattern.start ?? 0 })
 			return
 		case 'ObjectPattern':
 			for (const prop of pattern.properties ?? []) {
 				if (prop.type === 'Property') {
-					const v = prop.value as EstNode
-					collectBindingIds(v, out)
+					collectPatternBindings(prop.value as EstNode, onBinding)
 				} else if (prop.type === 'RestElement') {
-					collectBindingIds(prop.argument as EstNode, out)
+					collectPatternBindings(prop.argument as EstNode, onBinding)
 				}
 			}
 			return
 		case 'ArrayPattern':
 			for (const el of pattern.elements ?? []) {
-				if (el) collectBindingIds(el as EstNode, out)
+				if (el) collectPatternBindings(el as EstNode, onBinding)
 			}
 			return
 		case 'AssignmentPattern':
-			collectBindingIds(pattern.left as EstNode, out)
+			collectPatternBindings(pattern.left as EstNode, onBinding)
 			return
 		case 'RestElement':
-			collectBindingIds(pattern.argument as EstNode, out)
+			collectPatternBindings(pattern.argument as EstNode, onBinding)
 			return
 		default:
 			return

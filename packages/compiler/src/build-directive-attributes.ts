@@ -6,19 +6,21 @@
  */
 
 import {
+	AERO_ATTR_PREFIX,
 	ATTR_CASE,
 	ATTR_DEFAULT,
 	ATTR_ELSE,
 	ATTR_ELSE_IF,
 	ATTR_FOR,
 	ATTR_IF,
-	ATTR_PREFIX,
 	ATTR_PROPS,
 	ATTR_SWITCH,
+	DATA_AERO_ATTR_PREFIX,
+	LEGACY_BUILD_ATTR_PREFIX,
+	type BuildDirectivePrefixMode,
 } from './constants'
-import { isAttr } from './helpers'
 
-/** Closed set of build directives that accept bare or `data-` prefixed names. */
+/** Closed set of build directives that accept bare or prefixed names. */
 export const BUILD_DIRECTIVES = [
 	ATTR_IF,
 	ATTR_ELSE_IF,
@@ -32,10 +34,12 @@ export const BUILD_DIRECTIVES = [
 
 export type BuildDirective = (typeof BUILD_DIRECTIVES)[number]
 
+export type { BuildDirectivePrefixMode }
+
 /**
  * Elements on which a bare directive name is actually a real HTML attribute. A bare `for` is the
  * native attribute on `<label>`/`<output>`, `switch` on `<input>` (Safari toggle), `default` on
- * `<track>`. The `data-` form is always an explicit directive.
+ * `<track>`. Prefixed forms are always explicit directives.
  */
 export const NATIVE_BARE_ATTR_ELEMENTS: Record<BuildDirective, ReadonlySet<string>> = {
 	[ATTR_IF]: new Set(),
@@ -55,6 +59,68 @@ const BRACED_VALUE_DIRECTIVES = new Set<BuildDirective>([
 	ATTR_FOR,
 	ATTR_PROPS,
 ])
+
+type AttributeNode = {
+	hasAttribute?: (name: string) => boolean
+	getAttribute?: (name: string) => string | null
+}
+
+function matchesBuildDirectiveName(name: string, directive: BuildDirective): boolean {
+	return (
+		name === directive ||
+		name === AERO_ATTR_PREFIX + directive ||
+		name === DATA_AERO_ATTR_PREFIX + directive
+	)
+}
+
+function matchesBuildDirectiveNameForFormatting(name: string, directive: BuildDirective): boolean {
+	return matchesBuildDirectiveName(name, directive) || name === LEGACY_BUILD_ATTR_PREFIX + directive
+}
+
+/** All attribute names that represent a build directive (bare + prefixed). */
+export function buildDirectiveAttributeNames(directive: BuildDirective): readonly string[] {
+	return [directive, AERO_ATTR_PREFIX + directive, DATA_AERO_ATTR_PREFIX + directive]
+}
+
+/** Format a canonical directive name for the given prefix mode. */
+export function formatBuildDirectiveName(
+	directive: BuildDirective,
+	mode: BuildDirectivePrefixMode
+): string {
+	switch (mode) {
+		case 'none':
+			return directive
+		case 'aero':
+			return AERO_ATTR_PREFIX + directive
+		case 'data-aero':
+			return DATA_AERO_ATTR_PREFIX + directive
+	}
+}
+
+/** Resolve a build directive attribute name to its canonical form, or null if not recognized. */
+export function resolveBuildDirectiveName(name: string): BuildDirective | null {
+	for (const directive of BUILD_DIRECTIVES) {
+		if (matchesBuildDirectiveName(name, directive)) return directive
+	}
+	return null
+}
+
+/**
+ * Resolve a build directive name for formatting input, including deprecated legacy `data-*` forms.
+ */
+export function resolveBuildDirectiveNameForFormatting(name: string): BuildDirective | null {
+	for (const directive of BUILD_DIRECTIVES) {
+		if (matchesBuildDirectiveNameForFormatting(name, directive)) return directive
+	}
+	return null
+}
+
+/** True when the attribute name uses an explicit prefix (`aero-*` or `data-aero-*`). */
+export function isPrefixedBuildDirectiveName(name: string): boolean {
+	const canonical = resolveBuildDirectiveName(name)
+	if (canonical == null) return false
+	return name !== canonical
+}
 
 /** Strip optional quote wrappers from parser or DOM attribute values. */
 export function normalizeAttributeValue(raw: string | null | undefined): string {
@@ -77,23 +143,58 @@ export function looksBracedDirectiveValue(value: string | null | undefined): boo
 }
 
 export function isBuildDirectiveName(name: string): boolean {
-	for (const directive of BUILD_DIRECTIVES) {
-		if (isAttr(name, directive, ATTR_PREFIX)) return true
+	return resolveBuildDirectiveName(name) !== null
+}
+
+export function isBuildDirectiveNameForFormatting(name: string): boolean {
+	return resolveBuildDirectiveNameForFormatting(name) !== null
+}
+
+export function canonicalBuildDirectiveName(name: string): BuildDirective {
+	const resolved = resolveBuildDirectiveName(name)
+	if (resolved == null) throw new Error(`Not a build directive: ${name}`)
+	return resolved
+}
+
+export function canonicalBuildDirectiveNameForFormatting(name: string): BuildDirective {
+	const resolved = resolveBuildDirectiveNameForFormatting(name)
+	if (resolved == null) throw new Error(`Not a build directive: ${name}`)
+	return resolved
+}
+
+/** True when a DOM node has a build directive attribute (any supported prefix form). */
+export function hasBuildDirectiveAttribute(
+	node: AttributeNode | null | undefined,
+	directive: BuildDirective
+): boolean {
+	if (!node?.hasAttribute) return false
+	for (const name of buildDirectiveAttributeNames(directive)) {
+		if (node.hasAttribute(name)) return true
 	}
 	return false
 }
 
-export function canonicalBuildDirectiveName(name: string): BuildDirective {
-	for (const directive of BUILD_DIRECTIVES) {
-		if (isAttr(name, directive, ATTR_PREFIX)) return directive
+/**
+ * Read a build directive attribute from a DOM node. Returns the actual attribute name present and
+ * its value, or null when absent.
+ */
+export function getBuildDirectiveAttribute(
+	node: AttributeNode | null | undefined,
+	directive: BuildDirective
+): { name: string; value: string | null } | null {
+	if (!node?.getAttribute) return null
+	for (const name of buildDirectiveAttributeNames(directive)) {
+		if (node.hasAttribute?.(name)) {
+			return { name, value: node.getAttribute(name) }
+		}
 	}
-	throw new Error(`Not a build directive: ${name}`)
+	return null
 }
 
 /**
- * True when a bare (non-`data-`) directive-named attribute should be left as native HTML: the
- * attribute name matches a build directive, its value is not brace-shaped, and the tag is one where
- * that name is genuinely native.
+ * True when a bare directive-named attribute should be left as native HTML: the attribute name
+ * matches a build directive, its value is not brace-shaped, and the tag is one where that name is
+ * genuinely native.
  */
 export function isNativeBareAttribute(
 	tag: string | undefined,
@@ -101,13 +202,9 @@ export function isNativeBareAttribute(
 	value: string | null | undefined
 ): boolean {
 	if (!tag) return false
-	let canonical: BuildDirective
-	try {
-		canonical = canonicalBuildDirectiveName(attrName)
-	} catch {
-		return false
-	}
-	// Explicit `data-*` form is always a directive, never native passthrough.
+	const canonical = resolveBuildDirectiveName(attrName)
+	if (canonical == null) return false
+	// Prefixed forms are always directives, never native passthrough.
 	if (attrName !== canonical) return false
 	if (looksBracedDirectiveValue(value)) return false
 	return NATIVE_BARE_ATTR_ELEMENTS[canonical]?.has(tag.toLowerCase()) ?? false
@@ -128,6 +225,21 @@ export function isBuildDirectiveAttribute(
 	return looksBracedDirectiveValue(trimmed)
 }
 
+/** Like {@link isBuildDirectiveAttribute} but accepts legacy `data-*` input for formatting. */
+export function isBuildDirectiveAttributeForFormatting(
+	name: string,
+	rawValue: string | null | undefined
+): boolean {
+	if (!isBuildDirectiveNameForFormatting(name)) return false
+	const canonical = canonicalBuildDirectiveNameForFormatting(name)
+	if (canonical === ATTR_ELSE || canonical === ATTR_DEFAULT) return true
+	const trimmed = normalizeAttributeValue(rawValue).trim()
+	if (canonical === ATTR_PROPS && !trimmed) return true
+	if (canonical === ATTR_FOR) return looksBracedDirectiveValue(trimmed)
+	if (canonical === ATTR_CASE) return trimmed.length > 0
+	return looksBracedDirectiveValue(trimmed)
+}
+
 /**
  * True when a valued attribute should be flagged for missing brace-wrapped expression (VSCode /
  * compile validation). Returns false for native passthrough and already-braced values.
@@ -137,12 +249,8 @@ export function requiresBracedDirectiveValue(
 	value: string,
 	tagName?: string
 ): boolean {
-	let canonical: BuildDirective
-	try {
-		canonical = canonicalBuildDirectiveName(attrName)
-	} catch {
-		return false
-	}
+	const canonical = resolveBuildDirectiveName(attrName)
+	if (canonical == null) return false
 	if (!BRACED_VALUE_DIRECTIVES.has(canonical)) return false
 	if (looksBracedDirectiveValue(value)) return false
 	if (tagName && isNativeBareAttribute(tagName, attrName, value)) return false

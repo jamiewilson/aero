@@ -8,8 +8,9 @@
  * - Keyed object `{ title: site.home.title }` injects global `title`; expression refs include `site`.
  */
 
-const PROPS_VALUE_REGEX = /(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/i
-const BARE_PROPS_REGEX = /(?:^|\s)(?:data-)?props(?!\s*=)(?:\s|\/|$)/i
+const PROPS_VALUE_REGEX =
+	/(?:^|\s)(?:(?:aero-|data-aero-)?props)\s*=\s*["']([^"']*)["']/i
+const BARE_PROPS_REGEX = /(?:^|\s)(?:(?:aero-|data-aero-)?props)(?!\s*=)(?:\s|\/|$)/i
 const SPREAD_VAR_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
 const JS_KEYWORD =
 	/^(if|else|return|function|var|let|const|import|from|as|in|of|true|false|null|undefined)$/

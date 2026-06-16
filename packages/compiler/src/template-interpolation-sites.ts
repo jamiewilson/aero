@@ -11,7 +11,8 @@ import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
 import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
-import { ATTR_PREFIX, ATTR_PROPS } from './constants'
+import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
+import { buildDirectiveAttributeNames } from './build-directive-attributes'
 
 export type TemplateInterpolationSite = {
 	readonly expression: string
@@ -24,8 +25,12 @@ export type TemplateInterpolationSite = {
 	readonly wrapPropsObjectLiteral?: boolean
 }
 
-const FOR_ATTR_NAMES = new Set(['for', 'data-for'])
-const PROPS_ATTR_NAMES = new Set([ATTR_PROPS.toLowerCase(), `${ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase()])
+const FOR_ATTR_NAMES = new Set(['for', `${AERO_ATTR_PREFIX}for`, `${DATA_AERO_ATTR_PREFIX}for`])
+const PROPS_ATTR_NAMES = new Set([
+	ATTR_PROPS.toLowerCase(),
+	`${AERO_ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase(),
+	`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase(),
+])
 
 type AttributeMask = { start: number; length: number }
 type AttributeInterpolation = {
@@ -43,7 +48,7 @@ function maskScriptAndStyleInner(sourceText: string): string {
 
 function maskForDirectiveValues(sourceText: string): string {
 	return sourceText.replace(
-		/\b(?:data-)?for\s*=\s*(['"])([\s\S]*?)\1/gi,
+		/\b(?:aero-|data-aero-)?for\s*=\s*(['"])([\s\S]*?)\1/gi,
 		(match, _q: string, inner: string) => match.replace(inner, ' '.repeat(inner.length))
 	)
 }
@@ -156,7 +161,13 @@ function collectForDirectiveScopes(roots: Node[]): ForDirectiveScope[] {
 		const attrs = node.attributes
 		if (!attrs) continue
 
-		const rawValue = attrs['for'] ?? attrs['data-for'] ?? undefined
+		let rawValue: string | undefined
+		for (const name of buildDirectiveAttributeNames(ATTR_FOR)) {
+			if (attrs[name] != null) {
+				rawValue = attrs[name]
+				break
+			}
+		}
 		if (rawValue == null) continue
 
 		const inner = normalizeForDirectiveValue(rawValue)

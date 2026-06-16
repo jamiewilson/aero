@@ -62,7 +62,11 @@ function findBlockingPropsNeedle(
 ): string | undefined {
 	if (!source) return undefined
 
-	for (const needle of [`props="${passDataExpr}"`, `data-props="${passDataExpr}"`]) {
+	for (const needle of [
+		`props="${passDataExpr}"`,
+		`aero-props="${passDataExpr}"`,
+		`data-aero-props="${passDataExpr}"`,
+	]) {
 		if (source.includes(needle)) {
 			return needle
 		}

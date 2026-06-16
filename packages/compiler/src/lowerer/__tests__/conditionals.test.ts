@@ -16,9 +16,9 @@ describe('lowerer/conditionals', () => {
 		return document.body!.firstElementChild as any
 	}
 
-	it('hasIfAttr detects if and data-if', () => {
+	it('hasIfAttr detects if and if', () => {
 		expect(hasIfAttr(el('<span if="{true}">'))).toBe(true)
-		expect(hasIfAttr(el('<span data-if="{true}">'))).toBe(true)
+		expect(hasIfAttr(el('<span if="{true}">'))).toBe(true)
 		expect(hasIfAttr(el('<span>'))).toBe(false)
 	})
 

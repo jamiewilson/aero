@@ -1,71 +1,49 @@
 /**
- * data-if / data-else-if / data-else chain detection and lowering to a single IR `If` node.
+ * if / else-if / else chain detection and lowering to a single IR `If` node.
  *
  * @remarks
  * Branch bodies use {@link ConditionalChainDeps.compileBranchBody}, which must compile
  * `<template>` branches without emitting the wrapper (see `Lowerer.compileWrapperAwareBranch`).
  */
 
-import * as CONST from '../constants'
+import { ATTR_ELSE, ATTR_ELSE_IF, ATTR_IF } from '../constants'
+import {
+	getBuildDirectiveAttribute,
+	hasBuildDirectiveAttribute,
+	type BuildDirective,
+} from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import type { IRNode } from '../ir'
 import type { LowererDiag } from './types'
 
 export function hasIfAttr(node: any): boolean {
-	return (
-		node.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_IF) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_IF))
-	)
+	return node.nodeType === 1 && hasBuildDirectiveAttribute(node, ATTR_IF)
 }
 
 export function hasElseIfAttr(node: any): boolean {
-	return (
-		node.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_ELSE_IF) ||
-			node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE_IF))
-	)
+	return node.nodeType === 1 && hasBuildDirectiveAttribute(node, ATTR_ELSE_IF)
 }
 
 export function hasElseAttr(node: any): boolean {
-	return (
-		node.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_ELSE) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_ELSE))
-	)
+	return node.nodeType === 1 && hasBuildDirectiveAttribute(node, ATTR_ELSE)
 }
 
 /** Gets the condition value from if/else-if attribute */
-export function getCondition(node: any, attr: string, diag: LowererDiag): string | null {
+export function getCondition(node: any, directive: BuildDirective, diag: LowererDiag): string | null {
 	const tagName = node?.tagName?.toLowerCase?.() || 'element'
-	const plainValue = node.getAttribute(attr)
-	if (plainValue !== null) {
-		const needle = `${attr}="${plainValue}"`
-		return Helper.stripBraces(
-			Helper.validateSingleBracedExpression(plainValue, {
-				directive: attr,
-				tagName,
-				diagnosticSource: diag?.source,
-				diagnosticFile: diag?.file,
-				positionNeedle: diag ? needle : undefined,
-			})
-		)
-	}
-
-	const dataAttr = CONST.ATTR_PREFIX + attr
-	const dataValue = node.getAttribute(dataAttr)
-	if (dataValue !== null) {
-		const needle = `${dataAttr}="${dataValue}"`
-		return Helper.stripBraces(
-			Helper.validateSingleBracedExpression(dataValue, {
-				directive: dataAttr,
-				tagName,
-				diagnosticSource: diag?.source,
-				diagnosticFile: diag?.file,
-				positionNeedle: diag ? needle : undefined,
-			})
-		)
-	}
-
-	return null
+	const attr = getBuildDirectiveAttribute(node, directive)
+	if (!attr) return null
+	const needle =
+		attr.value != null && attr.value !== '' ? `${attr.name}="${attr.value}"` : undefined
+	return Helper.stripBraces(
+		Helper.validateSingleBracedExpression(attr.value ?? '', {
+			directive: attr.name,
+			tagName,
+			diagnosticSource: diag?.source,
+			diagnosticFile: diag?.file,
+			positionNeedle: diag ? needle : undefined,
+		})
+	)
 }
 
 export interface ConditionalChainDeps {
@@ -110,11 +88,11 @@ export function compileConditionalChain(
 
 		if (condition === null) {
 			if (!hasIfAttr(node)) break
-			condition = getCondition(node, CONST.ATTR_IF, diag)!
+			condition = getCondition(node, ATTR_IF, diag)!
 			body = deps.compileBranchBody(node, skipInterpolation, outVar)
 			i++
 		} else if (hasElseIfAttr(node)) {
-			const elseIfCondition = getCondition(node, CONST.ATTR_ELSE_IF, diag)!
+			const elseIfCondition = getCondition(node, ATTR_ELSE_IF, diag)!
 			elseIf.push({
 				condition: elseIfCondition,
 				body: deps.compileBranchBody(node, skipInterpolation, outVar),
