@@ -182,7 +182,8 @@ function collectForDirectiveScopes(roots: Node[]): ForDirectiveScope[] {
 
 		if (bindingNames.length === 0) continue
 
-		const startOffset = node.startTagEnd ?? node.start
+		// Bindings apply to sibling attributes on the same tag, not only to content after `>`.
+		const startOffset = node.start
 		const endOffset = node.endTagStart ?? node.end
 		scopes.push({ startOffset, endOffset, bindingNames })
 	}

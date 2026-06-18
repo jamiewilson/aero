@@ -4,11 +4,11 @@
 </script>
 
 <footer>
-	<ul>
-		<li for="{ const { path, label } of links }">
-			<a href="{ path }">{ label }</a>
-		</li>
-	</ul>
+	<menu>
+		<template for="{ const { path, label } of links }">
+			<a href="{ path }"> { label } </a>
+		</template>
+	</menu>
 
 	<style>
 		@scope {
@@ -26,7 +26,7 @@
 				backdrop-filter: blur(10px);
 			}
 
-			ul {
+			menu {
 				display: flex;
 				padding-inline: var(--element-base-padding);
 				justify-content: center;
