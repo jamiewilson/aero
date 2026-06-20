@@ -4,6 +4,7 @@ export interface StateBinding {
 	name: string
 	derived: boolean
 	dependencies: string[]
+	initExpr: string
 }
 
 export interface StateScriptDiagnostic {
@@ -15,6 +16,7 @@ export interface StateScriptDiagnostic {
 export interface StateScriptAnalysisResult {
 	bindings: StateBinding[]
 	diagnostics: StateScriptDiagnostic[]
+	functionSources: string[]
 }
 
 const STATE_SCRIPT_FILENAME = 'state.ts'
@@ -60,8 +62,27 @@ function topLevelVariableDeclarators(program: any): Array<{ id: any; init: any; 
 	return out
 }
 
+function topLevelFunctionDeclarations(program: any, script: string): string[] {
+	const out: string[] = []
+	for (const stmt of program?.body ?? []) {
+		let declaration = stmt
+		if (stmt?.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration
+		if (declaration?.type !== 'FunctionDeclaration') continue
+		if (typeof declaration.start !== 'number' || typeof declaration.end !== 'number') continue
+		out.push(script.slice(declaration.start, declaration.end))
+	}
+	return out
+}
+
+function initExprSource(script: string, init: unknown): string {
+	if (!init || typeof init !== 'object') return 'undefined'
+	const node = init as { start?: number; end?: number }
+	if (typeof node.start !== 'number' || typeof node.end !== 'number') return 'undefined'
+	return script.slice(node.start, node.end)
+}
+
 export function analyzeStateScript(script: string): StateScriptAnalysisResult {
-	if (!script.trim()) return { bindings: [], diagnostics: [] }
+	if (!script.trim()) return { bindings: [], diagnostics: [], functionSources: [] }
 
 	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
 	if (parsed.errors.length > 0) {
@@ -87,6 +108,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 			name: d.id.name,
 			derived: deps.length > 0,
 			dependencies: deps,
+			initExpr: initExprSource(script, d.init),
 		})
 	}
 
@@ -116,5 +138,9 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 	})
 
-	return { bindings, diagnostics }
+	return {
+		bindings,
+		diagnostics,
+		functionSources: topLevelFunctionDeclarations(parsed.program, script),
+	}
 }

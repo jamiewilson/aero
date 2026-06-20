@@ -18,10 +18,14 @@ import {
 	escapeTemplateLiteralContent,
 	validateSingleBracedExpression,
 } from './helpers'
-import { Lowerer } from './lowerer/lowerer'
 import { parse } from './parser'
 import { Resolver } from './resolver'
 import { buildTemplateAnalysis } from './template-analysis'
+import {
+	collectReactiveBinds,
+	createStateMountImportLine,
+	emitMountStateBindingsFunction,
+} from './state-mount-codegen'
 
 function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {
 	const hasVirtualClientScripts =
@@ -158,17 +162,30 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		}
 	}
 
-	const lowerer = new Lowerer(resolver, buildLowererDiagnostics(options))
+	const lowererDiagnostics = buildLowererDiagnostics(options)
 
-	const ta = buildTemplateAnalysis(parsed, options, resolver, lowerer)
+	const ta = buildTemplateAnalysis(parsed, options, resolver, lowererDiagnostics)
 	const runtimeScript = [ta.scriptBody, ta.stateScriptBody].filter(Boolean).join('\n')
 	const script = addVirtualClientScriptHelper(runtimeScript, options.clientScripts)
 	const { rootScripts, headScripts } = collectClientScriptLines(options.clientScripts)
 	headScripts.push(...collectBlockingHeadScripts(options.blockingScripts, options))
-	const stateHydrationLine =
+	const ownedStateBindingNames =
 		ta.stateAnalysis !== null
-			? createStateHydrationScriptLine(ta.stateAnalysis.bindings.map(binding => binding.name))
+			? ta.stateAnalysis.bindings.filter(binding => !binding.derived).map(binding => binding.name)
+			: []
+	const stateHydrationLine =
+		ownedStateBindingNames.length > 0
+			? createStateHydrationScriptLine(ownedStateBindingNames)
 			: null
+	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [] }
+	const mountImportLine =
+		reactiveBinds.textBinds.length > 0 || reactiveBinds.eventBinds.length > 0
+			? createStateMountImportLine()
+			: null
+	const mountFn =
+		ta.stateAnalysis !== null
+			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds)
+			: ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
@@ -177,7 +194,11 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		headScriptsLines: headScripts,
 	})
 
-	return new CodeBuilder().raw(ta.importsCode).raw('\n').raw(renderFn).toString()
+	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
+	let output = prefixLines.length > 0 ? `${prefixLines.join('\n')}\n` : '\n'
+	output += renderFn
+	if (mountFn) output += `\n\n${mountFn}`
+	return output
 }
 
 /**

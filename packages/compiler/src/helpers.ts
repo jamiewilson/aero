@@ -104,6 +104,26 @@ export function compileInterpolation(text: string): string {
 }
 
 /**
+ * Compile reactive text read expression for client mount bindings.
+ */
+export function compileReactiveTextReadExpr(text: string): string {
+	if (!text) return "''"
+	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+	const parts = segments.map(seg => {
+		if (seg.kind === 'literal') {
+			return JSON.stringify(seg.value)
+		}
+		const expr = seg.expression.trim()
+		if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {
+			return `(${seg.expression})`
+		}
+		return `escapeHtml(${seg.expression})`
+	})
+	if (parts.length === 1) return parts[0]!
+	return parts.join(' + ')
+}
+
+/**
  * Compile an attribute value: `{ expr }` → interpolation; `{{` / `}}` → literal `{` / `}`.
  * Attributes are NOT auto-escaped (browser handles XML escaping).
  */

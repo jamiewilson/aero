@@ -14,6 +14,7 @@ import { CompileError } from './types'
 import { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
+import type { LowererDiag } from './lowerer/types'
 import { expandSelfClosingTags } from './parser'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
@@ -94,7 +95,7 @@ export function buildTemplateAnalysis(
 	parsed: ParseResult,
 	options: CompileOptions,
 	resolver: Resolver,
-	lowerer: Lowerer
+	diag?: LowererDiag
 ): TemplateAnalysis {
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
@@ -103,6 +104,10 @@ export function buildTemplateAnalysis(
 	if (stateAnalysis && stateAnalysis.diagnostics.length > 0) {
 		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
 	}
+	const stateBindingNames = stateAnalysis
+		? new Set(stateAnalysis.bindings.map(binding => binding.name))
+		: undefined
+	const lowerer = new Lowerer(resolver, diag, stateBindingNames)
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = parsed.stateScript
 		? stripBuildScriptTypes(parsed.stateScript.content, 'state.ts')

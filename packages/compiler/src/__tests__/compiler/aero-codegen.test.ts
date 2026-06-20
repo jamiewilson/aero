@@ -17,7 +17,13 @@ const mockOptions = {
 /** Execute the generated render function */
 async function execute(code: string, context: Record<string, any> = {}) {
 	const defaultIdx = code.indexOf('export default async function')
-	const renderCode = defaultIdx >= 0 ? code.slice(defaultIdx) : code
+	const mountIdx = code.indexOf('export function mountStateBindings')
+	const renderCode =
+		defaultIdx >= 0
+			? mountIdx >= 0
+				? code.slice(defaultIdx, mountIdx)
+				: code.slice(defaultIdx)
+			: code
 
 	const bodyStart = renderCode.indexOf('{')
 	const bodyEnd = renderCode.lastIndexOf('}')
@@ -149,7 +155,7 @@ describe('Aero Codegen - Client Scripts', () => {
 
 		expect(out).toContain('type="aero/state"')
 		expect(out).toContain('"count":1')
-		expect(out).toContain('"doubled":2')
+		expect(out).not.toContain('"doubled"')
 	})
 
 	it('renders template interpolations from is:state bindings', async () => {
@@ -163,7 +169,7 @@ describe('Aero Codegen - Client Scripts', () => {
 		const code = compile(parsed, mockOptions)
 		const output = await execute(code)
 
-		expect(output).toContain('<div>1-2</div>')
+		expect(output).toContain('display:contents">1-2</span></div>')
 	})
 })
 

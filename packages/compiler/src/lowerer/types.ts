@@ -23,6 +23,13 @@ export interface ParsedElementAttrs {
 	/** Discriminant from `switch` / `data-switch="{ … }"` when present. */
 	switchExpr: string | null
 	passDataExpr: string | null
+	eventBinds: import('../ir').IRReactiveEventBind[]
+}
+
+export interface LowererReactiveState {
+	readonly bindingNames: ReadonlySet<string>
+	nextTextBindId(): number
+	nextEventBindId(): number
 }
 
 /** Result of parsing a component's attributes: props object code string (with optional spread). */

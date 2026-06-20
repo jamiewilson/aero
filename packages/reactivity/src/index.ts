@@ -1,12 +1,14 @@
 import { Computed } from './computed'
 import { Effect } from './effect'
-import { Signal } from './signal'
 import { readHydrationState, type HydrationRoot } from './hydration'
+import { mountStateBindings, bindEvent, bindText } from './mount'
+import { Signal } from './signal'
+import { createStateScope, type StateBindingSpec } from './state-scope'
 import { SignalStore } from './store'
 
 export { Computed, Effect, Signal, SignalStore }
-export { readHydrationState }
-export type { HydrationRoot } from './hydration'
+export { readHydrationState, mountStateBindings, bindEvent, bindText, createStateScope }
+export type { HydrationRoot, StateBindingSpec }
 
 export interface ReactivityRuntime {
 	readonly kind: 'reactivity-runtime'
