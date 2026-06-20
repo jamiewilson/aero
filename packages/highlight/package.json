@@ -25,7 +25,7 @@
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "vitest run --root ../.. packages/highlight",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
