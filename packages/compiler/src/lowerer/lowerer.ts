@@ -193,7 +193,7 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds } = parseElementAttributes(
+		const { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds, busyBinds } = parseElementAttributes(
 			this.resolver,
 			this.diag,
 			node,
@@ -327,9 +327,10 @@ export class Lowerer {
 				},
 			...eventBinds,
 			...textBinds,
+			...busyBinds,
 		]
 	}
-	return [...inner, ...eventBinds, ...textBinds]
+	return [...inner, ...eventBinds, ...textBinds, ...busyBinds]
 	}
 
 	private emitScriptPassDataIR(
@@ -462,9 +463,11 @@ export class Lowerer {
 function createLowererReactiveState(bindingNames: ReadonlySet<string>): LowererReactiveState {
 	let textBindId = 0
 	let eventBindId = 0
+	let busyBindId = 0
 	return {
 		bindingNames,
 		nextTextBindId: () => textBindId++,
 		nextEventBindId: () => eventBindId++,
+		nextBusyBindId: () => busyBindId++,
 	}
 }

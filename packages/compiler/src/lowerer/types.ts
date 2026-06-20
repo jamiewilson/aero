@@ -25,12 +25,14 @@ export interface ParsedElementAttrs {
 	passDataExpr: string | null
 	eventBinds: import('../ir').IRReactiveEventBind[]
 	textBinds: import('../ir').IRReactiveTextBind[]
+	busyBinds: import('../ir').IRReactiveBusyBind[]
 }
 
 export interface LowererReactiveState {
 	readonly bindingNames: ReadonlySet<string>
 	nextTextBindId(): number
 	nextEventBindId(): number
+	nextBusyBindId(): number
 }
 
 /** Result of parsing a component's attributes: props object code string (with optional spread). */

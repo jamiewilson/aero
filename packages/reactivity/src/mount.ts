@@ -24,6 +24,7 @@ export interface MountStateBindingsOptions {
 	readonly functionSources: readonly string[]
 	readonly textBinds: readonly { selector: string; readExpr: string }[]
 	readonly eventBinds: readonly { selector: string; event: string; handlerExpr: string }[]
+	readonly busyBinds?: readonly { selector: string; readExpr: string }[]
 	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
 	/** External functions to inject into the handler eval scope (e.g. hypermedia actions). */
@@ -78,6 +79,16 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			throw new Error(`[aero] Missing reactive event target: ${bind.selector}`)
 		}
 		cleanups.push(bindEvent(target as Element, bind.event, compileHandler(bind.handlerExpr, scope)))
+	}
+
+	if (options.busyBinds) {
+		for (const bind of options.busyBinds) {
+			const target = options.root.querySelector(bind.selector)
+			if (!target) {
+				throw new Error(`[aero] Missing busy target: ${bind.selector}`)
+			}
+			cleanups.push(bindText(target, compileRead(bind.readExpr, scope)))
+		}
 	}
 
 	return () => {

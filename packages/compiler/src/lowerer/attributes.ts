@@ -19,7 +19,7 @@ import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
-import type { IRReactiveEventBind, IRReactiveTextBind } from '../ir'
+import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind } from '../ir'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
@@ -292,6 +292,7 @@ export function parseElementAttributes(
 	const attributes: string[] = []
 	const eventBinds: IRReactiveEventBind[] = []
 	const textBinds: IRReactiveTextBind[] = []
+	const busyBinds: IRReactiveBusyBind[] = []
 	let loopData: { binding: string; items: string } | null = null
 	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
@@ -368,11 +369,25 @@ export function parseElementAttributes(
 			return
 		}
 
+		if (parsedRuntime?.canonicalBareName === 'busy' && reactiveState) {
+			const readExpr = Helper.stripBraces(
+				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+			)
+			const bindId = reactiveState.nextBusyBindId()
+			busyBinds.push({
+				kind: 'ReactiveBusyBind',
+				bindId,
+				readExpr,
+			})
+			attributes.push(`data-aero-busy="${bindId}"`)
+			return
+		}
+
 		const emitted = buildEmittedAttribute(resolver, attr)
 		if (!emitted) return
 		attributes.push(emitted)
 	})
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
-	return { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds }
+	return { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds, busyBinds }
 }

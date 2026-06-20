@@ -177,11 +177,12 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		ownedStateBindingNames.length > 0
 			? createStateHydrationScriptLine(ownedStateBindingNames)
 			: null
-	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [] }
-	const mountImportLine =
-		reactiveBinds.textBinds.length > 0 || reactiveBinds.eventBinds.length > 0
-			? createStateMountImportLine()
-			: null
+	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [], busyBinds: [] }
+	const hasReactiveBinds =
+		reactiveBinds.textBinds.length > 0 ||
+		reactiveBinds.eventBinds.length > 0 ||
+		reactiveBinds.busyBinds.length > 0
+	const mountImportLine = hasReactiveBinds ? createStateMountImportLine() : null
 	const mountFn =
 		ta.stateAnalysis !== null
 			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports)
