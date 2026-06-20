@@ -27,12 +27,20 @@ describe('isDirectiveAttr with default config', () => {
 		expect(isDirectiveAttr('.prevent')).toBe(true)
 	})
 
-	it('returns false for normal and Aero directive attributes', () => {
+	it('returns false for normal and build-only Aero attributes', () => {
 		expect(isDirectiveAttr('href')).toBe(false)
 		expect(isDirectiveAttr('class')).toBe(false)
 		expect(isDirectiveAttr('for')).toBe(false)
 		expect(isDirectiveAttr('if')).toBe(false)
 		expect(isDirectiveAttr('aero-props')).toBe(false)
+	})
+
+	it('returns true for Aero runtime directives', () => {
+		expect(isDirectiveAttr('on:click')).toBe(true)
+		expect(isDirectiveAttr('aero-on:submit.prevent')).toBe(true)
+		expect(isDirectiveAttr('data-aero-on-click')).toBe(true)
+		expect(isDirectiveAttr('busy')).toBe(true)
+		expect(isDirectiveAttr('class:is-active')).toBe(true)
 	})
 
 	it('returns false for hx- when using default config', () => {
