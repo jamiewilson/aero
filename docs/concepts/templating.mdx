@@ -70,7 +70,7 @@ Inside attribute values, `{{` and `}}` produce literal `{` and `}` characters:
 
 ## Loops
 
-Use `for` or `data-for` with a JavaScript `for…of` head to repeat an element. Destructuring is supported:
+Use `for` or `for` with a JavaScript `for…of` head to repeat an element. Destructuring is supported:
 
 ```html
 <script is:build>
@@ -78,7 +78,7 @@ Use `for` or `data-for` with a JavaScript `for…of` head to repeat an element. 
 </script>
 
 <ul>
-	<li data-for="{ const item of items }">{ item }</li>
+	<li for="{ const item of items }">{ item }</li>
 </ul>
 ```
 
@@ -92,7 +92,7 @@ Inside the loop body, Aero injects these variables automatically:
 | `length` | The iterable's `.length` (meaningful for arrays) |
 
 ```html
-<li data-for="{ const item of items }">
+<li for="{ const item of items }">
 	{ item } (index: { index }, first: { first }, last: { last }, length: { length })
 </li>
 ```
@@ -192,4 +192,4 @@ The list items become direct children of `<ul>` with no extra element in the tre
 
 ## data- prefix
 
-All custom directive attributes (`for`, `if`, `else`, `switch`, `case`, `default`, `props`) also accept a `data-` prefix for strict HTML spec compliance: `data-for`, `data-if`, `data-else`, etc. Both forms are equivalent; the shorthand is preferred for readability.
+All custom directive attributes (`for`, `if`, `else`, `switch`, `case`, `default`, `props`) also accept a `data-` prefix for strict HTML spec compliance: `for`, `if`, `else`, etc. Both forms are equivalent; the shorthand is preferred for readability.

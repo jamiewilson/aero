@@ -4,7 +4,13 @@
 
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
-import { isNativeBareAttribute } from '../build-directive-attributes'
+import {
+	getBuildDirectiveAttribute,
+	hasBuildDirectiveAttribute,
+	isNativeBareAttribute,
+	resolveBuildDirectiveName,
+	type BuildDirective,
+} from '../build-directive-attributes'
 import { isDirectiveAttr } from '../directive-attributes'
 import { parentIsSwitchContainer } from './switch'
 import { Resolver } from '../resolver'
@@ -35,17 +41,13 @@ const NON_PROP_COMPONENT_DIRECTIVE_ATTRS = [
 	CONST.ATTR_DEFAULT,
 ] as const
 
-function hasDirectiveAttr(node: NodeLike, directiveName: string): boolean {
-	return Boolean(
-		node?.hasAttribute?.(directiveName) || node?.hasAttribute?.(CONST.ATTR_PREFIX + directiveName)
-	)
+function hasDirectiveAttr(node: NodeLike, directiveName: BuildDirective): boolean {
+	return hasBuildDirectiveAttribute(node, directiveName)
 }
 
-function isDirectiveAttrName(attrName: string, directives: readonly string[]): boolean {
-	for (const directive of directives) {
-		if (Helper.isAttr(attrName, directive, CONST.ATTR_PREFIX)) return true
-	}
-	return false
+function isDirectiveAttrName(attrName: string, directives: readonly BuildDirective[]): boolean {
+	const resolved = resolveBuildDirectiveName(attrName)
+	return resolved != null && directives.includes(resolved)
 }
 
 function getTagName(node: NodeLike): string {
@@ -109,7 +111,7 @@ function parseForAttribute(
 	diag: LowererDiag,
 	attr: AttrLike
 ): { binding: string; items: string } | null {
-	if (!Helper.isAttr(attr.name, CONST.ATTR_FOR, CONST.ATTR_PREFIX)) return null
+	if (resolveBuildDirectiveName(attr.name) !== CONST.ATTR_FOR) return null
 	// Bare `for` on <label>/<output> with a non-braced value is the native HTML attribute.
 	if (isNativeBareAttribute(getTagName(node), attr.name, attr.value ?? null)) {
 		return null
@@ -204,7 +206,7 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 	forEachAttribute(node, attr => {
 		if (isDirectiveAttrName(attr.name, NON_PROP_COMPONENT_DIRECTIVE_ATTRS)) return
 
-		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+		if (resolveBuildDirectiveName(attr.name) === CONST.ATTR_PROPS) {
 			const value = attr.value?.trim() || ''
 			if (!value) {
 				dataPropsExpression = '...props'
@@ -268,7 +270,7 @@ export function parseElementAttributes(
 				attr.value ?? null
 			)
 			if (parentIsSwitchContainer(node) || !nativeTrackDefault) return
-		} else if (Helper.isAttr(attr.name, CONST.ATTR_SWITCH, CONST.ATTR_PREFIX)) {
+		} else if (resolveBuildDirectiveName(attr.name) === CONST.ATTR_SWITCH) {
 			// Bare boolean `switch` on <input> is the native attribute; pass it through.
 			const tagName = getTagName(node)
 			if (!isNativeBareAttribute(tagName, attr.name, attr.value ?? null)) {
@@ -279,7 +281,7 @@ export function parseElementAttributes(
 			}
 		}
 
-		if (Helper.isAttr(attr.name, CONST.ATTR_PROPS, CONST.ATTR_PREFIX)) {
+		if (resolveBuildDirectiveName(attr.name) === CONST.ATTR_PROPS) {
 			const value = attr.value?.trim() || ''
 			passDataExpr = value
 				? validateBracedDirectiveValue(node, diag, attr.name, value)

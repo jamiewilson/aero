@@ -1,9 +1,4 @@
-import { ATTR_PREFIX } from '@aero-js/compiler/constants'
-import type { BuildDirective } from '@aero-js/compiler/build-directive-attributes'
-
-export function formatDirectiveName(directive: BuildDirective, usePrefix: boolean): string {
-	return usePrefix ? `${ATTR_PREFIX}${directive}` : directive
-}
+export { formatBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 
 /** Tags eligible for self-closing preference (*-component only, not *-layout). */
 export function isSelfClosingComponentTag(tag: string | undefined): boolean {

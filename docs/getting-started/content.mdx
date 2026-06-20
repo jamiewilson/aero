@@ -42,7 +42,7 @@ Use `getCollection()` inside a `<script is:build>` block to fetch all items:
 </script>
 
 <ul>
-	<li data-for="{ const doc of allDocs }">
+	<li for="{ const doc of allDocs }">
 		<a href="/docs/{ doc.id }">{ doc.data.title }</a>
 	</li>
 </ul>

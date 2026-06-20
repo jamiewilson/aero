@@ -7,7 +7,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`         |
 | 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`         |
 | 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component |
-| 🔁 Loops & conditionals    | `for`/`data-for` and `if/else-if/else` right in your markup                  |
+| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                  |
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes      |
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
@@ -51,7 +51,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ### Mostly just html, css and js/ts, with few things on top
 
-Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props`, `data-props`). The source looks like HTML, the output is HTML.
+Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props`, `aero-props`). The source looks like HTML, the output is HTML.
 
 > Also check out: [Philosophy](docs/get-started/philosophy.mdx) (what makes Aero different and how it relates to Web Components).
 
@@ -136,7 +136,7 @@ Use `props="{ ...obj }"` to pass any object as the component’s props:
 
 ### 3. Passing data into script and style
 
-To use build-scope data inside a client `<script>` or `<style>`, add `props` (or `data-props`) with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression. Bare `props` (no value) spreads a local `props` variable, same as on components.
+To use build-scope data inside a client `<script>` or `<style>`, add `props` (or `aero-props`) with a **braced expression** (one `{ }`). The expression is evaluated at render time and must produce an object; its keys become global variables in script or CSS custom properties in style (e.g. `--fg`, `--bg`). Same interpolation rules as elsewhere: what you write is the expression. Bare `props` (no value) spreads a local `props` variable, same as on components.
 
 #### Multiple variables in script:
 
@@ -171,15 +171,15 @@ To use build-scope data inside a client `<script>` or `<style>`, add `props` (or
 ```
 
 > [!NOTE]
-> All custom attributes (`props`, `for`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `data-props`, `data-for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
+> All custom attributes (`props`, `for`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `aero-props`, `for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
 
 ## Loops & conditionals
 
-Use `for` / `data-for` and `if` / `else-if` / `else` with `{ }` expressions:
+Use `for` / `for` and `if` / `else-if` / `else` with `{ }` expressions:
 
 ```html
 <ul>
-	<li data-for="{ const item of items }">{ item.name }</li>
+	<li for="{ const item of items }">{ item.name }</li>
 </ul>
 
 <div if="{ user }">Hello, { user.name }</div>

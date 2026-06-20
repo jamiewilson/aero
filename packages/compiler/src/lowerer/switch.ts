@@ -4,32 +4,25 @@
 
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
+import {
+	getBuildDirectiveAttribute,
+	hasBuildDirectiveAttribute,
+} from '../build-directive-attributes'
 import type { IRSwitch, IRNode } from '../ir'
 import { CompileError } from '../types'
 import type { LowererDiag } from './types'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 
 export function hasSwitchAttr(node: any): boolean {
-	return (
-		node?.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_SWITCH) ||
-			node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_SWITCH))
-	)
+	return node?.nodeType === 1 && hasBuildDirectiveAttribute(node, CONST.ATTR_SWITCH)
 }
 
 export function hasCaseAttr(node: any): boolean {
-	return (
-		node?.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_CASE) || node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_CASE))
-	)
+	return node?.nodeType === 1 && hasBuildDirectiveAttribute(node, CONST.ATTR_CASE)
 }
 
 export function hasDefaultAttr(node: any): boolean {
-	return (
-		node?.nodeType === 1 &&
-		(node.hasAttribute(CONST.ATTR_DEFAULT) ||
-			node.hasAttribute(CONST.ATTR_PREFIX + CONST.ATTR_DEFAULT))
-	)
+	return node?.nodeType === 1 && hasBuildDirectiveAttribute(node, CONST.ATTR_DEFAULT)
 }
 
 /** Whether `node` is a direct child of an element (or template content fragment) that has `switch`. */
@@ -73,16 +66,19 @@ function splitTopLevelCommaSegments(inner: string): string[] {
 }
 
 /**
- * Parse `case="…"` / `data-case="…"` into JS RHS comparand expression strings for `===`.
+ * Parse `case="…"` / `aero-case="…"` into JS RHS comparand expression strings for `===`.
  */
 export function parseCaseComparands(node: any, diag: LowererDiag): string[] {
 	const tagName = node?.tagName?.toLowerCase?.() || 'element'
-	const plain = node.getAttribute(CONST.ATTR_CASE)
-	const dataName = CONST.ATTR_PREFIX + CONST.ATTR_CASE
-	const dataVal = node.getAttribute(dataName)
-	const useData = plain === null && dataVal !== null
-	const raw = useData ? dataVal! : (plain ?? '')
-	const attrLabel = useData ? dataName : CONST.ATTR_CASE
+	const attr = getBuildDirectiveAttribute(node, CONST.ATTR_CASE)
+	if (!attr) {
+		throw new CompileError({
+			message: `Directive \`case\` on <${tagName}> requires a value (literal or braced expression).`,
+			file: diag?.file,
+		})
+	}
+	const raw = attr.value ?? ''
+	const attrLabel = attr.name
 
 	if (raw === null || raw === '') {
 		throw new CompileError({

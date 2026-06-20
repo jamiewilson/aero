@@ -1,23 +1,29 @@
 import type { SupportOption } from 'prettier'
+import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
 
 export interface AeroPluginOptions {
-	aeroAttributePrefix: boolean
+	aeroAttributePrefix: BuildDirectivePrefixMode
 	aeroBracketSpacing: boolean
 	aeroSelfClosingComponents: boolean
 }
 
 export const defaultAeroOptions: AeroPluginOptions = {
-	aeroAttributePrefix: false,
+	aeroAttributePrefix: 'none',
 	aeroBracketSpacing: true,
 	aeroSelfClosingComponents: true,
 }
 
 export const aeroOptions: Record<keyof AeroPluginOptions, SupportOption> = {
 	aeroAttributePrefix: {
-		type: 'boolean',
+		type: 'choice',
 		category: 'Aero',
-		default: false,
-		description: 'Use data- prefix on Aero build directives (data-props vs props).',
+		default: 'none',
+		description: 'Prefix form for Aero build directives.',
+		choices: [
+			{ value: 'none', description: 'Bare names (props, for, if, …).' },
+			{ value: 'aero', description: 'aero-* names (aero-props, aero-for, …).' },
+			{ value: 'data-aero', description: 'data-aero-* names (data-aero-props, …).' },
+		],
 	},
 	aeroBracketSpacing: {
 		type: 'boolean',

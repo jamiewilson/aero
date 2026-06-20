@@ -44,9 +44,9 @@ describe('Lowerer wrapperless foundation', () => {
 		expect(serialized).toContain('</div>')
 	})
 
-	it('compileNode lowers template data-for to For with wrapperless body', () => {
+	it('compileNode lowers template for to For with wrapperless body', () => {
 		const { document } = parseHTML(
-			'<html><body><template data-for="{ const x of xs }"><span>{ x }</span></template></body></html>'
+			'<html><body><template for="{ const x of xs }"><span>{ x }</span></template></body></html>'
 		)
 		const template = document.body!.firstElementChild!
 		const lowerer = new Lowerer(resolver)

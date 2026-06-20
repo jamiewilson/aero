@@ -5,7 +5,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`                                                                                |
 | 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`                                                                                |
 | 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component                                                                        |
-| 🔁 Loops & conditionals    | `for`/`data-for` and `if/else-if/else` right in your markup                                                                                         |
+| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                                                                                         |
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes                                                                             |
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`                                                                          |
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server                                                                                  |
@@ -167,15 +167,15 @@ To use build-scope data inside a client `<script>` or `<style>`, add `props` wit
 </script>
 ```
 
-> All custom attributes (`props`, `for`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `data-props`, `data-for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
+> All custom attributes (`props`, `for`, `if`, `else`, etc.) also accept a `data-` prefix (e.g. `aero-props`, `for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is preferred for readability.
 
 ## [Loops & conditionals](#loops--conditionals)
 
-Use `for` / `data-for` and `if` / `else-if` / `else` with `{ }` expressions:
+Use `for` / `for` and `if` / `else-if` / `else` with `{ }` expressions:
 
 ```html
 <ul>
-	<li data-for="{ const item of items }">{ item.name }</li>
+	<li for="{ const item of items }">{ item.name }</li>
 </ul>
 
 <div if="{ user }">Hello, { user.name }</div>

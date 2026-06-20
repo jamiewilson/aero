@@ -176,11 +176,11 @@ Text interpolations are HTML-escaped by default. Use `raw()` for intentional une
 
 ## Loops
 
-Use `for` (or `data-for`) with a `for…of` expression to repeat an element:
+Use `for` (or `for`) with a `for…of` expression to repeat an element:
 
 ```html
 <ul>
-	<li data-for="{ const item of items }">{ item }</li>
+	<li for="{ const item of items }">{ item }</li>
 </ul>
 ```
 
@@ -223,5 +223,5 @@ This works with `if`, `for`, and `switch`. It is especially useful inside `<tabl
 
 <Note>
 	All directive attributes also accept a `data-` prefix for strict HTML spec compliance:
-	`data-for`, `data-if`, `data-else`, etc.
+	`for`, `if`, `else`, etc.
 </Note>

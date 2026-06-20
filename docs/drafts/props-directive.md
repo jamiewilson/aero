@@ -1,8 +1,8 @@
-# Built-in Data Passing (`props` / `data-props`)
+# Built-in Data Passing (`props` / `aero-props`)
 
 A common struggle in modern web frameworks is bridging data computed securely on the server down to the client-side JavaScript securely and easily.
 
-Aero simplifies context passing completely using the intuitive `props` (or `data-props`) attribute available on both `<script>` and `<style>` tags.
+Aero simplifies context passing completely using the intuitive `props` (or `aero-props`) attribute available on both `<script>` and `<style>` tags.
 
 ## Core Concepts
 

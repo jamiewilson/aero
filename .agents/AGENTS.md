@@ -149,6 +149,6 @@ When adding or refactoring comments in TypeScript files, use **block-style TSDoc
 
 - Virtual client scripts use `/@aero/client/` prefix - plugin uses `\0` prefix for proper Vite virtual module handling
 - Slot passthrough uses both `name` and `slot` attributes on `<slot>` elements
-- `for` / `data-for` loops: `<li data-for="{ const item of items }">{ item.name }</li>`
-- All custom attributes (`props`, `for`, `if`, etc.) also accept a `data-` prefix for HTML spec compliance
+- `for` / `for` loops: `<li for="{ const item of items }">{ item.name }</li>`
+- All custom attributes (`props`, `for`, `if`, etc.) also accept `aero-*` or `data-aero-*` prefixes when you want explicit namespacing
 - `props` on script/style takes one braced expression (same as rest of interpolation); use `props="{ ...theme }"` for object properties as CSS vars, not `{ theme }` (which passes one key). See [Props](docs/data/props.mdx) and [Templating](docs/concepts/templating.mdx).

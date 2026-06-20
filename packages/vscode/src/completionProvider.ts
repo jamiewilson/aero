@@ -2,7 +2,7 @@
  * Completion provider for Aero HTML: attributes, import paths, component/layout tags, content globals.
  *
  * @remarks
- * Triggers on `<`, `/`, `@`, `"`, `'`. Supplies Aero attributes (data-for, data-if, etc.), path/alias completions from the resolver, and content global properties. Uses classifyPosition and getResolver.
+ * Triggers on `<`, `/`, `@`, `"`, `'`. Supplies Aero attributes (for, aero-for, if, etc.), path/alias completions from the resolver, and content global properties. Uses classifyPosition and getResolver.
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
@@ -28,31 +28,31 @@ const AERO_ATTRIBUTES: Array<{
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{
-		label: 'data-for',
-		detail: 'Loop over items (Aero for…of)',
-		snippet: 'data-for="{ const ${1:item} of ${2:items} }"',
+		label: 'aero-for',
+		detail: 'Loop over items (Aero for…of, namespaced)',
+		snippet: 'aero-for="{ const ${1:item} of ${2:items} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
-		label: 'data-if',
-		detail: 'Conditional rendering (Aero)',
-		snippet: 'data-if="{ ${1:condition} }"',
+		label: 'aero-if',
+		detail: 'Conditional rendering (Aero, namespaced)',
+		snippet: 'aero-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
-		label: 'data-else-if',
-		detail: 'Chained conditional (Aero)',
-		snippet: 'data-else-if="{ ${1:condition} }"',
+		label: 'aero-else-if',
+		detail: 'Chained conditional (Aero, namespaced)',
+		snippet: 'aero-else-if="{ ${1:condition} }"',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
-		label: 'data-else',
-		detail: 'Fallback conditional (Aero)',
+		label: 'aero-else',
+		detail: 'Fallback conditional (Aero, namespaced)',
 		kind: vscode.CompletionItemKind.Keyword,
 	},
 	{
-		label: 'data-props',
-		detail: 'Spread props to component (Aero)',
+		label: 'aero-props',
+		detail: 'Spread props to component (Aero, namespaced)',
 		kind: vscode.CompletionItemKind.Property,
 	},
 	{

@@ -68,7 +68,7 @@ If the browser could understand it in a regular HTML file by itself, it is proba
 Mixed cases:
 
 - `<slot>` is a native HTML element, but Aero uses it as part of its layout and component system.
-- `data-*` is native HTML syntax, but `data-if`, `data-for`, `data-switch`, and `data-props` are Aero directives.
+- `data-*` is native HTML syntax; Aero directives use bare names or optional `aero-*` / `data-aero-*` prefixes (`aero-if`, `data-aero-for`, …).
 - Plain `<script>` is native, but Aero can still bundle local scripts and pass data into them with `props`.
 
 ## Aero-only template syntax
@@ -81,7 +81,7 @@ Plain HTML has no built-in way to evaluate JavaScript expressions inside markup 
 
 HTML has no native conditional rendering syntax. Aero adds conditional directives on elements. See [Templates](/getting-started/templates).
 
-### `for` and `data-for`
+### `for` and `for`
 
 HTML has no native loop syntax. Aero adds loop directives so one element or fragment can repeat. See [Templates](/getting-started/templates).
 
@@ -89,7 +89,7 @@ HTML has no native loop syntax. Aero adds loop directives so one element or frag
 
 Aero adds `switch`, `case`, and `default` directives for matching one value against several cases. See [Templates](/getting-started/templates).
 
-### `props` and `data-props`
+### `props` and `aero-props`
 
 Aero adds `props` for components, client scripts, and styles. See [Templates](/getting-started/templates).
 
@@ -111,7 +111,7 @@ HTML does not have a native file-import-based component system. In Aero you impo
 
 ### Wrapperless `<template>` directives
 
-Plain `<template>` is native and stays inert in the browser. `<template if>`, `<template data-for>`, and `<template switch>` get special compiler behavior. See [The HTML template element](/guide/html-template).
+Plain `<template>` is native and stays inert in the browser. `<template if>`, `<template for>`, and `<template switch>` get special compiler behavior. See [The HTML template element](/guide/html-template).
 
 ## Framework features beyond native web
 
@@ -149,14 +149,14 @@ See [Image optimization](/tooling/image-optimization) and [Incremental builds](/
 | `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax       | HTMX or Alpine in the browser                        |
 | `{ title }`                             | Aero                  | Aero template engine                                 |
 | `if`, `else-if`, `else`                 | Aero                  | Aero template engine                                 |
-| `for`, `data-for`                       | Aero                  | Aero template engine                                 |
+| `for`, `for`                       | Aero                  | Aero template engine                                 |
 | `switch`, `case`, `default`             | Aero                  | Aero template engine                                 |
-| `props`, `data-props`                   | Aero                  | Aero template engine                                 |
+| `props`, `aero-props`                   | Aero                  | Aero template engine                                 |
 | `<script is:build>`                     | Aero                  | Build or SSR runtime                                 |
 | `<script is:inline>` / `is:blocking`    | Aero on native element| Aero compiler                                        |
 | `<header-component>` from `header.html` | Aero                  | Aero component system                                |
 | `<slot>` in an Aero layout              | Mixed                 | Native element used by Aero composition              |
-| `<template data-for>`                   | Mixed                 | Native element with Aero directive behavior          |
+| `<template for>`                   | Mixed                 | Native element with Aero directive behavior          |
 | `client/pages/about.html` → `/about`    | Aero                  | Aero routing                                         |
 | `[slug].html` + `getStaticPaths()`      | Aero                  | Aero routing and build                               |
 | `getCollection()` and `render()`        | Aero                  | Aero content layer                                   |

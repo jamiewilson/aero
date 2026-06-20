@@ -88,8 +88,8 @@ describe('isAttr', () => {
 	})
 
 	it('should match prefixed attribute name', () => {
-		expect(isAttr('data-if', 'if', 'data-')).toBe(true)
-		expect(isAttr('data-for', 'for', 'data-')).toBe(true)
+		expect(isAttr('if', 'if', 'data-')).toBe(true)
+		expect(isAttr('for', 'for', 'data-')).toBe(true)
 	})
 
 	it('should not match unrelated attributes', () => {

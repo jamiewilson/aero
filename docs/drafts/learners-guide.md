@@ -75,7 +75,7 @@ Use this shortcut:
 There are a few important mixed cases:
 
 - `<slot>` is a native HTML element, but Aero uses it as part of its layout and component system.
-- `data-*` is native HTML syntax, but `data-if`, `data-for`, `data-switch`, and `data-props` are Aero directives.
+- `data-*` is native HTML syntax, but `if`, `for`, `aero-switch`, and `aero-props` are Aero directives.
 - Plain `<script>` is native, but Aero can still bundle local scripts and pass data into them with `props`.
 
 ---
@@ -119,7 +119,7 @@ These attributes are interpreted by Aero. The browser does not know what they me
 
 ---
 
-## `for` and `data-for` — **Aero-only**
+## `for` and `for` — **Aero-only**
 
 Problem: HTML has no native loop syntax.
 
@@ -127,11 +127,11 @@ Aero adds loop directives so one element or fragment can repeat:
 
 ```html
 <ul>
-	<li data-for="{ const item of items }">{ item.name }</li>
+	<li for="{ const item of items }">{ item.name }</li>
 </ul>
 ```
 
-`data-for` uses valid HTML attribute syntax, but the looping behavior still comes from Aero.
+`for` uses valid HTML attribute syntax, but the looping behavior still comes from Aero.
 
 ---
 
@@ -151,7 +151,7 @@ Aero adds `switch`, `case`, and `default` directives:
 
 ---
 
-## `props` and `data-props` — **Aero-only**
+## `props` and `aero-props` — **Aero-only**
 
 Problem: HTML attributes are just attributes. They do not natively create a component props system or pass build-time data into scripts and styles.
 
@@ -255,13 +255,13 @@ Aero lets `<template>` act as a wrapperless control-flow container when it has s
 
 ```html
 <ul>
-	<template data-for="{ const item of items }">
+	<template for="{ const item of items }">
 		<li>{ item.name }</li>
 	</template>
 </ul>
 ```
 
-Plain `<template>` is native HTML and stays inert in the browser. But `<template if>`, `<template data-for>`, and `<template switch>` get special Aero compiler behavior.
+Plain `<template>` is native HTML and stays inert in the browser. But `<template if>`, `<template for>`, and `<template switch>` get special Aero compiler behavior.
 
 ---
 
@@ -378,16 +378,16 @@ Aero adds optional framework-level build features such as image optimization and
 | `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax               | HTMX or Alpine in the browser                                 |
 | `{ title }`                             | Aero                          | Aero template engine                                          |
 | `if`, `else-if`, `else`                 | Aero                          | Aero template engine                                          |
-| `for`, `data-for`                       | Aero                          | Aero template engine                                          |
+| `for`, `for`                       | Aero                          | Aero template engine                                          |
 | `switch`, `case`, `default`             | Aero                          | Aero template engine                                          |
-| `props`, `data-props`                   | Aero                          | Aero template engine                                          |
+| `props`, `aero-props`                   | Aero                          | Aero template engine                                          |
 | `<script is:build>`                     | Aero                          | Aero build or server-side render runtime                      |
 | `<script is:inline>`                    | Aero syntax on native element | Aero compiler leaves it in place                              |
 | `<script is:blocking>`                  | Aero syntax on native element | Aero compiler hoists it                                       |
 | `<header-component>` from `header.html` | Aero                          | Aero component system                                         |
 | `<base-layout>` from `base.html`        | Aero                          | Aero layout system                                            |
 | `<slot>` inside an Aero layout          | Mixed                         | Native element used by Aero composition                       |
-| `<template data-for>`                   | Mixed                         | Native element with Aero directive behavior                   |
+| `<template for>`                   | Mixed                         | Native element with Aero directive behavior                   |
 | `client/pages/about.html` -> `/about`   | Aero                          | Aero routing                                                  |
 | `[slug].html` + `getStaticPaths()`      | Aero                          | Aero routing and build system                                 |
 | `getCollection()` and `render()`        | Aero                          | Aero content layer                                            |

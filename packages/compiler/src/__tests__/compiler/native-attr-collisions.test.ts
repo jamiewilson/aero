@@ -35,9 +35,9 @@ describe('native HTML attribute collisions (bare directive passthrough)', () => 
 			expect(code).not.toContain('for="')
 		})
 
-		it('still fails loud on explicit data-for without braces', () => {
-			expect(() => compileBody('<li data-for="email">x</li>')).toThrow(
-				'Directive `data-for` on <li> must use a braced expression'
+		it('still fails loud on explicit for without braces', () => {
+			expect(() => compileBody('<li for="email">x</li>')).toThrow(
+				'Directive `for` on <li> must use a braced expression'
 			)
 		})
 
@@ -62,9 +62,9 @@ describe('native HTML attribute collisions (bare directive passthrough)', () => 
 			expect(code).not.toContain('switch="')
 		})
 
-		it('still fails loud on explicit data-switch without braces', () => {
+		it('still fails loud on explicit aero-switch without braces', () => {
 			expect(() =>
-				compileBody('<div data-switch="status"><span default>d</span></div>')
+				compileBody('<div aero-switch="status"><span default>d</span></div>')
 			).toThrow('must use a braced expression')
 		})
 
@@ -86,8 +86,8 @@ describe('native HTML attribute collisions (bare directive passthrough)', () => 
 			expect(code).not.toMatch(/<span default>/)
 		})
 
-		it('fails loud on explicit data-default outside a switch', () => {
-			expect(() => compileBody('<span data-default>x</span>')).toThrow(
+		it('fails loud on explicit aero-default outside a switch', () => {
+			expect(() => compileBody('<span aero-default>x</span>')).toThrow(
 				'must be direct children of an element with `switch`'
 			)
 		})

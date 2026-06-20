@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Aero codegen (codegen.ts): compile(parse(html)) → async render function.
  *
- * Covers interpolation, data-for, components (props, data-props, slots), if/else-if/else,
+ * Covers interpolation, for, components (props, aero-props, slots), if/else-if/else,
  * getStaticPaths extraction, props (client/inline/blocking/style), client script injection,
  * Alpine/HTMX attribute preservation. Uses an execute()
  * helper that evals the generated module body with a mock Aero context.
@@ -108,7 +108,7 @@ describe('Codegen', () => {
 										const items = ['a', 'b', 'c'];
 									</script>
 									<ul>
-										<li data-for="{ const item of items }">
+										<li for="{ const item of items }">
 											{ item }-{ index }-{ first }-{ last }-{ length }
 										</li>
 									</ul>`
@@ -185,12 +185,12 @@ describe('Codegen', () => {
 		expect(output).toBe('<div>Static</div>')
 	})
 
-	it('should compile data-for loops', async () => {
+	it('should compile for loops', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<li data-for="{ const item of items }">{ item }</li>
+										<li for="{ const item of items }">{ item }</li>
 									</ul>`
 
 		const parsed = parse(html)
@@ -200,15 +200,15 @@ describe('Codegen', () => {
 		// Normalize whitespace for easier comparison if needed, but contain should work
 		expect(output).toContain('<li>a</li>')
 		expect(output).toContain('<li>b</li>')
-		expect(output).not.toContain('data-for')
+		expect(output).not.toContain('for')
 	})
 
-	it('should compile wrapperless template data-for (children only, no template tag)', async () => {
+	it('should compile wrapperless template for (children only, no template tag)', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<template data-for="{ const item of items }">
+										<template for="{ const item of items }">
 											<li>{ item }</li>
 										</template>
 									</ul>`
@@ -220,7 +220,7 @@ describe('Codegen', () => {
 		expect(output).toContain('<li>a</li>')
 		expect(output).toContain('<li>b</li>')
 		expect(output).not.toMatch(/<template[\s>]/i)
-		expect(output).not.toContain('data-for')
+		expect(output).not.toContain('for')
 	})
 
 	it('should compile wrapperless template for alias (for=)', async () => {
@@ -240,13 +240,13 @@ describe('Codegen', () => {
 		expect(output).not.toMatch(/<template[\s>]/i)
 	})
 
-	it('should compile wrapperless template data-for inside component default slot', async () => {
+	it('should compile wrapperless template for inside component default slot', async () => {
 		const html = `<script is:build>
 										const items = ['x', 'y'];
 										const layout = { name: 'layout' };
 									</script>
 									<layout-component>
-										<template data-for="{ const item of items }">
+										<template for="{ const item of items }">
 											<p>{ item }</p>
 										</template>
 									</layout-component>`
@@ -398,8 +398,8 @@ describe('Codegen', () => {
 									</script>
 									<my-comp-component
 										title="Local" item="{ 'a' }"
-										data-props="{ ...someProps }" />
-									<my-comp-component data-props />`
+										aero-props="{ ...someProps }" />
+									<my-comp-component aero-props />`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -706,11 +706,11 @@ describe('Codegen', () => {
 		expect(code).toContain(contextArg)
 	})
 
-	it('should support inline object literals in data-props', async () => {
+	it('should support inline object literals in aero-props', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
-									<my-comp-component data-props="{ title: 'Inline Title', count: 42 }" />`
+									<my-comp-component aero-props="{ title: 'Inline Title', count: 42 }" />`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -727,12 +727,12 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ title: 'Inline Title', count: 42 })
 	})
 
-	it('should support expressions in data-props', async () => {
+	it('should support expressions in aero-props', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const site = { meta: { title: 'Test Site' } };
 									</script>
-									<my-comp-component data-props="{ title: site.meta.title, doubled: 2 * 21 }" />`
+									<my-comp-component aero-props="{ title: site.meta.title, doubled: 2 * 21 }" />`
 
 		const parsed = parse(html)
 		const code = compile(parsed, mockOptions)
@@ -749,16 +749,16 @@ describe('Codegen', () => {
 		expect(renderedProps[0]).toEqual({ title: 'Test Site', doubled: 42 })
 	})
 
-	it('should throw when data-props value is not brace-wrapped', async () => {
+	it('should throw when aero-props value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 										const myProps = { a: 1, b: 2 };
 									</script>
-									<my-comp-component data-props="myProps" />`
+									<my-comp-component aero-props="myProps" />`
 
 		const parsed = parse(html)
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Directive `data-props` on <my-comp-component> must use a braced expression'
+			'Directive `aero-props` on <my-comp-component> must use a braced expression'
 		)
 	})
 
@@ -774,26 +774,26 @@ describe('Codegen', () => {
 		)
 	})
 
-	it('should throw when data-for value is not brace-wrapped', async () => {
+	it('should throw when for value is not brace-wrapped', async () => {
 		const html = `<script is:build>
 										const items = ['a', 'b'];
 									</script>
 									<ul>
-										<li data-for="const item of items">{ item }</li>
+										<li for="const item of items">{ item }</li>
 									</ul>`
 
 		const parsed = parse(html)
 		expect(() => compile(parsed, mockOptions)).toThrow(
-			'Directive `data-for` on <li> must use a braced expression'
+			'Directive `for` on <li> must use a braced expression'
 		)
 	})
 
-	it('should merge data-props with individual attributes', async () => {
+	it('should merge aero-props with individual attributes', async () => {
 		const html = `<script is:build>
 										const myComp = { name: 'comp' };
 									</script>
 									<my-comp-component 
-										data-props="{ base: 'value' }" 
+										aero-props="{ base: 'value' }" 
 										extra="{ 'additional' }" />`
 
 		const parsed = parse(html)
@@ -900,7 +900,7 @@ describe('Codegen', () => {
 	})
 
 	// =========================================================================
-	// if/else-if/else conditional chains (data-if / data-else-if / data-else or if/else-if/else)
+	// if/else-if/else conditional chains (if / else-if / else or if/else-if/else)
 	// =========================================================================
 
 	it('should compile simple if/else chain', async () => {
@@ -1023,9 +1023,9 @@ describe('Codegen', () => {
 										const choice = 2;
 									</script>
 									<div>
-										<p data-if="{ choice === 1 }">One</p>
-										<p data-else-if="{ choice === 2 }">Two</p>
-										<p data-else>Other</p>
+										<p if="{ choice === 1 }">One</p>
+										<p else-if="{ choice === 2 }">Two</p>
+										<p else>Other</p>
 									</div>`
 
 		const parsed = parse(html)
@@ -1148,11 +1148,11 @@ describe('Codegen', () => {
 		expect(output).not.toMatch(/<template[\s>]/i)
 	})
 
-	it('should treat lone data-else (invalid markup) as normal element and strip directive', async () => {
-		// data-else without preceding data-if is not a conditional chain; element is compiled as normal, directive stripped
+	it('should treat lone aero-else (invalid markup) as normal element and strip directive', async () => {
+		// aero-else without preceding if is not a conditional chain; element is compiled as normal, directive stripped
 		const html = `<script is:build></script>
 									<div>
-										<p data-else>Standalone else</p>
+										<p aero-else>Standalone else</p>
 									</div>`
 
 		const parsed = parse(html)
@@ -1160,7 +1160,7 @@ describe('Codegen', () => {
 
 		const output = await execute(code)
 		expect(output).toContain('Standalone else')
-		expect(output).not.toContain('data-else')
+		expect(output).not.toContain('aero-else')
 	})
 
 	// =========================================================================
@@ -1394,11 +1394,11 @@ describe('Codegen', () => {
 			expect(stylesOutput).toContain('--bg: #fff;')
 		})
 
-		it('should support data-props on script and style (matches component syntax)', async () => {
+		it('should support aero-props on script and style (matches component syntax)', async () => {
 			const html = `<script is:build>
 				const theme = { fg: '#111', bg: '#eee' };
 			</script>
-			<style data-props="{ ...theme }">
+			<style aero-props="{ ...theme }">
 				body { color: var(--fg); background: var(--bg); }
 			</style>`
 
@@ -1453,7 +1453,7 @@ describe('Codegen', () => {
 		})
 
 		it('collects warning when for loop binding shadows loop metadata', () => {
-			const html = `<ul><li data-for="{ const index of items }">{ index }</li></ul>`
+			const html = `<ul><li for="{ const index of items }">{ index }</li></ul>`
 			const parsed = parse(html)
 			const warnings: Array<{ code: string; message: string }> = []
 			compile(parsed, {

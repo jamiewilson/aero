@@ -32,7 +32,7 @@ A `<script>` tag with no `is:*` attribute is treated as a client-side module scr
 - **Execution Context:** Runs in the client's browser.
 - **Purpose:** Interactive front-end logic, client-side imports, and Vite HMR during development.
 - **Bundling:** Aero hands the contents to Vite as a virtual module (`/@aero/client/...`). Vite minifies, chunks, and optimizes the code.
-- **Data Passing:** Use the `props` (or `data-props`) attribute to pass server context into the module.
+- **Data Passing:** Use the `props` (or `aero-props`) attribute to pass server context into the module.
 
 ```html
 <script props="{ apiToken }">

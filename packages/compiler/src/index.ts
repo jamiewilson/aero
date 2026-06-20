@@ -113,7 +113,10 @@ export {
 
 // Constants
 export {
-	ATTR_PREFIX,
+	AERO_ATTR_PREFIX,
+	DATA_AERO_ATTR_PREFIX,
+	LEGACY_BUILD_ATTR_PREFIX,
+	type BuildDirectivePrefixMode,
 	ATTR_PROPS,
 	ATTR_FOR,
 	ATTR_IF,
@@ -154,11 +157,22 @@ export {
 	normalizeAttributeValue,
 	looksBracedDirectiveValue,
 	isBuildDirectiveName,
+	isBuildDirectiveNameForFormatting,
 	canonicalBuildDirectiveName,
+	canonicalBuildDirectiveNameForFormatting,
 	isNativeBareAttribute,
 	isBuildDirectiveAttribute,
+	isBuildDirectiveAttributeForFormatting,
 	requiresBracedDirectiveValue,
+	formatBuildDirectiveName,
+	resolveBuildDirectiveName,
+	resolveBuildDirectiveNameForFormatting,
+	buildDirectiveAttributeNames,
+	hasBuildDirectiveAttribute,
+	getBuildDirectiveAttribute,
+	isPrefixedBuildDirectiveName,
 	type BuildDirective,
+	type BuildDirectivePrefixMode,
 } from './build-directive-attributes'
 
 // Resolver

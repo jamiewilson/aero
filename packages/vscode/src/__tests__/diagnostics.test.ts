@@ -1,7 +1,7 @@
 /**
  * Unit tests for diagnostics orchestrator: unused/undefined variable reporting,
  * script tag validation (is:build, is:inline, type="module"), conditional chains
- * (data-if/else-if/else), directive brace requirements, duplicate declarations, and component
+ * (if/else-if/else), directive brace requirements, duplicate declarations, and component
  * reference checks. Uses mocked vscode APIs and calls updateDiagnostics(doc) to assert reported diagnostics.
  */
 
@@ -1144,7 +1144,7 @@ describe('AeroDiagnostics Script Tags', () => {
 	})
 })
 
-/** data-else-if and data-else must follow an element with data-if or data-else-if. */
+/** else-if and aero-else must follow an element with if or else-if. */
 describe('AeroDiagnostics Conditional Chains', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -1153,7 +1153,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 	it('should flag orphaned else-if without preceding if', () => {
 		const text = `
 <div>Before</div>
-<div data-else-if="{condition}">Else If</div>
+<div else-if="{condition}">Else If</div>
 `
 		const doc = {
 			uri: {
@@ -1180,7 +1180,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 	it('should flag orphaned else without preceding if', () => {
 		const text = `
 <div>Before</div>
-<div data-else>Else</div>
+<div aero-else>Else</div>
 `
 		const doc = {
 			uri: {
@@ -1206,9 +1206,9 @@ describe('AeroDiagnostics Conditional Chains', () => {
 
 	it('should NOT flag valid if-else-if-else chain', () => {
 		const text = `
-<div data-if="{a}">A</div>
-<div data-else-if="{b}">B</div>
-<div data-else>C</div>
+<div if="{a}">A</div>
+<div else-if="{b}">B</div>
+<div aero-else>C</div>
 `
 		const doc = {
 			uri: {
@@ -1233,7 +1233,7 @@ describe('AeroDiagnostics Conditional Chains', () => {
 	})
 })
 
-/** Directives (data-if, data-for, etc.) must use braced expressions (e.g. data-if="{ cond }"). */
+/** Directives (if, for, etc.) must use braced expressions (e.g. if="{ cond }"). */
 describe('AeroDiagnostics Directive Expression Braces', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -1241,7 +1241,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 
 	it('should flag directive without braced expression', () => {
 		const text = `
-<div data-if="condition">Content</div>
+<div if="condition">Content</div>
 `
 		const doc = {
 			uri: {
@@ -1269,7 +1269,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 
 	it('should NOT flag directive with braced expression', () => {
 		const text = `
-<div data-if="{condition}">Content</div>
+<div if="{condition}">Content</div>
 `
 		const doc = {
 			uri: {
@@ -1323,8 +1323,8 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		expect(findBraceDiag()).toBeDefined()
 	})
 
-	it('should still flag explicit data-for on <label> (always a directive)', () => {
-		runDiagnostics(makeDoc(`\n<label data-for="email">x</label>\n`))
+	it('should still flag explicit aero-for on <label> (always a directive)', () => {
+		runDiagnostics(makeDoc(`\n<label aero-for="email">x</label>\n`))
 		expect(findBraceDiag()).toBeDefined()
 	})
 })
@@ -1923,6 +1923,78 @@ describe('AeroDiagnostics Script props variables', () => {
 		runDiagnostics(docWithout)
 		const withoutDiags = mockSet.mock.calls[0]?.[1] ?? []
 		expect(withoutDiags.find((d: any) => d.message.includes("'token' is not defined"))).toBeDefined()
+	})
+
+	it('does not flag arrow params or for-of bindings in client scripts', () => {
+		const text = `
+<script>
+	const linksById = new Map(
+		[...document.querySelectorAll('[data-toc-link]')]
+			.map(link => [link.hash.slice(1), link])
+			.filter(([id]) => id)
+	)
+	for (const heading of [...linksById.keys()]) {
+		if (!heading.id) continue
+		break
+	}
+</script>
+`
+		const doc = {
+			uri: { toString: () => 'file:///toc.html', fsPath: '/toc.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/toc.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const falsePositives = reportedDiagnostics.filter(
+			(d: any) =>
+				d.message.includes('is not defined') &&
+				(d.message.includes("'link'") ||
+					d.message.includes("'id'") ||
+					d.message.includes("'heading'") ||
+					d.message.includes("'new'") ||
+					d.message.includes("'for'") ||
+					d.message.includes("'continue'") ||
+					d.message.includes("'break'"))
+		)
+		expect(falsePositives).toEqual([])
+	})
+
+	it('does not flag JS keywords in client scripts (toc pattern)', () => {
+		const text = fs.readFileSync(
+			path.join(process.cwd(), 'website/client/components/toc.html'),
+			'utf8'
+		)
+		const doc = {
+			uri: { toString: () => 'file:///toc.html', fsPath: '/toc.html', scheme: 'file' },
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/toc.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const scriptUndefinedDiags = reportedDiagnostics.filter(
+			(d: any) =>
+				d.message.includes('is not defined') &&
+				d.range.start.line >= 59 &&
+				d.range.start.line <= 121
+		)
+		expect(scriptUndefinedDiags).toEqual([])
 	})
 
 	it('does not flag words inside line comments in client scripts', () => {

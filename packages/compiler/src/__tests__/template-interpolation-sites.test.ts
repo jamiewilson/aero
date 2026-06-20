@@ -11,8 +11,8 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(sites[1]?.wrapPropsObjectLiteral).toBeFalsy()
 	})
 
-	it('treats data-props like props', () => {
-		const html = `<x data-props="{ ...p }" />`
+	it('treats aero-props like props', () => {
+		const html = `<x aero-props="{ ...p }" />`
 		const sites = collectTemplateInterpolationSites(html)
 		expect(sites[0]?.wrapPropsObjectLiteral).toBe(true)
 	})

@@ -25,8 +25,8 @@ describe('parsePropsAttributeBindings', () => {
 		expect(result.expressionRefs).toEqual([])
 	})
 
-	it('parses data-props bare form', () => {
-		const result = parsePropsAttributeBindings('data-props', buildProps)
+	it('parses aero-props bare form', () => {
+		const result = parsePropsAttributeBindings('aero-props', buildProps)
 		expect(result.injectedNames).toEqual(['token', 'label'])
 	})
 

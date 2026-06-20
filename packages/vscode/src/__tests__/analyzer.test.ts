@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Aero VS Code analyzer (analyzer.ts): template references (components,
- * attributes), defined variables (imports), template scopes (data-for), and variables by scope
- * (e.g. props/data-props in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
+ * attributes), defined variables (imports), template scopes (for), and variables by scope
+ * (e.g. props/aero-props in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -33,7 +33,7 @@ vi.mock('vscode', () => {
 	}
 })
 
-/** Component/attribute references in template; must skip HTML comments and structural directives (data-if, data-else, etc.) when not on elements. */
+/** Component/attribute references in template; must skip HTML comments and structural directives (if, aero-else, etc.) when not on elements. */
 describe('collectTemplateReferences', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
@@ -67,8 +67,8 @@ describe('collectTemplateReferences', () => {
 
 	it('should ignore structural directives as standalone attributes', () => {
 		const text = `
-    <div data-if="true"></div>
-    <div data-else></div>
+    <div if="true"></div>
+    <div aero-else></div>
     <div else></div>
     <div if="false"></div>
     `
@@ -94,7 +94,7 @@ describe('collectTemplateReferences', () => {
 		expect(variableRefs.map(r => r.content)).not.toContain('required')
 	})
 
-	it('should treat standalone props / data-props as variable ref', () => {
+	it('should treat standalone props / aero-props as variable ref', () => {
 		const text = `<my-component props />`
 		const refs = collectTemplateReferences(mockDoc, text)
 
@@ -102,10 +102,10 @@ describe('collectTemplateReferences', () => {
 		expect(propsRefs).toHaveLength(1)
 	})
 
-	it('should not treat Aero standalone directives (else, data-else) as variable refs', () => {
+	it('should not treat Aero standalone directives (else, aero-else) as variable refs', () => {
 		const text = `
-    <div data-if="{ show }">yes</div>
-    <div data-else>no</div>
+    <div if="{ show }">yes</div>
+    <div aero-else>no</div>
     <div else>fallback</div>
     `
 		const refs = collectTemplateReferences(mockDoc, text)
@@ -114,8 +114,8 @@ describe('collectTemplateReferences', () => {
 			r => !r.isComponent && (r.content !== 'props' || !r.isAttribute)
 		)
 		expect(variableRefs.map(r => r.content)).not.toContain('else')
-		// data-else is the attribute name; we don't add a ref for "else" or "data-else" as variable
-		expect(variableRefs.filter(r => r.content === 'data-else')).toHaveLength(0)
+		// aero-else is the attribute name; we don't add a ref for "else" or "aero-else" as variable
+		expect(variableRefs.filter(r => r.content === 'aero-else')).toHaveLength(0)
 	})
 })
 
@@ -199,16 +199,16 @@ const meta: MetaProps = { title: 'x' }
 	})
 })
 
-/** for / data-for scopes: binding names and iterable expression; nested loops return inner-first. */
+/** for / for scopes: binding names and iterable expression; nested loops return inner-first. */
 describe('collectTemplateScopes', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
 	} as any
 
-	it('should parse data-for attribute', () => {
+	it('should parse for attribute', () => {
 		const text = `
 <ul>
-	<li data-for="{ const item of items }">{item.name}</li>
+	<li for="{ const item of items }">{item.name}</li>
 </ul>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)
@@ -231,10 +231,10 @@ describe('collectTemplateScopes', () => {
 		expect(scopes[0].sourceExpr).toBe('users')
 	})
 
-	it('should handle nested data-for scopes', () => {
+	it('should handle nested for scopes', () => {
 		const text = `
-<div data-for="{ const category of categories }">
-	<span data-for="{ const item of category.items }">{item.name}</span>
+<div for="{ const category of categories }">
+	<span for="{ const item of category.items }">{item.name}</span>
 </div>
 `
 		const scopes = collectTemplateScopes(mockDoc, text)

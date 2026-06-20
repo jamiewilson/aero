@@ -9,6 +9,7 @@ import type { PathResolver } from '../pathResolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
+import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 import { getIgnoredRanges, isInRanges } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
@@ -18,18 +19,20 @@ const COMPONENT_TAG_OPEN_REGEX =
 /** Matches props="{ ...varName }" to extract the variable name. */
 const PROPS_SPREAD_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
 
-/** Bare props / data-props attribute (no value) — equivalent to props="{ ...props }". */
-const BARE_PROPS_ATTR_REGEX = /(?:^|\s)(?:data-)?props(?!\s*=)(?:\s|\/|$)/
+/** Bare props attribute (no value) — equivalent to props="{ ...props }". */
+const BARE_PROPS_ATTR_REGEX = /(?:^|\s)(?:(?:data-aero-|aero-)?props)(?!\s*=)(?:\s|\/|$)/
 
 /** Maximum layout chain depth to prevent infinite loops. */
 const MAX_LAYOUT_CHAIN_DEPTH = 10
 
 /**
  * Resolve the variable name spread via a props attribute, or null when not a spread.
- * Bare `props` / `data-props` (no value) maps to local variable `props`.
+ * Bare `props` / prefixed props (no value) maps to local variable `props`.
  */
 export function resolvePropsSpreadVariable(attrs: string): string | null {
-	const propsSpreadMatch = attrs.match(/(?:^|\s)(?:data-)?props\s*=\s*["']([^"']*)["']/)
+	const propsSpreadMatch = attrs.match(
+		/(?:^|\s)(?:(?:data-aero-|aero-)?props)\s*=\s*["']([^"']*)["']/
+	)
 	if (propsSpreadMatch) {
 		const value = propsSpreadMatch[1].trim()
 		return value.match(PROPS_SPREAD_REGEX)?.[1] ?? null
@@ -193,24 +196,13 @@ function pushPropDiagnostic(
 /** Extract attribute names from a tag's attribute string, excluding Aero directives. */
 function getAttributeKeysFromTag(attrs: string): string[] {
 	const keys: string[] = []
-	const skipAttrs = new Set([
-		'props',
-		'data-props',
-		'if',
-		'data-if',
-		'else-if',
-		'data-else-if',
-		'for',
-		'data-for',
-		'slot',
-		'data-slot',
-	])
+	const skipAttrs = new Set(['slot', 'data-slot'])
 	const attrRegex = /\b([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\s*=/gi
 	let m: RegExpExecArray | null
 	attrRegex.lastIndex = 0
 	while ((m = attrRegex.exec(attrs)) !== null) {
 		const name = m[1].toLowerCase()
-		if (name.startsWith('data-')) continue
+		if (isBuildDirectiveName(name)) continue
 		if (skipAttrs.has(name)) continue
 		keys.push(name)
 	}

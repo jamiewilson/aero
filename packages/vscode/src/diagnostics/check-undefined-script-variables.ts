@@ -70,7 +70,7 @@ const SCRIPT_ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'ResizeObserver',
 ])
 
-const PROPS_VALUE_IN_ATTRS = /(?:props|data-props)\s*=\s*(['"])([\s\S]*?)\1/i
+const PROPS_VALUE_IN_ATTRS = /(?:(?:data-aero-|aero-)?props)\s*=\s*(['"])([\s\S]*?)\1/i
 
 function toBuildBindingProperties(
 	definedVariables: Map<string, VariableDefinition>

@@ -31,7 +31,7 @@ A `<script>{:html}` tag with no `is:*` attribute is a client-side module. Aero p
 
 - Runs in the browser; gets HMR in development.
 - Use it for interactive logic and client-only imports.
-- Use the `props` (or `data-props`) attribute to inject build-time data into the module.
+- Use the `props` (or `aero-props`) attribute to inject build-time data into the module.
 
 Example:
 

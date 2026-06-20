@@ -30,9 +30,9 @@ describe('isDirectiveAttr with default config', () => {
 	it('returns false for normal and Aero directive attributes', () => {
 		expect(isDirectiveAttr('href')).toBe(false)
 		expect(isDirectiveAttr('class')).toBe(false)
-		expect(isDirectiveAttr('data-for')).toBe(false)
-		expect(isDirectiveAttr('data-if')).toBe(false)
-		expect(isDirectiveAttr('data-props')).toBe(false)
+		expect(isDirectiveAttr('for')).toBe(false)
+		expect(isDirectiveAttr('if')).toBe(false)
+		expect(isDirectiveAttr('aero-props')).toBe(false)
 	})
 
 	it('returns false for hx- when using default config', () => {

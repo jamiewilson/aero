@@ -2,11 +2,16 @@ import type { ParseResult, ScriptEntry } from './types'
 
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
+import { AERO_ATTR_PREFIX, DATA_AERO_ATTR_PREFIX } from './constants'
 
 const BOM_PREFIX = /^\uFEFF/
 const FRAGMENT_DOCUMENT_PREFIX = '<html><head></head><body>'
 const FRAGMENT_DOCUMENT_SUFFIX = '</body></html>'
-const DATA_PROPS_ATTR = `${CONST.ATTR_PREFIX}${CONST.ATTR_PROPS}`
+
+const DATA_PROPS_ATTRS = [
+	`${AERO_ATTR_PREFIX}${CONST.ATTR_PROPS}`,
+	`${DATA_AERO_ATTR_PREFIX}${CONST.ATTR_PROPS}`,
+]
 
 const SCRIPT_TAXONOMY_ATTRS = new Set([
 	CONST.ATTR_IS_BUILD,
@@ -17,7 +22,7 @@ const SCRIPT_TAXONOMY_ATTRS = new Set([
 const CLIENT_SCRIPT_EXCLUDED_ATTRS = new Set([
 	...SCRIPT_TAXONOMY_ATTRS,
 	CONST.ATTR_PROPS,
-	DATA_PROPS_ATTR,
+	...DATA_PROPS_ATTRS,
 ])
 
 const SCRIPT_TAXONOMY_ATTRS_LOWER = new Set(
@@ -190,10 +195,20 @@ function serializeTemplate(doc: Document, isFullDocument: boolean): string {
 	return doc.body?.innerHTML ?? ''
 }
 
+function getPrefixedPropsAttribute(scriptEl: Element): { name: string; value: string | null } | null {
+	for (const name of DATA_PROPS_ATTRS) {
+		if (scriptEl.hasAttribute(name)) {
+			return { name, value: scriptEl.getAttribute(name) }
+		}
+	}
+	return null
+}
+
 function getPassData(scriptEl: Element): string | undefined {
+	const prefixed = getPrefixedPropsAttribute(scriptEl)
 	let passData =
-		scriptEl.getAttribute(CONST.ATTR_PROPS) ?? scriptEl.getAttribute(DATA_PROPS_ATTR) ?? undefined
-	const hasProps = scriptEl.hasAttribute(CONST.ATTR_PROPS) || scriptEl.hasAttribute(DATA_PROPS_ATTR)
+		scriptEl.getAttribute(CONST.ATTR_PROPS) ?? prefixed?.value ?? undefined
+	const hasProps = scriptEl.hasAttribute(CONST.ATTR_PROPS) || prefixed != null
 	// Bare props shorthand: no value → spread local props
 	if (passData === '' && hasProps) {
 		passData = '{ ...props }'

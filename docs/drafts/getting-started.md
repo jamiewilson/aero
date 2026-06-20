@@ -185,7 +185,7 @@ Use it in any template or component:
 
 <title>{ site.meta.title }</title>
 <nav>
-	<a data-for="{ const link of site.nav }" href="{ link.path }">{ link.label }</a>
+	<a for="{ const link of site.nav }" href="{ link.path }">{ link.label }</a>
 </nav>
 ```
 
@@ -269,11 +269,11 @@ Vite handles CSS bundling, autoprefixing, and minification automatically.
 
 ### Loops
 
-Use `for` / `data-for` with a for…of head:
+Use `for` / `for` with a for…of head:
 
 ```html
 <ul>
-	<li data-for="{ const item of items }">{ item.name }</li>
+	<li for="{ const item of items }">{ item.name }</li>
 </ul>
 ```
 
@@ -310,7 +310,7 @@ On a **normal element**, the tag is part of the output: `<div if="{ x }">` yield
 	<p>Ends Friday.</p>
 </template>
 
-<template data-for="{ const item of items }">
+<template for="{ const item of items }">
 	<li>{ item }</li>
 </template>
 ```

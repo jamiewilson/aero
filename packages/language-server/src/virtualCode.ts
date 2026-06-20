@@ -24,6 +24,8 @@ import {
 	formatPropsInjectedAmbientDecls,
 	type BuildBindingProperties,
 } from '@aero-js/compiler'
+import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
+import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 
@@ -82,13 +84,24 @@ function getScriptType(
 	if ('src' in attrs) return 'external'
 	if ('is:build' in attrs) return 'build'
 	if ('is:inline' in attrs) return 'inline'
-	if ('props' in attrs || 'data-props' in attrs) return 'inline'
+	if (hasPropsAttribute(attrs)) return 'inline'
 	if ('is:blocking' in attrs) return 'blocking'
 	if (hasTypeImportmap(node, sourceText)) return 'importmap'
 	return 'client'
 }
 
-/** True if script has lang="ts" or lang="typescript". */
+const PROPS_ATTR_KEYS = ['props', 'aero-props', 'data-aero-props'] as const
+
+function getPropsAttributeValue(attrs: Record<string, string | undefined>): string | undefined {
+	for (const key of PROPS_ATTR_KEYS) {
+		if (key in attrs) return attrs[key]
+	}
+	return undefined
+}
+
+function hasPropsAttribute(attrs: Record<string, string | undefined>): boolean {
+	return PROPS_ATTR_KEYS.some(key => key in attrs)
+}
 function hasLangTs(node: Node, sourceText: string): boolean {
 	if (node.startTagEnd == null) return false
 	const tagStart = sourceText.lastIndexOf('<script', node.startTagEnd)
@@ -151,7 +164,13 @@ function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirec
 		const attrs = node.attributes
 		if (!attrs) continue
 
-		const rawValue = attrs['for'] ?? attrs['data-for'] ?? undefined
+		let rawValue: string | undefined
+		for (const name of buildDirectiveAttributeNames(ATTR_FOR)) {
+			if (attrs[name] != null) {
+				rawValue = attrs[name]
+				break
+			}
+		}
 		if (rawValue == null) continue
 
 		// Strip surrounding quotes if present (parser includes them)
@@ -422,7 +441,7 @@ function collectSlotTypeInfoByName(
 		const normalized = slotName || 'default'
 		slotNamesWithBindings.set(
 			normalized,
-			parseSlotPropsBindings(attrs.props ?? attrs['data-props'] ?? undefined)
+			parseSlotPropsBindings(getPropsAttributeValue(attrs))
 		)
 	}
 	const out = new Map<
@@ -762,7 +781,7 @@ export class AeroVirtualCode implements VirtualCode {
 				}
 			} else if (scriptType === 'client') {
 				const attrs = node.attributes ?? {}
-				const hasProps = 'props' in attrs || 'data-props' in attrs
+				const hasProps = hasPropsAttribute(attrs)
 				const preamble = hasProps
 					? propsInjectedPreamble(node, sourceText, this.buildBindingProperties)
 					: ''
@@ -783,7 +802,7 @@ export class AeroVirtualCode implements VirtualCode {
 				}
 			} else if (scriptType === 'blocking') {
 				const attrs = node.attributes ?? {}
-				const hasProps = 'props' in attrs || 'data-props' in attrs
+				const hasProps = hasPropsAttribute(attrs)
 				const preamble = hasProps
 					? propsInjectedPreamble(node, sourceText, this.buildBindingProperties)
 					: ''

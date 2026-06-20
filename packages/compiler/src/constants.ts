@@ -2,26 +2,34 @@
  * Shared constants for the Aero compiler (parser, codegen, helpers).
  *
  * @remarks
- * Attribute names are used with optional `data-` prefix (e.g. `data-for`). Script taxonomy uses
+ * Build directives accept bare names or optional `aero-*` / `data-aero-*` prefixes. Script taxonomy uses
  * `is:build`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
  * When changing script taxonomy (is:build, is:inline, etc.), update all consumers per
  * _reference/script-taxonomy-sync.md.
  */
 
-/** Prefix for data attributes (e.g. `data-for` → ATTR_PREFIX + ATTR_FOR). */
-export const ATTR_PREFIX = 'data-'
-/** Attribute for spreading props onto a component: `data-props` or `data-props="{ ... }"`. */
+/** Prefix for namespaced Aero directives (e.g. `aero-for`). */
+export const AERO_ATTR_PREFIX = 'aero-'
+/** Prefix for data-namespaced Aero directives (e.g. `data-aero-for`). */
+export const DATA_AERO_ATTR_PREFIX = 'data-aero-'
+/** @deprecated Legacy `data-*` prefix; accepted as Prettier input only, not by the compiler. */
+export const LEGACY_BUILD_ATTR_PREFIX = 'data-'
+
+/** Prettier / formatter output mode for build directive attribute names. */
+export type BuildDirectivePrefixMode = 'none' | 'aero' | 'data-aero'
+
+/** Attribute for spreading props onto a component: `props` or `aero-props="{ ... }"`. */
 export const ATTR_PROPS = 'props'
-/** Attribute for iteration: `data-for="{ const item of items }"`. */
+/** Attribute for iteration: `for` or `aero-for="{ const item of items }"`. */
 export const ATTR_FOR = 'for'
 export const ATTR_IF = 'if'
 export const ATTR_ELSE_IF = 'else-if'
 export const ATTR_ELSE = 'else'
-/** Structural switch container: `switch` / `data-switch`. */
+/** Structural switch container: `switch` / `aero-switch`. */
 export const ATTR_SWITCH = 'switch'
-/** Switch branch: `case` / `data-case`. */
+/** Switch branch: `case` / `aero-case`. */
 export const ATTR_CASE = 'case'
-/** Switch fallback: `default` / `data-default`. */
+/** Switch fallback: `default` / `aero-default`. */
 export const ATTR_DEFAULT = 'default'
 /** Slot name (on `<slot>` or content). */
 export const ATTR_NAME = 'name'

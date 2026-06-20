@@ -122,7 +122,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.template).toContain('<div>Content</div>')
 	})
 
-	it('should extract props/data-props expression from scripts (matches component syntax)', () => {
+	it('should extract props/aero-props expression from scripts (matches component syntax)', () => {
 		const inputWithProps = `
             <script props="{ { config } }">
                 console.log(config);
@@ -133,7 +133,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(resultProps.clientScripts[0].passDataExpr).toBe('{ { config } }')
 
 		const inputWithDataProps = `
-            <script data-props="{ { theme } }">
+            <script aero-props="{ { theme } }">
                 console.log(theme);
             </script>
         `
