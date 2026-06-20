@@ -10,6 +10,7 @@ import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/htm
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
 import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
+import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
@@ -93,7 +94,8 @@ function collectAttributeInterpolations(
 
 			if (!hasValue || !value) continue
 
-			if (isDirectiveAttr(name)) continue
+			const runtimeDirective = normalizeRuntimeDirectiveName(name)
+			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') continue
 
 			if (FOR_ATTR_NAMES.has(name)) continue
 

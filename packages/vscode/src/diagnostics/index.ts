@@ -8,7 +8,7 @@ import { checkConditionalChains } from './check-conditional-chains'
 import { checkDirectiveExpressionBraces } from './check-directive-braces'
 import { checkDuplicateDeclarations } from './check-duplicate-declarations'
 import { checkScriptTags } from './check-script-tags'
-import { checkUndefinedVariables } from './check-undefined-variables'
+import { checkUndefinedVariables, hasStateScript } from './check-undefined-variables'
 import { checkUndefinedScriptVariables } from './check-undefined-script-variables'
 import { checkUnusedVariables } from './check-unused-variables'
 import { checkRouteContract } from './check-route-contract'
@@ -31,7 +31,7 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 		vscode.workspace
 			.getConfiguration('aero')
 			.get<boolean>('diagnostics.regexUndefinedVariables') === true
-	if (regexUndefined) {
+	if (regexUndefined || hasStateScript(parsed)) {
 		checkUndefinedVariables(parsed, diagnostics)
 	}
 	checkUnusedVariables(parsed, diagnostics)

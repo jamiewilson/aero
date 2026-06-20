@@ -28,4 +28,11 @@ describe('collectTemplateInterpolationSites', () => {
 		const prelude = formatInterpolationBinderPreludeFromTemplate(html, hrefSite!.braceOffset)
 		expect(prelude).toContain('declare const path: any;')
 	})
+
+	it('includes braced expressions on Aero event directives', () => {
+		const html = `<button on:click="{ inc() }">+</button><p>{ count }</p>`
+		const sites = collectTemplateInterpolationSites(html)
+		expect(sites.some(s => s.expression.trim() === 'inc()')).toBe(true)
+		expect(sites.some(s => s.expression.trim() === 'count')).toBe(true)
+	})
 })
