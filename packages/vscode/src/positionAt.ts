@@ -365,13 +365,14 @@ function isInsideInlineScript(document: vscode.TextDocument, position: vscode.Po
 
 /**
  * Check whether the cursor is inside an Aero expression attribute value.
- * Supports: if/else-if/for and aero-* / data-aero-* prefixed forms.
+ * Supports: build directives (if/else-if/for) and event directives (on:* forms).
  */
 function getAeroExpressionAttributeValueRangeAt(
 	lineText: string,
 	offset: number
 ): { start: number; end: number } | null {
-	const attrValueRegex = /\b(?:data-aero-|aero-)?(?:if|else-if|for)\s*=\s*(['"])(.*?)\1/gi
+	const attrValueRegex =
+		/\b(?:data-aero-|aero-)?(?:if|else-if|for|on[:\-][a-z0-9_.:-]+)\s*=\s*(['"])(.*?)\1/gi
 
 	let match: RegExpExecArray | null
 	while ((match = attrValueRegex.exec(lineText)) !== null) {

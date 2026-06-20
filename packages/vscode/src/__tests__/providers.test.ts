@@ -344,6 +344,7 @@ describe('AeroDefinitionProvider', () => {
 		expect((result as any).identifier).toBe('Aero')
 	})
 
+
 	it('should provide definition for component tag', async () => {
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },

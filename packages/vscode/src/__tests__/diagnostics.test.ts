@@ -1327,6 +1327,21 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		runDiagnostics(makeDoc(`\n<label aero-for="email">x</label>\n`))
 		expect(findBraceDiag()).toBeDefined()
 	})
+
+	it('should flag event directive without braced expression', () => {
+		runDiagnostics(makeDoc(`\n<button on:click="submit()">Save</button>\n`))
+		expect(findBraceDiag()).toBeDefined()
+	})
+
+	it('should flag malformed event directive modifier chain', () => {
+		runDiagnostics(makeDoc(`\n<button on:click..prevent="{ submit() }">Save</button>\n`))
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const invalidDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes('is invalid:')
+		)
+		expect(invalidDiag).toBeDefined()
+		expect(invalidDiag.code.value).toBe('AERO_COMPILE')
+	})
 })
 
 /** Same name declared in same scope (e.g. import + const) → "declared multiple times". */
@@ -2013,10 +2028,10 @@ describe('AeroDiagnostics Script props variables', () => {
 	})
 
 	it('does not flag JS keywords in client scripts (toc pattern)', () => {
-		const text = fs.readFileSync(
-			path.join(process.cwd(), 'website/client/components/toc.html'),
-			'utf8'
-		)
+		const cwdPath = path.join(process.cwd(), 'website/client/components/toc.html')
+		const repoRootPath = path.join(process.cwd(), '../../website/client/components/toc.html')
+		const tocPath = fs.existsSync(cwdPath) ? cwdPath : repoRootPath
+		const text = fs.readFileSync(tocPath, 'utf8')
 		const doc = {
 			uri: { toString: () => 'file:///toc.html', fsPath: '/toc.html', scheme: 'file' },
 			getText: () => text,
