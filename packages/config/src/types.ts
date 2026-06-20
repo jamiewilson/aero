@@ -17,6 +17,12 @@ export interface AeroConfig {
 	/** Enable Nitro server integration (default: `false`). */
 	server?: boolean
 
+	/** Enable Aero reactivity pipeline (default: `false`). */
+	reactivity?: boolean
+
+	/** Enable Aero hypermedia pipeline (default: `false`). */
+	hypermedia?: boolean
+
 	/**
 	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
 	 * `Aero.site.url` in templates; used for sitemap, RSS, and canonical links.

@@ -1,5 +1,5 @@
 import { runAeroCheck } from '../check'
-import { AERO_EXIT_COMPILE, AERO_EXIT_ROUTE } from '@aero-js/core/diagnostics'
+import { AERO_EXIT_COMPILE, AERO_EXIT_CONFIG, AERO_EXIT_ROUTE } from '@aero-js/core/diagnostics'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -132,6 +132,48 @@ describe('runAeroCheck', () => {
 			const out = spy.mock.calls.map(args => String(args[0])).join('')
 			expect(out).toContain('[AERO_ROUTE]')
 			expect(out).toContain('Unsupported route segment')
+		} finally {
+			spy.mockRestore()
+		}
+	})
+
+	it('reports AERO_CONFIG when is:state used with reactivity disabled', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-is-state-disabled-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.writeFileSync(path.join(dir, 'aero.config.ts'), 'export default {}\n', 'utf-8')
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/index.html'),
+			'<script is:state>let count = 0</script><p>{count}</p>\n',
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_CONFIG)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_CONFIG]')
+			expect(out).toContain('`<script is:state>` requires `reactivity: true`')
+		} finally {
+			spy.mockRestore()
+		}
+	})
+
+	it('reports AERO_CONFIG when busy used without required flags', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-busy-disabled-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.writeFileSync(path.join(dir, 'aero.config.ts'), 'export default {}\n', 'utf-8')
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/index.html'),
+			'<button busy="{ isSaving }">Save</button>\n',
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_CONFIG)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_CONFIG]')
+			expect(out).toContain('`busy` requires hypermedia: true and reactivity: true')
 		} finally {
 			spy.mockRestore()
 		}

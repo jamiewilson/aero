@@ -203,6 +203,46 @@ function resolveAeroConfigObject(loaded: AeroConfig | AeroConfigFunction | null)
 	return loaded
 }
 
+function resolveFeatureFlags(aero: AeroConfig): { reactivity: boolean; hypermedia: boolean } {
+	return {
+		reactivity: aero.reactivity === true,
+		hypermedia: aero.hypermedia === true,
+	}
+}
+
+function collectTemplateFeatureGateDiagnostics(
+	source: string,
+	file: string,
+	flags: { reactivity: boolean; hypermedia: boolean }
+): AeroDiagnostic[] {
+	const out: AeroDiagnostic[] = []
+
+	if (!flags.reactivity && /<script\b[^>]*\bis:state\b/i.test(source)) {
+		out.push({
+			severity: 'error',
+			code: 'AERO_CONFIG',
+			message: '[aero check] `<script is:state>` requires `reactivity: true` in aero.config.',
+			file,
+		})
+	}
+
+	if (/\b(?:data-aero-|aero-)?busy\b\s*=\s*(["']).*?\1/is.test(source)) {
+		if (!flags.hypermedia || !flags.reactivity) {
+			const missing: string[] = []
+			if (!flags.hypermedia) missing.push('hypermedia: true')
+			if (!flags.reactivity) missing.push('reactivity: true')
+			out.push({
+				severity: 'error',
+				code: 'AERO_CONFIG',
+				message: `[aero check] \`busy\` requires ${missing.join(' and ')} in aero.config.`,
+				file,
+			})
+		}
+	}
+
+	return out
+}
+
 function contentConfigPathFromAero(root: string, aero: AeroConfig): string {
 	const c = aero.content
 	if (c === true || c === undefined || c === false) {
@@ -267,6 +307,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 				})
 			)
 			const aero = resolveAeroConfigObject(loadedRaw)
+			const featureFlags = resolveFeatureFlags(aero)
 
 			const dirs = resolveDirs(aero.dirs)
 			const mergedAliases = mergeWithDefaultAliases(loadTsconfigAliases(root), root, dirs)
@@ -335,6 +376,9 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 							if (source === null) return Effect.void
 							return Effect.try({
 								try: () => {
+									diagnostics.push(
+										...collectTemplateFeatureGateDiagnostics(source, file, featureFlags)
+									)
 									compileTemplate(source, {
 										root,
 										resolvePath,
