@@ -16,7 +16,7 @@ import type {
 	MountOptions,
 } from '../types'
 import { escapeScriptJson } from '@aero-js/compiler/helpers'
-import { pagePathToKey, resolvePageTarget } from '../utils/routing'
+import { pagePathToKey, resolvePageName, resolvePageTarget } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 
 export { aeroDevLog }
@@ -28,6 +28,17 @@ export class Aero {
 	private pagesMap: Record<string, AeroPageModule> = {}
 	/** Set by client entry when running in the browser; used to attach the app to a DOM root. */
 	mount?: (options?: MountOptions) => Promise<void>
+
+	/** Shared HTML escaping utility used by template rendering and client state mounts. */
+	escapeHtml(s: unknown): string {
+		if (s == null) return ''
+		return String(s)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+	}
 
 	/**
 	 * Register a global value available in all templates as `name`.
@@ -109,16 +120,6 @@ export class Aero {
 		const siteUrl = typeof input.site === 'string' ? input.site : (input.site?.url ?? '')
 		let _passDataId = 0
 
-		const escapeHtml = (s: unknown): string => {
-			if (s == null) return ''
-			return String(s)
-				.replace(/&/g, '&amp;')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-				.replace(/"/g, '&quot;')
-				.replace(/'/g, '&#39;')
-		}
-
 		const raw = (s: unknown): string => {
 			if (s == null) return ''
 			return String(s)
@@ -160,7 +161,7 @@ export class Aero {
 			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
 			createScriptTag,
-			escapeHtml,
+			escapeHtml: this.escapeHtml.bind(this),
 			escapeScriptJson,
 			raw,
 			trim,
@@ -350,5 +351,22 @@ export class Aero {
 		}
 
 		return ''
+	}
+
+	/**
+	 * Mount compiled state bindings for the current route when the module exports `mountStateBindings`.
+	 *
+	 * @returns Cleanup function for mounted reactive bindings, or a no-op when no bindings exist.
+	 */
+	mountStateBindingsForPath(pathname: string, root: HTMLElement): () => void {
+		const pageName = resolvePageName(pathname || '/')
+		const resolved = resolvePageTarget(pageName, this.pagesMap)
+		if (!resolved) return () => {}
+		const target = resolved.module as unknown
+		if (!target || typeof target !== 'object') return () => {}
+		const mountStateBindings = (target as { mountStateBindings?: unknown }).mountStateBindings
+		if (typeof mountStateBindings !== 'function') return () => {}
+		const cleanup = mountStateBindings(root, this)
+		return typeof cleanup === 'function' ? cleanup : () => {}
 	}
 }

@@ -26,6 +26,11 @@ const hmrState: {
 	lastEl: HTMLElement | null
 	unsubscribe: (() => void) | null
 } = { lastEl: null, unsubscribe: null }
+let destroyStateBindings: (() => void) | null = null
+
+function currentPathname(): string {
+	return typeof window !== 'undefined' ? window.location.pathname : '/'
+}
 
 /**
  * Attach the app to a DOM element and optionally set up HMR re-renders.
@@ -45,12 +50,17 @@ function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
 	const el = resolveMountTarget(target)
+	if (destroyStateBindings) {
+		destroyStateBindings()
+		destroyStateBindings = null
+	}
 
 	hmrState.lastEl = el
 
 	// Skip initial render as we assume SSR provided the correct HTML.
 	// We just need to initialize any client-side logic (listeners, hydration, etc.)
 	bootstrapReactivityRuntime()
+	destroyStateBindings = aero.mountStateBindingsForPath(currentPathname(), el)
 	if (onRender) onRender(el)
 	const done = Promise.resolve()
 
@@ -58,9 +68,24 @@ function mount(options: MountOptions = {}): Promise<void> {
 		hmrState.unsubscribe = onUpdate(() => {
 			const el = hmrState.lastEl
 			if (el) {
+				if (destroyStateBindings) {
+					destroyStateBindings()
+					destroyStateBindings = null
+				}
 				void renderPage(el, coreRender).then(() => {
+					destroyStateBindings = aero.mountStateBindingsForPath(currentPathname(), el)
 					if (onRender) onRender(el)
 				})
+			}
+		})
+		import.meta.hot.dispose(() => {
+			if (destroyStateBindings) {
+				destroyStateBindings()
+				destroyStateBindings = null
+			}
+			if (hmrState.unsubscribe) {
+				hmrState.unsubscribe()
+				hmrState.unsubscribe = null
 			}
 		})
 	}

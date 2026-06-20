@@ -26,4 +26,29 @@ describe('entry-prod reactivity bootstrap', () => {
 			delete globalObj[REACTIVITY_RUNTIME_GLOBAL_KEY]
 		}
 	})
+
+	it('destroys prior state bindings before remounting', async () => {
+		const target = {} as HTMLElement
+		const cleanupCalls: number[] = []
+		const originalMountStateBindingsForPath = (
+			aero as unknown as { mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void }
+		).mountStateBindingsForPath
+		let bindingId = 0
+		;(aero as unknown as { mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void }).mountStateBindingsForPath =
+			(_pathname: string, _root: HTMLElement) => {
+				const id = ++bindingId
+				return () => cleanupCalls.push(id)
+			}
+
+		try {
+			await aero.mount({ target })
+			expect(cleanupCalls).toEqual([])
+			await aero.mount({ target })
+			expect(cleanupCalls).toEqual([1])
+		} finally {
+			;(aero as unknown as {
+				mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void
+			}).mountStateBindingsForPath = originalMountStateBindingsForPath
+		}
+	})
 })

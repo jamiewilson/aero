@@ -15,11 +15,22 @@ import {
 	readBootstrappedReactivityRuntime,
 } from './runtime/reactivity-bootstrap'
 
+let destroyStateBindings: (() => void) | null = null
+
+function currentPathname(): string {
+	return typeof window !== 'undefined' ? window.location.pathname : '/'
+}
+
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
 	const el = resolveMountTarget(target)
+	if (destroyStateBindings) {
+		destroyStateBindings()
+		destroyStateBindings = null
+	}
 	bootstrapReactivityRuntime()
+	destroyStateBindings = aero.mountStateBindingsForPath(currentPathname(), el)
 
 	if (onRender) onRender(el)
 
