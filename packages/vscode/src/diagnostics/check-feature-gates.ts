@@ -18,8 +18,26 @@ interface CachedFlags extends FeatureFlags {
 }
 
 const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
+const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 
 const flagsCache = new Map<string, CachedFlags>()
+
+/** Nearest Aero app root (matches pathResolver semantics for monorepo nested apps). */
+function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | undefined {
+	let current = startDir
+	const fsRoot = path.parse(current).root
+	const stopAt = workspaceRoot ? path.resolve(workspaceRoot) : fsRoot
+
+	while (current !== stopAt && current !== fsRoot) {
+		if (fs.existsSync(path.join(current, 'client'))) return current
+		if (fs.existsSync(path.join(current, 'frontend'))) return current
+		for (const name of AERO_CONFIG_NAMES) {
+			if (fs.existsSync(path.join(current, name))) return current
+		}
+		current = path.dirname(current)
+	}
+	return undefined
+}
 
 function findConfigFile(root: string): string | null {
 	for (const name of AERO_CONFIG_NAMES) {
@@ -57,19 +75,35 @@ function getFeatureFlags(root: string): FeatureFlags {
 	return flags
 }
 
+function rangeForMatch(
+	document: vscode.TextDocument,
+	text: string,
+	re: RegExp
+): vscode.Range {
+	const match = re.exec(text)
+	if (!match || match.index === undefined) {
+		return new vscode.Range(0, 0, 0, 0)
+	}
+	const start = document.positionAt(match.index)
+	const end = document.positionAt(match.index + match[0].length)
+	return new vscode.Range(start, end)
+}
+
 export function checkFeatureGates(
 	document: vscode.TextDocument,
 	text: string,
 	diagnostics: vscode.Diagnostic[]
 ): void {
-	const root = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath
-	if (!root) return
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath
+	if (!workspaceRoot) return
 
-	const flags = getFeatureFlags(root)
+	const docDir = path.dirname(document.uri.fsPath)
+	const projectRoot = findAeroAppRoot(docDir, workspaceRoot) ?? workspaceRoot
+	const flags = getFeatureFlags(projectRoot)
 
-	if (!flags.reactivity && /<script\b[^>]*\bis:state\b/i.test(text)) {
+	if (!flags.reactivity && IS_STATE_SCRIPT_RE.test(text)) {
 		const diagnostic = new vscode.Diagnostic(
-			new vscode.Range(0, 0, 0, 0),
+			rangeForMatch(document, text, IS_STATE_SCRIPT_RE),
 			'`<script is:state>` requires `reactivity: true` in aero.config.',
 			vscode.DiagnosticSeverity.Error
 		)
@@ -85,7 +119,7 @@ export function checkFeatureGates(
 			if (!flags.hypermedia) missing.push('hypermedia: true')
 			if (!flags.reactivity) missing.push('reactivity: true')
 			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(0, 0, 0, 0),
+				rangeForMatch(document, text, busyRegex),
 				`\`busy\` requires ${missing.join(' and ')} in aero.config.`,
 				vscode.DiagnosticSeverity.Error
 			)
