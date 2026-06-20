@@ -27,10 +27,12 @@ export default {
 		title: 'About Aero',
 		subtitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
 	},
+	demos: [{ label: 'Counter', href: '/demos/counter' }],
 	footer: {
 		links: [
 			{ label: 'Home', path: '/' },
 			{ label: 'About', path: '/about' },
+			{ label: 'Demos', path: '/demos' },
 			{ label: 'Docs', path: '/docs' },
 		],
 	},

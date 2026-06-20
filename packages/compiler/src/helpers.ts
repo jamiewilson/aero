@@ -5,7 +5,7 @@
 import { tokenizeCurlyInterpolation } from './tokenizer'
 import { CompileError } from './types'
 import { CodeBuilder } from './code-builder'
-import { escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
+import { escapeHtml, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
 
 export {
 	escapeCodegenTemplateBody,
@@ -92,7 +92,7 @@ export function compileInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return escapeTemplateLiteralContent(seg.value)
+				return escapeTemplateLiteralContent(escapeHtml(seg.value))
 			}
 			const expr = seg.expression.trim()
 			if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {

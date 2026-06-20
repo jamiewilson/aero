@@ -1,0 +1,12 @@
+<script is:build>
+	import base from '@layouts/base'
+	import site from '@content/site'
+</script>
+
+<base-layout>
+	<ul>
+		<li for="{ const demo of site.demos }">
+			<a href="{ demo.href }">{ demo.label }</a>
+		</li>
+	</u>
+</base-layout>
