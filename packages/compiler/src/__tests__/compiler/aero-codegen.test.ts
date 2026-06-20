@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { escapeScriptJson } from '../../helpers'
+import { escapeHtml } from '../../escapes'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
 
@@ -51,6 +52,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		slots: {},
 		props: {},
 		escapeScriptJson,
+		escapeHtml,
 		...context,
 	}
 	return await renderFn(aeroContext)
@@ -148,6 +150,20 @@ describe('Aero Codegen - Client Scripts', () => {
 		expect(out).toContain('type="aero/state"')
 		expect(out).toContain('"count":1')
 		expect(out).toContain('"doubled":2')
+	})
+
+	it('renders template interpolations from is:state bindings', async () => {
+		const html = `<script is:state>
+			let count = 1
+			let doubled = count * 2
+		</script>
+		<div>{ count }-{ doubled }</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code)
+
+		expect(output).toContain('<div>1-2</div>')
 	})
 })
 
