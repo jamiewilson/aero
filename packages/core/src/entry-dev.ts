@@ -13,7 +13,10 @@ import { Aero } from './runtime'
 import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 import { resolveMountTarget } from './runtime/mount-target'
-import { bootstrapReactivityRuntime } from './runtime/reactivity-bootstrap'
+import {
+	bootstrapReactivityRuntime,
+	readBootstrappedReactivityRuntime,
+} from './runtime/reactivity-bootstrap'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
@@ -65,6 +68,13 @@ function mount(options: MountOptions = {}): Promise<void> {
 	return done
 }
 
-aero.mount = mount
+const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
 
-export default aero as Aero & { mount: typeof mount }
+aero.mount = mount
+;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
+	getReactivityRuntime
+
+export default aero as Aero & {
+	mount: typeof mount
+	getReactivityRuntime: typeof getReactivityRuntime
+}

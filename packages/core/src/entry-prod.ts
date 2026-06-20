@@ -10,7 +10,10 @@
 import type { MountOptions } from './types'
 import { Aero } from './runtime'
 import { resolveMountTarget } from './runtime/mount-target'
-import { bootstrapReactivityRuntime } from './runtime/reactivity-bootstrap'
+import {
+	bootstrapReactivityRuntime,
+	readBootstrappedReactivityRuntime,
+} from './runtime/reactivity-bootstrap'
 
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
@@ -23,7 +26,14 @@ function mount(options: MountOptions = {}): Promise<void> {
 	return Promise.resolve()
 }
 
+const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
+
 const aero = new Aero()
 aero.mount = mount
+;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
+	getReactivityRuntime
 
-export default aero as Aero & { mount: typeof mount }
+export default aero as Aero & {
+	mount: typeof mount
+	getReactivityRuntime: typeof getReactivityRuntime
+}

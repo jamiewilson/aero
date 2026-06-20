@@ -20,6 +20,9 @@ describe('bootstrapReactivityRuntime', () => {
 			expect(first).toBe(second)
 			expect(readBootstrappedReactivityRuntime()).toBe(first)
 			expect((first as { kind?: string }).kind).toBe('reactivity-runtime')
+			expect(
+				(first as { store?: { snapshot(): Record<string, unknown> } }).store?.snapshot()
+			).toEqual({ count: 4 })
 		} finally {
 			if (prevDocument === undefined) delete globalObj.document
 			else globalObj.document = prevDocument
