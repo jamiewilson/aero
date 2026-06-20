@@ -569,4 +569,5 @@ import card from '@components/card'
 		expect(expr0).toContain('declare const item: ItemSlotProps["item"];')
 		expect(expr0).toContain(' item.name ')
 	})
+
 })

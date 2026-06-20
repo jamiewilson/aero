@@ -22,4 +22,16 @@ const title = 'x'
 		expect(ambient.bindingNames.has('a')).toBe(true)
 		expect(ambient.bindingNames.has('b')).toBe(true)
 	})
+
+	it('includes state-script bindings in interpolation scope', () => {
+		const html = `<script is:state>
+let count = 0
+let doubled = count * 2
+</script>
+<p>{count} {doubled}</p>`
+		const ambient = buildTemplateEditorAmbient(html)
+		expect(ambient.stateScriptBodies.length).toBe(1)
+		expect(ambient.bindingNames.has('count')).toBe(true)
+		expect(ambient.bindingNames.has('doubled')).toBe(true)
+	})
 })
