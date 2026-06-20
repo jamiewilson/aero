@@ -4,6 +4,7 @@ import { Signal } from './signal'
 import { SignalStore } from './store'
 
 export { Computed, Effect, Signal, SignalStore }
+export { readHydrationState } from './hydration'
 
 export interface ReactivityRuntime {
 	readonly kind: 'reactivity-runtime'

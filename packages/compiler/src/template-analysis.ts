@@ -77,6 +77,8 @@ export interface TemplateAnalysis {
 	readonly bodyCode: string
 	/** Build script after strip + import rewrite prep (no leading import lines). */
 	readonly scriptBody: string
+	/** State script after TS-strip, for SSR initialization/hydration payload emission. */
+	readonly stateScriptBody: string
 	readonly getStaticPathsFn: string | null
 	readonly stateAnalysis: StateScriptAnalysisResult | null
 	/**
@@ -102,6 +104,9 @@ export function buildTemplateAnalysis(
 		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
 	}
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
+	const stateScriptBody = parsed.stateScript
+		? stripBuildScriptTypes(parsed.stateScript.content, 'state.ts')
+		: ''
 	const getStaticPathsFn = analysis.getStaticPathsFn
 	const importsCode = buildImportsCode(analysis.imports, resolver)
 	const expandedTemplate = expandSelfClosingTags(parsed.template)
@@ -117,6 +122,7 @@ export function buildTemplateAnalysis(
 		bodyIR,
 		bodyCode,
 		scriptBody: script,
+		stateScriptBody,
 		getStaticPathsFn: getStaticPathsFn || null,
 		stateAnalysis,
 		editorAmbient,

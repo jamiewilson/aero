@@ -131,6 +131,24 @@ describe('Aero Codegen - Client Scripts', () => {
 
 		expect(Array.from(headScripts).some(s => s.includes('console.log(helper());'))).toBe(true)
 	})
+
+	it('emits aero/state hydration payload when is:state exists', async () => {
+		const html = `<script is:state>
+			let count = 1
+			let doubled = count * 2
+		</script>
+		<div>State</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		const out = Array.from(scripts).join('\n')
+
+		expect(out).toContain('type="aero/state"')
+		expect(out).toContain('"count":1')
+		expect(out).toContain('"doubled":2')
+	})
 })
 
 describe('Aero Codegen - Props (script/style)', () => {

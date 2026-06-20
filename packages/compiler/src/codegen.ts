@@ -112,6 +112,16 @@ function collectBlockingHeadScripts(
 	return blockingScripts.map(blockingScript => renderBlockingScriptTag(blockingScript, options))
 }
 
+function createStateSnapshotExpression(names: string[]): string {
+	if (names.length === 0) return '{}'
+	return `{ ${names.map(name => `${JSON.stringify(name)}: ${name}`).join(', ')} }`
+}
+
+function createStateHydrationScriptLine(stateBindingNames: string[]): string {
+	const snapshotExpr = createStateSnapshotExpression(stateBindingNames)
+	return `scripts?.add(\`<script type="aero/state">\${escapeScriptJson(${snapshotExpr})}</script>\`)`
+}
+
 /**
  * Compile a parsed template and options into a JavaScript module string (default async render function + optional getStaticPaths).
  *
@@ -151,14 +161,19 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const lowerer = new Lowerer(resolver, buildLowererDiagnostics(options))
 
 	const ta = buildTemplateAnalysis(parsed, options, resolver, lowerer)
-	const script = addVirtualClientScriptHelper(ta.scriptBody, options.clientScripts)
+	const runtimeScript = [ta.scriptBody, ta.stateScriptBody].filter(Boolean).join('\n')
+	const script = addVirtualClientScriptHelper(runtimeScript, options.clientScripts)
 	const { rootScripts, headScripts } = collectClientScriptLines(options.clientScripts)
 	headScripts.push(...collectBlockingHeadScripts(options.blockingScripts, options))
+	const stateHydrationLine =
+		ta.stateAnalysis !== null
+			? createStateHydrationScriptLine(ta.stateAnalysis.bindings.map(binding => binding.name))
+			: null
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
 		styleCode: ta.styleCode,
-		rootScriptsLines: rootScripts,
+		rootScriptsLines: stateHydrationLine ? [stateHydrationLine, ...rootScripts] : rootScripts,
 		headScriptsLines: headScripts,
 	})
 
