@@ -35,7 +35,7 @@
 		"embed-templates": "pnpm gen-templates && pnpm compile",
 		"build": "pnpm embed-templates",
 		"typecheck": "pnpm gen-templates && tsc --noEmit",
-		"test": "pnpm gen-templates && vitest run --root ../.. packages/diagnostics",
+		"test": "pnpm gen-templates && vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {

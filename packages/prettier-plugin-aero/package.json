@@ -24,7 +24,7 @@
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run --root ../.. packages/prettier-plugin-aero"
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",

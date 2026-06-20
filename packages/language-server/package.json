@@ -27,7 +27,8 @@
 	"scripts": {
 		"prebuild": "node scripts/generate-ambient-preamble.mjs",
 		"build": "tsdown",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
@@ -45,6 +46,7 @@
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"tsdown": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	}
 }

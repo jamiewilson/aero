@@ -21,10 +21,14 @@
 	"scripts": {
 		"create": "node .",
 		"create-aero-js": "node index.js",
+		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
 		"@aero-js/starter-fullstack": "workspace:*",
 		"@aero-js/starter-minimal": "workspace:*"
+	},
+	"devDependencies": {
+		"vitest": "catalog:"
 	}
 }

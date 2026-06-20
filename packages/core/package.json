@@ -75,7 +75,7 @@
 	"scripts": {
 		"build": "tsdown",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run --root ../.. packages/core",
+		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {

@@ -31,6 +31,7 @@
 	"scripts": {
 		"build": "tsdown src/index.ts src/vite.ts src/analyzer-entries.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -42,7 +43,8 @@
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"tsdown": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	},
 	"peerDependencies": {
 		"@aero-js/content": "workspace:*",
