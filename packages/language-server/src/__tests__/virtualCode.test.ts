@@ -483,6 +483,18 @@ const o = { a: 1 }
 		expect(expr1).toContain(' doc.title ')
 	})
 
+	it('injects for-directive bindings into same-tag attribute interpolations', () => {
+		const html = `<a for="{ const { path, label } of links }" href="{ path }"> { label } </a>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare const path: any;')
+		expect(expr0).toContain(' path ')
+		const expr1 = getEmbeddedText(code, 'expr_1')!
+		expect(expr1).toContain('declare const label: any;')
+		expect(expr1).toContain(' label ')
+	})
+
 	it('injects build-scope bindings into attribute interpolation fragments', () => {
 		const html = `<script is:build>const base = '/docs'</script><a href="{ base }/page">link</a>`
 

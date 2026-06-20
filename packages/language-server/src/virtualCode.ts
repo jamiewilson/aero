@@ -197,7 +197,9 @@ function collectForDirectiveScopes(roots: Node[], _sourceText: string): ForDirec
 
 		if (bindingNames.length === 0) continue
 
-		const startOffset = node.startTagEnd ?? node.start
+		// Bindings apply to sibling attributes on the same tag (e.g. href="{ path }" with
+		// for="{ const { path } of links }"), not only to content after the opening tag.
+		const startOffset = node.start
 		const endOffset = node.endTagStart ?? node.end
 		scopes.push({ startOffset, endOffset, bindingNames })
 	}
