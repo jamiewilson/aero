@@ -142,7 +142,7 @@ export class Aero {
 
 		const createScriptTag = (attrs: string, src: string): string => {
 			const normalizedAttrs = attrs.trim()
-			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${escapeHtml(src)}"></script>`
+			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${this.escapeHtml(src)}"></script>`
 		}
 
 		const context = {
