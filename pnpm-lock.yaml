@@ -432,9 +432,15 @@ importers:
       '@aero-js/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@aero-js/hypermedia':
+        specifier: workspace:*
+        version: link:../hypermedia
       '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
+      '@aero-js/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
       effect:
         specifier: ^3.21.0
         version: 3.21.0
