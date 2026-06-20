@@ -22,6 +22,7 @@
 	},
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"test": "vitest run --passWithNoTests",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -29,6 +30,7 @@
 	},
 	"devDependencies": {
 		"tsdown": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	}
 }

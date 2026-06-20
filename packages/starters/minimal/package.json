@@ -27,6 +27,7 @@
 		"preview": "vite build && vite preview",
 		"fmt": "prettier --write .",
 		"fmt:check": "prettier --check .",
+		"test": "vitest run --passWithNoTests",
 		"prepack": "cp ../../../LICENSE ."
 	},
 	"dependencies": {
@@ -34,6 +35,7 @@
 		"@aero-js/vite": "workspace:*"
 	},
 	"devDependencies": {
-		"vite": "catalog:"
+		"vite": "catalog:",
+		"vitest": "catalog:"
 	}
 }
