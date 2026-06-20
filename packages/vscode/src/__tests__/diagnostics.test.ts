@@ -1394,6 +1394,50 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 		)
 		expect(dupDiag).toBeUndefined()
 	})
+
+	it('should NOT flag arrow param shadowing module-level const with same name', () => {
+		const text = `
+<script is:build>
+	import base from '@layouts/base'
+	import { getCollection, render } from 'aero:content'
+
+	export async function getStaticPaths() {
+		const docs = await getCollection('docs')
+		return docs.map(doc => ({
+			params: { slug: doc.id },
+			props: doc,
+		}))
+	}
+
+	const doc = Aero.props
+	const { html } = await render(doc)
+</script>
+<base-layout title="{ doc.data.title }" />
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///docs/slug.html',
+				fsPath: '/docs/slug.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/docs/slug.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const dupDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'doc'") && d.message.includes('declared multiple times')
+		)
+		expect(dupDiag).toBeUndefined()
+	})
 })
 
 /** Component usage in template must have matching import; strings inside client scripts are ignored. */

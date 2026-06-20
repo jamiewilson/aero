@@ -8,6 +8,8 @@ import {
 	extractBuildScriptTypeDeclarationTexts,
 } from './build-script-analysis'
 import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
+import { collectPatternBindings } from './for-directive'
+import { parseSync } from 'oxc-parser'
 
 const SIMPLE_DECL_REGEX =
 	/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
@@ -50,6 +52,11 @@ export type IterateBuildScriptBindingsOptions = {
 	 * Omit static import bindings (e.g. inline scripts where import analysis is skipped).
 	 */
 	skipImports?: boolean
+	/**
+	 * Include arrow/callback params, for-of loop vars, and catch bindings.
+	 * Use for client-script undefined checks only — not build-script module scope.
+	 */
+	includeNestedBindings?: boolean
 }
 
 function toBinding(
@@ -155,6 +162,109 @@ function* iterateFunctionBindings(maskedContent: string): Generator<BuildScriptB
 	}
 }
 
+type EstNode = {
+	type: string
+	start?: number
+	name?: string
+	params?: EstNode[]
+	left?: EstNode
+	param?: EstNode
+	argument?: EstNode
+	value?: EstNode
+	properties?: EstNode[]
+	elements?: (EstNode | null)[]
+	declarations?: EstNode[]
+	id?: EstNode
+	body?: EstNode
+	[key: string]: unknown
+}
+
+const NESTED_SCRIPT_PARSE_OPTIONS = {
+	sourceType: 'module',
+	range: true,
+	lang: 'ts',
+} as const
+
+function recordPatternBindings(
+	pattern: EstNode | null | undefined,
+	kind: BuildScriptBindingKind,
+	yieldBinding: (binding: BuildScriptBinding) => void
+): void {
+	collectPatternBindings(pattern, ({ name, start }) => {
+		yieldBinding(toBinding(name, start, kind))
+	})
+}
+
+function walkNestedScriptBindings(node: EstNode, yieldBinding: (binding: BuildScriptBinding) => void): void {
+	switch (node.type) {
+		case 'ArrowFunctionExpression':
+		case 'FunctionExpression':
+			for (const param of node.params ?? []) {
+				recordPatternBindings(param, 'declaration', yieldBinding)
+			}
+			break
+		case 'ForOfStatement':
+		case 'ForInStatement': {
+			const left = node.left as EstNode | undefined
+			if (left?.type === 'VariableDeclaration') {
+				for (const decl of left.declarations ?? []) {
+					recordPatternBindings(decl.id as EstNode, 'declaration', yieldBinding)
+				}
+			}
+			break
+		}
+		case 'CatchClause':
+			recordPatternBindings(node.param as EstNode, 'declaration', yieldBinding)
+			break
+		default:
+			break
+	}
+
+	for (const key of Object.keys(node)) {
+		if (key === 'type' || key === 'start' || key === 'end' || key === 'name' || key === 'kind') continue
+		const value = node[key]
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				if (item && typeof item === 'object' && 'type' in item) {
+					walkNestedScriptBindings(item as EstNode, yieldBinding)
+				}
+			}
+			continue
+		}
+		if (value && typeof value === 'object' && 'type' in value) {
+			walkNestedScriptBindings(value as EstNode, yieldBinding)
+		}
+	}
+}
+
+function* iterateNestedScriptBindings(content: string): Generator<BuildScriptBinding> {
+	if (!content.trim()) return
+
+	let result: ReturnType<typeof parseSync>
+	try {
+		result = parseSync('script.ts', content, NESTED_SCRIPT_PARSE_OPTIONS)
+	} catch {
+		return
+	}
+	if (result.errors.length > 0) return
+
+	const body = (result.program as { body?: EstNode[] }).body
+	if (!body) return
+
+	const bindings: BuildScriptBinding[] = []
+	const seen = new Set<string>()
+
+	for (const stmt of body) {
+		walkNestedScriptBindings(stmt, binding => {
+			if (seen.has(binding.name)) return
+			seen.add(binding.name)
+			bindings.push(binding)
+		})
+	}
+
+	yield* bindings
+}
+
 /**
  * Yields value-like bindings in document order: imports, simple const/let/var, destructuring, then `function` declarations.
  * Uses comment-masking + regex passes as a lightweight fallback when full parse data is unavailable.
@@ -177,6 +287,9 @@ export function* iterateBuildScriptBindings(
 	yield* iterateSimpleDeclarationBindings(masked)
 	yield* iterateDestructuringBindings(masked)
 	yield* iterateFunctionBindings(masked)
+	if (options.includeNestedBindings === true) {
+		yield* iterateNestedScriptBindings(content)
+	}
 }
 
 /**

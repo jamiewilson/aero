@@ -89,7 +89,7 @@ function collectDefinedNamesInScriptBlock(
 	propsInjected: readonly string[]
 ): Set<string> {
 	const names = new Set<string>(propsInjected)
-	for (const binding of iterateBuildScriptBindings(blockContent)) {
+	for (const binding of iterateBuildScriptBindings(blockContent, { includeNestedBindings: true })) {
 		names.add(binding.name)
 	}
 	return names

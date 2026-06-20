@@ -151,7 +151,10 @@ export function collectVariablesByScope(
 		}
 
 		const skipImports = scope === 'inline'
-		for (const b of iterateBuildScriptBindings(content, { skipImports })) {
+		for (const b of iterateBuildScriptBindings(content, {
+			skipImports,
+			includeNestedBindings: scope === 'bundled' || scope === 'inline' || scope === 'blocking',
+		})) {
 			setVar(b.name, bindingToVariableDefinition(document, contentStart, b))
 		}
 	}

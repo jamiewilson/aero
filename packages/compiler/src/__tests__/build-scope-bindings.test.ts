@@ -63,6 +63,43 @@ const { svg: favicon } = meta.icon
 		expect(o?.properties?.has('b')).toBe(true)
 		expect(o?.properties?.has('c')).toBe(true)
 	})
+
+	it('collects arrow params, destructuring params, and for-of loop bindings', () => {
+		const script = `
+const linksById = new Map(
+	[...document.querySelectorAll('[data-toc-link]')]
+		.map(link => [link.hash.slice(1), link])
+		.filter(([id]) => id)
+)
+for (const heading of [...linksById.keys()]) {
+	document.getElementById(heading)
+}
+`
+		const names = [...iterateBuildScriptBindings(script, { includeNestedBindings: true })].map(
+			b => b.name
+		)
+		expect(names).toContain('linksById')
+		expect(names).toContain('link')
+		expect(names).toContain('id')
+		expect(names).toContain('heading')
+	})
+
+	it('does not treat nested callback params as module-level bindings by default', () => {
+		const script = `
+export async function getStaticPaths() {
+	const docs = await getCollection('docs')
+	return docs.map(doc => ({ params: { slug: doc.id }, props: doc }))
+}
+const doc = Aero.props
+`
+		const defaultNames = [...iterateBuildScriptBindings(script)].map(b => b.name)
+		expect(defaultNames.filter(n => n === 'doc')).toEqual(['doc'])
+
+		const nestedNames = [...iterateBuildScriptBindings(script, { includeNestedBindings: true })].map(
+			b => b.name
+		)
+		expect(nestedNames.filter(n => n === 'doc').length).toBeGreaterThan(1)
+	})
 })
 
 describe('formatBuildScopeAmbientPrelude', () => {

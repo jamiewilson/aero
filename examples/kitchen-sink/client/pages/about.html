@@ -17,13 +17,12 @@
 <sub-layout title="About Meta Title" image="{ Aero.site.url + aboutImage }">
 	<img src="{ aboutImage }" class="fullscreen" alt="About" />
 
-	<!-- FIXME:  slot="thru-sub" should be stripped on compile -->
 	<div class="h-stack" slot="thru-sub">
 		<a href="/register">Register</a>
 		<div switch="{ auth.state }">
 			<a href="/logout" case="{ AuthState.SignedIn }">Log Out</a>
 			<a href="/login" case="SignedOut">Log In</a>
-			<!--<span default>Default</span>-->
+			<span default>Default</span>
 		</div>
 	</div>
 
