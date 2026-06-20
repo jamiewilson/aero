@@ -10,11 +10,13 @@
 import type { MountOptions } from './types'
 import { Aero } from './runtime'
 import { resolveMountTarget } from './runtime/mount-target'
+import { bootstrapReactivityRuntime } from './runtime/reactivity-bootstrap'
 
 function mount(options: MountOptions = {}): Promise<void> {
 	const { target = '#app', onRender } = options
 
 	const el = resolveMountTarget(target)
+	bootstrapReactivityRuntime()
 
 	if (onRender) onRender(el)
 

@@ -13,6 +13,7 @@ import { Aero } from './runtime'
 import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 import { resolveMountTarget } from './runtime/mount-target'
+import { bootstrapReactivityRuntime } from './runtime/reactivity-bootstrap'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
@@ -46,6 +47,7 @@ function mount(options: MountOptions = {}): Promise<void> {
 
 	// Skip initial render as we assume SSR provided the correct HTML.
 	// We just need to initialize any client-side logic (listeners, hydration, etc.)
+	bootstrapReactivityRuntime()
 	if (onRender) onRender(el)
 	const done = Promise.resolve()
 
