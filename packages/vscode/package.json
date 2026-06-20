@@ -39,6 +39,7 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
+		"@aero-js/config": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",

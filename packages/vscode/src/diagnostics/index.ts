@@ -12,6 +12,7 @@ import { checkUndefinedVariables } from './check-undefined-variables'
 import { checkUndefinedScriptVariables } from './check-undefined-script-variables'
 import { checkUnusedVariables } from './check-unused-variables'
 import { checkRouteContract } from './check-route-contract'
+import { checkFeatureGates } from './check-feature-gates'
 
 export function collectDiagnosticsForDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
 	const parsed = parseDocument(document)
@@ -35,6 +36,7 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	}
 	checkUnusedVariables(parsed, diagnostics)
 	checkDuplicateDeclarations(parsed, diagnostics)
+	checkFeatureGates(document, text, diagnostics)
 
 	return diagnostics
 }

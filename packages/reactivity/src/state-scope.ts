@@ -12,6 +12,8 @@ export interface StateScopeOptions {
 	readonly store: SignalStore
 	readonly bindings: readonly StateBindingSpec[]
 	readonly functionSources: readonly string[]
+	/** External functions to inject into the eval scope (e.g. hypermedia action functions). */
+	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
 }
 
 export type StateScope = Record<string, unknown>
@@ -63,8 +65,8 @@ function wrapFunctionSource(source: string): string {
  * Build a plain object scope backed by store signals/computeds for compiled state handlers.
  */
 export function createStateScope(options: StateScopeOptions): StateScope {
-	const { store, bindings, functionSources } = options
-	const scope: StateScope = {}
+	const { store, bindings, functionSources, actionFunctions } = options
+	const scope: StateScope = { ...actionFunctions }
 
 	for (const binding of bindings.filter(b => !b.derived)) {
 		if (!store.has(binding.name)) {

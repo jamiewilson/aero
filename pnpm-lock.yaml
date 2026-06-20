@@ -745,6 +745,9 @@ importers:
       '@aero-js/compiler':
         specifier: workspace:*
         version: link:../compiler
+      '@aero-js/config':
+        specifier: workspace:*
+        version: link:../config
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core

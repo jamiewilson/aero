@@ -24,6 +24,7 @@ export interface ParsedElementAttrs {
 	switchExpr: string | null
 	passDataExpr: string | null
 	eventBinds: import('../ir').IRReactiveEventBind[]
+	textBinds: import('../ir').IRReactiveTextBind[]
 }
 
 export interface LowererReactiveState {

@@ -193,7 +193,7 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, switchExpr, passDataExpr, eventBinds } = parseElementAttributes(
+		const { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds } = parseElementAttributes(
 			this.resolver,
 			this.diag,
 			node,
@@ -325,10 +325,11 @@ export class Lowerer {
 					items: loopData.items,
 					body: inner,
 				},
-				...eventBinds,
-			]
-		}
-		return [...inner, ...eventBinds]
+			...eventBinds,
+			...textBinds,
+		]
+	}
+	return [...inner, ...eventBinds, ...textBinds]
 	}
 
 	private emitScriptPassDataIR(

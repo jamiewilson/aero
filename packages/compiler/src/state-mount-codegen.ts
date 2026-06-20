@@ -91,6 +91,7 @@ export function mountStateBindings(root, Aero) {
 		textBinds: ${serializeTextBinds(binds.textBinds)},
 		eventBinds: ${serializeEventBinds(binds.eventBinds)},
 		escapeHtml: Aero.escapeHtml,
+		actionFunctions: {},
 	})
 }`.trim()
 }

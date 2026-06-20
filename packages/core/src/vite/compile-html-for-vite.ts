@@ -22,6 +22,10 @@ interface CompileHtmlForViteParams {
 	resolvedConfig: ResolvedConfig
 	resolvePath: (specifier: string, importer: string) => string
 	onWarning?: (warning: CompileHtmlWarning) => void
+	/** Enable Aero reactivity pipeline. */
+	reactivity?: boolean
+	/** Enable Aero hypermedia pipeline. */
+	hypermedia?: boolean
 }
 
 /**
@@ -57,6 +61,8 @@ export function compileHtmlSourceForVite(
 			resolvePath: params.resolvePath,
 			importer: filePath,
 			onWarning: params.onWarning,
+			reactivity: params.reactivity,
+			hypermedia: params.hypermedia,
 		},
 		parsed
 	)

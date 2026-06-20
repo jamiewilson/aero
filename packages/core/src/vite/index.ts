@@ -111,6 +111,8 @@ function compileHtmlWithDedupedWarnings(
 	params: {
 		resolvedConfig: ResolvedConfig
 		resolvePath: (specifier: string, importer: string) => string
+		reactivity?: boolean
+		hypermedia?: boolean
 	},
 	clientScripts: Map<string, ScriptEntry>,
 	deduper: CompileWarningDeduper
@@ -504,23 +506,25 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const exit = Effect.runSyncExit(
 					htmlCompileTry(filePath, () => {
 						const code = readFileSync(filePath, 'utf-8')
-						return compileHtmlWithDedupedWarnings(
-							code,
-							filePath,
-							{
-								resolvedConfig,
-								resolvePath: resolvedAlias.resolve,
-							},
-							state.clientScripts,
-							state.compileWarningDeduper
-						)
-					})
-				)
-				const generated = compileExitToGeneratedOrReport(
-					this,
-					exit,
-					filePath,
-					'vite-plugin-aero-virtuals'
+					return compileHtmlWithDedupedWarnings(
+						code,
+						filePath,
+						{
+							resolvedConfig,
+							resolvePath: resolvedAlias.resolve,
+							reactivity: state.options.reactivity,
+							hypermedia: state.options.hypermedia,
+						},
+						state.clientScripts,
+						state.compileWarningDeduper
+					)
+				})
+			)
+			const generated = compileExitToGeneratedOrReport(
+				this,
+				exit,
+				filePath,
+				'vite-plugin-aero-virtuals'
 				)
 				return { code: generated, map: null }
 			}
@@ -564,6 +568,8 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 						{
 							resolvedConfig,
 							resolvePath: resolvedAlias.resolve,
+							reactivity: state.options.reactivity,
+							hypermedia: state.options.hypermedia,
 						},
 						state.clientScripts,
 						state.compileWarningDeduper
