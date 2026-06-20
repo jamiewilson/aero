@@ -34,6 +34,7 @@ describe('Parser (V2 Taxonomy)', () => {
 		// Check Build Script
 		expect(result.buildScript).toBeDefined()
 		expect(result.buildScript?.content).toContain('const buildTime = true')
+		expect(result.stateScript).toBeNull()
 
 		// Check Client Script (default)
 		expect(result.clientScripts).toBeDefined()
@@ -66,6 +67,29 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(result.buildScript?.content).toContain('const a = 1;')
 		expect(result.buildScript?.content).toContain('const b = 2;')
 		expect(result.template).toBe('<div>Content</div>')
+	})
+
+	it('should extract is:state script and remove it from template', () => {
+		const input = `
+            <script is:state>
+                let count = 0;
+            </script>
+            <div>Content</div>
+        `
+		const result = parse(input)
+
+		expect(result.stateScript?.content).toContain('let count = 0;')
+		expect(result.template).toContain('<div>Content</div>')
+		expect(result.template).not.toContain('is:state')
+	})
+
+	it('throws on multiple is:state scripts', () => {
+		const input = `
+            <script is:state>let a = 1;</script>
+            <script is:state>let b = 2;</script>
+            <div>Content</div>
+        `
+		expect(() => parse(input)).toThrow(/Only one <script is:state>/)
 	})
 
 	it('expands self-closing tags without regex backtracking and preserves quoted > characters', () => {

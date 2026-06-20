@@ -3,7 +3,7 @@
  *
  * @remarks
  * Build directives accept bare names or optional `aero-*` / `data-aero-*` prefixes. Script taxonomy uses
- * `is:build`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
+ * `is:build`, `is:state`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
  * When changing script taxonomy (is:build, is:inline, etc.), update all consumers per
  * _reference/script-taxonomy-sync.md.
  */
@@ -36,6 +36,8 @@ export const ATTR_NAME = 'name'
 export const ATTR_SLOT = 'slot'
 /** Script runs at build time; extracted and becomes render function body. */
 export const ATTR_IS_BUILD = 'is:build'
+/** Script declares reactive state; extracted for phase-2 reactivity pipeline. */
+export const ATTR_IS_STATE = 'is:state'
 /** Script left in template in place; not extracted. */
 export const ATTR_IS_INLINE = 'is:inline'
 /** Script hoisted to head; extracted. */

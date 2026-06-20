@@ -15,6 +15,7 @@ const DATA_PROPS_ATTRS = [
 
 const SCRIPT_TAXONOMY_ATTRS = new Set([
 	CONST.ATTR_IS_BUILD,
+	CONST.ATTR_IS_STATE,
 	CONST.ATTR_IS_INLINE,
 	CONST.ATTR_IS_BLOCKING,
 ])
@@ -134,6 +135,7 @@ interface ScriptPlacement {
 interface ScriptClassification {
 	placement: ScriptPlacement
 	hasBuild: boolean
+	hasState: boolean
 	hasInline: boolean
 	hasBlocking: boolean
 	src: string
@@ -227,10 +229,12 @@ function classifyScriptElement(
 	placement: ScriptPlacement
 ): ScriptClassification {
 	const hasBuild = scriptEl.hasAttribute(CONST.ATTR_IS_BUILD)
+	const hasState = scriptEl.hasAttribute(CONST.ATTR_IS_STATE)
 	const hasInline = scriptEl.hasAttribute(CONST.ATTR_IS_INLINE)
 	return {
 		placement,
 		hasBuild,
+		hasState,
 		hasInline,
 		hasBlocking: scriptEl.hasAttribute(CONST.ATTR_IS_BLOCKING),
 		src: scriptEl.getAttribute(CONST.ATTR_SRC) ?? '',
@@ -274,7 +278,7 @@ function isLocalScriptSource(src: string): boolean {
  *
  * @remarks
  * DOM-first approach: parse full document with linkedom, walk script elements (skipping SVG/MathML),
- * classify by attributes (is:build, is:inline, is:blocking, src, props), mutate DOM (remove/replace),
+ * classify by attributes (is:build, is:state, is:inline, is:blocking, src, props), mutate DOM (remove/replace),
  * then serialize to produce template. Scripts inside HTML comments are not in the DOM and are left in place.
  * BOM is stripped first.
  *
@@ -292,6 +296,7 @@ export function parse(html: string): ParseResult {
 	const doc = parseDocument(html, isFullDocument)
 
 	const buildContent: string[] = []
+	const stateContent: string[] = []
 	const clientScripts: ScriptEntry[] = []
 	const inlineScripts: ScriptEntry[] = []
 	const blockingScripts: ScriptEntry[] = []
@@ -304,6 +309,12 @@ export function parse(html: string): ParseResult {
 
 		if (script.hasBuild) {
 			buildContent.push(script.content)
+			toRemove.push(scriptEl)
+			continue
+		}
+
+		if (script.hasState) {
+			stateContent.push(script.content)
 			toRemove.push(scriptEl)
 			continue
 		}
@@ -339,12 +350,18 @@ export function parse(html: string): ParseResult {
 
 	for (const el of toRemove) el.remove()
 
+	if (stateContent.length > 1) {
+		throw new Error('[aero] Only one <script is:state> is allowed per template.')
+	}
+
 	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
+	const stateScript = stateContent.length > 0 ? { content: stateContent[0] } : null
 
 	const template = serializeTemplate(doc, isFullDocument)
 
 	return {
 		buildScript,
+		stateScript,
 		clientScripts,
 		inlineScripts,
 		blockingScripts,
