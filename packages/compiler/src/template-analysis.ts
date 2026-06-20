@@ -10,12 +10,14 @@ import type { TemplateEditorAmbient } from './template-editor-context'
 import type { CompileOptions, ParseResult } from './types'
 
 import { parseHTML } from 'linkedom'
+import { CompileError } from './types'
 import { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
 import { expandSelfClosingTags } from './parser'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
+import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
 
 function buildImportsCode(
 	imports: ReturnType<typeof analyzeBuildScript>['imports'],
@@ -76,6 +78,7 @@ export interface TemplateAnalysis {
 	/** Build script after strip + import rewrite prep (no leading import lines). */
 	readonly scriptBody: string
 	readonly getStaticPathsFn: string | null
+	readonly stateAnalysis: StateScriptAnalysisResult | null
 	/**
 	 * Build-scope names and type slices aligned with {@link parse} — for tooling and LSP ambient preludes.
 	 */
@@ -94,6 +97,10 @@ export function buildTemplateAnalysis(
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
 	const analysis = analyzeBuildScript(script)
+	const stateAnalysis = parsed.stateScript ? analyzeStateScript(parsed.stateScript.content) : null
+	if (stateAnalysis && stateAnalysis.diagnostics.length > 0) {
+		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
+	}
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const getStaticPathsFn = analysis.getStaticPathsFn
 	const importsCode = buildImportsCode(analysis.imports, resolver)
@@ -111,6 +118,7 @@ export function buildTemplateAnalysis(
 		bodyCode,
 		scriptBody: script,
 		getStaticPathsFn: getStaticPathsFn || null,
+		stateAnalysis,
 		editorAmbient,
 	}
 }

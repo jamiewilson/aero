@@ -148,6 +148,13 @@ export {
 } from './for-directive'
 export { type ParsedForDirective } from './for-directive'
 
+export {
+	analyzeStateScript,
+	type StateBinding,
+	type StateScriptDiagnostic,
+	type StateScriptAnalysisResult,
+} from './state-script-analysis'
+
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'
 export {
