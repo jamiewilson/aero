@@ -28,6 +28,8 @@ export type TemplateEditorAmbient = {
 	readonly typeDeclarationTexts: readonly string[]
 	/** Value-like binding names visible in `{ }` interpolations. */
 	readonly bindingNames: ReadonlySet<string>
+	/** Non-derived `is:state` bindings that are writable in event handlers. */
+	readonly writableStateBindingNames: ReadonlySet<string>
 }
 
 /**
@@ -43,16 +45,20 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			? [parsed.stateScript.content]
 			: []
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
+	const writableStateBindingNames = new Set<string>()
 	for (const stateBody of stateScriptBodies) {
 		try {
 			const analysis = analyzeStateScript(stateBody)
-			for (const b of analysis.bindings) bindingNames.add(b.name)
+			for (const b of analysis.bindings) {
+				bindingNames.add(b.name)
+				if (!b.derived) writableStateBindingNames.add(b.name)
+			}
 		} catch {
 			// Keep editor ambient resilient to partial/in-progress state scripts.
 		}
 	}
 	const typeDeclarationTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
-	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames }
+	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames, writableStateBindingNames }
 }
 
 /**

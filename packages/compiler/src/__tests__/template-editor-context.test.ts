@@ -33,5 +33,7 @@ let doubled = count * 2
 		expect(ambient.stateScriptBodies.length).toBe(1)
 		expect(ambient.bindingNames.has('count')).toBe(true)
 		expect(ambient.bindingNames.has('doubled')).toBe(true)
+		expect(ambient.writableStateBindingNames.has('count')).toBe(true)
+		expect(ambient.writableStateBindingNames.has('doubled')).toBe(false)
 	})
 })

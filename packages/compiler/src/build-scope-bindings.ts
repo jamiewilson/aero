@@ -307,7 +307,8 @@ export function collectBindingsFromBuildScriptContent(content: string, into: Set
  */
 export function formatBuildBindingAmbientBlock(
 	names: ReadonlySet<string>,
-	bindingTypes?: ReadonlyMap<string, string>
+	bindingTypes?: ReadonlyMap<string, string>,
+	writableNames?: ReadonlySet<string>
 ): string {
 	if (names.size === 0) return ''
 	return (
@@ -317,7 +318,8 @@ export function formatBuildBindingAmbientBlock(
 			.map(n => {
 				const t = bindingTypes?.get(n)
 				const typeStr = t !== undefined && t.trim().length > 0 ? t : 'any'
-				return `declare const ${n}: ${typeStr};`
+				const kind = writableNames?.has(n) ? 'let' : 'const'
+				return `declare ${kind} ${n}: ${typeStr};`
 			})
 			.join('\n') + '\n'
 	)
@@ -344,7 +346,8 @@ export function collectBuildScriptTypeDeclarationTexts(
 export function formatBuildScopeAmbientPrelude(
 	names: ReadonlySet<string>,
 	typeDeclarationSources: readonly string[],
-	buildScriptBodiesForInference?: readonly string[]
+	buildScriptBodiesForInference?: readonly string[],
+	writableNames?: ReadonlySet<string>
 ): string {
 	const typeBlock = typeDeclarationSources
 		.map(s => s.trim())
@@ -354,7 +357,7 @@ export function formatBuildScopeAmbientPrelude(
 		buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
 			? collectBindingTypeStringsFromBuildScripts(buildScriptBodiesForInference)
 			: undefined
-	const bindingBlock = formatBuildBindingAmbientBlock(names, bindingTypes)
+	const bindingBlock = formatBuildBindingAmbientBlock(names, bindingTypes, writableNames)
 	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
 	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
 	return bindingBlock

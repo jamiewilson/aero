@@ -33,6 +33,7 @@ export {
 
 export {
 	collectTemplateInterpolationSites,
+	buildTemplateInterpolationVirtualText,
 	formatInterpolationBinderPrelude,
 	formatInterpolationBinderPreludeFromTemplate,
 	type TemplateInterpolationSite,

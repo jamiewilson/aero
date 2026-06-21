@@ -590,6 +590,7 @@ export class AeroVirtualCode implements VirtualCode {
 			buildScriptBodies,
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
+			writableStateBindingNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
 
@@ -599,7 +600,8 @@ export class AeroVirtualCode implements VirtualCode {
 				sourceText,
 				buildBindingNames,
 				buildTypeDeclTexts,
-				buildScriptBodies
+				buildScriptBodies,
+				writableStateBindingNames
 			),
 			{
 				id: 'ambient',
@@ -615,7 +617,8 @@ export class AeroVirtualCode implements VirtualCode {
 		sourceText: string,
 		buildBindingNames: ReadonlySet<string>,
 		buildTypeDeclTexts: readonly string[],
-		buildScriptBodies: readonly string[]
+		buildScriptBodies: readonly string[],
+		writableStateBindingNames: ReadonlySet<string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const slotScopes = collectSlotScopes(sourceText, this.htmlFilePath)
@@ -629,7 +632,7 @@ export class AeroVirtualCode implements VirtualCode {
 		const makeExprVirtualCode = (
 			expression: string,
 			sourceOffset: number,
-			wrapPropsObjectLiteral?: boolean
+			options?: { wrapPropsObjectLiteral?: boolean; isEventHandler?: boolean }
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 			const slotBindings = getSlotBindingsAtOffset(sourceOffset, slotScopes)
@@ -654,16 +657,41 @@ export class AeroVirtualCode implements VirtualCode {
 			const binderDecl = formatBuildScopeAmbientPrelude(
 				combinedBindings,
 				mergedTypeDecls,
-				buildScriptBodies
+				buildScriptBodies,
+				options?.isEventHandler
+					? new Set(
+							[...writableStateBindingNames].filter(name => combinedBindings.has(name))
+						)
+					: undefined
 			)
 			const slotTypedBlock =
 				slotTypedBindingDecls.length > 0 ? slotTypedBindingDecls.join('\n') + '\n' : ''
-			const open = wrapPropsObjectLiteral ? '[{' : '['
-			const close = wrapPropsObjectLiteral ? '}]' : ']'
-			const exprOffsetInVirtual =
-				BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + slotTypedBlock.length + open.length
-			const virtualText =
-				BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock + open + expression + close
+			const head = BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock
+
+			if (options?.isEventHandler) {
+				const virtualText =
+					head + expression + (expression.trimEnd().endsWith(';') ? '' : ';')
+				const exprOffsetInVirtual = head.length
+				return {
+					id: `expr_${exprIdx++}`,
+					languageId: 'typescript',
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
+					mappings: [
+						{
+							sourceOffsets: [sourceOffset],
+							generatedOffsets: [exprOffsetInVirtual],
+							lengths: [expression.length],
+							data: BUILD_SCRIPT_FEATURES,
+						},
+					],
+					embeddedCodes: [],
+				}
+			}
+
+			const open = options?.wrapPropsObjectLiteral ? '[{' : '['
+			const close = options?.wrapPropsObjectLiteral ? '}]' : ']'
+			const exprOffsetInVirtual = head.length + open.length
+			const virtualText = head + open + expression + close
 
 			return {
 				id: `expr_${exprIdx++}`,
@@ -683,7 +711,10 @@ export class AeroVirtualCode implements VirtualCode {
 
 		for (const site of collectTemplateInterpolationSites(sourceText)) {
 			out.push(
-				makeExprVirtualCode(site.expression, site.braceOffset, site.wrapPropsObjectLiteral === true)
+				makeExprVirtualCode(site.expression, site.braceOffset, {
+					wrapPropsObjectLiteral: site.wrapPropsObjectLiteral === true,
+					isEventHandler: site.isEventHandler === true,
+				})
 			)
 		}
 
