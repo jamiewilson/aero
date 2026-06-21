@@ -25,8 +25,11 @@ import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
+	RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID,
 	resolveDirs,
 	RUNTIME_INSTANCE_MODULE_ID,
+	STATE_BINDINGS_REGISTRY_FILENAME,
+	STATE_BINDINGS_REGISTRY_MODULE_ID,
 } from './defaults'
 
 import {
@@ -50,6 +53,7 @@ import {
 	TemplateDiscovery,
 	createBuildConfig,
 	discoverClientScriptContentMap,
+	discoverReactivePagePaths,
 	getRuntimeInstanceModuleSource,
 	renderStaticPages,
 } from './build'
@@ -68,6 +72,7 @@ import {
 	wrapAeroViteLogger,
 } from './aero-vite-logger'
 import { createStaticBuildReportingService } from './static-build-reporting'
+import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
 
 const require = createRequire(import.meta.url)
 
@@ -81,6 +86,8 @@ interface AeroPluginState {
 	runtimeInstancePath: string
 	/** Set in configResolved: path to .aero/runtime-instance.mjs so Vite treats it as a real module (glob rules). */
 	generatedRuntimeInstancePath: string | null
+	/** Set in configResolved: path to `.aero/state-bindings-registry.mjs` for production reactive mounts. */
+	generatedStateBindingsRegistryPath: string | null
 	dirs: ReturnType<typeof resolveDirs>
 	apiPrefix: string
 	options: AeroOptions
@@ -239,7 +246,11 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					},
 				},
 				build: createBuildConfig(
-					{ resolvePath: state.aliasResult.resolve, dirs: state.options.dirs },
+					{
+						resolvePath: state.aliasResult.resolve,
+						dirs: state.options.dirs,
+						reactivity: state.options.reactivity,
+					},
 					root,
 					state.templateDiscovery
 				),
@@ -266,6 +277,18 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				'utf-8'
 			)
 			state.generatedRuntimeInstancePath = filePath
+
+			const reactivePages =
+				state.options.reactivity === true
+					? discoverReactivePagePaths(resolvedConfig.root, state.dirs.client)
+					: []
+			const stateBindingsRegistryPath = path.join(dir, STATE_BINDINGS_REGISTRY_FILENAME)
+			writeFileSync(
+				stateBindingsRegistryPath,
+				getStateBindingsRegistryModuleSource(resolvedConfig.root, reactivePages),
+				'utf-8'
+			)
+			state.generatedStateBindingsRegistryPath = stateBindingsRegistryPath
 		},
 	}
 }
@@ -418,6 +441,13 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
 			}
 
+			if (id === STATE_BINDINGS_REGISTRY_MODULE_ID) {
+				if (state.config?.command === 'build' && state.generatedStateBindingsRegistryPath) {
+					return state.generatedStateBindingsRegistryPath
+				}
+				return RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID
+			}
+
 			if (id.startsWith(CLIENT_SCRIPT_PREFIX)) {
 				return '\0' + id
 			}
@@ -483,6 +513,13 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			return null
 		},
 		load(id) {
+			if (id === RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID) {
+				return `export async function resolveStateBindingsModule(_pathname) {
+	return null
+}
+`
+			}
+
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
 				if (!state.config) return null
 				return getRuntimeInstanceModuleSource(
@@ -626,6 +663,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		templateDiscovery: null,
 		runtimeInstancePath,
 		generatedRuntimeInstancePath: null,
+		generatedStateBindingsRegistryPath: null,
 		dirs,
 		apiPrefix,
 		options,
@@ -758,4 +796,4 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 }
 
 export { DEFAULT_DIRS, resolveDirs } from './defaults'
-export { discoverRuntimeTemplatePaths } from './build'
+export { discoverReactivePagePaths, discoverRuntimeTemplatePaths } from './build'
