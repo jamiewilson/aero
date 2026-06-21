@@ -200,7 +200,7 @@ export class Lowerer {
 			this.reactiveState ?? undefined
 		)
 		const childSkip =
-			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
+			skipInterpolation || tagName === 'style' || tagName === 'script'
 
 		if (loopData && switchExpr) {
 			throw new CompileError({

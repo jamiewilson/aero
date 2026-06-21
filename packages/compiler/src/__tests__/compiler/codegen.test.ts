@@ -622,6 +622,23 @@ describe('Codegen', () => {
 		expect(output).toContain('console.log(config.theme);')
 	})
 
+	it('should not HTML-escape is:inline script body when props are used', async () => {
+		const html = `<script is:build>
+			const flag = true;
+		</script>
+		<script is:inline props="{ flag }">
+			console.debug('[aero]', flag)
+		</script>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code)
+
+		expect(output).toContain("console.debug('[aero]', flag)")
+		expect(output).not.toContain('&#39;')
+		expect(output).not.toContain('&amp;')
+	})
+
 	it('should handle attributes with colons (Alpine.js style)', async () => {
 		const html = '<button :disabled="!message.length">{ Aero.label }</button>'
 
