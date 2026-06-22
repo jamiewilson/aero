@@ -48,7 +48,7 @@ importers:
         version: 3.8.4
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   examples/import-bundling/cdn-externals:
     dependencies:
@@ -293,7 +293,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/compiler:
     dependencies:
@@ -324,7 +324,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/config:
     dependencies:
@@ -358,7 +358,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/content:
     dependencies:
@@ -422,7 +422,7 @@ importers:
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -489,7 +489,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/create:
     dependencies:
@@ -502,7 +502,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/diagnostics:
     dependencies:
@@ -524,7 +524,7 @@ importers:
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/highlight:
     dependencies:
@@ -546,7 +546,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/html-parser:
     dependencies:
@@ -568,13 +568,16 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/hypermedia:
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
         version: 25.5.0
+      happy-dom:
+        specifier: ^20.10.6
+        version: 20.10.6
       tsdown:
         specifier: 'catalog:'
         version: 0.21.7(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(oxc-resolver@11.19.1)(typescript@6.0.2)
@@ -583,7 +586,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/interpolation:
     devDependencies:
@@ -598,7 +601,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/language-server:
     dependencies:
@@ -647,7 +650,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/prettier-plugin-aero:
     dependencies:
@@ -675,7 +678,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/reactivity:
     devDependencies:
@@ -690,7 +693,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/starters/fullstack:
     dependencies:
@@ -709,7 +712,7 @@ importers:
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/starters/minimal:
     dependencies:
@@ -725,7 +728,7 @@ importers:
         version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/vite:
     dependencies:
@@ -741,7 +744,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   packages/vscode:
     dependencies:
@@ -784,7 +787,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+        version: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   website:
     dependencies:
@@ -2144,6 +2147,12 @@ packages:
   '@types/vscode@1.110.0':
     resolution: {integrity: sha512-AGuxUEpU4F4mfuQjxPPaQVyuOMhs+VT/xRok1jiHVBubHK7lBRvCuOMZG0LKUwxncrPorJ5qq/uil3IdZBd5lA==}
 
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
 
@@ -2281,6 +2290,10 @@ packages:
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
+  buffer-image-size@0.6.4:
+    resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
+    engines: {node: '>=4.0'}
 
   cac@7.0.0:
     resolution: {integrity: sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ==}
@@ -2565,6 +2578,10 @@ packages:
     peerDependenciesMeta:
       crossws:
         optional: true
+
+  happy-dom@20.10.6:
+    resolution: {integrity: sha512-6QD0ilzDDt93tX44y8tbmZdAcdTRYDhUP+Asgi6pC8Pp5IA3cvaZGyoVN/EGtlq9ziT65iPuBBn3ASLr6hCgVw==}
+    engines: {node: '>=20.0.0'}
 
   hast-util-heading-rank@3.0.0:
     resolution: {integrity: sha512-EJKb8oMUXVHcWZTDepnr+WNbfnXKFNf9duMesmr4S8SXTJBJ9M4Yok08pu9vxdJwdlGRhVumk9mEhkEvKGifwA==}
@@ -3522,10 +3539,26 @@ packages:
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
 
+  whatwg-mimetype@3.0.0:
+    resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
+    engines: {node: '>=12'}
+
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
     hasBin: true
+
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
@@ -4341,6 +4374,12 @@ snapshots:
 
   '@types/vscode@1.110.0': {}
 
+  '@types/whatwg-mimetype@3.0.2': {}
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 25.5.0
+
   '@ungap/structured-clone@1.3.0': {}
 
   '@vitest/expect@4.1.2':
@@ -4387,7 +4426,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
+      vitest: 4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
 
   '@vitest/utils@4.1.2':
     dependencies:
@@ -4508,6 +4547,10 @@ snapshots:
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
 
   buffer-from@1.1.2: {}
+
+  buffer-image-size@0.6.4:
+    dependencies:
+      '@types/node': 25.5.0
 
   cac@7.0.0: {}
 
@@ -4743,6 +4786,19 @@ snapshots:
       srvx: 0.11.13
     optionalDependencies:
       crossws: 0.4.4(srvx@0.11.13)
+
+  happy-dom@20.10.6:
+    dependencies:
+      '@types/node': 25.5.0
+      '@types/whatwg-mimetype': 3.0.2
+      '@types/ws': 8.18.1
+      buffer-image-size: 0.6.4
+      entities: 7.0.1
+      whatwg-mimetype: 3.0.0
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   hast-util-heading-rank@3.0.0:
     dependencies:
@@ -5866,7 +5922,7 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  vitest@4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)):
+  vitest@4.1.2(@types/node@25.5.0)(@vitest/ui@4.1.2)(happy-dom@20.10.6)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)):
     dependencies:
       '@vitest/expect': 4.1.2
       '@vitest/mocker': 4.1.2(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1))
@@ -5891,6 +5947,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
       '@vitest/ui': 4.1.2(vitest@4.1.2)
+      happy-dom: 20.10.6
     transitivePeerDependencies:
       - msw
 
@@ -5960,10 +6017,14 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
+  whatwg-mimetype@3.0.0: {}
+
   why-is-node-running@2.3.0:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
+
+  ws@8.21.0: {}
 
   zod@4.3.6: {}
 
