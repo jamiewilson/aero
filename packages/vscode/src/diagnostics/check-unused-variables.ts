@@ -26,6 +26,7 @@ export function checkUnusedVariables(
 	}
 
 	checkUnusedInScope(parsed, 'build', usedInTemplate, diagnostics)
+	checkUnusedInScope(parsed, 'state', usedInTemplate, diagnostics)
 	checkUnusedInScope(parsed, 'bundled', usedInTemplate, diagnostics)
 	checkUnusedInScope(parsed, 'inline', usedInTemplate, diagnostics)
 	checkUnusedInScope(parsed, 'blocking', usedInTemplate, diagnostics)
@@ -45,7 +46,7 @@ function isStateScopedName(parsed: ParsedDocument, name: string): boolean {
 
 function checkUnusedInScope(
 	parsed: ParsedDocument,
-	scope: 'build' | 'bundled' | 'inline' | 'blocking',
+	scope: 'build' | 'state' | 'bundled' | 'inline' | 'blocking',
 	usedInTemplate: Set<string>,
 	diagnostics: vscode.Diagnostic[]
 ): void {
@@ -66,7 +67,11 @@ function checkUnusedInScope(
 			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
 			const matches = maskedContent.match(usageRegex)
 			if (matches && matches.length > 1) continue
-		} else if (scope === 'bundled' || scope === 'blocking' || scope === 'inline') {
+		} else if (scope === 'state' || scope === 'bundled' || scope === 'blocking' || scope === 'inline') {
+			if (scope === 'state' && usedInTemplate.has(name)) {
+				continue
+			}
+
 			if (scope === 'bundled' && usedInTemplate.has(name) && isStateScopedName(parsed, name)) {
 				continue
 			}

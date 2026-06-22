@@ -33,4 +33,12 @@ describe('parseScriptBlocks', () => {
 		expect(blocks[0]?.kind).toBe('build')
 		expect(blocks[0]?.content).toBe('const x = 1;')
 	})
+
+	it('classifies is:state scripts separately from bundled client scripts', () => {
+		const text = '<script is:state>let count = 0</script>'
+		const blocks = parseScriptBlocks(text)
+
+		expect(blocks).toHaveLength(1)
+		expect(blocks[0]?.kind).toBe('state')
+	})
 })
