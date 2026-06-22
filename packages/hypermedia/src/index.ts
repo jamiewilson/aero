@@ -1,15 +1,21 @@
-export interface HypermediaRuntime {
-	readonly kind: 'hypermedia-runtime'
-}
+export type {
+	HttpMethod,
+	SwapStyle,
+	ActionOptions,
+	HypermediaRequest,
+	HypermediaResponse,
+	SwapOperation,
+} from './types'
 
-export interface HypermediaRuntimeOptions {
-	readonly debug?: boolean
-}
+export {
+	createHypermediaRuntime,
+	type HypermediaRuntime,
+	type HypermediaRuntimeOptions,
+} from './runtime'
 
-/**
- * Phase 1.5 placeholder entrypoint.
- * Runtime behavior lands in Phase 3.
- */
-export function createHypermediaRuntime(_options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
-	return { kind: 'hypermedia-runtime' }
-}
+export { buildRequest, executeRequest, normalizeMethod } from './request'
+export { resolveTarget, performSwap, performSwaps, parseSwapStyle } from './swap'
+export { dispatchLifecycleEvent } from './events'
+export type { LifecycleEventName, LifecycleDetail } from './events'
+export { GET, POST, PUT, PATCH, DELETE } from './actions'
+export { adopt } from './adopt'
