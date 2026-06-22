@@ -9,7 +9,8 @@ describe('@aero-js/core runtime bridges', () => {
 		expect(runtime.store.snapshot()).toEqual({})
 	})
 
-	it('re-exports hypermedia placeholder runtime', () => {
-		expect(createHypermediaRuntime()).toEqual({ kind: 'hypermedia-runtime' })
+	it('re-exports hypermedia runtime', () => {
+		const runtime = createHypermediaRuntime()
+		expect(runtime.kind).toBe('hypermedia-runtime')
 	})
 })
