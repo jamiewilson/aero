@@ -76,6 +76,8 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'$trigger',
 	'$triggerElement',
 	'$response',
+	// `on:*` handler parameter (matches runtime mount + virtual TS prelude)
+	'event',
 ])
 
 function isBoundByForScope(scope: TemplateScope, id: string): boolean {

@@ -35,6 +35,9 @@ const PROPS_ATTR_NAMES = new Set([
 	`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase(),
 ])
 
+/** Virtual TS prelude for `on:*` handler bodies — matches runtime `compileHandler` parameter. */
+export const EVENT_HANDLER_SCOPE_DECL = 'declare const event: Event;\n'
+
 type AttributeMask = { start: number; length: number }
 type AttributeInterpolation = {
 	expression: string
@@ -219,6 +222,7 @@ export function formatInterpolationBinderPrelude(
 	buildBindingNames: ReadonlySet<string>,
 	buildTypeDeclTexts: readonly string[],
 	buildScriptBodies: readonly string[],
+	stateScriptBodies: readonly string[] = [],
 	options?: { writableNames?: ReadonlySet<string> }
 ): string {
 	const doc = parseMinimalHtmlFromText(sourceText)
@@ -233,7 +237,7 @@ export function formatInterpolationBinderPrelude(
 	return formatBuildScopeAmbientPrelude(
 		allBindings,
 		buildTypeDeclTexts,
-		buildScriptBodies,
+		[...buildScriptBodies, ...stateScriptBodies],
 		writableNames
 	)
 }
@@ -253,6 +257,7 @@ export function formatInterpolationBinderPreludeFromTemplate(
 		ambient.bindingNames,
 		ambient.typeDeclarationTexts,
 		ambient.buildScriptBodies,
+		ambient.stateScriptBodies,
 		options
 	)
 }
@@ -270,8 +275,15 @@ export function buildTemplateInterpolationVirtualText(
 	const head = preamble + binderDecl
 
 	if (site.isEventHandler) {
-		const virtualText = head + site.expression + (site.expression.trimEnd().endsWith(';') ? '' : ';')
-		return { virtualText, expressionOffsetInVirtual: head.length }
+		const virtualText =
+			head +
+			EVENT_HANDLER_SCOPE_DECL +
+			site.expression +
+			(site.expression.trimEnd().endsWith(';') ? '' : ';')
+		return {
+			virtualText,
+			expressionOffsetInVirtual: head.length + EVENT_HANDLER_SCOPE_DECL.length,
+		}
 	}
 
 	const open = site.wrapPropsObjectLiteral === true ? '[{' : '['

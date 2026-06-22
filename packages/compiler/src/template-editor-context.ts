@@ -10,6 +10,7 @@ import { parse } from './parser'
 import {
 	collectBuildScopeBindingNames,
 	collectBuildScriptTypeDeclarationTexts,
+	collectBindingsFromBuildScriptContent,
 } from './build-scope-bindings'
 import { analyzeStateScript } from './state-script-analysis'
 
@@ -32,6 +33,13 @@ export type TemplateEditorAmbient = {
 	readonly writableStateBindingNames: ReadonlySet<string>
 }
 
+/** Build + state script bodies used for template expression type inference. */
+export function getBindingInferenceScriptBodies(
+	ambient: Pick<TemplateEditorAmbient, 'buildScriptBodies' | 'stateScriptBodies'>
+): readonly string[] {
+	return [...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
+}
+
 /**
  * Build editor ambient data from an already-parsed template (no re-parse).
  */
@@ -47,6 +55,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 	const writableStateBindingNames = new Set<string>()
 	for (const stateBody of stateScriptBodies) {
+		collectBindingsFromBuildScriptContent(stateBody, bindingNames)
 		try {
 			const analysis = analyzeStateScript(stateBody)
 			for (const b of analysis.bindings) {

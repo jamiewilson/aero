@@ -58,4 +58,17 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(prelude).toContain('declare const count')
 		expect(prelude).not.toContain('declare let count')
 	})
+
+	it('declares event in on:* handler virtual TS', () => {
+		const html = `<script is:state>
+function syncAuthLink(event) { event.preventDefault() }
+</script>
+<a on:click="{ syncAuthLink(event) }">x</a>`
+		const sites = collectTemplateInterpolationSites(html)
+		const eventSite = sites.find(s => s.isEventHandler)
+		expect(eventSite).toBeDefined()
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, eventSite!, '')
+		expect(virtualText).toContain('declare const event: Event;')
+		expect(virtualText).toMatch(/declare const event: Event;\s*syncAuthLink\(event\)/)
+	})
 })

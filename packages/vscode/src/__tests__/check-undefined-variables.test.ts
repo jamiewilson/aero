@@ -65,4 +65,15 @@ describe('checkUndefinedVariables state scope', () => {
 		expect(diagnostics.find(d => d.message.includes("'inc' is not defined"))).toBeDefined()
 		expect(diagnostics.find(d => d.message.includes("'count' is not defined"))).toBeUndefined()
 	})
+
+	it('allows event in on:* handler expressions', () => {
+		const text = `<script is:state>
+function syncAuthLink(event) { event.preventDefault() }
+</script>
+<a on:click="{ syncAuthLink(event) }">x</a>`
+		const parsed = parseDocument(makeDoc(text))
+		const diagnostics: any[] = []
+		checkUndefinedVariables(parsed, diagnostics)
+		expect(diagnostics.find(d => d.message.includes("'event' is not defined"))).toBeUndefined()
+	})
 })
