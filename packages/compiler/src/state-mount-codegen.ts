@@ -102,12 +102,14 @@ function serializeScopeConstants(imports: readonly BuildScriptImport[]): string 
 export function emitMountStateBindingsFunction(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
-	stateImports: readonly BuildScriptImport[] = []
+	stateImports: readonly BuildScriptImport[] = [],
+	actionFunctions?: string
 ): string {
 	if (binds.textBinds.length === 0 && binds.eventBinds.length === 0 && binds.busyBinds.length === 0) return ''
 
 	const scopeConstants = serializeScopeConstants(stateImports)
 	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
+	const actionFnsLine = actionFunctions ? `\n\t\tactionFunctions: { ${actionFunctions} },` : '\n\t\tactionFunctions: {},'
 
 	return `
 export function mountStateBindings(root, Aero) {
@@ -121,10 +123,13 @@ export function mountStateBindings(root, Aero) {
 		textBinds: ${serializeTextBinds(binds.textBinds)},
 		eventBinds: ${serializeEventBinds(binds.eventBinds)},
 		busyBinds: ${serializeBusyBinds(binds.busyBinds)},${scopeConstantsLine}
-		escapeHtml: Aero.escapeHtml,
-		actionFunctions: {},
+		escapeHtml: Aero.escapeHtml,${actionFnsLine}
 	})
 }`.trim()
+}
+
+export function createHypermediaImportLine(): string {
+	return `import { POST, GET, PUT, PATCH, DELETE } from '@aero-js/core/hypermedia'`
 }
 
 export function referencesStateBindingExpression(
