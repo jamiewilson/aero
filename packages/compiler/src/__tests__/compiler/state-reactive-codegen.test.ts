@@ -22,7 +22,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('export function mountStateBindings(root, Aero)')
 		expect(code).toContain('data-aero-text="0"')
 		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
-		expect(code).toContain('actionFunctions: {}')
+		expect(code).not.toContain('hypermediaRuntime:')
 		expect(code).not.toContain('data-aero-on-click')
 	})
 
@@ -38,7 +38,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('data-aero-event="0"')
 		expect(code).toContain('"handlerExpr":"inc()"')
 		expect(code).toContain('"event":"click"')
-		expect(code).toContain('actionFunctions: {}')
+		expect(code).not.toContain('hypermediaRuntime:')
 		expect(code).not.toContain('data-aero-on-click')
 	})
 
@@ -91,14 +91,14 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('scopeConstants: { AuthState: AuthState }')
 	})
 
-	it('includes hypermedia action functions import when hypermedia: true', () => {
+	it('includes hypermedia runtime wiring when hypermedia: true', () => {
 		const html = `<script is:state>
 			let count = 1
 		</script>
 		<div>{ count }</div>`
 
 		const code = compile(parse(html), { ...mockOptions, hypermedia: true })
-		expect(code).toContain("import { POST, GET, PUT, PATCH, DELETE } from '@aero-js/core/hypermedia'")
-		expect(code).toContain('actionFunctions: { POST, GET, PUT, PATCH, DELETE }')
+		expect(code).toContain('hypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined')
+		expect(code).not.toContain("import { POST, GET, PUT, PATCH, DELETE }")
 	})
 })

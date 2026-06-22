@@ -14,9 +14,10 @@ import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 import { resolveMountTarget } from './runtime/mount-target'
 import {
-	bootstrapReactivityRuntime,
+	createHypermediaRuntimeAccessor,
+	mountClientBindings,
 	readBootstrappedReactivityRuntime,
-} from './runtime/reactivity-bootstrap'
+} from './runtime/client-mount'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
@@ -57,26 +58,28 @@ function mount(options: MountOptions = {}): Promise<void> {
 
 	hmrState.lastEl = el
 
-	// Skip initial render as we assume SSR provided the correct HTML.
-	// We just need to initialize any client-side logic (listeners, hydration, etc.)
-	bootstrapReactivityRuntime()
-	destroyStateBindings = aero.mountStateBindingsForPath(currentPathname(), el)
+	destroyStateBindings = mountClientBindings(aero, currentPathname(), el)
 	if (onRender) onRender(el)
 	const done = Promise.resolve()
 
 	if (import.meta.hot && !hmrState.unsubscribe) {
 		hmrState.unsubscribe = onUpdate(() => {
 			const el = hmrState.lastEl
-			if (el) {
-				if (destroyStateBindings) {
-					destroyStateBindings()
-					destroyStateBindings = null
-				}
-				void renderPage(el, coreRender).then(() => {
-					destroyStateBindings = aero.mountStateBindingsForPath(currentPathname(), el)
-					if (onRender) onRender(el)
-				})
+			if (!el) return
+			const pathname = currentPathname()
+			if (destroyStateBindings) {
+				destroyStateBindings()
+				destroyStateBindings = null
 			}
+			if (aero.hasStateBindingsForPath(pathname)) {
+				destroyStateBindings = mountClientBindings(aero, pathname, el)
+				if (onRender) onRender(el)
+				return
+			}
+			void renderPage(el, coreRender).then(() => {
+				destroyStateBindings = mountClientBindings(aero, pathname, el)
+				if (onRender) onRender(el)
+			})
 		})
 		import.meta.hot.dispose(() => {
 			if (destroyStateBindings) {
@@ -94,12 +97,16 @@ function mount(options: MountOptions = {}): Promise<void> {
 }
 
 const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
+const getHypermediaRuntime = createHypermediaRuntimeAccessor()
 
 aero.mount = mount
 ;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
 	getReactivityRuntime
+;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
+	getHypermediaRuntime
 
 export default aero as Aero & {
 	mount: typeof mount
 	getReactivityRuntime: typeof getReactivityRuntime
+	getHypermediaRuntime: typeof getHypermediaRuntime
 }

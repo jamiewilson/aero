@@ -12,9 +12,12 @@ import type { MountOptions } from './types'
 import { Aero } from './runtime'
 import { resolveMountTarget } from './runtime/mount-target'
 import {
-	bootstrapReactivityRuntime,
+	bootstrapClientRuntimes,
+	createHypermediaRuntimeAccessor,
+	mountClientBindings,
 	readBootstrappedReactivityRuntime,
-} from './runtime/reactivity-bootstrap'
+	wireHypermediaAdopt,
+} from './runtime/client-mount'
 import { mountStateBindingsForRoute } from './runtime/state-bindings-prod'
 import { resolveStateBindingsModule } from 'virtual:aero/state-bindings-registry.ts'
 
@@ -34,30 +37,35 @@ function mount(options: MountOptions = {}): Promise<void> {
 		destroyStateBindings()
 		destroyStateBindings = null
 	}
-	bootstrapReactivityRuntime()
+	bootstrapClientRuntimes()
 	return mountStateBindingsForRoute(
 		aero,
 		currentPathname(),
 		el,
 		resolveStateBindingsModule
-	).then(cleanup => {
+	).then(stateCleanup => {
 		if (seq !== mountSeq) {
-			cleanup()
+			stateCleanup()
 			return
 		}
-		destroyStateBindings = cleanup
+		destroyStateBindings = stateCleanup
+		wireHypermediaAdopt(el)
 		if (onRender) onRender(el)
 	})
 }
 
 const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
+const getHypermediaRuntime = createHypermediaRuntimeAccessor()
 
 const aero = new Aero()
 aero.mount = mount
 ;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
 	getReactivityRuntime
+;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
+	getHypermediaRuntime
 
 export default aero as Aero & {
 	mount: typeof mount
 	getReactivityRuntime: typeof getReactivityRuntime
+	getHypermediaRuntime: typeof getHypermediaRuntime
 }
