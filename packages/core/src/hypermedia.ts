@@ -1,4 +1,9 @@
 export {
+	DELETE,
+	GET,
+	PATCH,
+	POST,
+	PUT,
 	createHypermediaRuntime,
 	type HypermediaRuntime,
 	type HypermediaRuntimeOptions,
