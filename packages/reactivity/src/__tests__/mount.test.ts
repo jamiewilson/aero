@@ -114,4 +114,41 @@ describe('mountStateBindings', () => {
 		;(store.get('count') as { value: number }).value = 3
 		expect(text.textContent).toBe('6')
 	})
+
+	it('resolves is:state import constants in reactive read expressions', () => {
+		const AuthState = { SignedIn: 'SignedIn', SignedOut: 'SignedOut' }
+		const text = { textContent: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-text="0"]') return text
+				return null
+			},
+		} as unknown as ParentNode
+
+		const store = new SignalStore()
+		store.merge({ authState: AuthState.SignedOut })
+
+		expect(() =>
+			mountStateBindings({
+				root,
+				store,
+				bindings: [
+					{ name: 'authState', derived: false, initExpr: 'AuthState.SignedOut', dependencies: [] },
+				],
+				functionSources: [],
+				textBinds: [
+					{
+						selector: '[data-aero-text="0"]',
+						readExpr: 'authState === AuthState.SignedIn ? "Log Out" : "Log In"',
+					},
+				],
+				eventBinds: [],
+				scopeConstants: { AuthState },
+			})
+		).not.toThrow()
+
+		expect(text.textContent).toBe('Log In')
+		;(store.get('authState') as { value: string }).value = AuthState.SignedIn
+		expect(text.textContent).toBe('Log Out')
+	})
 })

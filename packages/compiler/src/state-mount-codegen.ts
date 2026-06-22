@@ -1,4 +1,5 @@
 import type { IRNode, IRReactiveEventBind, IRReactiveTextBind } from './ir'
+import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
 export interface CollectedReactiveBinds {
@@ -14,16 +15,16 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 		for (const node of nodes) {
 			if (node.kind === 'ReactiveTextBind') textBinds.push(node)
 			if (node.kind === 'ReactiveEventBind') eventBinds.push(node)
-			if (node.kind === 'For' || node.kind === 'If' || node.kind === 'Switch') {
+			if (node.kind === 'For' || node.kind === 'If') {
 				walk(node.body)
 				if (node.kind === 'If') {
 					for (const branch of node.elseIf ?? []) walk(branch.body)
 					if (node.else) walk(node.else)
 				}
-				if (node.kind === 'Switch') {
-					for (const branch of node.cases) walk(branch.body)
-					if (node.defaultBody) walk(node.defaultBody)
-				}
+			}
+			if (node.kind === 'Switch') {
+				for (const branch of node.cases) walk(branch.body)
+				if (node.defaultBody) walk(node.defaultBody)
 			}
 			if (node.kind === 'Component') {
 				for (const slotIR of Object.values(node.slots)) walk(slotIR)
@@ -73,11 +74,28 @@ export function createStateMountImportLine(): string {
 	return `import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'`
 }
 
+function serializeScopeConstants(imports: readonly BuildScriptImport[]): string | null {
+	const entries: string[] = []
+	for (const imp of imports) {
+		if (imp.defaultBinding) entries.push(`${imp.defaultBinding}: ${imp.defaultBinding}`)
+		for (const binding of imp.namedBindings) {
+			entries.push(`${binding.local}: ${binding.local}`)
+		}
+		if (imp.namespaceBinding) entries.push(`${imp.namespaceBinding}: ${imp.namespaceBinding}`)
+	}
+	if (entries.length === 0) return null
+	return `{ ${entries.join(', ')} }`
+}
+
 export function emitMountStateBindingsFunction(
 	analysis: StateScriptAnalysisResult,
-	binds: CollectedReactiveBinds
+	binds: CollectedReactiveBinds,
+	stateImports: readonly BuildScriptImport[] = []
 ): string {
 	if (binds.textBinds.length === 0 && binds.eventBinds.length === 0) return ''
+
+	const scopeConstants = serializeScopeConstants(stateImports)
+	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
 
 	return `
 export function mountStateBindings(root, Aero) {
@@ -89,7 +107,7 @@ export function mountStateBindings(root, Aero) {
 		bindings: ${serializeBindings(analysis)},
 		functionSources: ${serializeFunctionSources(analysis)},
 		textBinds: ${serializeTextBinds(binds.textBinds)},
-		eventBinds: ${serializeEventBinds(binds.eventBinds)},
+		eventBinds: ${serializeEventBinds(binds.eventBinds)},${scopeConstantsLine}
 		escapeHtml: Aero.escapeHtml,
 		actionFunctions: {},
 	})

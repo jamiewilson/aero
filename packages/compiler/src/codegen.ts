@@ -184,7 +184,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			: null
 	const mountFn =
 		ta.stateAnalysis !== null
-			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds)
+			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports)
 			: ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {

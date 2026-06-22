@@ -24,6 +24,7 @@ export interface MountStateBindingsOptions {
 	readonly functionSources: readonly string[]
 	readonly textBinds: readonly { selector: string; readExpr: string }[]
 	readonly eventBinds: readonly { selector: string; event: string; handlerExpr: string }[]
+	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
 	/** External functions to inject into the handler eval scope (e.g. hypermedia actions). */
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
@@ -59,6 +60,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		bindings: options.bindings,
 		functionSources: options.functionSources,
 		actionFunctions: options.actionFunctions,
+		scopeConstants: options.scopeConstants,
 	})
 	const cleanups: Cleanup[] = []
 

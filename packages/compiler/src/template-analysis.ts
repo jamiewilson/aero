@@ -11,7 +11,7 @@ import type { CompileOptions, ParseResult } from './types'
 
 import { parseHTML } from 'linkedom'
 import { CompileError } from './types'
-import { analyzeBuildScript, stripBuildScriptTypes } from './build-script-analysis'
+import { analyzeBuildScript, stripBuildScriptTypes, type BuildScriptImport } from './build-script-analysis'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
 import type { LowererDiag } from './lowerer/types'
@@ -82,6 +82,8 @@ export interface TemplateAnalysis {
 	readonly stateScriptBody: string
 	readonly getStaticPathsFn: string | null
 	readonly stateAnalysis: StateScriptAnalysisResult | null
+	/** Static imports from `<script is:state>` for client mount scope. */
+	readonly stateImports: readonly BuildScriptImport[]
 	/**
 	 * Build-scope names and type slices aligned with {@link parse} — for tooling and LSP ambient preludes.
 	 */
@@ -100,7 +102,9 @@ export function buildTemplateAnalysis(
 	let script = parsed.buildScript ? parsed.buildScript.content : ''
 
 	const analysis = analyzeBuildScript(script)
-	const stateAnalysis = parsed.stateScript ? analyzeStateScript(parsed.stateScript.content) : null
+	const stateRaw = parsed.stateScript?.content ?? ''
+	const stateImportAnalysis = stateRaw ? analyzeBuildScript(stateRaw) : null
+	const stateAnalysis = stateRaw ? analyzeStateScript(stateRaw) : null
 	if (stateAnalysis && stateAnalysis.diagnostics.length > 0) {
 		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
 	}
@@ -109,11 +113,14 @@ export function buildTemplateAnalysis(
 		: undefined
 	const lowerer = new Lowerer(resolver, diag, stateBindingNames)
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
-	const stateScriptBody = parsed.stateScript
-		? stripBuildScriptTypes(parsed.stateScript.content, 'state.ts')
+	const stateScriptBody = stateImportAnalysis
+		? stripBuildScriptTypes(stateImportAnalysis.scriptWithoutImportsAndGetStaticPaths, 'state.ts')
 		: ''
 	const getStaticPathsFn = analysis.getStaticPathsFn
-	const importsCode = buildImportsCode(analysis.imports, resolver)
+	const importsCode = buildImportsCode(
+		[...analysis.imports, ...(stateImportAnalysis?.imports ?? [])],
+		resolver
+	)
 	const expandedTemplate = expandSelfClosingTags(parsed.template)
 	const { document } = parseHTML(`<html lang="en"><body>${expandedTemplate}</body></html>`)
 	const styleCode = extractTopLevelStyleCode(document.body, lowerer)
@@ -130,6 +137,7 @@ export function buildTemplateAnalysis(
 		stateScriptBody,
 		getStaticPathsFn: getStaticPathsFn || null,
 		stateAnalysis,
+		stateImports: stateImportAnalysis?.imports ?? [],
 		editorAmbient,
 	}
 }
