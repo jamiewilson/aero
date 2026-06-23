@@ -119,6 +119,23 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('livePropExprs: {"count":"count"}')
 	})
 
+	it('emits component bind records for reactive parent components without live props', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component label="Static" />`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('data-aero-component="0"')
+		expect(code).toContain('componentBinds:')
+		expect(code).toContain('component: counter')
+		expect(code).toContain('livePropExprs: {}')
+	})
+
 	it('emits component module refs for imported components with live props', () => {
 		const html = `<script is:build>
 			import header from '@components/header'

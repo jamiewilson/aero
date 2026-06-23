@@ -126,6 +126,41 @@ describe('mountStateBindings', () => {
 		expect(childCleanup).toHaveBeenCalledTimes(1)
 	})
 
+	it('mounts child component bindings without live props', () => {
+		const childRoot = {} as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		const childCleanup = vi.fn()
+		const childMount = vi.fn(() => childCleanup)
+		const childComponent = { mountStateBindings: childMount }
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: childComponent,
+					livePropExprs: {},
+				},
+			],
+			Aero: {},
+		})
+
+		expect(childMount).toHaveBeenCalledWith(childRoot, {}, { liveProps: {} })
+		cleanup()
+		expect(childCleanup).toHaveBeenCalledTimes(1)
+	})
+
 	it('binds page text markers when child components reuse the same bind id', () => {
 		const childText = { textContent: '0', tagName: 'SPAN' } as unknown as Element
 		const pageText = { textContent: '0', tagName: 'H2' } as unknown as Element
@@ -255,7 +290,7 @@ describe('mountStateBindings', () => {
 			},
 			matches: () => false,
 			get childNodes() {
-				return [] as NodeListOf<ChildNode>
+				return [] as unknown as NodeListOf<ChildNode>
 			},
 			querySelectorAll() {
 				return []
@@ -322,7 +357,7 @@ describe('mountStateBindings', () => {
 				return null
 			},
 			get childNodes() {
-				return [] as NodeListOf<ChildNode>
+				return [] as unknown as NodeListOf<ChildNode>
 			},
 			matches: () => false,
 			getRootNode() {

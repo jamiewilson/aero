@@ -433,10 +433,9 @@ export class Lowerer {
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = parseComponentAttributes(node, this.diag)
 		const livePropExprs = this.collectComponentLivePropExprs(node)
-		const componentBindId =
-			this.reactiveState && Object.keys(livePropExprs).length > 0
-				? this.reactiveState.nextComponentBindId()
-				: undefined
+		const componentBindId = this.reactiveState
+			? this.reactiveState.nextComponentBindId()
+			: undefined
 
 		const slotVarMap: Record<string, string> = {}
 		const slotContentMap: Record<string, any[]> = {
