@@ -21,6 +21,7 @@ import { CompileError } from '../types'
 import {
 	parseComponentAttributes,
 	parseElementAttributes,
+	isSingleWrappedExpression,
 	warnWrapperlessTemplateAttributes,
 } from './attributes'
 import { compileConditionalChain, hasElseAttr, hasElseIfAttr, hasIfAttr } from './conditionals'
@@ -431,6 +432,11 @@ export class Lowerer {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = parseComponentAttributes(node, this.diag)
+		const livePropExprs = this.collectComponentLivePropExprs(node)
+		const componentBindId =
+			this.reactiveState && Object.keys(livePropExprs).length > 0
+				? this.reactiveState.nextComponentBindId()
+				: undefined
 
 		const slotVarMap: Record<string, string> = {}
 		const slotContentMap: Record<string, any[]> = {
@@ -458,16 +464,44 @@ export class Lowerer {
 			slots[slotName] = this.compileSlotChildList(children, skipInterpolation, slotVar)
 		}
 
+		const componentNode: IRNode = {
+			kind: 'Component',
+			baseName,
+			propsString,
+			slots,
+			slotVarMap,
+			componentBindId,
+			outVar,
+		}
+		if (componentBindId === undefined) return [componentNode]
 		return [
+			componentNode,
 			{
-				kind: 'Component',
-				baseName,
-				propsString,
-				slots,
-				slotVarMap,
-				outVar,
+				kind: 'ReactiveComponentBind',
+				bindId: componentBindId,
+				componentExpr: baseName,
+				livePropExprs,
 			},
 		]
+	}
+
+	private collectComponentLivePropExprs(node: any): Record<string, string> {
+		const out: Record<string, string> = {}
+		if (!this.reactiveState || !node.attributes) return out
+		for (let i = 0; i < node.attributes.length; i++) {
+			const attr = node.attributes[i]
+			const name = String(attr.name ?? '')
+			if (!name || name === CONST.ATTR_PROPS || name.startsWith(`aero-${CONST.ATTR_PROPS}`)) {
+				continue
+			}
+			const value = String(attr.value ?? '')
+			if (!isSingleWrappedExpression(value)) continue
+			const expr = Helper.stripBraces(value)
+			if (!this.reactiveState.bindingNames.has(expr)) continue
+			const propName = name.endsWith(':readonly') ? name.slice(0, -':readonly'.length) : name
+			out[propName] = expr
+		}
+		return out
 	}
 }
 
@@ -475,10 +509,12 @@ function createLowererReactiveState(bindingNames: ReadonlySet<string>): LowererR
 	let textBindId = 0
 	let eventBindId = 0
 	let busyBindId = 0
+	let componentBindId = 0
 	return {
 		bindingNames,
 		nextTextBindId: () => textBindId++,
 		nextEventBindId: () => eventBindId++,
 		nextBusyBindId: () => busyBindId++,
+		nextComponentBindId: () => componentBindId++,
 	}
 }

@@ -1,4 +1,10 @@
-import type { IRNode, IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind } from './ir'
+import type {
+	IRNode,
+	IRReactiveBusyBind,
+	IRReactiveComponentBind,
+	IRReactiveEventBind,
+	IRReactiveTextBind,
+} from './ir'
 import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
@@ -6,18 +12,21 @@ export interface CollectedReactiveBinds {
 	textBinds: IRReactiveTextBind[]
 	eventBinds: IRReactiveEventBind[]
 	busyBinds: IRReactiveBusyBind[]
+	componentBinds: IRReactiveComponentBind[]
 }
 
 export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 	const textBinds: IRReactiveTextBind[] = []
 	const eventBinds: IRReactiveEventBind[] = []
 	const busyBinds: IRReactiveBusyBind[] = []
+	const componentBinds: IRReactiveComponentBind[] = []
 
 	function walk(nodes: IRNode[]): void {
 		for (const node of nodes) {
 			if (node.kind === 'ReactiveTextBind') textBinds.push(node)
 			if (node.kind === 'ReactiveEventBind') eventBinds.push(node)
 			if (node.kind === 'ReactiveBusyBind') busyBinds.push(node)
+			if (node.kind === 'ReactiveComponentBind') componentBinds.push(node)
 			if (node.kind === 'For' || node.kind === 'If') {
 				walk(node.body)
 				if (node.kind === 'If') {
@@ -36,7 +45,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 	}
 
 	walk(bodyIR)
-	return { textBinds, eventBinds, busyBinds }
+	return { textBinds, eventBinds, busyBinds, componentBinds }
 }
 
 function serializeBindings(analysis: StateScriptAnalysisResult): string {
@@ -104,6 +113,16 @@ function serializeBusyBinds(binds: IRReactiveBusyBind[]): string {
 	)
 }
 
+function serializeComponentBinds(binds: IRReactiveComponentBind[]): string {
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t\t{ selector: ${JSON.stringify(`[data-aero-component="${bind.bindId}"]`)}, component: ${bind.componentExpr}, livePropExprs: ${JSON.stringify(bind.livePropExprs)} }`
+		)
+		.join(',\n')}\n\t\t]`
+}
+
 function serializeScopeConstants(imports: readonly BuildScriptImport[]): string | null {
 	const entries: string[] = []
 	for (const imp of imports) {
@@ -123,7 +142,12 @@ export function emitMountStateBindingsFunction(
 	stateImports: readonly BuildScriptImport[] = [],
 	actionFunctions?: string
 ): string {
-	if (binds.textBinds.length === 0 && binds.eventBinds.length === 0 && binds.busyBinds.length === 0) return ''
+	if (
+		binds.textBinds.length === 0 &&
+		binds.eventBinds.length === 0 &&
+		binds.busyBinds.length === 0 &&
+		binds.componentBinds.length === 0
+	) return ''
 
 	const scopeConstants = serializeScopeConstants(stateImports)
 	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
@@ -144,7 +168,9 @@ export function mountStateBindings(root, Aero, opts = {}) {
 		textBinds: ${serializeTextBinds(binds.textBinds)},
 		eventBinds: ${serializeEventBinds(binds.eventBinds)},
 		busyBinds: ${serializeBusyBinds(binds.busyBinds)},${scopeConstantsLine}
+		componentBinds: ${serializeComponentBinds(binds.componentBinds)},
 		escapeHtml: Aero.escapeHtml,${actionFnsLine}
+		Aero,
 	})
 }`.trim()
 }

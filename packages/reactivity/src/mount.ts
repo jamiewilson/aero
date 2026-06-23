@@ -58,10 +58,16 @@ export interface MountStateBindingsOptions {
 		modifiers?: readonly string[]
 	}[]
 	readonly busyBinds?: readonly { selector: string; readExpr: string }[]
+	readonly componentBinds?: readonly {
+		selector: string
+		component: unknown
+		livePropExprs: Record<string, string>
+	}[]
 	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
 	readonly hypermediaRuntime?: HypermediaRuntimeLike
+	readonly Aero?: unknown
 }
 
 const HYPERMEDIA_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
@@ -169,6 +175,31 @@ function isElementLike(value: unknown): value is Element {
 	return !!value && typeof value === 'object'
 }
 
+function getComponentMount(component: unknown): ((root: Element, Aero: unknown, opts?: unknown) => unknown) | null {
+	if (component && typeof component === 'object') {
+		const direct = (component as { mountStateBindings?: unknown }).mountStateBindings
+		if (typeof direct === 'function') return direct as (root: Element, Aero: unknown, opts?: unknown) => unknown
+		const nested = (component as { default?: { mountStateBindings?: unknown } }).default?.mountStateBindings
+		if (typeof nested === 'function') return nested as (root: Element, Aero: unknown, opts?: unknown) => unknown
+	}
+	return null
+}
+
+function resolveLivePropSignals(
+	store: SignalStore,
+	livePropExprs: Record<string, string>
+): Record<string, { value: unknown }> {
+	const liveProps: Record<string, { value: unknown }> = {}
+	for (const [propName, expr] of Object.entries(livePropExprs)) {
+		const signalName = expr.trim()
+		if (!/^[A-Za-z_$][\w$]*$/.test(signalName)) {
+			throw new Error(`[aero] Live prop ${propName} must reference a state signal name.`)
+		}
+		liveProps[propName] = store.get(signalName)
+	}
+	return liveProps
+}
+
 /**
  * Wire compiled reactive text and base event handlers against a hydrated signal store.
  */
@@ -220,6 +251,19 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 				registerBusyBinding(target, bind.readExpr, options.store, options.bindings, options.hypermediaRuntime)
 			)
 		}
+	}
+
+	for (const bind of options.componentBinds ?? []) {
+		const target = options.root.querySelector(bind.selector)
+		if (!isElementLike(target)) {
+			throw new Error(`[aero] Missing reactive component target: ${bind.selector}`)
+		}
+		const mount = getComponentMount(bind.component)
+		if (!mount) continue
+		const cleanup = mount(target, options.Aero, {
+			liveProps: resolveLivePropSignals(options.store, bind.livePropExprs),
+		})
+		if (typeof cleanup === 'function') cleanups.push(cleanup as Cleanup)
 	}
 
 	return () => {

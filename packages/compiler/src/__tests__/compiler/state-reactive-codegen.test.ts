@@ -102,6 +102,23 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('"required":false')
 	})
 
+	it('emits component bind records for reactive parent component instances', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component count="{ count }" label="Static" />`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('data-aero-component="0"')
+		expect(code).toContain('componentBinds:')
+		expect(code).toContain('component: counter')
+		expect(code).toContain('livePropExprs: {"count":"count"}')
+	})
+
 	it('collects reactive binds inside switch branches with is:state', () => {
 		const html = `<script is:state>
 			const auth = { state: 'SignedOut' }

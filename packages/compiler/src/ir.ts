@@ -21,6 +21,7 @@ export type IRNode =
 	| IRReactiveTextBind
 	| IRReactiveEventBind
 	| IRReactiveBusyBind
+	| IRReactiveComponentBind
 
 /** Chunk of HTML/text (template literal content). */
 export interface IRAppend {
@@ -90,6 +91,7 @@ export interface IRComponent {
 	propsString: string
 	slots: Record<string, IRNode[]>
 	slotVarMap: Record<string, string>
+	componentBindId?: number
 	outVar?: string
 }
 
@@ -131,6 +133,14 @@ export interface IRReactiveBusyBind {
 	kind: 'ReactiveBusyBind'
 	bindId: number
 	readExpr: string
+}
+
+/** Register a child component mount against a `data-aero-component` marker. */
+export interface IRReactiveComponentBind {
+	kind: 'ReactiveComponentBind'
+	bindId: number
+	componentExpr: string
+	livePropExprs: Record<string, string>
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

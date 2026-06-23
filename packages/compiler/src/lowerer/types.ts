@@ -33,6 +33,7 @@ export interface LowererReactiveState {
 	nextTextBindId(): number
 	nextEventBindId(): number
 	nextBusyBindId(): number
+	nextComponentBindId(): number
 }
 
 /** Result of parsing a component's attributes: props object code string (with optional spread). */

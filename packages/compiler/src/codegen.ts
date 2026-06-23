@@ -183,11 +183,14 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		ownedStateBindingNames.length > 0
 			? createStateHydrationScriptLine(ownedStateBindingNames)
 			: null
-	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [], busyBinds: [] }
+	const reactiveBinds = ta.stateAnalysis
+		? collectReactiveBinds(ta.bodyIR)
+		: { textBinds: [], eventBinds: [], busyBinds: [], componentBinds: [] }
 	const hasReactiveBinds =
 		reactiveBinds.textBinds.length > 0 ||
 		reactiveBinds.eventBinds.length > 0 ||
-		reactiveBinds.busyBinds.length > 0
+		reactiveBinds.busyBinds.length > 0 ||
+		reactiveBinds.componentBinds.length > 0
 	const mountImportLine = hasReactiveBinds
 		? [createStateMountImportLine(), options.hypermedia ? createHypermediaImportLine() : null]
 				.filter(Boolean)

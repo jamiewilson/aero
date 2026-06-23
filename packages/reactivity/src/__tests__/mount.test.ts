@@ -87,6 +87,45 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
+	it('mounts child component bindings with live prop signal aliases', () => {
+		const childRoot = {} as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		store.merge({ count: 1 })
+		const childCleanup = vi.fn()
+		const childMount = vi.fn(() => childCleanup)
+		const childComponent = { mountStateBindings: childMount }
+		const aero = {}
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: childComponent,
+					livePropExprs: { count: 'count' },
+				},
+			],
+			Aero: aero,
+		})
+
+		expect(childMount).toHaveBeenCalledWith(childRoot, aero, {
+			liveProps: { count: store.get('count') },
+		})
+		cleanup()
+		expect(childCleanup).toHaveBeenCalledTimes(1)
+	})
+
 	it('creates local state for omitted optional live props', () => {
 		const text = { textContent: '' } as unknown as Element
 		const root = {
