@@ -113,13 +113,18 @@ function serializeBusyBinds(binds: IRReactiveBusyBind[]): string {
 	)
 }
 
-function serializeComponentBinds(binds: IRReactiveComponentBind[]): string {
+function serializeComponentBinds(
+	binds: IRReactiveComponentBind[],
+	defaultImportBindings: ReadonlySet<string>
+): string {
 	if (binds.length === 0) return '[]'
 	return `[\n${binds
-		.map(
-			bind =>
-				`\t\t\t{ selector: ${JSON.stringify(`[data-aero-component="${bind.bindId}"]`)}, component: ${bind.componentExpr}, livePropExprs: ${JSON.stringify(bind.livePropExprs)} }`
-		)
+		.map(bind => {
+			const componentExpr = defaultImportBindings.has(bind.componentExpr)
+				? `__aeroMod_${bind.componentExpr}`
+				: bind.componentExpr
+			return `\t\t\t{ selector: ${JSON.stringify(`[data-aero-component="${bind.bindId}"]`)}, component: ${componentExpr}, livePropExprs: ${JSON.stringify(bind.livePropExprs)} }`
+		})
 		.join(',\n')}\n\t\t]`
 }
 
@@ -140,7 +145,8 @@ export function emitMountStateBindingsFunction(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
 	stateImports: readonly BuildScriptImport[] = [],
-	actionFunctions?: string
+	actionFunctions?: string,
+	defaultImportBindings: ReadonlySet<string> = new Set()
 ): string {
 	if (
 		binds.textBinds.length === 0 &&
@@ -168,7 +174,7 @@ export function mountStateBindings(root, Aero, opts = {}) {
 		textBinds: ${serializeTextBinds(binds.textBinds)},
 		eventBinds: ${serializeEventBinds(binds.eventBinds)},
 		busyBinds: ${serializeBusyBinds(binds.busyBinds)},${scopeConstantsLine}
-		componentBinds: ${serializeComponentBinds(binds.componentBinds)},
+		componentBinds: ${serializeComponentBinds(binds.componentBinds, defaultImportBindings)},
 		escapeHtml: Aero.escapeHtml,${actionFnsLine}
 		Aero,
 	})

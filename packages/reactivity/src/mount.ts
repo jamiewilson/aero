@@ -175,6 +175,29 @@ function isElementLike(value: unknown): value is Element {
 	return !!value && typeof value === 'object'
 }
 
+/**
+ * Resolve a compiled bind target within a mount root.
+ * Page mounts skip markers owned by nested `[data-aero-component]` subtrees;
+ * component mounts scope to their own component root.
+ */
+function queryBindTarget(root: ParentNode, selector: string): Element | null {
+	const rootEl = root as Element
+	const matches = rootEl.querySelectorAll?.(selector)
+	if (!matches || matches.length === 0) {
+		return root.querySelector(selector) as Element | null
+	}
+
+	const ownsComponentRoot = rootEl.hasAttribute?.('data-aero-component') === true
+	for (const el of matches) {
+		if (!ownsComponentRoot) {
+			const componentRoot = el.closest('[data-aero-component]')
+			if (componentRoot && componentRoot !== rootEl) continue
+		}
+		return el as Element
+	}
+	return null
+}
+
 function getComponentMount(component: unknown): ((root: Element, Aero: unknown, opts?: unknown) => unknown) | null {
 	if (component && typeof component === 'object') {
 		const direct = (component as { mountStateBindings?: unknown }).mountStateBindings
@@ -215,7 +238,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	const cleanups: Cleanup[] = []
 
 	for (const bind of options.textBinds) {
-		const target = options.root.querySelector(bind.selector)
+		const target = queryBindTarget(options.root, bind.selector)
 		if (!target) {
 			throw new Error(`[aero] Missing reactive text target: ${bind.selector}`)
 		}
@@ -223,7 +246,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	}
 
 	for (const bind of options.eventBinds) {
-		const target = options.root.querySelector(bind.selector)
+		const target = queryBindTarget(options.root, bind.selector)
 		if (!target || typeof (target as Element).addEventListener !== 'function') {
 			throw new Error(`[aero] Missing reactive event target: ${bind.selector}`)
 		}
@@ -243,7 +266,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 
 	if (options.busyBinds && options.hypermediaRuntime) {
 		for (const bind of options.busyBinds) {
-			const target = options.root.querySelector(bind.selector)
+			const target = queryBindTarget(options.root, bind.selector)
 			if (!isElementLike(target)) {
 				throw new Error(`[aero] Missing busy target: ${bind.selector}`)
 			}

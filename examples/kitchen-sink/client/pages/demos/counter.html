@@ -1,12 +1,14 @@
 <script is:build>
 	import base from '@layouts/base'
+	import header from '@components/header'
 </script>
 
 <script is:state>
 	let count = 0
 </script>
 
-<base-layout title="Reactivity: { count }">
+<base-layout title="Counter: { count }">
+	<header-component title="Counter Demo" count="{ count }" />
 	<section class="h-stack items-center">
 		<button on:click="{ count-- }">−</button>
 		<h2>{ count }</h2>

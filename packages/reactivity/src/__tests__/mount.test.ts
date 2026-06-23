@@ -126,6 +126,124 @@ describe('mountStateBindings', () => {
 		expect(childCleanup).toHaveBeenCalledTimes(1)
 	})
 
+	it('resolves mountStateBindings from imported component module objects', () => {
+		const childRoot = {
+			tagName: 'SPAN',
+			hasAttribute(name: string) {
+				return name === 'data-aero-component'
+			},
+			querySelectorAll(selector: string) {
+				if (selector === '[data-aero-text="0"]') {
+					return [{ textContent: '0', tagName: 'SPAN', closest: () => childRoot }]
+				}
+				return []
+			},
+			querySelector(selector: string) {
+				if (selector === '[data-aero-text="0"]') {
+					return { textContent: '0', tagName: 'SPAN', closest: () => childRoot }
+				}
+				return null
+			},
+		} as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		store.merge({ count: 2 })
+		const childMount = vi.fn(() => () => {})
+		const childModule = { default: vi.fn(), mountStateBindings: childMount }
+
+		mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '2', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: childModule,
+					livePropExprs: { count: 'count' },
+				},
+			],
+		})
+
+		expect(childMount).toHaveBeenCalled()
+	})
+
+	it('binds page text markers when child components reuse the same bind id', () => {
+		const childText = { textContent: '0', tagName: 'SPAN' } as unknown as Element
+		const pageText = { textContent: '0', tagName: 'H2' } as unknown as Element
+		const componentRoot = {
+			tagName: 'SPAN',
+			hasAttribute(name: string) {
+				return name === 'data-aero-component'
+			},
+			closest() {
+				return componentRoot
+			},
+		} as unknown as Element
+
+		Object.defineProperty(childText, 'closest', {
+			value(selector: string) {
+				return selector === '[data-aero-component]' ? componentRoot : null
+			},
+		})
+		Object.defineProperty(pageText, 'closest', {
+			value() {
+				return null
+			},
+		})
+
+		const root = {
+			tagName: 'BODY',
+			hasAttribute() {
+				return false
+			},
+			querySelector(selector: string) {
+				if (selector === '[data-aero-text="0"]') return childText
+				if (selector === '[data-aero-component="0"]') return componentRoot
+				return null
+			},
+			querySelectorAll(selector: string) {
+				if (selector === '[data-aero-text="0"]') return [childText, pageText]
+				return []
+			},
+		} as unknown as ParentNode
+
+		const store = new SignalStore()
+		store.merge({ count: 0 })
+		const childMount = vi.fn(() => () => {})
+		const childComponent = { mountStateBindings: childMount }
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: childComponent,
+					livePropExprs: { count: 'count' },
+				},
+			],
+		})
+
+		expect(pageText.textContent).toBe('0')
+		;(store.get('count') as { value: number }).value = 3
+		expect(pageText.textContent).toBe('3')
+		expect(childText.textContent).toBe('0')
+		expect(childMount).toHaveBeenCalled()
+		cleanup()
+	})
+
 	it('creates local state for omitted optional live props', () => {
 		const text = { textContent: '' } as unknown as Element
 		const root = {

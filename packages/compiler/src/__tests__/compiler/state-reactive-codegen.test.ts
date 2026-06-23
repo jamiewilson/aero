@@ -119,6 +119,22 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('livePropExprs: {"count":"count"}')
 	})
 
+	it('emits component module refs for imported components with live props', () => {
+		const html = `<script is:build>
+			import header from '@components/header'
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<header-component count="{ count }" />`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('const __aeroMod_header = await import')
+		expect(code).toContain('const header = __aeroMod_header.default')
+		expect(code).toContain('component: __aeroMod_header')
+	})
+
 	it('collects reactive binds inside switch branches with is:state', () => {
 		const html = `<script is:state>
 			const auth = { state: 'SignedOut' }

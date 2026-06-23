@@ -199,7 +199,13 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
 	const mountFn =
 		ta.stateAnalysis !== null
-			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports, mountActionFns)
+			? emitMountStateBindingsFunction(
+					ta.stateAnalysis,
+					reactiveBinds,
+					ta.stateImports,
+					mountActionFns,
+					ta.defaultImportBindings
+				)
 			: ''
 	const livePropsMetadata =
 		ta.stateAnalysis !== null ? emitLivePropsMetadata(ta.stateAnalysis) : ''
