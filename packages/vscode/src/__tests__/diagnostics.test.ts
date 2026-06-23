@@ -1713,6 +1713,121 @@ const spread = { title: 'hello' }
 		}
 	})
 
+	it('should report omitted required live props for imported components', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const missing = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes('Required live prop `count`') &&
+					d.message.includes('<counter-component>')
+			)
+			expect(missing).toBeDefined()
+			expect(missing.code.value).toBe('AERO_COMPILE')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should not report required live props when passed as state signals', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-ok-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const missing = reportedDiagnostics.find((d: any) =>
+				d.message.includes('Required live prop `count`')
+			)
+			expect(missing).toBeUndefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
 	it('should report missing required prop when bare props omits it', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-props-bare-'))
 		try {

@@ -24,7 +24,14 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	checkConditionalChains(document, text, diagnostics)
 	checkDirectiveExpressionBraces(document, text, diagnostics)
 	checkComponentReferences(document, text, diagnostics, resolver)
-	checkComponentProps(document, text, diagnostics, resolver, parsed.definedVariables)
+	checkComponentProps(
+		document,
+		text,
+		diagnostics,
+		resolver,
+		parsed.definedVariables,
+		parsed.variablesByScope.state
+	)
 	checkUndefinedScriptVariables(document, parsed, diagnostics)
 	checkRouteContract(document, diagnostics, resolver)
 	const regexUndefined =

@@ -3,12 +3,14 @@
  */
 import * as vscode from 'vscode'
 import * as fs from 'node:fs'
+import path from 'node:path'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import type { PathResolver } from '../pathResolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
+import { collectComponentLivePropMetadata } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 import { getIgnoredRanges, isInRanges } from './helpers'
 
@@ -67,7 +69,8 @@ export function checkComponentProps(
 	text: string,
 	diagnostics: vscode.Diagnostic[],
 	resolver: PathResolver,
-	definedVars: Map<string, VariableDefinition>
+	definedVars: Map<string, VariableDefinition>,
+	stateVars: Map<string, VariableDefinition> = new Map()
 ): void {
 	const imports = collectImportedSpecifiersFromDocument(text)
 	const ignoredRanges = getIgnoredRanges(text)
@@ -100,6 +103,20 @@ export function checkComponentProps(
 		if (!resolvedPath) continue
 
 		const suffix = suffixMatch[1] as string
+		if (suffix === 'component') {
+			validateComponentLiveProps(
+				document,
+				diagnostics,
+				tagStart,
+				match[0].length,
+				attrs,
+				tagName,
+				baseName,
+				importName,
+				resolvedPath,
+				stateVars
+			)
+		}
 
 		// Layout: trace chain to sink component; validate bare/spread props or individual attrs
 		if (suffix === 'layout') {
@@ -166,6 +183,67 @@ export function checkComponentProps(
 				suffix
 			)
 		}
+	}
+}
+
+function getPassedLivePropNames(
+	attrs: string,
+	stateVars: Map<string, VariableDefinition>
+): Set<string> {
+	const passed = new Set<string>()
+	const attrRegex =
+		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+	let m: RegExpExecArray | null
+	attrRegex.lastIndex = 0
+	while ((m = attrRegex.exec(attrs)) !== null) {
+		const rawName = m[1]
+		const value = (m[2] ?? m[3] ?? '').trim()
+		const expr = value.match(/^\{\s*([A-Za-z_$][\w$]*)\s*\}$/)?.[1]
+		if (!expr || !stateVars.has(expr)) continue
+		const propName = rawName.endsWith(':readonly')
+			? rawName.slice(0, -':readonly'.length)
+			: rawName
+		passed.add(propName)
+	}
+	return passed
+}
+
+function validateComponentLiveProps(
+	document: vscode.TextDocument,
+	diagnostics: vscode.Diagnostic[],
+	tagStart: number,
+	tagLength: number,
+	attrs: string,
+	tagName: string,
+	baseName: string,
+	importName: string,
+	resolvedPath: string,
+	stateVars: Map<string, VariableDefinition>
+): void {
+	if (stateVars.size === 0) return
+	let metadata: ReturnType<typeof collectComponentLivePropMetadata>
+	try {
+		metadata = collectComponentLivePropMetadata(path.dirname(resolvedPath))
+	} catch {
+		return
+	}
+	const liveProps = metadata[importName] ?? metadata[baseName] ?? []
+	if (liveProps.length === 0) return
+
+	const passed = getPassedLivePropNames(attrs, stateVars)
+	for (const liveProp of liveProps) {
+		if (!liveProp.required) continue
+		const propName = liveProp.propName || liveProp.name
+		if (passed.has(propName)) continue
+		const startPos = document.positionAt(tagStart)
+		const endPos = document.positionAt(tagStart + tagLength)
+		const diagnostic = new vscode.Diagnostic(
+			new vscode.Range(startPos, endPos),
+			`Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
+			vscode.DiagnosticSeverity.Error
+		)
+		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
+		diagnostics.push(diagnostic)
 	}
 }
 
