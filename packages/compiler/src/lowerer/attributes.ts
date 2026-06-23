@@ -23,6 +23,7 @@ import {
 	deriveHypermediaFallbackAttrs,
 	renderFallbackAttributeString,
 } from '../hypermedia-fallback'
+import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind } from '../ir'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }

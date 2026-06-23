@@ -185,4 +185,97 @@ describe('createHypermediaRuntime integration', () => {
 		expect(get.disabled).toBe(false)
 		expect(post.disabled).toBe(false)
 	})
+
+	it('applies lifecycle classes to trigger and explicit target during each phase', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		const calls: string[] = []
+
+		btn.addEventListener('request', () => {
+			calls.push(`request:${btn.className}:${target.className}`)
+		})
+		target.addEventListener('response', () => {
+			calls.push(`response:${btn.className}:${target.className}`)
+		})
+		target.addEventListener('swap', () => {
+			calls.push(`swap:${btn.className}:${target.className}`)
+		})
+		target.addEventListener('settle', () => {
+			calls.push(`settle:${btn.className}:${target.className}`)
+		})
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span>new</span>', { status: 200, headers: { 'Content-Type': 'text/html' } })
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', target: '#result', swap: 'innerHTML' },
+			btn
+		)
+
+		expect(calls).toEqual([
+			'request:aero-loading:aero-loading',
+			'response::',
+			'swap:aero-swapping:aero-swapping',
+			'settle:aero-settling:aero-settling',
+		])
+		expect(btn.className).toBe('')
+		expect(target.className).toBe('')
+	})
+
+	it('mirrors lifecycle busy state to aria-busy when requested', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result" aria-busy="false">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		const calls: string[] = []
+
+		target.addEventListener('request', () => {
+			calls.push(`request:${btn.getAttribute('aria-busy')}:${target.getAttribute('aria-busy')}`)
+		})
+		target.addEventListener('settle', () => {
+			calls.push(`settle:${btn.getAttribute('aria-busy')}:${target.getAttribute('aria-busy')}`)
+		})
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span>new</span>', { status: 200, headers: { 'Content-Type': 'text/html' } })
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', target: '#result', swap: 'innerHTML', ariaBusy: true },
+			btn
+		)
+
+		expect(calls).toEqual(['request:true:true', 'settle:true:true'])
+		expect(btn.hasAttribute('aria-busy')).toBe(false)
+		expect(target.getAttribute('aria-busy')).toBe('false')
+	})
+
+	it('moves focus to the swap target when the focused descendant is removed without changing scroll', async () => {
+		document.body.innerHTML = '<div id="result"><button id="focused">focus me</button></div>'
+		const target = document.querySelector('#result') as HTMLElement
+		const focused = document.querySelector('#focused') as HTMLButtonElement
+		const runtime = createHypermediaRuntime()
+		const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+		Object.defineProperty(window, 'scrollX', { configurable: true, value: 11 })
+		Object.defineProperty(window, 'scrollY', { configurable: true, value: 27 })
+		focused.focus()
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span>new</span>', { status: 200, headers: { 'Content-Type': 'text/html' } })
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', target: '#result', swap: 'innerHTML' },
+			focused
+		)
+
+		expect(document.activeElement).toBe(target)
+		expect(target.getAttribute('tabindex')).toBe('-1')
+		expect(window.scrollX).toBe(11)
+		expect(window.scrollY).toBe(27)
+		expect(scrollTo).not.toHaveBeenCalled()
+	})
 })

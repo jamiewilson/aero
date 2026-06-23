@@ -20,6 +20,7 @@ export interface ActionOptions {
 	values?: Record<string, string>
 	pushUrl?: boolean | string
 	autoDisable?: boolean
+	ariaBusy?: boolean
 	state?: HypermediaBooleanSignal
 }
 

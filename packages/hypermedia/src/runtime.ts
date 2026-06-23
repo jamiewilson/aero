@@ -12,6 +12,14 @@ import { resolveTarget, performSwap, parseSwapStyle } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { adopt as adoptFragment } from './adopt'
 
+type LifecyclePhase = 'loading' | 'swapping' | 'settling'
+
+const PHASE_CLASS: Record<LifecyclePhase, string> = {
+	loading: 'aero-loading',
+	swapping: 'aero-swapping',
+	settling: 'aero-settling',
+}
+
 export interface HypermediaRuntime {
 	readonly kind: 'hypermedia-runtime'
 	readonly debug?: boolean
@@ -75,6 +83,77 @@ function syncNativeFallback(trigger: Element | undefined, url: string): void {
 function resolveExplicitTarget(targetSelector: string | undefined, context: ParentNode): Element | undefined {
 	if (!targetSelector) return undefined
 	return resolveTarget(targetSelector, context) ?? undefined
+}
+
+function uniqueElements(...elements: Array<Element | undefined>): Element[] {
+	const result: Element[] = []
+	for (const element of elements) {
+		if (!element || result.includes(element)) continue
+		result.push(element)
+	}
+	return result
+}
+
+function setPhaseClass(elements: readonly Element[], phase: LifecyclePhase | null): void {
+	for (const element of elements) {
+		for (const className of Object.values(PHASE_CLASS)) {
+			element.classList.remove(className)
+		}
+		if (phase) {
+			element.classList.add(PHASE_CLASS[phase])
+		}
+	}
+}
+
+function createAriaBusyMirror(enabled: boolean): {
+	add(elements: readonly Element[]): void
+	restore(): void
+} {
+	const previous = new Map<Element, string | null>()
+
+	return {
+		add(elements) {
+			if (!enabled) return
+			for (const element of elements) {
+				if (!previous.has(element)) {
+					previous.set(element, element.getAttribute('aria-busy'))
+				}
+				element.setAttribute('aria-busy', 'true')
+			}
+		},
+		restore() {
+			for (const [element, value] of previous) {
+				if (value === null) {
+					element.removeAttribute('aria-busy')
+				} else {
+					element.setAttribute('aria-busy', value)
+				}
+			}
+			previous.clear()
+		},
+	}
+}
+
+function createFocusFallback(target: Element): () => void {
+	const doc = target.ownerDocument
+	const activeBeforeSwap = doc.activeElement
+	const shouldFallback =
+		activeBeforeSwap instanceof Element && target.contains(activeBeforeSwap)
+
+	return () => {
+		if (!shouldFallback || activeBeforeSwap?.isConnected || !target.isConnected) return
+		if (!(target instanceof HTMLElement)) return
+
+		if (!target.hasAttribute('tabindex')) {
+			target.setAttribute('tabindex', '-1')
+		}
+
+		try {
+			target.focus({ preventScroll: true })
+		} catch {
+			target.focus()
+		}
+	}
 }
 
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
@@ -145,7 +224,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			trigger: options.trigger,
 			targetSelector: options.targetSelector,
 			performSwap() {
+				const applyFocusFallback = createFocusFallback(options.target)
 				performSwap({ target: options.target, html: options.html, style: options.style })
+				applyFocusFallback()
 			},
 			adoptRuntime(container: ParentNode) {
 				runtime.adopt(container)
@@ -176,6 +257,16 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		const context = trigger?.ownerDocument ?? document
 		const requestTargetSelector = opts.target ?? defaultTarget
 		const requestTarget = resolveExplicitTarget(requestTargetSelector, context)
+		const ariaBusy = createAriaBusyMirror(opts.ariaBusy === true)
+		const phasedElements = new Set<Element>()
+		const setLifecyclePhase = (elements: readonly Element[], phase: LifecyclePhase | null) => {
+			for (const element of elements) phasedElements.add(element)
+			setPhaseClass([...phasedElements], null)
+			setPhaseClass(elements, phase)
+			ariaBusy.add(elements)
+		}
+		const requestElements = uniqueElements(trigger, requestTarget)
+		setLifecyclePhase(requestElements, 'loading')
 		emitLifecycle(
 			'request',
 			{ request, target: requestTargetSelector, trigger },
@@ -211,7 +302,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
 			const explicitTargetEl = effectiveTarget ? (targetEl ?? undefined) : undefined
 			const lifecycleTarget = effectiveTarget ?? 'self'
+			const effectiveElements = uniqueElements(trigger, explicitTargetEl)
 
+			setPhaseClass([...phasedElements], null)
 			emitLifecycle(
 				'response',
 				{ request, response, target: lifecycleTarget, trigger },
@@ -220,6 +313,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			)
 
 			if (targetEl && effectiveSwap !== 'none') {
+				setLifecyclePhase(effectiveElements, 'swapping')
 				await runSwapLifecycle({
 					target: targetEl,
 					html: response.html,
@@ -233,18 +327,22 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					trigger,
 					explicitTargetEl
 				)
+				setLifecyclePhase(effectiveElements, 'settling')
 				emitLifecycle(
 					'settle',
 					{ request, response, target: lifecycleTarget, trigger },
 					trigger,
 					explicitTargetEl
 				)
+				setPhaseClass([...phasedElements], null)
 			}
 
 			applyPushUrl(response, opts, trigger)
 
 			return response
 		} finally {
+			setPhaseClass([...phasedElements], null)
+			ariaBusy.restore()
 			setBusyForSignal(busySignal, false)
 			if (autoDisable && previousDisabled !== undefined) setDisabled(trigger, previousDisabled)
 		}

@@ -19,6 +19,7 @@ interface CachedFlags extends FeatureFlags {
 
 const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
+const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/script>/i
 
 const flagsCache = new Map<string, CachedFlags>()
 
@@ -89,6 +90,76 @@ function rangeForMatch(
 	return new vscode.Range(start, end)
 }
 
+function stripBraces(value: string): string {
+	const trimmed = value.trim()
+	return trimmed.startsWith('{') && trimmed.endsWith('}')
+		? trimmed.slice(1, -1).trim()
+		: trimmed
+}
+
+function simpleIdentifier(expression: string): string | null {
+	const trimmed = expression.trim()
+	return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? trimmed : null
+}
+
+function isDefinitelyNonBooleanInit(initExpr: string): boolean {
+	const trimmed = initExpr.trim()
+	return (
+		trimmed === 'undefined' ||
+		trimmed === 'null' ||
+		/^(['"]).*\1$/.test(trimmed) ||
+		/^-?\d+(?:\.\d+)?$/.test(trimmed) ||
+		/^[\[{]/.test(trimmed)
+	)
+}
+
+function collectStateBindings(text: string): Map<string, string> {
+	const match = text.match(STATE_SCRIPT_BLOCK_RE)
+	const bindings = new Map<string, string>()
+	if (!match) return bindings
+	const script = match[1]
+	for (const declaration of script.matchAll(/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g)) {
+		bindings.set(declaration[1], declaration[2])
+	}
+	return bindings
+}
+
+function pushFeatureDiagnostic(
+	document: vscode.TextDocument,
+	text: string,
+	diagnostics: vscode.Diagnostic[],
+	re: RegExp,
+	message: string
+): void {
+	const diagnostic = new vscode.Diagnostic(
+		rangeForMatch(document, text, re),
+		message,
+		vscode.DiagnosticSeverity.Error
+	)
+	applyAeroDiagnosticIdentity(diagnostic, 'AERO_CONFIG', 'aero-config.md')
+	diagnostics.push(diagnostic)
+}
+
+function validateSignalReference(
+	document: vscode.TextDocument,
+	text: string,
+	diagnostics: vscode.Diagnostic[],
+	re: RegExp,
+	bindings: ReadonlyMap<string, string>,
+	name: string,
+	missingMessage: (name: string) => string,
+	nonBooleanMessage: (name: string) => string
+): void {
+	const initExpr = bindings.get(name)
+	if (initExpr === undefined) {
+		pushFeatureDiagnostic(document, text, diagnostics, re, missingMessage(name))
+		return
+	}
+	if (isDefinitelyNonBooleanInit(initExpr)) {
+		pushFeatureDiagnostic(document, text, diagnostics, re, nonBooleanMessage(name))
+	}
+}
+
 export function checkFeatureGates(
 	document: vscode.TextDocument,
 	text: string,
@@ -111,8 +182,9 @@ export function checkFeatureGates(
 		diagnostics.push(diagnostic)
 	}
 
-	const busyRegex = /\b(?:data-aero-|aero-)?busy\b\s*=\s*(['"]).*?\1/is
+	const busyRegex = /\b(?:data-aero-|aero-)?busy\b\s*=\s*(['"])(.*?)\1/is
 	const busyMatch = text.match(busyRegex)
+	const stateBindings = flags.reactivity && flags.hypermedia ? collectStateBindings(text) : new Map<string, string>()
 	if (busyMatch) {
 		if (!flags.reactivity || !flags.hypermedia) {
 			const missing: string[] = []
@@ -125,6 +197,65 @@ export function checkFeatureGates(
 			)
 			applyAeroDiagnosticIdentity(diagnostic, 'AERO_CONFIG', 'aero-config.md')
 			diagnostics.push(diagnostic)
+		} else if (!IS_STATE_SCRIPT_RE.test(text)) {
+			pushFeatureDiagnostic(
+				document,
+				text,
+				diagnostics,
+				busyRegex,
+				'`busy` attribute references must be declared in `<script is:state>`.'
+			)
+		} else {
+			const signalName = simpleIdentifier(stripBraces(busyMatch[2] ?? ''))
+			if (!signalName) {
+				pushFeatureDiagnostic(
+					document,
+					text,
+					diagnostics,
+					busyRegex,
+					'`busy` must reference one declared boolean state binding.'
+				)
+			} else {
+				validateSignalReference(
+					document,
+					text,
+					diagnostics,
+					busyRegex,
+					stateBindings,
+					signalName,
+					name => `Hypermedia busy signal not found: ${name}`,
+					name => `Hypermedia busy signal must be boolean: ${name}`
+				)
+			}
+		}
+	}
+
+	if (flags.reactivity && flags.hypermedia && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(text)) {
+		const stringStateRegex = /\bstate\s*:\s*(['"])[^'"]+\1/is
+		if (stringStateRegex.test(text)) {
+			pushFeatureDiagnostic(
+				document,
+				text,
+				diagnostics,
+				stringStateRegex,
+				'Hypermedia action `state` must reference a boolean state binding, not a string.'
+			)
+			return
+		}
+
+		const identifierStateRegex = /\bstate\s*:\s*([A-Za-z_$][\w$]*)/is
+		const stateMatch = text.match(identifierStateRegex)
+		if (stateMatch) {
+			validateSignalReference(
+				document,
+				text,
+				diagnostics,
+				identifierStateRegex,
+				stateBindings,
+				stateMatch[1],
+				name => `Hypermedia action state signal not found: ${name}`,
+				name => `Hypermedia action state signal must be boolean: ${name}`
+			)
 		}
 	}
 }

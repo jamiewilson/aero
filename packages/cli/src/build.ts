@@ -13,7 +13,7 @@ type AeroBuildOptions = {
 /** Resolve CLI exit code after `vite build` (respects `process.exitCode` and thrown Aero errors). */
 export function resolveAeroBuildExitCode(err?: unknown): number {
 	if (err !== undefined) return exitCodeForThrown(err)
-	return process.exitCode ?? 0
+	return typeof process.exitCode === 'number' ? process.exitCode : 0
 }
 
 /**

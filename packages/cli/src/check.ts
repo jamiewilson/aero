@@ -383,6 +383,8 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 										root,
 										resolvePath,
 										importer: file,
+										reactivity: featureFlags.reactivity,
+										hypermedia: featureFlags.hypermedia,
 										onWarning: warning => {
 											diagnostics.push({
 												severity: 'warning',

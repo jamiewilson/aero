@@ -3,6 +3,7 @@ import type { CompileOptions, ParseResult } from './types'
 import { CompileError } from './types'
 import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
+import type { StateScriptAnalysisResult } from './state-script-analysis'
 
 function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<string>): boolean {
 	for (const node of nodes) {
@@ -36,7 +37,8 @@ function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<stri
 export function validateFeatureGates(
 	parsed: ParseResult,
 	options: CompileOptions,
-	bodyIR: IRNode[]
+	bodyIR: IRNode[],
+	stateAnalysis?: StateScriptAnalysisResult | null
 ): void {
 	const file = options.importer
 
@@ -85,12 +87,16 @@ export function validateFeatureGates(
 	}
 
 	if (options.hypermedia === true) {
-		const issues = detectHypermediaIssues(eventBinds, parsed.template)
+		const issues = detectHypermediaIssues(eventBinds, parsed.template, parsed.stateScript !== null)
 		for (const issue of issues) {
 			if (issue.severity === 'error') {
 				throw new CompileError({ message: issue.message, file })
 			}
 			options.onWarning?.({ code: 'AERO_COMPILE', message: issue.message, file })
+		}
+
+		if (stateAnalysis) {
+			validateHypermediaSignalRefs(reactiveBinds.busyBinds, eventBinds, stateAnalysis, file)
 		}
 	}
 
@@ -99,5 +105,86 @@ export function validateFeatureGates(
 			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
 			file,
 		})
+	}
+}
+
+function simpleIdentifier(expression: string): string | null {
+	const trimmed = expression.trim()
+	return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? trimmed : null
+}
+
+function isDefinitelyNonBooleanInit(initExpr: string): boolean {
+	const trimmed = initExpr.trim()
+	return (
+		trimmed === 'undefined' ||
+		trimmed === 'null' ||
+		/^(['"]).*\1$/.test(trimmed) ||
+		/^-?\d+(?:\.\d+)?$/.test(trimmed) ||
+		/^[\[{]/.test(trimmed)
+	)
+}
+
+function assertBooleanStateBinding(
+	name: string,
+	analysis: StateScriptAnalysisResult,
+	file: string | undefined,
+	missingMessage: (name: string) => string,
+	nonBooleanMessage: (name: string) => string
+): void {
+	const binding = analysis.bindings.find(item => item.name === name)
+	if (!binding) {
+		throw new CompileError({ message: missingMessage(name), file })
+	}
+	if (binding.derived || isDefinitelyNonBooleanInit(binding.initExpr)) {
+		throw new CompileError({ message: nonBooleanMessage(name), file })
+	}
+}
+
+function validateHypermediaSignalRefs(
+	busyBinds: readonly { readExpr: string }[],
+	eventBinds: readonly IRReactiveEventBind[],
+	analysis: StateScriptAnalysisResult,
+	file: string | undefined
+): void {
+	for (const bind of busyBinds) {
+		const name = simpleIdentifier(bind.readExpr)
+		if (!name) {
+			throw new CompileError({
+				message: '`busy` must reference one declared boolean state binding.',
+				file,
+			})
+		}
+		assertBooleanStateBinding(
+			name,
+			analysis,
+			file,
+			ref => `Hypermedia busy signal not found: ${ref}`,
+			ref => `Hypermedia busy signal must be boolean: ${ref}`
+		)
+	}
+
+	for (const bind of eventBinds) {
+		const handler = bind.handlerExpr
+		if (!/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(handler)) continue
+
+		if (/\bstate\s*:\s*(['"])[^'"]+\1/.test(handler)) {
+			throw new CompileError({
+				message:
+					'Hypermedia action `state` must reference a boolean state binding, not a string.',
+				file,
+			})
+		}
+
+		const refs = handler.matchAll(/\bstate\s*:\s*([A-Za-z_$][\w$]*)/g)
+		for (const match of refs) {
+			const name = match[1]
+			assertBooleanStateBinding(
+				name,
+				analysis,
+				file,
+				ref => `Hypermedia action state signal not found: ${ref}`,
+				ref => `Hypermedia action state signal must be boolean: ${ref}`
+			)
+		}
 	}
 }

@@ -178,4 +178,32 @@ describe('runAeroCheck', () => {
 			spy.mockRestore()
 		}
 	})
+
+	it('reports compiler hypermedia diagnostics with resolved feature flags', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-hypermedia-state-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.writeFileSync(
+			path.join(dir, 'aero.config.ts'),
+			'export default { reactivity: true, hypermedia: true }\n',
+			'utf-8'
+		)
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/index.html'),
+			`<script is:state>
+				let isSaving = false
+			</script>
+			<button on:click="{ POST('/api/save', { state: 'isSaving' }) }">Save</button>\n`,
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_COMPILE)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_COMPILE]')
+			expect(out).toContain('Hypermedia action `state` must reference a boolean state binding')
+		} finally {
+			spy.mockRestore()
+		}
+	})
 })

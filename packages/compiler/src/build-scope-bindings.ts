@@ -248,7 +248,7 @@ function* iterateNestedScriptBindings(content: string): Generator<BuildScriptBin
 	}
 	if (result.errors.length > 0) return
 
-	const body = (result.program as { body?: EstNode[] }).body
+	const body = (result.program as unknown as { body?: EstNode[] }).body
 	if (!body) return
 
 	const bindings: BuildScriptBinding[] = []
