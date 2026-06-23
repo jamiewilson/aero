@@ -46,6 +46,10 @@ function serializeBindings(analysis: StateScriptAnalysisResult): string {
 			derived: binding.derived,
 			initExpr: binding.initExpr,
 			dependencies: binding.dependencies,
+			...(binding.liveProp ? { liveProp: true } : {}),
+			...(binding.propName && binding.propName !== binding.name ? { propName: binding.propName } : {}),
+			...(binding.liveProp ? { required: binding.required === true } : {}),
+			...(binding.readonly ? { readonly: true } : {}),
 		}))
 	)
 }
@@ -115,12 +119,13 @@ export function emitMountStateBindingsFunction(
 		: ''
 
 	return `
-export function mountStateBindings(root, Aero) {
+export function mountStateBindings(root, Aero, opts = {}) {
 	const runtime = Aero.getReactivityRuntime?.()
 	if (!runtime) return () => {}
 	return __aeroMountStateBindings({
 		root,
 		store: runtime.store,
+		liveProps: opts.liveProps ?? {},
 		bindings: ${serializeBindings(analysis)},
 		functionSources: ${serializeFunctionSources(analysis)},
 		textBinds: ${serializeTextBinds(binds.textBinds)},

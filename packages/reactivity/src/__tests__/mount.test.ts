@@ -48,6 +48,125 @@ describe('bindEvent', () => {
 })
 
 describe('mountStateBindings', () => {
+	it('aliases live props to the passed signal instead of creating owned state', () => {
+		const text = { textContent: '1' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-text="0"]') return text
+				return null
+			},
+		} as unknown as ParentNode
+
+		const parentStore = new SignalStore()
+		const parentCount = parentStore.signal('count', 1)
+		const childStore = new SignalStore()
+
+		const cleanup = mountStateBindings({
+			root,
+			store: childStore,
+			liveProps: { count: parentCount },
+			bindings: [
+				{
+					name: 'count',
+					derived: false,
+					initExpr: 'undefined',
+					dependencies: [],
+					liveProp: true,
+					required: true,
+				},
+			],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			eventBinds: [],
+		})
+
+		expect(text.textContent).toBe('1')
+		;(childStore.get('count') as { value: number }).value = 2
+		expect(parentCount.value).toBe(2)
+		expect(text.textContent).toBe('2')
+		cleanup()
+	})
+
+	it('creates local state for omitted optional live props', () => {
+		const text = { textContent: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-text="0"]') return text
+				return null
+			},
+		} as unknown as ParentNode
+		const childStore = new SignalStore()
+
+		const cleanup = mountStateBindings({
+			root,
+			store: childStore,
+			liveProps: {},
+			bindings: [
+				{
+					name: 'label',
+					derived: false,
+					initExpr: '"Counter"',
+					dependencies: [],
+					liveProp: true,
+					required: false,
+				},
+			],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'label' }],
+			eventBinds: [],
+		})
+
+		expect(text.textContent).toBe('Counter')
+		;(childStore.get('label') as { value: string }).value = 'Local'
+		expect(text.textContent).toBe('Local')
+		cleanup()
+	})
+
+	it('fails loudly when a required live prop is omitted', () => {
+		expect(() =>
+			createStateScope({
+				store: new SignalStore(),
+				liveProps: {},
+				bindings: [
+					{
+						name: 'count',
+						derived: false,
+						initExpr: 'undefined',
+						dependencies: [],
+						liveProp: true,
+						required: true,
+					},
+				],
+				functionSources: [],
+			})
+		).toThrow('Required live prop was not provided: count')
+	})
+
+	it('fails loudly when readonly live props are assigned', () => {
+		const parentStore = new SignalStore()
+		const childStore = new SignalStore()
+		const scope = createStateScope({
+			store: childStore,
+			liveProps: { count: parentStore.signal('count', 1) },
+			bindings: [
+				{
+					name: 'count',
+					derived: false,
+					initExpr: 'undefined',
+					dependencies: [],
+					liveProp: true,
+					required: true,
+					readonly: true,
+				},
+			],
+			functionSources: [],
+		})
+
+		expect(() => {
+			scope.count = 2
+		}).toThrow('Readonly live prop cannot be assigned: count')
+	})
+
 	it('wires reactive text and click handlers from state scope', () => {
 		const text = { textContent: '1' } as unknown as Element
 		const button = {

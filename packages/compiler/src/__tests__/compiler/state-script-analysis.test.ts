@@ -29,6 +29,42 @@ describe('analyzeStateScript', () => {
 		expect(result.functionSources).toEqual(['function inc() { count++ }'])
 	})
 
+	it('captures live props from Aero.props destructures', () => {
+		const result = analyzeStateScript(`
+			const { count, label = 'Counter', title: heading } = Aero.props as Props
+		`)
+		const byName = new Map(result.bindings.map(b => [b.name, b]))
+
+		expect(byName.get('count')).toMatchObject({
+			liveProp: true,
+			propName: 'count',
+			required: true,
+			initExpr: 'undefined',
+		})
+		expect(byName.get('label')).toMatchObject({
+			liveProp: true,
+			propName: 'label',
+			required: false,
+			initExpr: "'Counter'",
+		})
+		expect(byName.get('heading')).toMatchObject({
+			liveProp: true,
+			propName: 'title',
+			required: true,
+		})
+	})
+
+	it('reports diagnostics when live props collide with owned state', () => {
+		const result = analyzeStateScript(`
+			const { count } = Aero.props
+			let count = 0
+		`)
+
+		expect(result.diagnostics[0]?.message).toBe(
+			'Live prop `count` conflicts with an owned state binding.'
+		)
+	})
+
 	it('reports diagnostics when derived bindings are assigned', () => {
 		const result = analyzeStateScript(`
 			let a = 1

@@ -5,6 +5,10 @@ export interface StateBinding {
 	derived: boolean
 	dependencies: string[]
 	initExpr: string
+	liveProp?: boolean
+	propName?: string
+	required?: boolean
+	readonly?: boolean
 }
 
 export interface StateScriptDiagnostic {
@@ -81,6 +85,83 @@ function initExprSource(script: string, init: unknown): string {
 	return script.slice(node.start, node.end)
 }
 
+function unwrapExpression(node: any): any {
+	let current = node
+	while (
+		current?.type === 'TSAsExpression' ||
+		current?.type === 'TSSatisfiesExpression' ||
+		current?.type === 'TSNonNullExpression'
+	) {
+		current = current.expression
+	}
+	return current
+}
+
+function isAeroPropsExpression(node: unknown): boolean {
+	const expr = unwrapExpression(node as any)
+	return (
+		expr?.type === 'MemberExpression' &&
+		expr.object?.type === 'Identifier' &&
+		expr.object.name === 'Aero' &&
+		expr.property?.type === 'Identifier' &&
+		expr.property.name === 'props' &&
+		expr.computed === false
+	)
+}
+
+function propertyKeyName(property: any): string | null {
+	const key = property?.key
+	if (key?.type === 'Identifier') return key.name
+	if (key?.type === 'Literal' && typeof key.value === 'string') return key.value
+	return null
+}
+
+function livePropBindingFromProperty(
+	script: string,
+	property: any
+): StateBinding | null {
+	if (property?.type !== 'Property') return null
+	if (property.computed) return null
+	const propName = propertyKeyName(property)
+	if (!propName) return null
+
+	const value = property.value
+	if (value?.type === 'Identifier') {
+		return {
+			name: value.name,
+			propName,
+			derived: false,
+			dependencies: [],
+			initExpr: 'undefined',
+			liveProp: true,
+			required: true,
+		}
+	}
+	if (value?.type === 'AssignmentPattern' && value.left?.type === 'Identifier') {
+		return {
+			name: value.left.name,
+			propName,
+			derived: false,
+			dependencies: [],
+			initExpr: initExprSource(script, value.right),
+			liveProp: true,
+			required: false,
+		}
+	}
+	return null
+}
+
+function livePropBindingsFromDeclarator(script: string, declarator: { id: any; init: any }): StateBinding[] {
+	if (declarator.id?.type !== 'ObjectPattern') return []
+	if (!isAeroPropsExpression(declarator.init)) return []
+	const out: StateBinding[] = []
+	for (const property of declarator.id.properties ?? []) {
+		const binding = livePropBindingFromProperty(script, property)
+		if (binding) out.push(binding)
+	}
+	return out
+}
+
 export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	if (!script.trim()) return { bindings: [], diagnostics: [], functionSources: [] }
 
@@ -93,14 +174,16 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	}
 
 	const declarators = topLevelVariableDeclarators(parsed.program)
+	const livePropBindings = declarators.flatMap(d => livePropBindingsFromDeclarator(script, d))
 	const allNames = new Set<string>()
 	for (const d of declarators) {
 		if (d.id?.type === 'Identifier' && typeof d.id.name === 'string') {
 			allNames.add(d.id.name)
 		}
 	}
+	for (const binding of livePropBindings) allNames.add(binding.name)
 
-	const bindings: StateBinding[] = []
+	const bindings: StateBinding[] = [...livePropBindings]
 	for (const d of declarators) {
 		if (d.id?.type !== 'Identifier' || typeof d.id.name !== 'string') continue
 		const deps = [...collectIdentifiersFromInit(d.init)].filter(dep => allNames.has(dep))
@@ -114,6 +197,16 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 
 	const derived = new Set(bindings.filter(b => b.derived).map(b => b.name))
 	const diagnostics: StateScriptDiagnostic[] = []
+	const livePropNames = new Set(livePropBindings.map(binding => binding.name))
+	const ownedNames = new Set(bindings.filter(binding => !binding.liveProp).map(binding => binding.name))
+	for (const name of livePropNames) {
+		if (ownedNames.has(name)) {
+			diagnostics.push({
+				name,
+				message: `Live prop \`${name}\` conflicts with an owned state binding.`,
+			})
+		}
+	}
 
 	walk(parsed.program, node => {
 		if (node?.type === 'AssignmentExpression' && node.left?.type === 'Identifier') {

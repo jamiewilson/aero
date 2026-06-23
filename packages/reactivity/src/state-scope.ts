@@ -6,12 +6,17 @@ export interface StateBindingSpec {
 	readonly derived: boolean
 	readonly initExpr: string
 	readonly dependencies: readonly string[]
+	readonly liveProp?: boolean
+	readonly propName?: string
+	readonly required?: boolean
+	readonly readonly?: boolean
 }
 
 export interface StateScopeOptions {
 	readonly store: SignalStore
 	readonly bindings: readonly StateBindingSpec[]
 	readonly functionSources: readonly string[]
+	readonly liveProps?: Record<string, { value: unknown }>
 	/** Module-scope values from `<script is:state>` imports, merged into eval scope. */
 	readonly scopeConstants?: Record<string, unknown>
 	/** External functions to inject into the eval scope (e.g. hypermedia action functions). */
@@ -47,7 +52,12 @@ function evalInit(initExpr: string, scope: StateScope): unknown {
 	return new Function('scope', `with (scope) { return (${initExpr}); }`)(scope)
 }
 
-function defineScopeAccessor(scope: StateScope, name: string, read: () => unknown, write?: (v: unknown) => void): void {
+function defineScopeAccessor(
+	scope: StateScope,
+	name: string,
+	read: () => unknown,
+	write?: (v: unknown) => void
+): void {
 	Object.defineProperty(scope, name, {
 		configurable: true,
 		enumerable: true,
@@ -68,19 +78,31 @@ function wrapFunctionSource(source: string): string {
  */
 export function createStateScope(options: StateScopeOptions): StateScope {
 	const { store, bindings, functionSources, actionFunctions, scopeConstants } = options
+	const liveProps = options.liveProps ?? {}
 	const scope: StateScope = { ...actionFunctions, ...scopeConstants }
 
 	for (const binding of bindings.filter(b => !b.derived)) {
-		if (!store.has(binding.name)) {
+		const livePropKey = binding.propName ?? binding.name
+		const liveProp = binding.liveProp ? liveProps[livePropKey] : undefined
+		if (binding.liveProp && liveProp) {
+			store.alias(binding.name, liveProp)
+		} else if (binding.liveProp && binding.required) {
+			throw new Error(`[aero] Required live prop was not provided: ${binding.name}`)
+		} else if (!store.has(binding.name)) {
 			store.signal(binding.name, evalInit(binding.initExpr, scope))
 		}
+		const write = binding.readonly
+			? () => {
+					throw new Error(`[aero] Readonly live prop cannot be assigned: ${binding.name}`)
+				}
+			: (value: unknown) => {
+					;(store.get(binding.name) as { value: unknown }).value = value
+				}
 		defineScopeAccessor(
 			scope,
 			binding.name,
 			() => store.get(binding.name).value,
-			value => {
-				;(store.get(binding.name) as { value: unknown }).value = value
-			}
+			write
 		)
 	}
 

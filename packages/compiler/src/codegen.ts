@@ -174,7 +174,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	headScripts.push(...collectBlockingHeadScripts(options.blockingScripts, options))
 	const ownedStateBindingNames =
 		ta.stateAnalysis !== null
-			? ta.stateAnalysis.bindings.filter(binding => !binding.derived).map(binding => binding.name)
+			? ta.stateAnalysis.bindings
+					.filter(binding => !binding.derived && !binding.liveProp)
+					.map(binding => binding.name)
 			: []
 	const stateHydrationLine =
 		ownedStateBindingNames.length > 0

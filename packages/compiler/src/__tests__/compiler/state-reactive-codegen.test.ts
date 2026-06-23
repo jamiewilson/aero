@@ -19,7 +19,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		const code = compile(parse(html), mockOptions)
 
 		expect(code).toContain("import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'")
-		expect(code).toContain('export function mountStateBindings(root, Aero)')
+		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
 		expect(code).toContain('data-aero-text="0"')
 		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
 		expect(code).not.toContain('hypermediaRuntime:')
@@ -63,6 +63,25 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('escapeScriptJson({ "count": count })')
 		expect(code).not.toContain('"doubled": doubled')
 		expect(code).not.toContain('"doubled":2')
+	})
+
+	it('serializes live props declared from Aero.props in is:state', () => {
+		const html = `<script is:state>
+			const { count, label = 'Counter' } = Aero.props
+		</script>
+		<p>{ label }: { count }</p>`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('"name":"count"')
+		expect(code).toContain('"liveProp":true')
+		expect(code).toContain('"required":true')
+		expect(code).toContain('"name":"label"')
+		expect(code).toContain(`"initExpr":"'Counter'"`)
+		expect(code).toContain('"required":false')
+		expect(code).toContain('liveProps: opts.liveProps ?? {}')
+		expect(code).not.toContain('"count": count')
+		expect(code).not.toContain('"label": label')
 	})
 
 	it('collects reactive binds inside switch branches with is:state', () => {

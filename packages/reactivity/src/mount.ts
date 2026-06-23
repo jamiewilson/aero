@@ -47,6 +47,7 @@ export function bindEvent(
 export interface MountStateBindingsOptions {
 	readonly root: ParentNode
 	readonly store: SignalStore
+	readonly liveProps?: Record<string, { value: unknown }>
 	readonly bindings: readonly StateBindingSpec[]
 	readonly functionSources: readonly string[]
 	readonly textBinds: readonly { selector: string; readExpr: string }[]
@@ -176,6 +177,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		store: options.store,
 		bindings: options.bindings,
 		functionSources: options.functionSources,
+		liveProps: options.liveProps,
 		actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 		scopeConstants: options.scopeConstants,
 	})
