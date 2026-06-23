@@ -59,4 +59,32 @@ describe('createHypermediaRuntime', () => {
 		const link = container.querySelector('a')!
 		expect(link.hasAttribute('data-aero-adopted')).toBe(true)
 	})
+
+	it('unregisters compiled busy bindings', async () => {
+		document.body.innerHTML = '<button id="btn">go</button>'
+		const btn = document.querySelector('#btn')!
+		const runtime = createHypermediaRuntime()
+		const state = { value: false }
+		const unregister = runtime.registerBusyBinding(btn, 'isSaving', state)
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 200 }))
+
+		unregister()
+		await runtime.executeAction({ method: 'POST', url: '/save', swap: 'none' }, btn)
+
+		expect(state.value).toBe(false)
+	})
+
+	it('rejects non-boolean busy and state handles', async () => {
+		document.body.innerHTML = '<button id="btn">go</button>'
+		const btn = document.querySelector('#btn')!
+		const runtime = createHypermediaRuntime()
+
+		expect(() =>
+			runtime.registerBusyBinding(btn, 'isSaving', { value: 'no' } as never)
+		).toThrow('must be boolean')
+
+		await expect(
+			runtime.executeAction({ method: 'POST', url: '/save', state: { value: 'no' } as never }, btn)
+		).rejects.toThrow('must be boolean')
+	})
 })

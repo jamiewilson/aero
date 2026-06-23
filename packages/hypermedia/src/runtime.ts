@@ -1,7 +1,9 @@
 import type {
 	ActionOptions,
+	HypermediaBooleanSignal,
 	HypermediaRequest,
 	HypermediaResponse,
+	HypermediaSignalStore,
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
@@ -15,8 +17,8 @@ export interface HypermediaRuntime {
 	readonly debug?: boolean
 	executeAction(options: ActionOptions, trigger?: Element): Promise<HypermediaResponse>
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
-	adopt(container: ParentNode): void
-	registerBusyBinding(element: Element, signalName: string, setBusy: (value: boolean) => void): void
+	adopt(container: ParentNode, store?: HypermediaSignalStore): void
+	registerBusyBinding(element: Element, signalName: string, signal: HypermediaBooleanSignal): () => void
 	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
 
@@ -25,6 +27,7 @@ export interface HypermediaRuntimeOptions {
 	readonly defaultSwap?: SwapStyle
 	readonly defaultTarget?: string
 	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
+	readonly store?: HypermediaSignalStore
 }
 
 function resolveSwapTarget(
@@ -77,8 +80,9 @@ function resolveExplicitTarget(targetSelector: string | undefined, context: Pare
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
-	const busyBindings = new Map<Element, { signalName: string; setBusy: (value: boolean) => void }>()
-	const inFlightCounts = new Map<Element, number>()
+	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
+	const inFlightCounts = new WeakMap<HypermediaBooleanSignal, number>()
+	let defaultStore = options.store
 	let swapLifecycleAdapter = options.swapLifecycleAdapter ?? null
 
 	function emit(name: LifecycleEventName, detail: LifecycleDetail, element?: Element): void {
@@ -97,15 +101,34 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 	}
 
-	function setBusyForElement(element: Element | undefined, busy: boolean): void {
-		if (!element) return
-		const binding = busyBindings.get(element)
-		if (!binding) return
-		const count = (inFlightCounts.get(element) ?? 0) + (busy ? 1 : -1)
+	function setBusyForSignal(signal: HypermediaBooleanSignal | undefined, busy: boolean): void {
+		if (!signal) return
+		const count = (inFlightCounts.get(signal) ?? 0) + (busy ? 1 : -1)
 		const next = Math.max(0, count)
-		if (next === 0) inFlightCounts.delete(element)
-		else inFlightCounts.set(element, next)
-		binding.setBusy(next > 0)
+		if (next === 0) inFlightCounts.delete(signal)
+		else inFlightCounts.set(signal, next)
+		signal.value = next > 0
+	}
+
+	function resolveBusySignal(opts: ActionOptions, trigger: Element | undefined): HypermediaBooleanSignal | undefined {
+		if (opts.state) {
+			if (typeof opts.state.value !== 'boolean') {
+				throw new Error('[aero] Hypermedia state signal must be boolean.')
+			}
+			return opts.state
+		}
+		if (!trigger) return undefined
+		return busyBindings.get(trigger)?.signal
+	}
+
+	function shouldAutoDisable(method: string, opts: ActionOptions): boolean {
+		if (opts.autoDisable === false) return false
+		return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE'
+	}
+
+	function setDisabled(trigger: Element | undefined, disabled: boolean): void {
+		if (!trigger || !('disabled' in trigger)) return
+		;(trigger as { disabled: boolean }).disabled = disabled
 	}
 
 	async function runSwapLifecycle(options: {
@@ -146,6 +169,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 
 		const request = buildRequest(opts, trigger)
+		const busySignal = resolveBusySignal(opts, trigger)
+		const autoDisable = shouldAutoDisable(request.method, opts)
+		const previousDisabled = trigger && 'disabled' in trigger ? Boolean((trigger as { disabled: boolean }).disabled) : undefined
 		syncNativeFallback(trigger, request.url)
 		const context = trigger?.ownerDocument ?? document
 		const requestTargetSelector = opts.target ?? defaultTarget
@@ -156,68 +182,72 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			trigger,
 			requestTarget
 		)
-		setBusyForElement(trigger, true)
+		setBusyForSignal(busySignal, true)
+		if (autoDisable) setDisabled(trigger, true)
 
 		let response: HypermediaResponse
 		try {
-			response = await executeRequest(request)
-		} catch (error) {
-			setBusyForElement(trigger, false)
-			emitLifecycle(
-				'error',
-				{
-					request,
-					error: error instanceof Error ? error : new Error(String(error)),
-					target: requestTargetSelector,
+			try {
+				response = await executeRequest(request)
+			} catch (error) {
+				emitLifecycle(
+					'error',
+					{
+						request,
+						error: error instanceof Error ? error : new Error(String(error)),
+						target: requestTargetSelector,
+						trigger,
+					},
 					trigger,
-				},
-				trigger,
-				requestTarget
-			)
-			throw error
-		}
+					requestTarget
+				)
+				throw error
+			}
 
-		const headerSwap = response.headers['aero-swap']
-		const headerTarget = response.headers['aero-target']
-		const effectiveSwap = parseSwapStyle(headerSwap ?? '') ?? opts.swap ?? defaultSwap
-		const effectiveTarget = headerTarget ?? opts.target
-		const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
-		const explicitTargetEl = effectiveTarget ? (targetEl ?? undefined) : undefined
-		const lifecycleTarget = effectiveTarget ?? 'self'
+			const headerSwap = response.headers['aero-swap']
+			const headerTarget = response.headers['aero-target']
+			const effectiveSwap = parseSwapStyle(headerSwap ?? '') ?? opts.swap ?? defaultSwap
+			const effectiveTarget = headerTarget ?? opts.target
+			const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
+			const explicitTargetEl = effectiveTarget ? (targetEl ?? undefined) : undefined
+			const lifecycleTarget = effectiveTarget ?? 'self'
 
-		emitLifecycle(
-			'response',
-			{ request, response, target: lifecycleTarget, trigger },
-			trigger,
-			explicitTargetEl
-		)
-
-		if (targetEl && effectiveSwap !== 'none') {
-			await runSwapLifecycle({
-				target: targetEl,
-				html: response.html,
-				style: effectiveSwap,
-				trigger,
-				targetSelector: lifecycleTarget,
-			})
 			emitLifecycle(
-				'swap',
-				{ request, response, swapStyle: effectiveSwap, target: lifecycleTarget, trigger },
-				trigger,
-				explicitTargetEl
-			)
-			emitLifecycle(
-				'settle',
+				'response',
 				{ request, response, target: lifecycleTarget, trigger },
 				trigger,
 				explicitTargetEl
 			)
+
+			if (targetEl && effectiveSwap !== 'none') {
+				await runSwapLifecycle({
+					target: targetEl,
+					html: response.html,
+					style: effectiveSwap,
+					trigger,
+					targetSelector: lifecycleTarget,
+				})
+				emitLifecycle(
+					'swap',
+					{ request, response, swapStyle: effectiveSwap, target: lifecycleTarget, trigger },
+					trigger,
+					explicitTargetEl
+				)
+				emitLifecycle(
+					'settle',
+					{ request, response, target: lifecycleTarget, trigger },
+					trigger,
+					explicitTargetEl
+				)
+			}
+
+			applyPushUrl(response, opts, trigger)
+
+			return response
+		} finally {
+			setBusyForSignal(busySignal, false)
+			if (autoDisable && previousDisabled !== undefined) setDisabled(trigger, previousDisabled)
 		}
-
-		applyPushUrl(response, opts, trigger)
-		setBusyForElement(trigger, false)
-
-		return response
 	}
 
 	function swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void {
@@ -235,13 +265,24 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		executeAction,
 		swapElement,
 		adopt: () => {},
-		registerBusyBinding(element, signalName, setBusy) {
-			busyBindings.set(element, { signalName, setBusy })
+		registerBusyBinding(element, signalName, signal) {
+			if (typeof signal.value !== 'boolean') {
+				throw new Error(`[aero] Hypermedia busy signal must be boolean: ${signalName}`)
+			}
+			busyBindings.set(element, { signalName, signal })
+			return () => {
+				if (busyBindings.get(element)?.signalName === signalName) {
+					busyBindings.delete(element)
+				}
+			}
 		},
 		setSwapLifecycleAdapter(adapter) {
 			swapLifecycleAdapter = adapter
 		},
 	}
-	runtime.adopt = (container: ParentNode) => adoptFragment(container, runtime)
+	runtime.adopt = (container: ParentNode, store?: HypermediaSignalStore) => {
+		if (store) defaultStore = store
+		adoptFragment(container, runtime, store ?? defaultStore)
+	}
 	return runtime
 }

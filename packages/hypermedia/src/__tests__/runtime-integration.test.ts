@@ -1,6 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { createHypermediaRuntime } from '../runtime'
 
+function deferredResponse() {
+	let resolve!: (value: Response) => void
+	const promise = new Promise<Response>(r => {
+		resolve = r
+	})
+	return { promise, resolve }
+}
+
 beforeEach(() => {
 	vi.restoreAllMocks()
 })
@@ -98,5 +106,83 @@ describe('createHypermediaRuntime integration', () => {
 		).rejects.toThrow('offline')
 
 		expect(calls).toEqual(['trigger:error:offline', 'target:error:offline'])
+	})
+
+	it('keeps a shared state signal busy until all matching requests complete', async () => {
+		document.body.innerHTML = '<button id="a">a</button><button id="b">b</button>'
+		const first = deferredResponse()
+		const second = deferredResponse()
+		vi.spyOn(globalThis, 'fetch')
+			.mockReturnValueOnce(first.promise)
+			.mockReturnValueOnce(second.promise)
+		const runtime = createHypermediaRuntime()
+		const state = { value: false }
+
+		const a = document.querySelector('#a')!
+		const b = document.querySelector('#b')!
+		const firstRequest = runtime.executeAction({ method: 'POST', url: '/a', state, swap: 'none' }, a)
+		const secondRequest = runtime.executeAction({ method: 'POST', url: '/b', state, swap: 'none' }, b)
+
+		expect(state.value).toBe(true)
+		first.resolve(new Response('', { status: 200 }))
+		await firstRequest
+		expect(state.value).toBe(true)
+		second.resolve(new Response('', { status: 200 }))
+		await secondRequest
+		expect(state.value).toBe(false)
+	})
+
+	it('uses per-action state before element busy binding', async () => {
+		document.body.innerHTML = '<button id="btn">go</button>'
+		const btn = document.querySelector('#btn')!
+		const runtime = createHypermediaRuntime()
+		const elementBusy = { value: false }
+		const actionState = { value: false }
+		runtime.registerBusyBinding(btn, 'elementBusy', elementBusy)
+		const response = deferredResponse()
+		vi.spyOn(globalThis, 'fetch').mockReturnValueOnce(response.promise)
+
+		const request = runtime.executeAction(
+			{ method: 'POST', url: '/save', state: actionState, swap: 'none' },
+			btn
+		)
+
+		expect(actionState.value).toBe(true)
+		expect(elementBusy.value).toBe(false)
+		response.resolve(new Response('', { status: 200 }))
+		await request
+		expect(actionState.value).toBe(false)
+		expect(elementBusy.value).toBe(false)
+	})
+
+	it('auto-disables mutating trigger elements by default', async () => {
+		document.body.innerHTML = '<button id="btn">go</button>'
+		const btn = document.querySelector('#btn') as HTMLButtonElement
+		const runtime = createHypermediaRuntime()
+		const response = deferredResponse()
+		vi.spyOn(globalThis, 'fetch').mockReturnValueOnce(response.promise)
+
+		const request = runtime.executeAction({ method: 'POST', url: '/save', swap: 'none' }, btn)
+
+		expect(btn.disabled).toBe(true)
+		response.resolve(new Response('', { status: 200 }))
+		await request
+		expect(btn.disabled).toBe(false)
+	})
+
+	it('does not auto-disable GET or explicit opt-out actions', async () => {
+		document.body.innerHTML = '<button id="get">get</button><button id="post">post</button>'
+		const get = document.querySelector('#get') as HTMLButtonElement
+		const post = document.querySelector('#post') as HTMLButtonElement
+		const runtime = createHypermediaRuntime()
+		vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+			Promise.resolve(new Response('', { status: 200 }))
+		)
+
+		await runtime.executeAction({ method: 'GET', url: '/read', swap: 'none' }, get)
+		await runtime.executeAction({ method: 'POST', url: '/write', autoDisable: false, swap: 'none' }, post)
+
+		expect(get.disabled).toBe(false)
+		expect(post.disabled).toBe(false)
 	})
 })
