@@ -3,7 +3,9 @@
 	import logo from '@components/logo'
 
 	const props = Aero.props as HeaderProps
-	const isHomepage = Aero.page.url.pathname === '/'
+	const pagePath = Aero.page.url.pathname.replace(/\/$/, '') || '/'
+	const isHomepage = pagePath === '/'
+	const isCounterDemo = pagePath === '/demos/counter'
 </script>
 
 <script is:state>
@@ -11,8 +13,8 @@
 </script>
 
 <header>
-	<h2>Live prop: <span>{ count }</span></h2>
 	<logo-component if="{ isHomepage }" class="logo" />
+	<h2 else-if="{ isCounterDemo }">Live prop: <span>{ count }</span></h2>
 	<h1 else-if="{ props.title }">{ props.title }</h1>
 	<h2 else>Fallback Title</h2>
 

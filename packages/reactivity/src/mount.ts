@@ -175,6 +175,43 @@ function isElementLike(value: unknown): value is Element {
 	return !!value && typeof value === 'object'
 }
 
+function walkQuerySelector(root: Element, selector: string): Element | null {
+	if (typeof root.matches === 'function' && root.matches(selector)) return root
+	for (let i = 0; i < root.childNodes.length; i++) {
+		const node = root.childNodes[i]
+		if (node.nodeType !== 1) continue
+		const found = walkQuerySelector(node as Element, selector)
+		if (found) return found
+	}
+	return null
+}
+
+function isDomDescendantOf(element: Element, ancestor: Element): boolean {
+	let cursor: Node | null = element
+	while (cursor) {
+		if (cursor === ancestor) return true
+		cursor = cursor.parentNode
+	}
+	return false
+}
+
+function queryOwnedComponentTarget(componentRoot: Element, selector: string): Element | null {
+	const walked = walkQuerySelector(componentRoot, selector)
+	if (walked) return walked
+
+	const doc = componentRoot.getRootNode() as ParentNode
+	for (const el of doc.querySelectorAll?.(selector) ?? []) {
+		if (isDomDescendantOf(el as Element, componentRoot)) {
+			return el as Element
+		}
+	}
+	return null
+}
+
+function ownsComponentMountRoot(root: ParentNode): boolean {
+	return (root as Element).hasAttribute?.('data-aero-component') === true
+}
+
 /**
  * Resolve a compiled bind target within a mount root.
  * Page mounts skip markers owned by nested `[data-aero-component]` subtrees;
@@ -182,20 +219,28 @@ function isElementLike(value: unknown): value is Element {
  */
 function queryBindTarget(root: ParentNode, selector: string): Element | null {
 	const rootEl = root as Element
-	const matches = rootEl.querySelectorAll?.(selector)
-	if (!matches || matches.length === 0) {
-		return root.querySelector(selector) as Element | null
+	const ownsComponentRoot = ownsComponentMountRoot(root)
+	if (ownsComponentRoot) {
+		return queryOwnedComponentTarget(rootEl, selector)
 	}
 
-	const ownsComponentRoot = rootEl.hasAttribute?.('data-aero-component') === true
-	for (const el of matches) {
-		if (!ownsComponentRoot) {
+	const matches = rootEl.querySelectorAll?.(selector)
+	let target: Element | null = null
+
+	if (matches && matches.length > 0) {
+		for (const el of matches) {
 			const componentRoot = el.closest('[data-aero-component]')
 			if (componentRoot && componentRoot !== rootEl) continue
+			target = el as Element
+			break
 		}
-		return el as Element
 	}
-	return null
+
+	if (!target) {
+		target = root.querySelector(selector) as Element | null
+	}
+
+	return target
 }
 
 function getComponentMount(component: unknown): ((root: Element, Aero: unknown, opts?: unknown) => unknown) | null {
@@ -240,6 +285,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	for (const bind of options.textBinds) {
 		const target = queryBindTarget(options.root, bind.selector)
 		if (!target) {
+			if (ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive text target: ${bind.selector}`)
 		}
 		cleanups.push(bindText(target, compileRead(bind.readExpr, scope, options.escapeHtml)))
@@ -248,6 +294,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	for (const bind of options.eventBinds) {
 		const target = queryBindTarget(options.root, bind.selector)
 		if (!target || typeof (target as Element).addEventListener !== 'function') {
+			if (!target && ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive event target: ${bind.selector}`)
 		}
 		cleanups.push(
@@ -268,6 +315,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		for (const bind of options.busyBinds) {
 			const target = queryBindTarget(options.root, bind.selector)
 			if (!isElementLike(target)) {
+				if (ownsComponentMountRoot(options.root)) continue
 				throw new Error(`[aero] Missing busy target: ${bind.selector}`)
 			}
 			cleanups.push(

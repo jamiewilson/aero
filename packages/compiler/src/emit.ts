@@ -140,10 +140,7 @@ function emitComponentNode(
 	const slotsString = Helper.emitSlotsObjectVars(node.slotVarMap)
 	const targetVar = outVarFor(node, outVar)
 	if (node.componentBindId !== undefined) {
-		b.stmtAppendOut(
-			`<span data-aero-component="${node.componentBindId}" style="display:contents">`,
-			targetVar
-		)
+		b.stmtAppendOut(`<span data-aero-component="${node.componentBindId}">`, targetVar)
 	}
 	b.stmtRenderComponent(
 		targetVar,
