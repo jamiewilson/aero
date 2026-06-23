@@ -84,6 +84,24 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).not.toContain('"label": label')
 	})
 
+	it('exports live prop metadata for parent component wiring', () => {
+		const html = `<script is:state>
+			const { count, title: heading, label = 'Counter' } = Aero.props
+		</script>
+		<p>{ heading }: { label } { count }</p>`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('export const __aeroLiveProps =')
+		expect(code).toContain('"name":"count"')
+		expect(code).toContain('"propName":"count"')
+		expect(code).toContain('"required":true')
+		expect(code).toContain('"name":"heading"')
+		expect(code).toContain('"propName":"title"')
+		expect(code).toContain('"name":"label"')
+		expect(code).toContain('"required":false')
+	})
+
 	it('collects reactive binds inside switch branches with is:state', () => {
 		const html = `<script is:state>
 			const auth = { state: 'SignedOut' }

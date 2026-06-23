@@ -54,6 +54,19 @@ function serializeBindings(analysis: StateScriptAnalysisResult): string {
 	)
 }
 
+export function emitLivePropsMetadata(analysis: StateScriptAnalysisResult): string {
+	const liveProps = analysis.bindings
+		.filter(binding => binding.liveProp)
+		.map(binding => ({
+			name: binding.name,
+			propName: binding.propName ?? binding.name,
+			required: binding.required === true,
+			...(binding.readonly ? { readonly: true } : {}),
+		}))
+	if (liveProps.length === 0) return ''
+	return `export const __aeroLiveProps = ${JSON.stringify(liveProps)}`
+}
+
 function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
 	return JSON.stringify(analysis.functionSources)
 }

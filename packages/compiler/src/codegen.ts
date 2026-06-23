@@ -25,6 +25,7 @@ import {
 	collectReactiveBinds,
 	createStateMountImportLine,
 	createHypermediaImportLine,
+	emitLivePropsMetadata,
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
@@ -197,6 +198,8 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		ta.stateAnalysis !== null
 			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports, mountActionFns)
 			: ''
+	const livePropsMetadata =
+		ta.stateAnalysis !== null ? emitLivePropsMetadata(ta.stateAnalysis) : ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
@@ -207,6 +210,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
 	let output = prefixLines.length > 0 ? `${prefixLines.join('\n')}\n` : '\n'
+	if (livePropsMetadata) output += `${livePropsMetadata}\n`
 	output += renderFn
 	if (mountFn) output += `\n\n${mountFn}`
 	return output
