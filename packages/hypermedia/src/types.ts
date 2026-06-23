@@ -43,3 +43,14 @@ export interface SwapOperation {
 	html: string
 	style: SwapStyle
 }
+
+export interface HypermediaSwapLifecycleOperation extends SwapOperation {
+	trigger?: Element
+	targetSelector: string
+	performSwap(): void
+	adoptRuntime(container: ParentNode): void
+}
+
+export type HypermediaSwapLifecycleAdapter = (
+	operation: HypermediaSwapLifecycleOperation
+) => void | Promise<void>

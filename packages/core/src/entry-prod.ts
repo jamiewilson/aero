@@ -14,18 +14,32 @@ import { resolveMountTarget } from './runtime/mount-target'
 import {
 	bootstrapClientRuntimes,
 	createHypermediaRuntimeAccessor,
-	mountClientBindings,
+	type HypermediaRuntimeWithSwapLifecycle,
 	readBootstrappedReactivityRuntime,
-	wireHypermediaAdopt,
+	installHypermediaSwapLifecycle,
 } from './runtime/client-mount'
-import { mountStateBindingsForRoute } from './runtime/state-bindings-prod'
 import { resolveStateBindingsModule } from 'virtual:aero/state-bindings-registry.ts'
 
 let destroyStateBindings: (() => void) | null = null
+let cleanupSwapLifecycle: (() => void) | null = null
+let hasActiveStateBindings = false
 let mountSeq = 0
 
 function currentPathname(): string {
 	return typeof window !== 'undefined' ? window.location.pathname : '/'
+}
+
+async function mountStateBindingsForCurrentRoute(el: HTMLElement): Promise<{
+	cleanup: () => void
+	hasStateBindings: boolean
+}> {
+	const mountFn = await resolveStateBindingsModule(currentPathname())
+	if (!mountFn) return { cleanup: () => {}, hasStateBindings: false }
+	const cleanup = mountFn(el, aero)
+	return {
+		cleanup: typeof cleanup === 'function' ? cleanup : () => {},
+		hasStateBindings: true,
+	}
 }
 
 function mount(options: MountOptions = {}): Promise<void> {
@@ -33,23 +47,43 @@ function mount(options: MountOptions = {}): Promise<void> {
 
 	const el = resolveMountTarget(target)
 	const seq = ++mountSeq
+	if (cleanupSwapLifecycle) {
+		cleanupSwapLifecycle()
+		cleanupSwapLifecycle = null
+	}
 	if (destroyStateBindings) {
 		destroyStateBindings()
 		destroyStateBindings = null
 	}
+	hasActiveStateBindings = false
 	bootstrapClientRuntimes()
-	return mountStateBindingsForRoute(
-		aero,
-		currentPathname(),
-		el,
-		resolveStateBindingsModule
-	).then(stateCleanup => {
+	return mountStateBindingsForCurrentRoute(el).then(result => {
 		if (seq !== mountSeq) {
-			stateCleanup()
+			result.cleanup()
 			return
 		}
-		destroyStateBindings = stateCleanup
-		wireHypermediaAdopt(el)
+		destroyStateBindings = result.cleanup
+		hasActiveStateBindings = result.hasStateBindings
+		const runtime = getHypermediaRuntime()
+		if (runtime) {
+			cleanupSwapLifecycle = installHypermediaSwapLifecycle({
+				root: el,
+				runtime: runtime as unknown as HypermediaRuntimeWithSwapLifecycle,
+				shouldRemountCompiled: () => hasActiveStateBindings,
+				destroyPrevious() {
+					if (destroyStateBindings) {
+						destroyStateBindings()
+						destroyStateBindings = null
+					}
+					hasActiveStateBindings = false
+				},
+				async remountCompiled() {
+					const next = await mountStateBindingsForCurrentRoute(el)
+					destroyStateBindings = next.cleanup
+					hasActiveStateBindings = next.hasStateBindings
+				},
+			})
+		}
 		if (onRender) onRender(el)
 	})
 }

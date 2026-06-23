@@ -1,4 +1,10 @@
-import type { ActionOptions, HypermediaRequest, HypermediaResponse, SwapStyle } from './types'
+import type {
+	ActionOptions,
+	HypermediaRequest,
+	HypermediaResponse,
+	HypermediaSwapLifecycleAdapter,
+	SwapStyle,
+} from './types'
 import { buildRequest, executeRequest } from './request'
 import { resolveTarget, performSwap, parseSwapStyle } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
@@ -11,12 +17,14 @@ export interface HypermediaRuntime {
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
 	adopt(container: ParentNode): void
 	registerBusyBinding(element: Element, signalName: string, setBusy: (value: boolean) => void): void
+	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
 
 export interface HypermediaRuntimeOptions {
 	readonly debug?: boolean
 	readonly defaultSwap?: SwapStyle
 	readonly defaultTarget?: string
+	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
 }
 
 function resolveSwapTarget(
@@ -66,6 +74,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 	const defaultTarget = options.defaultTarget
 	const busyBindings = new Map<Element, { signalName: string; setBusy: (value: boolean) => void }>()
 	const inFlightCounts = new Map<Element, number>()
+	let swapLifecycleAdapter = options.swapLifecycleAdapter ?? null
 
 	function emit(name: LifecycleEventName, detail: LifecycleDetail, element?: Element): void {
 		dispatchLifecycleEvent(name, detail, element)
@@ -80,6 +89,36 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		if (next === 0) inFlightCounts.delete(element)
 		else inFlightCounts.set(element, next)
 		binding.setBusy(next > 0)
+	}
+
+	async function runSwapLifecycle(options: {
+		target: Element
+		html: string
+		style: SwapStyle
+		trigger?: Element
+		targetSelector: string
+	}): Promise<void> {
+		const operation = {
+			target: options.target,
+			html: options.html,
+			style: options.style,
+			trigger: options.trigger,
+			targetSelector: options.targetSelector,
+			performSwap() {
+				performSwap({ target: options.target, html: options.html, style: options.style })
+			},
+			adoptRuntime(container: ParentNode) {
+				runtime.adopt(container)
+			},
+		}
+
+		if (swapLifecycleAdapter) {
+			await swapLifecycleAdapter(operation)
+			return
+		}
+
+		operation.performSwap()
+		operation.adoptRuntime(options.target)
 	}
 
 	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
@@ -114,8 +153,13 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 
 		if (targetEl && effectiveSwap !== 'none') {
 			emit('swap', { request, response, swapStyle: effectiveSwap, target: effectiveTarget ?? 'self', trigger }, trigger)
-			performSwap({ target: targetEl, html: response.html, style: effectiveSwap })
-			adoptFragment(targetEl, runtime)
+			await runSwapLifecycle({
+				target: targetEl,
+				html: response.html,
+				style: effectiveSwap,
+				trigger,
+				targetSelector: effectiveTarget ?? 'self',
+			})
 			emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, trigger)
 			if (targetEl !== trigger) {
 				emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, targetEl)
@@ -134,8 +178,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		if (!targetEl) {
 			throw new Error(`[aero] Swap target not found: ${targetSelector}`)
 		}
-		performSwap({ target: targetEl, html, style })
-		adoptFragment(targetEl, runtime)
+		void runSwapLifecycle({ target: targetEl, html, style, targetSelector })
 	}
 
 	const runtime: HypermediaRuntime = {
@@ -146,6 +189,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		adopt: () => {},
 		registerBusyBinding(element, signalName, setBusy) {
 			busyBindings.set(element, { signalName, setBusy })
+		},
+		setSwapLifecycleAdapter(adapter) {
+			swapLifecycleAdapter = adapter
 		},
 	}
 	runtime.adopt = (container: ParentNode) => adoptFragment(container, runtime)

@@ -1,6 +1,6 @@
 import type { HypermediaRequest, HypermediaResponse } from './types'
 
-export type LifecycleEventName = 'aero:request' | 'aero:response' | 'aero:swap' | 'aero:settle' | 'aero:error'
+export type LifecycleEventName = 'request' | 'response' | 'swap' | 'settle' | 'error'
 
 export interface LifecycleEvent extends CustomEvent<LifecycleDetail> {
 	readonly type: LifecycleEventName

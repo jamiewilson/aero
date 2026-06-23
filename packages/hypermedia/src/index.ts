@@ -4,6 +4,8 @@ export type {
 	ActionOptions,
 	HypermediaRequest,
 	HypermediaResponse,
+	HypermediaSwapLifecycleAdapter,
+	HypermediaSwapLifecycleOperation,
 	SwapOperation,
 } from './types'
 

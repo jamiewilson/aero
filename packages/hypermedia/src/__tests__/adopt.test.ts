@@ -8,6 +8,8 @@ function createMockRuntime(): HypermediaRuntime {
 		executeAction: vi.fn().mockResolvedValue({ ok: true, status: 200, html: '', headers: {} }),
 		swapElement: vi.fn(),
 		adopt: vi.fn(),
+		registerBusyBinding: vi.fn(),
+		setSwapLifecycleAdapter: vi.fn(),
 	}
 }
 
