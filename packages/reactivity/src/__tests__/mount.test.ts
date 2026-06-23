@@ -86,6 +86,59 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
+	it('wires inline count++ / count-- handlers against signal store', () => {
+		const text = { textContent: '0' } as unknown as Element
+		const minus = {
+			addEventListener(type: string, handler: (event: Event) => void) {
+				minus.handlers.push(handler)
+			},
+			removeEventListener(_type: string, handler: (event: Event) => void) {
+				minus.handlers = minus.handlers.filter(item => item !== handler)
+			},
+			handlers: [] as Array<(event: Event) => void>,
+		} as unknown as Element & { handlers: Array<(event: Event) => void> }
+		const plus = {
+			addEventListener(type: string, handler: (event: Event) => void) {
+				plus.handlers.push(handler)
+			},
+			removeEventListener(_type: string, handler: (event: Event) => void) {
+				plus.handlers = plus.handlers.filter(item => item !== handler)
+			},
+			handlers: [] as Array<(event: Event) => void>,
+		} as unknown as Element & { handlers: Array<(event: Event) => void> }
+
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-event="0"]') return minus
+				if (selector === '[data-aero-text="1"]') return text
+				if (selector === '[data-aero-event="2"]') return plus
+				return null
+			},
+		} as unknown as ParentNode
+
+		const store = new SignalStore()
+		store.merge({ count: 0 })
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="1"]', readExpr: 'String(count)' }],
+			eventBinds: [
+				{ selector: '[data-aero-event="0"]', event: 'click', handlerExpr: 'count--' },
+				{ selector: '[data-aero-event="2"]', event: 'click', handlerExpr: 'count++' },
+			],
+		})
+
+		expect(text.textContent).toBe('0')
+		for (const handler of plus.handlers) handler(new Event('click'))
+		expect(text.textContent).toBe('1')
+		for (const handler of minus.handlers) handler(new Event('click'))
+		expect(text.textContent).toBe('0')
+		cleanup()
+	})
+
 	it('tracks derived bindings', () => {
 		const text = { textContent: '2' } as unknown as Element
 		const root = {

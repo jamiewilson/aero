@@ -80,9 +80,13 @@ function compileHandler(
 	const body = handlerExpr.trim().endsWith(';') ? handlerExpr.trim() : `${handlerExpr.trim()};`
 	return function (this: Element, event: Event) {
 		const actionScope = hypermediaRuntime ? createHypermediaActionScope(hypermediaRuntime, this) : {}
-		const handlerScope = { ...scope, ...actionScope, event }
 		// eslint-disable-next-line @typescript-eslint/no-implied-eval
-		const fn = new Function('scope', `return function() { with (scope) { ${body} } }`)(handlerScope) as () => void
+		const fn = new Function(
+			'scope',
+			'actions',
+			'event',
+			`return function() { with (scope) { with (actions) { with ({ event }) { ${body} } } } }`
+		)(scope, actionScope, event) as () => void
 		fn.call(this)
 	}
 }
