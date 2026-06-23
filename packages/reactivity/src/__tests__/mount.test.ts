@@ -204,4 +204,77 @@ describe('mountStateBindings', () => {
 		;(store.get('authState') as { value: string }).value = AuthState.SignedIn
 		expect(text.textContent).toBe('Log Out')
 	})
+
+	it('lets lifecycle response handlers update state from hypermedia action events', () => {
+		function createFakeElement() {
+			const listeners = new Map<string, Array<(this: Element, event: Event) => void>>()
+			const attrs = new Map<string, string>()
+			const el = {
+				addEventListener(type: string, handler: (this: Element, event: Event) => void) {
+					listeners.set(type, [...(listeners.get(type) ?? []), handler])
+				},
+				removeEventListener(type: string, handler: (this: Element, event: Event) => void) {
+					listeners.set(type, (listeners.get(type) ?? []).filter(item => item !== handler))
+				},
+				dispatch(type: string) {
+					for (const handler of listeners.get(type) ?? []) {
+						handler.call(el as unknown as Element, new Event(type))
+					}
+				},
+				setAttribute(name: string, value: string) {
+					attrs.set(name, value)
+				},
+				getAttribute(name: string) {
+					return attrs.get(name) ?? null
+				},
+			}
+			return el
+		}
+
+		const button = createFakeElement()
+		const target = createFakeElement()
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-event="0"]') return button
+				if (selector === '[data-aero-event="1"]') return target
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		store.merge({ count: 0 })
+		const hypermediaRuntime = {
+			executeAction() {
+				target.dispatch('response')
+				return Promise.resolve({})
+			},
+			registerBusyBinding() {},
+		}
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [
+				{
+					selector: '[data-aero-event="0"]',
+					event: 'click',
+					handlerExpr: "GET('/api/save', { target: '#result' })",
+				},
+				{
+					selector: '[data-aero-event="1"]',
+					event: 'response',
+					handlerExpr: 'count++; this.setAttribute("data-count", String(count))',
+				},
+			],
+			hypermediaRuntime,
+		})
+
+		button.dispatch('click')
+
+		expect((store.get('count') as { value: number }).value).toBe(1)
+		expect(target.getAttribute('data-count')).toBe('1')
+		cleanup()
+	})
 })

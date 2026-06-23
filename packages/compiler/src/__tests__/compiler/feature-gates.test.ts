@@ -44,4 +44,24 @@ describe('feature gates', () => {
 		const code = compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
 		expect(code).toContain('href="/api/items"')
 	})
+
+	it('allows lifecycle handlers to contain state side effects', () => {
+		const html = `<script is:state>
+			let saved = false
+		</script>
+		<button on:click="{ POST('/api/save') }" on:response="{ saved = true }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).not.toThrow()
+	})
+
+	it('rejects mixed action and state side effects in one handler', () => {
+		const html = `<script is:state>
+			let saved = false
+		</script>
+		<button on:click="{ POST('/api/save'); saved = true }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Mixed hypermedia action expressions are not allowed')
+	})
 })

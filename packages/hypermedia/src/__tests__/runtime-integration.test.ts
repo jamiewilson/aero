@@ -43,4 +43,60 @@ describe('createHypermediaRuntime integration', () => {
 		await runtime.executeAction({ method: 'GET', url: '/dynamic/path' }, link)
 		expect(link.href).toContain('/dynamic/path')
 	})
+
+	it('dispatches lifecycle events on trigger and explicit target in order', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		const calls: string[] = []
+		for (const eventName of ['request', 'response', 'swap', 'settle'] as const) {
+			btn.addEventListener(eventName, event => {
+				calls.push(`trigger:${event.type}:${(event.currentTarget as Element).id}`)
+			})
+			target.addEventListener(eventName, event => {
+				calls.push(`target:${event.type}:${(event.currentTarget as Element).id}:${target.innerHTML}`)
+			})
+		}
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span>new</span>', { status: 200, headers: { 'Content-Type': 'text/html' } })
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', target: '#result', swap: 'innerHTML' },
+			btn
+		)
+
+		expect(calls).toEqual([
+			'trigger:request:btn',
+			'target:request:result:old',
+			'trigger:response:btn',
+			'target:response:result:old',
+			'trigger:swap:btn',
+			'target:swap:result:<span>new</span>',
+			'trigger:settle:btn',
+			'target:settle:result:<span>new</span>',
+		])
+	})
+
+	it('dispatches network errors on trigger and explicit target', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		const calls: string[] = []
+		btn.addEventListener('error', event => {
+			calls.push(`trigger:${event.type}:${((event as CustomEvent).detail.error as Error).message}`)
+		})
+		target.addEventListener('error', event => {
+			calls.push(`target:${event.type}:${((event as CustomEvent).detail.error as Error).message}`)
+		})
+		vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+
+		await expect(
+			runtime.executeAction({ method: 'GET', url: '/api/x', target: '#result' }, btn)
+		).rejects.toThrow('offline')
+
+		expect(calls).toEqual(['trigger:error:offline', 'target:error:offline'])
+	})
 })

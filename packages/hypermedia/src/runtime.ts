@@ -69,6 +69,11 @@ function syncNativeFallback(trigger: Element | undefined, url: string): void {
 	}
 }
 
+function resolveExplicitTarget(targetSelector: string | undefined, context: ParentNode): Element | undefined {
+	if (!targetSelector) return undefined
+	return resolveTarget(targetSelector, context) ?? undefined
+}
+
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
@@ -78,6 +83,18 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 
 	function emit(name: LifecycleEventName, detail: LifecycleDetail, element?: Element): void {
 		dispatchLifecycleEvent(name, detail, element)
+	}
+
+	function emitLifecycle(
+		name: LifecycleEventName,
+		detail: LifecycleDetail,
+		trigger: Element | undefined,
+		target: Element | undefined
+	): void {
+		emit(name, detail, trigger)
+		if (target && target !== trigger) {
+			emit(name, detail, target)
+		}
 	}
 
 	function setBusyForElement(element: Element | undefined, busy: boolean): void {
@@ -130,7 +147,15 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 
 		const request = buildRequest(opts, trigger)
 		syncNativeFallback(trigger, request.url)
-		emit('request', { request, trigger }, trigger)
+		const context = trigger?.ownerDocument ?? document
+		const requestTargetSelector = opts.target ?? defaultTarget
+		const requestTarget = resolveExplicitTarget(requestTargetSelector, context)
+		emitLifecycle(
+			'request',
+			{ request, target: requestTargetSelector, trigger },
+			trigger,
+			requestTarget
+		)
 		setBusyForElement(trigger, true)
 
 		let response: HypermediaResponse
@@ -138,32 +163,55 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			response = await executeRequest(request)
 		} catch (error) {
 			setBusyForElement(trigger, false)
-			emit('error', { request, error: error instanceof Error ? error : new Error(String(error)), trigger }, trigger)
+			emitLifecycle(
+				'error',
+				{
+					request,
+					error: error instanceof Error ? error : new Error(String(error)),
+					target: requestTargetSelector,
+					trigger,
+				},
+				trigger,
+				requestTarget
+			)
 			throw error
 		}
-
-		emit('response', { request, response, trigger }, trigger)
 
 		const headerSwap = response.headers['aero-swap']
 		const headerTarget = response.headers['aero-target']
 		const effectiveSwap = parseSwapStyle(headerSwap ?? '') ?? opts.swap ?? defaultSwap
 		const effectiveTarget = headerTarget ?? opts.target
-		const context = trigger?.ownerDocument ?? document
 		const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
+		const explicitTargetEl = effectiveTarget ? (targetEl ?? undefined) : undefined
+		const lifecycleTarget = effectiveTarget ?? 'self'
+
+		emitLifecycle(
+			'response',
+			{ request, response, target: lifecycleTarget, trigger },
+			trigger,
+			explicitTargetEl
+		)
 
 		if (targetEl && effectiveSwap !== 'none') {
-			emit('swap', { request, response, swapStyle: effectiveSwap, target: effectiveTarget ?? 'self', trigger }, trigger)
 			await runSwapLifecycle({
 				target: targetEl,
 				html: response.html,
 				style: effectiveSwap,
 				trigger,
-				targetSelector: effectiveTarget ?? 'self',
+				targetSelector: lifecycleTarget,
 			})
-			emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, trigger)
-			if (targetEl !== trigger) {
-				emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, targetEl)
-			}
+			emitLifecycle(
+				'swap',
+				{ request, response, swapStyle: effectiveSwap, target: lifecycleTarget, trigger },
+				trigger,
+				explicitTargetEl
+			)
+			emitLifecycle(
+				'settle',
+				{ request, response, target: lifecycleTarget, trigger },
+				trigger,
+				explicitTargetEl
+			)
 		}
 
 		applyPushUrl(response, opts, trigger)
