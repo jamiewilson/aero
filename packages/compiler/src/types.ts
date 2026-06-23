@@ -24,6 +24,13 @@ export interface ResolverOptions {
 /**
  * Input to the codegen compiler for a single template.
  */
+export interface ComponentLivePropMetadata {
+	readonly name: string
+	readonly propName: string
+	readonly required: boolean
+	readonly readonly?: boolean
+}
+
 export interface CompileOptions {
 	root: string
 	clientScripts?: ScriptEntry[]
@@ -38,6 +45,11 @@ export interface CompileOptions {
 	reactivity?: boolean
 	/** Enable Aero hypermedia pipeline (action functions, swap engine). */
 	hypermedia?: boolean
+	/**
+	 * Live-prop contracts for child components, keyed by the component render binding
+	 * name (`counter` for `<counter-component>`) or by the kebab component base.
+	 */
+	componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
 }
 
 export interface CompileWarning {

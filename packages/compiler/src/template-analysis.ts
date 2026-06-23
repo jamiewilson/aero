@@ -116,6 +116,7 @@ export function buildTemplateAnalysis(
 		: undefined
 	const lowerer = new Lowerer(resolver, diag, stateBindingNames, {
 		hypermedia: options.hypermedia,
+		componentLiveProps: options.componentLiveProps,
 	})
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = stateImportAnalysis

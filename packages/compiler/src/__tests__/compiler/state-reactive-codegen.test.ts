@@ -152,6 +152,25 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('component: __aeroMod_header')
 	})
 
+	it('rejects omitted required child live props when component metadata is available', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component label="Static" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentLiveProps: {
+					counter: [{ name: 'count', propName: 'count', required: true }],
+				},
+			})
+		).toThrow('Required live prop `count` for <counter-component> must be passed as a state signal.')
+	})
+
 	it('collects reactive binds inside switch branches with is:state', () => {
 		const html = `<script is:state>
 			const auth = { state: 'SignedOut' }

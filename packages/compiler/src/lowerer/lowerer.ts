@@ -17,7 +17,7 @@ import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
-import { CompileError } from '../types'
+import { CompileError, type ComponentLivePropMetadata } from '../types'
 import {
 	parseComponentAttributes,
 	parseElementAttributes,
@@ -42,16 +42,21 @@ export class Lowerer {
 	private readonly reactiveState: LowererReactiveState | null
 
 	private readonly hypermedia: boolean
+	private readonly componentLiveProps: Record<string, readonly ComponentLivePropMetadata[]>
 
 	constructor(
 		resolver: Resolver,
 		diag?: LowererDiag,
 		stateBindingNames?: ReadonlySet<string>,
-		options?: { hypermedia?: boolean }
+		options?: {
+			hypermedia?: boolean
+			componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
+		}
 	) {
 		this.resolver = resolver
 		this.diag = diag
 		this.hypermedia = options?.hypermedia === true
+		this.componentLiveProps = options?.componentLiveProps ?? {}
 		this.reactiveState =
 			stateBindingNames && stateBindingNames.size > 0
 				? createLowererReactiveState(stateBindingNames)
@@ -433,6 +438,7 @@ export class Lowerer {
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = parseComponentAttributes(node, this.diag)
 		const livePropExprs = this.collectComponentLivePropExprs(node)
+		this.validateRequiredComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
 		const componentBindId = this.reactiveState
 			? this.reactiveState.nextComponentBindId()
 			: undefined
@@ -501,6 +507,36 @@ export class Lowerer {
 			out[propName] = expr
 		}
 		return out
+	}
+
+	private getComponentLivePropMetadata(
+		tagName: string,
+		kebabBase: string,
+		baseName: string
+	): readonly ComponentLivePropMetadata[] {
+		return (
+			this.componentLiveProps[baseName] ??
+			this.componentLiveProps[kebabBase] ??
+			this.componentLiveProps[tagName] ??
+			[]
+		)
+	}
+
+	private validateRequiredComponentLiveProps(
+		tagName: string,
+		kebabBase: string,
+		baseName: string,
+		livePropExprs: Record<string, string>
+	): void {
+		if (!this.reactiveState) return
+		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+			const propName = prop.propName || prop.name
+			if (!prop.required || livePropExprs[propName] !== undefined) continue
+			throw new CompileError({
+				message: `Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
+				file: this.diag?.file,
+			})
+		}
 	}
 }
 
