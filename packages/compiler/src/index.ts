@@ -41,6 +41,7 @@ export {
 } from './template-interpolation-sites'
 
 export {
+	collectComponentLivePropMetadata,
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,
 	writeComponentRegistryDts,
@@ -58,6 +59,7 @@ export type {
 	ScriptEntry,
 	ResolverOptions,
 	CodegenTarget,
+	ComponentLivePropMetadata,
 	EmitRenderFunctionOptions,
 	CompileErrorOptions,
 } from './types'

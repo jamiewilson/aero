@@ -10,7 +10,7 @@ import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 
 interface CompileHtmlWarning {
-	code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+	code: 'AERO_COMPILE' | 'AERO_TEMPLATE' | 'AERO_SWITCH'
 	message: string
 	file?: string
 	line?: number

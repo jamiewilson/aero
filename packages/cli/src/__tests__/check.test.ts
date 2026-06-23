@@ -206,4 +206,46 @@ describe('runAeroCheck', () => {
 			spy.mockRestore()
 		}
 	})
+
+	it('reports omitted required component live props during check', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-live-props-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.mkdirSync(path.join(dir, 'client/components'), { recursive: true })
+		fs.writeFileSync(
+			path.join(dir, 'aero.config.ts'),
+			'export default { reactivity: true }\n',
+			'utf-8'
+		)
+		fs.writeFileSync(
+			path.join(dir, 'client/components/counter.html'),
+			`<script is:state>
+				const { count } = Aero.props
+			</script>
+			<p>{ count }</p>\n`,
+			'utf-8'
+		)
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/index.html'),
+			`<script is:build>
+				import counter from '@components/counter'
+			</script>
+			<script is:state>
+				let count = 1
+			</script>
+			<counter-component />\n`,
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir)
+			expect(code).toBe(AERO_EXIT_COMPILE)
+			const out = spy.mock.calls.map(args => String(args[0])).join('')
+			expect(out).toContain('[AERO_COMPILE]')
+			expect(out).toContain(
+				'Required live prop `count` for <counter-component> must be passed as a state signal.'
+			)
+		} finally {
+			spy.mockRestore()
+		}
+	})
 })
