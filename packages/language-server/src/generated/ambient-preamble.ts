@@ -9,7 +9,7 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 	
 	slots: Record<string, string>
 	
-	page: { url: URL; request: Request; params: Record<string, string> }
+	page: { url: URL; request: Request; params: Record<string, string>; routePath: string }
 	
 	site: { url: string }
 }

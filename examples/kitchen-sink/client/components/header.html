@@ -3,9 +3,8 @@
 	import logo from '@components/logo'
 
 	const props = Aero.props as HeaderProps
-	const pagePath = Aero.page.url.pathname.replace(/\/$/, '') || '/'
-	const isHomepage = pagePath === '/'
-	const isCounterDemo = pagePath === '/demos/counter'
+	const isHomepage = Aero.page.routePath === '/'
+	const isCounterDemo = Aero.page.routePath === '/demos/counter'
 </script>
 
 <script is:state>

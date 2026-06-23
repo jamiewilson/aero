@@ -16,7 +16,7 @@ import type {
 	MountOptions,
 } from '../types'
 import { escapeScriptJson } from '@aero-js/compiler/helpers'
-import { pagePathToKey, resolvePageName, resolvePageTarget } from '../utils/routing'
+import { pagePathToKey, pageNameToRoutePath, normalizeRoutePath, resolvePageName, resolvePageTarget } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 
 export { aeroDevLog }
@@ -80,11 +80,7 @@ export class Aero {
 
 	/** Convert a page name to a route path (e.g. `index` → `'/'`, `about` → `'/about'`). */
 	private toRoutePath(pageName = 'index'): string {
-		if (!pageName || pageName === 'index' || pageName === 'home') return '/'
-		if (pageName.endsWith('/index')) {
-			return '/' + pageName.slice(0, -'/index'.length)
-		}
-		return pageName.startsWith('/') ? pageName : '/' + pageName
+		return pageNameToRoutePath(pageName)
 	}
 
 	/** Build a URL from route path and optional raw URL. Uses `http://localhost` as base when only a path is given. */
@@ -105,12 +101,12 @@ export class Aero {
 		params?: AeroRouteParams
 		routePath?: string
 		site?: string | { url: string }
-		page?: { url?: URL; request?: Request; params?: AeroRouteParams }
+		page?: { url?: URL; request?: Request; params?: AeroRouteParams; routePath?: string }
 		styles?: Set<string>
 		scripts?: Set<string>
 		headScripts?: Set<string>
 	}): AeroTemplateContext {
-		const routePath = input.routePath || '/'
+		const routePath = normalizeRoutePath(input.page?.routePath ?? input.routePath ?? '/')
 		const pageInput = input.page
 		const url = pageInput?.url ?? this.toURL(routePath, input.url)
 		const urlResolved = url instanceof URL ? url : new URL(String(url), 'http://localhost')
@@ -153,6 +149,7 @@ export class Aero {
 				url: urlResolved,
 				request,
 				params,
+				routePath,
 			},
 			site: { url: siteUrl },
 			styles: input.styles,
@@ -247,7 +244,7 @@ export class Aero {
 			}
 		}
 
-		const routePath = renderInput.routePath || this.toRoutePath(matchedPageName)
+		const routePath = this.toRoutePath(matchedPageName)
 		const context = this.createContext({
 			props: renderInput.props || {},
 			slots: renderInput.slots || {},

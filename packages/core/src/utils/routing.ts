@@ -77,6 +77,32 @@ export function resolvePageName(url: string): string {
 }
 
 /**
+ * Canonical URL path for a resolved page name (no trailing slash; root is `'/'`).
+ *
+ * @example
+ * pageNameToRoutePath('index') // '/'
+ * pageNameToRoutePath('demos/counter') // '/demos/counter'
+ * pageNameToRoutePath('blog/index') // '/blog'
+ */
+export function pageNameToRoutePath(pageName = 'index'): string {
+	if (!pageName || pageName === 'index' || pageName === 'home') return '/'
+	if (pageName.endsWith('/index')) {
+		return '/' + pageName.slice(0, -'/index'.length)
+	}
+	return pageName.startsWith('/') ? pageName : '/' + pageName
+}
+
+/**
+ * Normalize a route path for stable comparisons (strip trailing slashes; root is `'/'`).
+ */
+export function normalizeRoutePath(path: string): string {
+	if (!path || path === '/') return '/'
+	const trimmed = path.replace(/\/+$/, '')
+	if (!trimmed) return '/'
+	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+}
+
+/**
  * Matches a page name (e.g. `posts/42`) against registered dynamic routes (e.g. `posts/[id]`).
  * Returns the first matching module, its canonical page name, and extracted params.
  *

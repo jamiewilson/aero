@@ -22,8 +22,8 @@ declare const Aero: {
 	props: Record<string, any>
 	/** Named slot content (key to HTML string). */
 	slots: Record<string, string>
-	/** Request-scoped: url, request, params. Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params`. */
-	page: { url: URL; request: Request; params: Record<string, string> }
+	/** Request-scoped: url, request, params, routePath. Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params`, `Aero.page.routePath`. */
+	page: { url: URL; request: Request; params: Record<string, string>; routePath: string }
 	/** Site-scoped: canonical URL from config. Use `Aero.site.url`. Always defined (empty string when not configured). */
 	site: { url: string }
 }

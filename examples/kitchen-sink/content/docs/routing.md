@@ -76,7 +76,9 @@ Inside `<script is:build>{:html}` and in template expressions you have:
 
 **`Aero.page.url`** — Full URL object for the current page.
 
-**`Aero.page.url.pathname`** — The path (e.g. `'/alpha'`).
+**`Aero.page.url.pathname`** — The path as requested (e.g. `'/alpha'` or `'/alpha/'`).
+
+**`Aero.page.routePath`** — Canonical matched route path (e.g. `'/alpha'`).
 
 **`Aero.props`** — Props from a parent component or layout (e.g. `{ title: 'Hello' }{:ts}`).
 

@@ -137,7 +137,7 @@ describe('Aero class', () => {
 		})
 
 		/** normalizeRenderInput merges input into context; request/url are built from routePath when not provided. */
-		it('should pass context with request, url, params', async () => {
+		it('should pass context with request, url, params, routePath', async () => {
 			let capturedCtx: any
 			aero.registerPages({
 				'pages/index.html': {
@@ -155,6 +155,46 @@ describe('Aero class', () => {
 			expect(capturedCtx.page.request).toBeInstanceOf(Request)
 			expect(capturedCtx.page.url).toBeInstanceOf(URL)
 			expect(capturedCtx.page.params).toEqual({ id: '1' })
+			expect(capturedCtx.page.routePath).toBe('/')
+		})
+
+		it('should expose canonical routePath regardless of trailing slash in request url', async () => {
+			let capturedCtx: any
+			aero.registerPages({
+				'pages/demos/counter.html': {
+					default: (ctx: any) => {
+						capturedCtx = ctx
+						return ''
+					},
+				},
+			})
+
+			await aero.render('demos/counter', {
+				url: new URL('http://localhost/demos/counter/'),
+				routePath: '/demos/counter/',
+			})
+
+			expect(capturedCtx.page.url.pathname).toBe('/demos/counter/')
+			expect(capturedCtx.page.routePath).toBe('/demos/counter')
+		})
+
+		it('should pass routePath through renderComponent page context', async () => {
+			let capturedCtx: any
+			const child = async (ctx: any) => {
+				capturedCtx = ctx
+				return ''
+			}
+
+			await aero.renderComponent(child, {}, {}, {
+				page: {
+					url: new URL('http://localhost/demos/counter'),
+					request: new Request('http://localhost/demos/counter'),
+					params: {},
+					routePath: '/demos/counter',
+				},
+			})
+
+			expect(capturedCtx.page.routePath).toBe('/demos/counter')
 		})
 
 		it('should pass slots in context when provided in input', async () => {
