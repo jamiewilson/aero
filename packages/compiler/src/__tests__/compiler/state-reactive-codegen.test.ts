@@ -18,7 +18,9 @@ describe('state reactive codegen (PR-2d)', () => {
 
 		const code = compile(parse(html), mockOptions)
 
-		expect(code).toContain("import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'")
+		expect(code).toContain(
+			"import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'"
+		)
 		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
 		expect(code).toContain('data-aero-text="0"')
 		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
@@ -168,7 +170,9 @@ describe('state reactive codegen (PR-2d)', () => {
 					counter: [{ name: 'count', propName: 'count', required: true }],
 				},
 			})
-		).toThrow('Required live prop `count` for <counter-component> must be passed as a state signal.')
+		).toThrow(
+			'Required live prop `count` for <counter-component> must be passed as a state signal.'
+		)
 	})
 
 	it('collects reactive binds inside switch branches with is:state', () => {
@@ -205,6 +209,6 @@ describe('state reactive codegen (PR-2d)', () => {
 
 		const code = compile(parse(html), { ...mockOptions, hypermedia: true })
 		expect(code).toContain('hypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined')
-		expect(code).not.toContain("import { POST, GET, PUT, PATCH, DELETE }")
+		expect(code).not.toContain('import { POST, GET, PUT, PATCH, DELETE }')
 	})
 })

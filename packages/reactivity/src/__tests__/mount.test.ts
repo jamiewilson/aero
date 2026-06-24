@@ -169,26 +169,22 @@ describe('mountStateBindings', () => {
 			hasAttribute(name: string) {
 				return name === 'data-aero-component'
 			},
-			closest() {
-				return componentRoot
-			},
 		} as unknown as Element
 
-		Object.defineProperty(childText, 'closest', {
-			value(selector: string) {
-				return selector === '[data-aero-component]' ? componentRoot : null
+		const documentRoot = {
+			querySelectorAll(selector: string) {
+				if (selector === '[data-aero-component]') return [componentRoot]
+				return []
 			},
-		})
-		Object.defineProperty(pageText, 'closest', {
-			value() {
-				return null
-			},
-		})
+		} as unknown as ParentNode
 
 		const root = {
 			tagName: 'BODY',
 			hasAttribute() {
 				return false
+			},
+			getRootNode() {
+				return documentRoot
 			},
 			querySelector(selector: string) {
 				if (selector === '[data-aero-text="0"]') return childText
@@ -200,6 +196,10 @@ describe('mountStateBindings', () => {
 				return []
 			},
 		} as unknown as ParentNode
+
+		Object.defineProperty(childText, 'parentNode', { value: componentRoot })
+		Object.defineProperty(componentRoot, 'parentNode', { value: root })
+		Object.defineProperty(pageText, 'parentNode', { value: root })
 
 		const store = new SignalStore()
 		store.merge({ count: 0 })
@@ -225,6 +225,76 @@ describe('mountStateBindings', () => {
 		expect(pageText.textContent).toBe('0')
 		;(store.get('count') as { value: number }).value = 3
 		expect(pageText.textContent).toBe('3')
+		expect(childText.textContent).toBe('0')
+		expect(childMount).toHaveBeenCalled()
+		cleanup()
+	})
+
+	it('binds page text markers inside layout wrappers but outside registered child components', () => {
+		const layoutRoot = {
+			tagName: 'SPAN',
+			hasAttribute(name: string) {
+				return name === 'data-aero-component'
+			},
+		} as unknown as Element
+		const childComponentRoot = {
+			tagName: 'SPAN',
+			hasAttribute() {
+				return true
+			},
+		} as unknown as Element
+		const childText = { textContent: '0', tagName: 'SPAN' } as unknown as Element
+		const pageText = { textContent: '0', tagName: 'H2' } as unknown as Element
+
+		const root = {
+			tagName: 'BODY',
+			hasAttribute() {
+				return false
+			},
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return layoutRoot
+				if (selector === '[data-aero-component="1"]') return childComponentRoot
+				return null
+			},
+			querySelectorAll(selector: string) {
+				if (selector === '[data-aero-text="0"]') return [childText, pageText]
+				return []
+			},
+		} as unknown as ParentNode
+
+		Object.defineProperty(childComponentRoot, 'parentNode', { value: layoutRoot })
+		Object.defineProperty(layoutRoot, 'parentNode', { value: root })
+		Object.defineProperty(childText, 'parentNode', { value: childComponentRoot })
+		Object.defineProperty(pageText, 'parentNode', { value: layoutRoot })
+
+		const store = new SignalStore()
+		store.merge({ count: 0 })
+		const childMount = vi.fn(() => () => {})
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: {},
+					livePropExprs: {},
+				},
+				{
+					selector: '[data-aero-component="1"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: {},
+				},
+			],
+		})
+
+		expect(pageText.textContent).toBe('0')
+		;(store.get('count') as { value: number }).value = 9
+		expect(pageText.textContent).toBe('9')
 		expect(childText.textContent).toBe('0')
 		expect(childMount).toHaveBeenCalled()
 		cleanup()
@@ -373,6 +443,49 @@ describe('mountStateBindings', () => {
 				functionSources: [],
 				textBinds: [{ selector: '[data-aero-text="0"]', readExpr: '"missing"' }],
 				eventBinds: [],
+			}),
+		).not.toThrow()
+	})
+
+	it('skips absent component binds on component mounts for inactive conditional branches', () => {
+		const componentRoot = {
+			hasAttribute(name: string) {
+				return name === 'data-aero-component'
+			},
+			getAttribute(name: string) {
+				return name === 'data-aero-component' ? '1' : null
+			},
+			querySelectorAll() {
+				return []
+			},
+			querySelector() {
+				return null
+			},
+			get childNodes() {
+				return [] as NodeListOf<ChildNode>
+			},
+			matches: () => false,
+			getRootNode() {
+				return { querySelectorAll: () => [] }
+			},
+		} as unknown as Element
+
+		expect(() =>
+			mountStateBindings({
+				root: componentRoot,
+				store: new SignalStore(),
+				bindings: [],
+				functionSources: [],
+				textBinds: [],
+				eventBinds: [],
+				componentBinds: [
+					{
+						selector: '[data-aero-component="0"]',
+						component: {},
+						livePropExprs: {},
+					},
+				],
+				Aero: {},
 			}),
 		).not.toThrow()
 	})
