@@ -68,6 +68,7 @@ function serializeEventBinds(binds: IRReactiveEventBind[]): string {
 		binds.map(bind => ({
 			selector: `[data-aero-event="${bind.bindId}"]`,
 			event: bind.event,
+			modifiers: bind.modifiers,
 			handlerExpr: bind.handlerExpr,
 		}))
 	)
@@ -109,7 +110,9 @@ export function emitMountStateBindingsFunction(
 
 	const scopeConstants = serializeScopeConstants(stateImports)
 	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
-	const actionFnsLine = actionFunctions ? `\n\t\tactionFunctions: { ${actionFunctions} },` : '\n\t\tactionFunctions: {},'
+	const actionFnsLine = actionFunctions
+		? '\n\t\thypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined,'
+		: ''
 
 	return `
 export function mountStateBindings(root, Aero) {
@@ -129,7 +132,7 @@ export function mountStateBindings(root, Aero) {
 }
 
 export function createHypermediaImportLine(): string {
-	return `import { POST, GET, PUT, PATCH, DELETE } from '@aero-js/core/hypermedia'`
+	return ''
 }
 
 export function referencesStateBindingExpression(

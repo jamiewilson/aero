@@ -19,7 +19,10 @@ import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
-import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind } from '../ir'
+import {
+	deriveHypermediaFallbackAttrs,
+	renderFallbackAttributeString,
+} from '../hypermedia-fallback'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
@@ -287,7 +290,8 @@ export function parseElementAttributes(
 	resolver: Resolver,
 	diag: LowererDiag,
 	node: NodeLike,
-	reactiveState?: LowererReactiveState
+	reactiveState?: LowererReactiveState,
+	hypermedia?: boolean
 ): ParsedElementAttrs {
 	const attributes: string[] = []
 	const eventBinds: IRReactiveEventBind[] = []
@@ -349,9 +353,23 @@ export function parseElementAttributes(
 				kind: 'ReactiveEventBind',
 				bindId,
 				event: parsedEvent.directive.event,
+				modifiers: parsedEvent.directive.modifiers,
 				handlerExpr,
 			})
 			attributes.push(`data-aero-event="${bindId}"`)
+			if (hypermedia) {
+				const fallback = deriveHypermediaFallbackAttrs(getTagName(node), {
+					kind: 'ReactiveEventBind',
+					bindId,
+					event: parsedEvent.directive.event,
+					modifiers: parsedEvent.directive.modifiers,
+					handlerExpr,
+				})
+				if (fallback) {
+					const fallbackStr = renderFallbackAttributeString(fallback)
+					if (fallbackStr.trim()) attributes.push(fallbackStr.trim())
+				}
+			}
 			return
 		}
 

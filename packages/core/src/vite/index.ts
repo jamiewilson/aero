@@ -234,6 +234,8 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 				resolve: { alias },
 				define: {
 					'import.meta.env.SITE': JSON.stringify(site),
+					'import.meta.env.AERO_HYPERMEDIA': JSON.stringify(state.options.hypermedia === true),
+					'import.meta.env.AERO_REACTIVITY': JSON.stringify(state.options.reactivity === true),
 				},
 				environments: {
 					...userEnvs,

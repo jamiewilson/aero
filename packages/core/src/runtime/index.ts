@@ -369,4 +369,14 @@ export class Aero {
 		const cleanup = mountStateBindings(root, this)
 		return typeof cleanup === 'function' ? cleanup : () => {}
 	}
+
+	/** True when the route module exports `mountStateBindings`. */
+	hasStateBindingsForPath(pathname: string): boolean {
+		const pageName = resolvePageName(pathname || '/')
+		const resolved = resolvePageTarget(pageName, this.pagesMap)
+		if (!resolved) return false
+		const target = resolved.module as unknown
+		if (!target || typeof target !== 'object') return false
+		return typeof (target as { mountStateBindings?: unknown }).mountStateBindings === 'function'
+	}
 }

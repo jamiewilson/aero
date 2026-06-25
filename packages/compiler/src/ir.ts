@@ -122,6 +122,7 @@ export interface IRReactiveEventBind {
 	kind: 'ReactiveEventBind'
 	bindId: number
 	event: string
+	modifiers: string[]
 	handlerExpr: string
 }
 

@@ -40,13 +40,17 @@ export class Lowerer {
 	private readonly diag: LowererDiag
 	private readonly reactiveState: LowererReactiveState | null
 
+	private readonly hypermedia: boolean
+
 	constructor(
 		resolver: Resolver,
 		diag?: LowererDiag,
-		stateBindingNames?: ReadonlySet<string>
+		stateBindingNames?: ReadonlySet<string>,
+		options?: { hypermedia?: boolean }
 	) {
 		this.resolver = resolver
 		this.diag = diag
+		this.hypermedia = options?.hypermedia === true
 		this.reactiveState =
 			stateBindingNames && stateBindingNames.size > 0
 				? createLowererReactiveState(stateBindingNames)
@@ -56,7 +60,13 @@ export class Lowerer {
 	private get slotDeps(): SlotDefaultContentDeps {
 		return {
 			parseElementAttributes: (n: any) =>
-				parseElementAttributes(this.resolver, this.diag, n, this.reactiveState ?? undefined),
+				parseElementAttributes(
+					this.resolver,
+					this.diag,
+					n,
+					this.reactiveState ?? undefined,
+					this.hypermedia
+				),
 			parseComponentAttributes: (n: any) => parseComponentAttributes(n, this.diag),
 		}
 	}
@@ -197,7 +207,8 @@ export class Lowerer {
 			this.resolver,
 			this.diag,
 			node,
-			this.reactiveState ?? undefined
+			this.reactiveState ?? undefined,
+			this.hypermedia
 		)
 		const childSkip =
 			skipInterpolation || tagName === 'style' || tagName === 'script'

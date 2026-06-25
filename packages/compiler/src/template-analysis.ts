@@ -111,7 +111,9 @@ export function buildTemplateAnalysis(
 	const stateBindingNames = stateAnalysis
 		? new Set(stateAnalysis.bindings.map(binding => binding.name))
 		: undefined
-	const lowerer = new Lowerer(resolver, diag, stateBindingNames)
+	const lowerer = new Lowerer(resolver, diag, stateBindingNames, {
+		hypermedia: options.hypermedia,
+	})
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = stateImportAnalysis
 		? stripBuildScriptTypes(stateImportAnalysis.scriptWithoutImportsAndGetStaticPaths, 'state.ts')
