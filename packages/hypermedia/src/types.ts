@@ -20,6 +20,17 @@ export interface ActionOptions {
 	values?: Record<string, string>
 	pushUrl?: boolean | string
 	autoDisable?: boolean
+	ariaBusy?: boolean
+	state?: HypermediaBooleanSignal
+}
+
+export interface HypermediaBooleanSignal {
+	value: boolean
+}
+
+export interface HypermediaSignalStore {
+	has?(path: string): boolean
+	get(path: string): { value: unknown }
 }
 
 export interface HypermediaRequest {
@@ -43,3 +54,14 @@ export interface SwapOperation {
 	html: string
 	style: SwapStyle
 }
+
+export interface HypermediaSwapLifecycleOperation extends SwapOperation {
+	trigger?: Element
+	targetSelector: string
+	performSwap(): void
+	adoptRuntime(container: ParentNode): void
+}
+
+export type HypermediaSwapLifecycleAdapter = (
+	operation: HypermediaSwapLifecycleOperation
+) => void | Promise<void>

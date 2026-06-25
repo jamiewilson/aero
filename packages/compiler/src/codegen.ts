@@ -167,7 +167,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const lowererDiagnostics = buildLowererDiagnostics(options)
 
 	const ta = buildTemplateAnalysis(parsed, options, resolver, lowererDiagnostics)
-	validateFeatureGates(parsed, options, ta.bodyIR)
+	validateFeatureGates(parsed, options, ta.bodyIR, ta.stateAnalysis)
 	const runtimeScript = [ta.scriptBody, ta.stateScriptBody].filter(Boolean).join('\n')
 	const script = addVirtualClientScriptHelper(runtimeScript, options.clientScripts)
 	const { rootScripts, headScripts } = collectClientScriptLines(options.clientScripts)

@@ -234,10 +234,10 @@ describe('Aero class', () => {
 			aero.registerPages({
 				'pages/index.html': {
 					default: () => '<div></div>',
-					mountStateBindings(root: HTMLElement, runtime: Aero) {
+					mountStateBindings(root: HTMLElement, runtime: unknown) {
 						mounted = true
 						expect(root).toBe(target)
-						expect(runtime).toBe(aero)
+						expect(runtime as Aero).toBe(aero)
 						return () => {
 							cleaned = true
 						}

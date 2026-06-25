@@ -1,7 +1,8 @@
-import type { ActionOptions, HttpMethod, SwapStyle } from './types'
+import type { ActionOptions, HttpMethod, HypermediaBooleanSignal, HypermediaSignalStore, SwapStyle } from './types'
 import type { HypermediaRuntime } from './runtime'
 
 const HYPERMEDIA_ON_PREFIX = 'data-aero-on-'
+const HYPERMEDIA_BUSY_ATTR = 'data-aero-busy'
 
 interface ParsedAction {
 	method: HttpMethod
@@ -9,11 +10,34 @@ interface ParsedAction {
 	options: ActionOptions
 }
 
-function parseActionExpression(expr: string): ParsedAction | null {
-	const trimmed = expr.trim()
-	const inner = trimmed.startsWith('{') && trimmed.endsWith('}')
+function stripBraces(value: string): string {
+	const trimmed = value.trim()
+	return trimmed.startsWith('{') && trimmed.endsWith('}')
 		? trimmed.slice(1, -1).trim()
 		: trimmed
+}
+
+function resolveSignalRef(ref: string, store: HypermediaSignalStore | undefined): HypermediaBooleanSignal {
+	if (!store) {
+		throw new Error(`[aero] Hypermedia signal reference ${JSON.stringify(ref)} requires a SignalStore.`)
+	}
+	const path = ref.trim().replace(/^\$/, '')
+	if (!path) {
+		throw new Error('[aero] Empty hypermedia signal reference.')
+	}
+	if (store.has && !store.has(path)) {
+		throw new Error(`[aero] Hypermedia signal not found: ${path}`)
+	}
+	const signal = store.get(path)
+	if (typeof signal.value !== 'boolean') {
+		throw new Error(`[aero] Hypermedia signal must be boolean: ${path}`)
+	}
+	return signal as HypermediaBooleanSignal
+}
+
+function parseActionExpression(expr: string, store?: HypermediaSignalStore): ParsedAction | null {
+	const trimmed = expr.trim()
+	const inner = stripBraces(trimmed)
 
 	const match = inner.match(
 		/^(POST|GET|PUT|PATCH|DELETE)\s*\(\s*(['"])([^'"]*)\2\s*(?:,\s*(\{[^}]*\}))?\s*\)$/
@@ -28,8 +52,10 @@ function parseActionExpression(expr: string): ParsedAction | null {
 	if (optsRaw) {
 		const targetMatch = optsRaw.match(/target:\s*['"]([^'"]+)['"]/)
 		const swapMatch = optsRaw.match(/swap:\s*['"]([^'"]+)['"]/)
+		const stateMatch = optsRaw.match(/state:\s*\$(\w+(?:\.\w+)*)/)
 		if (targetMatch) options.target = targetMatch[1]
 		if (swapMatch) options.swap = swapMatch[1] as SwapStyle
+		if (stateMatch) options.state = resolveSignalRef(`$${stateMatch[1]}`, store)
 	}
 
 	return { method, url, options }
@@ -47,16 +73,26 @@ function shouldPreventDefault(eventName: string): boolean {
 	return eventName.includes('prevent')
 }
 
-export function adopt(container: ParentNode, runtime: HypermediaRuntime): void {
+export function adopt(container: ParentNode, runtime: HypermediaRuntime, store?: HypermediaSignalStore): void {
 	const all = container.querySelectorAll<Element>('*')
 	for (const el of all) {
 		if (el.hasAttribute('data-aero-adopted')) continue
+		let didAdopt = false
+
+		const busyAttr = el.getAttribute(HYPERMEDIA_BUSY_ATTR)
+		if (busyAttr) {
+			const signalRef = stripBraces(busyAttr)
+			if (signalRef.startsWith('$')) {
+				runtime.registerBusyBinding(el, signalRef.slice(1), resolveSignalRef(signalRef, store))
+				didAdopt = true
+			}
+		}
 
 		for (let i = 0; i < el.attributes.length; i++) {
 			const attr = el.attributes[i]
 			if (!attr.name.startsWith(HYPERMEDIA_ON_PREFIX)) continue
 
-			const parsed = parseActionExpression(attr.value)
+			const parsed = parseActionExpression(attr.value, store)
 			if (!parsed) continue
 
 			const attrEvent = getEventName(attr.name)
@@ -72,8 +108,12 @@ export function adopt(container: ParentNode, runtime: HypermediaRuntime): void {
 				}, el)
 			})
 
-			el.setAttribute('data-aero-adopted', '')
+			didAdopt = true
 			break
+		}
+
+		if (didAdopt) {
+			el.setAttribute('data-aero-adopted', '')
 		}
 	}
 }

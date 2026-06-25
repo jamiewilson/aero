@@ -53,4 +53,25 @@ test.describe('kitchen-sink preview:api', () => {
 		await expect(page).toHaveURL(`${server.url}/docs/`)
 		await expect(page.getByRole('heading', { name: 'Docs' })).toBeVisible()
 	})
+
+	test('runs the Aero hypermedia demo through the client runtime', async ({ page }) => {
+		await page.goto(`${server.url}/demos/hypermedia`)
+
+		await expect(page.getByText('Ready')).toBeVisible()
+		await expect(page.locator('#hypermedia-result')).toContainText('Waiting')
+
+		await Promise.all([
+			page.waitForResponse(
+				response =>
+					response.url().endsWith('/api/hypermedia-demo') &&
+					response.request().method() === 'GET' &&
+					response.status() === 200
+			),
+			page.getByRole('button', { name: 'Load fragment' }).click(),
+		])
+
+		await expect(page.locator('#hypermedia-result')).toContainText(
+			'Hypermedia fragment loaded from'
+		)
+	})
 })

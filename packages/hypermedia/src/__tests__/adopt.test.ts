@@ -8,6 +8,8 @@ function createMockRuntime(): HypermediaRuntime {
 		executeAction: vi.fn().mockResolvedValue({ ok: true, status: 200, html: '', headers: {} }),
 		swapElement: vi.fn(),
 		adopt: vi.fn(),
+		registerBusyBinding: vi.fn(() => () => {}),
+		setSwapLifecycleAdapter: vi.fn(),
 	}
 }
 
@@ -75,5 +77,44 @@ describe('adopt', () => {
 		const event = new Event('submit', { bubbles: true, cancelable: true })
 		form.dispatchEvent(event)
 		expect(event.defaultPrevented).toBe(true)
+	})
+
+	it('registers runtime busy attributes with $ signal refs', () => {
+		const container = document.createElement('div')
+		container.innerHTML = '<button data-aero-busy="{ $isSaving }">Save</button>'
+		const runtime = createMockRuntime()
+		const signal = { value: false }
+		const store = { has: () => true, get: () => signal }
+
+		adopt(container, runtime, store)
+
+		const button = container.querySelector('button')!
+		expect(runtime.registerBusyBinding).toHaveBeenCalledWith(button, 'isSaving', signal)
+	})
+
+	it('parses runtime action state option with $ signal refs', () => {
+		const container = document.createElement('div')
+		container.innerHTML = '<button data-aero-on-click="{ POST(\'/save\', { state: $isSaving }) }">Save</button>'
+		const runtime = createMockRuntime()
+		const signal = { value: false }
+		const store = { has: () => true, get: () => signal }
+
+		adopt(container, runtime, store)
+		const button = container.querySelector('button')!
+		button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+		expect(runtime.executeAction).toHaveBeenCalledWith(
+			expect.objectContaining({ method: 'POST', url: '/save', state: signal }),
+			button
+		)
+	})
+
+	it('throws when runtime $ refs resolve to non-boolean signals', () => {
+		const container = document.createElement('div')
+		container.innerHTML = '<button data-aero-busy="{ $isSaving }">Save</button>'
+		const runtime = createMockRuntime()
+		const store = { has: () => true, get: () => ({ value: 'yes' }) }
+
+		expect(() => adopt(container, runtime, store)).toThrow('must be boolean')
 	})
 })

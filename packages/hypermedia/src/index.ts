@@ -2,8 +2,12 @@ export type {
 	HttpMethod,
 	SwapStyle,
 	ActionOptions,
+	HypermediaBooleanSignal,
 	HypermediaRequest,
 	HypermediaResponse,
+	HypermediaSignalStore,
+	HypermediaSwapLifecycleAdapter,
+	HypermediaSwapLifecycleOperation,
 	SwapOperation,
 } from './types'
 

@@ -44,4 +44,83 @@ describe('feature gates', () => {
 		const code = compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
 		expect(code).toContain('href="/api/items"')
 	})
+
+	it('allows lifecycle handlers to contain state side effects', () => {
+		const html = `<script is:state>
+			let saved = false
+		</script>
+		<button on:click="{ POST('/api/save') }" on:response="{ saved = true }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).not.toThrow()
+	})
+
+	it('allows non-action lifecycle handlers to use object properties named state', () => {
+		const html = `<script is:state>
+			let saved = false
+			function log(value) {}
+		</script>
+		<button on:response="{ log({ state: 'saved' }); saved = true }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).not.toThrow()
+	})
+
+	it('rejects mixed action and state side effects in one handler', () => {
+		const html = `<script is:state>
+			let saved = false
+		</script>
+		<button on:click="{ POST('/api/save'); saved = true }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Mixed hypermedia action expressions are not allowed')
+	})
+
+	it('rejects busy references to missing state bindings', () => {
+		const html = `<script is:state>
+			let saved = false
+		</script>
+		<button busy="{ isSaving }" on:click="{ POST('/api/save') }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Hypermedia busy signal not found: isSaving')
+	})
+
+	it('rejects busy references to non-boolean state bindings', () => {
+		const html = `<script is:state>
+			let status = 'idle'
+		</script>
+		<button busy="{ status }" on:click="{ POST('/api/save') }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Hypermedia busy signal must be boolean: status')
+	})
+
+	it('rejects string state options in action calls', () => {
+		const html = `<script is:state>
+			let isSaving = false
+		</script>
+		<button on:click="{ POST('/api/save', { state: 'isSaving' }) }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Hypermedia action `state` must reference a boolean state binding')
+	})
+
+	it('rejects visible action state references to missing or non-boolean bindings', () => {
+		const missing = `<script is:state>
+			let saved = false
+		</script>
+		<button on:click="{ POST('/api/save', { state: isSaving }) }">Save</button>`
+		expect(() =>
+			compile(parse(missing), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Hypermedia action state signal not found: isSaving')
+
+		const nonBoolean = `<script is:state>
+			let status = 'idle'
+		</script>
+		<button on:click="{ POST('/api/save', { state: status }) }">Save</button>`
+		expect(() =>
+			compile(parse(nonBoolean), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('Hypermedia action state signal must be boolean: status')
+	})
 })

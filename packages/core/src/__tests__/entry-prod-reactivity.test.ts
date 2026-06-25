@@ -36,7 +36,7 @@ describe('entry-prod reactivity bootstrap', () => {
 		const cleanupCalls: number[] = []
 		const { resolveStateBindingsModule } = await import('virtual:aero/state-bindings-registry.ts')
 		vi.mocked(resolveStateBindingsModule).mockImplementation(async () => {
-			return (_root, _aero) => {
+			return (_root: HTMLElement, _aero: unknown) => {
 				const id = cleanupCalls.length + 1
 				return () => {
 					cleanupCalls.push(id)

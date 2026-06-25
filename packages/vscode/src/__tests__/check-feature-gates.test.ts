@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as vscode from 'vscode'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { checkFeatureGates } from '../diagnostics/check-feature-gates'
 
 const repoRoot = '/Users/jamie/dev/aero'
@@ -102,5 +105,34 @@ describe('checkFeatureGates', () => {
 		expect(range.start.line).toBeGreaterThan(0)
 		expect(counterText.slice(0, 50)).toContain('is:build')
 		expect(counterText.split('\n')[range.start.line]).toMatch(/is:state/)
+	})
+
+	it('reports visible invalid hypermedia state signal references', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-hypermedia-'))
+		fs.mkdirSync(path.join(root, 'client/pages'), { recursive: true })
+		fs.writeFileSync(
+			path.join(root, 'aero.config.mjs'),
+			'export default { reactivity: true, hypermedia: true }\n',
+			'utf-8'
+		)
+		vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue({
+			uri: { fsPath: root },
+		} as vscode.WorkspaceFolder)
+		const text = `<script is:state>
+			let status = 'idle'
+		</script>
+		<button busy="{ missing }" on:click="{ POST('/api/save', { state: 'status' }) }">Save</button>`
+		const diagnostics: vscode.Diagnostic[] = []
+
+		checkFeatureGates(
+			makeDoc(text, path.join(root, 'client/pages/index.html')),
+			text,
+			diagnostics
+		)
+
+		expect(diagnostics.map(d => d.message)).toEqual([
+			'Hypermedia busy signal not found: missing',
+			'Hypermedia action `state` must reference a boolean state binding, not a string.',
+		])
 	})
 })

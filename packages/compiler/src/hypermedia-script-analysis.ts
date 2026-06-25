@@ -29,7 +29,8 @@ function extractActionUrl(handlerExpr: string): string | null {
 
 export function detectHypermediaIssues(
 	eventBinds: readonly IRReactiveEventBind[],
-	templateSource: string
+	templateSource: string,
+	hasStateScript = /\bis:state\b/.test(templateSource)
 ): HypermediaIssue[] {
 	const issues: HypermediaIssue[] = []
 
@@ -67,7 +68,7 @@ export function detectHypermediaIssues(
 		}
 	}
 
-	if (/\bbusy\s*=/.test(templateSource) && !/\bis:state\b/.test(templateSource)) {
+	if (/\bbusy\s*=/.test(templateSource) && !hasStateScript) {
 		issues.push({
 			severity: 'error',
 			message: '`busy` attribute references must be declared in `<script is:state>`.',

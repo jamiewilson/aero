@@ -41,7 +41,7 @@ export interface CompileOptions {
 }
 
 export interface CompileWarning {
-	code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+	code: 'AERO_TEMPLATE' | 'AERO_SWITCH' | 'AERO_COMPILE'
 	message: string
 	file?: string
 	line?: number

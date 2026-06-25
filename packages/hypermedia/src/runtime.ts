@@ -1,22 +1,41 @@
-import type { ActionOptions, HypermediaRequest, HypermediaResponse, SwapStyle } from './types'
+import type {
+	ActionOptions,
+	HypermediaBooleanSignal,
+	HypermediaRequest,
+	HypermediaResponse,
+	HypermediaSignalStore,
+	HypermediaSwapLifecycleAdapter,
+	SwapStyle,
+} from './types'
 import { buildRequest, executeRequest } from './request'
 import { resolveTarget, performSwap, parseSwapStyle } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { adopt as adoptFragment } from './adopt'
+
+type LifecyclePhase = 'loading' | 'swapping' | 'settling'
+
+const PHASE_CLASS: Record<LifecyclePhase, string> = {
+	loading: 'aero-loading',
+	swapping: 'aero-swapping',
+	settling: 'aero-settling',
+}
 
 export interface HypermediaRuntime {
 	readonly kind: 'hypermedia-runtime'
 	readonly debug?: boolean
 	executeAction(options: ActionOptions, trigger?: Element): Promise<HypermediaResponse>
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
-	adopt(container: ParentNode): void
-	registerBusyBinding(element: Element, signalName: string, setBusy: (value: boolean) => void): void
+	adopt(container: ParentNode, store?: HypermediaSignalStore): void
+	registerBusyBinding(element: Element, signalName: string, signal: HypermediaBooleanSignal): () => void
+	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
 
 export interface HypermediaRuntimeOptions {
 	readonly debug?: boolean
 	readonly defaultSwap?: SwapStyle
 	readonly defaultTarget?: string
+	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
+	readonly store?: HypermediaSignalStore
 }
 
 function resolveSwapTarget(
@@ -61,25 +80,166 @@ function syncNativeFallback(trigger: Element | undefined, url: string): void {
 	}
 }
 
+function resolveExplicitTarget(targetSelector: string | undefined, context: ParentNode): Element | undefined {
+	if (!targetSelector) return undefined
+	return resolveTarget(targetSelector, context) ?? undefined
+}
+
+function uniqueElements(...elements: Array<Element | undefined>): Element[] {
+	const result: Element[] = []
+	for (const element of elements) {
+		if (!element || result.includes(element)) continue
+		result.push(element)
+	}
+	return result
+}
+
+function setPhaseClass(elements: readonly Element[], phase: LifecyclePhase | null): void {
+	for (const element of elements) {
+		for (const className of Object.values(PHASE_CLASS)) {
+			element.classList.remove(className)
+		}
+		if (phase) {
+			element.classList.add(PHASE_CLASS[phase])
+		}
+	}
+}
+
+function createAriaBusyMirror(enabled: boolean): {
+	add(elements: readonly Element[]): void
+	restore(): void
+} {
+	const previous = new Map<Element, string | null>()
+
+	return {
+		add(elements) {
+			if (!enabled) return
+			for (const element of elements) {
+				if (!previous.has(element)) {
+					previous.set(element, element.getAttribute('aria-busy'))
+				}
+				element.setAttribute('aria-busy', 'true')
+			}
+		},
+		restore() {
+			for (const [element, value] of previous) {
+				if (value === null) {
+					element.removeAttribute('aria-busy')
+				} else {
+					element.setAttribute('aria-busy', value)
+				}
+			}
+			previous.clear()
+		},
+	}
+}
+
+function createFocusFallback(target: Element): () => void {
+	const doc = target.ownerDocument
+	const activeBeforeSwap = doc.activeElement
+	const shouldFallback =
+		activeBeforeSwap instanceof Element && target.contains(activeBeforeSwap)
+
+	return () => {
+		if (!shouldFallback || activeBeforeSwap?.isConnected || !target.isConnected) return
+		if (!(target instanceof HTMLElement)) return
+
+		if (!target.hasAttribute('tabindex')) {
+			target.setAttribute('tabindex', '-1')
+		}
+
+		try {
+			target.focus({ preventScroll: true })
+		} catch {
+			target.focus()
+		}
+	}
+}
+
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
-	const busyBindings = new Map<Element, { signalName: string; setBusy: (value: boolean) => void }>()
-	const inFlightCounts = new Map<Element, number>()
+	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
+	const inFlightCounts = new WeakMap<HypermediaBooleanSignal, number>()
+	let defaultStore = options.store
+	let swapLifecycleAdapter = options.swapLifecycleAdapter ?? null
 
 	function emit(name: LifecycleEventName, detail: LifecycleDetail, element?: Element): void {
 		dispatchLifecycleEvent(name, detail, element)
 	}
 
-	function setBusyForElement(element: Element | undefined, busy: boolean): void {
-		if (!element) return
-		const binding = busyBindings.get(element)
-		if (!binding) return
-		const count = (inFlightCounts.get(element) ?? 0) + (busy ? 1 : -1)
+	function emitLifecycle(
+		name: LifecycleEventName,
+		detail: LifecycleDetail,
+		trigger: Element | undefined,
+		target: Element | undefined
+	): void {
+		emit(name, detail, trigger)
+		if (target && target !== trigger) {
+			emit(name, detail, target)
+		}
+	}
+
+	function setBusyForSignal(signal: HypermediaBooleanSignal | undefined, busy: boolean): void {
+		if (!signal) return
+		const count = (inFlightCounts.get(signal) ?? 0) + (busy ? 1 : -1)
 		const next = Math.max(0, count)
-		if (next === 0) inFlightCounts.delete(element)
-		else inFlightCounts.set(element, next)
-		binding.setBusy(next > 0)
+		if (next === 0) inFlightCounts.delete(signal)
+		else inFlightCounts.set(signal, next)
+		signal.value = next > 0
+	}
+
+	function resolveBusySignal(opts: ActionOptions, trigger: Element | undefined): HypermediaBooleanSignal | undefined {
+		if (opts.state) {
+			if (typeof opts.state.value !== 'boolean') {
+				throw new Error('[aero] Hypermedia state signal must be boolean.')
+			}
+			return opts.state
+		}
+		if (!trigger) return undefined
+		return busyBindings.get(trigger)?.signal
+	}
+
+	function shouldAutoDisable(method: string, opts: ActionOptions): boolean {
+		if (opts.autoDisable === false) return false
+		return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE'
+	}
+
+	function setDisabled(trigger: Element | undefined, disabled: boolean): void {
+		if (!trigger || !('disabled' in trigger)) return
+		;(trigger as { disabled: boolean }).disabled = disabled
+	}
+
+	async function runSwapLifecycle(options: {
+		target: Element
+		html: string
+		style: SwapStyle
+		trigger?: Element
+		targetSelector: string
+	}): Promise<void> {
+		const operation = {
+			target: options.target,
+			html: options.html,
+			style: options.style,
+			trigger: options.trigger,
+			targetSelector: options.targetSelector,
+			performSwap() {
+				const applyFocusFallback = createFocusFallback(options.target)
+				performSwap({ target: options.target, html: options.html, style: options.style })
+				applyFocusFallback()
+			},
+			adoptRuntime(container: ParentNode) {
+				runtime.adopt(container)
+			},
+		}
+
+		if (swapLifecycleAdapter) {
+			await swapLifecycleAdapter(operation)
+			return
+		}
+
+		operation.performSwap()
+		operation.adoptRuntime(options.target)
 	}
 
 	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
@@ -90,42 +250,102 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 
 		const request = buildRequest(opts, trigger)
+		const busySignal = resolveBusySignal(opts, trigger)
+		const autoDisable = shouldAutoDisable(request.method, opts)
+		const previousDisabled = trigger && 'disabled' in trigger ? Boolean((trigger as { disabled: boolean }).disabled) : undefined
 		syncNativeFallback(trigger, request.url)
-		emit('request', { request, trigger }, trigger)
-		setBusyForElement(trigger, true)
+		const context = trigger?.ownerDocument ?? document
+		const requestTargetSelector = opts.target ?? defaultTarget
+		const requestTarget = resolveExplicitTarget(requestTargetSelector, context)
+		const ariaBusy = createAriaBusyMirror(opts.ariaBusy === true)
+		const phasedElements = new Set<Element>()
+		const setLifecyclePhase = (elements: readonly Element[], phase: LifecyclePhase | null) => {
+			for (const element of elements) phasedElements.add(element)
+			setPhaseClass([...phasedElements], null)
+			setPhaseClass(elements, phase)
+			ariaBusy.add(elements)
+		}
+		const requestElements = uniqueElements(trigger, requestTarget)
+		setLifecyclePhase(requestElements, 'loading')
+		emitLifecycle(
+			'request',
+			{ request, target: requestTargetSelector, trigger },
+			trigger,
+			requestTarget
+		)
+		setBusyForSignal(busySignal, true)
+		if (autoDisable) setDisabled(trigger, true)
 
 		let response: HypermediaResponse
 		try {
-			response = await executeRequest(request)
-		} catch (error) {
-			setBusyForElement(trigger, false)
-			emit('error', { request, error: error instanceof Error ? error : new Error(String(error)), trigger }, trigger)
-			throw error
-		}
-
-		emit('response', { request, response, trigger }, trigger)
-
-		const headerSwap = response.headers['aero-swap']
-		const headerTarget = response.headers['aero-target']
-		const effectiveSwap = parseSwapStyle(headerSwap ?? '') ?? opts.swap ?? defaultSwap
-		const effectiveTarget = headerTarget ?? opts.target
-		const context = trigger?.ownerDocument ?? document
-		const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
-
-		if (targetEl && effectiveSwap !== 'none') {
-			emit('swap', { request, response, swapStyle: effectiveSwap, target: effectiveTarget ?? 'self', trigger }, trigger)
-			performSwap({ target: targetEl, html: response.html, style: effectiveSwap })
-			adoptFragment(targetEl, runtime)
-			emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, trigger)
-			if (targetEl !== trigger) {
-				emit('settle', { request, response, target: effectiveTarget ?? 'self', trigger }, targetEl)
+			try {
+				response = await executeRequest(request)
+			} catch (error) {
+				emitLifecycle(
+					'error',
+					{
+						request,
+						error: error instanceof Error ? error : new Error(String(error)),
+						target: requestTargetSelector,
+						trigger,
+					},
+					trigger,
+					requestTarget
+				)
+				throw error
 			}
+
+			const headerSwap = response.headers['aero-swap']
+			const headerTarget = response.headers['aero-target']
+			const effectiveSwap = parseSwapStyle(headerSwap ?? '') ?? opts.swap ?? defaultSwap
+			const effectiveTarget = headerTarget ?? opts.target
+			const targetEl = resolveSwapTarget(effectiveTarget, trigger, context)
+			const explicitTargetEl = effectiveTarget ? (targetEl ?? undefined) : undefined
+			const lifecycleTarget = effectiveTarget ?? 'self'
+			const effectiveElements = uniqueElements(trigger, explicitTargetEl)
+
+			setPhaseClass([...phasedElements], null)
+			emitLifecycle(
+				'response',
+				{ request, response, target: lifecycleTarget, trigger },
+				trigger,
+				explicitTargetEl
+			)
+
+			if (targetEl && effectiveSwap !== 'none') {
+				setLifecyclePhase(effectiveElements, 'swapping')
+				await runSwapLifecycle({
+					target: targetEl,
+					html: response.html,
+					style: effectiveSwap,
+					trigger,
+					targetSelector: lifecycleTarget,
+				})
+				emitLifecycle(
+					'swap',
+					{ request, response, swapStyle: effectiveSwap, target: lifecycleTarget, trigger },
+					trigger,
+					explicitTargetEl
+				)
+				setLifecyclePhase(effectiveElements, 'settling')
+				emitLifecycle(
+					'settle',
+					{ request, response, target: lifecycleTarget, trigger },
+					trigger,
+					explicitTargetEl
+				)
+				setPhaseClass([...phasedElements], null)
+			}
+
+			applyPushUrl(response, opts, trigger)
+
+			return response
+		} finally {
+			setPhaseClass([...phasedElements], null)
+			ariaBusy.restore()
+			setBusyForSignal(busySignal, false)
+			if (autoDisable && previousDisabled !== undefined) setDisabled(trigger, previousDisabled)
 		}
-
-		applyPushUrl(response, opts, trigger)
-		setBusyForElement(trigger, false)
-
-		return response
 	}
 
 	function swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void {
@@ -134,8 +354,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		if (!targetEl) {
 			throw new Error(`[aero] Swap target not found: ${targetSelector}`)
 		}
-		performSwap({ target: targetEl, html, style })
-		adoptFragment(targetEl, runtime)
+		void runSwapLifecycle({ target: targetEl, html, style, targetSelector })
 	}
 
 	const runtime: HypermediaRuntime = {
@@ -144,10 +363,24 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		executeAction,
 		swapElement,
 		adopt: () => {},
-		registerBusyBinding(element, signalName, setBusy) {
-			busyBindings.set(element, { signalName, setBusy })
+		registerBusyBinding(element, signalName, signal) {
+			if (typeof signal.value !== 'boolean') {
+				throw new Error(`[aero] Hypermedia busy signal must be boolean: ${signalName}`)
+			}
+			busyBindings.set(element, { signalName, signal })
+			return () => {
+				if (busyBindings.get(element)?.signalName === signalName) {
+					busyBindings.delete(element)
+				}
+			}
+		},
+		setSwapLifecycleAdapter(adapter) {
+			swapLifecycleAdapter = adapter
 		},
 	}
-	runtime.adopt = (container: ParentNode) => adoptFragment(container, runtime)
+	runtime.adopt = (container: ParentNode, store?: HypermediaSignalStore) => {
+		if (store) defaultStore = store
+		adoptFragment(container, runtime, store ?? defaultStore)
+	}
 	return runtime
 }
