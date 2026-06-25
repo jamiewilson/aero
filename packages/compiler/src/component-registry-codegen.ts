@@ -94,7 +94,8 @@ function collectLivePropsFromTemplate(fullPath: string): readonly ComponentLiveP
 			name: binding.name,
 			propName: binding.propName ?? binding.name,
 			required: binding.required === true,
-			...(binding.readonly ? { readonly: true } : {}),
+			...(binding.bindable ? { bindable: true } : {}),
+			...(binding.writes ? { writes: true } : {}),
 		}))
 }
 

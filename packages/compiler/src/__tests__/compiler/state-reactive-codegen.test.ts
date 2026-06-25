@@ -82,15 +82,16 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain(`"initExpr":"'Counter'"`)
 		expect(code).toContain('"required":false')
 		expect(code).toContain('liveProps: opts.liveProps ?? {}')
+		expect(code).toContain('store: opts.store ?? runtime.store')
 		expect(code).not.toContain('"count": count')
 		expect(code).not.toContain('"label": label')
 	})
 
 	it('exports live prop metadata for parent component wiring', () => {
 		const html = `<script is:state>
-			const { count, title: heading, label = 'Counter' } = Aero.props
+			const { count, title: heading, label = 'Counter', value = Aero.bindable(0) } = Aero.props
 		</script>
-		<p>{ heading }: { label } { count }</p>`
+		<p>{ heading }: { label } { count } { value }</p>`
 
 		const code = compile(parse(html), mockOptions)
 
@@ -102,6 +103,8 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('"propName":"title"')
 		expect(code).toContain('"name":"label"')
 		expect(code).toContain('"required":false')
+		expect(code).toContain('"name":"value"')
+		expect(code).toContain('"bindable":true')
 	})
 
 	it('emits component bind records for reactive parent component instances', () => {
@@ -118,7 +121,23 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('data-aero-component="0"')
 		expect(code).toContain('componentBinds:')
 		expect(code).toContain('component: counter')
-		expect(code).toContain('livePropExprs: {"count":"count"}')
+		expect(code).toContain('livePropExprs: {"count":{"expr":"count","mutable":false}}')
+	})
+
+	it('emits mutable component live prop records for bind syntax', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('livePropExprs: {"count":{"expr":"count","mutable":true}}')
+		expect(code).toContain('renderComponent(counter, { "count": count }')
+		expect(code).not.toContain('"bind:count"')
 	})
 
 	it('emits component bind records for reactive parent components without live props', () => {
@@ -154,6 +173,32 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('component: __aeroMod_header')
 	})
 
+	it('rejects bind component props that do not reference writable parent state', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+			let doubled = count * 2
+		</script>
+		<counter-component bind:count="{ doubled }" />`
+
+		expect(() => compile(parse(html), mockOptions)).toThrow(
+			'Component bind prop `bind:count` must reference one writable state binding.'
+		)
+	})
+
+	it('rejects bind component props without a parent state scope', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		expect(() => compile(parse(html), mockOptions)).toThrow(
+			'Component bind prop `bind:count` on <counter-component> requires a writable state binding in `<script is:state>`.'
+		)
+	})
+
 	it('rejects omitted required child live props when component metadata is available', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
@@ -172,6 +217,81 @@ describe('state reactive codegen (PR-2d)', () => {
 			})
 		).toThrow(
 			'Required live prop `count` for <counter-component> must be passed as a state signal.'
+		)
+	})
+
+	it('rejects bind component props when the child prop is not bindable', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentLiveProps: {
+					counter: [{ name: 'count', propName: 'count', required: true }],
+				},
+			})
+		).toThrow(
+			'Child prop `count` for <counter-component> must be declared with `Aero.bindable()` before it can be passed with `bind:count`.'
+		)
+	})
+
+	it('allows bind component props when the child prop is bindable', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component bind:count="{ count }" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentLiveProps: {
+					counter: [{ name: 'count', propName: 'count', required: false, bindable: true }],
+				},
+			})
+		).not.toThrow()
+	})
+
+	it('rejects plain live props when the child writes them', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component count="{ count }" />`
+
+		expect(() =>
+			compile(parse(html), {
+				...mockOptions,
+				componentLiveProps: {
+					counter: [{ name: 'count', propName: 'count', required: false, bindable: true, writes: true }],
+				},
+			})
+		).toThrow(
+			'Live prop `count` for <counter-component> is readonly; use `bind:count="{ ... }"` to allow child mutation.'
+		)
+	})
+
+	it('rejects obsolete readonly component live prop syntax', () => {
+		const html = `<script is:build>
+			const counter = { name: 'counter' }
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<counter-component count:readonly="{ count }" />`
+
+		expect(() => compile(parse(html), mockOptions)).toThrow(
+			'Component live prop `count:readonly` is obsolete; use `count="{ ... }"` because live props are readonly by default.'
 		)
 	})
 

@@ -267,6 +267,16 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 			return
 		}
 
+		if (attr.name.endsWith(':readonly')) {
+			throwDirectiveError(
+				node,
+				diag,
+				attr.name,
+				attr.value,
+				`Component live prop \`${attr.name}\` is obsolete; use \`${attr.name.slice(0, -':readonly'.length)}="{ ... }"\` because live props are readonly by default.`
+			)
+		}
+
 		const rawValue = attr.value ?? ''
 		let propVal: string
 
@@ -279,7 +289,8 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 			propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
 		}
 
-		propsEntries.push(`${JSON.stringify(attr.name)}: ${propVal}`)
+		const propName = attr.name.startsWith('bind:') ? attr.name.slice('bind:'.length) : attr.name
+		propsEntries.push(`${JSON.stringify(propName)}: ${propVal}`)
 	})
 
 	const propsString = Helper.buildPropsString(propsEntries, dataPropsExpression)

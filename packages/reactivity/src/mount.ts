@@ -1,6 +1,6 @@
 import { Effect } from './effect'
 import { createStateScope, type StateBindingSpec, type StateScope } from './state-scope'
-import type { SignalStore } from './store'
+import { SignalStore } from './store'
 
 export type Cleanup = () => void
 
@@ -61,7 +61,7 @@ export interface MountStateBindingsOptions {
 	readonly componentBinds?: readonly {
 		selector: string
 		component: unknown
-		livePropExprs: Record<string, string>
+		livePropExprs: Record<string, LivePropExpression>
 	}[]
 	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
@@ -69,6 +69,12 @@ export interface MountStateBindingsOptions {
 	readonly hypermediaRuntime?: HypermediaRuntimeLike
 	readonly Aero?: unknown
 }
+
+export type LivePropExpression =
+	{
+		readonly expr: string
+		readonly mutable: boolean
+	}
 
 const HYPERMEDIA_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
 
@@ -289,17 +295,33 @@ function getComponentMount(component: unknown): ((root: Element, Aero: unknown, 
 	return null
 }
 
+function readonlySignal(signalName: string, signal: { value: unknown }): { value: unknown } {
+	return {
+		get value() {
+			return signal.value
+		},
+		set value(_value: unknown) {
+			throw new Error(`[aero] Readonly live prop cannot be assigned: ${signalName}`)
+		},
+	}
+}
+
 function resolveLivePropSignals(
 	store: SignalStore,
-	livePropExprs: Record<string, string>
+	livePropExprs: Record<string, LivePropExpression>
 ): Record<string, { value: unknown }> {
 	const liveProps: Record<string, { value: unknown }> = {}
-	for (const [propName, expr] of Object.entries(livePropExprs)) {
+	for (const [propName, livePropExpr] of Object.entries(livePropExprs)) {
+		const expr = livePropExpr.expr
 		const signalName = expr.trim()
 		if (!/^[A-Za-z_$][\w$]*$/.test(signalName)) {
 			throw new Error(`[aero] Live prop ${propName} must reference a state signal name.`)
 		}
-		liveProps[propName] = store.get(signalName)
+		const signal = store.get(signalName)
+		liveProps[propName] =
+			livePropExpr.mutable
+				? signal
+				: readonlySignal(propName, signal)
 	}
 	return liveProps
 }
@@ -368,10 +390,15 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		}
 		const mount = getComponentMount(bind.component)
 		if (!mount) continue
+		const childStore = new SignalStore()
 		const cleanup = mount(target, options.Aero, {
+			store: childStore,
 			liveProps: resolveLivePropSignals(options.store, bind.livePropExprs),
 		})
-		if (typeof cleanup === 'function') cleanups.push(cleanup as Cleanup)
+		cleanups.push(() => {
+			if (typeof cleanup === 'function') cleanup()
+			childStore.destroy()
+		})
 	}
 
 	return () => {

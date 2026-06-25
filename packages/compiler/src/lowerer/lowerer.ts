@@ -8,7 +8,7 @@
  * {@link compileWrapperAwareBranch}; `data-for` / `for` on `<template>` via
  * {@link compileWrapperlessNode} for the loop body.
  */
-import type { IRNode } from '../ir'
+import type { IRNode, IRReactiveComponentLivePropExpr } from '../ir'
 import type { LowererDiag, LowererReactiveState } from './types'
 
 import * as CONST from '../constants'
@@ -49,6 +49,7 @@ export class Lowerer {
 		diag?: LowererDiag,
 		stateBindingNames?: ReadonlySet<string>,
 		options?: {
+			writableStateBindingNames?: ReadonlySet<string>
 			hypermedia?: boolean
 			componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
 		}
@@ -59,7 +60,10 @@ export class Lowerer {
 		this.componentLiveProps = options?.componentLiveProps ?? {}
 		this.reactiveState =
 			stateBindingNames && stateBindingNames.size > 0
-				? createLowererReactiveState(stateBindingNames)
+				? createLowererReactiveState(
+						stateBindingNames,
+						options?.writableStateBindingNames ?? stateBindingNames
+					)
 				: null
 	}
 
@@ -437,8 +441,10 @@ export class Lowerer {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = parseComponentAttributes(node, this.diag)
+		this.validateComponentBindAttrsRequireState(node, tagName)
 		const livePropExprs = this.collectComponentLivePropExprs(node)
 		this.validateRequiredComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
+		this.validateBindableComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
 		const componentBindId = this.reactiveState
 			? this.reactiveState.nextComponentBindId()
 			: undefined
@@ -490,8 +496,8 @@ export class Lowerer {
 		]
 	}
 
-	private collectComponentLivePropExprs(node: any): Record<string, string> {
-		const out: Record<string, string> = {}
+	private collectComponentLivePropExprs(node: any): Record<string, IRReactiveComponentLivePropExpr> {
+		const out: Record<string, IRReactiveComponentLivePropExpr> = {}
 		if (!this.reactiveState || !node.attributes) return out
 		for (let i = 0; i < node.attributes.length; i++) {
 			const attr = node.attributes[i]
@@ -499,14 +505,49 @@ export class Lowerer {
 			if (!name || name === CONST.ATTR_PROPS || name.startsWith(`aero-${CONST.ATTR_PROPS}`)) {
 				continue
 			}
+			if (name.endsWith(':readonly')) {
+				throw new CompileError({
+					message: `Component live prop \`${name}\` is obsolete; use \`${name.slice(0, -':readonly'.length)}="{ ... }"\` because live props are readonly by default.`,
+					file: this.diag?.file,
+				})
+			}
 			const value = String(attr.value ?? '')
+			const bindName = name.startsWith('bind:') ? name.slice('bind:'.length) : null
+			if (bindName !== null && !isSingleWrappedExpression(value)) {
+				throw new CompileError({
+					message: `Component bind prop \`${name}\` must reference one writable state binding.`,
+					file: this.diag?.file,
+				})
+			}
 			if (!isSingleWrappedExpression(value)) continue
 			const expr = Helper.stripBraces(value)
+			if (bindName !== null) {
+				if (!this.reactiveState.writableBindingNames.has(expr)) {
+					throw new CompileError({
+						message: `Component bind prop \`${name}\` must reference one writable state binding.`,
+						file: this.diag?.file,
+					})
+				}
+				out[bindName] = { expr, mutable: true }
+				continue
+			}
 			if (!this.reactiveState.bindingNames.has(expr)) continue
-			const propName = name.endsWith(':readonly') ? name.slice(0, -':readonly'.length) : name
-			out[propName] = expr
+			out[name] = { expr, mutable: false }
 		}
 		return out
+	}
+
+	private validateComponentBindAttrsRequireState(node: any, tagName: string): void {
+		if (this.reactiveState || !node.attributes) return
+		for (let i = 0; i < node.attributes.length; i++) {
+			const attr = node.attributes[i]
+			const name = String(attr.name ?? '')
+			if (!name.startsWith('bind:')) continue
+			throw new CompileError({
+				message: `Component bind prop \`${name}\` on <${tagName}> requires a writable state binding in \`<script is:state>\`.`,
+				file: this.diag?.file,
+			})
+		}
 	}
 
 	private getComponentLivePropMetadata(
@@ -526,7 +567,7 @@ export class Lowerer {
 		tagName: string,
 		kebabBase: string,
 		baseName: string,
-		livePropExprs: Record<string, string>
+		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
 	): void {
 		if (!this.reactiveState) return
 		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
@@ -538,15 +579,44 @@ export class Lowerer {
 			})
 		}
 	}
+
+	private validateBindableComponentLiveProps(
+		tagName: string,
+		kebabBase: string,
+		baseName: string,
+		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+	): void {
+		if (!this.reactiveState) return
+		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+			const propName = prop.propName || prop.name
+			const passed = livePropExprs[propName]
+			if (passed?.mutable === true && !prop.bindable) {
+				throw new CompileError({
+					message: `Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
+					file: this.diag?.file,
+				})
+			}
+			if (prop.writes && passed?.mutable === false) {
+				throw new CompileError({
+					message: `Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
+					file: this.diag?.file,
+				})
+			}
+		}
+	}
 }
 
-function createLowererReactiveState(bindingNames: ReadonlySet<string>): LowererReactiveState {
+function createLowererReactiveState(
+	bindingNames: ReadonlySet<string>,
+	writableBindingNames: ReadonlySet<string>
+): LowererReactiveState {
 	let textBindId = 0
 	let eventBindId = 0
 	let busyBindId = 0
 	let componentBindId = 0
 	return {
 		bindingNames,
+		writableBindingNames,
 		nextTextBindId: () => textBindId++,
 		nextEventBindId: () => eventBindId++,
 		nextBusyBindId: () => busyBindId++,

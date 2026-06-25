@@ -58,7 +58,7 @@ function serializeBindings(analysis: StateScriptAnalysisResult): string {
 			...(binding.liveProp ? { liveProp: true } : {}),
 			...(binding.propName && binding.propName !== binding.name ? { propName: binding.propName } : {}),
 			...(binding.liveProp ? { required: binding.required === true } : {}),
-			...(binding.readonly ? { readonly: true } : {}),
+			...(binding.bindable ? { bindable: true } : {}),
 		}))
 	)
 }
@@ -70,7 +70,8 @@ export function emitLivePropsMetadata(analysis: StateScriptAnalysisResult): stri
 			name: binding.name,
 			propName: binding.propName ?? binding.name,
 			required: binding.required === true,
-			...(binding.readonly ? { readonly: true } : {}),
+			...(binding.bindable ? { bindable: true } : {}),
+			...(binding.writes ? { writes: true } : {}),
 		}))
 	if (liveProps.length === 0) return ''
 	return `export const __aeroLiveProps = ${JSON.stringify(liveProps)}`
@@ -167,7 +168,7 @@ export function mountStateBindings(root, Aero, opts = {}) {
 	if (!runtime) return () => {}
 	return __aeroMountStateBindings({
 		root,
-		store: runtime.store,
+		store: opts.store ?? runtime.store,
 		liveProps: opts.liveProps ?? {},
 		bindings: ${serializeBindings(analysis)},
 		functionSources: ${serializeFunctionSources(analysis)},

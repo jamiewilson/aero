@@ -136,11 +136,16 @@ export interface IRReactiveBusyBind {
 }
 
 /** Register a child component mount against a `data-aero-component` marker. */
+export interface IRReactiveComponentLivePropExpr {
+	readonly expr: string
+	readonly mutable: boolean
+}
+
 export interface IRReactiveComponentBind {
 	kind: 'ReactiveComponentBind'
 	bindId: number
 	componentExpr: string
-	livePropExprs: Record<string, string>
+	livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

@@ -1,4 +1,8 @@
 import { parseSync } from 'oxc-parser'
+import {
+	collectReadonlyLivePropWrites,
+	readonlyLivePropWriteMessage,
+} from './readonly-live-prop-writes'
 
 export interface StateBinding {
 	name: string
@@ -8,7 +12,8 @@ export interface StateBinding {
 	liveProp?: boolean
 	propName?: string
 	required?: boolean
-	readonly?: boolean
+	bindable?: boolean
+	writes?: boolean
 }
 
 export interface StateScriptDiagnostic {
@@ -30,22 +35,22 @@ const STATE_SCRIPT_PARSE_OPTIONS = {
 	lang: 'ts',
 } as const
 
-function walk(node: unknown, visit: (node: any) => void): void {
+function walkStateScriptAst(node: unknown, visit: (node: any) => void): void {
 	if (!node || typeof node !== 'object') return
 	visit(node)
 	for (const value of Object.values(node as Record<string, unknown>)) {
 		if (!value) continue
 		if (Array.isArray(value)) {
-			for (const item of value) walk(item, visit)
+			for (const item of value) walkStateScriptAst(item, visit)
 			continue
 		}
-		if (typeof value === 'object') walk(value, visit)
+		if (typeof value === 'object') walkStateScriptAst(value, visit)
 	}
 }
 
 function collectIdentifiersFromInit(initNode: unknown): Set<string> {
 	const names = new Set<string>()
-	walk(initNode, node => {
+	walkStateScriptAst(initNode, node => {
 		if (node?.type === 'Identifier' && typeof node.name === 'string') {
 			names.add(node.name)
 		}
@@ -109,6 +114,26 @@ function isAeroPropsExpression(node: unknown): boolean {
 	)
 }
 
+function isAeroBindableCall(node: unknown): boolean {
+	const expr = unwrapExpression(node as any)
+	return (
+		expr?.type === 'CallExpression' &&
+		expr.callee?.type === 'MemberExpression' &&
+		expr.callee.object?.type === 'Identifier' &&
+		expr.callee.object.name === 'Aero' &&
+		expr.callee.property?.type === 'Identifier' &&
+		expr.callee.property.name === 'bindable' &&
+		expr.callee.computed === false
+	)
+}
+
+function bindableFallbackExprSource(script: string, call: any): string {
+	const firstArg = call?.arguments?.[0]
+	if (!firstArg) return 'undefined'
+	const expr = firstArg.expression ?? firstArg
+	return initExprSource(script, expr)
+}
+
 function propertyKeyName(property: any): string | null {
 	const key = property?.key
 	if (key?.type === 'Identifier') return key.name
@@ -138,14 +163,18 @@ function livePropBindingFromProperty(
 		}
 	}
 	if (value?.type === 'AssignmentPattern' && value.left?.type === 'Identifier') {
+		const bindable = isAeroBindableCall(value.right)
 		return {
 			name: value.left.name,
 			propName,
 			derived: false,
 			dependencies: [],
-			initExpr: initExprSource(script, value.right),
+			initExpr: bindable
+				? bindableFallbackExprSource(script, unwrapExpression(value.right))
+				: initExprSource(script, value.right),
 			liveProp: true,
 			required: false,
+			...(bindable ? { bindable: true } : {}),
 		}
 	}
 	return null
@@ -198,7 +227,14 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	const derived = new Set(bindings.filter(b => b.derived).map(b => b.name))
 	const diagnostics: StateScriptDiagnostic[] = []
 	const livePropNames = new Set(livePropBindings.map(binding => binding.name))
+	const livePropNameToPropName = new Map(
+		livePropBindings.map(binding => [binding.name, binding.propName ?? binding.name])
+	)
+	const bindableLivePropNames = new Set(
+		livePropBindings.filter(binding => binding.bindable).map(binding => binding.name)
+	)
 	const ownedNames = new Set(bindings.filter(binding => !binding.liveProp).map(binding => binding.name))
+	const writtenLiveProps = new Set<string>()
 	for (const name of livePropNames) {
 		if (ownedNames.has(name)) {
 			diagnostics.push({
@@ -208,9 +244,19 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 	}
 
-	walk(parsed.program, node => {
+	for (const write of collectReadonlyLivePropWrites(parsed.program, new Set([...livePropNames].filter(name => !bindableLivePropNames.has(name))))) {
+		const propName = livePropNameToPropName.get(write.name) ?? write.name
+		diagnostics.push({
+			name: write.name,
+			message: readonlyLivePropWriteMessage(propName),
+			range: write.range,
+		})
+	}
+
+	walkStateScriptAst(parsed.program, node => {
 		if (node?.type === 'AssignmentExpression' && node.left?.type === 'Identifier') {
 			const name = node.left.name
+			if (livePropNames.has(name)) writtenLiveProps.add(name)
 			if (derived.has(name)) {
 				diagnostics.push({
 					name,
@@ -221,6 +267,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 		if (node?.type === 'UpdateExpression' && node.argument?.type === 'Identifier') {
 			const name = node.argument.name
+			if (livePropNames.has(name)) writtenLiveProps.add(name)
 			if (derived.has(name)) {
 				diagnostics.push({
 					name,
@@ -230,6 +277,11 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 			}
 		}
 	})
+	for (const binding of bindings) {
+		if (binding.liveProp && writtenLiveProps.has(binding.name)) {
+			binding.writes = true
+		}
+	}
 
 	return {
 		bindings,

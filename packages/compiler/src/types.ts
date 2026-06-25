@@ -28,7 +28,8 @@ export interface ComponentLivePropMetadata {
 	readonly name: string
 	readonly propName: string
 	readonly required: boolean
-	readonly readonly?: boolean
+	readonly bindable?: boolean
+	readonly writes?: boolean
 }
 
 export interface CompileOptions {

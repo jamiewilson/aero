@@ -136,6 +136,8 @@ export class Aero {
 			return String(s).trimEnd()
 		}
 
+		const bindable = (fallback?: unknown): unknown => fallback
+
 		const createScriptTag = (attrs: string, src: string): string => {
 			const normalizedAttrs = attrs.trim()
 			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${this.escapeHtml(src)}"></script>`
@@ -160,6 +162,7 @@ export class Aero {
 			createScriptTag,
 			escapeHtml: this.escapeHtml.bind(this),
 			escapeScriptJson,
+			bindable,
 			raw,
 			trim,
 			trimStart,

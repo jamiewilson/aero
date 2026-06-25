@@ -136,6 +136,17 @@ describe('Aero class', () => {
 			expect(result).toBe('<div>Test Title</div>')
 		})
 
+		it('should expose bindable fallback helper to state SSR code', async () => {
+			aero.registerPages({
+				'pages/index.html': {
+					default: (ctx: any) => `<div>${ctx.bindable('Fallback')}</div>`,
+				},
+			})
+
+			const result = await aero.render('index')
+			expect(result).toBe('<div>Fallback</div>')
+		})
+
 		/** normalizeRenderInput merges input into context; request/url are built from routePath when not provided. */
 		it('should pass context with request, url, params, routePath', async () => {
 			let capturedCtx: any

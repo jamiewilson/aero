@@ -30,6 +30,7 @@ export interface ParsedElementAttrs {
 
 export interface LowererReactiveState {
 	readonly bindingNames: ReadonlySet<string>
+	readonly writableBindingNames: ReadonlySet<string>
 	nextTextBindId(): number
 	nextEventBindId(): number
 	nextBusyBindId(): number

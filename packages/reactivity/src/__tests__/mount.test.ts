@@ -48,7 +48,7 @@ describe('bindEvent', () => {
 })
 
 describe('mountStateBindings', () => {
-	it('aliases live props to the passed signal instead of creating owned state', () => {
+	it('aliases bindable live props to the passed signal instead of creating owned state', () => {
 		const text = { textContent: '1' } as unknown as Element
 		const root = {
 			querySelector(selector: string) {
@@ -73,6 +73,7 @@ describe('mountStateBindings', () => {
 					dependencies: [],
 					liveProp: true,
 					required: true,
+					bindable: true,
 				},
 			],
 			functionSources: [],
@@ -87,7 +88,7 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
-	it('mounts child component bindings with live prop signal aliases', () => {
+	it('mounts child component bindings with readonly live prop signal aliases', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -113,17 +114,117 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childComponent,
-					livePropExprs: { count: 'count' },
+					livePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 			Aero: aero,
 		})
 
 		expect(childMount).toHaveBeenCalledWith(childRoot, aero, {
-			liveProps: { count: store.get('count') },
+			store: expect.any(SignalStore),
+			liveProps: { count: expect.objectContaining({ value: 1 }) },
 		})
+		const calls = childMount.mock.calls as unknown as Array<
+			[Element, unknown, { store: SignalStore; liveProps: Record<string, { value: unknown }> }]
+		>
+		expect(calls[0]?.[2].store).not.toBe(store)
+		expect(calls[0]?.[2].liveProps.count).not.toBe(store.get('count'))
+		expect(() => {
+			calls[0]![2].liveProps.count.value = 2
+		}).toThrow('Readonly live prop cannot be assigned: count')
 		cleanup()
 		expect(childCleanup).toHaveBeenCalledTimes(1)
+	})
+
+	it('mounts bind component props with mutable live prop signal aliases', () => {
+		const childRoot = {} as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		store.merge({ count: 1 })
+		let liveProps: Record<string, { value: unknown }> | undefined
+		const childMount = vi.fn((_root, _aero, opts) => {
+			liveProps = opts.liveProps
+			return () => {}
+		})
+
+		mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: { count: { expr: 'count', mutable: true } },
+				},
+			],
+			Aero: {},
+		})
+
+		expect(liveProps?.count).toBe(store.get('count'))
+		liveProps!.count.value = 2
+		expect(store.get('count').value).toBe(2)
+	})
+
+	it('creates an independent store for each child component instance', () => {
+		const firstRoot = {} as Element
+		const secondRoot = {} as Element
+		const root = {
+			querySelectorAll(selector: string) {
+				if (selector === '[data-aero-component="0"]') return [firstRoot]
+				if (selector === '[data-aero-component="1"]') return [secondRoot]
+				return []
+			},
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return firstRoot
+				if (selector === '[data-aero-component="1"]') return secondRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const parentStore = new SignalStore()
+		parentStore.merge({ count: 1 })
+		const childMount = vi.fn(() => () => {})
+
+		mountStateBindings({
+			root,
+			store: parentStore,
+			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: {},
+				},
+				{
+					selector: '[data-aero-component="1"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: {},
+				},
+			],
+			Aero: {},
+		})
+
+		const calls = childMount.mock.calls as unknown as Array<
+			[Element, unknown, { store: SignalStore }]
+		>
+		const firstStore = calls[0]?.[2].store
+		const secondStore = calls[1]?.[2].store
+		expect(firstStore).toBeInstanceOf(SignalStore)
+		expect(secondStore).toBeInstanceOf(SignalStore)
+		expect(firstStore).not.toBe(secondStore)
+		expect(firstStore).not.toBe(parentStore)
+		expect(secondStore).not.toBe(parentStore)
 	})
 
 	it('mounts child component bindings without live props', () => {
@@ -156,9 +257,52 @@ describe('mountStateBindings', () => {
 			Aero: {},
 		})
 
-		expect(childMount).toHaveBeenCalledWith(childRoot, {}, { liveProps: {} })
+		expect(childMount).toHaveBeenCalledWith(childRoot, {}, {
+			store: expect.any(SignalStore),
+			liveProps: {},
+		})
 		cleanup()
 		expect(childCleanup).toHaveBeenCalledTimes(1)
+	})
+
+	it('passes plain live prop aliases that fail loudly on child writes', () => {
+		const childRoot = {} as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const parentStore = new SignalStore()
+		parentStore.merge({ count: 1 })
+		let liveProps: Record<string, { value: unknown }> | undefined
+		const childMount = vi.fn((_root, _aero, opts) => {
+			liveProps = opts.liveProps
+			return () => {}
+		})
+
+		mountStateBindings({
+			root,
+			store: parentStore,
+			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: { count: { expr: 'count', mutable: false } },
+				},
+			],
+			Aero: {},
+		})
+
+		expect(liveProps?.count.value).toBe(1)
+		expect(() => {
+			liveProps!.count.value = 2
+		}).toThrow('Readonly live prop cannot be assigned: count')
+		expect(parentStore.get('count').value).toBe(1)
 	})
 
 	it('binds page text markers when child components reuse the same bind id', () => {
@@ -217,7 +361,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childComponent,
-					livePropExprs: { count: 'count' },
+					livePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 		})
@@ -341,7 +485,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childModule,
-					livePropExprs: { count: 'count' },
+					livePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 		})
@@ -462,7 +606,7 @@ describe('mountStateBindings', () => {
 				return null
 			},
 			get childNodes() {
-				return [] as NodeListOf<ChildNode>
+				return [] as unknown as NodeListOf<ChildNode>
 			},
 			matches: () => false,
 			getRootNode() {
@@ -559,7 +703,6 @@ describe('mountStateBindings', () => {
 					dependencies: [],
 					liveProp: true,
 					required: true,
-					readonly: true,
 				},
 			],
 			functionSources: [],
@@ -568,6 +711,31 @@ describe('mountStateBindings', () => {
 		expect(() => {
 			scope.count = 2
 		}).toThrow('Readonly live prop cannot be assigned: count')
+	})
+
+	it('allows bindable live props to be assigned', () => {
+		const parentStore = new SignalStore()
+		const childStore = new SignalStore()
+		const parentCount = parentStore.signal('count', 1)
+		const scope = createStateScope({
+			store: childStore,
+			liveProps: { count: parentCount },
+			bindings: [
+				{
+					name: 'count',
+					derived: false,
+					initExpr: 'undefined',
+					dependencies: [],
+					liveProp: true,
+					required: false,
+					bindable: true,
+				},
+			],
+			functionSources: [],
+		})
+
+		scope.count = 2
+		expect(parentCount.value).toBe(2)
 	})
 
 	it('wires reactive text and click handlers from state scope', () => {

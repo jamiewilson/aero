@@ -31,6 +31,8 @@ export type TemplateEditorAmbient = {
 	readonly bindingNames: ReadonlySet<string>
 	/** Non-derived `is:state` bindings that are writable in event handlers. */
 	readonly writableStateBindingNames: ReadonlySet<string>
+	/** Live props that are intentionally readonly but may need Aero-specific write diagnostics. */
+	readonly readonlyLivePropNames: ReadonlySet<string>
 }
 
 /** Build + state script bodies used for template expression type inference. */
@@ -54,20 +56,29 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			: []
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 	const writableStateBindingNames = new Set<string>()
+	const readonlyLivePropNames = new Set<string>()
 	for (const stateBody of stateScriptBodies) {
 		collectBindingsFromBuildScriptContent(stateBody, bindingNames)
 		try {
 			const analysis = analyzeStateScript(stateBody)
 			for (const b of analysis.bindings) {
 				bindingNames.add(b.name)
-				if (!b.derived) writableStateBindingNames.add(b.name)
+				if (!b.derived && (!b.liveProp || b.bindable)) writableStateBindingNames.add(b.name)
+				if (b.liveProp && !b.bindable) readonlyLivePropNames.add(b.name)
 			}
 		} catch {
 			// Keep editor ambient resilient to partial/in-progress state scripts.
 		}
 	}
 	const typeDeclarationTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
-	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames, writableStateBindingNames }
+	return {
+		buildScriptBodies,
+		stateScriptBodies,
+		typeDeclarationTexts,
+		bindingNames,
+		writableStateBindingNames,
+		readonlyLivePropNames,
+	}
 }
 
 /**

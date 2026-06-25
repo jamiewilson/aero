@@ -4,7 +4,7 @@
  * Include in your project by adding `"types": ["@aero-js/core/env"]` to tsconfig.json,
  * or via a triple-slash directive: `/// <reference types="@aero-js/core/env" />`
  *
- * These declarations type the globals available inside `<script is:build>` blocks.
+ * These declarations type the globals available inside Aero template scripts.
  *
  * Single source of truth: the language server generates its preamble from this file.
  * When changing globals (Aero, renderComponent, *.html, aero:content), run:
@@ -26,6 +26,9 @@ declare const Aero: {
 	page: { url: URL; request: Request; params: Record<string, string>; routePath: string }
 	/** Site-scoped: canonical URL from config. Use `Aero.site.url`. Always defined (empty string when not configured). */
 	site: { url: string }
+	/** Declare a live prop as child-mutable inside `<script is:state>` `Aero.props` destructure defaults. */
+	bindable(): undefined
+	bindable<T>(fallback: T): T
 }
 
 /**

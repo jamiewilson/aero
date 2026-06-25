@@ -9,7 +9,7 @@ export interface StateBindingSpec {
 	readonly liveProp?: boolean
 	readonly propName?: string
 	readonly required?: boolean
-	readonly readonly?: boolean
+	readonly bindable?: boolean
 }
 
 export interface StateScopeOptions {
@@ -91,7 +91,7 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		} else if (!store.has(binding.name)) {
 			store.signal(binding.name, evalInit(binding.initExpr, scope))
 		}
-		const write = binding.readonly
+		const write = binding.liveProp && !binding.bindable
 			? () => {
 					throw new Error(`[aero] Readonly live prop cannot be assigned: ${binding.name}`)
 				}
