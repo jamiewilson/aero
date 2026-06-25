@@ -118,17 +118,17 @@ export function tokenizeCurlyInterpolation(text: string, options: TokenizeOption
 			}
 		}
 
-		if (char === '/' && next === '/') {
+		if (char === '/' && next === '/' && depth > 0) {
 			inComment = '//'
 			i += 2
 			continue
 		}
-		if (char === '/' && next === '*') {
+		if (char === '/' && next === '*' && depth > 0) {
 			inComment = '/*'
 			i += 2
 			continue
 		}
-		if (char === '"' || char === "'" || char === '`') {
+		if (depth > 0 && (char === '"' || char === "'" || char === '`')) {
 			inString = char
 			i++
 			continue

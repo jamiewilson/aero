@@ -90,3 +90,14 @@ If instructions conflict, follow: system/developer instructions > this file > ta
 - Preserve public APIs unless change is intentional and justified.
 - Add/update tests with each functional change.
 - Keep generated artifacts deterministic and avoid duplicated sources of truth.
+
+## 8) GitButler in Codex
+
+This repo is already registered with GitButler. If `but status -fv` reports
+`Setup required: unable to open database file`, treat that as a Codex sandbox
+permission issue, not a missing GitButler setup.
+
+GitButler stores its repo database under `.git/gitbutler/`, so Codex needs write
+access to `/Users/jamie/dev/aero/.git/gitbutler` for `but status` and mutation
+commands. In restricted sessions, rerun `but` commands with elevated filesystem
+access rather than repeatedly running `but setup`.
