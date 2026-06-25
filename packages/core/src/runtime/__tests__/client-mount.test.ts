@@ -74,11 +74,12 @@ describe('installHypermediaSwapLifecycle', () => {
 	it('does not adopt-scan the compiled root during initial client mount', () => {
 		vi.stubEnv('AERO_HYPERMEDIA', true as unknown as string)
 		const root = document.createElement('main')
+		const hypermediaAdopt = vi.fn()
 		const runtime = {
 			kind: 'hypermedia-runtime' as const,
 			executeAction: vi.fn(),
 			swapElement: vi.fn(),
-			adopt: vi.fn(),
+			adopt: hypermediaAdopt,
 			registerBusyBinding: vi.fn(),
 			setSwapLifecycleAdapter: vi.fn(),
 		}
@@ -90,7 +91,8 @@ describe('installHypermediaSwapLifecycle', () => {
 
 		const cleanup = mountClientBindings(aero as never, '/', root)
 
-		expect(runtime.adopt).not.toHaveBeenCalled()
+		// composeHypermediaReactivityAdopt replaces runtime.adopt; assert on the original mock.
+		expect(hypermediaAdopt).not.toHaveBeenCalled()
 		expect(runtime.setSwapLifecycleAdapter).toHaveBeenCalledWith(expect.any(Function))
 		cleanup()
 	})
