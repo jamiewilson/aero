@@ -41,6 +41,28 @@ export function createHypermediaRuntimeAccessor(): () => ReturnType<typeof readB
 	return () => readBootstrappedHypermediaRuntime()
 }
 
+let hypermediaReactivityAdoptComposed = false
+
+/** Compose hypermedia fragment adopt with reactivity adopt for runtime-inserted HTML. */
+export function composeHypermediaReactivityAdopt(): void {
+	if (hypermediaReactivityAdoptComposed) return
+	const hypermedia = readBootstrappedHypermediaRuntime() as (HypermediaRuntimeWithSwapLifecycle & {
+		adopt?: (container: ParentNode, store?: unknown) => void
+	}) | null
+	const reactivity = readBootstrappedReactivityRuntime() as {
+		adopt?: (container: ParentNode, store?: unknown) => () => void
+		store: unknown
+	} | null
+	if (!hypermedia?.adopt || !reactivity?.adopt) return
+	const hypermediaAdopt = hypermedia.adopt.bind(hypermedia)
+	const reactivityAdopt = reactivity.adopt
+	hypermedia.adopt = (container: ParentNode, store?: unknown) => {
+		hypermediaAdopt(container, store)
+		reactivityAdopt(container, reactivity.store)
+	}
+	hypermediaReactivityAdoptComposed = true
+}
+
 export interface HypermediaSwapLifecycleBinding {
 	readonly root: HTMLElement
 	readonly runtime: HypermediaRuntimeWithSwapLifecycle
@@ -83,6 +105,7 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 
 export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElement): () => void {
 	bootstrapClientRuntimes()
+	composeHypermediaReactivityAdopt()
 	let destroyStateBindings = aero.mountStateBindingsForPath(pathname, root)
 	const runtime = readBootstrappedHypermediaRuntime() as HypermediaRuntimeWithSwapLifecycle | null
 	const cleanupSwapLifecycle = runtime
