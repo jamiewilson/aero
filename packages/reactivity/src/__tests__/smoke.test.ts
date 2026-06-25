@@ -3,6 +3,8 @@ import { createReactivityRuntime } from '../index'
 
 describe('@aero-js/reactivity scaffold', () => {
 	it('exposes placeholder runtime factory', () => {
-		expect(createReactivityRuntime()).toEqual({ kind: 'reactivity-runtime' })
+		const runtime = createReactivityRuntime()
+		expect(runtime.kind).toBe('reactivity-runtime')
+		expect(runtime.store.snapshot()).toEqual({})
 	})
 })

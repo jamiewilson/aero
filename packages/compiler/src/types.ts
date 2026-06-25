@@ -49,6 +49,7 @@ export interface CompileWarning {
  */
 export interface ParseResult {
 	buildScript: { content: string } | null
+	stateScript: { content: string } | null
 	clientScripts: ScriptEntry[]
 	inlineScripts: ScriptEntry[]
 	blockingScripts: ScriptEntry[]

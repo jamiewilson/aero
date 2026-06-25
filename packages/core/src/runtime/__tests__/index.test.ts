@@ -225,6 +225,39 @@ describe('Aero class', () => {
 			expect(typeof ctx.renderComponent).toBe('function')
 		})
 	})
+
+	describe('mountStateBindingsForPath', () => {
+		it('mounts route module state bindings and returns cleanup', () => {
+			const target = {} as HTMLElement
+			let mounted = false
+			let cleaned = false
+			aero.registerPages({
+				'pages/index.html': {
+					default: () => '<div></div>',
+					mountStateBindings(root: HTMLElement, runtime: Aero) {
+						mounted = true
+						expect(root).toBe(target)
+						expect(runtime).toBe(aero)
+						return () => {
+							cleaned = true
+						}
+					},
+				},
+			})
+
+			const destroy = aero.mountStateBindingsForPath('/', target)
+			expect(mounted).toBe(true)
+			destroy()
+			expect(cleaned).toBe(true)
+		})
+
+		it('returns no-op cleanup when route has no state mount export', () => {
+			aero.registerPages({
+				'pages/index.html': { default: () => '<div></div>' },
+			})
+			expect(() => aero.mountStateBindingsForPath('/', {} as HTMLElement)).not.toThrow()
+		})
+	})
 })
 
 // instance.ts and onUpdate are not unit-tested here: the module uses import.meta.glob('@components/...')

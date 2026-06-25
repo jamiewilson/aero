@@ -1621,3 +1621,18 @@ describe('event directive validation', () => {
 		expect(() => compile(parsed, mockOptions)).toThrow(/must use a braced expression/i)
 	})
 })
+
+describe('state script diagnostics scaffold', () => {
+	it('errors when derived state is assigned in is:state script', () => {
+		const html = `
+			<script is:state>
+				let a = 1
+				let b = a + 2
+				b = 10
+			</script>
+			<div>ok</div>
+		`
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(/Derived state `b` is read-only/)
+	})
+})

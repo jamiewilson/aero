@@ -11,6 +11,7 @@ import {
 	collectBuildScopeBindingNames,
 	collectBuildScriptTypeDeclarationTexts,
 } from './build-scope-bindings'
+import { analyzeStateScript } from './state-script-analysis'
 
 /**
  * Ambient prelude inputs for template interpolations — same shape used by {@link formatBuildScopeAmbientPrelude}.
@@ -21,6 +22,8 @@ export type TemplateEditorAmbient = {
 	 * (one entry when any build script exists: joined with `\n`).
 	 */
 	readonly buildScriptBodies: readonly string[]
+	/** Body of `<script is:state>` when present. */
+	readonly stateScriptBodies: readonly string[]
 	/** `interface` / `type` / `enum` slices extracted for template expression checking. */
 	readonly typeDeclarationTexts: readonly string[]
 	/** Value-like binding names visible in `{ }` interpolations. */
@@ -35,9 +38,21 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 		parsed.buildScript && parsed.buildScript.content.trim().length > 0
 			? [parsed.buildScript.content]
 			: []
+	const stateScriptBodies: string[] =
+		parsed.stateScript && parsed.stateScript.content.trim().length > 0
+			? [parsed.stateScript.content]
+			: []
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
+	for (const stateBody of stateScriptBodies) {
+		try {
+			const analysis = analyzeStateScript(stateBody)
+			for (const b of analysis.bindings) bindingNames.add(b.name)
+		} catch {
+			// Keep editor ambient resilient to partial/in-progress state scripts.
+		}
+	}
 	const typeDeclarationTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
-	return { buildScriptBodies, typeDeclarationTexts, bindingNames }
+	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames }
 }
 
 /**

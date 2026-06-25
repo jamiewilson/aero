@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { escapeScriptJson } from '../../helpers'
+import { escapeHtml } from '../../escapes'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
 
@@ -16,7 +17,13 @@ const mockOptions = {
 /** Execute the generated render function */
 async function execute(code: string, context: Record<string, any> = {}) {
 	const defaultIdx = code.indexOf('export default async function')
-	const renderCode = defaultIdx >= 0 ? code.slice(defaultIdx) : code
+	const mountIdx = code.indexOf('export function mountStateBindings')
+	const renderCode =
+		defaultIdx >= 0
+			? mountIdx >= 0
+				? code.slice(defaultIdx, mountIdx)
+				: code.slice(defaultIdx)
+			: code
 
 	const bodyStart = renderCode.indexOf('{')
 	const bodyEnd = renderCode.lastIndexOf('}')
@@ -51,6 +58,7 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		slots: {},
 		props: {},
 		escapeScriptJson,
+		escapeHtml,
 		...context,
 	}
 	return await renderFn(aeroContext)
@@ -130,6 +138,38 @@ describe('Aero Codegen - Client Scripts', () => {
 		await execute(code, { scripts, headScripts })
 
 		expect(Array.from(headScripts).some(s => s.includes('console.log(helper());'))).toBe(true)
+	})
+
+	it('emits aero/state hydration payload when is:state exists', async () => {
+		const html = `<script is:state>
+			let count = 1
+			let doubled = count * 2
+		</script>
+		<div>State</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		const out = Array.from(scripts).join('\n')
+
+		expect(out).toContain('type="aero/state"')
+		expect(out).toContain('"count":1')
+		expect(out).not.toContain('"doubled"')
+	})
+
+	it('renders template interpolations from is:state bindings', async () => {
+		const html = `<script is:state>
+			let count = 1
+			let doubled = count * 2
+		</script>
+		<div>{ count }-{ doubled }</div>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code)
+
+		expect(output).toContain('display:contents">1-2</span></div>')
 	})
 })
 

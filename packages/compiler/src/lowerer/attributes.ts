@@ -18,7 +18,8 @@ import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
-import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
+import type { IRReactiveEventBind } from '../ir'
+import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
 type NodeLike = {
@@ -284,9 +285,11 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 export function parseElementAttributes(
 	resolver: Resolver,
 	diag: LowererDiag,
-	node: NodeLike
+	node: NodeLike,
+	reactiveState?: LowererReactiveState
 ): ParsedElementAttrs {
 	const attributes: string[] = []
+	const eventBinds: IRReactiveEventBind[] = []
 	let loopData: { binding: string; items: string } | null = null
 	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
@@ -333,11 +336,26 @@ export function parseElementAttributes(
 		}
 
 		validateEventDirective(node, diag, attr)
+		const parsedEvent = parseEventDirectiveName(attr.name)
+		if (parsedEvent.kind === 'ok' && reactiveState) {
+			const handlerExpr = Helper.stripBraces(
+				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+			)
+			const bindId = reactiveState.nextEventBindId()
+			eventBinds.push({
+				kind: 'ReactiveEventBind',
+				bindId,
+				event: parsedEvent.directive.event,
+				handlerExpr,
+			})
+			attributes.push(`data-aero-event="${bindId}"`)
+			return
+		}
 		const emitted = buildEmittedAttribute(resolver, attr)
 		if (!emitted) return
 		attributes.push(emitted)
 	})
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
-	return { attrString, loopData, switchExpr, passDataExpr }
+	return { attrString, loopData, switchExpr, passDataExpr, eventBinds }
 }

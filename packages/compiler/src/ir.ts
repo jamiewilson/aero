@@ -18,6 +18,8 @@ export type IRNode =
 	| IRComponent
 	| IRScriptPassData
 	| IRStylePassData
+	| IRReactiveTextBind
+	| IRReactiveEventBind
 
 /** Chunk of HTML/text (template literal content). */
 export interface IRAppend {
@@ -102,9 +104,24 @@ export interface IRScriptPassData extends IRPassDataBase {
 	isModule: boolean
 }
 
-/** Inject props into a style tag (CSS custom properties). */
+/** StylePassData inject props into a style tag (CSS custom properties). */
 export interface IRStylePassData extends IRPassDataBase {
 	kind: 'StylePassData'
+}
+
+/** Register a reactive text binding against a `data-aero-text` marker. */
+export interface IRReactiveTextBind {
+	kind: 'ReactiveTextBind'
+	bindId: number
+	readExpr: string
+}
+
+/** Register a reactive event binding against a `data-aero-event` marker. */
+export interface IRReactiveEventBind {
+	kind: 'ReactiveEventBind'
+	bindId: number
+	event: string
+	handlerExpr: string
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

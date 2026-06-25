@@ -207,6 +207,9 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 		case 'StylePassData':
 			emitStylePassDataNode(b, node)
 			break
+		case 'ReactiveTextBind':
+		case 'ReactiveEventBind':
+			break
 		default: {
 			const _: never = node
 			void _

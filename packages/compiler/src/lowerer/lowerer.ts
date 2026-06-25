@@ -9,11 +9,13 @@
  * {@link compileWrapperlessNode} for the loop body.
  */
 import type { IRNode } from '../ir'
-import type { LowererDiag } from './types'
+import type { LowererDiag, LowererReactiveState } from './types'
 
 import * as CONST from '../constants'
 import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import * as Helper from '../helpers'
+import { tokenizeCurlyInterpolation } from '../tokenizer'
+import { textReferencesStateBindings } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import {
@@ -36,15 +38,25 @@ export class Lowerer {
 	private resolver: Resolver
 	private slotCounter = 0
 	private readonly diag: LowererDiag
+	private readonly reactiveState: LowererReactiveState | null
 
-	constructor(resolver: Resolver, diag?: LowererDiag) {
+	constructor(
+		resolver: Resolver,
+		diag?: LowererDiag,
+		stateBindingNames?: ReadonlySet<string>
+	) {
 		this.resolver = resolver
 		this.diag = diag
+		this.reactiveState =
+			stateBindingNames && stateBindingNames.size > 0
+				? createLowererReactiveState(stateBindingNames)
+				: null
 	}
 
 	private get slotDeps(): SlotDefaultContentDeps {
 		return {
-			parseElementAttributes: (n: any) => parseElementAttributes(this.resolver, this.diag, n),
+			parseElementAttributes: (n: any) =>
+				parseElementAttributes(this.resolver, this.diag, n, this.reactiveState ?? undefined),
 			parseComponentAttributes: (n: any) => parseComponentAttributes(n, this.diag),
 		}
 	}
@@ -138,6 +150,24 @@ export class Lowerer {
 	private compileText(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
 		const text = node.textContent || ''
 		if (!text) return []
+		if (
+			!skipInterpolation &&
+			this.reactiveState &&
+			textReferencesStateBindings(text, this.reactiveState.bindingNames, value =>
+				tokenizeCurlyInterpolation(value, { attributeMode: false })
+			)
+		) {
+			const bindId = this.reactiveState.nextTextBindId()
+			const content = `<span data-aero-text="${bindId}" style="display:contents">${Helper.compileInterpolation(text)}</span>`
+			return [
+				{ kind: 'Append', content, outVar },
+				{
+					kind: 'ReactiveTextBind',
+					bindId,
+					readExpr: Helper.compileReactiveTextReadExpr(text),
+				},
+			]
+		}
 		const content = skipInterpolation
 			? Helper.escapeBackticks(text)
 			: Helper.compileInterpolation(text)
@@ -163,10 +193,11 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, switchExpr, passDataExpr } = parseElementAttributes(
+		const { attrString, loopData, switchExpr, passDataExpr, eventBinds } = parseElementAttributes(
 			this.resolver,
 			this.diag,
-			node
+			node,
+			this.reactiveState ?? undefined
 		)
 		const childSkip =
 			skipInterpolation || tagName === 'style' || (tagName === 'script' && !passDataExpr)
@@ -294,9 +325,10 @@ export class Lowerer {
 					items: loopData.items,
 					body: inner,
 				},
+				...eventBinds,
 			]
 		}
-		return inner
+		return [...inner, ...eventBinds]
 	}
 
 	private emitScriptPassDataIR(
@@ -423,5 +455,15 @@ export class Lowerer {
 				outVar,
 			},
 		]
+	}
+}
+
+function createLowererReactiveState(bindingNames: ReadonlySet<string>): LowererReactiveState {
+	let textBindId = 0
+	let eventBindId = 0
+	return {
+		bindingNames,
+		nextTextBindId: () => textBindId++,
+		nextEventBindId: () => eventBindId++,
 	}
 }

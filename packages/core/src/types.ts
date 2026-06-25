@@ -261,6 +261,7 @@ export type AeroPageModule =
 	| {
 			default?: AeroRenderFn
 			getStaticPaths?: () => Promise<StaticPathEntry[] | unknown[]>
+			mountStateBindings?: (root: HTMLElement, Aero: unknown) => void | (() => void)
 	  }
 
 /** Options shared by standalone compiler/runtime helpers. */

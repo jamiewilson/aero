@@ -128,6 +128,7 @@ export {
 	ATTR_NAME,
 	ATTR_SLOT,
 	ATTR_IS_BUILD,
+	ATTR_IS_STATE,
 	ATTR_IS_INLINE,
 	ATTR_IS_BLOCKING,
 	ATTR_SRC,
@@ -146,6 +147,13 @@ export {
 	FOR_LOOP_IMPLICIT_NAMES,
 } from './for-directive'
 export { type ParsedForDirective } from './for-directive'
+
+export {
+	analyzeStateScript,
+	type StateBinding,
+	type StateScriptDiagnostic,
+	type StateScriptAnalysisResult,
+} from './state-script-analysis'
 
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'
