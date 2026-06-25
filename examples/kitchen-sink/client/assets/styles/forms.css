@@ -65,11 +65,11 @@
 		text-align: center;
 		background: --opacity(currentColor, 0.05);
 		border: 1px solid --opacity(currentColor, 0.1);
-		padding: var(--element-base-padding) calc(var(--element-base-padding) * 2);
+		padding: var(--element-base-padding);
 		border-radius: var(--radius-xl);
 		corner-shape: squircle;
-		transition-property: background, opacity;
-		transition-duration: var(--duration-fast);
+		user-select: none;
+		justify-self: center;
 
 		&[disabled] {
 			opacity: 0.5;
