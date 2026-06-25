@@ -18,6 +18,8 @@ import {
 import { resolvePageName } from '../utils/routing'
 import { addDoctype } from './build'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
+import { logAeroDevTiming } from './dev-timing'
+import { performance } from 'node:perf_hooks'
 
 /** Subset of Aero plugin state needed for SSR (avoids circular import from `index.ts`). */
 interface AeroSsrMiddlewareState {
@@ -91,6 +93,7 @@ export async function handleSsrRequest(
 	}
 
 	let renderPageNameForDiag = resolvePageName(req.url)
+	const ssrStart = performance.now()
 	try {
 		const pageName = resolvePageName(req.url)
 		renderPageNameForDiag = pageName
@@ -179,6 +182,7 @@ export async function handleSsrRequest(
 		const transformed = await server.transformIndexHtml(req.url, rendered)
 		res.setHeader('Content-Type', 'text/html; charset=utf-8')
 		res.end(transformed)
+		logAeroDevTiming('dev-ssr', ssrStart, `${pathname} page=${renderPageName}`)
 	} catch (err) {
 		const root = state.config?.root
 		const pageTemplateHint =

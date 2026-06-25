@@ -77,4 +77,21 @@ const x=1
 		expect(output).toContain('<script is:build>')
 		expect(output).not.toContain('lang="ts"')
 	})
+
+	it('formats a representative template within a reasonable time budget', async () => {
+		const input = await import('node:fs').then(fs =>
+			fs.readFileSync(
+				new URL('../../../../examples/kitchen-sink/client/pages/demos/form-model.html', import.meta.url),
+				'utf-8'
+			)
+		)
+		const start = performance.now()
+		await prettier.format(input, {
+			...baseOptions,
+			aeroBracketSpacing: true,
+			aeroSelfClosingComponents: true,
+		})
+		const elapsed = performance.now() - start
+		expect(elapsed).toBeLessThan(3000)
+	})
 })

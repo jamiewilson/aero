@@ -19,6 +19,17 @@ import type { AeroPluginOptions } from './options.js'
 
 type TextEdit = { start: number; end: number; text: string }
 
+const expressionFormatCache = new Map<string, string>()
+
+function expressionFormatCacheKey(expression: string, options: prettier.Options): string {
+	return JSON.stringify({
+		expression,
+		semi: options.semi ?? false,
+		singleQuote: options.singleQuote,
+		trailingComma: options.trailingComma,
+	})
+}
+
 function collectAttributeEdits(
 	source: string,
 	nodes: Node[],
@@ -95,6 +106,10 @@ async function formatExpressionContents(
 	options: prettier.Options
 ): Promise<string> {
 	const trimmed = expression.trim()
+	const cacheKey = expressionFormatCacheKey(trimmed, options)
+	const cached = expressionFormatCache.get(cacheKey)
+	if (cached !== undefined) return cached
+
 	const formatOptions: prettier.Options = {
 		...options,
 		parser: 'babel-ts',
@@ -108,17 +123,22 @@ async function formatExpressionContents(
 			.replace(/;\s*$/, '')
 
 	try {
-		return stripFormatted(await prettier.format(trimmed, formatOptions))
+		const formatted = stripFormatted(await prettier.format(trimmed, formatOptions))
+		expressionFormatCache.set(cacheKey, formatted)
+		return formatted
 	} catch {
 		try {
 			const wrapped = await prettier.format(`(${trimmed})`, formatOptions)
-			return stripFormatted(
+			const formatted = stripFormatted(
 				wrapped
 					.trim()
 					.replace(/^\(/, '')
 					.replace(/\)\;?\s*$/, '')
 			)
+			expressionFormatCache.set(cacheKey, formatted)
+			return formatted
 		} catch {
+			expressionFormatCache.set(cacheKey, trimmed)
 			return trimmed
 		}
 	}

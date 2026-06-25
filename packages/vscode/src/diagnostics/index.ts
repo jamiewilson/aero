@@ -53,6 +53,8 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 export function registerDiagnostics(context: vscode.ExtensionContext): vscode.Disposable {
 	const collection = vscode.languages.createDiagnosticCollection('aero')
 	const disposables: vscode.Disposable[] = []
+	const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+	const DIAGNOSTICS_DEBOUNCE_MS = 200
 
 	const updateDiagnostics = (document: vscode.TextDocument): void => {
 		if (!isAeroDocument(document)) {
@@ -63,11 +65,32 @@ export function registerDiagnostics(context: vscode.ExtensionContext): vscode.Di
 		collection.set(document.uri, collectDiagnosticsForDocument(document))
 	}
 
+	const scheduleDiagnostics = (document: vscode.TextDocument): void => {
+		const key = document.uri.toString()
+		const existing = debounceTimers.get(key)
+		if (existing) clearTimeout(existing)
+		debounceTimers.set(
+			key,
+			setTimeout(() => {
+				debounceTimers.delete(key)
+				updateDiagnostics(document)
+			}, DIAGNOSTICS_DEBOUNCE_MS)
+		)
+	}
+
 	disposables.push(
 		vscode.workspace.onDidOpenTextDocument(doc => updateDiagnostics(doc)),
 		vscode.workspace.onDidSaveTextDocument(doc => updateDiagnostics(doc)),
-		vscode.workspace.onDidChangeTextDocument(e => updateDiagnostics(e.document)),
-		vscode.workspace.onDidCloseTextDocument(doc => collection.delete(doc.uri))
+		vscode.workspace.onDidChangeTextDocument(e => scheduleDiagnostics(e.document)),
+		vscode.workspace.onDidCloseTextDocument(doc => {
+			const key = doc.uri.toString()
+			const pending = debounceTimers.get(key)
+			if (pending) {
+				clearTimeout(pending)
+				debounceTimers.delete(key)
+			}
+			collection.delete(doc.uri)
+		})
 	)
 
 	for (const doc of vscode.workspace.textDocuments) {

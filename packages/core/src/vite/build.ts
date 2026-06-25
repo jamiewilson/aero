@@ -378,6 +378,22 @@ export function collectTransitiveTemplateImports(
 	return result
 }
 
+/** Page files whose build script imports `aero:content` (dev HMR should SSR-fetch these). */
+const AERO_CONTENT_IMPORT_RE = /from\s+['"]aero:content['"]/
+
+export function discoverContentDependentPageNames(root: string, clientDir: string): string[] {
+	const { pages } = discoverRuntimeTemplatePaths(root, clientDir)
+	return pages
+		.filter(file => {
+			try {
+				return AERO_CONTENT_IMPORT_RE.test(fs.readFileSync(file, 'utf-8'))
+			} catch {
+				return false
+			}
+		})
+		.map(file => pagePathToKey(toPosixRelative(file, root)))
+}
+
 /**
  * Dev/build runtime instance module: explicit imports per discovered template (manifest-driven)
  * so Vite HMR invalidates only affected modules instead of eager `import.meta.glob` for everything.
@@ -436,6 +452,13 @@ export function getRuntimeInstanceModuleSource(
 		pageEntries.push(`${JSON.stringify(url)}: ${name}`)
 	}
 	lines.push(`const pages = { ${pageEntries.join(', ')} }`)
+
+	const contentPageNames = discoverContentDependentPageNames(root, clientDir)
+	appendLines(
+		lines,
+		`const devSsrFetchPageNames = new Set(${JSON.stringify(contentPageNames)})`,
+		''
+	)
 	appendLines(
 		lines,
 		'',
@@ -447,7 +470,7 @@ export function getRuntimeInstanceModuleSource(
 		'',
 		`if (import.meta.hot) import.meta.hot.accept()`,
 		'',
-		`export { aero, onUpdate }`,
+		`export { aero, onUpdate, devSsrFetchPageNames }`,
 		''
 	)
 	return lines.join('\n')
