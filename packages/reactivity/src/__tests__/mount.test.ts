@@ -48,6 +48,79 @@ describe('bindEvent', () => {
 })
 
 describe('mountStateBindings', () => {
+	it('resolves text binds on the mount root element itself', () => {
+		const target = {
+			textContent: '',
+			matches(selector: string) {
+				return selector === '[data-aero-text="0"]'
+			},
+			querySelectorAll() {
+				return []
+			},
+			querySelector() {
+				return null
+			},
+		} as unknown as Element
+
+		const store = new SignalStore()
+		const cleanup = mountStateBindings({
+			root: target,
+			store,
+			bindings: [],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: '"Alpha"' }],
+			eventBinds: [],
+			Aero: {},
+		})
+
+		expect(target.textContent).toBe('Alpha')
+		cleanup()
+	})
+
+	it('evaluates subset binds against a provided row scope', () => {
+		const store = new SignalStore()
+		store.merge({ items: [{ id: 1, label: 'Alpha' }] })
+		const pageScope = createStateScope({
+			store,
+			bindings: [{ name: 'items', derived: false, initExpr: '[]', dependencies: [] }],
+			functionSources: [],
+		})
+		const rowScope = Object.create(pageScope) as ReturnType<typeof createStateScope>
+		Object.defineProperty(rowScope, 'item', {
+			configurable: true,
+			enumerable: true,
+			writable: true,
+			value: { id: 1, label: 'Beta' },
+		})
+
+		const target = {
+			textContent: '',
+			matches(selector: string) {
+				return selector === '[data-aero-text="0"]'
+			},
+			querySelectorAll() {
+				return []
+			},
+			querySelector() {
+				return null
+			},
+		} as unknown as Element
+
+		const cleanup = mountStateBindings({
+			root: target,
+			store,
+			scope: rowScope,
+			bindings: [{ name: 'items', derived: false, initExpr: '[]', dependencies: [] }],
+			functionSources: [],
+			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String( item.label )' }],
+			eventBinds: [],
+			Aero: {},
+		})
+
+		expect(target.textContent).toBe('Beta')
+		cleanup()
+	})
+
 	it('aliases bindable live props to the passed signal instead of creating owned state', () => {
 		const text = { textContent: '1' } as unknown as Element
 		const root = {
@@ -172,6 +245,44 @@ describe('mountStateBindings', () => {
 		expect(liveProps?.count).toBe(store.get('count'))
 		liveProps!.count.value = 2
 		expect(store.get('count').value).toBe(2)
+	})
+
+	it('maps renamed live props from parent attribute names to child prop names', () => {
+		const childRoot = {} as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-component="0"]') return childRoot
+				return null
+			},
+		} as unknown as ParentNode
+		const store = new SignalStore()
+		store.merge({ title: 'Hello' })
+		let liveProps: Record<string, { value: unknown }> | undefined
+		const childMount = vi.fn((_root, _aero, opts) => {
+			liveProps = opts.liveProps
+			return () => {}
+		})
+
+		mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'title', derived: false, initExpr: "'Hello'", dependencies: [] }],
+			functionSources: [],
+			textBinds: [],
+			eventBinds: [],
+			componentBinds: [
+				{
+					selector: '[data-aero-component="0"]',
+					component: { mountStateBindings: childMount },
+					livePropExprs: { heading: { expr: 'title', mutable: false } },
+				},
+			],
+			Aero: {},
+		})
+
+		expect(liveProps?.heading.value).toBe('Hello')
+		;(store.get('title') as { value: string }).value = 'Updated'
+		expect(liveProps?.heading.value).toBe('Updated')
 	})
 
 	it('creates an independent store for each child component instance', () => {
