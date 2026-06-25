@@ -1,0 +1,38 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let open = false
+	let body = '<strong>html</strong> binding'
+	let active = false
+	let saving = false
+</script>
+
+<base-layout title="Binding handlers">
+	<section class="v-stack">
+		<p class="secondary"><code>show</code>, <code>html</code>, <code>class:*</code>, property bindings (P5.4)</p>
+
+		<div class="v-stack">
+			<button on:click="{ open = !open }">Toggle show</button>
+			<div show="{ open }" class="card">Shown when <code>open</code> is true</div>
+		</div>
+
+		<div class="card" html="{ body }"></div>
+
+		<button on:click="{ active = !active }" class:is-active="{ active }">
+			Toggle <code>class:is-active</code>
+		</button>
+
+		<button disabled="{ saving }" on:click="{ saving = !saving }">
+			Toggle disabled (property binding)
+		</button>
+	</section>
+</base-layout>
+
+<style>
+	button.class\:is-active,
+	button.is-active {
+		outline: 2px solid var(--accent, #0b57d0);
+	}
+</style>

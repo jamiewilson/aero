@@ -1,0 +1,45 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let email = 'you@example.com'
+	let agree = false
+	let plan = 'free'
+	let bio = 'Two-way bindings stay in sync.'
+</script>
+
+<base-layout title="Form model">
+	<section class="v-stack">
+		<p class="secondary">Inferred two-way <code>value</code> / <code>checked</code> (P5.3)</p>
+
+		<label class="v-stack">
+			<span>Email</span>
+			<input type="email" value="{ email }" />
+		</label>
+
+		<label class="h-stack items-center">
+			<input type="checkbox" checked="{ agree }" />
+			<span>Agree to terms</span>
+		</label>
+
+		<label class="v-stack">
+			<span>Plan</span>
+			<select value="{ plan }">
+				<option value="free">Free</option>
+				<option value="pro">Pro</option>
+			</select>
+		</label>
+
+		<label class="v-stack">
+			<span>Bio</span>
+			<textarea value="{ bio }" rows="3"></textarea>
+		</label>
+
+		<p class="card">
+			<code>{ email }</code> · agreed: <code>{ agree }</code> · plan: <code>{ plan }</code>
+			<br />
+			<code>{ bio }</code>
+		</p>
+	</section>
+</base-layout>

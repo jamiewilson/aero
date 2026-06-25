@@ -1,0 +1,43 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let items = [
+		{ id: 1, label: 'Alpha' },
+		{ id: 2, label: 'Beta' },
+		{ id: 3, label: 'Gamma' },
+	]
+
+	let nextId = 4
+
+	function addItem() {
+		items = [...items, { id: nextId, label: `Item ${nextId}` }]
+		nextId++
+	}
+
+	function removeFirst() {
+		if (items.length === 0) return
+		items = items.slice(1)
+	}
+
+	function reverseItems() {
+		items = [...items].reverse()
+	}
+</script>
+
+<base-layout title="Keyed list">
+	<section class="v-stack">
+		<p class="secondary">Keyed reactive <code>for</code> with <code>key</code> (P5.2)</p>
+
+		<div class="h-stack">
+			<button on:click="{ addItem() }">Add</button>
+			<button on:click="{ removeFirst() }">Remove first</button>
+			<button on:click="{ reverseItems() }">Reverse</button>
+		</div>
+
+		<ul class="card">
+			<li for="{ const item of items }" key="{ item.id }" text="{ item.label }"></li>
+		</ul>
+	</section>
+</base-layout>

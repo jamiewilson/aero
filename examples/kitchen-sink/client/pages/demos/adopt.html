@@ -1,0 +1,41 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let note = 'Runtime fragment reads page state via $refs.'
+	let showNote = true
+</script>
+
+<base-layout title="Adopt runtime">
+	<section class="v-stack">
+		<p class="secondary"><code>AeroReactivity.adopt()</code> for inserted HTML (P5.5)</p>
+
+		<label class="h-stack items-center">
+			<input type="checkbox" checked="{ showNote }" />
+			<span>Show inserted fragment</span>
+		</label>
+
+		<label class="v-stack">
+			<span>Page signal (<code>note</code>)</span>
+			<input value="{ note }" />
+		</label>
+
+		<button type="button" id="adopt-insert">Insert fragment</button>
+		<div id="adopt-host" class="card secondary">Fragment mounts here…</div>
+	</section>
+</base-layout>
+
+<script>
+	import aero from '@aero-js/core'
+
+	const insert = document.getElementById('adopt-insert')
+	const host = document.getElementById('adopt-host')
+	if (insert && host) {
+		insert.addEventListener('click', () => {
+			host.innerHTML =
+				'<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+			aero.getReactivityRuntime?.()?.adopt(host)
+		})
+	}
+</script>
