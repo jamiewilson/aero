@@ -41,6 +41,14 @@
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"
 		},
+		"./reactivity": {
+			"types": "./dist/reactivity.d.mts",
+			"default": "./dist/reactivity.mjs"
+		},
+		"./hypermedia": {
+			"types": "./dist/hypermedia.d.mts",
+			"default": "./dist/hypermedia.mjs"
+		},
 		"./types": "./dist/types.d.mts",
 		"./utils/aliases": {
 			"types": "./dist/utils/aliases.d.mts",
@@ -81,7 +89,9 @@
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
+		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
+		"@aero-js/reactivity": "workspace:*",
 		"effect": "^3.21.0",
 		"get-tsconfig": "^4.13.7",
 		"html-minifier-next": "^5.2.2",

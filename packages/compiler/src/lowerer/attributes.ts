@@ -17,6 +17,7 @@ import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
+import { parseEventDirectiveName } from '../event-directive-attributes'
 import type { LowererDiag, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
@@ -149,12 +150,54 @@ function parseForAttribute(
 }
 
 function buildEmittedAttribute(resolver: Resolver, attr: AttrLike): string | null {
+	const parsedEvent = parseEventDirectiveName(attr.name)
+	if (parsedEvent.kind === 'ok') {
+		const val = resolver.resolveAttrValue(attr.value ?? '')
+		return `${parsedEvent.directive.canonicalName}="${val}"`
+	}
 	if (attr.name === CONST.ATTR_IS_INLINE) return null
 	let val = resolver.resolveAttrValue(attr.value ?? '')
 	if (!isDirectiveAttr(attr.name)) {
 		val = Helper.compileAttributeInterpolation(val)
 	}
 	return `${attr.name}="${val}"`
+}
+
+function throwDirectiveError(
+	node: NodeLike,
+	diag: LowererDiag,
+	attrName: string,
+	attrValue: string | null | undefined,
+	message: string
+): never {
+	const raw = attrValue ?? ''
+	const needle = `${attrName}="${raw}"`
+	if (diag?.source && needle.length > 0) {
+		const idx = diag.source.indexOf(needle)
+		if (idx >= 0) {
+			const { line, column } = Helper.lineColumnAtOffset(diag.source, idx)
+			throw new CompileError({ message, file: diag.file, line, column })
+		}
+	}
+	if (diag?.file) {
+		throw new CompileError({ message, file: diag.file })
+	}
+	throw new Error(message)
+}
+
+function validateEventDirective(node: NodeLike, diag: LowererDiag, attr: AttrLike): void {
+	const parsed = parseEventDirectiveName(attr.name)
+	if (parsed.kind === 'non-event') return
+	if (parsed.kind === 'invalid') {
+		throwDirectiveError(
+			node,
+			diag,
+			attr.name,
+			attr.value,
+			`Directive \`${attr.name}\` on <${getTagName(node)}> is invalid: ${parsed.message}`
+		)
+	}
+	validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
 }
 
 export function warnWrapperlessTemplateAttributes(diag: LowererDiag, node: NodeLike): void {
@@ -289,6 +332,7 @@ export function parseElementAttributes(
 			return
 		}
 
+		validateEventDirective(node, diag, attr)
 		const emitted = buildEmittedAttribute(resolver, attr)
 		if (!emitted) return
 		attributes.push(emitted)

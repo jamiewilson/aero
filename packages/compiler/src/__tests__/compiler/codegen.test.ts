@@ -1607,3 +1607,17 @@ const y = 2;`
 		expect(result.scriptWithoutImportsAndGetStaticPaths).toBe(script.trim())
 	})
 })
+
+describe('event directive validation', () => {
+	it('errors when event directive has malformed modifier chain', () => {
+		const html = `<button on:click..prevent="{ submit() }">Save</button>`
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(/malformed modifier chain/i)
+	})
+
+	it('errors when event directive value is not braced expression', () => {
+		const html = `<button on:click="submit()">Save</button>`
+		const parsed = parse(html)
+		expect(() => compile(parsed, mockOptions)).toThrow(/must use a braced expression/i)
+	})
+})

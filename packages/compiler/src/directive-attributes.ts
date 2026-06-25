@@ -1,9 +1,11 @@
 /**
- * Classifier for directive attributes (Alpine.js, HTMX, Vue, etc.) that should
+ * Classifier for directive attributes (Alpine.js, HTMX, Vue, Aero runtime attrs) that should
  * skip { } interpolation in the compiler.
  *
  * @packageDocumentation
  */
+
+import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 
 /**
  * Configurable list of directive attribute prefixes and optional exact names.
@@ -40,7 +42,8 @@ export function isDirectiveAttr(
 	const exactNames = config.exactNames ?? defaultConfig.exactNames!
 
 	if (exactNames.includes(attrName)) return true
-	return prefixes.some(p => attrName.startsWith(p))
+	if (prefixes.some(p => attrName.startsWith(p))) return true
+	return normalizeRuntimeDirectiveName(attrName) !== null
 }
 
 /**

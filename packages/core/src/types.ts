@@ -24,6 +24,10 @@ export interface RedirectRule {
 export interface AeroOptions {
 	/** Enable Nitro server integration (default: `false`). */
 	server?: boolean
+	/** Enable Aero reactivity pipeline (default: `false`). */
+	reactivity?: boolean
+	/** Enable Aero hypermedia pipeline (default: `false`). */
+	hypermedia?: boolean
 	/** API route prefix (default: `'/api'`). */
 	apiPrefix?: string
 	/** Directory overrides. */

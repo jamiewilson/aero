@@ -29,6 +29,20 @@ describe('resolveAeroConfigEffect', () => {
 		expect(config).toEqual({})
 	})
 
+	it('preserves reactivity/hypermedia flags from loaded config', () => {
+		const config = Effect.runSync(
+			resolveAeroConfigEffect(
+				{
+					reactivity: true,
+					hypermedia: false,
+				},
+				{ command: 'dev', mode: 'development' }
+			)
+		)
+		expect(config.reactivity).toBe(true)
+		expect(config.hypermedia).toBe(false)
+	})
+
 	it('applies env policy overrides when enabled', () => {
 		const config = Effect.runSync(
 			resolveAeroConfigEffect(

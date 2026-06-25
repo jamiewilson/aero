@@ -149,6 +149,16 @@ export { type ParsedForDirective } from './for-directive'
 
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'
+export {
+	normalizeRuntimeDirectiveName,
+	type NormalizedRuntimeDirective,
+	type RuntimeDirectiveFamily,
+} from './runtime-directive-attributes'
+export {
+	parseEventDirectiveName,
+	type EventDirectiveParseResult,
+	type ParsedEventDirective,
+} from './event-directive-attributes'
 
 // Build directive classification (compiler, prettier, VSCode)
 export {

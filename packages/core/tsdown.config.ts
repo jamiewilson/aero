@@ -15,6 +15,9 @@ const entry = [
 	'src/runtime/index.ts',
 	'src/runtime/standalone.ts',
 	'src/runtime/instance.ts',
+	'src/runtime/lifecycle-contract.ts',
+	'src/reactivity.ts',
+	'src/hypermedia.ts',
 ]
 
 export default defineConfig({

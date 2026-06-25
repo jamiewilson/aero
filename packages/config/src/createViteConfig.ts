@@ -78,6 +78,8 @@ function createViteConfigFromAero(
 	const {
 		content,
 		server,
+		reactivity,
+		hypermedia,
 		site,
 		dirs,
 		redirects,
@@ -97,6 +99,8 @@ function createViteConfigFromAero(
 	const basePlugins: UserConfig['plugins'] = [
 		aero({
 			server: server ?? false,
+			reactivity: reactivity ?? false,
+			hypermedia: hypermedia ?? false,
 			site,
 			dirs,
 			redirects,
