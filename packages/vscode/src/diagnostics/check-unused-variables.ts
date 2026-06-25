@@ -32,6 +32,18 @@ export function checkUnusedVariables(
 	checkUnusedInScope(parsed, 'blocking', usedInTemplate, diagnostics)
 }
 
+function isUsedInStateScript(parsed: ParsedDocument, name: string): boolean {
+	const stateContent = parsed.scriptContentByScope.state
+	if (!stateContent) return false
+	const maskedContent = maskJsComments(stateContent).replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, () =>
+		' '.repeat(20)
+	)
+	const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+	const matches = maskedContent.match(usageRegex)
+	return matches !== null && matches.length >= 1
+}
+
 function isStateScopedName(parsed: ParsedDocument, name: string): boolean {
 	for (const block of parsed.scriptBlocks) {
 		if (!/\bis:state\b/i.test(block.attrs)) continue
@@ -62,6 +74,8 @@ function checkUnusedInScope(
 			if (name === 'getStaticPaths') continue
 
 			if (usedInTemplate.has(name)) continue
+
+			if (isUsedInStateScript(parsed, name)) continue
 
 			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')

@@ -126,6 +126,40 @@ const x = 1
 		expect(preambleEnd).toBeGreaterThan(0)
 	})
 
+	it('injects build-scope bindings into is:state virtual TS', () => {
+		const html = `<script is:build>
+const initialItems = [{ id: 'a' }, { id: 'b' }]
+</script>
+<script is:state>
+let items = initialItems
+</script>
+<ul><li for="{ const item of items }">{ item.id }</li></ul>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'state_0')!
+		expect(text).toContain('declare const initialItems:')
+		expect(text).toContain('items')
+		expect(text).toContain('initialItems')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('state.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['state.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2304)
+	})
+
 	it('widens writable is:state let bindings in state virtual TS', () => {
 		const html = `<script is:state>
 const AuthState = { SignedIn: 'SignedIn', SignedOut: 'SignedOut' } as const

@@ -14,7 +14,7 @@ import {
 	type HTMLDocument,
 	type Node,
 } from '@aero-js/html-parser'
-import { formatBuildScopeAmbientPrelude, iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
+import { formatBuildScopeAmbientPrelude, iterateBuildScriptBindings, collectBuildScopeBindingNames } from '@aero-js/compiler/build-scope-bindings'
 import {
 	buildTemplateEditorAmbient,
 	collectForDirectiveBindingNames,
@@ -563,6 +563,9 @@ export class AeroVirtualCode implements VirtualCode {
 	htmlDocument: HTMLDocument
 	htmlFilePath?: string
 	private readonly buildBindingProperties: BuildBindingProperties
+	private readonly buildScriptBodies: readonly string[]
+	private readonly buildTypeDeclTexts: readonly string[]
+	private readonly buildOnlyBindingNames: ReadonlySet<string>
 
 	constructor(
 		public snapshot: IScriptSnapshot,
@@ -598,6 +601,9 @@ export class AeroVirtualCode implements VirtualCode {
 			readonlyLivePropNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
+		this.buildScriptBodies = buildScriptBodies
+		this.buildTypeDeclTexts = buildTypeDeclTexts
+		this.buildOnlyBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
@@ -785,14 +791,23 @@ export class AeroVirtualCode implements VirtualCode {
 						scriptType === 'state'
 							? annotateStateScriptForEditorTypecheck(scriptContent)
 							: { text: scriptContent, segments: [{ sourceStart: 0, sourceLength: scriptContent.length, generatedStart: 0 }] }
-					const virtualText = BUILD_SCRIPT_PREAMBLE + scriptForVirtual.text
+					const buildPrelude =
+						scriptType === 'state' && this.buildOnlyBindingNames.size > 0
+							? formatBuildScopeAmbientPrelude(
+									this.buildOnlyBindingNames,
+									this.buildTypeDeclTexts,
+									this.buildScriptBodies
+								)
+							: ''
+					const virtualText = BUILD_SCRIPT_PREAMBLE + buildPrelude + scriptForVirtual.text
+					const generatedPreludeLength = BUILD_SCRIPT_PREAMBLE.length + buildPrelude.length
 					yield {
 						id: `${idPrefix}_${idx}`,
 						languageId: 'typescript',
 						snapshot: asEmbeddedModuleSnapshot(virtualText),
 						mappings: scriptForVirtual.segments.map(segment => ({
 							sourceOffsets: [node.startTagEnd! + segment.sourceStart],
-							generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length + segment.generatedStart],
+							generatedOffsets: [generatedPreludeLength + segment.generatedStart],
 							lengths: [segment.sourceLength],
 							data: BUILD_SCRIPT_FEATURES,
 						})),
