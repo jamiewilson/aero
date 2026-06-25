@@ -23,8 +23,9 @@ import {
 	deriveHypermediaFallbackAttrs,
 	renderFallbackAttributeString,
 } from '../hypermedia-fallback'
-import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind } from '../ir'
+import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
+import { referencesStateBindingExpression } from '../state-mount-codegen'
 
 type AttrLike = { name: string; value?: string | null }
 type NodeLike = {
@@ -309,14 +310,31 @@ export function parseElementAttributes(
 	const eventBinds: IRReactiveEventBind[] = []
 	const textBinds: IRReactiveTextBind[] = []
 	const busyBinds: IRReactiveBusyBind[] = []
-	let loopData: { binding: string; items: string } | null = null
+	const showBinds: IRReactiveShowBind[] = []
+	const htmlBinds: IRReactiveHtmlBind[] = []
+	const classBinds: IRReactiveClassBind[] = []
+	const propertyBinds: IRReactivePropertyBind[] = []
+	const modelBinds: IRReactiveModelBind[] = []
+	let loopData: { binding: string; items: string; keyExpr?: string } | null = null
+	let keyExpr: string | undefined
 	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
+
+	forEachAttribute(node, attr => {
+		if (!isKeyAttribute(attr.name)) return
+		keyExpr = Helper.stripBraces(
+			validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+		)
+	})
 
 	forEachAttribute(node, attr => {
 		const parsedFor = parseForAttribute(node, diag, attr)
 		if (parsedFor) {
 			loopData = parsedFor
+			return
+		}
+
+		if (isKeyAttribute(attr.name)) {
 			return
 		}
 
@@ -413,11 +431,161 @@ export function parseElementAttributes(
 			return
 		}
 
+		if (parsedRuntime?.canonicalBareName === 'show' && reactiveState) {
+			const readExpr = Helper.stripBraces(
+				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+			)
+			const bindId = reactiveState.nextShowBindId()
+			showBinds.push({ kind: 'ReactiveShowBind', bindId, readExpr })
+			attributes.push(`data-aero-show="${bindId}"`)
+			return
+		}
+
+		if (parsedRuntime?.canonicalBareName === 'html' && reactiveState) {
+			const readExpr = Helper.stripBraces(
+				validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
+			)
+			const bindId = reactiveState.nextHtmlBindId()
+			htmlBinds.push({ kind: 'ReactiveHtmlBind', bindId, readExpr })
+			attributes.push(`data-aero-html="${bindId}"`)
+			return
+		}
+
+		if (parsedRuntime?.canonicalBareName?.startsWith('class-') && reactiveState) {
+			const className = parsedRuntime.canonicalBareName.slice('class-'.length)
+			const readExpr = attr.value
+				? Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, attr.value))
+				: className
+			if (!referencesStateBindingExpression(readExpr, reactiveState.bindingNames)) {
+				throwDirectiveError(
+					node,
+					diag,
+					attr.name,
+					attr.value,
+					`Reactive class binding \`${attr.name}\` must reference a declared state variable.`
+				)
+			}
+			const bindId = reactiveState.nextClassBindId()
+			classBinds.push({ kind: 'ReactiveClassBind', bindId, className, readExpr })
+			attributes.push(`data-aero-class-${className}="${bindId}"`)
+			return
+		}
+
+		const modelBinding = parseFormModelBinding(node, diag, attr, reactiveState)
+		if (modelBinding) {
+			const { emittedAttr, bind } = modelBinding
+			modelBinds.push(bind)
+			attributes.push(emittedAttr)
+			return
+		}
+
+		const propertyBinding = parsePropertyBinding(node, diag, attr, reactiveState)
+		if (propertyBinding) {
+			const { emittedAttr, bind } = propertyBinding
+			propertyBinds.push(bind)
+			attributes.push(emittedAttr)
+			return
+		}
+
 		const emitted = buildEmittedAttribute(resolver, attr)
 		if (!emitted) return
 		attributes.push(emitted)
 	})
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
-	return { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds, busyBinds }
+	type LoopData = { binding: string; items: string; keyExpr?: string }
+	const loop = loopData as LoopData | null
+	const resolvedLoopData: LoopData | null =
+		loop && keyExpr ? { binding: loop.binding, items: loop.items, keyExpr } : loop
+	return {
+		attrString,
+		loopData: resolvedLoopData,
+		switchExpr,
+		passDataExpr,
+		eventBinds,
+		textBinds,
+		busyBinds,
+		showBinds,
+		htmlBinds,
+		classBinds,
+		propertyBinds,
+		modelBinds,
+	}
+}
+
+function isKeyAttribute(name: string): boolean {
+	return name === 'key' || name === `${CONST.AERO_ATTR_PREFIX}key` || name === `${CONST.DATA_AERO_ATTR_PREFIX}key`
+}
+
+function parseFormModelBinding(
+	node: NodeLike,
+	diag: LowererDiag,
+	attr: AttrLike,
+	reactiveState?: LowererReactiveState
+): { emittedAttr: string; bind: IRReactiveModelBind } | null {
+	if (!reactiveState) return null
+	const tag = getTagName(node)
+	const raw = attr.value ?? ''
+	if (!isSingleWrappedExpression(raw)) return null
+	const expr = Helper.stripBraces(raw)
+	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
+
+	const name = attr.name
+	const readonly = name.includes(':readonly') || name.endsWith('-readonly')
+	const bare = name.replace(/^aero-/, '').replace(/^data-aero-/, '')
+
+	let modelKind: 'value' | 'checked' | null = null
+	if (bare === 'value' || bare.startsWith('value-')) modelKind = 'value'
+	if (bare === 'checked' || bare.startsWith('checked-')) modelKind = 'checked'
+
+	const isFormControl =
+		tag === 'textarea' ||
+		tag === 'select' ||
+		(tag === 'input' &&
+			!['button', 'submit', 'reset', 'image', 'hidden'].includes(
+				(node as { getAttribute?: (n: string) => string | null }).getAttribute?.('type')?.toLowerCase?.() ??
+					'text'
+			))
+
+	if (!modelKind || !isFormControl) return null
+
+	const bindId = reactiveState.nextModelBindId()
+	return {
+		emittedAttr: `data-aero-model-${modelKind}="${bindId}"`,
+		bind: {
+			kind: 'ReactiveModelBind',
+			bindId,
+			modelKind,
+			readExpr: expr,
+			writeExpr: expr,
+			...(readonly ? { readonly: true } : {}),
+		},
+	}
+}
+
+function parsePropertyBinding(
+	node: NodeLike,
+	diag: LowererDiag,
+	attr: AttrLike,
+	reactiveState?: LowererReactiveState
+): { emittedAttr: string; bind: IRReactivePropertyBind } | null {
+	if (!reactiveState) return null
+	if (isDirectiveAttr(attr.name)) return null
+	const raw = attr.value ?? ''
+	if (!isSingleWrappedExpression(raw)) return null
+	const expr = Helper.stripBraces(raw)
+	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
+	if (parseFormModelBinding(node, diag, attr, reactiveState)) return null
+
+	const propertyName = attr.name.replace(/^aero-/, '').replace(/^data-aero-/, '')
+	const bindId = reactiveState.nextPropertyBindId()
+	return {
+		emittedAttr: `data-aero-property-${propertyName}="${bindId}"`,
+		bind: {
+			kind: 'ReactivePropertyBind',
+			bindId,
+			propertyName,
+			readExpr: expr,
+		},
+	}
 }

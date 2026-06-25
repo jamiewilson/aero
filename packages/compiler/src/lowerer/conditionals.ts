@@ -14,6 +14,7 @@ import {
 } from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import type { IRNode } from '../ir'
+import { referencesStateBindingExpression } from '../state-mount-codegen'
 import type { LowererDiag } from './types'
 
 export function hasIfAttr(node: any): boolean {
@@ -49,6 +50,7 @@ export function getCondition(node: any, directive: BuildDirective, diag: Lowerer
 export interface ConditionalChainDeps {
 	/** Wrapper-aware: `<template>` branches compile children only; other elements keep their tags. */
 	compileBranchBody(node: any, skipInterpolation: boolean, outVar: string): IRNode[]
+	readonly bindingNames?: ReadonlySet<string>
 }
 
 /**
@@ -113,6 +115,23 @@ export function compileConditionalChain(
 		body,
 		...(elseIf.length > 0 && { elseIf }),
 		...(elseBody && elseBody.length > 0 && { else: elseBody }),
+		...(deps.bindingNames &&
+			isReactiveConditionalChain(condition!, elseIf, elseBody != null, deps.bindingNames) && {
+				reactive: true,
+			}),
 	}
 	return { nodes: [ifNode], consumed: i - startIndex }
+}
+
+function isReactiveConditionalChain(
+	condition: string,
+	elseIf: { condition: string; body: IRNode[] }[],
+	hasElse: boolean,
+	bindingNames: ReadonlySet<string>
+): boolean {
+	if (referencesStateBindingExpression(condition, bindingNames)) return true
+	for (const branch of elseIf) {
+		if (referencesStateBindingExpression(branch.condition, bindingNames)) return true
+	}
+	return hasElse && false
 }

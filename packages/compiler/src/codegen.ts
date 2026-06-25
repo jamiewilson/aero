@@ -185,12 +185,31 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 			: null
 	const reactiveBinds = ta.stateAnalysis
 		? collectReactiveBinds(ta.bodyIR)
-		: { textBinds: [], eventBinds: [], busyBinds: [], componentBinds: [] }
+		: {
+				textBinds: [],
+				eventBinds: [],
+				busyBinds: [],
+				componentBinds: [],
+				showBinds: [],
+				htmlBinds: [],
+				classBinds: [],
+				propertyBinds: [],
+				modelBinds: [],
+				ifBinds: [],
+				forBinds: [],
+			}
 	const hasReactiveBinds =
 		reactiveBinds.textBinds.length > 0 ||
 		reactiveBinds.eventBinds.length > 0 ||
 		reactiveBinds.busyBinds.length > 0 ||
-		reactiveBinds.componentBinds.length > 0
+		reactiveBinds.componentBinds.length > 0 ||
+		reactiveBinds.showBinds.length > 0 ||
+		reactiveBinds.htmlBinds.length > 0 ||
+		reactiveBinds.classBinds.length > 0 ||
+		reactiveBinds.propertyBinds.length > 0 ||
+		reactiveBinds.modelBinds.length > 0 ||
+		reactiveBinds.ifBinds.length > 0 ||
+		reactiveBinds.forBinds.length > 0
 	const mountImportLine = hasReactiveBinds
 		? [createStateMountImportLine(), options.hypermedia ? createHypermediaImportLine() : null]
 				.filter(Boolean)

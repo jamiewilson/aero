@@ -22,6 +22,13 @@ export type IRNode =
 	| IRReactiveEventBind
 	| IRReactiveBusyBind
 	| IRReactiveComponentBind
+	| IRReactiveShowBind
+	| IRReactiveHtmlBind
+	| IRReactiveClassBind
+	| IRReactivePropertyBind
+	| IRReactiveModelBind
+	| IRReactiveIfBind
+	| IRReactiveForBind
 
 /** Chunk of HTML/text (template literal content). */
 export interface IRAppend {
@@ -38,6 +45,12 @@ export interface IRFor {
 	/** Iterable expression source. */
 	items: string
 	body: IRNode[]
+	/** Key expression when reactive keyed reconciliation is required. */
+	keyExpr?: string
+	/** True when iterable or key references reactive state bindings. */
+	reactive?: boolean
+	/** Anchor id for keyed reconciliation. */
+	bindId?: number
 }
 
 /** Conditional with optional else-if/else chain. */
@@ -47,6 +60,10 @@ export interface IRIf {
 	body: IRNode[]
 	elseIf?: IRElseIfBranch[]
 	else?: IRNode[]
+	/** True when any branch condition references reactive state bindings. */
+	reactive?: boolean
+	/** Anchor id for reactive branch toggling. */
+	bindId?: number
 }
 
 /** Else-if branch in an if-chain. */
@@ -68,6 +85,8 @@ export interface IRSwitch {
 	expression: string
 	cases: IRSwitchCase[]
 	defaultBody?: IRNode[]
+	/** True when discriminant or case values reference reactive state bindings. */
+	reactive?: boolean
 }
 
 /** Output slot with default content (slots['name'] ?? defaultContent). */
@@ -146,6 +165,61 @@ export interface IRReactiveComponentBind {
 	bindId: number
 	componentExpr: string
 	livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+}
+
+export interface IRReactiveShowBind {
+	kind: 'ReactiveShowBind'
+	bindId: number
+	readExpr: string
+}
+
+export interface IRReactiveHtmlBind {
+	kind: 'ReactiveHtmlBind'
+	bindId: number
+	readExpr: string
+}
+
+export interface IRReactiveClassBind {
+	kind: 'ReactiveClassBind'
+	bindId: number
+	className: string
+	readExpr: string
+}
+
+export interface IRReactivePropertyBind {
+	kind: 'ReactivePropertyBind'
+	bindId: number
+	propertyName: string
+	readExpr: string
+}
+
+export interface IRReactiveModelBind {
+	kind: 'ReactiveModelBind'
+	bindId: number
+	modelKind: 'value' | 'checked'
+	readExpr: string
+	writeExpr: string
+	readonly?: boolean
+}
+
+export interface IRReactiveIfBranch {
+	conditionExpr: string | null
+	body: IRNode[]
+}
+
+export interface IRReactiveIfBind {
+	kind: 'ReactiveIfBind'
+	bindId: number
+	branches: IRReactiveIfBranch[]
+}
+
+export interface IRReactiveForBind {
+	kind: 'ReactiveForBind'
+	bindId: number
+	binding: string
+	itemsExpr: string
+	keyExpr: string
+	body: IRNode[]
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

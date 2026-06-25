@@ -64,7 +64,21 @@ export function validateFeatureGates(
 		})
 	}
 
-	const reactiveBinds = parsed.stateScript ? collectReactiveBinds(bodyIR) : { textBinds: [], eventBinds: [], busyBinds: [] }
+	const reactiveBinds = parsed.stateScript
+		? collectReactiveBinds(bodyIR)
+		: {
+				textBinds: [],
+				eventBinds: [],
+				busyBinds: [],
+				componentBinds: [],
+				showBinds: [],
+				htmlBinds: [],
+				classBinds: [],
+				propertyBinds: [],
+				modelBinds: [],
+				ifBinds: [],
+				forBinds: [],
+			}
 	const eventBinds: IRReactiveEventBind[] = reactiveBinds.eventBinds
 
 	if (options.hypermedia === false) {

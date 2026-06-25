@@ -15,7 +15,7 @@ import * as CONST from '../constants'
 import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
-import { textReferencesStateBindings } from '../state-mount-codegen'
+import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
 import { CompileError, type ComponentLivePropMetadata } from '../types'
 import {
@@ -149,6 +149,7 @@ export class Lowerer {
 				const { nodes: chainNodes, consumed } = compileConditionalChain(
 					{
 						compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+						bindingNames: this.reactiveState?.bindingNames,
 					},
 					this.diag,
 					nodes,
@@ -156,7 +157,22 @@ export class Lowerer {
 					skipInterpolation,
 					outVar
 				)
-				out.push(...chainNodes)
+				const ifNode = chainNodes[0]
+				if (ifNode?.kind === 'If' && ifNode.reactive && this.reactiveState) {
+					const bindId = this.reactiveState.nextIfBindId()
+					const branches = [
+						{ conditionExpr: ifNode.condition, body: ifNode.body },
+						...(ifNode.elseIf ?? []).map(branch => ({
+							conditionExpr: branch.condition,
+							body: branch.body,
+						})),
+						...(ifNode.else ? [{ conditionExpr: null as string | null, body: ifNode.else }] : []),
+					]
+					out.push({ kind: 'ReactiveIfBind', bindId, branches })
+					out.push({ ...ifNode, bindId })
+				} else {
+					out.push(...chainNodes)
+				}
 				i += consumed
 				continue
 			}
@@ -213,7 +229,20 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds, busyBinds } = parseElementAttributes(
+		const {
+			attrString,
+			loopData,
+			switchExpr,
+			passDataExpr,
+			eventBinds,
+			textBinds,
+			busyBinds,
+			showBinds,
+			htmlBinds,
+			classBinds,
+			propertyBinds,
+			modelBinds,
+		} = parseElementAttributes(
 			this.resolver,
 			this.diag,
 			node,
@@ -255,14 +284,16 @@ export class Lowerer {
 		// Wrapperless `<template data-for>` / `<template for>`: body is template contents only.
 		if (loopData && isTemplateElement(node)) {
 			const inner = this.compileWrapperlessNode(node, childSkip, outVar)
-			return [
-				{
-					kind: 'For',
-					binding: loopData.binding,
-					items: loopData.items,
-					body: inner,
-				},
-			]
+			return this.wrapForLoop(loopData, inner, [
+				...eventBinds,
+				...textBinds,
+				...busyBinds,
+				...showBinds,
+				...htmlBinds,
+				...classBinds,
+				...propertyBinds,
+				...modelBinds,
+			])
 		}
 
 		if (switchExpr && isTemplateElement(node)) {
@@ -339,19 +370,28 @@ export class Lowerer {
 		}
 
 		if (loopData) {
-			return [
-				{
-					kind: 'For',
-					binding: loopData.binding,
-					items: loopData.items,
-					body: inner,
-				},
-			...eventBinds,
-			...textBinds,
-			...busyBinds,
-		]
-	}
-	return [...inner, ...eventBinds, ...textBinds, ...busyBinds]
+			return this.wrapForLoop(loopData, inner, [
+				...eventBinds,
+				...textBinds,
+				...busyBinds,
+				...showBinds,
+				...htmlBinds,
+				...classBinds,
+				...propertyBinds,
+				...modelBinds,
+			])
+		}
+	return [
+		...inner,
+		...eventBinds,
+		...textBinds,
+		...busyBinds,
+		...showBinds,
+		...htmlBinds,
+		...classBinds,
+		...propertyBinds,
+		...modelBinds,
+	]
 	}
 
 	private emitScriptPassDataIR(
@@ -604,6 +644,46 @@ export class Lowerer {
 			}
 		}
 	}
+
+	private wrapForLoop(
+		loopData: { binding: string; items: string; keyExpr?: string },
+		body: IRNode[],
+		trailing: IRNode[]
+	): IRNode[] {
+		const reactive =
+			this.reactiveState != null &&
+			referencesStateBindingExpression(loopData.items, this.reactiveState.bindingNames)
+		if (reactive && !loopData.keyExpr) {
+			throw new CompileError({
+				message: 'Reactive for loops require `key="{ ... }"` when the iterable references state.',
+				file: this.diag?.file,
+			})
+		}
+		const loopBody = [...body, ...trailing]
+		let forNode: IRNode = {
+			kind: 'For',
+			binding: loopData.binding,
+			items: loopData.items,
+			body: loopBody,
+			...(loopData.keyExpr ? { keyExpr: loopData.keyExpr } : {}),
+			...(reactive ? { reactive: true } : {}),
+		}
+		const nodes: IRNode[] = [forNode]
+		if (reactive && this.reactiveState && loopData.keyExpr) {
+			const bindId = this.reactiveState.nextForBindId()
+			forNode = { ...(forNode as import('../ir').IRFor), bindId }
+			nodes[0] = forNode
+			nodes.push({
+				kind: 'ReactiveForBind',
+				bindId,
+				binding: loopData.binding,
+				itemsExpr: loopData.items,
+				keyExpr: loopData.keyExpr,
+				body: loopBody,
+			})
+		}
+		return nodes
+	}
 }
 
 function createLowererReactiveState(
@@ -614,6 +694,13 @@ function createLowererReactiveState(
 	let eventBindId = 0
 	let busyBindId = 0
 	let componentBindId = 0
+	let showBindId = 0
+	let htmlBindId = 0
+	let classBindId = 0
+	let propertyBindId = 0
+	let modelBindId = 0
+	let ifBindId = 0
+	let forBindId = 0
 	return {
 		bindingNames,
 		writableBindingNames,
@@ -621,5 +708,12 @@ function createLowererReactiveState(
 		nextEventBindId: () => eventBindId++,
 		nextBusyBindId: () => busyBindId++,
 		nextComponentBindId: () => componentBindId++,
+		nextShowBindId: () => showBindId++,
+		nextHtmlBindId: () => htmlBindId++,
+		nextClassBindId: () => classBindId++,
+		nextPropertyBindId: () => propertyBindId++,
+		nextModelBindId: () => modelBindId++,
+		nextIfBindId: () => ifBindId++,
+		nextForBindId: () => forBindId++,
 	}
 }

@@ -89,12 +89,53 @@ function emitAppendNode(
 }
 
 function emitForNode(b: CodeBuilder, node: Extract<IRNode, { kind: 'For' }>, outVar: string): void {
+	if (node.reactive && node.bindId !== undefined) {
+		b.stmtAppendOut(`<span data-aero-for="${node.bindId}" style="display:contents">`, outVar)
+	}
 	emitForLoopInto(b, node.binding, node.items, node.body, outVar)
+	if (node.reactive && node.bindId !== undefined) {
+		b.stmtAppendOut('</span>', outVar)
+	}
 }
 
 function emitIfNode(b: CodeBuilder, node: Extract<IRNode, { kind: 'If' }>, outVar: string): void {
+	if (node.reactive && node.bindId !== undefined) {
+		emitReactiveIfNode(b, node, outVar)
+		return
+	}
 	const branches = [{ condition: node.condition, body: node.body }, ...(node.elseIf ?? [])]
 	b.raw(emitConditionalChain(branches, node.else ?? [], Boolean(node.else?.length), outVar))
+}
+
+function emitReactiveIfNode(
+	b: CodeBuilder,
+	node: Extract<IRNode, { kind: 'If' }>,
+	outVar: string
+): void {
+	const bindId = node.bindId!
+	const branchBodies = [
+		node.body,
+		...(node.elseIf ?? []).map(branch => branch.body),
+		...(node.else ? [node.else] : []),
+	]
+	b.raw(`{\n`)
+	b.raw(`let __aeroIfActive_${bindId};\n`)
+	b.raw(`if (${node.condition}) __aeroIfActive_${bindId} = 0;\n`)
+	for (let i = 0; i < (node.elseIf ?? []).length; i++) {
+		b.raw(`else if (${node.elseIf![i]!.condition}) __aeroIfActive_${bindId} = ${i + 1};\n`)
+	}
+	if (node.else) {
+		b.raw(`else __aeroIfActive_${bindId} = ${branchBodies.length - 1};\n`)
+	}
+	b.stmtAppendOut(`<span data-aero-if="${bindId}" style="display:contents">`, outVar)
+	for (let i = 0; i < branchBodies.length; i++) {
+		if (i === 0) b.raw(`if (__aeroIfActive_${bindId} === ${i}) {\n`)
+		else b.raw(`else if (__aeroIfActive_${bindId} === ${i}) {\n`)
+		emitToJSInto(b, branchBodies[i]!, outVar)
+		b.raw('}\n')
+	}
+	b.stmtAppendOut('</span>', outVar)
+	b.raw('}\n')
 }
 
 function emitSwitchNode(
@@ -217,6 +258,13 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 		case 'ReactiveEventBind':
 		case 'ReactiveBusyBind':
 		case 'ReactiveComponentBind':
+		case 'ReactiveShowBind':
+		case 'ReactiveHtmlBind':
+		case 'ReactiveClassBind':
+		case 'ReactivePropertyBind':
+		case 'ReactiveModelBind':
+		case 'ReactiveIfBind':
+		case 'ReactiveForBind':
 			break
 		default: {
 			const _: never = node
