@@ -1486,6 +1486,15 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		expect(invalidDiag).toBeDefined()
 		expect(invalidDiag.code.value).toBe('AERO_COMPILE')
 	})
+
+	it('should NOT flag HTMX hx-on event attributes as Aero on:* directives', () => {
+		runDiagnostics(
+			makeDoc(
+				`\n<form hx-post="/api/submit" hx-on::after-request="if (event.detail.successful) this.reset()"></form>\n`
+			)
+		)
+		expect(findBraceDiag()).toBeUndefined()
+	})
 })
 
 /** Same name declared in same scope (e.g. import + const) → "declared multiple times". */

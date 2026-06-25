@@ -10,13 +10,9 @@ import { getIgnoredRanges, isInRanges } from './helpers'
 /** Matches opening tags and captures the attributes part */
 const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
 
-/** Matches directive attributes with explicit values */
-const DIRECTIVE_ATTR_VALUE_REGEX =
-	/\b((?:data-aero-|aero-)?(?:if|else-if|for|props))\s*=\s*(['"])(.*?)\2/gi
-
-/** Matches event directive attributes with explicit values */
-const EVENT_DIRECTIVE_ATTR_VALUE_REGEX =
-	/\b((?:data-aero-|aero-)?on[:\-][a-z0-9_.:-]+)\s*=\s*(['"])(.*?)\2/gi
+/** Full attribute names with quoted values (avoids matching `on:` inside `hx-on:*`). */
+const ATTR_WITH_VALUE_REGEX =
+	/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:\-.]*)\s*=\s*(['"])([\s\S]*?)\2/g
 
 function isSingleBracedExpression(value: string): boolean {
 	const trimmed = value.trim()
@@ -43,34 +39,28 @@ export function checkDirectiveExpressionBraces(
 
 		const attrsStart = tagStart + match[0].indexOf(attrs)
 
-		DIRECTIVE_ATTR_VALUE_REGEX.lastIndex = 0
+		ATTR_WITH_VALUE_REGEX.lastIndex = 0
 		let attrMatch: RegExpExecArray | null
-		while ((attrMatch = DIRECTIVE_ATTR_VALUE_REGEX.exec(attrs)) !== null) {
+		while ((attrMatch = ATTR_WITH_VALUE_REGEX.exec(attrs)) !== null) {
 			const attrName = attrMatch[1]
 			const attrValue = (attrMatch[3] || '').trim()
-
-			if (!requiresBracedDirectiveValue(attrName, attrValue, tagName)) continue
-
 			const start = attrsStart + attrMatch.index
 			const end = start + attrMatch[0].length
-			const example = `${attrName}="{ expression }"`
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(document.positionAt(start), document.positionAt(end)),
-				`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
-				vscode.DiagnosticSeverity.Error
-			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-			diagnostics.push(diagnostic)
-		}
 
-		EVENT_DIRECTIVE_ATTR_VALUE_REGEX.lastIndex = 0
-		while ((attrMatch = EVENT_DIRECTIVE_ATTR_VALUE_REGEX.exec(attrs)) !== null) {
-			const attrName = attrMatch[1]
-			const attrValue = (attrMatch[3] || '').trim()
+			if (requiresBracedDirectiveValue(attrName, attrValue, tagName)) {
+				const example = `${attrName}="{ expression }"`
+				const diagnostic = new vscode.Diagnostic(
+					new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
+					vscode.DiagnosticSeverity.Error
+				)
+				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
+				diagnostics.push(diagnostic)
+				continue
+			}
+
 			const parsed = parseEventDirectiveName(attrName)
-
-			const start = attrsStart + attrMatch.index
-			const end = start + attrMatch[0].length
+			if (parsed.kind === 'non-event') continue
 
 			if (parsed.kind === 'invalid') {
 				const diagnostic = new vscode.Diagnostic(
@@ -83,7 +73,7 @@ export function checkDirectiveExpressionBraces(
 				continue
 			}
 
-			if (parsed.kind === 'ok' && !isSingleBracedExpression(attrValue)) {
+			if (!isSingleBracedExpression(attrValue)) {
 				const example = `${attrName}="{ expression }"`
 				const diagnostic = new vscode.Diagnostic(
 					new vscode.Range(document.positionAt(start), document.positionAt(end)),
