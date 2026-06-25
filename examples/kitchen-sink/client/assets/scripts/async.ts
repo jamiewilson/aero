@@ -6,7 +6,7 @@ function simulateAsync() {
 		console.debug(message)
 		setTimeout(() => {
 			resolve(`${message} resolved`)
-		}, 1000)
+		}, 500)
 	})
 }
 
