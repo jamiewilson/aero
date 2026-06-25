@@ -77,6 +77,26 @@ function runDiagnostics(doc: any): void {
 	mockSet(doc.uri, diagnostics)
 }
 
+function positionAtOffset(text: string, offset: number): { line: number; character: number } {
+	const lines = text.slice(0, offset).split('\n')
+	return {
+		line: lines.length - 1,
+		character: lines[lines.length - 1]?.length ?? 0,
+	}
+}
+
+function expectDiagnosticRange(
+	text: string,
+	diagnostic: any,
+	expectedSubstring: string
+): void {
+	const startOffset = text.indexOf(expectedSubstring)
+	expect(startOffset).toBeGreaterThanOrEqual(0)
+	const endOffset = startOffset + expectedSubstring.length
+	expect(diagnostic.range.start).toEqual(positionAtOffset(text, startOffset))
+	expect(diagnostic.range.end).toEqual(positionAtOffset(text, endOffset))
+}
+
 describe('AeroDiagnostics orchestration', () => {
 	beforeEach(() => {
 		mockSet.mockClear()
@@ -1619,6 +1639,31 @@ describe('AeroDiagnostics Component References', () => {
 		expect(notImported).toHaveLength(0)
 	})
 
+	it('should underline only the tag name when a component is not imported', () => {
+		const text = `<missing-component />`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => positionAtOffset(text, offset),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const notImported = reportedDiagnostics.find((d: any) =>
+			d.message.includes("Component 'missing' is not imported")
+		)
+		expect(notImported).toBeDefined()
+		expectDiagnosticRange(text, notImported, '<missing-component')
+	})
+
 	it('should ignore components inside client scripts', () => {
 		const text = `
 <script>
@@ -1767,6 +1812,7 @@ let count = 1
 			)
 			expect(missing).toBeDefined()
 			expect(missing.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, missing, '<counter-component')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
@@ -1881,6 +1927,7 @@ let count = 1
 			)
 			expect(readonly).toBeDefined()
 			expect(readonly.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, readonly, 'count:readonly="{ count }"')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
@@ -1938,6 +1985,7 @@ let count = 1
 			)
 			expect(bind).toBeDefined()
 			expect(bind.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, bind, 'bind:count="{ count }"')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
@@ -1996,6 +2044,7 @@ let count = 1
 			)
 			expect(readonly).toBeDefined()
 			expect(readonly.code.value).toBe('AERO_COMPILE')
+			expectDiagnosticRange(pageText, readonly, 'count="{ count }"')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
