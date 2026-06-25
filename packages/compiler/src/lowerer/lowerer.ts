@@ -18,6 +18,7 @@ import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
 import { CompileError, type ComponentLivePropMetadata } from '../types'
+import { collectForDirectiveBindingNames } from '../for-directive'
 import {
 	parseComponentAttributes,
 	parseElementAttributes,
@@ -679,6 +680,9 @@ export class Lowerer {
 				kind: 'ReactiveForBind',
 				bindId,
 				binding: loopData.binding,
+				bindingNames: collectForDirectiveBindingNames(
+					`const ${loopData.binding} of __aeroItems`
+				),
 				itemsExpr: loopData.items,
 				keyExpr: loopData.keyExpr,
 				body: loopBody,

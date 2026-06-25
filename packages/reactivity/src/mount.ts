@@ -94,6 +94,7 @@ export interface MountStateBindingsOptions {
 	readonly forBinds?: readonly {
 		selector: string
 		binding: string
+		bindingNames: readonly string[]
 		itemsExpr: string
 		keyExpr: string
 		renderRow: (Aero: unknown) => string
@@ -609,6 +610,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 				itemsExpr: bind.itemsExpr,
 				keyExpr: bind.keyExpr,
 				binding: bind.binding,
+				bindingNames: bind.bindingNames,
 				renderRow: rowScope => {
 					const keyReader = compileScopeRead(bind.keyExpr, rowScope)
 					return {

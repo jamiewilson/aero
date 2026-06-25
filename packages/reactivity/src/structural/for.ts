@@ -15,6 +15,7 @@ export interface BindKeyedForOptions {
 	readonly itemsExpr: string
 	readonly keyExpr: string
 	readonly binding: string
+	readonly bindingNames: readonly string[]
 	readonly renderRow: (rowScope: StateScope) => KeyedForRowSpec
 }
 
@@ -36,8 +37,30 @@ function evalKey(keyExpr: string, rowScope: StateScope): string | number {
 	return toKey(compileScopeRead(keyExpr, rowScope)())
 }
 
+function createRowScope(
+	parentScope: StateScope,
+	binding: string,
+	bindingNames: readonly string[],
+	item: unknown
+): StateScope {
+	const rowScope = Object.create(parentScope) as StateScope
+	const trimmed = binding.trim()
+	if (/^[A-Za-z_$][\w$]*$/.test(trimmed)) {
+		rowScope[trimmed] = item
+	} else {
+		const pairs = bindingNames.map(name => `${JSON.stringify(name)}: ${name}`).join(', ')
+		const values = new Function('item', `const ${trimmed} = item; return ({ ${pairs} });`)(
+			item
+		) as Record<string, unknown>
+		for (const name of bindingNames) {
+			rowScope[name] = values[name]
+		}
+	}
+	return rowScope
+}
+
 export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
-	const { container, scope, itemsExpr, keyExpr, binding, renderRow } = options
+	const { container, scope, itemsExpr, keyExpr, binding, bindingNames, renderRow } = options
 	const rows = new Map<string | number, { element: Element; cleanup: Cleanup }>()
 	const seenKeys = new Set<string | number>()
 
@@ -48,13 +71,7 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 		const nextKeys: Array<string | number> = []
 
 		for (const item of items) {
-			const rowScope = Object.create(scope) as StateScope
-			Object.defineProperty(rowScope, binding, {
-				configurable: true,
-				enumerable: true,
-				writable: true,
-				value: item,
-			})
+			const rowScope = createRowScope(scope, binding, bindingNames, item)
 			const key = evalKey(keyExpr, rowScope)
 			if (seenKeys.has(key)) {
 				throw new Error(`[aero] Duplicate loop key: ${String(key)}`)
