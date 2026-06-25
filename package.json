@@ -21,6 +21,7 @@
 		"build": "pnpm -r --filter @aero-js/interpolation --filter @aero-js/html-parser --filter @aero-js/highlight --filter @aero-js/diagnostics --filter @aero-js/compiler --filter @aero-js/prettier-plugin-aero --filter @aero-js/reactivity --filter @aero-js/hypermedia --filter @aero-js/core --filter @aero-js/vite --filter @aero-js/content --filter @aero-js/config --filter @aero-js/cli --filter @aero-js/create run build",
 		"vscode:build": "pnpm --dir packages/vscode build",
 		"vscode:package": "pnpm build:vscode && pnpm --dir packages/vscode exec vsce package --no-dependencies",
+		"website:build": "pnpm build && pnpm --filter aero-website build",
 		"clean:all": "rm -rf node_modules && find packages examples -type d \\( -name node_modules -o -name dist -o -name build -o -name .output -o -name .aero \\) -prune -exec rm -rf {} +",
 		"version:bump": "node scripts/bump-versions.js",
 		"release:prep": "pnpm test && pnpm clean:all && pnpm install && pnpm build",
