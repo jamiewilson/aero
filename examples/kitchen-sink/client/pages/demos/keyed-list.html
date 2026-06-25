@@ -1,15 +1,17 @@
 <script is:build>
 	import base from '@layouts/base'
+
+	const initialItems = [
+		{ id: crypto.randomUUID() },
+		{ id: crypto.randomUUID() },
+		{ id: crypto.randomUUID() },
+	]
 </script>
 
 <script is:state>
 	import { withTransition } from '@scripts/utils/withTransition'
 
-	let items = [
-		{ id: crypto.randomUUID() },
-		{ id: crypto.randomUUID() },
-		{ id: crypto.randomUUID() },
-	]
+	let items = initialItems
 
 	function addItem() {
 		const id = crypto.randomUUID()
