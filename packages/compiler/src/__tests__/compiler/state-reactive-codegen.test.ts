@@ -90,4 +90,15 @@ describe('state reactive codegen (PR-2d)', () => {
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain('scopeConstants: { AuthState: AuthState }')
 	})
+
+	it('includes hypermedia action functions import when hypermedia: true', () => {
+		const html = `<script is:state>
+			let count = 1
+		</script>
+		<div>{ count }</div>`
+
+		const code = compile(parse(html), { ...mockOptions, hypermedia: true })
+		expect(code).toContain("import { POST, GET, PUT, PATCH, DELETE } from '@aero-js/core/hypermedia'")
+		expect(code).toContain('actionFunctions: { POST, GET, PUT, PATCH, DELETE }')
+	})
 })

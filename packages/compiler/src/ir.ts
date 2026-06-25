@@ -20,6 +20,7 @@ export type IRNode =
 	| IRStylePassData
 	| IRReactiveTextBind
 	| IRReactiveEventBind
+	| IRReactiveBusyBind
 
 /** Chunk of HTML/text (template literal content). */
 export interface IRAppend {
@@ -122,6 +123,13 @@ export interface IRReactiveEventBind {
 	bindId: number
 	event: string
 	handlerExpr: string
+}
+
+/** Register a busy signal binding against a `data-aero-busy` marker. */
+export interface IRReactiveBusyBind {
+	kind: 'ReactiveBusyBind'
+	bindId: number
+	readExpr: string
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

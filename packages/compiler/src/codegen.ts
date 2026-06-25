@@ -24,6 +24,7 @@ import { buildTemplateAnalysis } from './template-analysis'
 import {
 	collectReactiveBinds,
 	createStateMountImportLine,
+	createHypermediaImportLine,
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 
@@ -177,14 +178,20 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		ownedStateBindingNames.length > 0
 			? createStateHydrationScriptLine(ownedStateBindingNames)
 			: null
-	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [] }
-	const mountImportLine =
-		reactiveBinds.textBinds.length > 0 || reactiveBinds.eventBinds.length > 0
-			? createStateMountImportLine()
-			: null
+	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [], busyBinds: [] }
+	const hasReactiveBinds =
+		reactiveBinds.textBinds.length > 0 ||
+		reactiveBinds.eventBinds.length > 0 ||
+		reactiveBinds.busyBinds.length > 0
+	const mountImportLine = hasReactiveBinds
+		? [createStateMountImportLine(), options.hypermedia ? createHypermediaImportLine() : null]
+				.filter(Boolean)
+				.join('\n')
+		: null
+	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
 	const mountFn =
 		ta.stateAnalysis !== null
-			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports)
+			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports, mountActionFns)
 			: ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {

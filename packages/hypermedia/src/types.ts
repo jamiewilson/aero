@@ -1,0 +1,45 @@
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export type SwapStyle =
+	| 'innerHTML'
+	| 'outerHTML'
+	| 'beforebegin'
+	| 'afterbegin'
+	| 'beforeend'
+	| 'afterend'
+	| 'replace'
+	| 'remove'
+	| 'none'
+
+export interface ActionOptions {
+	method?: HttpMethod
+	url?: string
+	target?: string
+	swap?: SwapStyle
+	headers?: Record<string, string>
+	values?: Record<string, string>
+	pushUrl?: boolean | string
+	autoDisable?: boolean
+}
+
+export interface HypermediaRequest {
+	method: HttpMethod
+	url: string
+	headers: Record<string, string>
+	body?: FormData | URLSearchParams | string
+	target?: string
+	swap?: SwapStyle
+}
+
+export interface HypermediaResponse {
+	readonly ok: boolean
+	readonly status: number
+	readonly html: string
+	readonly headers: Record<string, string>
+}
+
+export interface SwapOperation {
+	target: Element
+	html: string
+	style: SwapStyle
+}

@@ -209,6 +209,7 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 			break
 		case 'ReactiveTextBind':
 		case 'ReactiveEventBind':
+		case 'ReactiveBusyBind':
 			break
 		default: {
 			const _: never = node
