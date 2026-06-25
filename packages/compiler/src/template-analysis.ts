@@ -29,7 +29,8 @@ function buildImportsCode(
 		const resolved = resolver.resolveImport(imp.specifier)
 		const modExpr = `await import("${resolved}")`
 		if (imp.defaultBinding) {
-			importsLines.push(`const ${imp.defaultBinding} = (${modExpr}).default`)
+			importsLines.push(`const __aeroMod_${imp.defaultBinding} = ${modExpr}`)
+			importsLines.push(`const ${imp.defaultBinding} = __aeroMod_${imp.defaultBinding}.default`)
 			continue
 		}
 		if (imp.namedBindings.length > 0) {
@@ -84,6 +85,8 @@ export interface TemplateAnalysis {
 	readonly stateAnalysis: StateScriptAnalysisResult | null
 	/** Static imports from `<script is:state>` for client mount scope. */
 	readonly stateImports: readonly BuildScriptImport[]
+	/** Default import binding names from build/state scripts (for component module refs). */
+	readonly defaultImportBindings: ReadonlySet<string>
 	/**
 	 * Build-scope names and type slices aligned with {@link parse} — for tooling and LSP ambient preludes.
 	 */
@@ -111,8 +114,17 @@ export function buildTemplateAnalysis(
 	const stateBindingNames = stateAnalysis
 		? new Set(stateAnalysis.bindings.map(binding => binding.name))
 		: undefined
+	const writableStateBindingNames = stateAnalysis
+		? new Set(
+				stateAnalysis.bindings
+					.filter(binding => !binding.derived && (!binding.liveProp || binding.bindable))
+					.map(binding => binding.name)
+			)
+		: undefined
 	const lowerer = new Lowerer(resolver, diag, stateBindingNames, {
+		writableStateBindingNames,
 		hypermedia: options.hypermedia,
+		componentLiveProps: options.componentLiveProps,
 	})
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = stateImportAnalysis
@@ -122,6 +134,11 @@ export function buildTemplateAnalysis(
 	const importsCode = buildImportsCode(
 		[...analysis.imports, ...(stateImportAnalysis?.imports ?? [])],
 		resolver
+	)
+	const defaultImportBindings = new Set(
+		[...analysis.imports, ...(stateImportAnalysis?.imports ?? [])]
+			.map(imp => imp.defaultBinding)
+			.filter((name): name is string => name !== null)
 	)
 	const expandedTemplate = expandSelfClosingTags(parsed.template)
 	const { document } = parseHTML(`<html lang="en"><body>${expandedTemplate}</body></html>`)
@@ -140,6 +157,7 @@ export function buildTemplateAnalysis(
 		getStaticPathsFn: getStaticPathsFn || null,
 		stateAnalysis,
 		stateImports: stateImportAnalysis?.imports ?? [],
+		defaultImportBindings,
 		editorAmbient,
 	}
 }

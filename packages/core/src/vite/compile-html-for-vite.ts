@@ -4,13 +4,14 @@
 
 import type { ResolvedConfig } from 'vite'
 import type { ScriptEntry } from '../types'
+import type { ComponentLivePropMetadata } from '@aero-js/compiler'
 import { compileTemplate, parse } from '@aero-js/compiler'
 import { getClientScriptVirtualUrl } from './defaults'
 import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 
 interface CompileHtmlWarning {
-	code: 'AERO_TEMPLATE' | 'AERO_SWITCH'
+	code: 'AERO_COMPILE' | 'AERO_TEMPLATE' | 'AERO_SWITCH'
 	message: string
 	file?: string
 	line?: number
@@ -26,6 +27,7 @@ interface CompileHtmlForViteParams {
 	reactivity?: boolean
 	/** Enable Aero hypermedia pipeline. */
 	hypermedia?: boolean
+	componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
 }
 
 /**
@@ -63,6 +65,7 @@ export function compileHtmlSourceForVite(
 			onWarning: params.onWarning,
 			reactivity: params.reactivity,
 			hypermedia: params.hypermedia,
+			componentLiveProps: params.componentLiveProps,
 		},
 		parsed
 	)

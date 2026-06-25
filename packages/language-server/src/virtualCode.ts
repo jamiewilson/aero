@@ -95,14 +95,14 @@ function getScriptType(
 
 const PROPS_ATTR_KEYS = ['props', 'aero-props', 'data-aero-props'] as const
 
-function getPropsAttributeValue(attrs: Record<string, string | undefined>): string | undefined {
+function getPropsAttributeValue(attrs: Record<string, string | null | undefined>): string | undefined {
 	for (const key of PROPS_ATTR_KEYS) {
-		if (key in attrs) return attrs[key]
+		if (key in attrs) return attrs[key] ?? undefined
 	}
 	return undefined
 }
 
-function hasPropsAttribute(attrs: Record<string, string | undefined>): boolean {
+function hasPropsAttribute(attrs: Record<string, string | null | undefined>): boolean {
 	return PROPS_ATTR_KEYS.some(key => key in attrs)
 }
 function hasLangTs(node: Node, sourceText: string): boolean {
@@ -595,6 +595,7 @@ export class AeroVirtualCode implements VirtualCode {
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
 			writableStateBindingNames,
+			readonlyLivePropNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
 
@@ -606,7 +607,8 @@ export class AeroVirtualCode implements VirtualCode {
 				buildTypeDeclTexts,
 				buildScriptBodies,
 				stateScriptBodies,
-				writableStateBindingNames
+				writableStateBindingNames,
+				readonlyLivePropNames
 			),
 			{
 				id: 'ambient',
@@ -624,7 +626,8 @@ export class AeroVirtualCode implements VirtualCode {
 		buildTypeDeclTexts: readonly string[],
 		buildScriptBodies: readonly string[],
 		stateScriptBodies: readonly string[],
-		writableStateBindingNames: ReadonlySet<string>
+		writableStateBindingNames: ReadonlySet<string>,
+		readonlyLivePropNames: ReadonlySet<string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const slotScopes = collectSlotScopes(sourceText, this.htmlFilePath)
@@ -666,7 +669,9 @@ export class AeroVirtualCode implements VirtualCode {
 				[...buildScriptBodies, ...stateScriptBodies],
 				options?.isEventHandler
 					? new Set(
-							[...writableStateBindingNames].filter(name => combinedBindings.has(name))
+							[...writableStateBindingNames, ...readonlyLivePropNames].filter(name =>
+								combinedBindings.has(name)
+							)
 						)
 					: undefined
 			)

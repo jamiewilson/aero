@@ -62,6 +62,63 @@ describe('Vite Plugin Integration', () => {
 		expect(result.code).toContain('Vite Test')
 	})
 
+	it('validates required component live props during Vite transforms', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-live-props-'))
+		const pagesDir = path.join(tmpDir, 'client', 'pages')
+		const componentsDir = path.join(tmpDir, 'client', 'components')
+		fs.mkdirSync(pagesDir, { recursive: true })
+		fs.mkdirSync(componentsDir, { recursive: true })
+		fs.writeFileSync(path.join(pagesDir, 'index.html'), '<p>home</p>', 'utf-8')
+		fs.writeFileSync(
+			path.join(componentsDir, 'counter.html'),
+			`<script is:state>
+				const { count } = Aero.props
+			</script>
+			<p>{ count }</p>`,
+			'utf-8'
+		)
+
+		const localPlugins: any[] = aero({ reactivity: true })
+		const localConfigPlugin = localPlugins.find((p: any) => p.config)
+		const localTransformPlugin = localPlugins.find((p: any) => p.transform)
+		const localErrorRef: {
+			current: { message: string; loc?: { line: number; column: number } } | null
+		} = { current: null }
+		const localCtx = {
+			error(msg: string | { message: string; loc?: { line: number; column: number } }) {
+				if (typeof msg === 'string') {
+					localErrorRef.current = { message: msg }
+					throw new Error(msg)
+				}
+				localErrorRef.current = { message: msg.message, loc: msg.loc }
+				throw new Error(msg.message)
+			},
+			resolve: async () => null,
+		}
+
+		try {
+			localConfigPlugin.config({ root: tmpDir }, { command: 'serve' })
+			localConfigPlugin.configResolved({ root: tmpDir, command: 'serve' })
+			const pagePath = path.join(pagesDir, 'bad.html')
+			const html = `<script is:build>
+				import counter from '@components/counter'
+			</script>
+			<script is:state>
+				let count = 1
+			</script>
+			<counter-component />`
+
+			expect(() => localTransformPlugin.transform.call(localCtx, html, pagePath)).toThrow(
+				'Required live prop `count` for <counter-component> must be passed as a state signal.'
+			)
+			expect(localErrorRef.current?.message).toContain(
+				'Required live prop `count` for <counter-component> must be passed as a state signal.'
+			)
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
+	})
+
 	it('should treat plain <script> (no is:inline) as default client and emit virtual script URL', async () => {
 		const html = `
 <script is:build>const x = 1;</script>

@@ -26,4 +26,21 @@ describe('SignalStore', () => {
 		store.merge({ count: 1, user: { name: 'Ada' } })
 		expect(store.snapshot()).toEqual({ count: 1, user: { name: 'Ada' } })
 	})
+
+	it('aliases an existing signal entry without creating a new signal', () => {
+		const store = new SignalStore()
+		const count = store.signal('count', 1)
+		const alias = store.alias('count', count)
+		expect(alias).toBe(count)
+		expect(store.get<number>('count').value).toBe(1)
+		alias.value = 3
+		expect(count.value).toBe(3)
+	})
+
+	it('fails when aliasing a path that already maps to a different entry', () => {
+		const store = new SignalStore()
+		store.signal('count', 1)
+		store.signal('other', 2)
+		expect(() => store.alias('count', store.get('other'))).toThrow(/already registered/)
+	})
 })

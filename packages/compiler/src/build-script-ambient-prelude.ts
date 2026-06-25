@@ -13,9 +13,12 @@ export const BUILD_SCRIPT_AMBIENT_PRELUDE = `declare const Aero: {
 	
 	slots: Record<string, string>
 	
-	page: { url: URL; request: Request; params: Record<string, string> }
+	page: { url: URL; request: Request; params: Record<string, string>; routePath: string }
 	
 	site: { url: string }
+	
+	bindable(): undefined
+	bindable<T>(fallback: T): T
 }
 
 declare namespace Aero {

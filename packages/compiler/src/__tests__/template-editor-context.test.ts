@@ -28,14 +28,19 @@ const title = 'x'
 		const html = `<script is:state>
 let count = 0
 let doubled = count * 2
+const { readonlyCount, mutableCount = Aero.bindable(0) } = Aero.props
 </script>
 <p>{count} {doubled}</p>`
 		const ambient = buildTemplateEditorAmbient(html)
 		expect(ambient.stateScriptBodies.length).toBe(1)
 		expect(ambient.bindingNames.has('count')).toBe(true)
 		expect(ambient.bindingNames.has('doubled')).toBe(true)
+		expect(ambient.bindingNames.has('readonlyCount')).toBe(true)
+		expect(ambient.bindingNames.has('mutableCount')).toBe(true)
 		expect(ambient.writableStateBindingNames.has('count')).toBe(true)
 		expect(ambient.writableStateBindingNames.has('doubled')).toBe(false)
+		expect(ambient.writableStateBindingNames.has('readonlyCount')).toBe(false)
+		expect(ambient.writableStateBindingNames.has('mutableCount')).toBe(true)
 	})
 
 	it('includes is:state import bindings in interpolation scope', () => {

@@ -3,13 +3,27 @@
 	import logo from '@components/logo'
 
 	const props = Aero.props as HeaderProps
-	const isHomepage = Aero.page.url.pathname === '/'
+	const isHomepage = Aero.page.routePath === '/'
+	const isCounterDemo = Aero.page.routePath === '/demos/counter'
+</script>
+
+<script is:state>
+	const { count = Aero.bindable() } = Aero.props
 </script>
 
 <header>
 	<logo-component if="{ isHomepage }" class="logo" />
 	<h1 else-if="{ props.title }">{ props.title }</h1>
 	<h2 else>Fallback Title</h2>
+
+	<div if="{ isCounterDemo }" class="binding-demo v-stack items-center">
+		<h3>Live prop binding</h3>
+		<code>bind:count="{ count }"</code>
+		<div class="h-stack items-center">
+			<button on:click="{ count-- }">−</button>
+			<button on:click="{ count++ }">+</button>
+		</div>
+	</div>
 
 	<p class="subtitle secondary">{ props.subtitle }</p>
 
@@ -37,6 +51,12 @@
 <style>
 	header {
 		background: red;
+	}
+
+	.binding-demo {
+		padding: 1rem;
+		border-radius: var(--radius-md);
+		border: 1px solid --opacity(currentColor, 0.1);
 	}
 </style>
 

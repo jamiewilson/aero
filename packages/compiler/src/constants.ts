@@ -31,6 +31,8 @@ export const ATTR_SWITCH = 'switch'
 export const ATTR_CASE = 'case'
 /** Switch fallback: `default` / `aero-default`. */
 export const ATTR_DEFAULT = 'default'
+/** Key for reactive keyed loops: `key` / `aero-key`. */
+export const ATTR_KEY = 'key'
 /** Slot name (on `<slot>` or content). */
 export const ATTR_NAME = 'name'
 export const ATTR_SLOT = 'slot'

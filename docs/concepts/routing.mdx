@@ -159,7 +159,8 @@ Inside `<script is:build>` and `{ }` expressions, every page has access to these
 | ------------------------ | ------------------------------------ | ---------------------------- |
 | `Aero.page.params`       | Dynamic route parameters             | `{ id: 'alpha' }`            |
 | `Aero.page.url`          | Full URL object for the current page | `URL { pathname: '/alpha' }` |
-| `Aero.page.url.pathname` | The URL path                         | `'/alpha'`                   |
+| `Aero.page.url.pathname` | The URL path as requested            | `'/alpha'`                   |
+| `Aero.page.routePath`    | Canonical matched route path         | `'/alpha'`                   |
 
 ## Linking between pages
 

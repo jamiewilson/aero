@@ -1713,6 +1713,333 @@ const spread = { title: 'hello' }
 		}
 	})
 
+	it('should report omitted required live props for imported components', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const missing = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes('Required live prop `count`') &&
+					d.message.includes('<counter-component>')
+			)
+			expect(missing).toBeDefined()
+			expect(missing.code.value).toBe('AERO_COMPILE')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should not report required live props when passed as state signals', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-ok-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const missing = reportedDiagnostics.find((d: any) =>
+				d.message.includes('Required live prop `count`')
+			)
+			expect(missing).toBeUndefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should report obsolete readonly live prop syntax', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-readonly-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component count:readonly="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const readonly = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes('Component live prop `count:readonly` is obsolete')
+			)
+			expect(readonly).toBeDefined()
+			expect(readonly.code.value).toBe('AERO_COMPILE')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should report bind live props when child prop is not bindable', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-bind-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count } = Aero.props
+</script>
+<p>{ count }</p>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component bind:count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const bind = reportedDiagnostics.find((d: any) =>
+				d.message.includes('must be declared with `Aero.bindable()`')
+			)
+			expect(bind).toBeDefined()
+			expect(bind.code.value).toBe('AERO_COMPILE')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should report plain live props when the child assigns them', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-write-'))
+		try {
+			const compPath = path.join(dir, 'counter.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const { count = Aero.bindable(0) } = Aero.props
+function inc() { count++ }
+</script>
+<button on:click="{ inc() }">{ count }</button>
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import counter from './counter.html'
+</script>
+<script is:state>
+let count = 1
+</script>
+<counter-component count="{ count }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const readonly = reportedDiagnostics.find((d: any) =>
+				d.message.includes('is readonly; use `bind:count="{ ... }"`')
+			)
+			expect(readonly).toBeDefined()
+			expect(readonly.code.value).toBe('AERO_COMPILE')
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('should explain how to bind when a child mutates a readonly live prop', () => {
+		const text = `<script is:state>
+const { count } = Aero.props
+</script>
+<button on:click="{ count++ }">{ count }</button>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///counter.html',
+				fsPath: '/counter.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return {
+					line: lines.length - 1,
+					character: lines[lines.length - 1]?.length ?? 0,
+				}
+			},
+			languageId: 'html',
+			fileName: '/counter.html',
+			lineAt: (line: number) => ({
+				text: text.split('\n')[line] ?? '',
+			}),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const readonly = reportedDiagnostics.find((d: any) =>
+			d.message.includes(
+				'Live prop `count` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:count="{ ... }"` from the parent to allow mutation.'
+			)
+		)
+		expect(readonly).toBeDefined()
+		expect(readonly.code.value).toBe('AERO_COMPILE')
+	})
+
 	it('should report missing required prop when bare props omits it', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-props-bare-'))
 		try {

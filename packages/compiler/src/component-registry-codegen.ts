@@ -7,7 +7,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { getPropsTypeFromBuildScript } from './build-script-analysis'
 import { collectBuildScriptTypeDeclarationTexts } from './build-scope-bindings'
+import { kebabToCamelCase } from './helpers'
 import { parse } from './parser'
+import { analyzeStateScript } from './state-script-analysis'
+import type { ComponentLivePropMetadata } from './types'
 
 export const DEFAULT_COMPONENT_REGISTRY_REL = path.join(
 	'.aero',
@@ -77,6 +80,60 @@ export function collectComponentRegistryEntries(componentsDir: string): Componen
 
 	walk(componentsDir)
 	return out.sort((a, b) => a.tag.localeCompare(b.tag))
+}
+
+function collectLivePropsFromTemplate(fullPath: string): readonly ComponentLivePropMetadata[] {
+	const source = fs.readFileSync(fullPath, 'utf-8')
+	const parsed = parse(source)
+	const stateScript = parsed.stateScript?.content ?? ''
+	if (!stateScript.trim()) return []
+	const analysis = analyzeStateScript(stateScript)
+	return analysis.bindings
+		.filter(binding => binding.liveProp)
+		.map(binding => ({
+			name: binding.name,
+			propName: binding.propName ?? binding.name,
+			required: binding.required === true,
+			...(binding.bindable ? { bindable: true } : {}),
+			...(binding.writes ? { writes: true } : {}),
+		}))
+}
+
+function addComponentLivePropMetadata(
+	out: Record<string, readonly ComponentLivePropMetadata[]>,
+	fullPath: string
+): void {
+	const tag = kebabBasename(fullPath)
+	const liveProps = collectLivePropsFromTemplate(fullPath)
+	if (liveProps.length === 0) return
+	out[tag] = liveProps
+	out[kebabToCamelCase(tag)] = liveProps
+}
+
+/**
+ * Scan compiled component/layout templates and return their `is:state` live-prop contracts.
+ */
+export function collectComponentLivePropMetadata(
+	templateDirs: string | readonly string[]
+): Record<string, readonly ComponentLivePropMetadata[]> {
+	const dirs = Array.isArray(templateDirs) ? templateDirs : [templateDirs]
+	const out: Record<string, readonly ComponentLivePropMetadata[]> = {}
+
+	function walk(dir: string): void {
+		if (!fs.existsSync(dir)) return
+		for (const name of fs.readdirSync(dir, { withFileTypes: true })) {
+			const full = path.join(dir, name.name)
+			if (name.isDirectory()) {
+				walk(full)
+				continue
+			}
+			if (!name.isFile() || !name.name.endsWith('.html')) continue
+			addComponentLivePropMetadata(out, full)
+		}
+	}
+
+	for (const dir of dirs) walk(dir)
+	return out
 }
 
 /**

@@ -25,6 +25,7 @@ import {
 	collectReactiveBinds,
 	createStateMountImportLine,
 	createHypermediaImportLine,
+	emitLivePropsMetadata,
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
@@ -174,17 +175,41 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	headScripts.push(...collectBlockingHeadScripts(options.blockingScripts, options))
 	const ownedStateBindingNames =
 		ta.stateAnalysis !== null
-			? ta.stateAnalysis.bindings.filter(binding => !binding.derived).map(binding => binding.name)
+			? ta.stateAnalysis.bindings
+					.filter(binding => !binding.derived && !binding.liveProp)
+					.map(binding => binding.name)
 			: []
 	const stateHydrationLine =
 		ownedStateBindingNames.length > 0
 			? createStateHydrationScriptLine(ownedStateBindingNames)
 			: null
-	const reactiveBinds = ta.stateAnalysis ? collectReactiveBinds(ta.bodyIR) : { textBinds: [], eventBinds: [], busyBinds: [] }
+	const reactiveBinds = ta.stateAnalysis
+		? collectReactiveBinds(ta.bodyIR)
+		: {
+				textBinds: [],
+				eventBinds: [],
+				busyBinds: [],
+				componentBinds: [],
+				showBinds: [],
+				htmlBinds: [],
+				classBinds: [],
+				propertyBinds: [],
+				modelBinds: [],
+				ifBinds: [],
+				forBinds: [],
+			}
 	const hasReactiveBinds =
 		reactiveBinds.textBinds.length > 0 ||
 		reactiveBinds.eventBinds.length > 0 ||
-		reactiveBinds.busyBinds.length > 0
+		reactiveBinds.busyBinds.length > 0 ||
+		reactiveBinds.componentBinds.length > 0 ||
+		reactiveBinds.showBinds.length > 0 ||
+		reactiveBinds.htmlBinds.length > 0 ||
+		reactiveBinds.classBinds.length > 0 ||
+		reactiveBinds.propertyBinds.length > 0 ||
+		reactiveBinds.modelBinds.length > 0 ||
+		reactiveBinds.ifBinds.length > 0 ||
+		reactiveBinds.forBinds.length > 0
 	const mountImportLine = hasReactiveBinds
 		? [createStateMountImportLine(), options.hypermedia ? createHypermediaImportLine() : null]
 				.filter(Boolean)
@@ -193,8 +218,16 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
 	const mountFn =
 		ta.stateAnalysis !== null
-			? emitMountStateBindingsFunction(ta.stateAnalysis, reactiveBinds, ta.stateImports, mountActionFns)
+			? emitMountStateBindingsFunction(
+					ta.stateAnalysis,
+					reactiveBinds,
+					ta.stateImports,
+					mountActionFns,
+					ta.defaultImportBindings
+				)
 			: ''
+	const livePropsMetadata =
+		ta.stateAnalysis !== null ? emitLivePropsMetadata(ta.stateAnalysis) : ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
@@ -205,6 +238,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
 	let output = prefixLines.length > 0 ? `${prefixLines.join('\n')}\n` : '\n'
+	if (livePropsMetadata) output += `${livePropsMetadata}\n`
 	output += renderFn
 	if (mountFn) output += `\n\n${mountFn}`
 	return output

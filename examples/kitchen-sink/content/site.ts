@@ -28,7 +28,12 @@ export default {
 		subtitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
 	},
 	demos: [
-		{ label: 'Counter', href: '/demos/counter' },
+		{ label: 'Counter (live props)', href: '/demos/counter' },
+		{ label: 'Conditionals', href: '/demos/conditionals' },
+		{ label: 'Keyed list', href: '/demos/keyed-list' },
+		{ label: 'Form model', href: '/demos/form-model' },
+		{ label: 'Bindings', href: '/demos/bindings' },
+		{ label: 'Adopt runtime', href: '/demos/adopt' },
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
 	],
 	footer: {

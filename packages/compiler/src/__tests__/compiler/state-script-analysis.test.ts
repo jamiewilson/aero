@@ -29,6 +29,79 @@ describe('analyzeStateScript', () => {
 		expect(result.functionSources).toEqual(['function inc() { count++ }'])
 	})
 
+	it('captures live props from Aero.props destructures', () => {
+		const result = analyzeStateScript(`
+			const { count, label = 'Counter', title: heading, value = Aero.bindable(0), optional = Aero.bindable() } = Aero.props as Props
+		`)
+		const byName = new Map(result.bindings.map(b => [b.name, b]))
+
+		expect(byName.get('count')).toMatchObject({
+			liveProp: true,
+			propName: 'count',
+			required: true,
+			initExpr: 'undefined',
+		})
+		expect(byName.get('label')).toMatchObject({
+			liveProp: true,
+			propName: 'label',
+			required: false,
+			initExpr: "'Counter'",
+		})
+		expect(byName.get('heading')).toMatchObject({
+			liveProp: true,
+			propName: 'title',
+			required: true,
+		})
+		expect(byName.get('value')).toMatchObject({
+			liveProp: true,
+			propName: 'value',
+			required: false,
+			bindable: true,
+			initExpr: '0',
+		})
+		expect(byName.get('optional')).toMatchObject({
+			liveProp: true,
+			propName: 'optional',
+			required: false,
+			bindable: true,
+			initExpr: 'undefined',
+		})
+	})
+
+	it('reports diagnostics when live props collide with owned state', () => {
+		const result = analyzeStateScript(`
+			const { count } = Aero.props
+			let count = 0
+		`)
+
+		expect(result.diagnostics[0]?.message).toBe(
+			'Live prop `count` conflicts with an owned state binding.'
+		)
+	})
+
+	it('reports diagnostics when readonly live props are assigned in state script code', () => {
+		const result = analyzeStateScript(`
+			const { count, label, value = Aero.bindable(0) } = Aero.props
+			function inc() { count++ }
+			function rename() { label = 'Updated' }
+			function update() { value++ }
+		`)
+		const byName = new Map(result.bindings.map(b => [b.name, b]))
+
+		expect(byName.get('count')?.writes).toBe(true)
+		expect(byName.get('label')?.writes).toBe(true)
+		expect(byName.get('value')?.writes).toBe(true)
+		expect(result.diagnostics.map(d => d.message)).toContain(
+			'Live prop `count` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:count="{ ... }"` from the parent to allow mutation.'
+		)
+		expect(result.diagnostics.map(d => d.message)).toContain(
+			'Live prop `label` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:label="{ ... }"` from the parent to allow mutation.'
+		)
+		expect(result.diagnostics.map(d => d.message)).not.toContain(
+			'Live prop `value` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:value="{ ... }"` from the parent to allow mutation.'
+		)
+	})
+
 	it('reports diagnostics when derived bindings are assigned', () => {
 		const result = analyzeStateScript(`
 			let a = 1

@@ -8,19 +8,20 @@
  * {@link compileWrapperAwareBranch}; `data-for` / `for` on `<template>` via
  * {@link compileWrapperlessNode} for the loop body.
  */
-import type { IRNode } from '../ir'
+import type { IRNode, IRReactiveComponentLivePropExpr } from '../ir'
 import type { LowererDiag, LowererReactiveState } from './types'
 
 import * as CONST from '../constants'
 import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
-import { textReferencesStateBindings } from '../state-mount-codegen'
+import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
-import { CompileError } from '../types'
+import { CompileError, type ComponentLivePropMetadata } from '../types'
 import {
 	parseComponentAttributes,
 	parseElementAttributes,
+	isSingleWrappedExpression,
 	warnWrapperlessTemplateAttributes,
 } from './attributes'
 import { compileConditionalChain, hasElseAttr, hasElseIfAttr, hasIfAttr } from './conditionals'
@@ -41,19 +42,28 @@ export class Lowerer {
 	private readonly reactiveState: LowererReactiveState | null
 
 	private readonly hypermedia: boolean
+	private readonly componentLiveProps: Record<string, readonly ComponentLivePropMetadata[]>
 
 	constructor(
 		resolver: Resolver,
 		diag?: LowererDiag,
 		stateBindingNames?: ReadonlySet<string>,
-		options?: { hypermedia?: boolean }
+		options?: {
+			writableStateBindingNames?: ReadonlySet<string>
+			hypermedia?: boolean
+			componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
+		}
 	) {
 		this.resolver = resolver
 		this.diag = diag
 		this.hypermedia = options?.hypermedia === true
+		this.componentLiveProps = options?.componentLiveProps ?? {}
 		this.reactiveState =
 			stateBindingNames && stateBindingNames.size > 0
-				? createLowererReactiveState(stateBindingNames)
+				? createLowererReactiveState(
+						stateBindingNames,
+						options?.writableStateBindingNames ?? stateBindingNames
+					)
 				: null
 	}
 
@@ -139,6 +149,7 @@ export class Lowerer {
 				const { nodes: chainNodes, consumed } = compileConditionalChain(
 					{
 						compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+						bindingNames: this.reactiveState?.bindingNames,
 					},
 					this.diag,
 					nodes,
@@ -146,7 +157,22 @@ export class Lowerer {
 					skipInterpolation,
 					outVar
 				)
-				out.push(...chainNodes)
+				const ifNode = chainNodes[0]
+				if (ifNode?.kind === 'If' && ifNode.reactive && this.reactiveState) {
+					const bindId = this.reactiveState.nextIfBindId()
+					const branches = [
+						{ conditionExpr: ifNode.condition, body: ifNode.body },
+						...(ifNode.elseIf ?? []).map(branch => ({
+							conditionExpr: branch.condition,
+							body: branch.body,
+						})),
+						...(ifNode.else ? [{ conditionExpr: null as string | null, body: ifNode.else }] : []),
+					]
+					out.push({ kind: 'ReactiveIfBind', bindId, branches })
+					out.push({ ...ifNode, bindId })
+				} else {
+					out.push(...chainNodes)
+				}
 				i += consumed
 				continue
 			}
@@ -203,7 +229,20 @@ export class Lowerer {
 			return this.compileComponent(node, tagName, skipInterpolation, outVar)
 		}
 
-		const { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds, busyBinds } = parseElementAttributes(
+		const {
+			attrString,
+			loopData,
+			switchExpr,
+			passDataExpr,
+			eventBinds,
+			textBinds,
+			busyBinds,
+			showBinds,
+			htmlBinds,
+			classBinds,
+			propertyBinds,
+			modelBinds,
+		} = parseElementAttributes(
 			this.resolver,
 			this.diag,
 			node,
@@ -245,14 +284,16 @@ export class Lowerer {
 		// Wrapperless `<template data-for>` / `<template for>`: body is template contents only.
 		if (loopData && isTemplateElement(node)) {
 			const inner = this.compileWrapperlessNode(node, childSkip, outVar)
-			return [
-				{
-					kind: 'For',
-					binding: loopData.binding,
-					items: loopData.items,
-					body: inner,
-				},
-			]
+			return this.wrapForLoop(loopData, inner, [
+				...eventBinds,
+				...textBinds,
+				...busyBinds,
+				...showBinds,
+				...htmlBinds,
+				...classBinds,
+				...propertyBinds,
+				...modelBinds,
+			])
 		}
 
 		if (switchExpr && isTemplateElement(node)) {
@@ -329,19 +370,28 @@ export class Lowerer {
 		}
 
 		if (loopData) {
-			return [
-				{
-					kind: 'For',
-					binding: loopData.binding,
-					items: loopData.items,
-					body: inner,
-				},
-			...eventBinds,
-			...textBinds,
-			...busyBinds,
-		]
-	}
-	return [...inner, ...eventBinds, ...textBinds, ...busyBinds]
+			return this.wrapForLoop(loopData, inner, [
+				...eventBinds,
+				...textBinds,
+				...busyBinds,
+				...showBinds,
+				...htmlBinds,
+				...classBinds,
+				...propertyBinds,
+				...modelBinds,
+			])
+		}
+	return [
+		...inner,
+		...eventBinds,
+		...textBinds,
+		...busyBinds,
+		...showBinds,
+		...htmlBinds,
+		...classBinds,
+		...propertyBinds,
+		...modelBinds,
+	]
 	}
 
 	private emitScriptPassDataIR(
@@ -431,6 +481,13 @@ export class Lowerer {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
 		const { propsString } = parseComponentAttributes(node, this.diag)
+		this.validateComponentBindAttrsRequireState(node, tagName)
+		const livePropExprs = this.collectComponentLivePropExprs(node)
+		this.validateRequiredComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
+		this.validateBindableComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
+		const componentBindId = this.reactiveState
+			? this.reactiveState.nextComponentBindId()
+			: undefined
 
 		const slotVarMap: Record<string, string> = {}
 		const slotContentMap: Record<string, any[]> = {
@@ -458,27 +515,205 @@ export class Lowerer {
 			slots[slotName] = this.compileSlotChildList(children, skipInterpolation, slotVar)
 		}
 
+		const componentNode: IRNode = {
+			kind: 'Component',
+			baseName,
+			propsString,
+			slots,
+			slotVarMap,
+			componentBindId,
+			outVar,
+		}
+		if (componentBindId === undefined) return [componentNode]
 		return [
+			componentNode,
 			{
-				kind: 'Component',
-				baseName,
-				propsString,
-				slots,
-				slotVarMap,
-				outVar,
+				kind: 'ReactiveComponentBind',
+				bindId: componentBindId,
+				componentExpr: baseName,
+				livePropExprs,
 			},
 		]
 	}
+
+	private collectComponentLivePropExprs(node: any): Record<string, IRReactiveComponentLivePropExpr> {
+		const out: Record<string, IRReactiveComponentLivePropExpr> = {}
+		if (!this.reactiveState || !node.attributes) return out
+		for (let i = 0; i < node.attributes.length; i++) {
+			const attr = node.attributes[i]
+			const name = String(attr.name ?? '')
+			if (!name || name === CONST.ATTR_PROPS || name.startsWith(`aero-${CONST.ATTR_PROPS}`)) {
+				continue
+			}
+			if (name.endsWith(':readonly')) {
+				throw new CompileError({
+					message: `Component live prop \`${name}\` is obsolete; use \`${name.slice(0, -':readonly'.length)}="{ ... }"\` because live props are readonly by default.`,
+					file: this.diag?.file,
+				})
+			}
+			const value = String(attr.value ?? '')
+			const bindName = name.startsWith('bind:') ? name.slice('bind:'.length) : null
+			if (bindName !== null && !isSingleWrappedExpression(value)) {
+				throw new CompileError({
+					message: `Component bind prop \`${name}\` must reference one writable state binding.`,
+					file: this.diag?.file,
+				})
+			}
+			if (!isSingleWrappedExpression(value)) continue
+			const expr = Helper.stripBraces(value)
+			if (bindName !== null) {
+				if (!this.reactiveState.writableBindingNames.has(expr)) {
+					throw new CompileError({
+						message: `Component bind prop \`${name}\` must reference one writable state binding.`,
+						file: this.diag?.file,
+					})
+				}
+				out[bindName] = { expr, mutable: true }
+				continue
+			}
+			if (!this.reactiveState.bindingNames.has(expr)) continue
+			out[name] = { expr, mutable: false }
+		}
+		return out
+	}
+
+	private validateComponentBindAttrsRequireState(node: any, tagName: string): void {
+		if (this.reactiveState || !node.attributes) return
+		for (let i = 0; i < node.attributes.length; i++) {
+			const attr = node.attributes[i]
+			const name = String(attr.name ?? '')
+			if (!name.startsWith('bind:')) continue
+			throw new CompileError({
+				message: `Component bind prop \`${name}\` on <${tagName}> requires a writable state binding in \`<script is:state>\`.`,
+				file: this.diag?.file,
+			})
+		}
+	}
+
+	private getComponentLivePropMetadata(
+		tagName: string,
+		kebabBase: string,
+		baseName: string
+	): readonly ComponentLivePropMetadata[] {
+		return (
+			this.componentLiveProps[baseName] ??
+			this.componentLiveProps[kebabBase] ??
+			this.componentLiveProps[tagName] ??
+			[]
+		)
+	}
+
+	private validateRequiredComponentLiveProps(
+		tagName: string,
+		kebabBase: string,
+		baseName: string,
+		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+	): void {
+		if (!this.reactiveState) return
+		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+			const propName = prop.propName || prop.name
+			if (!prop.required || livePropExprs[propName] !== undefined) continue
+			throw new CompileError({
+				message: `Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
+				file: this.diag?.file,
+			})
+		}
+	}
+
+	private validateBindableComponentLiveProps(
+		tagName: string,
+		kebabBase: string,
+		baseName: string,
+		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+	): void {
+		if (!this.reactiveState) return
+		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+			const propName = prop.propName || prop.name
+			const passed = livePropExprs[propName]
+			if (passed?.mutable === true && !prop.bindable) {
+				throw new CompileError({
+					message: `Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
+					file: this.diag?.file,
+				})
+			}
+			if (prop.writes && passed?.mutable === false) {
+				throw new CompileError({
+					message: `Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
+					file: this.diag?.file,
+				})
+			}
+		}
+	}
+
+	private wrapForLoop(
+		loopData: { binding: string; items: string; keyExpr?: string },
+		body: IRNode[],
+		trailing: IRNode[]
+	): IRNode[] {
+		const reactive =
+			this.reactiveState != null &&
+			referencesStateBindingExpression(loopData.items, this.reactiveState.bindingNames)
+		if (reactive && !loopData.keyExpr) {
+			throw new CompileError({
+				message: 'Reactive for loops require `key="{ ... }"` when the iterable references state.',
+				file: this.diag?.file,
+			})
+		}
+		const loopBody = [...body, ...trailing]
+		let forNode: IRNode = {
+			kind: 'For',
+			binding: loopData.binding,
+			items: loopData.items,
+			body: loopBody,
+			...(loopData.keyExpr ? { keyExpr: loopData.keyExpr } : {}),
+			...(reactive ? { reactive: true } : {}),
+		}
+		const nodes: IRNode[] = [forNode]
+		if (reactive && this.reactiveState && loopData.keyExpr) {
+			const bindId = this.reactiveState.nextForBindId()
+			forNode = { ...(forNode as import('../ir').IRFor), bindId }
+			nodes[0] = forNode
+			nodes.push({
+				kind: 'ReactiveForBind',
+				bindId,
+				binding: loopData.binding,
+				itemsExpr: loopData.items,
+				keyExpr: loopData.keyExpr,
+				body: loopBody,
+			})
+		}
+		return nodes
+	}
 }
 
-function createLowererReactiveState(bindingNames: ReadonlySet<string>): LowererReactiveState {
+function createLowererReactiveState(
+	bindingNames: ReadonlySet<string>,
+	writableBindingNames: ReadonlySet<string>
+): LowererReactiveState {
 	let textBindId = 0
 	let eventBindId = 0
 	let busyBindId = 0
+	let componentBindId = 0
+	let showBindId = 0
+	let htmlBindId = 0
+	let classBindId = 0
+	let propertyBindId = 0
+	let modelBindId = 0
+	let ifBindId = 0
+	let forBindId = 0
 	return {
 		bindingNames,
+		writableBindingNames,
 		nextTextBindId: () => textBindId++,
 		nextEventBindId: () => eventBindId++,
 		nextBusyBindId: () => busyBindId++,
+		nextComponentBindId: () => componentBindId++,
+		nextShowBindId: () => showBindId++,
+		nextHtmlBindId: () => htmlBindId++,
+		nextClassBindId: () => classBindId++,
+		nextPropertyBindId: () => propertyBindId++,
+		nextModelBindId: () => modelBindId++,
+		nextIfBindId: () => ifBindId++,
+		nextForBindId: () => forBindId++,
 	}
 }

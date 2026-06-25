@@ -199,7 +199,7 @@ export interface AeroRenderInput {
 	/** Canonical site URL from config. String for backward compat; object when passed from Aero.site. */
 	site?: string | { url: string }
 	/** Page context (url, request, params). When provided, overrides individual request/url/params. */
-	page?: { url?: URL; request?: Request; params?: AeroRouteParams }
+	page?: { url?: URL; request?: Request; params?: AeroRouteParams; routePath?: string }
 }
 
 /**
@@ -210,6 +210,8 @@ export interface AeroPageContext {
 	url: URL
 	request: Request
 	params: AeroRouteParams
+	/** Canonical matched route path (no trailing slash; root is `'/'`). */
+	routePath: string
 }
 
 /**
@@ -224,7 +226,7 @@ export interface AeroSiteContext {
  *
  * @remarks
  * Includes `props`, `slots`, `renderComponent`, `page`, `site`, and optional style/script sets.
- * Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params` for request-scoped data;
+ * Use `Aero.page.url`, `Aero.page.request`, `Aero.page.params`, `Aero.page.routePath` for request-scoped data;
  * use `Aero.site.url` for the canonical site URL.
  */
 // fallow-ignore-next-line unused-types — public API for `@aero-js/core/types` consumers
@@ -243,6 +245,11 @@ export interface AeroTemplateContext {
 	page: AeroPageContext
 	/** Site-scoped: canonical URL and future config. */
 	site: AeroSiteContext
+	/** Marker/fallback helper for child-mutable live props in state scripts. */
+	bindable: {
+		(): undefined
+		<T>(fallback: T): T
+	}
 	styles?: Set<string>
 	scripts?: Set<string>
 	headScripts?: Set<string>

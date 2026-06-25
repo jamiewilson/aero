@@ -109,6 +109,57 @@ function topLevelLetDeclarators(program: unknown): Array<{
 	return out
 }
 
+function isAeroPropsExpression(node: unknown): boolean {
+	const expr = node as {
+		type?: string
+		object?: { type?: string; name?: string }
+		property?: { type?: string; name?: string }
+		computed?: boolean
+	}
+	return (
+		expr?.type === 'MemberExpression' &&
+		expr.object?.type === 'Identifier' &&
+		expr.object.name === 'Aero' &&
+		expr.property?.type === 'Identifier' &&
+		expr.property.name === 'props' &&
+		expr.computed === false
+	)
+}
+
+function topLevelAeroPropsConstDeclarations(program: unknown): Array<{ start: number; length: number }> {
+	const out: Array<{ start: number; length: number }> = []
+	for (const stmt of (program as { body?: unknown[] })?.body ?? []) {
+		let declaration = stmt as {
+			type?: string
+			kind?: string
+			start?: number
+			declaration?: {
+				type?: string
+				kind?: string
+				start?: number
+				declarations?: unknown[]
+			}
+			declarations?: unknown[]
+		}
+		if (declaration?.type === 'ExportNamedDeclaration' && declaration.declaration) {
+			declaration = declaration.declaration
+		}
+		if (
+			declaration?.type !== 'VariableDeclaration' ||
+			declaration.kind !== 'const' ||
+			typeof declaration.start !== 'number'
+		) {
+			continue
+		}
+		const hasAeroPropsPattern = (declaration.declarations ?? []).some(d => {
+			const decl = d as { id?: { type?: string }; init?: unknown }
+			return decl.id?.type === 'ObjectPattern' && isAeroPropsExpression(decl.init)
+		})
+		if (hasAeroPropsPattern) out.push({ start: declaration.start, length: 'const'.length })
+	}
+	return out
+}
+
 /**
  * Insert `: Type` after top-level `let` binding names for editor virtual TS.
  */
@@ -118,7 +169,10 @@ export function annotateStateScriptForEditorTypecheck(script: string): StateScri
 	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
 	if (parsed.errors.length > 0) return wholeScriptMapping(script)
 
-	const insertions: Array<{ pos: number; text: string }> = []
+	const insertions: Array<{ pos: number; text: string; deleteLength?: number }> = []
+	for (const declaration of topLevelAeroPropsConstDeclarations(parsed.program)) {
+		insertions.push({ pos: declaration.start, text: 'let', deleteLength: declaration.length })
+	}
 	for (const decl of topLevelLetDeclarators(parsed.program)) {
 		const typeAnn = typeAnnotationForInit(decl.init)
 		insertions.push({ pos: decl.idEnd, text: `: ${typeAnn}` })
@@ -149,6 +203,7 @@ export function annotateStateScriptForEditorTypecheck(script: string): StateScri
 		}
 		generated += insertion.text
 		generatedCursor += insertion.text.length
+		sourceCursor += insertion.deleteLength ?? 0
 	}
 
 	if (sourceCursor < script.length) {

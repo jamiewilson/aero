@@ -1,0 +1,25 @@
+<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let n = 0
+</script>
+
+<base-layout title="Reactive conditionals">
+	<section class="v-stack">
+		<p class="secondary">Reactive <code>if</code> / <code>else-if</code> / <code>else</code> (P5.1)</p>
+
+		<div class="h-stack items-center">
+			<button on:click="{ n-- }">−</button>
+			<code>n = { n }</code>
+			<button on:click="{ n++ }">+</button>
+		</div>
+
+		<div class="card v-stack">
+			<p if="{ n > 0 }">Positive branch</p>
+			<p else-if="{ n < 0 }">Negative branch</p>
+			<p else>Zero branch</p>
+		</div>
+	</section>
+</base-layout>

@@ -41,6 +41,7 @@ export {
 } from './template-interpolation-sites'
 
 export {
+	collectComponentLivePropMetadata,
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,
 	writeComponentRegistryDts,
@@ -58,6 +59,7 @@ export type {
 	ScriptEntry,
 	ResolverOptions,
 	CodegenTarget,
+	ComponentLivePropMetadata,
 	EmitRenderFunctionOptions,
 	CompileErrorOptions,
 } from './types'
@@ -155,6 +157,11 @@ export {
 	type StateScriptDiagnostic,
 	type StateScriptAnalysisResult,
 } from './state-script-analysis'
+export {
+	collectReadonlyLivePropWritesInExpression,
+	readonlyLivePropWriteMessage,
+	type ReadonlyLivePropWrite,
+} from './readonly-live-prop-writes'
 
 export {
 	annotateStateScriptForEditorTypecheck,

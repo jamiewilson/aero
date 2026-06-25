@@ -46,7 +46,7 @@ import { CompileWarningDeduper, type CompileWarningPayload } from './compile-war
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
-import { parse } from '@aero-js/compiler'
+import { collectComponentLivePropMetadata, parse } from '@aero-js/compiler'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
 import {
@@ -120,16 +120,22 @@ function compileHtmlWithDedupedWarnings(
 		resolvePath: (specifier: string, importer: string) => string
 		reactivity?: boolean
 		hypermedia?: boolean
+		dirs: AeroPluginState['dirs']
 	},
 	clientScripts: Map<string, ScriptEntry>,
 	deduper: CompileWarningDeduper
 ): string {
 	const warnings: CompileWarningPayload[] = []
+	const componentLiveProps = collectComponentLivePropMetadata([
+		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
+		path.join(params.resolvedConfig.root, params.dirs.client, 'layouts'),
+	])
 	const generated = compileHtmlSourceForVite(
 		code,
 		filePath,
 		{
 			...params,
+			componentLiveProps,
 			onWarning: warning => {
 				warnings.push(warning)
 			},
@@ -553,6 +559,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 							resolvePath: resolvedAlias.resolve,
 							reactivity: state.options.reactivity,
 							hypermedia: state.options.hypermedia,
+							dirs: state.dirs,
 						},
 						state.clientScripts,
 						state.compileWarningDeduper
@@ -609,6 +616,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 							resolvePath: resolvedAlias.resolve,
 							reactivity: state.options.reactivity,
 							hypermedia: state.options.hypermedia,
+							dirs: state.dirs,
 						},
 						state.clientScripts,
 						state.compileWarningDeduper

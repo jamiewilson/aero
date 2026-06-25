@@ -1,7 +1,8 @@
 import { Computed } from './computed'
 import { Signal } from './signal'
 
-type StoreEntry = Signal<unknown> | Computed<unknown>
+type SignalLike<T = unknown> = { value: T }
+type StoreEntry = Signal<unknown> | Computed<unknown> | SignalLike
 
 function flattenObject(
 	value: Record<string, unknown>,
@@ -40,7 +41,7 @@ export class SignalStore {
 		const existing = this.entries.get(path)
 		if (existing) {
 			if (existing instanceof Signal) return existing as Signal<T>
-			throw new Error(`[aero] Path ${JSON.stringify(path)} already registered as computed.`)
+			throw new Error(`[aero] Path ${JSON.stringify(path)} already registered.`)
 		}
 		const created = new Signal<T>(initial as T)
 		this.entries.set(path, created as Signal<unknown>)
@@ -51,19 +52,28 @@ export class SignalStore {
 		const existing = this.entries.get(path)
 		if (existing) {
 			if (existing instanceof Computed) return existing as Computed<T>
-			throw new Error(`[aero] Path ${JSON.stringify(path)} already registered as signal.`)
+			throw new Error(`[aero] Path ${JSON.stringify(path)} already registered.`)
 		}
 		const created = new Computed<T>(fn)
 		this.entries.set(path, created as Computed<unknown>)
 		return created
 	}
 
-	get<T>(path: string): Signal<T> | Computed<T> {
+	alias<T>(path: string, entry: SignalLike<T>): SignalLike<T> {
+		const existing = this.entries.get(path)
+		if (existing && existing !== entry) {
+			throw new Error(`[aero] Path ${JSON.stringify(path)} already registered.`)
+		}
+		this.entries.set(path, entry as StoreEntry)
+		return entry
+	}
+
+	get<T>(path: string): Signal<T> | Computed<T> | SignalLike<T> {
 		const entry = this.entries.get(path)
 		if (!entry) {
 			throw new Error(`[aero] Missing signal path: ${JSON.stringify(path)}`)
 		}
-		return entry as Signal<T> | Computed<T>
+		return entry as Signal<T> | Computed<T> | SignalLike<T>
 	}
 
 	has(path: string): boolean {
@@ -74,7 +84,7 @@ export class SignalStore {
 		const flat = flattenObject(values)
 		for (const [path, value] of Object.entries(flat)) {
 			const existing = this.entries.get(path)
-			if (existing && existing instanceof Signal) {
+			if (existing && !(existing instanceof Computed)) {
 				existing.value = value
 				continue
 			}

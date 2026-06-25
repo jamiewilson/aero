@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { pagePathToKey, resolveDynamicPage, resolvePageName, resolvePageTarget } from '../routing'
+import { pagePathToKey, resolveDynamicPage, resolvePageName, resolvePageTarget, pageNameToRoutePath, normalizeRoutePath } from '../routing'
 
 describe('pagePathToKey', () => {
 	it('should use segment after pages/ for page paths', () => {
@@ -150,5 +150,21 @@ describe('resolvePageTarget', () => {
 	it('should return null for unknown page name', () => {
 		expect(resolvePageTarget('nonexistent', {})).toBeNull()
 		expect(resolvePageTarget('unknown', { index: {} })).toBeNull()
+	})
+})
+
+describe('pageNameToRoutePath', () => {
+	it('should map page names to canonical route paths', () => {
+		expect(pageNameToRoutePath('index')).toBe('/')
+		expect(pageNameToRoutePath('demos/counter')).toBe('/demos/counter')
+		expect(pageNameToRoutePath('blog/index')).toBe('/blog')
+	})
+})
+
+describe('normalizeRoutePath', () => {
+	it('should strip trailing slashes except root', () => {
+		expect(normalizeRoutePath('/demos/counter/')).toBe('/demos/counter')
+		expect(normalizeRoutePath('/')).toBe('/')
+		expect(normalizeRoutePath('')).toBe('/')
 	})
 })
