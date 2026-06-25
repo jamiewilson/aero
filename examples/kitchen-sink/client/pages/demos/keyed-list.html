@@ -36,8 +36,14 @@
 			<button on:click="{ reverseItems() }">Reverse</button>
 		</div>
 
-		<ul class="card">
+		<ul>
 			<li for="{ const item of items }" key="{ item.id }" text="{ item.label }"></li>
 		</ul>
 	</section>
 </base-layout>
+
+<style>
+	ul {
+		list-style-type: none;
+	}
+</style>

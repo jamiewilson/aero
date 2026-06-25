@@ -7,20 +7,12 @@
 </script>
 
 <base-layout>
-	<h1>Hypermedia demo</h1>
-	<p>{ status }</p>
-	<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">
-		Load fragment
-	</button>
+	<section>
+		<h1>Hypermedia demo</h1>
+		<p>{ status }</p>
+		<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">
+			Load fragment
+		</button>
+	</section>
 	<div id="hypermedia-result" class="card">Waiting…</div>
 </base-layout>
-
-<style>
-	.card {
-		margin-top: 1rem;
-		padding: 1rem;
-		border: 1px solid var(--border, #ccc);
-		border-radius: 0.5rem;
-		min-height: 3rem;
-	}
-</style>
