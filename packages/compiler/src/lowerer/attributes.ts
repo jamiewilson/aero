@@ -18,7 +18,8 @@ import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
-import type { IRReactiveEventBind } from '../ir'
+import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
+import type { IRReactiveEventBind, IRReactiveTextBind } from '../ir'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 
 type AttrLike = { name: string; value?: string | null }
@@ -290,6 +291,7 @@ export function parseElementAttributes(
 ): ParsedElementAttrs {
 	const attributes: string[] = []
 	const eventBinds: IRReactiveEventBind[] = []
+	const textBinds: IRReactiveTextBind[] = []
 	let loopData: { binding: string; items: string } | null = null
 	let switchExpr: string | null = null
 	let passDataExpr: string | null = null
@@ -351,11 +353,26 @@ export function parseElementAttributes(
 			attributes.push(`data-aero-event="${bindId}"`)
 			return
 		}
+
+		const parsedRuntime = normalizeRuntimeDirectiveName(attr.name)
+		if (parsedRuntime?.canonicalBareName === 'text' && reactiveState) {
+			const text = attr.value || ''
+			const readExpr = Helper.compileReactiveTextReadExpr(text)
+			const bindId = reactiveState.nextTextBindId()
+			textBinds.push({
+				kind: 'ReactiveTextBind',
+				bindId,
+				readExpr,
+			})
+			attributes.push(`data-aero-text="${bindId}"`)
+			return
+		}
+
 		const emitted = buildEmittedAttribute(resolver, attr)
 		if (!emitted) return
 		attributes.push(emitted)
 	})
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
-	return { attrString, loopData, switchExpr, passDataExpr, eventBinds }
+	return { attrString, loopData, switchExpr, passDataExpr, eventBinds, textBinds }
 }

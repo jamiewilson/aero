@@ -10,7 +10,7 @@ import { FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK } from './build-script-ambient-
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import {
 	collectTemplateInterpolationSites,
-	formatInterpolationBinderPreludeFromTemplate,
+	buildTemplateInterpolationVirtualText,
 } from './template-interpolation-sites'
 import {
 	compilerOptionsForVirtualCheck,
@@ -191,12 +191,12 @@ export function checkTemplateTypes(
 		const sites = collectTemplateInterpolationSites(htmlSource)
 		let exprIdx = 0
 		for (const site of sites) {
-			const binderDecl = formatInterpolationBinderPreludeFromTemplate(htmlSource, site.braceOffset)
-			const open = site.wrapPropsObjectLiteral === true ? '[{' : '['
-			const close = site.wrapPropsObjectLiteral === true ? '}]' : ']'
-			const head = FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n' + binderDecl + open
-			const virtualText = head + site.expression + close
-			const exprStartInVirtual = head.length
+			const { virtualText, expressionOffsetInVirtual: exprStartInVirtual } =
+				buildTemplateInterpolationVirtualText(
+					htmlSource,
+					site,
+					FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n'
+				)
 			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
 
 			const diags = createVirtualProgramDiagnostics(

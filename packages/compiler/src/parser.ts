@@ -341,8 +341,10 @@ export function parse(html: string): ParseResult {
 			}
 			continue
 		}
-		// Script in head with attributes (e.g. props) but not is:inline stays in place
-		if (script.placement.inHead && scriptEl.attributes.length > 0) continue
+		// Head scripts with attributes (e.g. props) stay inline unless they use ESM imports (bundled client module).
+		if (script.placement.inHead && scriptEl.attributes.length > 0) {
+			if (!/\bimport\s/.test(script.content)) continue
+		}
 		// Plain script (no attrs or body): extract as client
 		pushClientScript(clientScripts, script)
 		toRemove.push(scriptEl)

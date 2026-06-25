@@ -2,6 +2,7 @@
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
 import { requiresBracedDirectiveValue } from '@aero-js/compiler/build-directive-attributes'
+import { parseEventDirectiveName } from '@aero-js/compiler'
 import * as vscode from 'vscode'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { getIgnoredRanges, isInRanges } from './helpers'
@@ -20,30 +21,6 @@ const EVENT_DIRECTIVE_ATTR_VALUE_REGEX =
 function isSingleBracedExpression(value: string): boolean {
 	const trimmed = value.trim()
 	return trimmed.startsWith('{') && trimmed.endsWith('}') && trimmed.length >= 2
-}
-
-function parseEventDirectiveNameForDiagnostics(
-	attrName: string
-): { kind: 'ok' } | { kind: 'invalid'; message: string } {
-	const trimmed = attrName.trim()
-	const body = trimmed
-		.replace(/^data-aero-/, '')
-		.replace(/^aero-/, '')
-		.replace(/^on[:-]/, '')
-
-	if (!body) {
-		return {
-			kind: 'invalid',
-			message: 'Event directive must include an event name (e.g. on:click).',
-		}
-	}
-	if (body.startsWith('.') || body.endsWith('.') || body.includes('..')) {
-		return {
-			kind: 'invalid',
-			message: 'Event directive has malformed modifier chain (empty modifier segment).',
-		}
-	}
-	return { kind: 'ok' }
 }
 
 export function checkDirectiveExpressionBraces(
@@ -90,7 +67,7 @@ export function checkDirectiveExpressionBraces(
 		while ((attrMatch = EVENT_DIRECTIVE_ATTR_VALUE_REGEX.exec(attrs)) !== null) {
 			const attrName = attrMatch[1]
 			const attrValue = (attrMatch[3] || '').trim()
-			const parsed = parseEventDirectiveNameForDiagnostics(attrName)
+			const parsed = parseEventDirectiveName(attrName)
 
 			const start = attrsStart + attrMatch.index
 			const end = start + attrMatch[0].length

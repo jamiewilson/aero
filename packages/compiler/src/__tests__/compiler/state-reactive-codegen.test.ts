@@ -22,6 +22,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('export function mountStateBindings(root, Aero)')
 		expect(code).toContain('data-aero-text="0"')
 		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
+		expect(code).toContain('actionFunctions: {}')
 		expect(code).not.toContain('data-aero-on-click')
 	})
 
@@ -37,6 +38,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('data-aero-event="0"')
 		expect(code).toContain('"handlerExpr":"inc()"')
 		expect(code).toContain('"event":"click"')
+		expect(code).toContain('actionFunctions: {}')
 		expect(code).not.toContain('data-aero-on-click')
 	})
 
@@ -61,5 +63,31 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('escapeScriptJson({ "count": count })')
 		expect(code).not.toContain('"doubled": doubled')
 		expect(code).not.toContain('"doubled":2')
+	})
+
+	it('collects reactive binds inside switch branches with is:state', () => {
+		const html = `<script is:state>
+			const auth = { state: 'SignedOut' }
+		</script>
+		<div switch="{ auth.state }">
+			<span case="SignedIn">{ auth.state }</span>
+			<span default>Default</span>
+		</div>`
+
+		expect(() => compile(parse(html), mockOptions)).not.toThrow()
+	})
+
+	it('passes is:state imports into mount scopeConstants', () => {
+		const html = `<script is:state>
+			import { AuthState } from '@shared/types/auth'
+			let authState = AuthState.SignedOut
+			function toggleAuth() {
+				authState = authState === AuthState.SignedIn ? AuthState.SignedOut : AuthState.SignedIn
+			}
+		</script>
+		<a on:click="{ toggleAuth() }">{ authState === AuthState.SignedIn ? 'Log Out' : 'Log In' }</a>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('scopeConstants: { AuthState: AuthState }')
 	})
 })

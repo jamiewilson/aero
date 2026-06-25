@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import aero from '../entry-prod'
 import { REACTIVITY_RUNTIME_GLOBAL_KEY } from '../runtime/reactivity-bootstrap'
+
+vi.mock('virtual:aero/state-bindings-registry.ts', () => ({
+	resolveStateBindingsModule: vi.fn(async () => null),
+}))
 
 describe('entry-prod reactivity bootstrap', () => {
 	it('bootstraps from aero/state payload and exposes runtime accessor', async () => {
@@ -30,15 +34,15 @@ describe('entry-prod reactivity bootstrap', () => {
 	it('destroys prior state bindings before remounting', async () => {
 		const target = {} as HTMLElement
 		const cleanupCalls: number[] = []
-		const originalMountStateBindingsForPath = (
-			aero as unknown as { mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void }
-		).mountStateBindingsForPath
-		let bindingId = 0
-		;(aero as unknown as { mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void }).mountStateBindingsForPath =
-			(_pathname: string, _root: HTMLElement) => {
-				const id = ++bindingId
-				return () => cleanupCalls.push(id)
+		const { resolveStateBindingsModule } = await import('virtual:aero/state-bindings-registry.ts')
+		vi.mocked(resolveStateBindingsModule).mockImplementation(async () => {
+			return (_root, _aero) => {
+				const id = cleanupCalls.length + 1
+				return () => {
+					cleanupCalls.push(id)
+				}
 			}
+		})
 
 		try {
 			await aero.mount({ target })
@@ -46,9 +50,7 @@ describe('entry-prod reactivity bootstrap', () => {
 			await aero.mount({ target })
 			expect(cleanupCalls).toEqual([1])
 		} finally {
-			;(aero as unknown as {
-				mountStateBindingsForPath: (pathname: string, root: HTMLElement) => () => void
-			}).mountStateBindingsForPath = originalMountStateBindingsForPath
+			vi.mocked(resolveStateBindingsModule).mockResolvedValue(null)
 		}
 	})
 })

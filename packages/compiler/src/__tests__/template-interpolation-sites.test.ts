@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
 	collectTemplateInterpolationSites,
+	buildTemplateInterpolationVirtualText,
 	formatInterpolationBinderPreludeFromTemplate,
 } from '../template-interpolation-sites'
 
@@ -27,5 +28,47 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(hrefSite).toBeDefined()
 		const prelude = formatInterpolationBinderPreludeFromTemplate(html, hrefSite!.braceOffset)
 		expect(prelude).toContain('declare const path: any;')
+	})
+
+	it('includes braced expressions on Aero event directives', () => {
+		const html = `<button on:click="{ inc() }">+</button><p>{ count }</p>`
+		const sites = collectTemplateInterpolationSites(html)
+		expect(sites.some(s => s.expression.trim() === 'inc()')).toBe(true)
+		expect(sites.some(s => s.expression.trim() === 'count')).toBe(true)
+		const eventSite = sites.find(s => s.expression.trim() === 'inc()')
+		expect(eventSite?.isEventHandler).toBe(true)
+	})
+
+	it('typechecks is:state assignments in event handlers with declare let and statement context', () => {
+		const html = `<script is:state>let count = 0</script><button on:dblclick="{ count = 0 }">Reset</button>`
+		const sites = collectTemplateInterpolationSites(html)
+		const eventSite = sites.find(s => s.isEventHandler)
+		expect(eventSite).toBeDefined()
+
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, eventSite!, '')
+		expect(virtualText).toContain('declare let count')
+		expect(virtualText).not.toContain('[ count = 0 ]')
+		expect(virtualText).toContain('count = 0')
+		expect(virtualText.endsWith(';')).toBe(true)
+	})
+
+	it('keeps read-only interpolation bindings as declare const', () => {
+		const html = `<script is:state>let count = 0</script><p>{ count }</p>`
+		const prelude = formatInterpolationBinderPreludeFromTemplate(html, html.indexOf('count'))
+		expect(prelude).toContain('declare const count')
+		expect(prelude).not.toContain('declare let count')
+	})
+
+	it('declares event in on:* handler virtual TS', () => {
+		const html = `<script is:state>
+function syncAuthLink(event) { event.preventDefault() }
+</script>
+<a on:click="{ syncAuthLink(event) }">x</a>`
+		const sites = collectTemplateInterpolationSites(html)
+		const eventSite = sites.find(s => s.isEventHandler)
+		expect(eventSite).toBeDefined()
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, eventSite!, '')
+		expect(virtualText).toContain('declare const event: Event;')
+		expect(virtualText).toMatch(/declare const event: Event;\s*syncAuthLink\(event\)/)
 	})
 })

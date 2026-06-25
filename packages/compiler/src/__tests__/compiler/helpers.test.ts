@@ -47,6 +47,11 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('{a} and {b}')).toBe('${escapeHtml(a)} and ${escapeHtml(b)}')
 	})
 
+	it('should escape HTML in literal text for safe HTML output', () => {
+		expect(compileInterpolation('<script is:state>')).toBe('&lt;script is:state&gt;')
+		expect(compileInterpolation('a & b')).toBe('a &amp; b')
+	})
+
 	it('should passthrough raw(), trim(), trimStart(), and trimEnd() calls', () => {
 		expect(compileInterpolation('{ raw(html) }')).toBe('${ raw(html) }')
 		expect(compileInterpolation('{ trim(text) }')).toBe('${ trim(text) }')

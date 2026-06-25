@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildTemplateEditorAmbient } from '../template-editor-context'
+import { formatInterpolationBinderPreludeFromTemplate } from '../template-interpolation-sites'
 import { parse } from '../parser'
 
 describe('buildTemplateEditorAmbient', () => {
@@ -33,5 +34,24 @@ let doubled = count * 2
 		expect(ambient.stateScriptBodies.length).toBe(1)
 		expect(ambient.bindingNames.has('count')).toBe(true)
 		expect(ambient.bindingNames.has('doubled')).toBe(true)
+		expect(ambient.writableStateBindingNames.has('count')).toBe(true)
+		expect(ambient.writableStateBindingNames.has('doubled')).toBe(false)
+	})
+
+	it('includes is:state import bindings in interpolation scope', () => {
+		const html = `<script is:state>
+import { AuthState } from '@shared/types/auth'
+const auth = { state: AuthState.SignedOut }
+</script>
+<div switch="{ auth.state }">
+<a case="{ AuthState.SignedIn }">Out</a>
+</div>`
+		const ambient = buildTemplateEditorAmbient(html)
+		expect(ambient.bindingNames.has('AuthState')).toBe(true)
+		expect(ambient.bindingNames.has('auth')).toBe(true)
+
+		const caseOffset = html.indexOf('{ AuthState.SignedIn }')
+		const prelude = formatInterpolationBinderPreludeFromTemplate(html, caseOffset + 1)
+		expect(prelude).toContain('declare const AuthState')
 	})
 })

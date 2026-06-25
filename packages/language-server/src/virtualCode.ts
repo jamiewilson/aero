@@ -22,6 +22,8 @@ import {
 	parse,
 	parsePropsAttributeBindings,
 	formatPropsInjectedAmbientDecls,
+	EVENT_HANDLER_SCOPE_DECL,
+	annotateStateScriptForEditorTypecheck,
 	type BuildBindingProperties,
 } from '@aero-js/compiler'
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
@@ -76,13 +78,14 @@ const ambientSnapshot: IScriptSnapshot = {
 function getScriptType(
 	node: Node,
 	sourceText: string
-): 'build' | 'client' | 'inline' | 'blocking' | 'external' | 'importmap' | null {
+): 'build' | 'state' | 'client' | 'inline' | 'blocking' | 'external' | 'importmap' | null {
 	if (node.tag !== 'script') return null
 	const attrs = node.attributes
 	if (!attrs) return 'client'
 
 	if ('src' in attrs) return 'external'
 	if ('is:build' in attrs) return 'build'
+	if ('is:state' in attrs) return 'state'
 	if ('is:inline' in attrs) return 'inline'
 	if (hasPropsAttribute(attrs)) return 'inline'
 	if ('is:blocking' in attrs) return 'blocking'
@@ -588,8 +591,10 @@ export class AeroVirtualCode implements VirtualCode {
 
 		const {
 			buildScriptBodies,
+			stateScriptBodies,
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
+			writableStateBindingNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
 
@@ -599,7 +604,9 @@ export class AeroVirtualCode implements VirtualCode {
 				sourceText,
 				buildBindingNames,
 				buildTypeDeclTexts,
-				buildScriptBodies
+				buildScriptBodies,
+				stateScriptBodies,
+				writableStateBindingNames
 			),
 			{
 				id: 'ambient',
@@ -615,7 +622,9 @@ export class AeroVirtualCode implements VirtualCode {
 		sourceText: string,
 		buildBindingNames: ReadonlySet<string>,
 		buildTypeDeclTexts: readonly string[],
-		buildScriptBodies: readonly string[]
+		buildScriptBodies: readonly string[],
+		stateScriptBodies: readonly string[],
+		writableStateBindingNames: ReadonlySet<string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const slotScopes = collectSlotScopes(sourceText, this.htmlFilePath)
@@ -629,7 +638,7 @@ export class AeroVirtualCode implements VirtualCode {
 		const makeExprVirtualCode = (
 			expression: string,
 			sourceOffset: number,
-			wrapPropsObjectLiteral?: boolean
+			options?: { wrapPropsObjectLiteral?: boolean; isEventHandler?: boolean }
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 			const slotBindings = getSlotBindingsAtOffset(sourceOffset, slotScopes)
@@ -654,16 +663,44 @@ export class AeroVirtualCode implements VirtualCode {
 			const binderDecl = formatBuildScopeAmbientPrelude(
 				combinedBindings,
 				mergedTypeDecls,
-				buildScriptBodies
+				[...buildScriptBodies, ...stateScriptBodies],
+				options?.isEventHandler
+					? new Set(
+							[...writableStateBindingNames].filter(name => combinedBindings.has(name))
+						)
+					: undefined
 			)
 			const slotTypedBlock =
 				slotTypedBindingDecls.length > 0 ? slotTypedBindingDecls.join('\n') + '\n' : ''
-			const open = wrapPropsObjectLiteral ? '[{' : '['
-			const close = wrapPropsObjectLiteral ? '}]' : ']'
-			const exprOffsetInVirtual =
-				BUILD_SCRIPT_PREAMBLE.length + binderDecl.length + slotTypedBlock.length + open.length
-			const virtualText =
-				BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock + open + expression + close
+			const head = BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock
+
+			if (options?.isEventHandler) {
+				const virtualText =
+					head +
+					EVENT_HANDLER_SCOPE_DECL +
+					expression +
+					(expression.trimEnd().endsWith(';') ? '' : ';')
+				const exprOffsetInVirtual = head.length + EVENT_HANDLER_SCOPE_DECL.length
+				return {
+					id: `expr_${exprIdx++}`,
+					languageId: 'typescript',
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
+					mappings: [
+						{
+							sourceOffsets: [sourceOffset],
+							generatedOffsets: [exprOffsetInVirtual],
+							lengths: [expression.length],
+							data: BUILD_SCRIPT_FEATURES,
+						},
+					],
+					embeddedCodes: [],
+				}
+			}
+
+			const open = options?.wrapPropsObjectLiteral ? '[{' : '['
+			const close = options?.wrapPropsObjectLiteral ? '}]' : ']'
+			const exprOffsetInVirtual = head.length + open.length
+			const virtualText = head + open + expression + close
 
 			return {
 				id: `expr_${exprIdx++}`,
@@ -683,7 +720,10 @@ export class AeroVirtualCode implements VirtualCode {
 
 		for (const site of collectTemplateInterpolationSites(sourceText)) {
 			out.push(
-				makeExprVirtualCode(site.expression, site.braceOffset, site.wrapPropsObjectLiteral === true)
+				makeExprVirtualCode(site.expression, site.braceOffset, {
+					wrapPropsObjectLiteral: site.wrapPropsObjectLiteral === true,
+					isEventHandler: site.isEventHandler === true,
+				})
 			)
 		}
 
@@ -695,6 +735,7 @@ export class AeroVirtualCode implements VirtualCode {
 		sourceText: string
 	): Generator<VirtualCode> {
 		let buildIdx = 0
+		let stateIdx = 0
 		let clientIdx = 0
 		let blockingIdx = 0
 		let inlineIdx = 0
@@ -729,28 +770,32 @@ export class AeroVirtualCode implements VirtualCode {
 
 			const isTs = hasLangTs(node, sourceText)
 
-			if (scriptType === 'build') {
-				// Build scripts default to TS + preamble; `lang="js"` / `javascript` opts into JS only.
+			if (scriptType === 'build' || scriptType === 'state') {
+				// Build/state scripts default to TS + preamble; `lang="js"` / `javascript` opts into JS only.
 				const useTypeScript = !hasLangJs(node, sourceText)
+				const idPrefix = scriptType === 'build' ? 'build' : 'state'
+				const idx = scriptType === 'build' ? buildIdx++ : stateIdx++
 				if (useTypeScript) {
-					const virtualText = BUILD_SCRIPT_PREAMBLE + scriptContent
+					const scriptForVirtual =
+						scriptType === 'state'
+							? annotateStateScriptForEditorTypecheck(scriptContent)
+							: { text: scriptContent, segments: [{ sourceStart: 0, sourceLength: scriptContent.length, generatedStart: 0 }] }
+					const virtualText = BUILD_SCRIPT_PREAMBLE + scriptForVirtual.text
 					yield {
-						id: `build_${buildIdx++}`,
+						id: `${idPrefix}_${idx}`,
 						languageId: 'typescript',
 						snapshot: asEmbeddedModuleSnapshot(virtualText),
-						mappings: [
-							{
-								sourceOffsets: [node.startTagEnd],
-								generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length],
-								lengths: [scriptContent.length],
-								data: BUILD_SCRIPT_FEATURES,
-							},
-						],
+						mappings: scriptForVirtual.segments.map(segment => ({
+							sourceOffsets: [node.startTagEnd! + segment.sourceStart],
+							generatedOffsets: [BUILD_SCRIPT_PREAMBLE.length + segment.generatedStart],
+							lengths: [segment.sourceLength],
+							data: BUILD_SCRIPT_FEATURES,
+						})),
 						embeddedCodes: [],
 					}
 				} else {
 					yield {
-						id: `build_${buildIdx++}`,
+						id: `${idPrefix}_${idx}`,
 						languageId: 'javascript',
 						snapshot: asEmbeddedModuleSnapshot(scriptContent),
 						mappings: [

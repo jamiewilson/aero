@@ -51,6 +51,7 @@ export function parseDocument(document: vscode.TextDocument): ParsedDocument {
 
 	const variablesByScope: VariablesByScope = {
 		build: collectVariablesByScope(document, text, 'build'),
+		state: collectVariablesByScope(document, text, 'state'),
 		bundled: collectVariablesByScope(document, text, 'bundled'),
 		inline: collectVariablesByScope(document, text, 'inline'),
 		blocking: collectVariablesByScope(document, text, 'blocking'),
@@ -59,6 +60,10 @@ export function parseDocument(document: vscode.TextDocument): ParsedDocument {
 	const scriptContentByScope: ScriptContentByScope = {
 		build: scriptBlocks
 			.filter(block => block.kind === 'build')
+			.map(block => block.content)
+			.join(' '),
+		state: scriptBlocks
+			.filter(block => block.kind === 'state')
 			.map(block => block.content)
 			.join(' '),
 		bundled: scriptBlocks

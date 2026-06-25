@@ -32,4 +32,4 @@ export type TemplateReference = {
 	isAlpine?: boolean
 }
 
-export type ScriptScope = 'build' | 'inline' | 'bundled' | 'blocking'
+export type ScriptScope = 'build' | 'state' | 'inline' | 'bundled' | 'blocking'

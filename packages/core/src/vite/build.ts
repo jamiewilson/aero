@@ -59,7 +59,10 @@ import {
 import { loadTsconfigAliases } from '../utils/aliases'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
+import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
 export { addDoctype } from './rewrite'
+
+const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 
 /** `AERO_LOG=debug` (or comma/space-separated list including `debug`): log static build phase timings. */
 function aeroStaticBuildDebug(message: string): void {
@@ -285,6 +288,18 @@ export function discoverRuntimeTemplatePaths(
 		),
 		pages: walkHtmlFiles(path.join(clientRoot, 'pages')).sort((a, b) => a.localeCompare(b)),
 	}
+}
+
+/** Page files under `client/pages` that contain `<script is:state>`. */
+export function discoverReactivePagePaths(root: string, clientDir: string): string[] {
+	const { pages } = discoverRuntimeTemplatePaths(root, clientDir)
+	return pages.filter(file => {
+		try {
+			return IS_STATE_SCRIPT_RE.test(fs.readFileSync(file, 'utf-8'))
+		} catch {
+			return false
+		}
+	})
 }
 
 /** Per `*.html` file under `clientDir` → sha256 (keys: posix path relative to `root`). */
@@ -991,6 +1006,7 @@ export async function renderStaticPages(
 interface BuildConfigOptions {
 	dirs?: AeroDirs
 	resolvePath?: (specifier: string, importer: string) => string
+	reactivity?: boolean
 }
 
 /**
@@ -1016,6 +1032,11 @@ export function createBuildConfig(
 	)
 	const assetEntries = new Map(templateAssetEntries)
 	appendDefaultAndImageAssetInputs(root, dirs.client, assetEntries)
+	if (options.reactivity) {
+		for (const pagePath of discoverReactivePagePaths(root, dirs.client)) {
+			assetEntries.set(toManifestKey(root, pagePath), pagePath)
+		}
+	}
 	const inputs = { ...Object.fromEntries(assetEntries), ...virtualClientInputs }
 	return {
 		outDir: dirs.dist,

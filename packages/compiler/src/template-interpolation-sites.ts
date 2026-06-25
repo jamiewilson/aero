@@ -10,6 +10,7 @@ import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/htm
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
 import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
+import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
@@ -23,6 +24,8 @@ export type TemplateInterpolationSite = {
 	 * (e.g. `props="{ ...x }"`) typecheck as object spread, not array spread.
 	 */
 	readonly wrapPropsObjectLiteral?: boolean
+	/** Aero `on:*` event handler — type-check as statement with writable state bindings. */
+	readonly isEventHandler?: boolean
 }
 
 const FOR_ATTR_NAMES = new Set(['for', `${AERO_ATTR_PREFIX}for`, `${DATA_AERO_ATTR_PREFIX}for`])
@@ -32,11 +35,15 @@ const PROPS_ATTR_NAMES = new Set([
 	`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase(),
 ])
 
+/** Virtual TS prelude for `on:*` handler bodies — matches runtime `compileHandler` parameter. */
+export const EVENT_HANDLER_SCOPE_DECL = 'declare const event: Event;\n'
+
 type AttributeMask = { start: number; length: number }
 type AttributeInterpolation = {
 	expression: string
 	sourceOffset: number
 	wrapPropsObjectLiteral?: boolean
+	isEventHandler?: boolean
 }
 
 function maskScriptAndStyleInner(sourceText: string): string {
@@ -93,11 +100,13 @@ function collectAttributeInterpolations(
 
 			if (!hasValue || !value) continue
 
-			if (isDirectiveAttr(name)) continue
+			const runtimeDirective = normalizeRuntimeDirectiveName(name)
+			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') continue
 
 			if (FOR_ATTR_NAMES.has(name)) continue
 
 			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
+			const isEventHandler = runtimeDirective?.family === 'event'
 
 			const matchStartInAttrs = attrMatch.index
 			const nameStartInMatch = fullMatch.indexOf(name)
@@ -116,6 +125,7 @@ function collectAttributeInterpolations(
 					expression: expr,
 					sourceOffset: absValueStart + seg.start + 1,
 					wrapPropsObjectLiteral,
+					isEventHandler,
 				})
 			}
 		}
@@ -211,14 +221,25 @@ export function formatInterpolationBinderPrelude(
 	braceOffset: number,
 	buildBindingNames: ReadonlySet<string>,
 	buildTypeDeclTexts: readonly string[],
-	buildScriptBodies: readonly string[]
+	buildScriptBodies: readonly string[],
+	stateScriptBodies: readonly string[] = [],
+	options?: { writableNames?: ReadonlySet<string> }
 ): string {
 	const doc = parseMinimalHtmlFromText(sourceText)
 	const scopes = collectForDirectiveScopes(doc.roots)
 	const forBindings = getForBindingsAtOffset(braceOffset, scopes)
 	const allBindings =
 		forBindings.size > 0 ? new Set([...buildBindingNames, ...forBindings]) : buildBindingNames
-	return formatBuildScopeAmbientPrelude(allBindings, buildTypeDeclTexts, buildScriptBodies)
+	const writableNames =
+		options?.writableNames && options.writableNames.size > 0
+			? new Set([...options.writableNames].filter(name => allBindings.has(name)))
+			: undefined
+	return formatBuildScopeAmbientPrelude(
+		allBindings,
+		buildTypeDeclTexts,
+		[...buildScriptBodies, ...stateScriptBodies],
+		writableNames
+	)
 }
 
 /**
@@ -226,17 +247,49 @@ export function formatInterpolationBinderPrelude(
  */
 export function formatInterpolationBinderPreludeFromTemplate(
 	sourceText: string,
-	braceOffset: number
+	braceOffset: number,
+	options?: { writableNames?: ReadonlySet<string> }
 ): string {
-	const { buildScriptBodies, typeDeclarationTexts, bindingNames } =
-		buildTemplateEditorAmbient(sourceText)
+	const ambient = buildTemplateEditorAmbient(sourceText)
 	return formatInterpolationBinderPrelude(
 		sourceText,
 		braceOffset,
-		bindingNames,
-		typeDeclarationTexts,
-		buildScriptBodies
+		ambient.bindingNames,
+		ambient.typeDeclarationTexts,
+		ambient.buildScriptBodies,
+		ambient.stateScriptBodies,
+		options
 	)
+}
+
+/** Build virtual TS for a template interpolation/event site (language server + type-check). */
+export function buildTemplateInterpolationVirtualText(
+	sourceText: string,
+	site: TemplateInterpolationSite,
+	preamble: string
+): { virtualText: string; expressionOffsetInVirtual: number } {
+	const ambient = buildTemplateEditorAmbient(sourceText)
+	const binderDecl = formatInterpolationBinderPreludeFromTemplate(sourceText, site.braceOffset, {
+		writableNames: site.isEventHandler ? ambient.writableStateBindingNames : undefined,
+	})
+	const head = preamble + binderDecl
+
+	if (site.isEventHandler) {
+		const virtualText =
+			head +
+			EVENT_HANDLER_SCOPE_DECL +
+			site.expression +
+			(site.expression.trimEnd().endsWith(';') ? '' : ';')
+		return {
+			virtualText,
+			expressionOffsetInVirtual: head.length + EVENT_HANDLER_SCOPE_DECL.length,
+		}
+	}
+
+	const open = site.wrapPropsObjectLiteral === true ? '[{' : '['
+	const close = site.wrapPropsObjectLiteral === true ? '}]' : ']'
+	const virtualText = head + open + site.expression + close
+	return { virtualText, expressionOffsetInVirtual: head.length + open.length }
 }
 
 /**
@@ -253,6 +306,7 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 			expression: i.expression,
 			braceOffset: i.sourceOffset,
 			...(i.wrapPropsObjectLiteral ? { wrapPropsObjectLiteral: true as const } : {}),
+			...(i.isEventHandler ? { isEventHandler: true as const } : {}),
 		})
 	}
 

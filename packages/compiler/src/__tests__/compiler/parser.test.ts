@@ -516,12 +516,28 @@ const x = 1;
 		expect(result.template).toContain('type="module"')
 		expect(result.template).toContain('@scripts/index.ts')
 
-		// props script stays in template
+		// props script without imports stays in template
 		expect(result.template).toContain('props')
 		expect(result.template).toContain('const k = 1')
 
 		// Plain script content must not appear in template
 		expect(result.template).not.toContain('import { fn }')
 		expect(result.template).toContain('<p>Body</p>')
+	})
+
+	it('should extract head script with props when it uses ESM imports', () => {
+		const input = `<html lang="en"><head>
+		<script props="{ storageKey, attribute, defaultTheme }">
+			import { initThemePersistence } from '@scripts/theme'
+			initThemePersistence({ storageKey, attribute, defaultTheme })
+		</script>
+		</head><body></body></html>`
+		const result = parse(input)
+
+		expect(result.clientScripts).toHaveLength(1)
+		expect(result.clientScripts[0].injectInHead).toBe(true)
+		expect(result.clientScripts[0].passDataExpr).toBe('{ storageKey, attribute, defaultTheme }')
+		expect(result.clientScripts[0].content).toContain("import { initThemePersistence }")
+		expect(result.template).not.toContain('initThemePersistence')
 	})
 })

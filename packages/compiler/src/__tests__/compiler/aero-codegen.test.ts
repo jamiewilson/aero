@@ -171,6 +171,24 @@ describe('Aero Codegen - Client Scripts', () => {
 
 		expect(output).toContain('display:contents">1-2</span></div>')
 	})
+
+	it('hoists is:state imports to module scope like is:build', () => {
+		const html = `<script is:state>
+			import { AuthState } from '@shared/types/auth'
+			const auth = { state: AuthState.SignedOut }
+		</script>
+		<div switch="{ auth.state }">
+			<a case="{ AuthState.SignedIn }">Out</a>
+			<span default>Default</span>
+		</div>`
+
+		const code = compile(parse(html), mockOptions)
+		const fnStart = code.indexOf('export default async function')
+		expect(fnStart).toBeGreaterThan(-1)
+		expect(code.slice(0, fnStart)).toContain('AuthState')
+		expect(code.slice(fnStart)).not.toMatch(/^\s*import\s/m)
+		expect(code.slice(fnStart)).toContain('const auth = { state: AuthState.SignedOut }')
+	})
 })
 
 describe('Aero Codegen - Props (script/style)', () => {

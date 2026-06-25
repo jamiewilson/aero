@@ -33,8 +33,10 @@ export {
 
 export {
 	collectTemplateInterpolationSites,
+	buildTemplateInterpolationVirtualText,
 	formatInterpolationBinderPrelude,
 	formatInterpolationBinderPreludeFromTemplate,
+	EVENT_HANDLER_SCOPE_DECL,
 	type TemplateInterpolationSite,
 } from './template-interpolation-sites'
 
@@ -154,6 +156,11 @@ export {
 	type StateScriptDiagnostic,
 	type StateScriptAnalysisResult,
 } from './state-script-analysis'
+
+export {
+	annotateStateScriptForEditorTypecheck,
+	type StateScriptTextMapping,
+} from './state-script-editor-typecheck'
 
 // Directive attributes
 export { isDirectiveAttr, isComponentAttr } from './directive-attributes'

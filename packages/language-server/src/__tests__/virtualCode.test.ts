@@ -126,6 +126,21 @@ const x = 1
 		expect(preambleEnd).toBeGreaterThan(0)
 	})
 
+	it('widens writable is:state let bindings in state virtual TS', () => {
+		const html = `<script is:state>
+const AuthState = { SignedIn: 'SignedIn', SignedOut: 'SignedOut' } as const
+type AuthState = (typeof AuthState)[keyof typeof AuthState]
+let authState = AuthState.SignedOut
+function toggleAuth() {
+	authState = authState === AuthState.SignedIn ? AuthState.SignedOut : AuthState.SignedIn
+}
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'state_0')!
+		expect(text).toContain('let authState: AuthState = AuthState.SignedOut as AuthState')
+	})
+
 	it('maps build script offsets correctly', () => {
 		const scriptContent = '\nconst { title } = Aero.props\n'
 		const html = `<script is:build lang="ts">${scriptContent}</script>`

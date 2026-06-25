@@ -532,6 +532,85 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedRenderDiag).toBeUndefined()
 		expect(unusedCollectionDiag).toBeUndefined()
 	})
+
+	it('should NOT flag is:state bindings as unused when used in template or event handlers', () => {
+		const text = `<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let count = 0
+
+	const inc = () => count++
+	const dec = () => count--
+</script>
+
+<base-layout title="Reactivity Demo">
+	<p>Count: <strong>{ count }</strong></p>
+	<button on:click="{ inc() }">+1</button>
+	<button on:click="{ dec() }">-1</button>
+</base-layout>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///counter.html',
+				fsPath: '/counter.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/counter.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		for (const name of ['count', 'inc', 'dec']) {
+			const unusedDiag = reportedDiagnostics.find((d: any) =>
+				d.message.includes(`'${name}' is declared but its value is never read`)
+			)
+			expect(unusedDiag).toBeUndefined()
+		}
+	})
+
+	it('should still flag unused bundled script vars that share a template name from build scope', () => {
+		const text = `<script is:build>
+	const title = 'Build title'
+</script>
+<script>
+	const title = 'Unused client copy'
+</script>
+<h1>{ title }</h1>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///page.html',
+				fsPath: '/page.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/page.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const unusedClientTitle = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'title' is declared but its value is never read")
+		)
+		expect(unusedClientTitle).toBeDefined()
+	})
 })
 
 /** Undefined refs in template expressions; content globals (e.g. site) and Alpine x-data are excluded. */
@@ -741,6 +820,51 @@ describe('AeroDiagnostics Undefined Variables', () => {
 			d.message.includes("'site' is not defined")
 		)
 		expect(siteDiag).toBeUndefined()
+	})
+
+	it('should flag undefined is:state handler refs when bindings are removed from state script', () => {
+		const text = `<script is:build>
+	import base from '@layouts/base'
+</script>
+
+<script is:state>
+	let count = 0
+
+	//const inc = () => count++
+	//const dec = () => count--
+</script>
+
+<base-layout title="Reactivity Demo">
+	<p>Count: <strong>{ count }</strong></p>
+	<button on:click="{ inc() }">+1</button>
+	<button on:click="{ dec() }">-1</button>
+</base-layout>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///counter.html',
+				fsPath: '/counter.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/counter.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		for (const name of ['inc', 'dec']) {
+			const undefinedDiag = reportedDiagnostics.find((d: any) =>
+				d.message.includes(`'${name}' is not defined`)
+			)
+			expect(undefinedDiag).toBeDefined()
+		}
 	})
 
 	it('should NOT flag content globals as undefined', () => {

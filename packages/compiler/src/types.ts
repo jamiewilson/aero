@@ -34,6 +34,10 @@ export interface CompileOptions {
 	/** Original HTML source for line/column diagnostics. Prefer {@link compileTemplate} to set this automatically. */
 	diagnosticTemplateSource?: string
 	onWarning?: (warning: CompileWarning) => void
+	/** Enable Aero reactivity pipeline (requires `<script is:state>` in templates). */
+	reactivity?: boolean
+	/** Enable Aero hypermedia pipeline (action functions, swap engine). */
+	hypermedia?: boolean
 }
 
 export interface CompileWarning {

@@ -25,6 +25,13 @@ export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance.ts'
 /** Resolved ID (with `\0` prefix) so Vite treats it as an internal module. */
 export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:aero/runtime-instance.ts'
 
+/** Virtual module for production reactive page loaders (written under `.aero/` during build). */
+export const STATE_BINDINGS_REGISTRY_MODULE_ID = 'virtual:aero/state-bindings-registry.ts'
+export const RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID =
+	'\0virtual:aero/state-bindings-registry.ts'
+/** Filename for the generated production state-bindings registry module. */
+export const STATE_BINDINGS_REGISTRY_FILENAME = 'state-bindings-registry.mjs'
+
 /** Prefix for virtual empty-CSS modules used when Vite requests .html?html-proxy&inline-css (Aero .html are JS, not HTML with styles). */
 export const AERO_EMPTY_INLINE_CSS_PREFIX = '\0aero:empty-inline-css:'
 

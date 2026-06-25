@@ -3,12 +3,12 @@
  *
  * @remarks
  * Every consumer that iterates `<script>` tags needs to classify them by kind
- * (build, inline, blocking, bundled, external). This module centralizes that
+ * (build, state, inline, blocking, bundled, external). This module centralizes that
  * logic so the regex + attribute checks live in one place.
  */
 
 /** The kind of a `<script>` tag in an Aero HTML file. */
-export type ScriptTagKind = 'build' | 'inline' | 'blocking' | 'bundled' | 'external'
+export type ScriptTagKind = 'build' | 'state' | 'inline' | 'blocking' | 'bundled' | 'external'
 
 /** A parsed `<script>` block with its classification and content. */
 export interface ParsedScriptBlock {
@@ -74,6 +74,7 @@ export function classifyScriptTag(attrs: string): ScriptTagKind {
 	const lower = attrs.toLowerCase()
 	if (/\bsrc\s*=/.test(lower)) return 'external'
 	if (/\bis:build\b/.test(lower)) return 'build'
+	if (/\bis:state\b/.test(lower)) return 'state'
 	if (/\bis:inline\b/.test(lower)) return 'inline'
 	if (/\bis:blocking\b/.test(lower)) return 'blocking'
 	return 'bundled'

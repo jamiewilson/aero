@@ -217,6 +217,9 @@ importers:
       '@aero-js/highlight':
         specifier: workspace:*
         version: link:../../packages/highlight
+      '@aero-js/reactivity':
+        specifier: workspace:*
+        version: link:../../packages/reactivity
       '@alpinejs/persist':
         specifier: ^3.15.10
         version: 3.15.10
@@ -745,6 +748,9 @@ importers:
       '@aero-js/compiler':
         specifier: workspace:*
         version: link:../compiler
+      '@aero-js/config':
+        specifier: workspace:*
+        version: link:../config
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core

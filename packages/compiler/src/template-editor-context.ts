@@ -10,6 +10,7 @@ import { parse } from './parser'
 import {
 	collectBuildScopeBindingNames,
 	collectBuildScriptTypeDeclarationTexts,
+	collectBindingsFromBuildScriptContent,
 } from './build-scope-bindings'
 import { analyzeStateScript } from './state-script-analysis'
 
@@ -28,6 +29,15 @@ export type TemplateEditorAmbient = {
 	readonly typeDeclarationTexts: readonly string[]
 	/** Value-like binding names visible in `{ }` interpolations. */
 	readonly bindingNames: ReadonlySet<string>
+	/** Non-derived `is:state` bindings that are writable in event handlers. */
+	readonly writableStateBindingNames: ReadonlySet<string>
+}
+
+/** Build + state script bodies used for template expression type inference. */
+export function getBindingInferenceScriptBodies(
+	ambient: Pick<TemplateEditorAmbient, 'buildScriptBodies' | 'stateScriptBodies'>
+): readonly string[] {
+	return [...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
 }
 
 /**
@@ -43,16 +53,21 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			? [parsed.stateScript.content]
 			: []
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
+	const writableStateBindingNames = new Set<string>()
 	for (const stateBody of stateScriptBodies) {
+		collectBindingsFromBuildScriptContent(stateBody, bindingNames)
 		try {
 			const analysis = analyzeStateScript(stateBody)
-			for (const b of analysis.bindings) bindingNames.add(b.name)
+			for (const b of analysis.bindings) {
+				bindingNames.add(b.name)
+				if (!b.derived) writableStateBindingNames.add(b.name)
+			}
 		} catch {
 			// Keep editor ambient resilient to partial/in-progress state scripts.
 		}
 	}
 	const typeDeclarationTexts = collectBuildScriptTypeDeclarationTexts(buildScriptBodies)
-	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames }
+	return { buildScriptBodies, stateScriptBodies, typeDeclarationTexts, bindingNames, writableStateBindingNames }
 }
 
 /**

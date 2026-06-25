@@ -1,8 +1,26 @@
 import * as vscode from 'vscode'
+import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import type { ParsedDocument } from '../document-analysis'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { findInnermostScope } from '../utils'
 import type { TemplateScope } from '../analyzer'
+
+function collectStateBindingNames(parsed: ParsedDocument): Set<string> {
+	const names = new Set<string>()
+	for (const block of parsed.scriptBlocks) {
+		if (!/\bis:state\b/i.test(block.attrs)) continue
+		for (const binding of iterateBuildScriptBindings(block.content, {
+			includeNestedBindings: true,
+		})) {
+			names.add(binding.name)
+		}
+	}
+	return names
+}
+
+export function hasStateScript(parsed: ParsedDocument): boolean {
+	return parsed.scriptBlocks.some(block => /\bis:state\b/i.test(block.attrs))
+}
 
 /** Allowed globals that are always available in templates. */
 const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
@@ -58,6 +76,8 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'$trigger',
 	'$triggerElement',
 	'$response',
+	// `on:*` handler parameter (matches runtime mount + virtual TS prelude)
+	'event',
 ])
 
 function isBoundByForScope(scope: TemplateScope, id: string): boolean {
@@ -71,6 +91,7 @@ export function checkUndefinedVariables(
 	diagnostics: vscode.Diagnostic[]
 ): void {
 	const definedVars = parsed.definedVariables
+	const stateBindings = collectStateBindingNames(parsed)
 	const templateScopes = parsed.templateScopes
 	const references = parsed.templateReferences
 	const buildContentGlobalRefs = parsed.buildContentGlobalReferences
@@ -98,6 +119,8 @@ export function checkUndefinedVariables(
 			continue
 		}
 
+		if (stateBindings.has(ref.content)) continue
+
 		const scope = findInnermostScope(templateScopes, ref.offset)
 		if (scope && isBoundByForScope(scope, ref.content)) continue
 
@@ -122,7 +145,7 @@ export function checkUndefinedVariables(
 	}
 
 	for (const ref of buildContentGlobalRefs) {
-		if (definedVars.has(ref.content)) continue
+		if (definedVars.has(ref.content) || stateBindings.has(ref.content)) continue
 
 		const diagnostic = new vscode.Diagnostic(
 			ref.range,
