@@ -111,6 +111,8 @@ export interface IRComponent {
 	slots: Record<string, IRNode[]>
 	slotVarMap: Record<string, string>
 	componentBindId?: number
+	/** True for `*-layout` tags that emit a full document (`<html>` root). */
+	isLayout?: boolean
 	outVar?: string
 }
 

@@ -35,8 +35,34 @@ const PROPS_ATTR_NAMES = new Set([
 	`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`.toLowerCase(),
 ])
 
-/** Virtual TS prelude for `on:*` handler bodies — matches runtime `compileHandler` parameter. */
-export const EVENT_HANDLER_SCOPE_DECL = 'declare const event: Event;\n'
+/** Hypermedia action functions injected into `on:*` handler scope at mount (reactivity mount compileHandler). */
+export const HYPERMEDIA_ACTION_SCOPE_DECL = `interface HypermediaResponse {
+	readonly ok: boolean
+	readonly status: number
+	readonly html: string
+	readonly headers: Record<string, string>
+}
+interface HypermediaActionOptions {
+	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+	target?: string
+	swap?: string
+	headers?: Record<string, string>
+	values?: Record<string, string>
+	pushUrl?: boolean | string
+	autoDisable?: boolean
+	ariaBusy?: boolean
+	state?: { value: boolean }
+}
+declare function GET(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
+declare function POST(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
+declare function PUT(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
+declare function PATCH(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
+declare function DELETE(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
+`
+
+/** Virtual TS prelude for `on:*` handler bodies — matches runtime mount `compileHandler` scope. */
+export const EVENT_HANDLER_SCOPE_DECL =
+	HYPERMEDIA_ACTION_SCOPE_DECL + 'declare const event: Event;\n'
 
 type AttributeMask = { start: number; length: number }
 type AttributeInterpolation = {
@@ -100,19 +126,22 @@ function collectAttributeInterpolations(
 
 			if (!hasValue || !value) continue
 
-			const runtimeDirective = normalizeRuntimeDirectiveName(name)
-			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') continue
-
-			if (FOR_ATTR_NAMES.has(name)) continue
-
-			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
-			const isEventHandler = runtimeDirective?.family === 'event'
-
 			const matchStartInAttrs = attrMatch.index
 			const nameStartInMatch = fullMatch.indexOf(name)
 			const quote = attrMatch[3]
 			const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
 			const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
+
+			const runtimeDirective = normalizeRuntimeDirectiveName(name)
+			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') {
+				masks.push({ start: absValueStart, length: value.length })
+				continue
+			}
+
+			if (FOR_ATTR_NAMES.has(name)) continue
+
+			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
+			const isEventHandler = runtimeDirective?.family === 'event'
 
 			masks.push({ start: absValueStart, length: value.length })
 

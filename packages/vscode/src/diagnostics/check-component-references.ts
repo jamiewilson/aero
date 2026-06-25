@@ -7,7 +7,7 @@ import { COMPONENT_SUFFIX_REGEX } from '../constants'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import type { PathResolver } from '../pathResolver'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
-import { getIgnoredRanges, isInRanges } from './helpers'
+import { getIgnoredRanges, isInRanges, findTagNameRange } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
 const COMPONENT_TAG_OPEN_REGEX =
@@ -39,10 +39,12 @@ export function checkComponentReferences(
 		const importedSpecifier = imports.get(importName)
 
 		if (!importedSpecifier) {
-			const startPos = document.positionAt(match.index)
-			const endPos = document.positionAt(match.index + match[0].length)
+			const nameRange = findTagNameRange(match.index, tagName)
 			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
+				new vscode.Range(
+					document.positionAt(nameRange.start),
+					document.positionAt(nameRange.end)
+				),
 				`Component '${baseName}' is not imported. Explicit imports are required.`,
 				vscode.DiagnosticSeverity.Error
 			)
@@ -57,10 +59,12 @@ export function checkComponentReferences(
 			(fs.existsSync(resolved) ||
 				(!resolved.endsWith('.html') && fs.existsSync(resolved + '.html')))
 		if (resolved && !resolvedExists) {
-			const startPos = document.positionAt(match.index)
-			const endPos = document.positionAt(match.index + match[0].length)
+			const nameRange = findTagNameRange(match.index, tagName)
 			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
+				new vscode.Range(
+					document.positionAt(nameRange.start),
+					document.positionAt(nameRange.end)
+				),
 				`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
 				vscode.DiagnosticSeverity.Warning
 			)

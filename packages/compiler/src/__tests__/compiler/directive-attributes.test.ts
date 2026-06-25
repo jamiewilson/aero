@@ -44,13 +44,15 @@ describe('isDirectiveAttr with default config', () => {
 	})
 
 	it('returns false for hx- when using default config', () => {
-		expect(isDirectiveAttr('hx-post')).toBe(false)
+		expect(isDirectiveAttr('hx-post')).toBe(true)
+		expect(isDirectiveAttr('hx-on::after-request')).toBe(true)
 	})
 })
 
 describe('DEFAULT_DIRECTIVE_PREFIXES', () => {
-	it('includes Alpine and shorthand prefixes', () => {
+	it('includes Alpine, HTMX, and shorthand prefixes', () => {
 		expect(DEFAULT_DIRECTIVE_PREFIXES).toContain('x-')
+		expect(DEFAULT_DIRECTIVE_PREFIXES).toContain('hx-')
 		expect(DEFAULT_DIRECTIVE_PREFIXES).toContain('@')
 		expect(DEFAULT_DIRECTIVE_PREFIXES).toContain(':')
 		expect(DEFAULT_DIRECTIVE_PREFIXES).toContain('.')

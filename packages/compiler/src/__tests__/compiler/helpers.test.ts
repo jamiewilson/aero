@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest'
 import {
 	compileInterpolation,
+	compileReactiveTextReadExpr,
 	compileAttributeInterpolation,
 	isAttr,
 	stripBraces,
@@ -57,6 +58,22 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('{ trim(text) }')).toBe('${ trim(text) }')
 		expect(compileInterpolation('{ trimStart(text) }')).toBe('${ trimStart(text) }')
 		expect(compileInterpolation('{ trimEnd(text) }')).toBe('${ trimEnd(text) }')
+	})
+})
+
+describe('compileReactiveTextReadExpr', () => {
+	it('uses String() for expressions because text binds write textContent', () => {
+		expect(compileReactiveTextReadExpr('{ count }')).toBe('String( count )')
+		expect(compileReactiveTextReadExpr('bind:count="{ count }"')).toBe(
+			'"bind:count=\\"" + String( count ) + "\\""'
+		)
+		expect(compileReactiveTextReadExpr('{ `bind:count="{ ${count} }"` }')).toBe(
+			'String( `bind:count="{ ${count} }"` )'
+		)
+	})
+
+	it('does not HTML-escape reactive read output', () => {
+		expect(compileReactiveTextReadExpr('{ count }')).not.toContain('escapeHtml')
 	})
 })
 

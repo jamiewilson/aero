@@ -180,16 +180,21 @@ function emitComponentNode(
 	}
 	const slotsString = Helper.emitSlotsObjectVars(node.slotVarMap)
 	const targetVar = outVarFor(node, outVar)
+	const contextArg = Helper.getRenderComponentContextArg()
+	if (node.componentBindId !== undefined && node.isLayout) {
+		const tmpVar = `__aero_layout_${node.componentBindId}`
+		b.raw(
+			`let ${tmpVar} = await Aero.renderComponent(${node.baseName}, ${node.propsString}, ${slotsString}, ${contextArg});\n`
+		)
+		b.raw(
+			`${targetVar} += ${tmpVar}.replace(/<html\\b/i, '<html data-aero-component="${node.componentBindId}"');\n`
+		)
+		return
+	}
 	if (node.componentBindId !== undefined) {
 		b.stmtAppendOut(`<span data-aero-component="${node.componentBindId}">`, targetVar)
 	}
-	b.stmtRenderComponent(
-		targetVar,
-		node.baseName,
-		node.propsString,
-		slotsString,
-		Helper.getRenderComponentContextArg()
-	)
+	b.stmtRenderComponent(targetVar, node.baseName, node.propsString, slotsString, contextArg)
 	if (node.componentBindId !== undefined) {
 		b.stmtAppendOut('</span>', targetVar)
 	}

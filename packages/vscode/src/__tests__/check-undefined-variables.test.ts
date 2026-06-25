@@ -76,4 +76,18 @@ function syncAuthLink(event) { event.preventDefault() }
 		checkUndefinedVariables(parsed, diagnostics)
 		expect(diagnostics.find(d => d.message.includes("'event' is not defined"))).toBeUndefined()
 	})
+
+	it('allows hypermedia GET/POST in on:* handler expressions', () => {
+		const text = `<script is:state>
+	let status = 'Ready'
+</script>
+<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">Load</button>
+<button on:click="{ POST('/api/save', { state: 'status' }) }">Save</button>`
+		const parsed = parseDocument(makeDoc(text))
+		const diagnostics: any[] = []
+		checkUndefinedVariables(parsed, diagnostics)
+		for (const name of ['GET', 'POST']) {
+			expect(diagnostics.find(d => d.message.includes(`'${name}' is not defined`))).toBeUndefined()
+		}
+	})
 })

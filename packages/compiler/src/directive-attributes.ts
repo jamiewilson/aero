@@ -19,8 +19,8 @@ export interface DirectiveAttrConfig {
 	exactNames?: string[]
 }
 
-/** Default prefixes: Alpine.js (x-*) and shorthand (@, :, .). */
-export const DEFAULT_DIRECTIVE_PREFIXES: string[] = ['x-', '@', ':', '.']
+/** Default prefixes: Alpine.js (x-*), HTMX (hx-*), and shorthand (@, :, .). */
+export const DEFAULT_DIRECTIVE_PREFIXES: string[] = ['x-', 'hx-', '@', ':', '.']
 
 const defaultConfig: DirectiveAttrConfig = {
 	prefixes: DEFAULT_DIRECTIVE_PREFIXES,

@@ -12,7 +12,7 @@ import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../util
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
 import { collectComponentLivePropMetadata } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
-import { getIgnoredRanges, isInRanges } from './helpers'
+import { getIgnoredRanges, isInRanges, attributeSectionBase, findAttributeRange, findTagNameRange, sliceRawAttrs, type ByteRange } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
 const COMPONENT_TAG_OPEN_REGEX =
@@ -83,7 +83,8 @@ export function checkComponentProps(
 		if (isInRanges(tagStart, ignoredRanges)) continue
 
 		const tagName = match[1]
-		const attrs = match[0].slice(1 + tagName.length, -1).trim()
+		const fullTag = match[0]
+		const attrs = fullTag.slice(1 + tagName.length, -1).trim()
 		const suffixMatch = COMPONENT_SUFFIX_REGEX.exec(tagName)
 		if (!suffixMatch) continue
 
@@ -108,8 +109,7 @@ export function checkComponentProps(
 				document,
 				diagnostics,
 				tagStart,
-				match[0].length,
-				attrs,
+				fullTag,
 				tagName,
 				baseName,
 				importName,
@@ -189,8 +189,11 @@ export function checkComponentProps(
 function getPassedLivePropNames(
 	attrs: string,
 	stateVars: Map<string, VariableDefinition>
-): Map<string, { bound: boolean; obsoleteReadonly: boolean }> {
-	const passed = new Map<string, { bound: boolean; obsoleteReadonly: boolean }>()
+): Map<string, { bound: boolean; obsoleteReadonly: boolean; rawAttrName: string }> {
+	const passed = new Map<
+		string,
+		{ bound: boolean; obsoleteReadonly: boolean; rawAttrName: string }
+	>()
 	const attrRegex =
 		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 	let m: RegExpExecArray | null
@@ -207,7 +210,7 @@ function getPassedLivePropNames(
 			: obsoleteReadonly
 				? rawName.slice(0, -':readonly'.length)
 				: rawName
-		passed.set(propName, { bound, obsoleteReadonly })
+		passed.set(propName, { bound, obsoleteReadonly, rawAttrName: rawName })
 	}
 	return passed
 }
@@ -279,8 +282,7 @@ function validateComponentLiveProps(
 	document: vscode.TextDocument,
 	diagnostics: vscode.Diagnostic[],
 	tagStart: number,
-	tagLength: number,
-	attrs: string,
+	fullTag: string,
 	tagName: string,
 	baseName: string,
 	importName: string,
@@ -297,7 +299,9 @@ function validateComponentLiveProps(
 	const liveProps = metadata[importName] ?? metadata[baseName] ?? []
 	if (liveProps.length === 0) return
 
-	const passed = getPassedLivePropNames(attrs, stateVars)
+	const rawAttrs = sliceRawAttrs(tagName, fullTag)
+	const attrBase = attributeSectionBase(tagStart, tagName)
+	const passed = getPassedLivePropNames(rawAttrs, stateVars)
 	const componentContent = fs.readFileSync(resolvedPath, 'utf-8')
 	const writtenLiveProps = collectWrittenLivePropNames(componentContent)
 	const bindableLiveProps = collectBindableLivePropNames(componentContent)
@@ -307,53 +311,91 @@ function validateComponentLiveProps(
 		const metadataWrites = (liveProp as typeof liveProp & { writes?: boolean }).writes === true
 		const metadataBindable = (liveProp as typeof liveProp & { bindable?: boolean }).bindable === true
 		if (passedProp?.obsoleteReadonly === true) {
-			const startPos = document.positionAt(tagStart)
-			const endPos = document.positionAt(tagStart + tagLength)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
-				`Component live prop \`${propName}:readonly\` is obsolete; use \`${propName}="{ ... }"\` because live props are readonly by default.`,
-				vscode.DiagnosticSeverity.Error
+			pushLivePropDiagnostic(
+				document,
+				diagnostics,
+				tagStart,
+				tagName,
+				rawAttrs,
+				attrBase,
+				passedProp.rawAttrName,
+				`Component live prop \`${propName}:readonly\` is obsolete; use \`${propName}="{ ... }"\` because live props are readonly by default.`
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-			diagnostics.push(diagnostic)
 			continue
 		}
 		if (passedProp?.bound === true && !metadataBindable && !bindableLiveProps.has(liveProp.name)) {
-			const startPos = document.positionAt(tagStart)
-			const endPos = document.positionAt(tagStart + tagLength)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
-				`Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
-				vscode.DiagnosticSeverity.Error
+			pushLivePropDiagnostic(
+				document,
+				diagnostics,
+				tagStart,
+				tagName,
+				rawAttrs,
+				attrBase,
+				passedProp.rawAttrName,
+				`Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-			diagnostics.push(diagnostic)
 			continue
 		}
 		if ((metadataWrites || writtenLiveProps.has(liveProp.name)) && passedProp && !passedProp.bound) {
-			const startPos = document.positionAt(tagStart)
-			const endPos = document.positionAt(tagStart + tagLength)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(startPos, endPos),
-				`Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
-				vscode.DiagnosticSeverity.Error
+			pushLivePropDiagnostic(
+				document,
+				diagnostics,
+				tagStart,
+				tagName,
+				rawAttrs,
+				attrBase,
+				passedProp.rawAttrName,
+				`Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-			diagnostics.push(diagnostic)
 			continue
 		}
 		if (!liveProp.required) continue
 		if (passedProp) continue
-		const startPos = document.positionAt(tagStart)
-		const endPos = document.positionAt(tagStart + tagLength)
-		const diagnostic = new vscode.Diagnostic(
-			new vscode.Range(startPos, endPos),
-			`Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
-			vscode.DiagnosticSeverity.Error
+		pushLivePropDiagnostic(
+			document,
+			diagnostics,
+			tagStart,
+			tagName,
+			rawAttrs,
+			attrBase,
+			null,
+			`Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`
 		)
-		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-		diagnostics.push(diagnostic)
 	}
+}
+
+function livePropDiagnosticRange(
+	tagStart: number,
+	tagName: string,
+	rawAttrs: string,
+	attrBase: number,
+	rawAttrName: string | null
+): ByteRange {
+	if (rawAttrName) {
+		const attrRange = findAttributeRange(rawAttrs, attrBase, rawAttrName)
+		if (attrRange) return attrRange
+	}
+	return findTagNameRange(tagStart, tagName)
+}
+
+function pushLivePropDiagnostic(
+	document: vscode.TextDocument,
+	diagnostics: vscode.Diagnostic[],
+	tagStart: number,
+	tagName: string,
+	rawAttrs: string,
+	attrBase: number,
+	rawAttrName: string | null,
+	message: string
+): void {
+	const range = livePropDiagnosticRange(tagStart, tagName, rawAttrs, attrBase, rawAttrName)
+	const diagnostic = new vscode.Diagnostic(
+		new vscode.Range(document.positionAt(range.start), document.positionAt(range.end)),
+		message,
+		vscode.DiagnosticSeverity.Error
+	)
+	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
+	diagnostics.push(diagnostic)
 }
 
 function pushPropDiagnostic(

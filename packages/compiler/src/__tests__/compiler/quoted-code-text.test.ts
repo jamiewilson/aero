@@ -18,7 +18,19 @@ describe('quoted interpolation in code text', () => {
 		const code = compile(parse(html), mockOptions)
 
 		expect(code).toContain('data-aero-text=')
-		expect(code).toContain('escapeHtml( count )')
+		expect(code).toContain('String( count )')
 		expect(code).not.toContain('bind:count=&quot;{ count }&quot;')
+	})
+
+	it('compiles template literal brace snippet', () => {
+		const html = `<script is:state>
+	let count = Aero.bindable(0)
+</script>
+<code>{ \`bind:count="{ \${count} }"\` }</code>`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('readExpr":"String( `bind:count=\\"{ ${count} }\\"` )"')
+		expect(code).not.toContain('readExpr":"escapeHtml')
 	})
 })

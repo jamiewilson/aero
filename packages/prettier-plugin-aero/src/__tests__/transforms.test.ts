@@ -169,4 +169,18 @@ import { getCollection, render } from 'aero:content'
 		const output = await formatAero(input, { aeroSelfClosingComponents: false })
 		expect(output).toBe('<nav-component></nav-component>')
 	})
+
+	it('does not prepend semicolons to template literal interpolations', async () => {
+		const input = '<code>{ `bind:count="{ ${count} }"` }</code>'
+		const output = await formatAero(input, { aeroBracketSpacing: true })
+		expect(output).not.toContain('{ ;')
+		expect(output).toContain('`bind:count="{ ${count} }"`')
+	})
+
+	it('does not prepend semicolons to string concat interpolations', async () => {
+		const input = `<code>{ 'bind:count="{ ' + count + ' }"' }</code>`
+		const output = await formatAero(input, { aeroBracketSpacing: true })
+		expect(output).not.toContain('{ ;')
+		expect(output).toContain('count')
+	})
 })

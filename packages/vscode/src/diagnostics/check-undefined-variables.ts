@@ -78,6 +78,12 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'$response',
 	// `on:*` handler parameter (matches runtime mount + virtual TS prelude)
 	'event',
+	// Hypermedia action functions (matches runtime mount action scope + virtual TS prelude)
+	'GET',
+	'POST',
+	'PUT',
+	'PATCH',
+	'DELETE',
 ])
 
 function isBoundByForScope(scope: TemplateScope, id: string): boolean {

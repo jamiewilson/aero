@@ -71,11 +71,6 @@ function mount(options: MountOptions = {}): Promise<void> {
 				destroyStateBindings()
 				destroyStateBindings = null
 			}
-			if (aero.hasStateBindingsForPath(pathname)) {
-				destroyStateBindings = mountClientBindings(aero, pathname, el)
-				if (onRender) onRender(el)
-				return
-			}
 			void renderPage(el, coreRender).then(() => {
 				destroyStateBindings = mountClientBindings(aero, pathname, el)
 				if (onRender) onRender(el)

@@ -82,4 +82,11 @@ function syncAuthLink(event) { event.preventDefault() }
 		expect(virtualText).toContain('declare const event: Event;')
 		expect(virtualText).toMatch(/declare const event: Event;\s*syncAuthLink\(event\)/)
 	})
+
+	it('does not extract interpolations from Alpine directive attribute values', () => {
+		const html = `<div x-bind:class="{ foo }">{ bar }</div>`
+		const sites = collectTemplateInterpolationSites(html)
+		expect(sites).toHaveLength(1)
+		expect(sites[0]?.expression.trim()).toBe('bar')
+	})
 })

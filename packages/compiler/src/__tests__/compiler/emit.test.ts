@@ -139,6 +139,26 @@ describe('emitToJS', () => {
 		expect(out).toContain(contextArg)
 	})
 
+	it('injects data-aero-component on html for bound layout components', () => {
+		const ir: IRNode[] = [
+			{
+				kind: 'Component',
+				baseName: 'base',
+				propsString: '{}',
+				slots: { default: [{ kind: 'Append', content: 'page' }] },
+				slotVarMap: { default: '__slot_0' },
+				componentBindId: 0,
+				isLayout: true,
+			},
+		]
+		const out = emitToJS(ir)
+		expect(out).toContain('let __aero_layout_0 = await Aero.renderComponent(base')
+		expect(out).toContain(
+			`__out += __aero_layout_0.replace(/<html\\b/i, '<html data-aero-component="0"');`
+		)
+		expect(out).not.toContain('<span data-aero-component="0">')
+	})
+
 	it('emits with custom outVar', () => {
 		const ir: IRNode[] = [{ kind: 'Append', content: 'x', outVar: '__html' }]
 		const out = emitToJS(ir, '__html')

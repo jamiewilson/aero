@@ -480,6 +480,7 @@ export class Lowerer {
 	): IRNode[] {
 		const kebabBase = tagName.replace(CONST.COMPONENT_SUFFIX_REGEX, '')
 		const baseName = Helper.kebabToCamelCase(kebabBase)
+		const isLayout = tagName.endsWith('-layout')
 		const { propsString } = parseComponentAttributes(node, this.diag)
 		this.validateComponentBindAttrsRequireState(node, tagName)
 		const livePropExprs = this.collectComponentLivePropExprs(node)
@@ -522,6 +523,7 @@ export class Lowerer {
 			slots,
 			slotVarMap,
 			componentBindId,
+			isLayout,
 			outVar,
 		}
 		if (componentBindId === undefined) return [componentNode]

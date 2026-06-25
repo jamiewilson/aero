@@ -23,7 +23,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		)
 		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
 		expect(code).toContain('data-aero-text="0"')
-		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
+		expect(code).toContain('readExpr":"String( count ) + \\"-\\" + String( doubled )')
 		expect(code).not.toContain('hypermediaRuntime:')
 		expect(code).not.toContain('data-aero-on-click')
 	})
@@ -138,6 +138,24 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('livePropExprs: {"count":{"expr":"count","mutable":true}}')
 		expect(code).toContain('renderComponent(counter, { "count": count }')
 		expect(code).not.toContain('"bind:count"')
+	})
+
+	it('injects layout component bind on html instead of span wrapper', () => {
+		const html = `<script is:build>
+			import base from '@layouts/base'
+		</script>
+		<script is:state>
+			let count = 0
+		</script>
+		<base-layout count="{ count }">
+			<p>{ count }</p>
+		</base-layout>`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).toContain('__aero_layout_0.replace(/<html\\b/i')
+		expect(code).toContain('data-aero-component="0"')
+		expect(code).not.toMatch(/<span data-aero-component="0">/)
 	})
 
 	it('emits component bind records for reactive parent components without live props', () => {

@@ -21,6 +21,14 @@ describe('bindText', () => {
 		expect(target.textContent).toBe('5')
 		cleanup()
 	})
+
+	it('renders literal quotes instead of HTML entities', () => {
+		const target = { textContent: '' } as unknown as Node
+		const cleanup = bindText(target, () => `bind:count="{ 5 }"`)
+		expect(target.textContent).toBe('bind:count="{ 5 }"')
+		expect(target.textContent).not.toContain('&quot;')
+		cleanup()
+	})
 })
 
 describe('bindEvent', () => {
