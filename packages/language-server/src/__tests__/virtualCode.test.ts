@@ -202,6 +202,37 @@ const { count } = Aero.props
 		expect(codes).not.toContain(2588)
 	})
 
+	it('does not emit TS2304 for hypermedia GET/POST in event handler virtual TS', () => {
+		const html = `<script is:state>
+let status = 'Ready'
+</script>
+<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">Load</button>
+<button on:click="{ POST('/api/save', { state: 'status' }) }">Save</button>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('declare function GET')
+		expect(expr0).toContain('declare const event')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('expr.ts', expr0, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('expr.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['expr.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2304)
+	})
+
 	it('maps build script offsets correctly', () => {
 		const scriptContent = '\nconst { title } = Aero.props\n'
 		const html = `<script is:build lang="ts">${scriptContent}</script>`
