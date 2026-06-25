@@ -52,6 +52,17 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(virtualText.endsWith(';')).toBe(true)
 	})
 
+	it('declares readonly live props as let in event handler virtual TS so Aero can own the diagnostic', () => {
+		const html = `<script is:state>const { count } = Aero.props</script><button on:click="{ count++ }">+</button>`
+		const sites = collectTemplateInterpolationSites(html)
+		const eventSite = sites.find(s => s.isEventHandler)
+		expect(eventSite).toBeDefined()
+
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, eventSite!, '')
+		expect(virtualText).toContain('declare let count')
+		expect(virtualText).toContain('count++')
+	})
+
 	it('keeps read-only interpolation bindings as declare const', () => {
 		const html = `<script is:state>let count = 0</script><p>{ count }</p>`
 		const prelude = formatInterpolationBinderPreludeFromTemplate(html, html.indexOf('count'))

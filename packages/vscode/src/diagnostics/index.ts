@@ -13,6 +13,7 @@ import { checkUndefinedScriptVariables } from './check-undefined-script-variable
 import { checkUnusedVariables } from './check-unused-variables'
 import { checkRouteContract } from './check-route-contract'
 import { checkFeatureGates } from './check-feature-gates'
+import { checkReadonlyLivePropWrites } from './check-readonly-live-prop-writes'
 
 export function collectDiagnosticsForDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
 	const parsed = parseDocument(document)
@@ -33,6 +34,7 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 		parsed.variablesByScope.state
 	)
 	checkUndefinedScriptVariables(document, parsed, diagnostics)
+	checkReadonlyLivePropWrites(document, parsed, diagnostics)
 	checkRouteContract(document, diagnostics, resolver)
 	const regexUndefined =
 		vscode.workspace

@@ -157,6 +157,11 @@ export {
 	type StateScriptDiagnostic,
 	type StateScriptAnalysisResult,
 } from './state-script-analysis'
+export {
+	collectReadonlyLivePropWritesInExpression,
+	readonlyLivePropWriteMessage,
+	type ReadonlyLivePropWrite,
+} from './readonly-live-prop-writes'
 
 export {
 	annotateStateScriptForEditorTypecheck,

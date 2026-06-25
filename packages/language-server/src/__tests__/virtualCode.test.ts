@@ -141,6 +141,67 @@ function toggleAuth() {
 		expect(text).toContain('let authState: AuthState = AuthState.SignedOut as AuthState')
 	})
 
+	it('includes Aero.bindable in state virtual TS preamble', () => {
+		const html = `<script is:state>
+const { count = Aero.bindable(), value = Aero.bindable(0) } = Aero.props
+function inc() { value++ }
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'state_0')!
+		expect(text).toContain('bindable(): undefined')
+		expect(text).toContain('bindable<T>(fallback: T): T')
+		expect(text).toContain('let { count = Aero.bindable(), value = Aero.bindable(0) } = Aero.props')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('state.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['state.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2339)
+		expect(codes).not.toContain(2588)
+	})
+
+	it('does not emit TS2588 for readonly live prop writes in event handler virtual TS', () => {
+		const html = `<script is:state>
+const { count } = Aero.props
+</script>
+<button on:click="{ count++ }">+</button>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'expr_0')!
+		expect(text).toContain('declare let count')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('expr.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('expr.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['expr.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2588)
+	})
+
 	it('maps build script offsets correctly', () => {
 		const scriptContent = '\nconst { title } = Aero.props\n'
 		const html = `<script is:build lang="ts">${scriptContent}</script>`

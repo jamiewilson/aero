@@ -29,6 +29,15 @@ function toggleAuth() {
 		expect(mapped.segments.length).toBeGreaterThan(1)
 	})
 
+	it('rewrites Aero.props destructures to let in virtual TS so Aero owns live-prop diagnostics', () => {
+		const script = `const { count, value = Aero.bindable(0) } = Aero.props
+function inc() { value++ }`
+
+		const mapped = annotateStateScriptForEditorTypecheck(script)
+		expect(mapped.text).toContain('let { count, value = Aero.bindable(0) } = Aero.props')
+		expect(mapped.text).not.toContain('const { count, value = Aero.bindable(0) } = Aero.props')
+	})
+
 	it('avoids TS2367 on derived href/label lines after authState widening', () => {
 		const script = `${AUTH_STATE_STUB}
 let authState = AuthState.SignedOut

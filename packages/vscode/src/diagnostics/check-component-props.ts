@@ -189,8 +189,8 @@ export function checkComponentProps(
 function getPassedLivePropNames(
 	attrs: string,
 	stateVars: Map<string, VariableDefinition>
-): Set<string> {
-	const passed = new Set<string>()
+): Map<string, { bound: boolean; obsoleteReadonly: boolean }> {
+	const passed = new Map<string, { bound: boolean; obsoleteReadonly: boolean }>()
 	const attrRegex =
 		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 	let m: RegExpExecArray | null
@@ -200,12 +200,79 @@ function getPassedLivePropNames(
 		const value = (m[2] ?? m[3] ?? '').trim()
 		const expr = value.match(/^\{\s*([A-Za-z_$][\w$]*)\s*\}$/)?.[1]
 		if (!expr || !stateVars.has(expr)) continue
-		const propName = rawName.endsWith(':readonly')
-			? rawName.slice(0, -':readonly'.length)
-			: rawName
-		passed.add(propName)
+		const bound = rawName.startsWith('bind:')
+		const obsoleteReadonly = rawName.endsWith(':readonly')
+		const propName = bound
+			? rawName.slice('bind:'.length)
+			: obsoleteReadonly
+				? rawName.slice(0, -':readonly'.length)
+				: rawName
+		passed.set(propName, { bound, obsoleteReadonly })
 	}
 	return passed
+}
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function collectStateScriptContent(componentContent: string): string {
+	const scripts: string[] = []
+	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+	let match: RegExpExecArray | null
+	while ((match = scriptRegex.exec(componentContent)) !== null) {
+		if (/\bis:state\b/.test(match[1])) scripts.push(match[2])
+	}
+	return scripts.join('\n')
+}
+
+function collectLivePropLocalNames(stateScript: string): Set<string> {
+	const names = new Set<string>()
+	const destructureRegex = /\bconst\s*\{([\s\S]*?)\}\s*=\s*Aero\.props\b/g
+	let match: RegExpExecArray | null
+	while ((match = destructureRegex.exec(stateScript)) !== null) {
+		for (const rawPart of match[1].split(',')) {
+			const part = rawPart.trim()
+			if (!part) continue
+			const local = (part.includes(':') ? part.split(':').pop() : part)
+				?.split('=')[0]
+				?.trim()
+			if (local && /^[A-Za-z_$][\w$]*$/.test(local)) names.add(local)
+		}
+	}
+	return names
+}
+
+function collectWrittenLivePropNames(componentContent: string): Set<string> {
+	const stateScript = collectStateScriptContent(componentContent)
+	const liveProps = collectLivePropLocalNames(stateScript)
+	const written = new Set<string>()
+	for (const name of liveProps) {
+		const escaped = escapeRegExp(name)
+		const writePattern = new RegExp(
+			`(?:\\b${escaped}\\s*(?:[+\\-*/%]?=)|(?:\\+\\+|--)\\s*${escaped}\\b|\\b${escaped}\\s*(?:\\+\\+|--))`
+		)
+		if (writePattern.test(stateScript)) written.add(name)
+	}
+	return written
+}
+
+function collectBindableLivePropNames(componentContent: string): Set<string> {
+	const stateScript = collectStateScriptContent(componentContent)
+	const bindable = new Set<string>()
+	const destructureRegex = /\bconst\s*\{([\s\S]*?)\}\s*=\s*Aero\.props\b/g
+	let match: RegExpExecArray | null
+	while ((match = destructureRegex.exec(stateScript)) !== null) {
+		for (const rawPart of match[1].split(',')) {
+			const part = rawPart.trim()
+			if (!part || !/\bAero\.bindable\s*\(/.test(part)) continue
+			const local = (part.includes(':') ? part.split(':').pop() : part)
+				?.split('=')[0]
+				?.trim()
+			if (local && /^[A-Za-z_$][\w$]*$/.test(local)) bindable.add(local)
+		}
+	}
+	return bindable
 }
 
 function validateComponentLiveProps(
@@ -231,10 +298,52 @@ function validateComponentLiveProps(
 	if (liveProps.length === 0) return
 
 	const passed = getPassedLivePropNames(attrs, stateVars)
+	const componentContent = fs.readFileSync(resolvedPath, 'utf-8')
+	const writtenLiveProps = collectWrittenLivePropNames(componentContent)
+	const bindableLiveProps = collectBindableLivePropNames(componentContent)
 	for (const liveProp of liveProps) {
-		if (!liveProp.required) continue
 		const propName = liveProp.propName || liveProp.name
-		if (passed.has(propName)) continue
+		const passedProp = passed.get(propName)
+		const metadataWrites = (liveProp as typeof liveProp & { writes?: boolean }).writes === true
+		const metadataBindable = (liveProp as typeof liveProp & { bindable?: boolean }).bindable === true
+		if (passedProp?.obsoleteReadonly === true) {
+			const startPos = document.positionAt(tagStart)
+			const endPos = document.positionAt(tagStart + tagLength)
+			const diagnostic = new vscode.Diagnostic(
+				new vscode.Range(startPos, endPos),
+				`Component live prop \`${propName}:readonly\` is obsolete; use \`${propName}="{ ... }"\` because live props are readonly by default.`,
+				vscode.DiagnosticSeverity.Error
+			)
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
+			diagnostics.push(diagnostic)
+			continue
+		}
+		if (passedProp?.bound === true && !metadataBindable && !bindableLiveProps.has(liveProp.name)) {
+			const startPos = document.positionAt(tagStart)
+			const endPos = document.positionAt(tagStart + tagLength)
+			const diagnostic = new vscode.Diagnostic(
+				new vscode.Range(startPos, endPos),
+				`Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
+				vscode.DiagnosticSeverity.Error
+			)
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
+			diagnostics.push(diagnostic)
+			continue
+		}
+		if ((metadataWrites || writtenLiveProps.has(liveProp.name)) && passedProp && !passedProp.bound) {
+			const startPos = document.positionAt(tagStart)
+			const endPos = document.positionAt(tagStart + tagLength)
+			const diagnostic = new vscode.Diagnostic(
+				new vscode.Range(startPos, endPos),
+				`Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
+				vscode.DiagnosticSeverity.Error
+			)
+			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
+			diagnostics.push(diagnostic)
+			continue
+		}
+		if (!liveProp.required) continue
+		if (passedProp) continue
 		const startPos = document.positionAt(tagStart)
 		const endPos = document.positionAt(tagStart + tagLength)
 		const diagnostic = new vscode.Diagnostic(
