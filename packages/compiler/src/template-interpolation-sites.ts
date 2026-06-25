@@ -100,19 +100,22 @@ function collectAttributeInterpolations(
 
 			if (!hasValue || !value) continue
 
-			const runtimeDirective = normalizeRuntimeDirectiveName(name)
-			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') continue
-
-			if (FOR_ATTR_NAMES.has(name)) continue
-
-			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
-			const isEventHandler = runtimeDirective?.family === 'event'
-
 			const matchStartInAttrs = attrMatch.index
 			const nameStartInMatch = fullMatch.indexOf(name)
 			const quote = attrMatch[3]
 			const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
 			const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
+
+			const runtimeDirective = normalizeRuntimeDirectiveName(name)
+			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') {
+				masks.push({ start: absValueStart, length: value.length })
+				continue
+			}
+
+			if (FOR_ATTR_NAMES.has(name)) continue
+
+			const wrapPropsObjectLiteral = isPropsLikeAttribute(name)
+			const isEventHandler = runtimeDirective?.family === 'event'
 
 			masks.push({ start: absValueStart, length: value.length })
 
