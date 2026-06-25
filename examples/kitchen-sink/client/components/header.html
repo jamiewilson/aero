@@ -18,7 +18,7 @@
 
 	<div if="{ isCounterDemo }" class="binding-demo v-stack items-center">
 		<h3>Live prop binding</h3>
-		<code>bind:count="{ count }"</code>
+		<code>{ `bind:count="{ ${count} }"` }</code>
 		<div class="h-stack items-center">
 			<button on:click="{ count-- }">−</button>
 			<button on:click="{ count++ }">+</button>

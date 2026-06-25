@@ -23,7 +23,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		)
 		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
 		expect(code).toContain('data-aero-text="0"')
-		expect(code).toContain('readExpr":"escapeHtml( count ) + \\"-\\" + escapeHtml( doubled )')
+		expect(code).toContain('readExpr":"String( count ) + \\"-\\" + String( doubled )')
 		expect(code).not.toContain('hypermediaRuntime:')
 		expect(code).not.toContain('data-aero-on-click')
 	})

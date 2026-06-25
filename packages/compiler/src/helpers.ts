@@ -117,7 +117,7 @@ export function compileReactiveTextReadExpr(text: string): string {
 		if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {
 			return `(${seg.expression})`
 		}
-		return `escapeHtml(${seg.expression})`
+		return `String(${seg.expression})`
 	})
 	if (parts.length === 1) return parts[0]!
 	return parts.join(' + ')

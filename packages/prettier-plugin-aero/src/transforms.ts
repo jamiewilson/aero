@@ -101,7 +101,11 @@ async function formatExpressionContents(
 		semi: options.semi ?? false,
 	}
 
-	const stripFormatted = (value: string): string => value.trim().replace(/;\s*$/, '')
+	const stripFormatted = (value: string): string =>
+		value
+			.trim()
+			.replace(/^;\s*/, '')
+			.replace(/;\s*$/, '')
 
 	try {
 		return stripFormatted(await prettier.format(trimmed, formatOptions))
