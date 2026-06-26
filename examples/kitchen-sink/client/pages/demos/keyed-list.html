@@ -1,43 +1,66 @@
 <script is:build>
 	import base from '@layouts/base'
+
+	const initialItems = [
+		{ id: crypto.randomUUID() },
+		{ id: crypto.randomUUID() },
+		{ id: crypto.randomUUID() },
+	]
 </script>
 
 <script is:state>
-	let items = [
-		{ id: 1, label: 'Alpha' },
-		{ id: 2, label: 'Beta' },
-		{ id: 3, label: 'Gamma' },
-	]
+	import { withTransition } from '@scripts/utils/withTransition'
 
-	let nextId = 4
+	let items = initialItems
 
 	function addItem() {
-		items = [...items, { id: nextId, label: `Item ${nextId}` }]
-		nextId++
+		const id = crypto.randomUUID()
+		withTransition(() => (items = [...items, { id }]))
 	}
 
 	function removeFirst() {
 		if (items.length === 0) return
-		items = items.slice(1)
+		withTransition(() => (items = items.slice(1)))
 	}
 
 	function reverseItems() {
-		items = [...items].reverse()
+		withTransition(() => (items = [...items].reverse()))
 	}
 </script>
 
 <base-layout title="Keyed list">
 	<section class="v-stack">
-		<p class="secondary">Keyed reactive <code>for</code> with <code>key</code> (P5.2)</p>
+		<p class="secondary">Keyed reactive <code>for</code> loop with <code>key</code></p>
 
 		<div class="h-stack">
 			<button on:click="{ addItem() }">Add</button>
 			<button on:click="{ removeFirst() }">Remove first</button>
 			<button on:click="{ reverseItems() }">Reverse</button>
 		</div>
-
-		<ul class="card">
-			<li for="{ const item of items }" key="{ item.id }" text="{ item.label }"></li>
-		</ul>
 	</section>
+	<ul>
+		<li
+			class="list-item"
+			for="{ const item of items }"
+			key="{ item.id }"
+			text="{ item.id.slice(-8) }"></li>
+
+		<style>
+			@scope {
+				:scope {
+					list-style-type: decimal-leading-zero;
+					list-style-position: inside;
+					justify-self: center;
+					text-align: start;
+					font-family: var(--font-mono);
+					font-size: smaller;
+
+					li {
+						view-transition-name: match-element;
+						view-transition-class: list-item;
+					}
+				}
+			}
+		</style>
+	</ul>
 </base-layout>

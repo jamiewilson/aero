@@ -4,9 +4,7 @@
 </script>
 
 <base-layout>
-	<ul>
-		<li for="{ const demo of site.demos }">
-			<a href="{ demo.href }">{ demo.label }</a>
-		</li>
-	</ul>
+	<div for="{ const demo of site.demos }">
+		<a href="{ demo.href }">{ demo.label }</a>
+	</div>
 </base-layout>

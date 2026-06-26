@@ -16,10 +16,10 @@
 	</header>
 
 	<ul class="card" data-testid="docs-list">
-		<li for="{ const doc of docs }">
-			<a href="/docs/{ doc.id }">{ doc.data.title }</a>
-			<badge-component if="{ !doc.data.published }" text="Draft" />
-			<p>{ doc.data.subtitle }</p>
+		<li for="{ const { id, data } of docs }">
+			<a href="/docs/{ id }">{ data.title }</a>
+			<badge-component if="{ !data.published }" label="Draft" />
+			<p>{ data.subtitle }</p>
 		</li>
 		<style>
 			@scope {

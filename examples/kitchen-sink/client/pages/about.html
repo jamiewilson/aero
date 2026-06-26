@@ -11,30 +11,11 @@
 	}
 </script>
 
-<script is:state>
-	import { AuthState } from '@shared/types/auth'
-	let authState = AuthState.SignedOut
-
-	let authHref = authState === AuthState.SignedIn ? '/logout' : '/login'
-	let authLabel = authState === AuthState.SignedIn ? 'Log Out' : 'Log In'
-
-	function toggleAuth() {
-		authState = authState === AuthState.SignedIn ? AuthState.SignedOut : AuthState.SignedIn
-	}
-
-	function syncAuthLink(event) {
-		event.preventDefault()
-		toggleAuth()
-		event.currentTarget.href = authHref
-	}
-</script>
-
 <sub-layout title="About Meta Title" image="{ Aero.site.url + aboutImage }">
 	<img src="{ aboutImage }" class="fullscreen" alt="About" />
 
 	<div class="h-stack" slot="thru-sub">
-		<code class="secondary">Auth state: { authState }</code>
-		<a href="{ authHref }" on:click="{ syncAuthLink(event) }">{ authLabel }</a>
+		<code class="secondary">Pass-through slot</code>
 	</div>
 
 	<header-component props />
