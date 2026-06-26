@@ -99,6 +99,11 @@ describe('Parser (V2 Taxonomy)', () => {
 		)
 	})
 
+	it('does not expand self-closing tags inside Aero expression bodies', () => {
+		const input = '<code>{ `<header-component bind:count="{ ${count} }" />` }</code>'
+		expect(expandSelfClosingTags(input)).toBe(input)
+	})
+
 	it('should not extract scripts inside HTML comments', () => {
 		const input = `
             <!--<script is:build>const commented = true;</script>-->

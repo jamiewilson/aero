@@ -1735,6 +1735,37 @@ describe('AeroDiagnostics Component References', () => {
 		)
 		expect(componentDiag).toBeUndefined()
 	})
+
+	it('should ignore component-like markup inside template literal snippets', () => {
+		const text = `<script is:state>
+	const { count = Aero.bindable() } = Aero.props
+</script>
+<code>{ \`<header-component bind:count="{ \${count} }" />\` }</code>`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => positionAtOffset(text, offset),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const headerDiags = reportedDiagnostics.filter(
+			(d: any) =>
+				d.message.includes('header') &&
+				(d.message.includes('not imported') ||
+					d.message.includes('not defined') ||
+					d.message.includes('is not defined'))
+		)
+		expect(headerDiags).toHaveLength(0)
+	})
 })
 
 /** Cross-file prop validation: report when required props are missing. */

@@ -2,6 +2,7 @@
  * Shared utilities: kebab-case conversion, import extraction, and scope lookup.
  */
 import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
+import { collectInterpolationBodyRanges } from '@aero-js/interpolation'
 import type { TemplateScope } from './analyzer'
 import { parseScriptBlocks } from './script-tag'
 
@@ -88,6 +89,10 @@ export function getIgnoredRanges(text: string): IgnoredRange[] {
 		const start = scriptMatch.index + scriptMatch[0].length - closeTagLen - contentLen
 		const end = start + contentLen
 		ranges.push({ start, end })
+	}
+
+	for (const range of collectInterpolationBodyRanges(text, { attributeMode: false })) {
+		ranges.push({ start: range.start - 1, end: range.end + 1 })
 	}
 
 	return ranges

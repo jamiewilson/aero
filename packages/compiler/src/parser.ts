@@ -1,5 +1,6 @@
 import type { ParseResult, ScriptEntry } from './types'
 
+import { isOffsetInRanges, collectInterpolationBodyRanges, escapeInterpolationBodyMarkup } from '@aero-js/interpolation'
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 import { AERO_ATTR_PREFIX, DATA_AERO_ATTR_PREFIX } from './constants'
@@ -63,6 +64,7 @@ function findSelfClosingSlash(html: string, tagEnd: number): number {
 export function expandSelfClosingTags(html: string): string {
 	let out = ''
 	let cursor = 0
+	const interpolationBodies = collectInterpolationBodyRanges(html, { attributeMode: false })
 
 	while (cursor < html.length) {
 		const tagStart = html.indexOf('<', cursor)
@@ -72,6 +74,11 @@ export function expandSelfClosingTags(html: string): string {
 		}
 
 		out += html.slice(cursor, tagStart)
+		if (isOffsetInRanges(tagStart, interpolationBodies)) {
+			out += '<'
+			cursor = tagStart + 1
+			continue
+		}
 		const firstTagChar = html[tagStart + 1]
 		if (!isTagNameChar(firstTagChar)) {
 			out += '<'
@@ -288,12 +295,14 @@ function isLocalScriptSource(src: string): boolean {
 export function parse(html: string): ParseResult {
 	html = html.replace(BOM_PREFIX, '')
 
+	const { text: escapedHtml, restore } = escapeInterpolationBodyMarkup(html)
+
 	// Expand non-void self-closing tags so the HTML5 parser (linkedom) builds correct DOM.
 	// Otherwise e.g. <nav-component /> is parsed as opening-only and swallows following siblings.
-	html = expandSelfClosingTags(html)
+	let htmlForParse = expandSelfClosingTags(escapedHtml)
 
-	const isFullDocument = /<\s*html[\s>]/i.test(html)
-	const doc = parseDocument(html, isFullDocument)
+	const isFullDocument = /<\s*html[\s>]/i.test(htmlForParse)
+	const doc = parseDocument(htmlForParse, isFullDocument)
 
 	const buildContent: string[] = []
 	const stateContent: string[] = []
@@ -359,7 +368,7 @@ export function parse(html: string): ParseResult {
 	const buildScript = buildContent.length > 0 ? { content: buildContent.join('\n') } : null
 	const stateScript = stateContent.length > 0 ? { content: stateContent[0] } : null
 
-	const template = serializeTemplate(doc, isFullDocument)
+	const template = restore(serializeTemplate(doc, isFullDocument).trim())
 
 	return {
 		buildScript,
@@ -367,6 +376,6 @@ export function parse(html: string): ParseResult {
 		clientScripts,
 		inlineScripts,
 		blockingScripts,
-		template: template.trim(),
+		template,
 	}
 }
