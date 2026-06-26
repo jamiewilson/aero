@@ -2,7 +2,12 @@ import * as vscode from 'vscode'
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseAeroHtmlDocument, walkHtmlNodes } from '@aero-js/html-parser'
 import { parseScriptBlocks } from '../script-tag'
-import { isInsideHtmlComment, maskJsComments } from './helpers'
+import {
+	escapeInterpolationBodyMarkup,
+	isInsideHtmlComment,
+	maskJsComments,
+	maskTemplateLiteralStatic,
+} from './helpers'
 import { isJsReservedIdentifier } from './js-keywords'
 import type { TemplateReference } from './types'
 
@@ -40,7 +45,10 @@ export function collectTemplateReferences(
 
 	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
 
-	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())
+	const htmlDoc = parseAeroHtmlDocument(
+		escapeInterpolationBodyMarkup(maskedText).text,
+		document.uri.toString()
+	)
 	for (const node of walkHtmlNodes(htmlDoc.roots)) {
 		if (!node.tag || node.startTagEnd == null) continue
 		const tl = node.tag.toLowerCase()
@@ -164,6 +172,7 @@ function extractIdentifiers(
 	isAlpine?: boolean
 ) {
 	let maskedContent = maskJsComments(content)
+	maskedContent = maskTemplateLiteralStatic(maskedContent)
 	maskedContent = maskedContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
 		' '.repeat(match.length)
 	)

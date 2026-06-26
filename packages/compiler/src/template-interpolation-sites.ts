@@ -5,7 +5,7 @@
  * Kept aligned with `packages/language-server/src/virtualCode.ts` interpolation extraction.
  */
 
-import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { escapeInterpolationBodyMarkup, tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/html-parser'
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
 import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
@@ -254,7 +254,9 @@ export function formatInterpolationBinderPrelude(
 	stateScriptBodies: readonly string[] = [],
 	options?: { writableNames?: ReadonlySet<string> }
 ): string {
-	const doc = parseMinimalHtmlFromText(sourceText)
+	const doc = parseMinimalHtmlFromText(
+		escapeInterpolationBodyMarkup(maskScriptAndStyleInner(sourceText)).text
+	)
 	const scopes = collectForDirectiveScopes(doc.roots)
 	const forBindings = getForBindingsAtOffset(braceOffset, scopes)
 	const allBindings =
@@ -327,7 +329,9 @@ export function buildTemplateInterpolationVirtualText(
  * All `{ ... }` interpolation expressions in document order (attribute interpolations first, then text).
  */
 export function collectTemplateInterpolationSites(sourceText: string): TemplateInterpolationSite[] {
-	const doc = parseMinimalHtmlFromText(sourceText)
+	const doc = parseMinimalHtmlFromText(
+		escapeInterpolationBodyMarkup(maskScriptAndStyleInner(sourceText)).text
+	)
 	const roots = doc.roots
 	const out: TemplateInterpolationSite[] = []
 
