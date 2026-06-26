@@ -553,6 +553,41 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedCollectionDiag).toBeUndefined()
 	})
 
+	it('should NOT flag build-scope const as unused when referenced from is:state', () => {
+		const text = `<script is:build>
+	const initialItems = [{ id: 'a' }, { id: 'b' }]
+</script>
+
+<script is:state>
+	let items = initialItems
+</script>
+
+<ul>
+	<li for="{ const item of items }" key="{ item.id }">{ item.id }</li>
+</ul>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///keyed-list.html',
+				fsPath: '/keyed-list.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => positionAtOffset(text, offset),
+			languageId: 'html',
+			fileName: '/keyed-list.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const unusedInitialItems = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'initialItems' is declared but its value is never read")
+		)
+		expect(unusedInitialItems).toBeUndefined()
+	})
+
 	it('should NOT flag is:state bindings as unused when used in template or event handlers', () => {
 		const text = `<script is:build>
 	import base from '@layouts/base'
