@@ -76,6 +76,7 @@ describe('reactive structural codegen', () => {
 		expect(code).toContain('data-aero-for="0"')
 		expect(code).toContain('forBinds:')
 		expect(code).toContain('__aeroForRow_0')
+		expect(code).toContain('bindingNames:')
 	})
 
 	it('scopes keyed for text binds to rowMounts, not page-level textBinds', () => {

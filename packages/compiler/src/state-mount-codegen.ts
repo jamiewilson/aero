@@ -333,6 +333,7 @@ function serializeForBinds(forBinds: IRReactiveForBind[]): string {
 			return `\t\t{
 			selector: ${JSON.stringify(`[data-aero-for="${forBind.bindId}"]`)},
 			binding: ${JSON.stringify(forBind.binding)},
+			bindingNames: ${JSON.stringify(forBind.bindingNames)},
 			itemsExpr: ${JSON.stringify(forBind.itemsExpr)},
 			keyExpr: ${JSON.stringify(forBind.keyExpr)},
 			renderRow: __aeroForRow_${forBind.bindId},

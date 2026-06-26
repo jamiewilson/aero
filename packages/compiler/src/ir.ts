@@ -219,6 +219,8 @@ export interface IRReactiveForBind {
 	kind: 'ReactiveForBind'
 	bindId: number
 	binding: string
+	/** Identifier names bound by `binding` (for destructuring patterns). */
+	bindingNames: readonly string[]
 	itemsExpr: string
 	keyExpr: string
 	body: IRNode[]
