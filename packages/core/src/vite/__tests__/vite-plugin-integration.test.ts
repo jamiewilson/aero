@@ -58,7 +58,7 @@ describe('Vite Plugin Integration', () => {
 		const id = '/aero/pages/test.html'
 
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('export default async function(Aero)')
+		expect(result.code).toContain('export default __aeroPageRender')
 		expect(result.code).toContain('Vite Test')
 	})
 
@@ -163,9 +163,12 @@ describe('Vite Plugin Integration', () => {
 		const id = '/aero/pages/props.html'
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		const aeroInstance = new Aero()
-		const bodyStart = result.code.indexOf('{')
-		const bodyEnd = result.code.lastIndexOf('}')
-		const body = result.code.substring(bodyStart + 1, bodyEnd)
+		const renderOpen = 'async function __aeroPageRender(Aero) {'
+		const bodyStart = result.code.indexOf(renderOpen)
+		const bodyEnd = result.code.indexOf('}\nexport default __aeroPageRender')
+		expect(bodyStart).toBeGreaterThan(-1)
+		expect(bodyEnd).toBeGreaterThan(bodyStart)
+		const body = result.code.substring(bodyStart + renderOpen.length, bodyEnd)
 		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('Aero', body)
 
 		const finalOutput = await aeroInstance.render(renderFn, {
@@ -318,7 +321,7 @@ describe('Vite Plugin Integration', () => {
 				},
 				moduleGraph: {
 					getModuleById: (id: string) =>
-						id === '\0virtual:aero/runtime-instance.ts' ? { id } : null,
+						id === '\0virtual:aero/template-loader.ts' ? { id } : null,
 					invalidateModule: (mod: { id: string }) => invalidatedIds.push(mod.id),
 				},
 			} as any)
@@ -353,7 +356,7 @@ describe('Vite Plugin Integration', () => {
 			fs.unlinkSync(guidePath)
 			unlink!(guidePath)
 			expect(readPaths()).not.toContain('/guide')
-			expect(invalidatedIds).toContain('\0virtual:aero/runtime-instance.ts')
+			expect(invalidatedIds).toContain('\0virtual:aero/template-loader.ts')
 		} finally {
 			fs.rmSync(tmpDir, { recursive: true, force: true })
 			configPlugin.config({ root: process.cwd() }, { command: 'serve' })

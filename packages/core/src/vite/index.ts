@@ -25,9 +25,13 @@ import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
+	RESOLVED_RUNTIME_HUB_MODULE_ID,
+	RESOLVED_TEMPLATE_LOADER_MODULE_ID,
 	RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID,
 	resolveDirs,
 	RUNTIME_INSTANCE_MODULE_ID,
+	RUNTIME_HUB_MODULE_ID,
+	TEMPLATE_LOADER_MODULE_ID,
 	STATE_BINDINGS_REGISTRY_FILENAME,
 	STATE_BINDINGS_REGISTRY_MODULE_ID,
 } from './defaults'
@@ -62,6 +66,9 @@ import {
 	discoverClientScriptContentMap,
 	discoverReactivePagePaths,
 	getRuntimeInstanceModuleSource,
+	getDevRuntimeHubModuleSource,
+	getDevRuntimeInstanceModuleSource,
+	getDevTemplateLoaderModuleSource,
 	renderStaticPages,
 } from './build'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
@@ -150,6 +157,7 @@ function compileHtmlWithDedupedWarnings(
 					params.dirs
 				)
 	logAeroDevTiming('dev-transform-metadata', metadataStart, filePath)
+	const compileStart = performance.now()
 	const generated = compileHtmlSourceForVite(
 		code,
 		filePath,
@@ -162,6 +170,7 @@ function compileHtmlWithDedupedWarnings(
 		},
 		clientScripts
 	)
+	logAeroDevTiming('dev-transform-compile', compileStart, filePath)
 	deduper.flushWarnings(filePath, code, warnings, warning =>
 		logCompileWarning(params.resolvedConfig, filePath, warning)
 	)
@@ -420,8 +429,8 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					state.dirs
 				)
 			}
-			const invalidateRuntimeRegistration = (): void => {
-				const mod = server.moduleGraph.getModuleById(RESOLVED_RUNTIME_INSTANCE_MODULE_ID)
+			const invalidateTemplateLoader = (): void => {
+				const mod = server.moduleGraph.getModuleById(RESOLVED_TEMPLATE_LOADER_MODULE_ID)
 				if (mod) server.moduleGraph.invalidateModule(mod)
 			}
 			const regenerateRouteArtifacts = (): void => {
@@ -436,8 +445,9 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const abs = path.resolve(file)
 				if (abs !== clientRoot && !abs.startsWith(clientRoot + path.sep)) return
 				regenerateRouteArtifacts()
-				invalidateRuntimeRegistration()
+				invalidateTemplateLoader()
 			}
+			server.watcher.on('change', onClientTemplateFs)
 			server.watcher.on('add', onClientTemplateFs)
 			server.watcher.on('unlink', onClientTemplateFs)
 		},
@@ -476,6 +486,14 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					return state.generatedRuntimeInstancePath
 				}
 				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
+			}
+
+			if (id === RUNTIME_HUB_MODULE_ID) {
+				return RESOLVED_RUNTIME_HUB_MODULE_ID
+			}
+
+			if (id === TEMPLATE_LOADER_MODULE_ID) {
+				return RESOLVED_TEMPLATE_LOADER_MODULE_ID
 			}
 
 			if (id === STATE_BINDINGS_REGISTRY_MODULE_ID) {
@@ -557,13 +575,18 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 `
 			}
 
+			if (id === RESOLVED_RUNTIME_HUB_MODULE_ID) {
+				return getDevRuntimeHubModuleSource('@aero-js/core/runtime')
+			}
+
+			if (id === RESOLVED_TEMPLATE_LOADER_MODULE_ID) {
+				if (!state.config) return null
+				return getDevTemplateLoaderModuleSource(state.config.root, state.dirs.client)
+			}
+
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
 				if (!state.config) return null
-				return getRuntimeInstanceModuleSource(
-					state.config.root,
-					state.dirs.client,
-					'@aero-js/core/runtime'
-				)
+				return getDevRuntimeInstanceModuleSource(state.config.root, state.dirs.client)
 			}
 
 			if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {
