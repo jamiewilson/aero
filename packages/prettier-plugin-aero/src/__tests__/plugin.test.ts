@@ -92,6 +92,6 @@ const x=1
 			aeroSelfClosingComponents: true,
 		})
 		const elapsed = performance.now() - start
-		expect(elapsed).toBeLessThan(3000)
+		expect(elapsed).toBeLessThan(800)
 	})
 })

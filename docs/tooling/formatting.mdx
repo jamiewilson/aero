@@ -44,13 +44,14 @@ pnpm add -D prettier @aero-js/prettier-plugin-aero
 
 All usual Prettier settings (`printWidth`, `useTabs`, `htmlWhitespaceSensitivity`, `singleAttributePerLine`, etc.) apply to Aero `.html` files. Embedded `<script is:build lang="ts">` and `<style>` blocks are formatted with Prettier's JS/TS/CSS rules.
 
-The plugin adds three **Aero-only** options (also set in `.prettierrc.json` or under `overrides`):
+The plugin adds four **Aero-only** options (also set in `.prettierrc.json` or under `overrides`):
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `aeroAttributePrefix` | `"none"` | Prefix form for Aero build directives: `"none"` (bare `props`, `for`, `if`), `"aero"` (`aero-props`, `aero-for`, …), or `"data-aero"` (`data-aero-props`, …). Plain HTML attributes (e.g. `<label for="email">`) are never rewritten. |
 | `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Inner JS/TS still follows Prettier's `bracketSpacing` for object literals. |
 | `aeroSelfClosingComponents` | `true` | When `true`, prefer `<my-component />` for `*-component` tags with no element children. `*-layout` tags always keep explicit close tags. |
+| `aeroExpressionFormatting` | `"full"` | `"full"` runs Prettier on inner `{ }` expressions; `"spacing-only"` adjusts brace spacing only; `"off"` leaves `{ }` regions unchanged. |
 
 Example with Aero options:
 
@@ -71,6 +72,43 @@ Example with Aero options:
 }
 ```
 
+### `aeroExpressionFormatting`
+
+Controls how `{ }` interpolation regions are formatted. Other Aero options (`aeroAttributePrefix`, self-closing components, and so on) still apply.
+
+Given this input:
+
+```html
+<input value="{email}" />
+<p>{email||'empty'}</p>
+```
+
+| Value | Result | When to use |
+|-------|--------|-------------|
+| `"full"` (default) | `value="{ email }"` and `{ email \|\| 'empty' }` — brace spacing plus Prettier on the inner expression | Normal development; keeps complex expressions tidy |
+| `"spacing-only"` | `value="{ email }"` and `{ email\|\|'empty' }` — only `{ expr }` vs `{expr}`; inner code untouched | Large templates where save-time formatting feels slow |
+| `"off"` | Input unchanged in `{ }` regions | Rare; you manage brace spacing manually |
+
+Example config for faster format-on-save on big templates:
+
+```json
+{
+  "plugins": ["@aero-js/prettier-plugin-aero"],
+  "overrides": [
+    {
+      "files": ["**/*.html"],
+      "options": {
+        "parser": "aero",
+        "aeroBracketSpacing": true,
+        "aeroExpressionFormatting": "spacing-only"
+      }
+    }
+  ]
+}
+```
+
+`"spacing-only"` and `"off"` do not affect `<script is:build>` bodies — those still follow Prettier's embedded script rules (or are skipped when `lang="ts"`).
+
 ## CLI
 
 Format templates from the project root:
@@ -80,6 +118,14 @@ pnpm exec prettier --write "**/*.html"
 ```
 
 Projects scaffolded with `@aero-js/create` include `.prettierrc.json` and recommended VS Code extensions.
+
+## Editor performance
+
+Format-on-save runs Prettier before the file is written, so it can delay Vite HMR until formatting finishes. To reduce save latency:
+
+- Set `"editor.formatOnSaveMode": "modificationsIfAvailable"` for `[aero]` files so unchanged buffers skip formatting.
+- Use `aeroExpressionFormatting: "spacing-only"` on very large templates when you only need `{ expr }` spacing, not inner expression formatting.
+- Set `AERO_PRETTIER_LOG=debug` when running Prettier from the CLI to log preprocess phase timings.
 
 <Tip>
 	Prettier config is the single source of truth for Aero format options. You do not need separate `aero.format.*` VS Code settings.
