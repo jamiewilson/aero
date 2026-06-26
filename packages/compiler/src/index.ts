@@ -32,6 +32,15 @@ export {
 } from './project-tsconfig'
 
 export {
+	applyTemplateAttributeMasks,
+	walkTemplateAttributeInterpolations,
+	walkTemplateAttributes,
+	type TemplateAttributeInterpolation,
+	type TemplateAttributeMask,
+	type TemplateAttributeWalkItem,
+} from './template-attribute-interpolations'
+
+export {
 	collectTemplateInterpolationSites,
 	buildTemplateInterpolationVirtualText,
 	formatInterpolationBinderPrelude,

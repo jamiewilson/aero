@@ -1,8 +1,9 @@
 import * as vscode from 'vscode'
-import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
-import { parseAeroHtmlDocument, walkHtmlNodes } from '@aero-js/html-parser'
+import { maskScriptAndStyleInner, tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { parseAeroTemplateDocument, walkHtmlNodes } from '@aero-js/html-parser'
+import { walkTemplateAttributes } from '@aero-js/compiler'
 import { parseScriptBlocks } from '../script-tag'
-import { isInsideHtmlComment, maskJsComments } from './helpers'
+import { isInsideHtmlComment, maskJsComments, maskTemplateLiteralStatic } from './helpers'
 import { isJsReservedIdentifier } from './js-keywords'
 import type { TemplateReference } from './types'
 
@@ -31,16 +32,10 @@ export function collectTemplateReferences(
 ): TemplateReference[] {
 	const refs: TemplateReference[] = []
 
-	let maskedText = text.replace(
-		/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi,
-		(match, tag, content) => {
-			return match.replace(content, ' '.repeat(content.length))
-		}
-	)
-
+	let maskedText = maskScriptAndStyleInner(text)
 	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
 
-	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())
+	const htmlDoc = parseAeroTemplateDocument(maskedText, document.uri.toString())
 	for (const node of walkHtmlNodes(htmlDoc.roots)) {
 		if (!node.tag || node.startTagEnd == null) continue
 		const tl = node.tag.toLowerCase()
@@ -69,70 +64,46 @@ export function collectTemplateReferences(
 				isComponent: true,
 			})
 		}
-
-		const attrsStart = node.start + nameMatch[0].length
-		const gt = open.lastIndexOf('>')
-		const attrsContent = gt > nameMatch[0].length ? open.slice(nameMatch[0].length, gt) : ''
-
-		const maskRange = (start: number, length: number) => {
-			maskedText =
-				maskedText.substring(0, start) + ' '.repeat(length) + maskedText.substring(start + length)
-		}
-
-		const attrRegex = /(?:\s|^)([a-zA-Z0-9-:@.]+)(?:(\s*=\s*)(['"])([\s\S]*?)\3)?/gi
-		let attrMatch: RegExpExecArray | null
-
-		while ((attrMatch = attrRegex.exec(attrsContent)) !== null) {
-			const fullMatch = attrMatch[0]
-			const name = attrMatch[1]
-			const hasValue = !!attrMatch[3]
-			const value = attrMatch[4] || ''
-
-			const matchStartInAttrs = attrMatch.index
-			const nameStartInMatch = fullMatch.indexOf(name)
-			const absNameStart = attrsStart + matchStartInAttrs + nameStartInMatch
-
-			const isAlpine = name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')
-
-			if (hasValue) {
-				const quote = attrMatch[3]
-				const quoteIndex = fullMatch.indexOf(quote, nameStartInMatch + name.length)
-				const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
-
-				if (isAlpine) {
-					extractIdentifiers(value, absValueStart, document, refs, true, true)
-					maskRange(absValueStart, value.length)
-				} else {
-					const segments = tokenizeCurlyInterpolation(value, {
-						attributeMode: true,
-					})
-					for (const seg of segments) {
-						if (seg.kind === 'interpolation') {
-							const contentStart = absValueStart + seg.start + 1
-							extractIdentifiers(seg.expression, contentStart, document, refs, true)
-						}
-					}
-					maskRange(absValueStart, value.length)
-				}
-			} else {
-				if (STANDALONE_ATTR_VARIABLE_REFS.has(name)) {
-					refs.push({
-						content: 'props',
-						range: new vscode.Range(
-							document.positionAt(absNameStart),
-							document.positionAt(absNameStart + name.length)
-						),
-						offset: absNameStart,
-						isAttribute: true,
-					})
-				}
-			}
-		}
 	}
 
-	const contentSegments = tokenizeCurlyInterpolation(maskedText, {
-		attributeMode: false,
-	})
+	const maskRange = (start: number, length: number) => {
+		maskedText =
+			maskedText.substring(0, start) + ' '.repeat(length) + maskedText.substring(start + length)
+	}
+
+	for (const attr of walkTemplateAttributes(htmlDoc.roots, text)) {
+		if (!attr.hasValue) {
+			if (STANDALONE_ATTR_VARIABLE_REFS.has(attr.name)) {
+				refs.push({
+					content: 'props',
+					range: new vscode.Range(
+						document.positionAt(attr.absNameStart),
+						document.positionAt(attr.absNameStart + attr.name.length)
+					),
+					offset: attr.absNameStart,
+					isAttribute: true,
+				})
+			}
+			continue
+		}
+
+		if (attr.isAlpine) {
+			extractIdentifiers(attr.value, attr.absValueStart, document, refs, true, true)
+			maskRange(attr.absValueStart, attr.value.length)
+			continue
+		}
+
+		const segments = tokenizeCurlyInterpolation(attr.value, { attributeMode: true })
+		for (const seg of segments) {
+			if (seg.kind === 'interpolation') {
+				const contentStart = attr.absValueStart + seg.start + 1
+				extractIdentifiers(seg.expression, contentStart, document, refs, true)
+			}
+		}
+		maskRange(attr.absValueStart, attr.value.length)
+	}
+
+	const contentSegments = tokenizeCurlyInterpolation(maskedText, { attributeMode: false })
 	for (const seg of contentSegments) {
 		if (seg.kind === 'interpolation') {
 			const contentStart = seg.start + 1
@@ -164,6 +135,7 @@ function extractIdentifiers(
 	isAlpine?: boolean
 ) {
 	let maskedContent = maskJsComments(content)
+	maskedContent = maskTemplateLiteralStatic(maskedContent)
 	maskedContent = maskedContent.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
 		' '.repeat(match.length)
 	)

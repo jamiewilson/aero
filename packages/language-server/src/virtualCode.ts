@@ -9,7 +9,7 @@ import path from 'node:path'
 import ts from 'typescript'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import {
-	parseMinimalHtmlDocument,
+	parseAeroTemplateDocument,
 	walkHtmlNodes,
 	type HTMLDocument,
 	type Node,
@@ -435,8 +435,7 @@ function collectSlotTypeInfoByName(
 		if (!m) continue
 		byName.set(m[1], decl)
 	}
-	const doc = TextDocument.create(componentHtmlPath, 'html', 0, source)
-	const htmlDoc = parseMinimalHtmlDocument(doc)
+	const htmlDoc = parseAeroTemplateDocument(source, componentHtmlPath)
 	const slotNamesWithBindings = new Map<string, string[]>()
 	for (const node of walkHtmlNodes(htmlDoc.roots)) {
 		if (node.tag !== 'slot') continue
@@ -468,8 +467,7 @@ function collectSlotScopes(sourceText: string, htmlFilePath: string | undefined)
 	const importedHtml = collectImportedHtmlByIdentifier(sourceText, htmlFilePath)
 	if (importedHtml.size === 0) return scopes
 
-	const doc = TextDocument.create(htmlFilePath, 'html', 0, sourceText)
-	const htmlDoc = parseMinimalHtmlDocument(doc)
+	const htmlDoc = parseAeroTemplateDocument(sourceText, htmlFilePath)
 
 	for (const node of walkHtmlNodes(htmlDoc.roots)) {
 		if (!node.tag || !node.tag.endsWith('-component')) continue
@@ -589,8 +587,7 @@ export class AeroVirtualCode implements VirtualCode {
 		]
 
 		const sourceText = snapshot.getText(0, snapshot.getLength())
-		const doc = TextDocument.create(this.htmlFilePath ?? '', 'html', 0, sourceText)
-		this.htmlDocument = parseMinimalHtmlDocument(doc)
+		this.htmlDocument = parseAeroTemplateDocument(sourceText, this.htmlFilePath ?? '')
 
 		const {
 			buildScriptBodies,

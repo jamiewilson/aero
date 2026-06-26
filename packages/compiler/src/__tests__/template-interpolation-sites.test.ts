@@ -39,6 +39,18 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(eventSite?.isEventHandler).toBe(true)
 	})
 
+	it('does not treat component markup inside template literal snippets as attribute sites', () => {
+		const html = `<code>{ \`<header-component bind:count="{ \${count} }" />\` }</code>`
+		const sites = collectTemplateInterpolationSites(html)
+		expect(sites).toHaveLength(1)
+		expect(sites[0]?.expression.trim()).toBe(
+			'`<header-component bind:count="{ ${count} }" />`'
+		)
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, sites[0]!, '')
+		expect(virtualText).toContain('${count}')
+		expect(virtualText).not.toContain('[bind:count')
+	})
+
 	it('typechecks is:state assignments in event handlers with declare let and statement context', () => {
 		const html = `<script is:state>let count = 0</script><button on:dblclick="{ count = 0 }">Reset</button>`
 		const sites = collectTemplateInterpolationSites(html)

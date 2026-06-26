@@ -2,6 +2,7 @@
  * Minimal HTML parse + tree walk using only the parser from `vscode-html-languageservice`
  * (no ~600KB web custom data). Shared by the Aero language server and VS Code extension.
  */
+import { prepareAeroTemplateSource } from '@aero-js/interpolation'
 import { HTMLParser } from 'vscode-html-languageservice/lib/umd/parser/htmlParser.js'
 import type { HTMLDocument, Node } from 'vscode-html-languageservice'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -39,13 +40,22 @@ export function parseMinimalHtmlDocument(document: TextDocument): HTMLDocument {
 	return parser.parseDocument(document) as HTMLDocument
 }
 
-/** Convenience: create a transient `TextDocument` and parse it. */
+/** Convenience: create a transient `TextDocument` and parse it (raw HTML, no Aero prep). */
 export function parseMinimalHtmlFromText(text: string, uri = ''): HTMLDocument {
 	return parseMinimalHtmlDocument(TextDocument.create(uri, 'html', 0, text))
 }
 
-/** @remarks Alias for {@link parseMinimalHtmlFromText} — Aero templates use this name in the extension. */
-export const parseAeroHtmlDocument = parseMinimalHtmlFromText
+/**
+ * Parse an Aero `.html` template with canonical lexical preparation so interpolation
+ * bodies are not misread as HTML structure.
+ */
+export function parseAeroTemplateDocument(text: string, uri = ''): HTMLDocument {
+	const prep = prepareAeroTemplateSource(text)
+	return parseMinimalHtmlFromText(prep.htmlSafeText, uri)
+}
+
+/** Parse Aero template HTML — applies {@link prepareAeroTemplateSource} before parsing. */
+export const parseAeroHtmlDocument = parseAeroTemplateDocument
 
 /**
  * Depth-first traversal of the vscode-html-languageservice node tree.

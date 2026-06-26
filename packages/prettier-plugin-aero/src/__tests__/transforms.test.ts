@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseMinimalHtmlFromText } from '@aero-js/html-parser'
+import { parseAeroTemplateDocument } from '@aero-js/html-parser'
 import { applyAeroTransforms } from '../transforms.js'
 import { defaultAeroOptions } from '../options.js'
 
@@ -7,7 +7,7 @@ async function formatAero(
 	source: string,
 	options: Partial<typeof defaultAeroOptions> = {}
 ): Promise<string> {
-	const doc = parseMinimalHtmlFromText(source)
+	const doc = parseAeroTemplateDocument(source)
 	return applyAeroTransforms(source, doc.roots, { ...defaultAeroOptions, ...options }, {
 		semi: false,
 	})

@@ -1,4 +1,4 @@
-import { parseMinimalHtmlFromText } from '@aero-js/html-parser'
+import { parseAeroTemplateDocument } from '@aero-js/html-parser'
 import type { ParserOptions } from 'prettier'
 import * as prettierPluginHtml from 'prettier/plugins/html'
 import { applyAeroTransforms } from './transforms.js'
@@ -14,7 +14,7 @@ export const aeroParser = {
 		options: ParserOptions & Partial<AeroPluginOptions>
 	): Promise<string> {
 		const aeroOptions = resolveAeroOptions(options)
-		const document = parseMinimalHtmlFromText(text)
+		const document = parseAeroTemplateDocument(text)
 		return applyAeroTransforms(text, document.roots, aeroOptions, options)
 	},
 }

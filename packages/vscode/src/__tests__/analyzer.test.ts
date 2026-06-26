@@ -102,6 +102,20 @@ describe('collectTemplateReferences', () => {
 		expect(propsRefs).toHaveLength(1)
 	})
 
+	it('should not treat Aero snippet tags inside template literals as components', () => {
+		const text = `<script is:state>
+	const { count = Aero.bindable() } = Aero.props
+</script>
+<code>{ \`<header-component bind:count="{ \${count} }" />\` }</code>`
+		const refs = collectTemplateReferences(mockDoc, text)
+
+		const components = refs.filter(r => r.isComponent)
+		expect(components).toHaveLength(0)
+		expect(refs.filter(r => r.content === 'header')).toHaveLength(0)
+		expect(refs.filter(r => r.content === 'component')).toHaveLength(0)
+		expect(refs.filter(r => r.content === 'count')).toHaveLength(1)
+	})
+
 	it('should not treat Aero standalone directives (else, aero-else) as variable refs', () => {
 		const text = `
     <div if="{ show }">yes</div>

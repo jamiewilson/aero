@@ -16,6 +16,7 @@ import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
 import type { LowererDiag } from './lowerer/types'
 import { expandSelfClosingTags } from './parser'
+import { prepareAeroTemplateSource } from '@aero-js/interpolation'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
@@ -65,6 +66,30 @@ function extractTopLevelStyleCode(body: HTMLElement | null, lowerer: Lowerer): s
 		node.remove()
 	}
 	return styleCode
+}
+
+/** Undo {@link prepareAeroTemplateSource} markup escapes in DOM text/attributes before lowering to IR. */
+function restoreDomMarkupEscapes(root: Node, restore: (value: string) => string): void {
+	const walk = (node: Node): void => {
+		if (node.nodeType === 3) {
+			const text = node.textContent
+			if (text) node.textContent = restore(text)
+			return
+		}
+		if (node.nodeType !== 1) return
+		const el = node as Element
+		const attrs = el.attributes
+		if (attrs) {
+			for (let i = 0; i < attrs.length; i++) {
+				const attr = attrs[i]
+				if (attr) attr.value = restore(attr.value)
+			}
+		}
+		for (let i = 0; i < node.childNodes.length; i++) {
+			walk(node.childNodes[i]!)
+		}
+	}
+	walk(root)
 }
 
 /**
@@ -140,8 +165,11 @@ export function buildTemplateAnalysis(
 			.map(imp => imp.defaultBinding)
 			.filter((name): name is string => name !== null)
 	)
-	const expandedTemplate = expandSelfClosingTags(parsed.template)
+	const { htmlSafeText: expandedTemplate, restore } = prepareAeroTemplateSource(
+		expandSelfClosingTags(parsed.template)
+	)
 	const { document } = parseHTML(`<html lang="en"><body>${expandedTemplate}</body></html>`)
+	if (document.body) restoreDomMarkupEscapes(document.body, restore)
 	const styleCode = extractTopLevelStyleCode(document.body, lowerer)
 	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })

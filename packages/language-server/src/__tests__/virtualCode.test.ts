@@ -655,6 +655,19 @@ const o = { a: 1 }
 		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
 	})
 
+	it('does not treat component markup inside template literal snippets as attribute sites', () => {
+		const html = `<script is:state>
+	const { count = Aero.bindable() } = Aero.props
+</script>
+<code>{ \`<header-component bind:count="{ \${count} }" />\` }</code>`
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const expr0 = getEmbeddedText(code, 'expr_0')!
+		expect(expr0).toContain('${count}')
+		expect(expr0).toContain('`<header-component bind:count="{ ${count} }" />`')
+		expect(expr0).not.toContain('[bind:count')
+		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
+	})
+
 	it('treats {{ }} as literal braces in attribute values (no interpolation)', () => {
 		const html = `<div data-value="{{ not interpolated }}">{ real }</div>`
 

@@ -1,5 +1,5 @@
 import type { Node } from '@aero-js/html-parser'
-import { parseMinimalHtmlFromText, walkHtmlNodes } from '@aero-js/html-parser'
+import { parseAeroTemplateDocument, walkHtmlNodes } from '@aero-js/html-parser'
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import prettier from 'prettier'
 import {
@@ -295,7 +295,7 @@ function applyEdits(source: string, edits: TextEdit[]): string {
 }
 
 function parseRoots(source: string): Node[] {
-	return parseMinimalHtmlFromText(source).roots
+	return parseAeroTemplateDocument(source).roots
 }
 
 function getScriptOpenTag(source: string, node: Node): string | null {

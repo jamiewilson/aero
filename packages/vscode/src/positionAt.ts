@@ -7,7 +7,7 @@
 import * as vscode from 'vscode'
 import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
 import { COMPONENT_SUFFIX_REGEX, CONTENT_GLOBALS } from './constants'
-import { type Node, parseAeroHtmlDocument } from '@aero-js/html-parser'
+import { type Node, parseAeroTemplateDocument } from '@aero-js/html-parser'
 import { parseScriptBlocks } from './script-tag'
 
 /** Result of classifying a position: kind-specific data and range, or null. */
@@ -156,7 +156,7 @@ function getAssetRefAt(
 	const offset = document.offsetAt(position)
 	const text = document.getText()
 	const uri = document.uri.toString()
-	const htmlDoc = parseAeroHtmlDocument(text, uri)
+	const htmlDoc = parseAeroTemplateDocument(text, uri)
 	const node = htmlDoc.findNodeAt(offset)
 	if (!node?.tag || node.startTagEnd == null) return null
 
@@ -195,7 +195,7 @@ function getComponentTagAt(
 	const offset = document.offsetAt(position)
 	const text = document.getText()
 	const uri = document.uri.toString()
-	const htmlDoc = parseAeroHtmlDocument(text, uri)
+	const htmlDoc = parseAeroTemplateDocument(text, uri)
 	const node = htmlDoc.findNodeAt(offset)
 	if (!node?.tag || node.startTagEnd == null) return null
 
