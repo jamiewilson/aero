@@ -29,6 +29,7 @@ export type IRNode =
 	| IRReactiveModelBind
 	| IRReactiveIfBind
 	| IRReactiveForBind
+	| IRReactiveSwitchBind
 
 /** Chunk of HTML/text (template literal content). */
 export interface IRAppend {
@@ -87,6 +88,8 @@ export interface IRSwitch {
 	defaultBody?: IRNode[]
 	/** True when discriminant or case values reference reactive state bindings. */
 	reactive?: boolean
+	/** Anchor id for reactive branch toggling. */
+	bindId?: number
 }
 
 /** Output slot with default content (slots['name'] ?? defaultContent). */
@@ -224,6 +227,19 @@ export interface IRReactiveForBind {
 	itemsExpr: string
 	keyExpr: string
 	body: IRNode[]
+}
+
+export interface IRReactiveSwitchBranch {
+	comparandExprs: string[]
+	body: IRNode[]
+}
+
+export interface IRReactiveSwitchBind {
+	kind: 'ReactiveSwitchBind'
+	bindId: number
+	expression: string
+	cases: IRReactiveSwitchBranch[]
+	defaultBody?: IRNode[]
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */

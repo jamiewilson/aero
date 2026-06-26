@@ -7,6 +7,7 @@ import { bindFormModel } from '../bindings/model'
 import { SignalStore } from '../store'
 import { createStateScope } from '../state-scope'
 import { bindReactiveIf } from '../structural/if'
+import { bindReactiveSwitch } from '../structural/switch'
 import { AeroReactivity, adoptFragment } from '../adopt'
 
 describe('phase 5 binding handlers', () => {
@@ -125,6 +126,33 @@ describe('phase 5 binding handlers', () => {
 		for (const handler of listeners.get('input') ?? []) handler()
 		expect(writes).toBe(0)
 	})
+
+	it('bindFormModel syncs radio group by selected value', () => {
+		const store = new SignalStore()
+		store.signal('plan', 'free')
+		const read = () => store.get<string>('plan').value
+		const write = (value: unknown) => {
+			;(store.get('plan') as { value: unknown }).value = value
+		}
+
+		const free = document.createElement('input')
+		free.type = 'radio'
+		free.value = 'free'
+		free.name = 'plan'
+		const pro = document.createElement('input')
+		pro.type = 'radio'
+		pro.value = 'pro'
+		pro.name = 'plan'
+
+		bindFormModel({ target: free, kind: 'checked', read, write })
+		bindFormModel({ target: pro, kind: 'checked', read, write })
+
+		expect(free.checked).toBe(true)
+		expect(pro.checked).toBe(false)
+		pro.checked = true
+		pro.dispatchEvent(new Event('change'))
+		expect(store.get('plan').value).toBe('pro')
+	})
 })
 
 describe('phase 5 reactive if', () => {
@@ -178,6 +206,65 @@ describe('phase 5 reactive if', () => {
 	})
 })
 
+describe('phase 5 reactive switch', () => {
+	it('toggles visible case branch when discriminant changes', () => {
+		const store = new SignalStore()
+		store.merge({ status: 'loading' })
+		const scope = createStateScope({
+			store,
+			bindings: [{ name: 'status', derived: false, initExpr: "'loading'", dependencies: [] }],
+			functionSources: [],
+		})
+		const anchor = { innerHTML: '' } as unknown as Element
+		const cleanup = bindReactiveSwitch({
+			anchor,
+			scope,
+			expression: 'status',
+			cases: [
+				{
+					comparandExprs: ['"loading"'],
+					renderHtml: () => '<p id="loading">loading</p>',
+					mountBranch: () => () => {},
+				},
+				{
+					comparandExprs: ['"error"'],
+					renderHtml: () => '<p id="error">error</p>',
+					mountBranch: () => () => {},
+				},
+			],
+			defaultBranch: {
+				renderHtml: () => '<p id="ready">ready</p>',
+				mountBranch: () => () => {},
+			},
+		})
+		expect(anchor.innerHTML).toContain('loading')
+		;(store.get('status') as { value: string }).value = 'ready'
+		cleanup()
+		bindReactiveSwitch({
+			anchor,
+			scope,
+			expression: 'status',
+			cases: [
+				{
+					comparandExprs: ['"loading"'],
+					renderHtml: () => 'loading',
+					mountBranch: () => () => {},
+				},
+				{
+					comparandExprs: ['"error"'],
+					renderHtml: () => 'error',
+					mountBranch: () => () => {},
+				},
+			],
+			defaultBranch: {
+				renderHtml: () => 'ready',
+				mountBranch: () => () => {},
+			},
+		})
+		expect(anchor.innerHTML).toBe('ready')
+	})
+})
+
 describe('AeroReactivity.adopt', () => {
 	it('wires runtime text bindings with $ refs', () => {
 		const store = new SignalStore()
@@ -214,5 +301,23 @@ describe('AeroReactivity.adopt', () => {
 		expect(typeof cleanup).toBe('function')
 		cleanup()
 		reactivity.destroy()
+	})
+
+	it('wires runtime switch branches with $ refs', () => {
+		const store = new SignalStore()
+		store.signal('status', 'loading')
+		const host = document.createElement('div')
+		host.innerHTML = `
+			<div data-aero-switch="$status">
+				<template data-aero-case="loading"><p id="loading">Loading</p></template>
+				<template data-aero-case="error"><p id="error">Error</p></template>
+				<template data-aero-default><p id="ready">Ready</p></template>
+			</div>
+		`
+		const cleanup = adoptFragment({ container: host, store })
+		expect(host.querySelector('#loading')).not.toBeNull()
+		store.get<string>('status').value = 'ready'
+		expect(host.querySelector('#ready')).not.toBeNull()
+		cleanup()
 	})
 })

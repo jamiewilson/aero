@@ -47,6 +47,7 @@ export interface LowererReactiveState {
 	nextModelBindId(): number
 	nextIfBindId(): number
 	nextForBindId(): number
+	nextSwitchBindId(): number
 }
 
 /** Result of parsing a component's attributes: props object code string (with optional spread). */

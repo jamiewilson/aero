@@ -7,6 +7,7 @@ import type {
 	IRReactiveForBind,
 	IRReactiveHtmlBind,
 	IRReactiveIfBind,
+	IRReactiveSwitchBind,
 	IRReactiveModelBind,
 	IRReactivePropertyBind,
 	IRReactiveShowBind,
@@ -80,6 +81,7 @@ export interface CollectedReactiveBinds {
 	modelBinds: IRReactiveModelBind[]
 	ifBinds: IRReactiveIfBind[]
 	forBinds: IRReactiveForBind[]
+	switchBinds: IRReactiveSwitchBind[]
 }
 
 function collectBranchBinds(body: IRNode[]): BranchReactiveBinds {
@@ -119,6 +121,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 	const modelBinds: IRReactiveModelBind[] = []
 	const ifBinds: IRReactiveIfBind[] = []
 	const forBinds: IRReactiveForBind[] = []
+	const switchBinds: IRReactiveSwitchBind[] = []
 
 	function walk(nodes: IRNode[]): void {
 		for (const node of nodes) {
@@ -133,6 +136,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 			if (node.kind === 'ReactiveModelBind') modelBinds.push(node)
 			if (node.kind === 'ReactiveIfBind') ifBinds.push(node)
 			if (node.kind === 'ReactiveForBind') forBinds.push(node)
+			if (node.kind === 'ReactiveSwitchBind') switchBinds.push(node)
 			if (node.kind === 'For') {
 				if (!node.reactive) walk(node.body)
 				continue
@@ -146,8 +150,11 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 				continue
 			}
 			if (node.kind === 'Switch') {
-				for (const branch of node.cases) walk(branch.body)
-				if (node.defaultBody) walk(node.defaultBody)
+				if (!node.reactive) {
+					for (const branch of node.cases) walk(branch.body)
+					if (node.defaultBody) walk(node.defaultBody)
+				}
+				continue
 			}
 			if (node.kind === 'Component') {
 				for (const slotIR of Object.values(node.slots)) walk(slotIR)
@@ -168,6 +175,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 		modelBinds,
 		ifBinds,
 		forBinds,
+		switchBinds,
 	}
 }
 
@@ -343,6 +351,42 @@ function serializeForBinds(forBinds: IRReactiveForBind[]): string {
 		.join(',\n')}\n\t]`
 }
 
+function serializeSwitchBinds(switchBinds: IRReactiveSwitchBind[]): string {
+	if (switchBinds.length === 0) return '[]'
+	return `[\n${switchBinds
+		.map(switchBind => {
+			const cases = switchBind.cases
+				.map((branch, index) => {
+					const branchMounts = collectBranchBinds(branch.body)
+					return `\t\t\t{
+				comparandExprs: ${JSON.stringify(branch.comparandExprs)},
+				render: __aeroSwitchBranch_${switchBind.bindId}_${index},
+				mounts: ${serializeBranchMounts(branchMounts)}
+			}`
+				})
+				.join(',\n')
+			const defaultBranch =
+				switchBind.defaultBody !== undefined
+					? (() => {
+							const branchMounts = collectBranchBinds(switchBind.defaultBody)
+							return `,
+			default: {
+				render: __aeroSwitchDefault_${switchBind.bindId},
+				mounts: ${serializeBranchMounts(branchMounts)}
+			}`
+						})()
+					: ''
+			return `\t\t{
+			selector: ${JSON.stringify(`[data-aero-switch="${switchBind.bindId}"]`)},
+			expression: ${JSON.stringify(switchBind.expression)},
+			cases: [
+${cases}
+			]${defaultBranch}
+		}`
+		})
+		.join(',\n')}\n\t]`
+}
+
 function serializeComponentBinds(
 	binds: IRReactiveComponentBind[],
 	defaultImportBindings: ReadonlySet<string>
@@ -386,6 +430,19 @@ export function emitStructuralBranchFunctions(binds: CollectedReactiveBinds): st
 			`function __aeroForRow_${forBind.bindId}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(forBind.body), '__out')}\nreturn __out;\n}`
 		)
 	}
+	for (const switchBind of binds.switchBinds) {
+		for (let i = 0; i < switchBind.cases.length; i++) {
+			const branch = switchBind.cases[i]!
+			lines.push(
+				`function __aeroSwitchBranch_${switchBind.bindId}_${i}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(branch.body), '__out')}\nreturn __out;\n}`
+			)
+		}
+		if (switchBind.defaultBody !== undefined) {
+			lines.push(
+				`function __aeroSwitchDefault_${switchBind.bindId}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(switchBind.defaultBody), '__out')}\nreturn __out;\n}`
+			)
+		}
+	}
 	return lines.join('\n\n')
 }
 
@@ -401,7 +458,8 @@ function hasAnyBinds(binds: CollectedReactiveBinds): boolean {
 		binds.propertyBinds.length > 0 ||
 		binds.modelBinds.length > 0 ||
 		binds.ifBinds.length > 0 ||
-		binds.forBinds.length > 0
+		binds.forBinds.length > 0 ||
+		binds.switchBinds.length > 0
 	)
 }
 
@@ -441,7 +499,8 @@ export function mountStateBindings(root, Aero, opts = {}) {
 		propertyBinds: ${serializePropertyBinds(binds.propertyBinds)},
 		modelBinds: ${serializeModelBinds(binds.modelBinds)},
 		ifBinds: ${serializeIfBinds(binds.ifBinds)},
-		forBinds: ${serializeForBinds(binds.forBinds)},${scopeConstantsLine}
+		forBinds: ${serializeForBinds(binds.forBinds)},
+		switchBinds: ${serializeSwitchBinds(binds.switchBinds)},${scopeConstantsLine}
 		componentBinds: ${serializeComponentBinds(binds.componentBinds, defaultImportBindings)},
 		escapeHtml: Aero.escapeHtml,${actionFnsLine}
 		Aero,

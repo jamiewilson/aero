@@ -143,6 +143,10 @@ function emitSwitchNode(
 	node: Extract<IRNode, { kind: 'Switch' }>,
 	outVar: string
 ): void {
+	if (node.reactive && node.bindId !== undefined) {
+		emitReactiveSwitchNode(b, node, outVar)
+		return
+	}
 	const expr = node.expression
 	if (node.cases.length === 0) {
 		if (node.defaultBody !== undefined) {
@@ -157,6 +161,42 @@ function emitSwitchNode(
 	b.raw(
 		emitConditionalChain(branches, node.defaultBody ?? [], node.defaultBody !== undefined, outVar)
 	)
+}
+
+function emitReactiveSwitchNode(
+	b: CodeBuilder,
+	node: Extract<IRNode, { kind: 'Switch' }>,
+	outVar: string
+): void {
+	const bindId = node.bindId!
+	const caseBodies = node.cases.map(branch => branch.body)
+	const defaultBody = node.defaultBody
+	const branchBodies =
+		defaultBody !== undefined ? [...caseBodies, defaultBody] : caseBodies
+
+	b.raw(`{\n`)
+	b.raw(`let __aeroSwitchActive_${bindId} = -1;\n`)
+	b.raw(`const __aeroSwitchDisc_${bindId} = ${node.expression};\n`)
+	for (let i = 0; i < node.cases.length; i++) {
+		const caseBranch = node.cases[i]!
+		const condition = caseBranch.comparandExprs
+			.map(comparand => `(__aeroSwitchDisc_${bindId}) === (${comparand})`)
+			.join(' || ')
+		if (i === 0) b.raw(`if (${condition}) __aeroSwitchActive_${bindId} = ${i};\n`)
+		else b.raw(`else if (${condition}) __aeroSwitchActive_${bindId} = ${i};\n`)
+	}
+	if (defaultBody !== undefined) {
+		b.raw(`else __aeroSwitchActive_${bindId} = ${node.cases.length};\n`)
+	}
+	b.stmtAppendOut(`<span data-aero-switch="${bindId}" style="display:contents">`, outVar)
+	for (let i = 0; i < branchBodies.length; i++) {
+		if (i === 0) b.raw(`if (__aeroSwitchActive_${bindId} === ${i}) {\n`)
+		else b.raw(`else if (__aeroSwitchActive_${bindId} === ${i}) {\n`)
+		emitToJSInto(b, branchBodies[i]!, outVar)
+		b.raw('}\n')
+	}
+	b.stmtAppendOut('</span>', outVar)
+	b.raw('}\n')
 }
 
 function emitSlotNode(
@@ -270,6 +310,7 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 		case 'ReactiveModelBind':
 		case 'ReactiveIfBind':
 		case 'ReactiveForBind':
+		case 'ReactiveSwitchBind':
 			break
 		default: {
 			const _: never = node

@@ -8,6 +8,7 @@ import { bindProperty } from './bindings/property'
 import { bindFormModel } from './bindings/model'
 import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
+import { bindReactiveSwitch } from './structural/switch'
 import { compileScopeRead } from './scope-eval'
 
 export type Cleanup = () => void
@@ -99,6 +100,19 @@ export interface MountStateBindingsOptions {
 		keyExpr: string
 		renderRow: (Aero: unknown) => string
 		rowMounts: MountBindingSubset
+	}[]
+	readonly switchBinds?: readonly {
+		selector: string
+		expression: string
+		cases: readonly {
+			comparandExprs: readonly string[]
+			render: (Aero: unknown) => string
+			mounts: MountBindingSubset
+		}[]
+		default?: {
+			render: (Aero: unknown) => string
+			mounts: MountBindingSubset
+		}
 	}[]
 	readonly componentBinds?: readonly {
 		selector: string
@@ -624,6 +638,48 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 						},
 					}
 				},
+			})
+		)
+	}
+
+	for (const bind of options.switchBinds ?? []) {
+		const anchor = queryBindTarget(options.root, bind.selector, options.componentBinds)
+		if (!anchor) {
+			throw new Error(`[aero] Missing reactive switch anchor: ${bind.selector}`)
+		}
+		cleanups.push(
+			bindReactiveSwitch({
+				anchor,
+				scope,
+				expression: bind.expression,
+				cases: bind.cases.map(branch => ({
+					comparandExprs: branch.comparandExprs,
+					renderHtml: () => branch.render(options.Aero),
+					mountBranch: branchRoot => {
+						const subsetCleanups = mountBindingSubset(branchRoot, scope, branch.mounts, options)
+						return () => {
+							for (const cleanup of subsetCleanups) cleanup()
+						}
+					},
+				})),
+				...(bind.default
+					? {
+							defaultBranch: {
+								renderHtml: () => bind.default.render(options.Aero),
+								mountBranch: branchRoot => {
+									const subsetCleanups = mountBindingSubset(
+										branchRoot,
+										scope,
+										bind.default!.mounts,
+										options
+									)
+									return () => {
+										for (const cleanup of subsetCleanups) cleanup()
+									}
+								},
+							},
+						}
+					: {}),
 			})
 		)
 	}

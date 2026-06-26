@@ -5,9 +5,17 @@
 		max-inline-size: 20rem;
 	}
 
+	fieldset {
+		padding: var(--element-base-padding);
+		border: 1px solid --opacity(currentColor, 0.1);
+		border-radius: var(--radius-xl);
+		corner-shape: squircle;
+	}
+
 	label {
 		cursor: pointer;
 		text-align: start;
+		font-size: smaller;
 	}
 
 	input:not([type='checkbox']):not([type='radio']),

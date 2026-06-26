@@ -5,11 +5,12 @@
 <script is:state>
 	let note = 'Runtime fragment reads page state via $refs.'
 	let showNote = true
+	let status = 'loading'
 </script>
 
 <base-layout title="Adopt runtime">
 	<section class="v-stack">
-		<p class="secondary"><code>AeroReactivity.adopt()</code> for inserted HTML (P5.5)</p>
+		<p class="secondary"><code>AeroReactivity.adopt()</code> for inserted HTML</p>
 
 		<label class="h-stack items-center">
 			<input type="checkbox" checked="{ showNote }" />
@@ -21,7 +22,17 @@
 			<input value="{ note }" />
 		</label>
 
+		<label class="v-stack">
+			<span>Page signal (<code>status</code>)</span>
+			<select value="{ status }">
+				<option value="loading">loading</option>
+				<option value="error">error</option>
+				<option value="ready">ready</option>
+			</select>
+		</label>
+
 		<button type="button" id="adopt-insert">Insert fragment</button>
+		<button type="button" id="adopt-insert-switch">Insert switch fragment</button>
 		<div id="adopt-host" class="card secondary">Fragment mounts here…</div>
 	</section>
 </base-layout>
@@ -33,8 +44,21 @@
 	const host = document.getElementById('adopt-host')
 	if (insert && host) {
 		insert.addEventListener('click', () => {
-			host.innerHTML =
-				'<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+			host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+			aero.getReactivityRuntime?.()?.adopt(host)
+		})
+	}
+
+	const insertSwitch = document.getElementById('adopt-insert-switch')
+	if (insertSwitch && host) {
+		insertSwitch.addEventListener('click', () => {
+			host.innerHTML = `
+				<div data-aero-switch="$status">
+					<template data-aero-case="loading"><p>Runtime loading…</p></template>
+					<template data-aero-case="error"><p>Runtime error</p></template>
+					<template data-aero-default><p>Runtime ready</p></template>
+				</div>
+			`
 			aero.getReactivityRuntime?.()?.adopt(host)
 		})
 	}

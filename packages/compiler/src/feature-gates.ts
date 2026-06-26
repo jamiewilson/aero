@@ -78,6 +78,7 @@ export function validateFeatureGates(
 				modelBinds: [],
 				ifBinds: [],
 				forBinds: [],
+				switchBinds: [],
 			}
 	const eventBinds: IRReactiveEventBind[] = reactiveBinds.eventBinds
 

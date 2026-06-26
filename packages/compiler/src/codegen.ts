@@ -198,6 +198,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				modelBinds: [],
 				ifBinds: [],
 				forBinds: [],
+				switchBinds: [],
 			}
 	const hasReactiveBinds =
 		reactiveBinds.textBinds.length > 0 ||
@@ -210,7 +211,8 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		reactiveBinds.propertyBinds.length > 0 ||
 		reactiveBinds.modelBinds.length > 0 ||
 		reactiveBinds.ifBinds.length > 0 ||
-		reactiveBinds.forBinds.length > 0
+		reactiveBinds.forBinds.length > 0 ||
+		reactiveBinds.switchBinds.length > 0
 	const mountImportLine = hasReactiveBinds
 		? [createStateMountImportLine(), options.hypermedia ? createHypermediaImportLine() : null]
 				.filter(Boolean)

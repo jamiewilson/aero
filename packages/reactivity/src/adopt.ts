@@ -7,7 +7,9 @@ import { bindProperty } from './bindings/property'
 import { bindFormModel, type FormModelKind } from './bindings/model'
 import { bindReactiveIf, type ReactiveIfBranchSpec } from './structural/if'
 import { bindKeyedFor } from './structural/for'
+import { bindReactiveSwitch } from './structural/switch'
 import { createStateScope, type StateScope } from './state-scope'
+import { compileRuntimeRead, wireAdoptStructuralBindings } from './adopt-structural'
 
 export interface BindingHandler {
 	readonly name: string
@@ -19,14 +21,6 @@ function stripBraces(value: string): string {
 	return trimmed.startsWith('{') && trimmed.endsWith('}')
 		? trimmed.slice(1, -1).trim()
 		: trimmed
-}
-
-function compileRuntimeRead(expr: string, store: SignalStore): () => unknown {
-	const code = expr.replace(/\$(\w+(?:\.\w+)*)/g, (_, path: string) => {
-		return `store.get(${JSON.stringify(path)}).value`
-	})
-	// eslint-disable-next-line @typescript-eslint/no-implied-eval
-	return new Function('store', `return function() { return (${code}); }`)(store) as () => unknown
 }
 
 function compileRuntimeHandler(expr: string, store: SignalStore): (this: Element, event: Event) => void {
@@ -163,10 +157,29 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 	const scope = createStateScope({ store, bindings: [], functionSources: [] })
 	const handlers = options.handlers ?? createDefaultHandlers()
 	const cleanups: Cleanup[] = []
+
+	const adoptNested = (nested: ParentNode): Cleanup =>
+		adoptFragment({ container: nested, store, handlers })
+
+	cleanups.push(
+		...wireAdoptStructuralBindings({
+			container: options.container,
+			store,
+			adoptNested,
+		})
+	)
+
 	const elements = options.container.querySelectorAll?.('*') ?? []
 
 	for (const el of elements) {
 		if (el.hasAttribute('data-aero-adopted')) continue
+		if (
+			typeof (el as Element).closest === 'function' &&
+			(el as Element).closest('[data-aero-adopted]') &&
+			el !== options.container
+		) {
+			continue
+		}
 		let adopted = false
 
 		for (let i = 0; i < el.attributes.length; i++) {
@@ -270,4 +283,4 @@ export class AeroReactivity {
 	}
 }
 
-export { bindReactiveIf, bindKeyedFor, type ReactiveIfBranchSpec }
+export { bindReactiveIf, bindKeyedFor, bindReactiveSwitch, type ReactiveIfBranchSpec }
