@@ -105,6 +105,11 @@
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "When false (default), skip regex-based “undefined variable in `{ }`” diagnostics — rely on the Volar language server and `aero check --types` for expression typing. Enable only if you need the legacy heuristic without the LS."
+				},
+				"aero.languageServer.enabled": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "When false, do not start the Volar language server (faster saves in large workspaces; use `aero check` for typing)."
 				}
 			}
 		},

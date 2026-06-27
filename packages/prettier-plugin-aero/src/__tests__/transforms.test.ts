@@ -183,4 +183,37 @@ import { getCollection, render } from 'aero:content'
 		expect(output).not.toContain('{ ;')
 		expect(output).toContain('count')
 	})
+
+	it('uses spacing-only fast path for simple identifiers', async () => {
+		const input = '<input value="{email}" />'
+		const output = await formatAero(input, { aeroBracketSpacing: true })
+		expect(output).toContain('value="{ email }"')
+	})
+
+	it('respects aeroExpressionFormatting off', async () => {
+		const input = '<p if="{ok}">{title}</p>'
+		const doc = parseMinimalHtmlFromText(input)
+		const output = await applyAeroTransforms(
+			input,
+			doc.roots,
+			{ ...defaultAeroOptions, aeroBracketSpacing: true },
+			{ semi: false },
+			'off'
+		)
+		expect(output).toBe(input)
+	})
+
+	it('respects aeroExpressionFormatting spacing-only for complex expressions', async () => {
+		const input = '<code>{ `bind:count="{ ${count} }"` }</code>'
+		const doc = parseMinimalHtmlFromText(input)
+		const output = await applyAeroTransforms(
+			input,
+			doc.roots,
+			{ ...defaultAeroOptions, aeroBracketSpacing: true },
+			{ semi: false },
+			'spacing-only'
+		)
+		expect(output).toContain('`bind:count="{ ${count} }"`')
+		expect(output).toMatch(/\{ `bind:count=/)
+	})
 })

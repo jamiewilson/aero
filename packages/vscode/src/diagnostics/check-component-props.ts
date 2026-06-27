@@ -10,13 +10,24 @@ import type { PathResolver } from '../pathResolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
-import { collectComponentLivePropMetadata } from '@aero-js/compiler'
+import { ComponentLivePropMetadataCache } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 import { getIgnoredRanges, isInRanges, attributeSectionBase, findAttributeRange, findTagNameRange, sliceRawAttrs, type ByteRange } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
 const COMPONENT_TAG_OPEN_REGEX =
 	/<([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout))\b[^>]*\/?>/gi
+
+const componentLivePropMetadataCaches = new Map<string, ComponentLivePropMetadataCache>()
+
+function collectCachedComponentLivePropMetadata(componentDir: string) {
+	let cache = componentLivePropMetadataCaches.get(componentDir)
+	if (!cache) {
+		cache = new ComponentLivePropMetadataCache()
+		componentLivePropMetadataCaches.set(componentDir, cache)
+	}
+	return cache.collect([componentDir])
+}
 
 /** Matches props="{ ...varName }" to extract the variable name. */
 const PROPS_SPREAD_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
@@ -290,9 +301,9 @@ function validateComponentLiveProps(
 	stateVars: Map<string, VariableDefinition>
 ): void {
 	if (stateVars.size === 0) return
-	let metadata: ReturnType<typeof collectComponentLivePropMetadata>
+	let metadata: ReturnType<typeof collectCachedComponentLivePropMetadata>
 	try {
-		metadata = collectComponentLivePropMetadata(path.dirname(resolvedPath))
+		metadata = collectCachedComponentLivePropMetadata(path.dirname(resolvedPath))
 	} catch {
 		return
 	}

@@ -101,6 +101,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	)
 
 	// ---- Language Server (Volar) ----
+	const languageServerEnabled =
+		vscode.workspace.getConfiguration('aero').get<boolean>('languageServer.enabled', true) !== false
 	const serverModule = vscode.Uri.joinPath(context.extensionUri, 'dist', 'server.cjs')
 	const serverOptions: ServerOptions = {
 		run: {
@@ -142,10 +144,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		clientOptions
 	)
 
-	await languageClient.start()
-	// Second pass: language mode can be reset while the LS starts, or tabs were not in textDocuments yet.
-	void runTrySetAeroForAllOpenDocs()
-	context.subscriptions.push({ dispose: () => languageClient?.stop() })
+	if (languageServerEnabled) {
+		await languageClient.start()
+		// Second pass: language mode can be reset while the LS starts, or tabs were not in textDocuments yet.
+		void runTrySetAeroForAllOpenDocs()
+		context.subscriptions.push({ dispose: () => languageClient?.stop() })
+	} else {
+		outputChannel?.appendLine('[aero] language server disabled (aero.languageServer.enabled: false)')
+	}
 
 	// ---- Completion Provider ----
 	context.subscriptions.push(

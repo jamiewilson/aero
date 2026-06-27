@@ -58,7 +58,7 @@ describe('Vite Plugin Integration', () => {
 		const id = '/aero/pages/test.html'
 
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
-		expect(result.code).toContain('export default async function(Aero)')
+		expect(result.code).toContain('export default __aeroPageRender')
 		expect(result.code).toContain('Vite Test')
 	})
 
@@ -163,9 +163,12 @@ describe('Vite Plugin Integration', () => {
 		const id = '/aero/pages/props.html'
 		const result: any = transformPlugin.transform.call(pluginCtx, html, id)
 		const aeroInstance = new Aero()
-		const bodyStart = result.code.indexOf('{')
-		const bodyEnd = result.code.lastIndexOf('}')
-		const body = result.code.substring(bodyStart + 1, bodyEnd)
+		const renderOpen = 'async function __aeroPageRender(Aero) {'
+		const bodyStart = result.code.indexOf(renderOpen)
+		const bodyEnd = result.code.indexOf('}\nexport default __aeroPageRender')
+		expect(bodyStart).toBeGreaterThan(-1)
+		expect(bodyEnd).toBeGreaterThan(bodyStart)
+		const body = result.code.substring(bodyStart + renderOpen.length, bodyEnd)
 		const renderFn = new (Object.getPrototypeOf(async function () {}).constructor)('Aero', body)
 
 		const finalOutput = await aeroInstance.render(renderFn, {
@@ -307,6 +310,7 @@ describe('Vite Plugin Integration', () => {
 
 		const watcherHandlers = new Map<string, (file: string) => void>()
 		const invalidatedIds: string[] = []
+		const sends: unknown[] = []
 		try {
 			configPlugin.config({ root: tmpDir }, { command: 'serve' })
 			configPlugin.configResolved({ root: tmpDir, command: 'serve' })
@@ -318,9 +322,10 @@ describe('Vite Plugin Integration', () => {
 				},
 				moduleGraph: {
 					getModuleById: (id: string) =>
-						id === '\0virtual:aero/runtime-instance.ts' ? { id } : null,
+						id === '\0virtual:aero/template-loader.ts' ? { id } : null,
 					invalidateModule: (mod: { id: string }) => invalidatedIds.push(mod.id),
 				},
+				ws: { send: (payload: unknown) => sends.push(payload) },
 			} as any)
 
 			const manifestPath = path.join(tmpDir, '.aero', 'generated', 'route-manifest.json')
@@ -333,27 +338,37 @@ describe('Vite Plugin Integration', () => {
 			expect(readPaths()).toContain('/')
 
 			const add = watcherHandlers.get('add')
+			const change = watcherHandlers.get('change')
 			const unlink = watcherHandlers.get('unlink')
 			expect(add).toBeDefined()
+			expect(change).toBeDefined()
 			expect(unlink).toBeDefined()
+
+			change!(path.join(pagesDir, 'index.html'))
+			expect(sends).not.toContainEqual({ type: 'full-reload' })
 
 			const docsPath = path.join(pagesDir, 'docs.html')
 			fs.writeFileSync(docsPath, '<p>docs</p>', 'utf-8')
 			add!(docsPath)
 			expect(readPaths()).toContain('/docs')
+			expect(sends).not.toContainEqual({ type: 'full-reload' })
 
 			const guidePath = path.join(pagesDir, 'guide.html')
 			fs.renameSync(docsPath, guidePath)
 			unlink!(docsPath)
+			expect(sends).toContainEqual({ type: 'full-reload' })
+			sends.length = 0
 			add!(guidePath)
 			const afterRename = readPaths()
 			expect(afterRename).toContain('/guide')
 			expect(afterRename).not.toContain('/docs')
+			expect(sends).not.toContainEqual({ type: 'full-reload' })
 
 			fs.unlinkSync(guidePath)
 			unlink!(guidePath)
 			expect(readPaths()).not.toContain('/guide')
-			expect(invalidatedIds).toContain('\0virtual:aero/runtime-instance.ts')
+			expect(sends).toContainEqual({ type: 'full-reload' })
+			expect(invalidatedIds).toContain('\0virtual:aero/template-loader.ts')
 		} finally {
 			fs.rmSync(tmpDir, { recursive: true, force: true })
 			configPlugin.config({ root: process.cwd() }, { command: 'serve' })

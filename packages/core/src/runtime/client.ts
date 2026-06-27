@@ -39,6 +39,23 @@ function extractDocumentParts(html: string): PageFragments {
 /** Guard: skip starting a new render while one is in progress (avoids overlapping HMR runs). */
 let rendering = false
 
+function isClientAeroDebugEnabled(): boolean {
+	const raw = import.meta.env.AERO_LOG
+	return raw === 'debug' || (typeof raw === 'string' && raw.split(/[\s,]+/).includes('debug'))
+}
+
+function logClientRenderTiming(label: string, startMs: number, detail?: string): void {
+	if (!isClientAeroDebugEnabled()) return
+	const ms = performance.now() - startMs
+	const suffix = detail ? ` ${detail}` : ''
+	aeroDevLog('warn', 'AERO_TIMING', `[dev-renderPage] ${label} ${ms.toFixed(1)}ms${suffix}`)
+}
+
+export type RenderPageOptions = {
+	/** When true for a page name, dev HMR fetches HTML from the dev server instead of calling `renderFn`. */
+	shouldUseDevSsrFetch?: (pageName: string) => boolean
+}
+
 function diagnosticsFromDevFetch(res: Response, html: string): AeroDiagnostic[] | null {
 	const raw = res.headers.get(AERO_DIAGNOSTICS_HTTP_HEADER)
 	if (raw) {
@@ -110,28 +127,36 @@ function updateHead(headContent: string) {
 
 /**
  * Re-render the current page in the browser (e.g. on HMR).
- * In dev (when import.meta.hot exists), fetches HTML from the dev server for all routes to avoid
- * running the full markdown pipeline in the browser, which can cause crashes when DevTools is open.
+ * In dev HMR, fetches HTML from the dev server only for pages that need SSR-only pipelines
+ * (e.g. `aero:content` markdown). Other pages call `renderFn` directly to avoid an HTTP round-trip.
  * Otherwise resolves page name and uses `renderFn`.
  *
  * @param appEl - Root element to receive the new body content (e.g. `#app`).
  * @param renderFn - Async function that returns full document HTML for a given page name (e.g. `aero.render`).
+ * @param options - Dev HMR routing (SSR fetch vs direct render).
  */
 export async function renderPage(
 	appEl: HTMLElement,
-	renderFn: (pageName: string) => Promise<string | null>
+	renderFn: (pageName: string) => Promise<string | null>,
+	options: RenderPageOptions = {}
 ) {
 	if (rendering) return
 	rendering = true
 	const pathname = window.location.pathname
 	const pageName = resolvePageName(pathname)
+	const renderStart = performance.now()
 
 	try {
 		let html: string
-		const useFetch = typeof window !== 'undefined' && import.meta.hot
+		const useFetch =
+			typeof window !== 'undefined' &&
+			import.meta.hot &&
+			options.shouldUseDevSsrFetch?.(pageName) === true
 		if (useFetch) {
+			const fetchStart = performance.now()
 			const res = await fetch(pathname, { headers: { Accept: 'text/html' } })
 			html = await res.text()
+			logClientRenderTiming('fetch', fetchStart, pathname)
 			if (!res.ok) {
 				const diagnostics = diagnosticsFromDevFetch(res, html)
 				if (diagnostics !== null && diagnostics.length > 0) {
@@ -141,20 +166,25 @@ export async function renderPage(
 				throw new Error(`Fetch failed: ${res.status}`)
 			}
 		} else {
+			const renderFnStart = performance.now()
 			const rendered = await renderFn(pageName)
+			logClientRenderTiming('renderFn', renderFnStart, pageName)
 			if (rendered == null) {
 				throw new Error(`[aero] No HTML for page "${pageName}"`)
 			}
 			html = rendered
 		}
+		const patchStart = performance.now()
 		const { head, body } = extractDocumentParts(html)
 		if (head) updateHead(head)
 		appEl.innerHTML = body
+		logClientRenderTiming('patch', patchStart, pageName)
 	} catch (err) {
 		const safe = escapeForBrowserPre(err instanceof Error ? err.message : String(err))
 		appEl.innerHTML = `<h1>Error rendering page: ${escapeForBrowserPre(pageName)}</h1><pre>${safe}</pre>`
 		aeroDevLog('error', 'AERO_INTERNAL', err instanceof Error ? err.message : String(err))
 	} finally {
+		logClientRenderTiming('total', renderStart, pageName)
 		rendering = false
 	}
 }

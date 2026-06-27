@@ -66,6 +66,10 @@ export function compileHtmlSourceForVite(
 			reactivity: params.reactivity,
 			hypermedia: params.hypermedia,
 			componentLiveProps: params.componentLiveProps,
+			devHmrPageUrl:
+				params.resolvedConfig.command !== 'build'
+					? '/' + toPosixRelative(filePath, params.resolvedConfig.root).replace(/^\//, '')
+					: undefined,
 		},
 		parsed
 	)

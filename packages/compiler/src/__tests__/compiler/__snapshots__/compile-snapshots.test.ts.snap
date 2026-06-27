@@ -2,7 +2,7 @@
 
 exports[`compileTemplate snapshots > component props and static attribute with special characters 1`] = `
 "
-export default async function(Aero) {
+async function __aeroPageRender(Aero) {
 		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } = Aero;
 		const x = 1;
 
@@ -15,12 +15,13 @@ export default async function(Aero) {
 		let __slot_0 = '';
 __out += await Aero.renderComponent(my, { "title": "a\\"b", "data-x": x }, { "default": __slot_0 }, { page: Aero.page, site: Aero.site, styles, scripts, headScripts });
 return __out;
-	}"
+	}
+export default __aeroPageRender"
 `;
 
 exports[`compileTemplate snapshots > minimal page with build script and interpolation 1`] = `
 "
-export default async function(Aero) {
+async function __aeroPageRender(Aero) {
 		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } = Aero;
 		const title = "Hi";
 
@@ -34,5 +35,6 @@ export default async function(Aero) {
 __out += \`\${escapeHtml( title )}\`;
 __out += \`</h1>\`;
 return __out;
-	}"
+	}
+export default __aeroPageRender"
 `;

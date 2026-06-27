@@ -11,13 +11,88 @@ import {
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
 import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
-import {
-	isSelfClosingComponentTag,
-	quoteAttributeValue,
-} from './directives.js'
-import type { AeroPluginOptions } from './options.js'
+import { isSelfClosingComponentTag, quoteAttributeValue } from './directives.js'
+import type { AeroExpressionFormatting, AeroPluginOptions } from './options.js'
+import { logAeroPrettierTiming } from './dev-timing.js'
+import { prettierFormatOptionsFingerprint } from './preprocess-cache.js'
+import { performance } from 'node:perf_hooks'
 
 type TextEdit = { start: number; end: number; text: string }
+
+type BracedRegionTask = {
+	start: number
+	end: number
+	spaced: boolean
+	formatInner: boolean
+}
+
+type BuildScriptTask = {
+	start: number
+	end: number
+	content: string
+	parser: 'babel-ts' | 'babel'
+}
+
+const expressionFormatCache = new Map<string, string>()
+const scriptFormatCache = new Map<string, string>()
+
+let parseCountForTests = 0
+
+/** @internal Test helper */
+export function resetTransformMetricsForTests(): void {
+	parseCountForTests = 0
+	expressionFormatCache.clear()
+	scriptFormatCache.clear()
+}
+
+/** @internal Test helper */
+export function getParseCountForTests(): number {
+	return parseCountForTests
+}
+
+const attributeNamePatterns = new Map<string, RegExp[]>()
+
+function attributeNamePatternsFor(name: string): RegExp[] {
+	let patterns = attributeNamePatterns.get(name)
+	if (!patterns) {
+		patterns = [
+			new RegExp(`\\s${name}\\s*=`, 'i'),
+			new RegExp(`\\s${name}(\\s|>|/>)`, 'i'),
+			new RegExp(`^<[^>]*?\\s${name}\\s*=`, 'i'),
+		]
+		attributeNamePatterns.set(name, patterns)
+	}
+	return patterns
+}
+
+function expressionFormatCacheKey(
+	expression: string,
+	options: prettier.Options,
+	expressionFormatting: AeroExpressionFormatting
+): string {
+	return `${expressionFormatting}\0${expression}\0${prettierFormatOptionsFingerprint(options as Record<string, unknown>)}`
+}
+
+function scriptFormatCacheKey(
+	content: string,
+	parser: 'babel-ts' | 'babel',
+	options: prettier.Options
+): string {
+	return `${parser}\0${content}\0${prettierFormatOptionsFingerprint(options as Record<string, unknown>)}`
+}
+
+/** Safe for spacing-only: identifiers, member access, calls with simple args — no statements. */
+const TRIVIAL_EXPRESSION_RE =
+	/^[\w$?.[\]('"+\-/*%|&!<>=:, \t\n]*$/
+
+function isTrivialExpression(expression: string): boolean {
+	const trimmed = expression.trim()
+	if (!trimmed) return true
+	if (/[;`]|=>|\bimport\b|\bfunction\b|\bconst\b|\blet\b|\bvar\b/.test(trimmed)) {
+		return false
+	}
+	return TRIVIAL_EXPRESSION_RE.test(trimmed)
+}
 
 function collectAttributeEdits(
 	source: string,
@@ -32,8 +107,6 @@ function collectAttributeEdits(
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
-			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
-			// prefixed form would change their meaning.
 			if (isNativeBareAttribute(node.tag, name, effectiveValue)) continue
 			if (!isBuildDirectiveAttributeForFormatting(name, effectiveValue)) continue
 			const canonical = canonicalBuildDirectiveNameForFormatting(name)
@@ -50,12 +123,7 @@ function collectAttributeEdits(
 
 function findAttributeNameStart(source: string, tagStart: number, name: string): number | null {
 	const tagSlice = source.slice(tagStart)
-	const patterns = [
-		new RegExp(`\\s${name}\\s*=`, 'i'),
-		new RegExp(`\\s${name}(\\s|>|/>)`, 'i'),
-		new RegExp(`^<[^>]*?\\s${name}\\s*=`, 'i'),
-	]
-	for (const pattern of patterns) {
+	for (const pattern of attributeNamePatternsFor(name)) {
 		const match = tagSlice.match(pattern)
 		if (match?.index != null) {
 			const offset = match[0].search(new RegExp(name, 'i'))
@@ -90,11 +158,36 @@ function isSingleBracedExpression(text: string): boolean {
 	)
 }
 
+function bracedRegionAlreadyMatches(
+	source: string,
+	start: number,
+	end: number,
+	spaced: boolean,
+	expressionFormatting: AeroExpressionFormatting
+): boolean {
+	if (expressionFormatting === 'off') return true
+	const raw = source.slice(start, end)
+	if (!isSingleBracedExpression(raw)) return true
+	const inner = raw.trim().slice(1, -1)
+	const expected = formatBracedWrapper(inner.trim(), spaced)
+	return raw === expected
+}
+
 async function formatExpressionContents(
 	expression: string,
-	options: prettier.Options
+	options: prettier.Options,
+	expressionFormatting: AeroExpressionFormatting
 ): Promise<string> {
 	const trimmed = expression.trim()
+	const cacheKey = expressionFormatCacheKey(trimmed, options, expressionFormatting)
+	const cached = expressionFormatCache.get(cacheKey)
+	if (cached !== undefined) return cached
+
+	if (expressionFormatting === 'spacing-only' || isTrivialExpression(trimmed)) {
+		expressionFormatCache.set(cacheKey, trimmed)
+		return trimmed
+	}
+
 	const formatOptions: prettier.Options = {
 		...options,
 		parser: 'babel-ts',
@@ -108,17 +201,22 @@ async function formatExpressionContents(
 			.replace(/;\s*$/, '')
 
 	try {
-		return stripFormatted(await prettier.format(trimmed, formatOptions))
+		const formatted = stripFormatted(await prettier.format(trimmed, formatOptions))
+		expressionFormatCache.set(cacheKey, formatted)
+		return formatted
 	} catch {
 		try {
 			const wrapped = await prettier.format(`(${trimmed})`, formatOptions)
-			return stripFormatted(
+			const formatted = stripFormatted(
 				wrapped
 					.trim()
 					.replace(/^\(/, '')
 					.replace(/\)\;?\s*$/, '')
 			)
+			expressionFormatCache.set(cacheKey, formatted)
+			return formatted
 		} catch {
+			expressionFormatCache.set(cacheKey, trimmed)
 			return trimmed
 		}
 	}
@@ -126,116 +224,21 @@ async function formatExpressionContents(
 
 async function formatBracedRegion(
 	source: string,
-	start: number,
-	end: number,
-	spaced: boolean,
+	task: BracedRegionTask,
 	options: prettier.Options,
-	formatInner: boolean
+	expressionFormatting: AeroExpressionFormatting
 ): Promise<TextEdit | null> {
+	if (expressionFormatting === 'off') return null
+	const { start, end, spaced, formatInner } = task
 	const raw = source.slice(start, end)
 	if (!isSingleBracedExpression(raw)) return null
 	const inner = raw.trim().slice(1, -1)
-	const formattedInner = formatInner ? await formatExpressionContents(inner, options) : inner.trim()
+	const formattedInner = formatInner
+		? await formatExpressionContents(inner, options, expressionFormatting)
+		: inner.trim()
 	const next = formatBracedWrapper(formattedInner, spaced)
 	if (next === raw) return null
 	return { start, end, text: next }
-}
-
-async function collectBracketSpacingEdits(
-	source: string,
-	nodes: Node[],
-	spaced: boolean,
-	options: prettier.Options
-): Promise<TextEdit[]> {
-	const edits: TextEdit[] = []
-
-	for (const node of walkHtmlNodes(nodes)) {
-		if (node.tag === 'script' || node.tag === 'style') continue
-
-		if (node.attributes) {
-			for (const [name, rawValue] of Object.entries(node.attributes)) {
-				if (rawValue == null) continue
-				const value = normalizeAttributeValue(rawValue)
-				const valueStart = findAttributeValueContentStart(
-					source,
-					node.start ?? 0,
-					name,
-					rawValue
-				)
-				if (valueStart == null) continue
-				const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
-				for (const seg of segments) {
-					if (seg.kind !== 'interpolation') continue
-					const edit = await formatBracedRegion(
-						source,
-						valueStart + seg.start,
-						valueStart + seg.end,
-						spaced,
-						options,
-						true
-					)
-					if (edit) edits.push(edit)
-				}
-			}
-		}
-
-		const innerStart = node.startTagEnd
-		const innerEnd = node.endTagStart
-		const hasElementChildren = node.children?.some(child => Boolean(child.tag)) ?? false
-		if (hasElementChildren) continue
-		if (innerStart != null && innerEnd != null && innerEnd > innerStart) {
-			const text = source.slice(innerStart, innerEnd)
-			const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
-			for (const seg of segments) {
-				if (seg.kind !== 'interpolation') continue
-				const edit = await formatBracedRegion(
-					source,
-					innerStart + seg.start,
-					innerStart + seg.end,
-					spaced,
-					options,
-					true
-				)
-				if (edit) edits.push(edit)
-			}
-		}
-	}
-
-	return edits
-}
-
-function findAttributeValueStart(
-	source: string,
-	tagStart: number,
-	name: string,
-	rawValue: string
-): number | null {
-	const tagSlice = source.slice(tagStart)
-	const unquoted = normalizeAttributeValue(rawValue)
-	const search = unquoted.startsWith('{')
-		? unquoted
-		: rawValue.startsWith('"') || rawValue.startsWith("'")
-			? rawValue
-			: `"${unquoted}"`
-	const idx = tagSlice.indexOf(search)
-	if (idx < 0) return null
-	const eq = tagSlice.indexOf('=', tagSlice.indexOf(name))
-	if (eq < 0 || eq > idx) return null
-	return tagStart + idx
-}
-
-/** Start index of unwrapped attribute value content within source. */
-function findAttributeValueContentStart(
-	source: string,
-	tagStart: number,
-	name: string,
-	rawValue: string
-): number | null {
-	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue)
-	if (valueStart == null) return null
-	const quote = source[valueStart]
-	if (quote === '"' || quote === "'") return valueStart + 1
-	return valueStart
 }
 
 function collectSelfClosingEdits(
@@ -272,6 +275,172 @@ function collectSelfClosingEdits(
 	return edits
 }
 
+function findAttributeValueStart(
+	source: string,
+	tagStart: number,
+	name: string,
+	rawValue: string
+): number | null {
+	const tagSlice = source.slice(tagStart)
+	const unquoted = normalizeAttributeValue(rawValue)
+	const search = unquoted.startsWith('{')
+		? unquoted
+		: rawValue.startsWith('"') || rawValue.startsWith("'")
+			? rawValue
+			: `"${unquoted}"`
+	const idx = tagSlice.indexOf(search)
+	if (idx < 0) return null
+	const eq = tagSlice.indexOf('=', tagSlice.indexOf(name))
+	if (eq < 0 || eq > idx) return null
+	return tagStart + idx
+}
+
+function findAttributeValueContentStart(
+	source: string,
+	tagStart: number,
+	name: string,
+	rawValue: string
+): number | null {
+	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue)
+	if (valueStart == null) return null
+	const quote = source[valueStart]
+	if (quote === '"' || quote === "'") return valueStart + 1
+	return valueStart
+}
+
+function collectTransformTasks(
+	source: string,
+	nodes: Node[],
+	options: AeroPluginOptions,
+	expressionFormatting: AeroExpressionFormatting
+): {
+	selfClosingEdits: TextEdit[]
+	bracketTasks: BracedRegionTask[]
+	buildScriptTasks: BuildScriptTask[]
+} {
+	const selfClosingEdits = collectSelfClosingEdits(
+		source,
+		nodes,
+		options.aeroSelfClosingComponents
+	)
+	const bracketTasks: BracedRegionTask[] = []
+	const buildScriptTasks: BuildScriptTask[] = []
+
+	if (expressionFormatting !== 'off') {
+		for (const node of walkHtmlNodes(nodes)) {
+			if (node.tag === 'script' || node.tag === 'style') continue
+
+			if (node.attributes) {
+				for (const [name, rawValue] of Object.entries(node.attributes)) {
+					if (rawValue == null) continue
+					const value = normalizeAttributeValue(rawValue)
+					const valueStart = findAttributeValueContentStart(
+						source,
+						node.start ?? 0,
+						name,
+						rawValue
+					)
+					if (valueStart == null) continue
+					const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
+					for (const seg of segments) {
+						if (seg.kind !== 'interpolation') continue
+						const start = valueStart + seg.start
+						const end = valueStart + seg.end
+						if (
+							bracedRegionAlreadyMatches(
+								source,
+								start,
+								end,
+								options.aeroBracketSpacing,
+								expressionFormatting
+							)
+						) {
+							continue
+						}
+						bracketTasks.push({
+							start,
+							end,
+							spaced: options.aeroBracketSpacing,
+							formatInner: true,
+						})
+					}
+				}
+			}
+
+			const innerStart = node.startTagEnd
+			const innerEnd = node.endTagStart
+			const hasElementChildren = node.children?.some(child => Boolean(child.tag)) ?? false
+			if (hasElementChildren) continue
+			if (innerStart != null && innerEnd != null && innerEnd > innerStart) {
+				const text = source.slice(innerStart, innerEnd)
+				const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+				for (const seg of segments) {
+					if (seg.kind !== 'interpolation') continue
+					const start = innerStart + seg.start
+					const end = innerStart + seg.end
+					if (
+						bracedRegionAlreadyMatches(
+							source,
+							start,
+							end,
+							options.aeroBracketSpacing,
+							expressionFormatting
+						)
+					) {
+						continue
+					}
+					bracketTasks.push({
+						start,
+						end,
+						spaced: options.aeroBracketSpacing,
+						formatInner: true,
+					})
+				}
+			}
+		}
+	}
+
+	for (const node of walkHtmlNodes(nodes)) {
+		if (!isBuildScript(node)) continue
+		if (node.startTagEnd == null || node.endTagStart == null) continue
+		if (hasLangTs(node, source)) continue
+
+		const scriptContent = source.substring(node.startTagEnd, node.endTagStart)
+		if (!scriptContent.trim()) continue
+
+		const parser = hasLangJs(node, source) ? 'babel' : 'babel-ts'
+		buildScriptTasks.push({
+			start: node.startTagEnd,
+			end: node.endTagStart,
+			content: scriptContent,
+			parser,
+		})
+	}
+
+	return { selfClosingEdits, bracketTasks, buildScriptTasks }
+}
+
+function isNoOpTransform(
+	source: string,
+	nodes: Node[],
+	options: AeroPluginOptions,
+	expressionFormatting: AeroExpressionFormatting
+): boolean {
+	if (collectAttributeEdits(source, nodes, options.aeroAttributePrefix).length > 0) return false
+	const tasks = collectTransformTasks(source, nodes, options, expressionFormatting)
+	if (tasks.selfClosingEdits.length > 0) return false
+	if (tasks.bracketTasks.length > 0) return false
+	if (tasks.buildScriptTasks.some(task => buildScriptLikelyNeedsFormat(task.content))) return false
+	return true
+}
+
+function buildScriptLikelyNeedsFormat(content: string): boolean {
+	if (!content.trim()) return false
+	if (/\bconst  +\w/.test(content)) return true
+	if (/(?<![=!<>])=(?!=)/.test(content.replace(/===|!==|=>/g, ''))) return true
+	return false
+}
+
 function dedupeEdits(edits: TextEdit[]): TextEdit[] {
 	const seen = new Set<string>()
 	const unique: TextEdit[] = []
@@ -295,6 +464,7 @@ function applyEdits(source: string, edits: TextEdit[]): string {
 }
 
 function parseRoots(source: string): Node[] {
+	parseCountForTests += 1
 	return parseMinimalHtmlFromText(source).roots
 }
 
@@ -309,13 +479,11 @@ function isBuildScript(node: Node): boolean {
 	return node.tag === 'script' && node.attributes != null && 'is:build' in node.attributes
 }
 
-/** True if script has lang="ts" or lang="typescript". */
 function hasLangTs(node: Node, source: string): boolean {
 	const openTag = getScriptOpenTag(source, node)
 	return openTag != null && /\blang\s*=\s*["'](ts|typescript)["']/i.test(openTag)
 }
 
-/** True if script opts into JavaScript with lang="js" or lang="javascript". */
 function hasLangJs(node: Node, source: string): boolean {
 	const openTag = getScriptOpenTag(source, node)
 	return openTag != null && /\blang\s*=\s*["'](js|javascript)["']/i.test(openTag)
@@ -328,6 +496,10 @@ async function formatEmbeddedScriptBody(
 ): Promise<string> {
 	if (!scriptContent.trim()) return scriptContent
 
+	const cacheKey = scriptFormatCacheKey(scriptContent, parser, options)
+	const cached = scriptFormatCache.get(cacheKey)
+	if (cached !== undefined) return cached
+
 	const formatOptions: prettier.Options = {
 		...options,
 		parser,
@@ -338,70 +510,83 @@ async function formatEmbeddedScriptBody(
 		const formatted = await prettier.format(scriptContent.trimEnd(), formatOptions)
 		const leadingNewline = scriptContent.startsWith('\n') ? '\n' : ''
 		const trailingNewline = scriptContent.endsWith('\n') ? '\n' : ''
-		return leadingNewline + formatted.trimEnd() + trailingNewline
+		const result = leadingNewline + formatted.trimEnd() + trailingNewline
+		scriptFormatCache.set(cacheKey, result)
+		return result
 	} catch {
+		scriptFormatCache.set(cacheKey, scriptContent)
 		return scriptContent
 	}
 }
 
-async function collectBuildScriptEdits(
+async function resolvePhaseBEdits(
 	source: string,
 	nodes: Node[],
-	options: prettier.Options
+	options: AeroPluginOptions,
+	prettierOptions: prettier.Options,
+	expressionFormatting: AeroExpressionFormatting
 ): Promise<TextEdit[]> {
-	const edits: TextEdit[] = []
+	const { selfClosingEdits, bracketTasks, buildScriptTasks } = collectTransformTasks(
+		source,
+		nodes,
+		options,
+		expressionFormatting
+	)
 
-	for (const node of walkHtmlNodes(nodes)) {
-		if (!isBuildScript(node)) continue
-		if (node.startTagEnd == null || node.endTagStart == null) continue
-		if (hasLangTs(node, source)) continue
+	const [bracketEdits, buildEdits] = await Promise.all([
+		Promise.all(
+			bracketTasks.map(task => formatBracedRegion(source, task, prettierOptions, expressionFormatting))
+		).then(results => results.filter((edit): edit is TextEdit => edit != null)),
+		Promise.all(
+			buildScriptTasks.map(async task => {
+				const formatted = await formatEmbeddedScriptBody(task.content, task.parser, prettierOptions)
+				if (formatted === task.content) return null
+				return { start: task.start, end: task.end, text: formatted } satisfies TextEdit
+			})
+		).then(results => results.filter((edit): edit is TextEdit => edit != null)),
+	])
 
-		const scriptContent = source.substring(node.startTagEnd, node.endTagStart)
-		if (!scriptContent.trim()) continue
-
-		const parser = hasLangJs(node, source) ? 'babel' : 'babel-ts'
-		const formatted = await formatEmbeddedScriptBody(scriptContent, parser, options)
-		if (formatted !== scriptContent) {
-			edits.push({ start: node.startTagEnd, end: node.endTagStart, text: formatted })
-		}
-	}
-
-	return edits
+	return [...selfClosingEdits, ...bracketEdits, ...buildEdits]
 }
 
 export async function applyAeroTransforms(
 	source: string,
 	nodes: Node[],
 	options: AeroPluginOptions,
-	prettierOptions: prettier.Options = {}
+	prettierOptions: prettier.Options = {},
+	expressionFormatting: AeroExpressionFormatting = 'full'
 ): Promise<string> {
-	let result = source
+	const totalStart = performance.now()
+
+	if (isNoOpTransform(source, nodes, options, expressionFormatting)) {
+		logAeroPrettierTiming('preprocess-noop', totalStart)
+		return source
+	}
+
+	const prefixStart = performance.now()
+	const prefixEdits = collectAttributeEdits(source, nodes, options.aeroAttributePrefix)
+	logAeroPrettierTiming('preprocess-prefix', prefixStart, `${prefixEdits.length} edits`)
+
+	let result = applyEdits(source, prefixEdits)
 	let currentNodes = nodes
+	if (prefixEdits.length > 0) {
+		const reparseStart = performance.now()
+		currentNodes = parseRoots(result)
+		logAeroPrettierTiming('preprocess-reparse', reparseStart)
+	}
 
-	const prefixEdits = collectAttributeEdits(result, currentNodes, options.aeroAttributePrefix)
-	result = applyEdits(result, prefixEdits)
-	currentNodes = parseRoots(result)
-
-	const bracketEdits = await collectBracketSpacingEdits(
+	const phaseBStart = performance.now()
+	const phaseBEdits = await resolvePhaseBEdits(
 		result,
 		currentNodes,
-		options.aeroBracketSpacing,
-		prettierOptions
+		options,
+		prettierOptions,
+		expressionFormatting
 	)
-	result = applyEdits(result, bracketEdits)
-	currentNodes = parseRoots(result)
+	logAeroPrettierTiming('preprocess-phase-b', phaseBStart, `${phaseBEdits.length} edits`)
 
-	const selfClosingEdits = collectSelfClosingEdits(
-		result,
-		currentNodes,
-		options.aeroSelfClosingComponents
-	)
-	result = applyEdits(result, selfClosingEdits)
-	currentNodes = parseRoots(result)
-
-	const buildScriptEdits = await collectBuildScriptEdits(result, currentNodes, prettierOptions)
-	result = applyEdits(result, buildScriptEdits)
-
+	result = applyEdits(result, phaseBEdits)
+	logAeroPrettierTiming('preprocess', totalStart)
 	return result
 }
 
