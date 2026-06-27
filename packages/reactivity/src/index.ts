@@ -13,6 +13,7 @@ import { bindProperty } from './bindings/property'
 import { bindFormModel } from './bindings/model'
 import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
+import { bindReactiveSwitch } from './structural/switch'
 
 export { Computed, Effect, Signal, SignalStore }
 export {
@@ -28,6 +29,7 @@ export {
 	bindFormModel,
 	bindReactiveIf,
 	bindKeyedFor,
+	bindReactiveSwitch,
 	AeroReactivity,
 	adoptFragment,
 	createDefaultHandlers,

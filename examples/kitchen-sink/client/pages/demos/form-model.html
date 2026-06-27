@@ -15,21 +15,31 @@
 
 <base-layout title="Form model">
 	<form class="v-stack" class:is-valid="{ isComplete() }">
-		<p class="secondary">Inferred two-way <code>value</code> / <code>checked</code></p>
+		<div class="v-stack">
+			<label for="email">Email</label>
+			<input id="email" type="email" placeholder="Enter your email..." value="{ email }" required />
+		</div>
 
-		<label class="v-stack">
-			<span>Email</span>
-			<input type="email" placeholder="Enter your email..." value="{ email }" required />
-		</label>
-
-		<label class="v-stack">
-			<span>Plan</span>
-			<select value="{ plan }">
+		<div class="v-stack">
+			<label for="plan-select">Plan (select)</label>
+			<select id="plan-select" value="{ plan }">
 				<option value="" disabled selected>Select a plan...</option>
 				<option value="free">Free</option>
 				<option value="pro">Pro</option>
 			</select>
-		</label>
+		</div>
+
+		<fieldset class="v-stack">
+			<label>Plan (radio group)</label>
+			<label class="h-stack items-center">
+				<input type="radio" name="plan-radio" value="free" checked="{ plan }" />
+				<span>Free</span>
+			</label>
+			<label class="h-stack items-center">
+				<input type="radio" name="plan-radio" value="pro" checked="{ plan }" />
+				<span>Pro</span>
+			</label>
+		</fieldset>
 
 		<label class="v-stack">
 			<span>Bio</span>
@@ -52,6 +62,10 @@
 </base-layout>
 
 <style>
+	form {
+		min-inline-size: 20rem;
+	}
+
 	.info {
 		position: absolute;
 		text-align: start;

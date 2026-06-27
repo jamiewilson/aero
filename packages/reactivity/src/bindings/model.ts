@@ -17,6 +17,12 @@ function isReadonlyControl(target: HTMLElement): boolean {
 	return false
 }
 
+function isRadioInput(
+	target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+): target is HTMLInputElement {
+	return target instanceof HTMLInputElement && target.type.toLowerCase() === 'radio'
+}
+
 function readControlValue(
 	target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
 	kind: FormModelKind
@@ -41,8 +47,13 @@ export function bindFormModel(options: FormModelBindingOptions): Cleanup {
 	const { target, kind, read, write } = options
 	const readonly = options.readonly === true || isReadonlyControl(target)
 	const cleanups: Cleanup[] = []
+	const radio = isRadioInput(target)
 
 	const syncEffect = new Effect(() => {
+		if (radio && kind === 'checked') {
+			target.checked = read() === target.value
+			return
+		}
 		writeControlValue(target, kind, read())
 	})
 	cleanups.push(() => syncEffect.destroy())
@@ -50,6 +61,10 @@ export function bindFormModel(options: FormModelBindingOptions): Cleanup {
 	if (!readonly) {
 		const event = kind === 'checked' ? 'change' : 'input'
 		const listener = () => {
+			if (radio && kind === 'checked') {
+				if (target.checked) write(target.value)
+				return
+			}
 			write(readControlValue(target, kind))
 		}
 		target.addEventListener(event, listener)

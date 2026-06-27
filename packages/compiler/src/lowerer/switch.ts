@@ -9,6 +9,7 @@ import {
 	hasBuildDirectiveAttribute,
 } from '../build-directive-attributes'
 import type { IRSwitch, IRNode } from '../ir'
+import { referencesStateBindingExpression } from '../state-mount-codegen'
 import { CompileError } from '../types'
 import type { LowererDiag } from './types'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
@@ -234,4 +235,19 @@ export function compileSwitchContainer(
 		cases,
 		...(seenDefault ? { defaultBody } : {}),
 	}
+}
+
+/** True when discriminant or any case comparand references reactive state bindings. */
+export function isReactiveSwitch(
+	expression: string,
+	cases: readonly { comparandExprs: readonly string[] }[],
+	bindingNames: ReadonlySet<string>
+): boolean {
+	if (referencesStateBindingExpression(expression, bindingNames)) return true
+	for (const branch of cases) {
+		for (const comparand of branch.comparandExprs) {
+			if (referencesStateBindingExpression(comparand, bindingNames)) return true
+		}
+	}
+	return false
 }

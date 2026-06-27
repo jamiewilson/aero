@@ -4,13 +4,16 @@
 
 <script is:state>
 	let n = 0
+	let status = 'loading'
+
+	function cycleStatus() {
+		status = status === 'loading' ? 'error' : status === 'error' ? 'ready' : 'loading'
+	}
 </script>
 
 <base-layout title="Reactive conditionals">
 	<section class="v-stack items-center">
-		<p class="secondary">
-			Reactive <code>if</code> / <code>else-if</code> / <code>else</code> (P5.1)
-		</p>
+		<p class="secondary">Reactive <code>if</code> / <code>else-if</code> / <code>else</code></p>
 
 		<div class="h-stack items-center">
 			<button on:click="{ n-- }">−</button>
@@ -22,6 +25,19 @@
 			<p if="{ n > 0 }">Positive branch</p>
 			<p else-if="{ n < 0 }">Negative branch</p>
 			<p else>Zero branch</p>
+		</div>
+
+		<p class="secondary">Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
+
+		<div class="h-stack items-center">
+			<button on:click="{ cycleStatus() }">Cycle status</button>
+			<code>status = { status }</code>
+		</div>
+
+		<div class="card v-stack" switch="{ status }">
+			<p case="loading">Loading branch</p>
+			<p case="error">Error branch</p>
+			<p default>Ready branch</p>
 		</div>
 	</section>
 </base-layout>

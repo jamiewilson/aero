@@ -32,7 +32,7 @@ import {
 	compileSlotDefaultContent,
 	type SlotDefaultContentDeps,
 } from './slots'
-import { compileSwitchContainer, hasCaseAttr, parentIsSwitchContainer } from './switch'
+import { compileSwitchContainer, hasCaseAttr, parentIsSwitchContainer, isReactiveSwitch } from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 
 /** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
@@ -298,7 +298,7 @@ export class Lowerer {
 		}
 
 		if (switchExpr && isTemplateElement(node)) {
-			const sw = compileSwitchContainer(
+			const switchIR = compileSwitchContainer(
 				{
 					compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
 				},
@@ -308,7 +308,26 @@ export class Lowerer {
 				childSkip,
 				outVar
 			)
-			return [sw]
+			const reactive =
+				this.reactiveState != null &&
+				isReactiveSwitch(switchIR.expression, switchIR.cases, this.reactiveState.bindingNames)
+			if (reactive && this.reactiveState) {
+				const bindId = this.reactiveState.nextSwitchBindId()
+				return [
+					{ ...switchIR, bindId, reactive: true },
+					{
+						kind: 'ReactiveSwitchBind',
+						bindId,
+						expression: switchIR.expression,
+						cases: switchIR.cases.map(branch => ({
+							comparandExprs: branch.comparandExprs,
+							body: branch.body,
+						})),
+						...(switchIR.defaultBody !== undefined ? { defaultBody: switchIR.defaultBody } : {}),
+					},
+				]
+			}
+			return [switchIR]
 		}
 
 		if (switchExpr && CONST.VOID_TAGS.has(tagName)) {
@@ -320,6 +339,7 @@ export class Lowerer {
 		}
 
 		const inner: IRNode[] = []
+		let switchBind: import('../ir').IRReactiveSwitchBind | null = null
 
 		if (CONST.VOID_TAGS.has(tagName)) {
 			inner.push({
@@ -347,18 +367,35 @@ export class Lowerer {
 			}
 
 			if (switchExpr) {
-				inner.push(
-					compileSwitchContainer(
-						{
-							compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
-						},
-						this.diag,
-						node,
-						switchExpr,
-						childSkip,
-						outVar
-					)
+				const switchIR = compileSwitchContainer(
+					{
+						compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+					},
+					this.diag,
+					node,
+					switchExpr,
+					childSkip,
+					outVar
 				)
+				const reactive =
+					this.reactiveState != null &&
+					isReactiveSwitch(switchIR.expression, switchIR.cases, this.reactiveState.bindingNames)
+				if (reactive && this.reactiveState) {
+					const bindId = this.reactiveState.nextSwitchBindId()
+					inner.push({ ...switchIR, bindId, reactive: true })
+					switchBind = {
+						kind: 'ReactiveSwitchBind',
+						bindId,
+						expression: switchIR.expression,
+						cases: switchIR.cases.map(branch => ({
+							comparandExprs: branch.comparandExprs,
+							body: branch.body,
+						})),
+						...(switchIR.defaultBody !== undefined ? { defaultBody: switchIR.defaultBody } : {}),
+					}
+				} else {
+					inner.push(switchIR)
+				}
 			} else {
 				inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar))
 			}
@@ -380,6 +417,7 @@ export class Lowerer {
 				...classBinds,
 				...propertyBinds,
 				...modelBinds,
+				...(switchBind ? [switchBind] : []),
 			])
 		}
 	return [
@@ -392,6 +430,7 @@ export class Lowerer {
 		...classBinds,
 		...propertyBinds,
 		...modelBinds,
+		...(switchBind ? [switchBind] : []),
 	]
 	}
 
@@ -707,6 +746,7 @@ function createLowererReactiveState(
 	let modelBindId = 0
 	let ifBindId = 0
 	let forBindId = 0
+	let switchBindId = 0
 	return {
 		bindingNames,
 		writableBindingNames,
@@ -721,5 +761,6 @@ function createLowererReactiveState(
 		nextModelBindId: () => modelBindId++,
 		nextIfBindId: () => ifBindId++,
 		nextForBindId: () => forBindId++,
+		nextSwitchBindId: () => switchBindId++,
 	}
 }

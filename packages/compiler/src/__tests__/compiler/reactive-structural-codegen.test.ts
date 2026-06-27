@@ -95,4 +95,35 @@ describe('reactive structural codegen', () => {
 		expect(code).toMatch(/rowMounts:[\s\S]*item\.name/)
 		expect(code).toMatch(/function __aeroForRow_0[\s\S]*data-aero-text=\\"0\\"/)
 	})
+
+	it('emits reactive switch anchor when discriminant references state', () => {
+		const html = `<script is:state>
+			let status = 'loading'
+		</script>
+		<div switch="{ status }">
+			<p case="loading">Loading</p>
+			<p case="error">Error</p>
+			<p default>Ready</p>
+		</div>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('data-aero-switch="0"')
+		expect(code).toContain('switchBinds:')
+		expect(code).toContain('__aeroSwitchBranch_0_0')
+		expect(code).toContain('__aeroSwitchDefault_0')
+	})
+
+	it('keeps build-time switch without state refs unchanged', () => {
+		const html = `<script is:build>
+			const status = 'ready'
+		</script>
+		<div switch="{ status }">
+			<p case="loading">Loading</p>
+			<p default>Ready</p>
+		</div>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).not.toContain('data-aero-switch=')
+		expect(code).not.toContain('switchBinds:')
+	})
 })
