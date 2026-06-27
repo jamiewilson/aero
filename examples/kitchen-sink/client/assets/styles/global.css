@@ -54,6 +54,10 @@
 		gap: calc(var(--vertical-spacing) / 4);
 	}
 
+	ul {
+		text-align: left;
+	}
+
 	a {
 		text-decoration: none;
 		color: var(--color-accent);

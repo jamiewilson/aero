@@ -1,5 +1,5 @@
 import { allCaps } from './utils/transform'
-const message = allCaps('[aero]') + ' <script async>...'
+const message = allCaps('[aero] <script async>')
 
 function simulateAsync() {
 	return new Promise(resolve => {

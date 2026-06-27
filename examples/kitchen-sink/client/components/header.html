@@ -42,6 +42,7 @@
 			.subtitle {
 				max-width: 45ch;
 				text-wrap: pretty;
+				justify-self: center;
 			}
 		}
 	</style>
@@ -53,12 +54,3 @@
 		background: red;
 	}
 </style>
-
-<script props="{ isHomepage }">
-	import { allCaps } from '@scripts/utils/transform'
-	console.debug(allCaps('[aero]'), 'isHomepage', isHomepage)
-</script>
-
-<script is:inline props="{ isHomepage }">
-	console.debug('[aero] isHomepage', isHomepage)
-</script>

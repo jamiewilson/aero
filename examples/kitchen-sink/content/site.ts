@@ -28,6 +28,7 @@ export default {
 		subtitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
 	},
 	demos: [
+		{ label: 'Scripts', href: '/demos/scripts' },
 		{ label: 'Counter (live props)', href: '/demos/counter' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
 		{ label: 'Keyed list', href: '/demos/keyed-list' },

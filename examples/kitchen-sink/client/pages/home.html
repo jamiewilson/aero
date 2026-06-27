@@ -13,23 +13,5 @@
 
 <base-layout>
 	<header-component props="{ ...headerProps }" />
-	<script is:inline>
-		console.debug('[AERO] <script is:inline> nested in <base-layout>')
-	</script>
 	<form-component />
 </base-layout>
-
-<script>
-	import { allCaps } from '@scripts/utils/transform'
-	console.debug(allCaps('[aero] plain <script> in <body>'))
-</script>
-
-<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
-
-<script is:blocking>
-	console.debug('[aero] <script is:blocking> moved to <head>')
-</script>
-
-<script src="@scripts/module.ts"></script>
-<script async src="@scripts/async.ts"></script>
-<script defer src="@scripts/defer.js"></script>
