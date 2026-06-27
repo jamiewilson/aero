@@ -62,13 +62,10 @@ aero.registerPages(components as Record<string, AeroPageModule>)
 aero.registerPages(layouts as Record<string, AeroPageModule>)
 aero.registerPages(pages as Record<string, AeroPageModule>)
 
-/** Pages that import `aero:content`; dev HMR uses SSR fetch for these only. */
-const devSsrFetchPageNames = new Set<string>()
-
 notify()
 
 if (import.meta.hot) {
 	import.meta.hot.accept()
 }
 
-export { aero, onUpdate, devSsrFetchPageNames }
+export { aero, onUpdate }

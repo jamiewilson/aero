@@ -10,7 +10,7 @@
 
 import type { MountOptions } from './types'
 import { Aero } from './runtime'
-import { aero, onUpdate, devSsrFetchPageNames } from './runtime/instance'
+import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 import { resolveMountTarget } from './runtime/mount-target'
 import {
@@ -71,9 +71,7 @@ function mount(options: MountOptions = {}): Promise<void> {
 				destroyStateBindings()
 				destroyStateBindings = null
 			}
-			void renderPage(el, coreRender, {
-				shouldUseDevSsrFetch: name => devSsrFetchPageNames.has(name),
-			}).then(() => {
+			void renderPage(el, coreRender).then(() => {
 				destroyStateBindings = mountClientBindings(aero, pathname, el)
 				if (onRender) onRender(el)
 			})

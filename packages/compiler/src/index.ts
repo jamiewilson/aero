@@ -48,8 +48,6 @@ export {
 	DEFAULT_COMPONENT_REGISTRY_REL,
 	type ComponentRegistryEntry,
 } from './component-registry-codegen'
-export { ComponentLivePropMetadataCache } from './component-live-props-cache'
-export { collectLivePropMetadataForFile } from './component-registry-codegen'
 export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
 export { parse } from './parser'
 

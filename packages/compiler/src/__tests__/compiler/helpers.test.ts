@@ -199,7 +199,7 @@ describe('emitSlotsObjectVars', () => {
 describe('emitRenderFunction', () => {
 	it('should emit render function without getStaticPaths', () => {
 		const result = emitRenderFunction('const name = "test"', '__out += name')
-		expect(result).toContain('export default __aeroPageRender')
+		expect(result).toContain('export default async function(Aero)')
 		expect(result).toContain('const name = "test"')
 	})
 
@@ -207,7 +207,7 @@ describe('emitRenderFunction', () => {
 		const getStaticPathsFn = 'export async function getStaticPaths() { return [] }'
 		const result = emitRenderFunction('', '', { getStaticPathsFn })
 		expect(result).toContain('export async function getStaticPaths() { return [] }')
-		expect(result).toContain('export default __aeroPageRender')
+		expect(result).toContain('export default async function(Aero)')
 	})
 
 	it('should include styleCode and rootScriptsLines when provided', () => {
