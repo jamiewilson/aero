@@ -23,7 +23,7 @@ const plugin: Plugin = {
 
 export default plugin
 export { aeroOptions, aeroParser }
-export type { AeroPluginOptions, AeroExpressionFormatting } from './options.js'
+export type { AeroPluginOptions } from './options.js'
 export {
 	BUILD_DIRECTIVES,
 	isBuildDirectiveAttribute,

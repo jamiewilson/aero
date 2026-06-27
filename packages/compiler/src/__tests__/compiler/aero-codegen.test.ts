@@ -16,7 +16,7 @@ const mockOptions = {
 
 /** Execute the generated render function */
 async function execute(code: string, context: Record<string, any> = {}) {
-	const defaultIdx = code.indexOf('async function __aeroPageRender')
+	const defaultIdx = code.indexOf('export default async function')
 	const mountIdx = code.indexOf('export function mountStateBindings')
 	const renderCode =
 		defaultIdx >= 0
@@ -183,7 +183,7 @@ describe('Aero Codegen - Client Scripts', () => {
 		</div>`
 
 		const code = compile(parse(html), mockOptions)
-		const fnStart = code.indexOf('async function __aeroPageRender')
+		const fnStart = code.indexOf('export default async function')
 		expect(fnStart).toBeGreaterThan(-1)
 		expect(code.slice(0, fnStart)).toContain('AuthState')
 		expect(code.slice(fnStart)).not.toMatch(/^\s*import\s/m)

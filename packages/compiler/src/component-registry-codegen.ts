@@ -110,15 +110,6 @@ function addComponentLivePropMetadata(
 	out[kebabToCamelCase(tag)] = liveProps
 }
 
-/** Live-prop metadata contributed by a single component/layout template file. */
-export function collectLivePropMetadataForFile(
-	fullPath: string
-): Record<string, readonly ComponentLivePropMetadata[]> {
-	const out: Record<string, readonly ComponentLivePropMetadata[]> = {}
-	addComponentLivePropMetadata(out, fullPath)
-	return out
-}
-
 /**
  * Scan compiled component/layout templates and return their `is:state` live-prop contracts.
  */

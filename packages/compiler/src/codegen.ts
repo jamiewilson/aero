@@ -21,7 +21,6 @@ import {
 import { parse } from './parser'
 import { Resolver } from './resolver'
 import { buildTemplateAnalysis } from './template-analysis'
-import { emitDevHmrPageRegistration } from './dev-hmr-codegen'
 import {
 	collectReactiveBinds,
 	createStateMountImportLine,
@@ -244,12 +243,6 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (livePropsMetadata) output += `${livePropsMetadata}\n`
 	output += renderFn
 	if (mountFn) output += `\n\n${mountFn}`
-	if (options.devHmrPageUrl) {
-		output += emitDevHmrPageRegistration(options.devHmrPageUrl, {
-			hasMountStateBindings: mountFn.length > 0,
-			hasGetStaticPaths: Boolean(ta.getStaticPathsFn),
-		})
-	}
 	return output
 }
 

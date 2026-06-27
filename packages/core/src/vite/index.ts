@@ -25,13 +25,9 @@ import {
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
-	RESOLVED_RUNTIME_HUB_MODULE_ID,
-	RESOLVED_TEMPLATE_LOADER_MODULE_ID,
 	RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID,
 	resolveDirs,
 	RUNTIME_INSTANCE_MODULE_ID,
-	RUNTIME_HUB_MODULE_ID,
-	TEMPLATE_LOADER_MODULE_ID,
 	STATE_BINDINGS_REGISTRY_FILENAME,
 	STATE_BINDINGS_REGISTRY_MODULE_ID,
 } from './defaults'
@@ -51,13 +47,6 @@ import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
 import { collectComponentLivePropMetadata, parse } from '@aero-js/compiler'
-import type { ComponentLivePropMetadataCache } from '@aero-js/compiler'
-import {
-	collectDevComponentLivePropMetadata,
-	createDevComponentLivePropsCache,
-	watchComponentLivePropsCache,
-} from './component-live-props-cache'
-import { logAeroDevTiming } from './dev-timing'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
 import {
@@ -66,9 +55,6 @@ import {
 	discoverClientScriptContentMap,
 	discoverReactivePagePaths,
 	getRuntimeInstanceModuleSource,
-	getDevRuntimeHubModuleSource,
-	getDevRuntimeInstanceModuleSource,
-	getDevTemplateLoaderModuleSource,
 	renderStaticPages,
 } from './build'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
@@ -76,7 +62,6 @@ import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { performance } from 'node:perf_hooks'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
@@ -108,8 +93,6 @@ interface AeroPluginState {
 	options: AeroOptions
 	/** Dedupes compile warnings when unchanged templates are recompiled during dev HMR. */
 	compileWarningDeduper: CompileWarningDeduper
-	/** Dev-only cache for component live-prop metadata scans during HTML transform. */
-	componentLivePropsCache: ComponentLivePropMetadataCache
 }
 
 const AERO_DIR = '.aero'
@@ -138,26 +121,15 @@ function compileHtmlWithDedupedWarnings(
 		reactivity?: boolean
 		hypermedia?: boolean
 		dirs: AeroPluginState['dirs']
-		componentLivePropsCache?: ComponentLivePropMetadataCache
 	},
 	clientScripts: Map<string, ScriptEntry>,
 	deduper: CompileWarningDeduper
 ): string {
 	const warnings: CompileWarningPayload[] = []
-	const metadataStart = performance.now()
-	const componentLiveProps =
-		params.resolvedConfig.command === 'build' || !params.componentLivePropsCache
-			? collectComponentLivePropMetadata([
-					path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
-					path.join(params.resolvedConfig.root, params.dirs.client, 'layouts'),
-				])
-			: collectDevComponentLivePropMetadata(
-					params.componentLivePropsCache,
-					params.resolvedConfig.root,
-					params.dirs
-				)
-	logAeroDevTiming('dev-transform-metadata', metadataStart, filePath)
-	const compileStart = performance.now()
+	const componentLiveProps = collectComponentLivePropMetadata([
+		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
+		path.join(params.resolvedConfig.root, params.dirs.client, 'layouts'),
+	])
 	const generated = compileHtmlSourceForVite(
 		code,
 		filePath,
@@ -170,7 +142,6 @@ function compileHtmlWithDedupedWarnings(
 		},
 		clientScripts
 	)
-	logAeroDevTiming('dev-transform-compile', compileStart, filePath)
 	deduper.flushWarnings(filePath, code, warnings, warning =>
 		logCompileWarning(params.resolvedConfig, filePath, warning)
 	)
@@ -271,7 +242,6 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 					'import.meta.env.SITE': JSON.stringify(site),
 					'import.meta.env.AERO_HYPERMEDIA': JSON.stringify(state.options.hypermedia === true),
 					'import.meta.env.AERO_REACTIVITY': JSON.stringify(state.options.reactivity === true),
-					'import.meta.env.AERO_LOG': JSON.stringify(process.env.AERO_LOG ?? ''),
 				},
 				environments: {
 					...userEnvs,
@@ -421,16 +391,8 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			return []
 		},
 		configureServer(server: ViteDevServer) {
-			if (state.config && state.config.command !== 'build') {
-				watchComponentLivePropsCache(
-					server,
-					state.componentLivePropsCache,
-					state.config.root,
-					state.dirs
-				)
-			}
-			const invalidateTemplateLoader = (): void => {
-				const mod = server.moduleGraph.getModuleById(RESOLVED_TEMPLATE_LOADER_MODULE_ID)
+			const invalidateRuntimeRegistration = (): void => {
+				const mod = server.moduleGraph.getModuleById(RESOLVED_RUNTIME_INSTANCE_MODULE_ID)
 				if (mod) server.moduleGraph.invalidateModule(mod)
 			}
 			const regenerateRouteArtifacts = (): void => {
@@ -438,20 +400,17 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const { manifest } = writeRouteManifestGenerated(state.config.root, state.dirs.client)
 				writeRouteTypesGenerated(state.config.root, manifest)
 			}
-			const onClientTemplateFs = (event: 'change' | 'add' | 'unlink', file: string): void => {
+			const onClientTemplateFs = (file: string): void => {
 				if (!file.endsWith('.html')) return
 				if (!state.config) return
+				const clientRoot = path.resolve(state.config.root, state.dirs.client)
 				const abs = path.resolve(file)
-				if (!isAeroTemplateHtml(abs, state.config.root, state.dirs)) return
+				if (abs !== clientRoot && !abs.startsWith(clientRoot + path.sep)) return
 				regenerateRouteArtifacts()
-				invalidateTemplateLoader()
-				if (event === 'unlink') {
-					server.ws.send({ type: 'full-reload' })
-				}
+				invalidateRuntimeRegistration()
 			}
-			server.watcher.on('change', file => onClientTemplateFs('change', file))
-			server.watcher.on('add', file => onClientTemplateFs('add', file))
-			server.watcher.on('unlink', file => onClientTemplateFs('unlink', file))
+			server.watcher.on('add', onClientTemplateFs)
+			server.watcher.on('unlink', onClientTemplateFs)
 		},
 		async resolveId(id, importer) {
 			// In dev: redirect client's runtime instance import to the virtual module.
@@ -488,14 +447,6 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					return state.generatedRuntimeInstancePath
 				}
 				return RESOLVED_RUNTIME_INSTANCE_MODULE_ID
-			}
-
-			if (id === RUNTIME_HUB_MODULE_ID) {
-				return RESOLVED_RUNTIME_HUB_MODULE_ID
-			}
-
-			if (id === TEMPLATE_LOADER_MODULE_ID) {
-				return RESOLVED_TEMPLATE_LOADER_MODULE_ID
 			}
 
 			if (id === STATE_BINDINGS_REGISTRY_MODULE_ID) {
@@ -577,18 +528,13 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 `
 			}
 
-			if (id === RESOLVED_RUNTIME_HUB_MODULE_ID) {
-				return getDevRuntimeHubModuleSource('@aero-js/core/runtime')
-			}
-
-			if (id === RESOLVED_TEMPLATE_LOADER_MODULE_ID) {
-				if (!state.config) return null
-				return getDevTemplateLoaderModuleSource(state.config.root, state.dirs.client)
-			}
-
 			if (id === RESOLVED_RUNTIME_INSTANCE_MODULE_ID) {
 				if (!state.config) return null
-				return getDevRuntimeInstanceModuleSource(state.config.root, state.dirs.client)
+				return getRuntimeInstanceModuleSource(
+					state.config.root,
+					state.dirs.client,
+					'@aero-js/core/runtime'
+				)
 			}
 
 			if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {
@@ -659,7 +605,6 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 			if (!state.config || !state.aliasResult) return null
 			const resolvedConfig = state.config
 			const resolvedAlias = state.aliasResult
-			const transformStart = performance.now()
 
 			const exit = Effect.runSyncExit(
 				htmlCompileTry(id, () =>
@@ -672,7 +617,6 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 							reactivity: state.options.reactivity,
 							hypermedia: state.options.hypermedia,
 							dirs: state.dirs,
-							componentLivePropsCache: state.componentLivePropsCache,
 						},
 						state.clientScripts,
 						state.compileWarningDeduper
@@ -680,7 +624,6 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 				)
 			)
 			const generated = compileExitToGeneratedOrReport(this, exit, id, 'vite-plugin-aero-transform')
-			logAeroDevTiming('dev-transform', transformStart, id)
 			return {
 				code: generated,
 				map: null,
@@ -735,7 +678,6 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		apiPrefix,
 		options,
 		compileWarningDeduper: new CompileWarningDeduper(),
-		componentLivePropsCache: createDevComponentLivePropsCache(),
 	}
 
 	const aeroConfigPlugin = createAeroConfigPlugin(state)

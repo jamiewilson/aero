@@ -15,9 +15,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	collectTransitiveTemplateImports,
 	createBuildConfig,
-	discoverContentDependentPageNames,
 	discoverRuntimeTemplatePaths,
-	getRuntimeInstanceModuleSource,
 	__internal,
 } from '../build'
 import { resolveDirs } from '../defaults'
@@ -450,31 +448,5 @@ import h from '@components/h'
 				})
 			).rejects.toThrow('boom')
 		})
-	})
-
-	it('discovers content-dependent page names and exports devSsrFetchPageNames in runtime instance', () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-build-content-'))
-		try {
-			const pagesDir = path.join(root, 'client', 'pages')
-			fs.mkdirSync(path.join(pagesDir, 'docs'), { recursive: true })
-			fs.writeFileSync(
-				path.join(pagesDir, 'home.html'),
-				'<script is:build>export const x = 1</script>',
-				'utf-8'
-			)
-			fs.writeFileSync(
-				path.join(pagesDir, 'docs', 'index.html'),
-				`<script is:build>import { getCollection } from 'aero:content'</script>`,
-				'utf-8'
-			)
-
-			expect(discoverContentDependentPageNames(root, 'client')).toEqual(['docs/index'])
-
-			const source = getRuntimeInstanceModuleSource(root, 'client', '@aero-js/core/runtime')
-			expect(source).toContain('devSsrFetchPageNames')
-			expect(source).toContain('"docs/index"')
-		} finally {
-			fs.rmSync(root, { recursive: true, force: true })
-		}
 	})
 })

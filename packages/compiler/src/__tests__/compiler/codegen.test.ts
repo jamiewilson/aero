@@ -13,14 +13,14 @@ import { compile } from '../../codegen'
 import { getRenderComponentContextArg, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } from '../../helpers'
 import { analyzeBuildScript } from '../../build-script-analysis'
 
-/** Runs the generated render function: finds async function __aeroPageRender(Aero) body and executes it with the given context. */
+/** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */
 async function execute(code: string, context: Record<string, any> = {}) {
 	// Generate the wrapper function
 	// We expect the code to contain `export default async function(Aero) { ... }`
 	// and optionally a preceding `export ... function getStaticPaths(...) { ... }`
 
 	// Find the render function (export default)
-	const defaultIdx = code.indexOf('async function __aeroPageRender')
+	const defaultIdx = code.indexOf('export default async function')
 	const renderCode = defaultIdx >= 0 ? code.slice(defaultIdx) : code
 
 	// Robust replacement: find the function body
@@ -1244,7 +1244,7 @@ describe('Codegen', () => {
 		// Should contain the named export
 		expect(code).toContain('export function getStaticPaths()')
 		// Should still contain the render function
-		expect(code).toContain('export default __aeroPageRender')
+		expect(code).toContain('export default async function')
 		// The render function should still work
 		const output = await execute(code)
 		expect(output).toContain('<h1>Hello</h1>')
@@ -1262,7 +1262,7 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		expect(code).toContain('export async function getStaticPaths()')
-		expect(code).toContain('export default __aeroPageRender')
+		expect(code).toContain('export default async function')
 	})
 
 	it('should not break when there is no getStaticPaths', async () => {
@@ -1275,7 +1275,7 @@ describe('Codegen', () => {
 		const code = compile(parsed, mockOptions)
 
 		expect(code).not.toContain('getStaticPaths')
-		expect(code).toContain('export default __aeroPageRender')
+		expect(code).toContain('export default async function')
 		const output = await execute(code)
 		expect(output).toContain('<p>1</p>')
 	})

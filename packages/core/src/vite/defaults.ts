@@ -25,14 +25,6 @@ export const RUNTIME_INSTANCE_MODULE_ID = 'virtual:aero/runtime-instance.ts'
 /** Resolved ID (with `\0` prefix) so Vite treats it as an internal module. */
 export const RESOLVED_RUNTIME_INSTANCE_MODULE_ID = '\0virtual:aero/runtime-instance.ts'
 
-/** Dev-only: stable Aero singleton + HMR listeners (no template imports). */
-export const RUNTIME_HUB_MODULE_ID = 'virtual:aero/runtime-hub.ts'
-export const RESOLVED_RUNTIME_HUB_MODULE_ID = '\0virtual:aero/runtime-hub.ts'
-
-/** Dev-only: eager template imports; invalidates on page/component edits without reloading the hub. */
-export const TEMPLATE_LOADER_MODULE_ID = 'virtual:aero/template-loader.ts'
-export const RESOLVED_TEMPLATE_LOADER_MODULE_ID = '\0virtual:aero/template-loader.ts'
-
 /** Virtual module for production reactive page loaders (written under `.aero/` during build). */
 export const STATE_BINDINGS_REGISTRY_MODULE_ID = 'virtual:aero/state-bindings-registry.ts'
 export const RESOLVED_STATE_BINDINGS_REGISTRY_MODULE_ID =

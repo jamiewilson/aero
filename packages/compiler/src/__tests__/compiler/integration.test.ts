@@ -9,7 +9,7 @@ import { compile } from '../../codegen'
 import { parse } from '../../parser'
 
 describe('Compiler Integration', () => {
-	/** getStaticPaths must appear before __aeroPageRender so Vite can expose it. */
+	/** getStaticPaths must appear before export default async function(Aero) so Vite can expose it. */
 	it('should correctly extract getStaticPaths as a named export', async () => {
 		const src = `
 <script is:build>
@@ -39,7 +39,7 @@ describe('Compiler Integration', () => {
 		// Ensure it is NOT inside the default export
 		// The default export starts with export default async function(Aero) {
 
-		const defaultExportIndex = code.indexOf('async function __aeroPageRender')
+		const defaultExportIndex = code.indexOf('export default async function(Aero)')
 		const getStaticPathsIndex = code.indexOf('export async function getStaticPaths()')
 
 		expect(getStaticPathsIndex).toBeGreaterThan(-1)

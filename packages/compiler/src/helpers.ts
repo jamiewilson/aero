@@ -283,7 +283,7 @@ export function emitRenderFunction(
 		headScriptsLines.length > 0 ? joinRenderFnHeadScripts(headScriptsLines) : ''
 
 	const renderFn = new CodeBuilder()
-		.raw('async function __aeroPageRender(Aero) {\n')
+		.raw('export default async function(Aero) {\n')
 		.raw('\t\tconst { ')
 		.raw(getRenderContextDestructurePattern())
 		.raw(' } = Aero;\n')
@@ -303,8 +303,7 @@ export function emitRenderFunction(
 		.raw('\n\t\t')
 		.raw(body)
 		.raw('return __out;\n')
-		.raw('\t}\n')
-		.raw('export default __aeroPageRender')
+		.raw('\t}')
 		.toString()
 
 	if (getStaticPathsFn) {

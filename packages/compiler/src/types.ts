@@ -51,8 +51,6 @@ export interface CompileOptions {
 	 * name (`counter` for `<counter-component>`) or by the kebab component base.
 	 */
 	componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
-	/** Root-relative Vite import URL; enables per-page dev HMR registration when set. */
-	devHmrPageUrl?: string
 }
 
 export interface CompileWarning {

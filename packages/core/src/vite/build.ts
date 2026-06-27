@@ -261,7 +261,7 @@ function walkHtmlFilesDirectOnly(dir: string): string[] {
 	return out
 }
 
-export function toRootRelativeImportUrl(root: string, absolutePath: string): string {
+function toRootRelativeImportUrl(root: string, absolutePath: string): string {
 	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
 	return '/' + rel.replace(/^\//, '')
 }
@@ -378,27 +378,17 @@ export function collectTransitiveTemplateImports(
 	return result
 }
 
-/** Page files whose build script imports `aero:content` (dev HMR should SSR-fetch these). */
-const AERO_CONTENT_IMPORT_RE = /from\s+['"]aero:content['"]/
-
-export function discoverContentDependentPageNames(root: string, clientDir: string): string[] {
-	const { pages } = discoverRuntimeTemplatePaths(root, clientDir)
-	return pages
-		.filter(file => {
-			try {
-				return AERO_CONTENT_IMPORT_RE.test(fs.readFileSync(file, 'utf-8'))
-			} catch {
-				return false
-			}
-		})
-		.map(file => pagePathToKey(toPosixRelative(file, root)))
-}
-
 /**
  * Dev/build runtime instance module: explicit imports per discovered template (manifest-driven)
  * so Vite HMR invalidates only affected modules instead of eager `import.meta.glob` for everything.
  */
-function appendRuntimeHubLines(lines: string[], runtimeImportPath: string): void {
+export function getRuntimeInstanceModuleSource(
+	root: string,
+	clientDir: string,
+	runtimeImportPath: string
+): string {
+	const { components, layouts, pages } = discoverRuntimeTemplatePaths(root, clientDir)
+	const lines: string[] = []
 	appendLines(
 		lines,
 		`import { Aero } from ${JSON.stringify(runtimeImportPath)}`,
@@ -411,44 +401,15 @@ function appendRuntimeHubLines(lines: string[], runtimeImportPath: string): void
 		`\tlisteners.add(cb)`,
 		`\treturn () => listeners.delete(cb)`,
 		`}`,
-		`let __aeroNotifyPending = false`,
 		`const notify = () => {`,
-		`\tif (__aeroNotifyPending) return`,
-		`\t__aeroNotifyPending = true`,
-		`\tqueueMicrotask(() => {`,
-		`\t\t__aeroNotifyPending = false`,
-		`\t\tlisteners.forEach((cb) => cb())`,
-		`\t})`,
+		`\tlisteners.forEach((cb) => cb())`,
 		`}`,
 		'',
 		`if (!globalThis.__AERO_INSTANCE__) globalThis.__AERO_INSTANCE__ = instance`,
 		`if (!globalThis.__AERO_LISTENERS__) globalThis.__AERO_LISTENERS__ = listeners`,
-		`if (!globalThis.__AERO_TEMPLATE_LOADED_URLS__) globalThis.__AERO_TEMPLATE_LOADED_URLS__ = new Set()`,
-		`const devTemplateLoadedUrls = globalThis.__AERO_TEMPLATE_LOADED_URLS__`,
 		''
 	)
-}
 
-function appendTemplateUrlList(
-	root: string,
-	components: string[],
-	layouts: string[],
-	pages: string[]
-): string[] {
-	const urls: string[] = []
-	for (const file of components) urls.push(toRootRelativeImportUrl(root, file))
-	for (const file of layouts) urls.push(toRootRelativeImportUrl(root, file))
-	for (const file of pages) urls.push(toRootRelativeImportUrl(root, file))
-	return urls
-}
-
-function appendTemplateStaticImportsWithRegistration(
-	lines: string[],
-	root: string,
-	components: string[],
-	layouts: string[],
-	pages: string[]
-): void {
 	const compEntries: string[] = []
 	for (let i = 0; i < components.length; i++) {
 		const url = toRootRelativeImportUrl(root, components[i]!)
@@ -475,83 +436,18 @@ function appendTemplateStaticImportsWithRegistration(
 		pageEntries.push(`${JSON.stringify(url)}: ${name}`)
 	}
 	lines.push(`const pages = { ${pageEntries.join(', ')} }`)
-
 	appendLines(
 		lines,
+		'',
 		`aero.registerPages(components)`,
 		`aero.registerPages(layouts)`,
 		`aero.registerPages(pages)`,
-		''
-	)
-}
-
-/** Stable dev module: Aero singleton + `onUpdate` / `notify` (no template imports). */
-export function getDevRuntimeHubModuleSource(runtimeImportPath: string): string {
-	const lines: string[] = []
-	appendRuntimeHubLines(lines, runtimeImportPath)
-	appendLines(lines, `export { aero, onUpdate, notify, devTemplateLoadedUrls }`, '')
-	return lines.join('\n')
-}
-
-/**
- * Dev module that statically imports all templates. Invalidates on template edits without
- * reloading the runtime hub or client entry.
- */
-export function getDevTemplateLoaderModuleSource(root: string, clientDir: string): string {
-	const { components, layouts, pages } = discoverRuntimeTemplatePaths(root, clientDir)
-	const lines: string[] = []
-	const templateUrls = appendTemplateUrlList(root, components, layouts, pages)
-	appendLines(
-		lines,
-		`import { devTemplateLoadedUrls } from 'virtual:aero/runtime-hub.ts'`,
-		`const __aeroTemplateUrls = ${JSON.stringify(templateUrls)}`,
-		`const __aeroPendingUrls = __aeroTemplateUrls.filter((url) => !devTemplateLoadedUrls.has(url))`,
-		`if (__aeroPendingUrls.length) {`,
-		`\tawait Promise.all(`,
-		`\t\t__aeroPendingUrls.map((url) =>`,
-		`\t\t\timport(/* @vite-ignore */ url).then(() => {`,
-		`\t\t\t\tdevTemplateLoadedUrls.add(url)`,
-		`\t\t\t})`,
-		`\t\t)`,
-		`\t)`,
-		`}`,
-		`if (import.meta.hot) import.meta.hot.accept(() => {})`,
-		''
-	)
-	return lines.join('\n')
-}
-
-/** Dev facade: re-exports hub, awaits template loader, exposes SSR-fetch page names. */
-export function getDevRuntimeInstanceModuleSource(root: string, clientDir: string): string {
-	const contentPageNames = discoverContentDependentPageNames(root, clientDir)
-	const lines: string[] = []
-	appendLines(
-		lines,
-		`import { aero, onUpdate } from 'virtual:aero/runtime-hub.ts'`,
+		'',
+		`notify()`,
+		'',
+		`if (import.meta.hot) import.meta.hot.accept()`,
+		'',
 		`export { aero, onUpdate }`,
-		`export const devSsrFetchPageNames = new Set(${JSON.stringify(contentPageNames)})`,
-		`await import('virtual:aero/template-loader.ts')`,
-		`if (import.meta.hot) import.meta.hot.accept()`,
-		''
-	)
-	return lines.join('\n')
-}
-
-export function getRuntimeInstanceModuleSource(
-	root: string,
-	clientDir: string,
-	runtimeImportPath: string
-): string {
-	const { components, layouts, pages } = discoverRuntimeTemplatePaths(root, clientDir)
-	const contentPageNames = discoverContentDependentPageNames(root, clientDir)
-	const lines: string[] = []
-	appendRuntimeHubLines(lines, runtimeImportPath)
-	appendTemplateStaticImportsWithRegistration(lines, root, components, layouts, pages)
-	appendLines(
-		lines,
-		`const devSsrFetchPageNames = new Set(${JSON.stringify(contentPageNames)})`,
-		`if (import.meta.hot) import.meta.hot.accept()`,
-		`export { aero, onUpdate, devSsrFetchPageNames }`,
 		''
 	)
 	return lines.join('\n')
