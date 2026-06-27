@@ -14,6 +14,7 @@ import {
 	type HTMLDocument,
 	type Node,
 } from '@aero-js/html-parser'
+import { collectBindingTypeStringsFromBuildScripts } from '@aero-js/compiler'
 import { formatBuildScopeAmbientPrelude, iterateBuildScriptBindings, collectBuildScopeBindingNames } from '@aero-js/compiler/build-scope-bindings'
 import {
 	buildTemplateEditorAmbient,
@@ -605,16 +606,21 @@ export class AeroVirtualCode implements VirtualCode {
 		this.buildTypeDeclTexts = buildTypeDeclTexts
 		this.buildOnlyBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 
+		const inferenceBodies = [...buildScriptBodies, ...stateScriptBodies]
+		const cachedBindingTypes =
+			inferenceBodies.some(body => body.trim().length > 0)
+				? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+				: undefined
+
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
 			...this.extractInterpolationVirtualCodes(
 				sourceText,
 				buildBindingNames,
 				buildTypeDeclTexts,
-				buildScriptBodies,
-				stateScriptBodies,
 				writableStateBindingNames,
-				readonlyLivePropNames
+				readonlyLivePropNames,
+				cachedBindingTypes
 			),
 			{
 				id: 'ambient',
@@ -630,10 +636,9 @@ export class AeroVirtualCode implements VirtualCode {
 		sourceText: string,
 		buildBindingNames: ReadonlySet<string>,
 		buildTypeDeclTexts: readonly string[],
-		buildScriptBodies: readonly string[],
-		stateScriptBodies: readonly string[],
 		writableStateBindingNames: ReadonlySet<string>,
-		readonlyLivePropNames: ReadonlySet<string>
+		readonlyLivePropNames: ReadonlySet<string>,
+		cachedBindingTypes?: ReadonlyMap<string, string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
 		const slotScopes = collectSlotScopes(sourceText, this.htmlFilePath)
@@ -672,14 +677,15 @@ export class AeroVirtualCode implements VirtualCode {
 			const binderDecl = formatBuildScopeAmbientPrelude(
 				combinedBindings,
 				mergedTypeDecls,
-				[...buildScriptBodies, ...stateScriptBodies],
+				undefined,
 				options?.isEventHandler
 					? new Set(
 							[...writableStateBindingNames, ...readonlyLivePropNames].filter(name =>
 								combinedBindings.has(name)
 							)
 						)
-					: undefined
+					: undefined,
+				cachedBindingTypes
 			)
 			const slotTypedBlock =
 				slotTypedBindingDecls.length > 0 ? slotTypedBindingDecls.join('\n') + '\n' : ''
