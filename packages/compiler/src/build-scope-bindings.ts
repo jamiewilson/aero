@@ -347,16 +347,18 @@ export function formatBuildScopeAmbientPrelude(
 	names: ReadonlySet<string>,
 	typeDeclarationSources: readonly string[],
 	buildScriptBodiesForInference?: readonly string[],
-	writableNames?: ReadonlySet<string>
+	writableNames?: ReadonlySet<string>,
+	precomputedBindingTypes?: ReadonlyMap<string, string>
 ): string {
 	const typeBlock = typeDeclarationSources
 		.map(s => s.trim())
 		.filter(Boolean)
 		.join('\n\n')
 	const bindingTypes =
-		buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
+		precomputedBindingTypes ??
+		(buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
 			? collectBindingTypeStringsFromBuildScripts(buildScriptBodiesForInference)
-			: undefined
+			: undefined)
 	const bindingBlock = formatBuildBindingAmbientBlock(names, bindingTypes, writableNames)
 	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
 	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
