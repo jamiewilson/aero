@@ -14,6 +14,7 @@ import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive
 import { isSelfClosingComponentTag, quoteAttributeValue } from './directives.js'
 import type { AeroExpressionFormatting, AeroPluginOptions } from './options.js'
 import { logAeroPrettierTiming } from './dev-timing.js'
+import { prettierFormatOptionsFingerprint } from './preprocess-cache.js'
 import { performance } from 'node:perf_hooks'
 
 type TextEdit = { start: number; end: number; text: string }
@@ -69,7 +70,7 @@ function expressionFormatCacheKey(
 	options: prettier.Options,
 	expressionFormatting: AeroExpressionFormatting
 ): string {
-	return `${expressionFormatting}\0${expression}\0${options.semi ?? false}\0${options.singleQuote}\0${options.trailingComma}`
+	return `${expressionFormatting}\0${expression}\0${prettierFormatOptionsFingerprint(options as Record<string, unknown>)}`
 }
 
 function scriptFormatCacheKey(
@@ -77,7 +78,7 @@ function scriptFormatCacheKey(
 	parser: 'babel-ts' | 'babel',
 	options: prettier.Options
 ): string {
-	return `${parser}\0${content}\0${options.semi ?? false}\0${options.singleQuote}\0${options.trailingComma}`
+	return `${parser}\0${content}\0${prettierFormatOptionsFingerprint(options as Record<string, unknown>)}`
 }
 
 /** Safe for spacing-only: identifiers, member access, calls with simple args — no statements. */

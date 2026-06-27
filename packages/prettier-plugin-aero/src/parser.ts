@@ -10,7 +10,7 @@ import {
 import { logAeroPrettierTiming } from './dev-timing.js'
 import {
 	getPreprocessCache,
-	prettierOptionsFingerprint,
+	prettierFormatOptionsFingerprint,
 	setPreprocessCache,
 } from './preprocess-cache.js'
 import { performance } from 'node:perf_hooks'
@@ -33,7 +33,7 @@ export const aeroParser = {
 		const preprocessStart = performance.now()
 		const aeroOptions = resolveAeroOptions(options)
 		const expressionFormatting = resolveExpressionFormatting(options)
-		const prettierFingerprint = prettierOptionsFingerprint(options as Record<string, unknown>)
+		const prettierFingerprint = prettierFormatOptionsFingerprint(options as Record<string, unknown>)
 
 		const cached = getPreprocessCache(text, aeroOptions, expressionFormatting, prettierFingerprint)
 		if (cached !== undefined) {

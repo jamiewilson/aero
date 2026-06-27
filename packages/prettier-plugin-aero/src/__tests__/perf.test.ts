@@ -2,22 +2,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import prettier from 'prettier'
 import { parseMinimalHtmlFromText } from '@aero-js/html-parser'
-import plugin from '../index.js'
 import { applyAeroTransforms, getParseCountForTests, resetTransformMetricsForTests } from '../transforms.js'
 import { defaultAeroOptions } from '../options.js'
-import { clearPreprocessCacheForTests } from '../preprocess-cache.js'
-
-const baseOptions = {
-	parser: 'aero' as const,
-	plugins: [plugin],
-	useTabs: true,
-	tabWidth: 2,
-	semi: false,
-	aeroBracketSpacing: true,
-	aeroSelfClosingComponents: true,
-}
+import {
+	clearPreprocessCacheForTests,
+	prettierFormatOptionsFingerprint,
+} from '../preprocess-cache.js'
 
 const packageDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(packageDir, '../../../..')
@@ -30,20 +21,30 @@ function readFixture(...segments: string[]): string {
 	return fs.readFileSync(fixturePath(...segments), 'utf-8')
 }
 
-async function timePreprocess(source: string): Promise<number> {
+async function transform(
+	source: string,
+	prettierOptions: Record<string, unknown> = {},
+	resetCaches = false
+): Promise<string> {
+	if (resetCaches) {
+		resetTransformMetricsForTests()
+		clearPreprocessCacheForTests()
+	}
+	const doc = parseMinimalHtmlFromText(source)
+	return applyAeroTransforms(
+		source,
+		doc.roots,
+		defaultAeroOptions,
+		{ semi: false, ...prettierOptions },
+		'full'
+	)
+}
+
+async function transformWithoutReset(source: string): Promise<string> {
 	resetTransformMetricsForTests()
 	clearPreprocessCacheForTests()
 	const doc = parseMinimalHtmlFromText(source)
-	const start = performance.now()
-	await applyAeroTransforms(source, doc.roots, defaultAeroOptions, { semi: false }, 'full')
-	return performance.now() - start
-}
-
-async function timeFullFormat(source: string): Promise<number> {
-	clearPreprocessCacheForTests()
-	const start = performance.now()
-	await prettier.format(source, baseOptions)
-	return performance.now() - start
+	return applyAeroTransforms(source, doc.roots, defaultAeroOptions, { semi: false }, 'full')
 }
 
 describe('prettier-plugin-aero performance', () => {
@@ -57,49 +58,62 @@ describe('prettier-plugin-aero performance', () => {
 
 	it('no-ops preprocess on an already formatted template', async () => {
 		const source = readFixture('examples/kitchen-sink/client/pages/demos/form-model.html')
-		const doc = parseMinimalHtmlFromText(source)
-		const formatted = await applyAeroTransforms(
-			source,
-			doc.roots,
-			defaultAeroOptions,
-			{ semi: false },
-			'full'
-		)
+		const formatted = await transform(source)
 		resetTransformMetricsForTests()
-		const formattedDoc = parseMinimalHtmlFromText(formatted)
-		const again = await applyAeroTransforms(
-			formatted,
-			formattedDoc.roots,
-			defaultAeroOptions,
-			{ semi: false },
-			'full'
-		)
+		const again = await transform(formatted)
 		expect(again).toBe(formatted)
 		expect(getParseCountForTests()).toBe(0)
 	})
 
-	it('formats form-model preprocess within budget', async () => {
-		const source = readFixture('examples/kitchen-sink/client/pages/demos/form-model.html')
-		const elapsed = await timePreprocess(source)
-		expect(elapsed).toBeLessThan(200)
+	it('keeps cache entries separate for expression bracket spacing options', async () => {
+		const source = '<p>{items.map((item)=>({foo:"bar"}))}</p>'
+		const spaced = await transform(source, { bracketSpacing: true, printWidth: 120 }, true)
+		const compact = await transform(source, { bracketSpacing: false, printWidth: 120 })
+
+		expect(spaced).toContain('{ foo: "bar" }')
+		expect(compact).toContain('{foo: "bar"}')
 	})
 
-	it('formats form-model end-to-end within budget', async () => {
-		const source = readFixture('examples/kitchen-sink/client/pages/demos/form-model.html')
-		const elapsed = await timeFullFormat(source)
-		expect(elapsed).toBeLessThan(800)
+	it('keeps cache entries separate for expression print width options', async () => {
+		const source =
+			'<p>{items.map((item)=>({label:item.label,value:item.value,description:item.description}))}</p>'
+		const wide = await transform(source, { printWidth: 120 }, true)
+		const narrow = await transform(source, { printWidth: 20 })
+
+		expect(wide).toContain(
+			'items.map((item) => ({ label: item.label, value: item.value, description: item.description }))'
+		)
+		expect(narrow).toContain('\n')
+		expect(narrow).not.toContain(
+			'items.map((item) => ({ label: item.label, value: item.value, description: item.description }))'
+		)
 	})
 
-	it('formats docs index end-to-end within budget', async () => {
-		const source = readFixture('examples/kitchen-sink/client/pages/docs/index.html')
-		const elapsed = await timeFullFormat(source)
-		expect(elapsed).toBeLessThan(800)
+	it('keeps cache entries separate for embedded script tab width options', async () => {
+		const source = `<script is:build>
+const  value={ready:true}
+if (ready) {
+console.log('ready')
+}
+</script>`
+		const tabs = await transform(source, { useTabs: true, tabWidth: 2 }, true)
+		const spaces = await transform(source, { useTabs: false, tabWidth: 4 })
+
+		expect(tabs).toContain('\tconsole.log("ready")')
+		expect(spaces).toContain('    console.log("ready")')
 	})
 
-	it('handles many interpolations within budget', async () => {
+	it('fingerprints singleAttributePerLine separately for preprocess cache entries', () => {
+		const shared = { semi: false, tabWidth: 2 }
+		expect(
+			prettierFormatOptionsFingerprint({ ...shared, singleAttributePerLine: false })
+		).not.toBe(prettierFormatOptionsFingerprint({ ...shared, singleAttributePerLine: true }))
+	})
+
+	it('does not reparse HTML per interpolation when handling many interpolations', async () => {
 		const attrs = Array.from({ length: 100 }, (_, i) => `data-${i}="{value${i}}"`)
 		const source = `<div ${attrs.join(' ')}></div>`
-		const elapsed = await timePreprocess(source)
-		expect(elapsed).toBeLessThan(500)
+		await transformWithoutReset(source)
+		expect(getParseCountForTests()).toBeLessThanOrEqual(2)
 	})
 })

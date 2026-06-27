@@ -16,14 +16,23 @@ function hashPreprocessKey(
 	return `${source}\0${aeroOptions.aeroAttributePrefix}\0${aeroOptions.aeroBracketSpacing}\0${aeroOptions.aeroSelfClosingComponents}\0${expressionFormatting}\0${prettierFingerprint}`
 }
 
-export function prettierOptionsFingerprint(options: Record<string, unknown>): string {
+export function prettierFormatOptionsFingerprint(options: Record<string, unknown>): string {
 	return JSON.stringify({
+		arrowParens: options.arrowParens,
+		bracketSameLine: options.bracketSameLine,
+		bracketSpacing: options.bracketSpacing,
+		embeddedLanguageFormatting: options.embeddedLanguageFormatting,
+		endOfLine: options.endOfLine,
+		htmlWhitespaceSensitivity: options.htmlWhitespaceSensitivity,
+		jsxSingleQuote: options.jsxSingleQuote,
+		printWidth: options.printWidth,
+		quoteProps: options.quoteProps,
 		semi: options.semi,
+		singleAttributePerLine: options.singleAttributePerLine,
 		singleQuote: options.singleQuote,
+		tabWidth: options.tabWidth,
 		trailingComma: options.trailingComma,
 		useTabs: options.useTabs,
-		tabWidth: options.tabWidth,
-		printWidth: options.printWidth,
 	})
 }
 

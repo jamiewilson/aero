@@ -438,18 +438,20 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const { manifest } = writeRouteManifestGenerated(state.config.root, state.dirs.client)
 				writeRouteTypesGenerated(state.config.root, manifest)
 			}
-			const onClientTemplateFs = (file: string): void => {
+			const onClientTemplateFs = (event: 'change' | 'add' | 'unlink', file: string): void => {
 				if (!file.endsWith('.html')) return
 				if (!state.config) return
-				const clientRoot = path.resolve(state.config.root, state.dirs.client)
 				const abs = path.resolve(file)
-				if (abs !== clientRoot && !abs.startsWith(clientRoot + path.sep)) return
+				if (!isAeroTemplateHtml(abs, state.config.root, state.dirs)) return
 				regenerateRouteArtifacts()
 				invalidateTemplateLoader()
+				if (event === 'unlink') {
+					server.ws.send({ type: 'full-reload' })
+				}
 			}
-			server.watcher.on('change', onClientTemplateFs)
-			server.watcher.on('add', onClientTemplateFs)
-			server.watcher.on('unlink', onClientTemplateFs)
+			server.watcher.on('change', file => onClientTemplateFs('change', file))
+			server.watcher.on('add', file => onClientTemplateFs('add', file))
+			server.watcher.on('unlink', file => onClientTemplateFs('unlink', file))
 		},
 		async resolveId(id, importer) {
 			// In dev: redirect client's runtime instance import to the virtual module.
