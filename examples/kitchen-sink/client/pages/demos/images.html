@@ -1,0 +1,15 @@
+<script is:build>
+	import base from '@layouts/base.html'
+	import aboutImage from '@images/about.jpg'
+</script>
+
+<base-layout title="Image imports">
+	<section class="v-stack gap-md">
+		<h1>Image imports</h1>
+		<p>
+			Import an asset from <code>@images/</code> in <code>&lt;script is:build&gt;</code>, then use
+			the resolved URL in markup.
+		</p>
+		<img src="{ aboutImage }" alt="Sample imported image" width="480" />
+	</section>
+</base-layout>

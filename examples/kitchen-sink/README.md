@@ -7,7 +7,7 @@ Full demo template for the Aero static site generator. Used for development and 
 | Path                   | Description                                                                                                                 |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `frontend/`            | Front-end source: pages, components, layouts, assets.                                                                       |
-| `frontend/pages/`      | Route pages (e.g. `home.html` → `/`, `about.html` → `/about`, `docs/[slug].html` → `/docs/:slug`).                          |
+| `frontend/pages/`      | Route pages (e.g. `home.html` → `/`, `demos/images.html` → `/demos/images`, `docs/[slug].html` → `/docs/:slug`).          |
 | `frontend/components/` | Reusable components (`-component` suffix in markup).                                                                        |
 | `frontend/layouts/`    | Layout wrappers with `<slot>`.                                                                                              |
 | `frontend/assets/`     | Styles, scripts, images.                                                                                                    |
