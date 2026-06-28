@@ -303,6 +303,18 @@ describe('AeroReactivity.adopt', () => {
 		reactivity.destroy()
 	})
 
+	it('wires nested show and text bindings in real DOM', () => {
+		const store = new SignalStore()
+		store.merge({ note: 'hello', showNote: true })
+		const host = document.createElement('div')
+		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+		const cleanup = adoptFragment({ container: host, store })
+		expect(host.textContent).toBe('hello')
+		store.get<boolean>('showNote').value = false
+		expect(host.querySelector('p')?.style.display).toBe('none')
+		cleanup()
+	})
+
 	it('wires runtime switch branches with $ refs', () => {
 		const store = new SignalStore()
 		store.signal('status', 'loading')

@@ -152,6 +152,15 @@ export interface AdoptOptions {
 	readonly handlers?: readonly BindingHandler[]
 }
 
+const STRUCTURAL_ADOPTED_SELECTOR =
+	'[data-aero-adopted][data-aero-switch], [data-aero-adopted][data-aero-if], [data-aero-adopted][data-aero-for]'
+
+function isInsideStructuralAdoptedSubtree(el: Element, container: ParentNode): boolean {
+	if (el === container) return false
+	if (typeof el.closest !== 'function') return false
+	return Boolean(el.closest(STRUCTURAL_ADOPTED_SELECTOR))
+}
+
 export function adoptFragment(options: AdoptOptions): Cleanup {
 	const store = options.store ?? new SignalStore()
 	const scope = createStateScope({ store, bindings: [], functionSources: [] })
@@ -173,13 +182,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 
 	for (const el of elements) {
 		if (el.hasAttribute('data-aero-adopted')) continue
-		if (
-			typeof (el as Element).closest === 'function' &&
-			(el as Element).closest('[data-aero-adopted]') &&
-			el !== options.container
-		) {
-			continue
-		}
+		if (isInsideStructuralAdoptedSubtree(el as Element, options.container)) continue
 		let adopted = false
 
 		for (let i = 0; i < el.attributes.length; i++) {
