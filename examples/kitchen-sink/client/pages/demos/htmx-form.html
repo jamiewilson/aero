@@ -1,15 +1,17 @@
 <script is:build>
 	import base from '@layouts/base'
 	import header from '@components/header'
+	import form from '@components/form'
 	import site from '@content/site'
 
 	const headerProps = {
-		title: site.home.title,
-		subtitle: site.home.subtitle,
+		title: site.htmxForm.title,
+		subtitle: site.htmxForm.subtitle,
 		requiredProp: true,
 	}
 </script>
 
 <base-layout>
 	<header-component props="{ ...headerProps }" />
+	<form-component />
 </base-layout>

@@ -21,6 +21,10 @@ export default {
 		title: 'Welcome to Aero',
 		subtitle:
 			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
+	},
+	htmxForm: {
+		title: 'HTMX form',
+		subtitle: 'Alpine x-model with an HTMX POST and toast fragment.',
 		cta: 'Send POST Request',
 	},
 	about: {
@@ -36,6 +40,7 @@ export default {
 		{ label: 'Bindings', href: '/demos/bindings' },
 		{ label: 'Adopt runtime', href: '/demos/adopt' },
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
+		{ label: 'HTMX form', href: '/demos/htmx-form' },
 	],
 	footer: {
 		links: [
