@@ -1,6 +1,6 @@
 ---
 title: 'Path Aliases'
-description: 'Use short import paths like @components/header instead of relative paths. Aero provides defaults — no tsconfig required.'
+description: 'Use short import paths like @components/header.html with explicit file extensions. Aero provides defaults — no tsconfig required.'
 ---
 
 ## The problem
@@ -9,7 +9,7 @@ In any project with nested directories, import paths get long and fragile. A com
 
 ## How Aero helps
 
-Path aliases let you write `import header from '@components/header'` instead of deeply nested relative paths. Aero injects a set of default aliases at build time so they work immediately — no `tsconfig.json` required for basic use.
+Path aliases let you write `import header from '@components/header.html'` instead of deeply nested relative paths. Aero injects a set of default aliases at build time so they work immediately — no `tsconfig.json` required for basic use.
 
 ## Default aliases
 
@@ -29,9 +29,9 @@ You can use these in `<script is:build>` imports, client scripts, `href` and `sr
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
-	import site from '@content/site'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 </script>
 
 <link rel="stylesheet" href="@styles/global.css" />

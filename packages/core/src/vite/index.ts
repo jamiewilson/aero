@@ -490,34 +490,6 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				return resolved
 			}
 
-			// Only try id + '.html' for path-like specifiers (relative, absolute, or path aliases like @components/foo).
-			// Skip package subpaths: @scope/name/subpath (3+ segments) and any id that resolved into node_modules.
-			const isPathLike =
-				(id.startsWith('./') ||
-					id.startsWith('../') ||
-					id.startsWith('/') ||
-					(id.startsWith('@') &&
-						!id.slice(1).split('/')[0].includes('-') &&
-						id.split('/').length < 3)) &&
-				!id.includes('.') &&
-				!id.startsWith('\0') &&
-				!resolved?.id.includes('node_modules')
-			if (isPathLike) {
-				const resolvedHtml = await this.resolve(id + '.html', importer, {
-					skipSelf: true,
-				})
-				if (resolvedHtml) {
-					if (
-						state.config?.command === 'build' &&
-						state.aliasResult &&
-						isAeroTemplateHtml(resolvedHtml.id, state.config.root, state.dirs)
-					) {
-						return AERO_HTML_VIRTUAL_PREFIX + resolvedHtml.id.replace(/\.html$/i, '.aero')
-					}
-					return resolvedHtml
-				}
-			}
-
 			return null
 		},
 		load(id) {

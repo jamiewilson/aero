@@ -327,7 +327,7 @@ describe('vite build helpers', () => {
 			fs.writeFileSync(
 				pagePath,
 				`<html><script is:build type="module">
-import h from '@components/h'
+import h from '@components/h.html'
 </script></html>`
 			)
 			fs.writeFileSync(compPath, '<html></html>')

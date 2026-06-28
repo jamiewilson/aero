@@ -31,7 +31,7 @@ Components use `-component` or `-layout` suffix in markup and are imported witho
 
 ```html
 <script is:build>
-	import header from '@components/header' <!-- resolves header.html -->
+	import header from '@components/header.html' <!-- resolves header.html -->
 </script>
 <header-component title="Hello" />
 ```

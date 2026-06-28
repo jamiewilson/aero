@@ -48,7 +48,7 @@ Pages with bracket-delimited filenames create dynamic routes. The bracket conten
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 
 	export function getStaticPaths() {
 		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }, { params: { id: 'gamma' } }]

@@ -208,7 +208,7 @@ Usage:
 ```html
 <!-- client/pages/index.html -->
 <script is:build>
-	import header from '@components/header'
+	import header from '@components/header.html'
 
 	const headerProps = {
 		title: site.home.title,

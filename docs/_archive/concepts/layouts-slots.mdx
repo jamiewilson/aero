@@ -56,7 +56,7 @@ To use it, import the layout in your page's `<script is:build>` block and wrap y
 ```html
 <!-- client/pages/about.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -68,7 +68,7 @@ To use it, import the layout in your page's `<script is:build>` block and wrap y
 Everything between `<base-layout>` and `</base-layout>` is rendered where `<slot />` appears in the layout.
 
 <Note>
-	Import the layout without its `.html` extension: `import base from '@layouts/base'` resolves to
+	Import the layout without its `.html` extension: `import base from '@layouts/base.html'` resolves to
 	`client/layouts/base.html`.
 </Note>
 
@@ -81,7 +81,7 @@ Create a sub-layout that uses `base`:
 ```html
 <!-- client/layouts/sub.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -94,7 +94,7 @@ Then use the sub-layout from a page:
 ```html
 <!-- client/pages/docs.html -->
 <script is:build>
-	import sub from '@layouts/sub'
+	import sub from '@layouts/sub.html'
 </script>
 
 <sub-layout>
@@ -120,7 +120,7 @@ A layout can define named slots using the `name` attribute on `<slot>`. A page p
 ```html
 <!-- client/pages/home.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -147,7 +147,7 @@ The sub-layout receives the `thru-sub` slot and passes it through to `into-nav`:
 ```html
 <!-- client/layouts/sub.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -160,7 +160,7 @@ The base layout defines `into-nav` and passes it into a nav component alongside 
 ```html
 <!-- client/layouts/base.html -->
 <script is:build>
-	import nav from '@components/nav'
+	import nav from '@components/nav.html'
 </script>
 
 <nav-component>

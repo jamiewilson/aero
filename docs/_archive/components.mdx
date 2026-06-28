@@ -23,8 +23,8 @@ Import the component in a `<script is:build>` block, then use `<name-component>`
 
 ```html client/pages/index.html
 <script is:build>
-	import base from '@layouts/base'
-	import greeting from '@components/greeting'
+	import base from '@layouts/base.html'
+	import greeting from '@components/greeting.html'
 </script>
 
 <base-layout>
@@ -33,7 +33,7 @@ Import the component in a `<script is:build>` block, then use `<name-component>`
 ```
 
 <Note>
-	Import files without the `.html` extension: `import greeting from '@components/greeting'`
+	Include the `.html` extension: `import greeting from '@components/greeting.html'`
 	resolves to `client/components/greeting.html`.
 </Note>
 
@@ -65,7 +65,7 @@ Use `props="{ ...obj }"` to pass every key in an object as a separate prop:
 
 ```html
 <script is:build>
-	import card from '@components/card'
+	import card from '@components/card.html'
 	const cardProps = { title: 'Hello', subtitle: 'World' }
 </script>
 
@@ -78,7 +78,7 @@ If you have a variable named `props` in scope, the bare `props` attribute spread
 
 ```html
 <script is:build>
-	import card from '@components/card'
+	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 

@@ -63,8 +63,8 @@ Type the object you spread so TypeScript catches missing required props at the c
 
 ```html client/pages/index.html
 <script is:build>
-	import header from '@components/header'
-	import site from '@content/site'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 	import type { HeaderProps } from 'types/props'
 
 	const headerProps: HeaderProps = {

@@ -17,9 +17,9 @@ test.describe('kitchen-sink preview:api', () => {
 	})
 
 	test('submits the HTMX form and renders the toast fragment', async ({ page }) => {
-		await page.goto(server.url)
+		await page.goto(`${server.url}/demos/htmx-form`)
 
-		const input = page.getByTestId('home-message-input')
+		const input = page.getByTestId('htmx-form-message-input')
 		const button = page.getByRole('button', { name: 'Send POST Request' })
 
 		await expect(button).toBeDisabled()
@@ -36,8 +36,8 @@ test.describe('kitchen-sink preview:api', () => {
 			button.click(),
 		])
 
-		await expect(page.getByTestId('home-toast')).toContainText('Server received POST:')
-		await expect(page.getByTestId('home-toast')).toContainText('hello from playwright')
+		await expect(page.getByTestId('htmx-form-toast')).toContainText('Server received POST:')
+		await expect(page.getByTestId('htmx-form-toast')).toContainText('hello from playwright')
 		await expect(input).toHaveValue('')
 	})
 

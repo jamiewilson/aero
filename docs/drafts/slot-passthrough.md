@@ -27,7 +27,7 @@ This allows a component to receive a named slot from its parent and forward it t
 
 ```html
 <script is:build>
-	import child from '@layouts/child'
+	import child from '@layouts/child.html'
 </script>
 
 <child-component>

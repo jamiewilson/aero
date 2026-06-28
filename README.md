@@ -33,9 +33,9 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
-	import site from '@content/site'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 </script>
 
 <base-layout>
@@ -87,12 +87,12 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 
 ## Components & Layouts
 
-Import `.html` templates without the extension; use `<name-component>` or `<name-layout>` in markup. The import resolves to the template file (e.g. `header` → `header.html`):
+Import `.html` templates with the file extension; use `<name-component>` or `<name-layout>` in markup:
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
 </script>
 
 <base-layout>
@@ -114,8 +114,8 @@ If you have a variable named `props` in the build script, use the bare `props` a
 ```html
 <!-- Page -->
 <script is:build>
-	import base from '@layouts/base'
-	import card from '@components/card'
+	import base from '@layouts/base.html'
+	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 
@@ -213,7 +213,7 @@ Content between `<base-layout>` and `</base-layout>` goes into the default slot:
 ```html
 <!-- pages/about.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -231,7 +231,7 @@ Your page content goes into the `<sub-layout>` slot:
 ```html
 <!-- pages/docs.html -->
 <script is:build>
-	import sub from '@layouts/sub'
+	import sub from '@layouts/sub.html'
 </script>
 
 <sub-layout>
@@ -245,7 +245,7 @@ The sub-layout uses the base layout and exposes its own default slot:
 ```html
 <!-- layouts/sub.html -->
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -302,11 +302,11 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 
 ## Content Collections
 
-Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](docs/data/content-collections.mdx).
+Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site.ts` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](docs/data/content-collections.mdx).
 
 ```html
 <script is:build>
-	import site from '@content/site'
+	import site from '@content/site.ts'
 	import { getCollection, render } from 'aero:content'
 
 	const docs = await getCollection('docs')

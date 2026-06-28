@@ -74,7 +74,6 @@ function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | und
 	}
 	return undefined
 }
-const RESOLUTION_EXTENSIONS = ['.html', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json']
 
 export interface PathResolver {
 	/** Resolve an alias-prefixed or relative specifier to an absolute file path. */
@@ -145,16 +144,5 @@ export function clearResolverCache(): void {
 function resolveToExistingPath(candidate: string): string {
 	if (!candidate) return candidate
 	if (fs.existsSync(candidate)) return candidate
-
-	for (const ext of RESOLUTION_EXTENSIONS) {
-		const withExt = `${candidate}${ext}`
-		if (fs.existsSync(withExt)) return withExt
-	}
-
-	for (const ext of RESOLUTION_EXTENSIONS) {
-		const indexPath = path.join(candidate, `index${ext}`)
-		if (fs.existsSync(indexPath)) return indexPath
-	}
-
 	return candidate
 }

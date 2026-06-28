@@ -95,12 +95,7 @@ export function checkComponentProps(
 
 		const rawResolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
 		const resolvedPath =
-			rawResolved &&
-			(fs.existsSync(rawResolved)
-				? rawResolved
-				: !rawResolved.endsWith('.html') && fs.existsSync(rawResolved + '.html')
-					? rawResolved + '.html'
-					: null)
+			rawResolved && fs.existsSync(rawResolved) ? rawResolved : null
 		if (!resolvedPath) continue
 
 		const suffix = suffixMatch[1] as string
@@ -465,12 +460,7 @@ function traceLayoutToSinkProps(
 		if (!spec) break
 		const childResolved = resolver.resolve(spec, currentPath)
 		const childPath =
-			childResolved &&
-			(fs.existsSync(childResolved)
-				? childResolved
-				: !childResolved.endsWith('.html') && fs.existsSync(childResolved + '.html')
-					? childResolved + '.html'
-					: null)
+			childResolved && fs.existsSync(childResolved) ? childResolved : null
 		if (!childPath) break
 		if (childTag.endsWith('-component')) {
 			const compContent = fs.readFileSync(childPath, 'utf-8')

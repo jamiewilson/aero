@@ -18,7 +18,7 @@ Every `.html` file in `client/pages/` becomes a route. `index.html` maps to `/`,
 
 ```html client/pages/about.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -41,14 +41,14 @@ Components are `.html` files in `client/components/`. Import one in a `<script i
 
 ```html client/pages/index.html
 <script is:build>
-	import greeting from '@components/greeting'
+	import greeting from '@components/greeting.html'
 </script>
 
 <greeting-component name="World" />
 ```
 
 <Note>
-	Import without the `.html` extension: `import greeting from '@components/greeting'`
+	Include the `.html` extension in import specifiers: `import greeting from '@components/greeting.html'`
 	resolves to `client/components/greeting.html`.
 </Note>
 
@@ -106,7 +106,7 @@ Layouts are `.html` files in `client/layouts/` that wrap page content. Use `<slo
 
 ```html client/pages/about.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -121,7 +121,7 @@ A layout can use another layout. Content flows from page to inner layout to oute
 
 ```html client/layouts/docs.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -147,7 +147,7 @@ Define named slots with the `name` attribute. Pages target them with `slot`:
 
 ```html client/pages/home.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>

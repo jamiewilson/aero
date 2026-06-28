@@ -8,7 +8,7 @@ For example, all of these can appear in one file:
 
 ```html
 <script is:build>
-	import card from '@components/card'
+	import card from '@components/card.html'
 	const title = 'Hello'
 </script>
 
@@ -210,8 +210,8 @@ In Aero, you can import an `.html` template and use it as a component or layout:
 
 ```html
 <script is:build>
-	import header from '@components/header'
-	import base from '@layouts/base'
+	import header from '@components/header.html'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>

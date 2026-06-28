@@ -44,7 +44,7 @@ Script blocks are classified by attributes (see [Scripts](https://github.com/jam
 
 ```html
 <script is:build>
-	import header from '@components/header'
+	import header from '@components/header.html'
 	const { title } = aero.props
 </script>
 <header-component title="{ title }" />

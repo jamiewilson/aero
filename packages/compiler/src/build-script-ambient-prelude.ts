@@ -37,8 +37,9 @@ declare function renderComponent(
 ): Promise<string>
 
 declare function raw(value: unknown): string
+`
 
-declare module '*.html' {
+export const IMPORT_MODULE_DECLARATIONS = `declare module '*.html' {
 	const component: string
 	export default component
 }
@@ -75,7 +76,3 @@ export const AERO_CONTENT_MODULE_DECLARATIONS = `declare module 'aero:content' {
 	export function render(entry: CollectionEntry | Record<string, any>): Promise<{ html: string }>
 }
 `
-
-/** Full prelude for `aero check --types` (build script + virtual imports like `aero:content`). */
-export const FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK =
-	BUILD_SCRIPT_AMBIENT_PRELUDE + '\n' + AERO_CONTENT_MODULE_DECLARATIONS + '\n'

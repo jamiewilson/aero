@@ -1,7 +1,7 @@
 <script is:build>
-	import base from '@layouts/base'
-	import logo from '@components/logo'
-	import toc from '@components/toc'
+	import base from '@layouts/base.html'
+	import logo from '@components/logo.html'
+	import toc from '@components/toc.html'
 	import overview from '@content/overview.md'
 	import { render } from 'aero:content'
 	const { html } = await render(overview)

@@ -344,10 +344,10 @@ const x = 1;
 	it('should extract plain script as client when parsing exact home.html file content', () => {
 		// Use exact home.html content (inline) so we don't depend on file path/encoding
 		const html = `<script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
-	import form from '@components/form'
-	import site from '@content/site'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
+	import form from '@components/form.html'
+	import site from '@content/site.ts'
 
 	const headerProps = {
 		title: site.home.title,
@@ -389,14 +389,14 @@ const x = 1;
 		expect(result.template).not.toContain('import { allCaps }')
 	})
 
-	/** Optional: runs only when examples/kitchen-sink has client/pages/home.html (snapshot of real page). */
-	it('should extract plain script when parsing home.html from file (if present)', () => {
-		const homePath = path.resolve(
+	/** Optional: runs only when kitchen-sink demos/scripts.html exists (page with plain client script). */
+	it('should extract plain script when parsing scripts.html from file (if present)', () => {
+		const scriptsPath = path.resolve(
 			__dirname,
-			'../../../../../examples/kitchen-sink/client/pages/home.html'
+			'../../../../../examples/kitchen-sink/client/pages/demos/scripts.html'
 		)
-		if (!fs.existsSync(homePath)) return
-		const html = fs.readFileSync(homePath, 'utf-8')
+		if (!fs.existsSync(scriptsPath)) return
+		const html = fs.readFileSync(scriptsPath, 'utf-8')
 		const result = parse(html)
 		expect(result.clientScripts.length).toBeGreaterThanOrEqual(1)
 		expect(result.clientScripts.some(s => s.content.includes('allCaps'))).toBe(true)

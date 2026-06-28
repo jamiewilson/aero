@@ -13,7 +13,7 @@ const kitchenSinkRoot = `${repoRoot}/examples/kitchen-sink`
 const counterPath = `${kitchenSinkRoot}/client/pages/counter.html`
 
 const counterText = `<script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <script is:state>

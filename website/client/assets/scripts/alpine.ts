@@ -1,5 +1,5 @@
 import type { ThemeStore } from '@shared/types/theme'
-import site from '@content/site'
+import site from '@content/site.ts'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
 

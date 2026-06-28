@@ -362,14 +362,10 @@ export function collectTransitiveTemplateImports(
 			} catch {
 				continue
 			}
-			let absNext = path.isAbsolute(resolved)
+			const absNext = path.isAbsolute(resolved)
 				? path.normalize(resolved)
 				: path.normalize(path.resolve(path.dirname(norm), resolved))
-			if (!absNext.endsWith('.html')) {
-				const withHtml = absNext + '.html'
-				if (fs.existsSync(withHtml)) absNext = withHtml
-				else continue
-			}
+			if (!absNext.endsWith('.html') || !fs.existsSync(absNext)) continue
 			visit(absNext)
 		}
 	}

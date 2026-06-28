@@ -54,10 +54,7 @@ export function checkComponentReferences(
 		}
 
 		const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
-		const resolvedExists =
-			resolved &&
-			(fs.existsSync(resolved) ||
-				(!resolved.endsWith('.html') && fs.existsSync(resolved + '.html')))
+		const resolvedExists = resolved && fs.existsSync(resolved)
 		if (resolved && !resolvedExists) {
 			const nameRange = findTagNameRange(match.index, tagName)
 			const diagnostic = new vscode.Diagnostic(

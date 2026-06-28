@@ -33,8 +33,9 @@ declare function renderComponent(
 ): Promise<string>
 
 declare function raw(value: unknown): string
+`
 
-declare module '*.html' {
+export const AMBIENT_DECLARATIONS = `declare module '*.html' {
 	const component: string
 	export default component
 }
@@ -55,9 +56,8 @@ declare module '*.md' {
 	const doc: ContentDocument
 	export default doc
 }
-`
 
-export const AMBIENT_DECLARATIONS = `declare module 'aero:content' {
+declare module 'aero:content' {
 	interface CollectionEntry {
 		id: string
 		data: Record<string, any>
