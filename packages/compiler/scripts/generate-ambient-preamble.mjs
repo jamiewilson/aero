@@ -2,9 +2,9 @@
 /**
  * Generate ambient preamble from @aero-js/core/env.d.ts.
  *
- * Single source of truth: env.d.ts. This script strips comments and splits
- * into BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, raw) and AMBIENT_DECLARATIONS
- * (*.html, *.md, aero:content) for the language server's virtual code.
+ * Single source of truth: env.d.ts. Strips comments and splits into
+ * BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, raw) and AMBIENT_DECLARATIONS
+ * (*.html, *.md, aero:content) for virtual TypeScript checking.
  */
 
 import * as fs from 'node:fs'
