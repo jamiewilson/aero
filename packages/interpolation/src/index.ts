@@ -212,6 +212,22 @@ export function maskInterpolationExpressionBodies(
 }
 
 const INTERPOLATION_BODY_LT_ESCAPE = '\uE000'
+/** Preserves entity-encoded snippet tags through HTML parse; restored before text lowering. */
+export const ENTITY_ENCODED_LT_ESCAPE = '\uE002'
+
+/** Escape `&lt;tag…&gt;` so HTML parsers keep snippet markup as text, not real elements. */
+export function escapeEntityEncodedElementMarkup(text: string): string {
+	return text.replace(
+		/&lt;(\/?)([A-Za-z][\w:-]*)([^&]*?)&gt;/g,
+		(_match, slash: string, tagName: string, rest: string) =>
+			`${ENTITY_ENCODED_LT_ESCAPE}${slash}${tagName}${rest}>`
+	)
+}
+
+/** Restore text produced by {@link escapeEntityEncodedElementMarkup}. */
+export function restoreEntityEncodedElementMarkup(value: string): string {
+	return value.replaceAll(ENTITY_ENCODED_LT_ESCAPE, '<')
+}
 
 function maskScriptAndStyleInner(text: string): string {
 	return text.replace(

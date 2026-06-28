@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+	escapeEntityEncodedElementMarkup,
 	escapeInterpolationBodyMarkup,
+	restoreEntityEncodedElementMarkup,
 	restoreInterpolationBodyMarkup,
 } from '../index'
 
@@ -35,5 +37,13 @@ export function getStaticPaths() {
 		expect(escaped).toContain('n < 0')
 		expect(escaped).not.toContain('\uE000')
 		expect(restore(escaped)).toBe(text)
+	})
+
+	it('escapes entity-encoded snippet tags so HTML parsers keep them as text', () => {
+		const text = '<code>&lt;script is:build&gt;</code>'
+		const escaped = escapeEntityEncodedElementMarkup(text)
+		expect(escaped).not.toContain('&lt;script')
+		expect(escaped).toContain('\uE002script is:build>')
+		expect(restoreEntityEncodedElementMarkup(escaped)).toBe('<code><script is:build></code>')
 	})
 })

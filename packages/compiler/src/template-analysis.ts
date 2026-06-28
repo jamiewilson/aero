@@ -16,7 +16,11 @@ import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
 import type { LowererDiag } from './lowerer/types'
 import { expandSelfClosingTags } from './parser'
-import { escapeInterpolationBodyMarkup } from '@aero-js/interpolation'
+import {
+	escapeEntityEncodedElementMarkup,
+	escapeInterpolationBodyMarkup,
+	restoreEntityEncodedElementMarkup,
+} from '@aero-js/interpolation'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
@@ -166,10 +170,14 @@ export function buildTemplateAnalysis(
 			.filter((name): name is string => name !== null)
 	)
 	const { text: expandedTemplate, restore } = escapeInterpolationBodyMarkup(
-		expandSelfClosingTags(parsed.template)
+		escapeEntityEncodedElementMarkup(expandSelfClosingTags(parsed.template))
 	)
 	const { document } = parseHTML(`<html lang="en"><body>${expandedTemplate}</body></html>`)
-	if (document.body) restoreDomMarkupEscapes(document.body, restore)
+	if (document.body) {
+		restoreDomMarkupEscapes(document.body, value =>
+			restoreEntityEncodedElementMarkup(restore(value))
+		)
+	}
 	const styleCode = extractTopLevelStyleCode(document.body, lowerer)
 	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
