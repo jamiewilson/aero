@@ -1,19 +1,16 @@
 <script is:build>
 	import base from '@layouts/base'
 	import badge from '@components/badge'
+	import header from '@components/header.html'
 	import { getCollection } from 'aero:content'
 
 	const docs = (await getCollection('docs')).sort((a, b) => b.data.published - a.data.published)
 </script>
 
 <base-layout title="Docs" description="Learn about Aero">
-	<header>
-		<h1>Docs</h1>
-		<p class="secondary">
-			Pages loaded from
-			<code>client/content/docs</code>
-		</p>
-	</header>
+	<header-component title="Docs">
+		<p slot="subtitle" class="secondary">Pages loaded from <code>client/content/docs</code></p>
+	</header-component>
 
 	<ul class="card" data-testid="docs-list">
 		<li for="{ const { id, data } of docs }">

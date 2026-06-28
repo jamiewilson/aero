@@ -29,6 +29,10 @@
 		}
 	}
 
+	.self-center {
+		align-self: center;
+	}
+
 	.items-center {
 		align-items: center;
 	}

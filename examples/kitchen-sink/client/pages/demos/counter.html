@@ -8,7 +8,7 @@
 </script>
 
 <base-layout title="Counter Demo" count="{ count }">
-	<header-component title="Counter Demo" bind:count="{ count }" />
+	<header-component bind:count="{ count }" />
 	<section class="h-stack justify-center items-center">
 		<button on:click="{ count-- }">−</button>
 		<h2>{ count }</h2>

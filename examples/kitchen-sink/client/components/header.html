@@ -14,10 +14,9 @@
 <header>
 	<logo-component if="{ isHomepage }" class="logo" />
 	<h1 else-if="{ props.title }">{ props.title }</h1>
-	<h2 else>Fallback Title</h2>
 
 	<div if="{ isCounterDemo }" class="card v-stack items-center">
-		<h4>Live prop binding</h4>
+		<h4>Reactive prop binding</h4>
 		<div class="h-stack items-center">
 			<button on:click="{ count-- }">−</button>
 			<code>{ `bind:count="{ ${count} }"` }</code>
@@ -25,7 +24,9 @@
 		</div>
 	</div>
 
-	<p class="subtitle secondary">{ props.subtitle }</p>
+	<slot name="subtitle">
+		<p class="subtitle secondary">{ props.subtitle }</p>
+	</slot>
 
 	<!-- Overrides global styles -->
 	<style>
