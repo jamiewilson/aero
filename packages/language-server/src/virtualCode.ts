@@ -30,7 +30,7 @@ import {
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
 import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
-import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
+import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from '@aero-js/compiler/ambient-preamble'
 
 const FULL_FEATURES: CodeInformation = {
 	completion: true,
@@ -70,10 +70,150 @@ function asEmbeddedModuleSnapshot(source: string): IScriptSnapshot {
 	return createSnapshot(source + EMBEDDED_MODULE_CLOSURE)
 }
 
-const ambientSnapshot: IScriptSnapshot = {
-	getText: (start, end) => AMBIENT_DECLARATIONS.substring(start, end),
-	getLength: () => AMBIENT_DECLARATIONS.length,
-	getChangeRange: () => undefined,
+
+function tryResolveToTs(candidateBasePath: string): string | null {
+	if (!candidateBasePath) return null
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.ts')) return candidateBasePath
+	return null
+}
+
+function resolveAliasImportPath(
+	specifier: string,
+	importerFile: string,
+	tryResolve: (candidate: string) => string | null
+): string | null {
+	if (!specifier || !importerFile) return null
+	if (specifier.startsWith('/')) {
+		return tryResolve(path.resolve(specifier))
+	}
+	if (specifier.startsWith('.')) {
+		return tryResolve(path.resolve(path.dirname(importerFile), specifier))
+	}
+	if (!specifier.startsWith('@')) return null
+	const aliases = loadPathAliasesForImporter(importerFile)
+	for (const alias of aliases) {
+		if (specifier === alias.find || specifier.startsWith(alias.find + '/')) {
+			const rest = specifier.slice(alias.find.length).replace(/^\//, '')
+			const candidate = path.join(alias.replacement, rest)
+			const resolved = tryResolve(candidate)
+			if (resolved) return resolved
+		}
+	}
+	return null
+}
+
+function resolveTsImportPath(specifier: string, importerFile: string): string | null {
+	return resolveAliasImportPath(specifier, importerFile, tryResolveToTs)
+}
+
+function hasExportModifier(node: ts.Node): boolean {
+	return (
+		ts.canHaveModifiers(node) &&
+		!!node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
+	)
+}
+
+function collectTsModuleExportNames(absPath: string): {
+	typeNames: string[]
+	valueNames: string[]
+	hasDefault: boolean
+} {
+	let source: string
+	try {
+		source = fs.readFileSync(absPath, 'utf-8')
+	} catch {
+		return { typeNames: [], valueNames: [], hasDefault: false }
+	}
+	const sf = ts.createSourceFile(absPath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+	const typeNames: string[] = []
+	const valueNames: string[] = []
+	let hasDefault = false
+
+	for (const stmt of sf.statements) {
+		if (ts.isExportAssignment(stmt)) {
+			if (!stmt.isExportEquals) hasDefault = true
+			continue
+		}
+		if (ts.isExportDeclaration(stmt)) {
+			if (stmt.moduleSpecifier) continue
+			if (!stmt.exportClause || ts.isNamespaceExport(stmt.exportClause)) continue
+			for (const el of stmt.exportClause.elements) {
+				const name = (el.name ?? el.propertyName)?.getText(sf)
+				if (!name) continue
+				if (stmt.isTypeOnly || el.isTypeOnly) typeNames.push(name)
+				else valueNames.push(name)
+			}
+			continue
+		}
+		if (!hasExportModifier(stmt)) continue
+		if (ts.isInterfaceDeclaration(stmt) || ts.isTypeAliasDeclaration(stmt)) {
+			typeNames.push(stmt.name.text)
+		} else if (ts.isVariableStatement(stmt)) {
+			for (const decl of stmt.declarationList.declarations) {
+				if (ts.isIdentifier(decl.name)) valueNames.push(decl.name.text)
+			}
+		} else if (
+			ts.isFunctionDeclaration(stmt) ||
+			ts.isClassDeclaration(stmt) ||
+			ts.isEnumDeclaration(stmt)
+		) {
+			if (stmt.name) valueNames.push(stmt.name.text)
+		}
+	}
+
+	return { typeNames, valueNames, hasDefault }
+}
+
+function toAmbientReExportSpecifier(relPath: string): string {
+	const normalized = relPath.replace(/\\/g, '/')
+	const withoutExt = normalized.replace(/\.tsx?$/, '')
+	return withoutExt.startsWith('.') ? withoutExt : `./${withoutExt}`
+}
+
+function buildTsImportAmbientSupplement(
+	htmlFilePath: string,
+	buildScriptBodies: readonly string[]
+): string {
+	if (!htmlFilePath) return ''
+	const ambientDir = path.dirname(`${htmlFilePath}.ambient.d.ts`)
+	const specifierToPath = new Map<string, string>()
+	for (const body of buildScriptBodies) {
+		if (!body.trim()) continue
+		try {
+			const { imports } = analyzeBuildScriptForEditor(body)
+			for (const imp of imports) {
+				if (!imp.specifier.endsWith('.ts')) continue
+				const resolved = resolveTsImportPath(imp.specifier, htmlFilePath)
+				if (resolved) specifierToPath.set(imp.specifier, resolved)
+			}
+		} catch {
+			continue
+		}
+	}
+	if (specifierToPath.size === 0) return ''
+	const blocks: string[] = []
+	for (const [specifier, absPath] of specifierToPath) {
+		const rel = path.relative(ambientDir, absPath).replace(/\\/g, '/')
+		const relImport = toAmbientReExportSpecifier(rel.startsWith('.') ? rel : `./${rel}`)
+		const { typeNames, valueNames, hasDefault } = collectTsModuleExportNames(absPath)
+		const escapedSpecifier = specifier.replace(/'/g, "\\'")
+		const lines = [`declare module '${escapedSpecifier}' {`]
+		if (typeNames.length > 0) {
+			lines.push(`  export type { ${typeNames.join(', ')} } from '${relImport}'`)
+		}
+		if (valueNames.length > 0) {
+			lines.push(`  export { ${valueNames.join(', ')} } from '${relImport}'`)
+		}
+		if (hasDefault) {
+			lines.push(`  export { default } from '${relImport}'`)
+		}
+		if (typeNames.length === 0 && valueNames.length === 0 && !hasDefault) {
+			lines.push(`  export * from '${relImport}'`)
+		}
+		lines.push(`}`, '')
+		blocks.push(...lines)
+	}
+	return blocks.join('\n')
 }
 
 function getScriptType(
@@ -354,28 +494,7 @@ function tryResolveToHtml(candidateBasePath: string): string | null {
 }
 
 function resolveHtmlImportPath(specifier: string, importerFile: string): string | null {
-	if (!specifier || !importerFile) return null
-	if (specifier.startsWith('/')) {
-		const abs = path.resolve(specifier)
-		return tryResolveToHtml(abs)
-	}
-	if (specifier.startsWith('.')) {
-		const candidate = path.resolve(path.dirname(importerFile), specifier)
-		return tryResolveToHtml(candidate)
-	}
-
-	if (!specifier.startsWith('@')) return null
-	const aliases = loadPathAliasesForImporter(importerFile)
-	for (const alias of aliases) {
-		if (specifier === alias.find || specifier.startsWith(alias.find + '/')) {
-			const rest = specifier.slice(alias.find.length).replace(/^\//, '')
-			const candidate = path.join(alias.replacement, rest)
-			const resolved = tryResolveToHtml(candidate)
-			if (resolved) return resolved
-		}
-	}
-
-	return null
+	return resolveAliasImportPath(specifier, importerFile, tryResolveToHtml)
 }
 
 function collectImportedHtmlByIdentifier(
@@ -608,6 +727,10 @@ export class AeroVirtualCode implements VirtualCode {
 				? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
 				: undefined
 
+		const tsImportAmbient = buildTsImportAmbientSupplement(this.htmlFilePath ?? '', buildScriptBodies)
+		const fullAmbient =
+			AMBIENT_DECLARATIONS + (tsImportAmbient.length > 0 ? `\n${tsImportAmbient}` : '')
+
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),
 			...this.extractInterpolationVirtualCodes(
@@ -621,7 +744,7 @@ export class AeroVirtualCode implements VirtualCode {
 			{
 				id: 'ambient',
 				languageId: 'typescriptdeclaration',
-				snapshot: ambientSnapshot,
+				snapshot: createSnapshot(fullAmbient),
 				mappings: [],
 				embeddedCodes: [],
 			},
