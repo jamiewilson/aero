@@ -21,6 +21,8 @@ export interface StateScopeOptions {
 	readonly scopeConstants?: Record<string, unknown>
 	/** External functions to inject into the eval scope (e.g. hypermedia action functions). */
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
+	/** Runtime-backed hypermedia actions; override imported fetch-only helpers in scope. */
+	readonly hypermediaScopeActions?: Record<string, unknown>
 }
 
 export type StateScope = Record<string, unknown>
@@ -77,9 +79,9 @@ function wrapFunctionSource(source: string): string {
  * Build a plain object scope backed by store signals/computeds for compiled state handlers.
  */
 export function createStateScope(options: StateScopeOptions): StateScope {
-	const { store, bindings, functionSources, actionFunctions, scopeConstants } = options
+	const { store, bindings, functionSources, actionFunctions, scopeConstants, hypermediaScopeActions } = options
 	const reactiveProps = options.reactiveProps ?? {}
-	const scope: StateScope = { ...actionFunctions, ...scopeConstants }
+	const scope: StateScope = { ...actionFunctions, ...scopeConstants, ...hypermediaScopeActions }
 
 	for (const binding of bindings.filter(b => !b.derived)) {
 		const reactivePropKey = binding.propName ?? binding.name
