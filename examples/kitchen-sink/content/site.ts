@@ -22,21 +22,16 @@ export default {
 		subtitle:
 			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
 	},
-	htmxForm: {
-		title: 'HTMX form',
-		subtitle: 'Alpine x-model with an HTMX POST and toast fragment.',
-		cta: 'Send POST Request',
-	},
 	demos: [
 		{ label: 'Scripts', href: '/demos/scripts' },
 		{ label: 'Image imports', href: '/demos/images' },
-		{ label: 'Counter (reactive props)', href: '/demos/counter' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
 		{ label: 'Keyed list', href: '/demos/keyed-list' },
 		{ label: 'Form model', href: '/demos/form-model' },
 		{ label: 'Bindings', href: '/demos/bindings' },
-		{ label: 'Process runtime', href: '/demos/process' },
+		{ label: 'Reactivity', href: '/demos/reactivity' },
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
+		{ label: 'Process runtime', href: '/demos/process' },
 		{ label: 'HTMX form', href: '/demos/htmx-form' },
 	],
 	footer: {
