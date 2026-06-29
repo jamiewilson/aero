@@ -10,7 +10,7 @@ export {
 	checkTemplateTypesWithFile,
 	checkTemplateBuildScriptTypes,
 	checkTemplateBuildScriptTypesWithFile,
-	collectComponentLivePropMetadata,
+	collectComponentReactivePropMetadata,
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/compiler'
@@ -26,7 +26,7 @@ export {
 } from './routing/route-typegen'
 export type {
 	BuildScriptTypeIssue,
-	ComponentLivePropMetadata,
+	ComponentReactivePropMetadata,
 	TemplateTypeIssue,
 	CheckTemplateTypesOptions,
 } from '@aero-js/compiler'

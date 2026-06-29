@@ -64,7 +64,7 @@ describe('collectTemplateInterpolationSites', () => {
 		expect(virtualText.endsWith(';')).toBe(true)
 	})
 
-	it('declares readonly live props as let in event handler virtual TS so Aero can own the diagnostic', () => {
+	it('declares readonly reactive props as let in event handler virtual TS so Aero can own the diagnostic', () => {
 		const html = `<script is:state>const { count } = Aero.props</script><button on:click="{ count++ }">+</button>`
 		const sites = collectTemplateInterpolationSites(html)
 		const eventSite = sites.find(s => s.isEventHandler)

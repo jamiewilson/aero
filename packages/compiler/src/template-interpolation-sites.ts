@@ -302,7 +302,7 @@ export function buildTemplateInterpolationVirtualText(
 	const ambient = buildTemplateEditorAmbient(sourceText)
 	const binderDecl = formatInterpolationBinderPreludeFromTemplate(sourceText, site.braceOffset, {
 		writableNames: site.isEventHandler
-			? new Set([...ambient.writableStateBindingNames, ...ambient.readonlyLivePropNames])
+			? new Set([...ambient.writableStateBindingNames, ...ambient.readonlyReactivePropNames])
 			: undefined,
 	})
 	const head = preamble + binderDecl

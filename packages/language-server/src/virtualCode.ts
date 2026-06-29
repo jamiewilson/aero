@@ -714,7 +714,7 @@ export class AeroVirtualCode implements VirtualCode {
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
 			writableStateBindingNames,
-			readonlyLivePropNames,
+			readonlyReactivePropNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
 		this.buildScriptBodies = buildScriptBodies
@@ -738,7 +738,7 @@ export class AeroVirtualCode implements VirtualCode {
 				buildBindingNames,
 				buildTypeDeclTexts,
 				writableStateBindingNames,
-				readonlyLivePropNames,
+				readonlyReactivePropNames,
 				cachedBindingTypes
 			),
 			{
@@ -756,7 +756,7 @@ export class AeroVirtualCode implements VirtualCode {
 		buildBindingNames: ReadonlySet<string>,
 		buildTypeDeclTexts: readonly string[],
 		writableStateBindingNames: ReadonlySet<string>,
-		readonlyLivePropNames: ReadonlySet<string>,
+		readonlyReactivePropNames: ReadonlySet<string>,
 		cachedBindingTypes?: ReadonlyMap<string, string>
 	): VirtualCode[] {
 		const forScopes = collectForDirectiveScopes(this.htmlDocument.roots, sourceText)
@@ -799,7 +799,7 @@ export class AeroVirtualCode implements VirtualCode {
 				undefined,
 				options?.isEventHandler
 					? new Set(
-							[...writableStateBindingNames, ...readonlyLivePropNames].filter(name =>
+							[...writableStateBindingNames, ...readonlyReactivePropNames].filter(name =>
 								combinedBindings.has(name)
 							)
 						)

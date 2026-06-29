@@ -11,7 +11,7 @@ import {
 import { initProcessor } from '@aero-js/content/processor'
 import {
 	checkTemplateTypesWithFile,
-	collectComponentLivePropMetadata,
+	collectComponentReactivePropMetadata,
 	compileTemplate,
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
@@ -360,7 +360,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 			const projectTs = runTypes ? loadProjectTsConfig(root) : null
 			const componentsDir = path.join(root, dirs.client, 'components')
 			const layoutsDir = path.join(root, dirs.client, 'layouts')
-			const componentLiveProps = collectComponentLivePropMetadata([componentsDir, layoutsDir])
+			const componentReactiveProps = collectComponentReactivePropMetadata([componentsDir, layoutsDir])
 			const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
 			const registryPath = registryWritten?.path
 
@@ -388,7 +388,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 										importer: file,
 										reactivity: featureFlags.reactivity,
 										hypermedia: featureFlags.hypermedia,
-										componentLiveProps,
+										componentReactiveProps,
 										onWarning: warning => {
 											diagnostics.push({
 												severity: 'warning',

@@ -129,7 +129,7 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
-	it('aliases bindable live props to the passed signal instead of creating owned state', () => {
+	it('aliases bindable reactive props to the passed signal instead of creating owned state', () => {
 		const text = { textContent: '1' } as unknown as Element
 		const root = {
 			querySelector(selector: string) {
@@ -145,14 +145,14 @@ describe('mountStateBindings', () => {
 		const cleanup = mountStateBindings({
 			root,
 			store: childStore,
-			liveProps: { count: parentCount },
+			reactiveProps: { count: parentCount },
 			bindings: [
 				{
 					name: 'count',
 					derived: false,
 					initExpr: 'undefined',
 					dependencies: [],
-					liveProp: true,
+					reactiveProp: true,
 					required: true,
 					bindable: true,
 				},
@@ -169,7 +169,7 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
-	it('mounts child component bindings with readonly live prop signal aliases', () => {
+	it('mounts child component bindings with readonly reactive prop signal aliases', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -195,7 +195,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childComponent,
-					livePropExprs: { count: { expr: 'count', mutable: false } },
+					reactivePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 			Aero: aero,
@@ -203,21 +203,21 @@ describe('mountStateBindings', () => {
 
 		expect(childMount).toHaveBeenCalledWith(childRoot, aero, {
 			store: expect.any(SignalStore),
-			liveProps: { count: expect.objectContaining({ value: 1 }) },
+			reactiveProps: { count: expect.objectContaining({ value: 1 }) },
 		})
 		const calls = childMount.mock.calls as unknown as Array<
-			[Element, unknown, { store: SignalStore; liveProps: Record<string, { value: unknown }> }]
+			[Element, unknown, { store: SignalStore; reactiveProps: Record<string, { value: unknown }> }]
 		>
 		expect(calls[0]?.[2].store).not.toBe(store)
-		expect(calls[0]?.[2].liveProps.count).not.toBe(store.get('count'))
+		expect(calls[0]?.[2].reactiveProps.count).not.toBe(store.get('count'))
 		expect(() => {
-			calls[0]![2].liveProps.count.value = 2
-		}).toThrow('Readonly live prop cannot be assigned: count')
+			calls[0]![2].reactiveProps.count.value = 2
+		}).toThrow('Readonly reactive prop cannot be assigned: count')
 		cleanup()
 		expect(childCleanup).toHaveBeenCalledTimes(1)
 	})
 
-	it('mounts bind component props with mutable live prop signal aliases', () => {
+	it('mounts bind component props with mutable reactive prop signal aliases', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -227,9 +227,9 @@ describe('mountStateBindings', () => {
 		} as unknown as ParentNode
 		const store = new SignalStore()
 		store.merge({ count: 1 })
-		let liveProps: Record<string, { value: unknown }> | undefined
+		let reactiveProps: Record<string, { value: unknown }> | undefined
 		const childMount = vi.fn((_root, _aero, opts) => {
-			liveProps = opts.liveProps
+			reactiveProps = opts.reactiveProps
 			return () => {}
 		})
 
@@ -244,18 +244,18 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: { count: { expr: 'count', mutable: true } },
+					reactivePropExprs: { count: { expr: 'count', mutable: true } },
 				},
 			],
 			Aero: {},
 		})
 
-		expect(liveProps?.count).toBe(store.get('count'))
-		liveProps!.count.value = 2
+		expect(reactiveProps?.count).toBe(store.get('count'))
+		reactiveProps!.count.value = 2
 		expect(store.get('count').value).toBe(2)
 	})
 
-	it('maps renamed live props from parent attribute names to child prop names', () => {
+	it('maps renamed reactive props from parent attribute names to child prop names', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -265,9 +265,9 @@ describe('mountStateBindings', () => {
 		} as unknown as ParentNode
 		const store = new SignalStore()
 		store.merge({ title: 'Hello' })
-		let liveProps: Record<string, { value: unknown }> | undefined
+		let reactiveProps: Record<string, { value: unknown }> | undefined
 		const childMount = vi.fn((_root, _aero, opts) => {
-			liveProps = opts.liveProps
+			reactiveProps = opts.reactiveProps
 			return () => {}
 		})
 
@@ -282,15 +282,15 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: { heading: { expr: 'title', mutable: false } },
+					reactivePropExprs: { heading: { expr: 'title', mutable: false } },
 				},
 			],
 			Aero: {},
 		})
 
-		expect(liveProps?.heading.value).toBe('Hello')
+		expect(reactiveProps?.heading.value).toBe('Hello')
 		;(store.get('title') as { value: string }).value = 'Updated'
-		expect(liveProps?.heading.value).toBe('Updated')
+		expect(reactiveProps?.heading.value).toBe('Updated')
 	})
 
 	it('creates an independent store for each child component instance', () => {
@@ -323,12 +323,12 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: {},
+					reactivePropExprs: {},
 				},
 				{
 					selector: '[data-aero-component="1"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: {},
+					reactivePropExprs: {},
 				},
 			],
 			Aero: {},
@@ -346,7 +346,7 @@ describe('mountStateBindings', () => {
 		expect(secondStore).not.toBe(parentStore)
 	})
 
-	it('mounts child component bindings without live props', () => {
+	it('mounts child component bindings without reactive props', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -370,7 +370,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childComponent,
-					livePropExprs: {},
+					reactivePropExprs: {},
 				},
 			],
 			Aero: {},
@@ -378,13 +378,13 @@ describe('mountStateBindings', () => {
 
 		expect(childMount).toHaveBeenCalledWith(childRoot, {}, {
 			store: expect.any(SignalStore),
-			liveProps: {},
+			reactiveProps: {},
 		})
 		cleanup()
 		expect(childCleanup).toHaveBeenCalledTimes(1)
 	})
 
-	it('passes plain live prop aliases that fail loudly on child writes', () => {
+	it('passes plain reactive prop aliases that fail loudly on child writes', () => {
 		const childRoot = {} as Element
 		const root = {
 			querySelector(selector: string) {
@@ -394,9 +394,9 @@ describe('mountStateBindings', () => {
 		} as unknown as ParentNode
 		const parentStore = new SignalStore()
 		parentStore.merge({ count: 1 })
-		let liveProps: Record<string, { value: unknown }> | undefined
+		let reactiveProps: Record<string, { value: unknown }> | undefined
 		const childMount = vi.fn((_root, _aero, opts) => {
-			liveProps = opts.liveProps
+			reactiveProps = opts.reactiveProps
 			return () => {}
 		})
 
@@ -411,16 +411,16 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: { count: { expr: 'count', mutable: false } },
+					reactivePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 			Aero: {},
 		})
 
-		expect(liveProps?.count.value).toBe(1)
+		expect(reactiveProps?.count.value).toBe(1)
 		expect(() => {
-			liveProps!.count.value = 2
-		}).toThrow('Readonly live prop cannot be assigned: count')
+			reactiveProps!.count.value = 2
+		}).toThrow('Readonly reactive prop cannot be assigned: count')
 		expect(parentStore.get('count').value).toBe(1)
 	})
 
@@ -480,7 +480,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childComponent,
-					livePropExprs: { count: { expr: 'count', mutable: false } },
+					reactivePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 		})
@@ -545,12 +545,12 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: {},
-					livePropExprs: {},
+					reactivePropExprs: {},
 				},
 				{
 					selector: '[data-aero-component="1"]',
 					component: { mountStateBindings: childMount },
-					livePropExprs: {},
+					reactivePropExprs: {},
 				},
 			],
 		})
@@ -604,7 +604,7 @@ describe('mountStateBindings', () => {
 				{
 					selector: '[data-aero-component="0"]',
 					component: childModule,
-					livePropExprs: { count: { expr: 'count', mutable: false } },
+					reactivePropExprs: { count: { expr: 'count', mutable: false } },
 				},
 			],
 		})
@@ -653,14 +653,14 @@ describe('mountStateBindings', () => {
 		const cleanup = mountStateBindings({
 			root: componentRoot,
 			store,
-			liveProps: { count: store.get('count') },
+			reactiveProps: { count: store.get('count') },
 			bindings: [
 				{
 					name: 'count',
 					derived: false,
 					initExpr: 'undefined',
 					dependencies: [],
-					liveProp: true,
+					reactiveProp: true,
 					required: true,
 				},
 			],
@@ -745,7 +745,7 @@ describe('mountStateBindings', () => {
 					{
 						selector: '[data-aero-component="0"]',
 						component: {},
-						livePropExprs: {},
+						reactivePropExprs: {},
 					},
 				],
 				Aero: {},
@@ -753,7 +753,7 @@ describe('mountStateBindings', () => {
 		).not.toThrow()
 	})
 
-	it('creates local state for omitted optional live props', () => {
+	it('creates local state for omitted optional reactive props', () => {
 		const text = { textContent: '' } as unknown as Element
 		const root = {
 			querySelector(selector: string) {
@@ -766,14 +766,14 @@ describe('mountStateBindings', () => {
 		const cleanup = mountStateBindings({
 			root,
 			store: childStore,
-			liveProps: {},
+			reactiveProps: {},
 			bindings: [
 				{
 					name: 'label',
 					derived: false,
 					initExpr: '"Counter"',
 					dependencies: [],
-					liveProp: true,
+					reactiveProp: true,
 					required: false,
 				},
 			],
@@ -788,39 +788,39 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 
-	it('fails loudly when a required live prop is omitted', () => {
+	it('fails loudly when a required reactive prop is omitted', () => {
 		expect(() =>
 			createStateScope({
 				store: new SignalStore(),
-				liveProps: {},
+				reactiveProps: {},
 				bindings: [
 					{
 						name: 'count',
 						derived: false,
 						initExpr: 'undefined',
 						dependencies: [],
-						liveProp: true,
+						reactiveProp: true,
 						required: true,
 					},
 				],
 				functionSources: [],
 			})
-		).toThrow('Required live prop was not provided: count')
+		).toThrow('Required reactive prop was not provided: count')
 	})
 
-	it('fails loudly when readonly live props are assigned', () => {
+	it('fails loudly when readonly reactive props are assigned', () => {
 		const parentStore = new SignalStore()
 		const childStore = new SignalStore()
 		const scope = createStateScope({
 			store: childStore,
-			liveProps: { count: parentStore.signal('count', 1) },
+			reactiveProps: { count: parentStore.signal('count', 1) },
 			bindings: [
 				{
 					name: 'count',
 					derived: false,
 					initExpr: 'undefined',
 					dependencies: [],
-					liveProp: true,
+					reactiveProp: true,
 					required: true,
 				},
 			],
@@ -829,23 +829,23 @@ describe('mountStateBindings', () => {
 
 		expect(() => {
 			scope.count = 2
-		}).toThrow('Readonly live prop cannot be assigned: count')
+		}).toThrow('Readonly reactive prop cannot be assigned: count')
 	})
 
-	it('allows bindable live props to be assigned', () => {
+	it('allows bindable reactive props to be assigned', () => {
 		const parentStore = new SignalStore()
 		const childStore = new SignalStore()
 		const parentCount = parentStore.signal('count', 1)
 		const scope = createStateScope({
 			store: childStore,
-			liveProps: { count: parentCount },
+			reactiveProps: { count: parentCount },
 			bindings: [
 				{
 					name: 'count',
 					derived: false,
 					initExpr: 'undefined',
 					dependencies: [],
-					liveProp: true,
+					reactiveProp: true,
 					required: false,
 					bindable: true,
 				},

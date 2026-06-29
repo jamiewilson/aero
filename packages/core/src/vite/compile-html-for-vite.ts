@@ -4,7 +4,7 @@
 
 import type { ResolvedConfig } from 'vite'
 import type { ScriptEntry } from '../types'
-import type { ComponentLivePropMetadata } from '@aero-js/compiler'
+import type { ComponentReactivePropMetadata } from '@aero-js/compiler'
 import { compileTemplate, parse } from '@aero-js/compiler'
 import { getClientScriptVirtualUrl } from './defaults'
 import { toPosixRelative } from '../utils/path'
@@ -27,7 +27,7 @@ interface CompileHtmlForViteParams {
 	reactivity?: boolean
 	/** Enable Aero hypermedia pipeline. */
 	hypermedia?: boolean
-	componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
+	componentReactiveProps?: Record<string, readonly ComponentReactivePropMetadata[]>
 }
 
 /**
@@ -65,7 +65,7 @@ export function compileHtmlSourceForVite(
 			onWarning: params.onWarning,
 			reactivity: params.reactivity,
 			hypermedia: params.hypermedia,
-			componentLiveProps: params.componentLiveProps,
+			componentReactiveProps: params.componentReactiveProps,
 		},
 		parsed
 	)

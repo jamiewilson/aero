@@ -41,7 +41,7 @@ export {
 } from './template-interpolation-sites'
 
 export {
-	collectComponentLivePropMetadata,
+	collectComponentReactivePropMetadata,
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,
 	writeComponentRegistryDts,
@@ -59,7 +59,7 @@ export type {
 	ScriptEntry,
 	ResolverOptions,
 	CodegenTarget,
-	ComponentLivePropMetadata,
+	ComponentReactivePropMetadata,
 	EmitRenderFunctionOptions,
 	CompileErrorOptions,
 } from './types'
@@ -158,10 +158,10 @@ export {
 	type StateScriptAnalysisResult,
 } from './state-script-analysis'
 export {
-	collectReadonlyLivePropWritesInExpression,
-	readonlyLivePropWriteMessage,
-	type ReadonlyLivePropWrite,
-} from './readonly-live-prop-writes'
+	collectReadonlyReactivePropWritesInExpression,
+	readonlyReactivePropWriteMessage,
+	type ReadonlyReactivePropWrite,
+} from './readonly-reactive-prop-writes'
 
 export {
 	annotateStateScriptForEditorTypecheck,

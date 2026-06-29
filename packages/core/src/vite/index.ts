@@ -46,7 +46,7 @@ import { CompileWarningDeduper, type CompileWarningPayload } from './compile-war
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
-import { collectComponentLivePropMetadata, parse } from '@aero-js/compiler'
+import { collectComponentReactivePropMetadata, parse } from '@aero-js/compiler'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
 import {
@@ -126,7 +126,7 @@ function compileHtmlWithDedupedWarnings(
 	deduper: CompileWarningDeduper
 ): string {
 	const warnings: CompileWarningPayload[] = []
-	const componentLiveProps = collectComponentLivePropMetadata([
+	const componentReactiveProps = collectComponentReactivePropMetadata([
 		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
 		path.join(params.resolvedConfig.root, params.dirs.client, 'layouts'),
 	])
@@ -135,7 +135,7 @@ function compileHtmlWithDedupedWarnings(
 		filePath,
 		{
 			...params,
-			componentLiveProps,
+			componentReactiveProps,
 			onWarning: warning => {
 				warnings.push(warning)
 			},

@@ -8,7 +8,7 @@
  * {@link compileWrapperAwareBranch}; `data-for` / `for` on `<template>` via
  * {@link compileWrapperlessNode} for the loop body.
  */
-import type { IRNode, IRReactiveComponentLivePropExpr } from '../ir'
+import type { IRNode, IRComponentReactivePropExpr } from '../ir'
 import type { LowererDiag, LowererReactiveState } from './types'
 
 import * as CONST from '../constants'
@@ -17,7 +17,7 @@ import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
-import { CompileError, type ComponentLivePropMetadata } from '../types'
+import { CompileError, type ComponentReactivePropMetadata } from '../types'
 import { collectForDirectiveBindingNames } from '../for-directive'
 import {
 	parseComponentAttributes,
@@ -43,7 +43,7 @@ export class Lowerer {
 	private readonly reactiveState: LowererReactiveState | null
 
 	private readonly hypermedia: boolean
-	private readonly componentLiveProps: Record<string, readonly ComponentLivePropMetadata[]>
+	private readonly componentReactiveProps: Record<string, readonly ComponentReactivePropMetadata[]>
 
 	constructor(
 		resolver: Resolver,
@@ -52,13 +52,13 @@ export class Lowerer {
 		options?: {
 			writableStateBindingNames?: ReadonlySet<string>
 			hypermedia?: boolean
-			componentLiveProps?: Record<string, readonly ComponentLivePropMetadata[]>
+			componentReactiveProps?: Record<string, readonly ComponentReactivePropMetadata[]>
 		}
 	) {
 		this.resolver = resolver
 		this.diag = diag
 		this.hypermedia = options?.hypermedia === true
-		this.componentLiveProps = options?.componentLiveProps ?? {}
+		this.componentReactiveProps = options?.componentReactiveProps ?? {}
 		this.reactiveState =
 			stateBindingNames && stateBindingNames.size > 0
 				? createLowererReactiveState(
@@ -523,9 +523,9 @@ export class Lowerer {
 		const isLayout = tagName.endsWith('-layout')
 		const { propsString } = parseComponentAttributes(node, this.diag)
 		this.validateComponentBindAttrsRequireState(node, tagName)
-		const livePropExprs = this.collectComponentLivePropExprs(node)
-		this.validateRequiredComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
-		this.validateBindableComponentLiveProps(tagName, kebabBase, baseName, livePropExprs)
+		const reactivePropExprs = this.collectComponentReactivePropExprs(node)
+		this.validateRequiredComponentReactiveProps(tagName, kebabBase, baseName, reactivePropExprs)
+		this.validateBindableComponentReactiveProps(tagName, kebabBase, baseName, reactivePropExprs)
 		const componentBindId = this.reactiveState
 			? this.reactiveState.nextComponentBindId()
 			: undefined
@@ -573,13 +573,13 @@ export class Lowerer {
 				kind: 'ReactiveComponentBind',
 				bindId: componentBindId,
 				componentExpr: baseName,
-				livePropExprs,
+				reactivePropExprs,
 			},
 		]
 	}
 
-	private collectComponentLivePropExprs(node: any): Record<string, IRReactiveComponentLivePropExpr> {
-		const out: Record<string, IRReactiveComponentLivePropExpr> = {}
+	private collectComponentReactivePropExprs(node: any): Record<string, IRComponentReactivePropExpr> {
+		const out: Record<string, IRComponentReactivePropExpr> = {}
 		if (!this.reactiveState || !node.attributes) return out
 		for (let i = 0; i < node.attributes.length; i++) {
 			const attr = node.attributes[i]
@@ -589,7 +589,7 @@ export class Lowerer {
 			}
 			if (name.endsWith(':readonly')) {
 				throw new CompileError({
-					message: `Component live prop \`${name}\` is obsolete; use \`${name.slice(0, -':readonly'.length)}="{ ... }"\` because live props are readonly by default.`,
+					message: `Component reactive prop \`${name}\` is obsolete; use \`${name.slice(0, -':readonly'.length)}="{ ... }"\` because reactive props are readonly by default.`,
 					file: this.diag?.file,
 				})
 			}
@@ -632,46 +632,46 @@ export class Lowerer {
 		}
 	}
 
-	private getComponentLivePropMetadata(
+	private getComponentReactivePropMetadata(
 		tagName: string,
 		kebabBase: string,
 		baseName: string
-	): readonly ComponentLivePropMetadata[] {
+	): readonly ComponentReactivePropMetadata[] {
 		return (
-			this.componentLiveProps[baseName] ??
-			this.componentLiveProps[kebabBase] ??
-			this.componentLiveProps[tagName] ??
+			this.componentReactiveProps[baseName] ??
+			this.componentReactiveProps[kebabBase] ??
+			this.componentReactiveProps[tagName] ??
 			[]
 		)
 	}
 
-	private validateRequiredComponentLiveProps(
+	private validateRequiredComponentReactiveProps(
 		tagName: string,
 		kebabBase: string,
 		baseName: string,
-		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+		reactivePropExprs: Record<string, IRComponentReactivePropExpr>
 	): void {
 		if (!this.reactiveState) return
-		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+		for (const prop of this.getComponentReactivePropMetadata(tagName, kebabBase, baseName)) {
 			const propName = prop.propName || prop.name
-			if (!prop.required || livePropExprs[propName] !== undefined) continue
+			if (!prop.required || reactivePropExprs[propName] !== undefined) continue
 			throw new CompileError({
-				message: `Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
+				message: `Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`,
 				file: this.diag?.file,
 			})
 		}
 	}
 
-	private validateBindableComponentLiveProps(
+	private validateBindableComponentReactiveProps(
 		tagName: string,
 		kebabBase: string,
 		baseName: string,
-		livePropExprs: Record<string, IRReactiveComponentLivePropExpr>
+		reactivePropExprs: Record<string, IRComponentReactivePropExpr>
 	): void {
 		if (!this.reactiveState) return
-		for (const prop of this.getComponentLivePropMetadata(tagName, kebabBase, baseName)) {
+		for (const prop of this.getComponentReactivePropMetadata(tagName, kebabBase, baseName)) {
 			const propName = prop.propName || prop.name
-			const passed = livePropExprs[propName]
+			const passed = reactivePropExprs[propName]
 			if (passed?.mutable === true && !prop.bindable) {
 				throw new CompileError({
 					message: `Child prop \`${propName}\` for <${tagName}> must be declared with \`Aero.bindable()\` before it can be passed with \`bind:${propName}\`.`,
@@ -680,7 +680,7 @@ export class Lowerer {
 			}
 			if (prop.writes && passed?.mutable === false) {
 				throw new CompileError({
-					message: `Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
+					message: `Reactive prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`,
 					file: this.diag?.file,
 				})
 			}

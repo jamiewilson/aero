@@ -186,17 +186,17 @@ function serializeBindings(analysis: StateScriptAnalysisResult): string {
 			derived: binding.derived,
 			initExpr: binding.initExpr,
 			dependencies: binding.dependencies,
-			...(binding.liveProp ? { liveProp: true } : {}),
+			...(binding.reactiveProp ? { reactiveProp: true } : {}),
 			...(binding.propName && binding.propName !== binding.name ? { propName: binding.propName } : {}),
-			...(binding.liveProp ? { required: binding.required === true } : {}),
+			...(binding.reactiveProp ? { required: binding.required === true } : {}),
 			...(binding.bindable ? { bindable: true } : {}),
 		}))
 	)
 }
 
-export function emitLivePropsMetadata(analysis: StateScriptAnalysisResult): string {
-	const liveProps = analysis.bindings
-		.filter(binding => binding.liveProp)
+export function emitReactivePropsMetadata(analysis: StateScriptAnalysisResult): string {
+	const reactiveProps = analysis.bindings
+		.filter(binding => binding.reactiveProp)
 		.map(binding => ({
 			name: binding.name,
 			propName: binding.propName ?? binding.name,
@@ -204,8 +204,8 @@ export function emitLivePropsMetadata(analysis: StateScriptAnalysisResult): stri
 			...(binding.bindable ? { bindable: true } : {}),
 			...(binding.writes ? { writes: true } : {}),
 		}))
-	if (liveProps.length === 0) return ''
-	return `export const __aeroLiveProps = ${JSON.stringify(liveProps)}`
+	if (reactiveProps.length === 0) return ''
+	return `export const __aeroReactiveProps = ${JSON.stringify(reactiveProps)}`
 }
 
 function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
@@ -397,7 +397,7 @@ function serializeComponentBinds(
 			const componentExpr = defaultImportBindings.has(bind.componentExpr)
 				? `__aeroMod_${bind.componentExpr}`
 				: bind.componentExpr
-			return `\t\t\t{ selector: ${JSON.stringify(`[data-aero-component="${bind.bindId}"]`)}, component: ${componentExpr}, livePropExprs: ${JSON.stringify(bind.livePropExprs)} }`
+			return `\t\t\t{ selector: ${JSON.stringify(`[data-aero-component="${bind.bindId}"]`)}, component: ${componentExpr}, reactivePropExprs: ${JSON.stringify(bind.reactivePropExprs)} }`
 		})
 		.join(',\n')}\n\t\t]`
 }
@@ -487,7 +487,7 @@ export function mountStateBindings(root, Aero, opts = {}) {
 	return __aeroMountStateBindings({
 		root,
 		store: opts.store ?? runtime.store,
-		liveProps: opts.liveProps ?? {},
+		reactiveProps: opts.reactiveProps ?? {},
 		bindings: ${serializeBindings(analysis)},
 		functionSources: ${serializeFunctionSources(analysis)},
 		textBinds: ${serializeTextBinds(binds.textBinds)},

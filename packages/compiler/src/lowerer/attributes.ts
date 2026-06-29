@@ -274,7 +274,7 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 				diag,
 				attr.name,
 				attr.value,
-				`Component live prop \`${attr.name}\` is obsolete; use \`${attr.name.slice(0, -':readonly'.length)}="{ ... }"\` because live props are readonly by default.`
+				`Component reactive prop \`${attr.name}\` is obsolete; use \`${attr.name.slice(0, -':readonly'.length)}="{ ... }"\` because reactive props are readonly by default.`
 			)
 		}
 

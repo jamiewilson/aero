@@ -245,7 +245,7 @@ export interface AeroTemplateContext {
 	page: AeroPageContext
 	/** Site-scoped: canonical URL and future config. */
 	site: AeroSiteContext
-	/** Marker/fallback helper for child-mutable live props in state scripts. */
+	/** Marker/fallback helper for child-mutable reactive props in state scripts. */
 	bindable: {
 		(): undefined
 		<T>(fallback: T): T

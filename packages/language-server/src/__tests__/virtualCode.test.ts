@@ -211,7 +211,7 @@ function inc() { value++ }
 		expect(codes).not.toContain(2588)
 	})
 
-	it('does not emit TS2588 for readonly live prop writes in event handler virtual TS', () => {
+	it('does not emit TS2588 for readonly reactive prop writes in event handler virtual TS', () => {
 		const html = `<script is:state>
 const { count } = Aero.props
 </script>

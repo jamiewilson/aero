@@ -29,7 +29,7 @@ function toggleAuth() {
 		expect(mapped.segments.length).toBeGreaterThan(1)
 	})
 
-	it('rewrites Aero.props destructures to let in virtual TS so Aero owns live-prop diagnostics', () => {
+	it('rewrites Aero.props destructures to let in virtual TS so Aero owns reactive-prop diagnostics', () => {
 		const script = `const { count, value = Aero.bindable(0) } = Aero.props
 function inc() { value++ }`
 

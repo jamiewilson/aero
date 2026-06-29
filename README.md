@@ -12,7 +12,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
 | 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags |
-| ⚡ Optional reactivity      | `<script is:state>`, bindings, live props — opt in with `reactivity: true`   |
+| ⚡ Optional reactivity      | `<script is:state>`, bindings, reactive props — opt in with `reactivity: true`   |
 | 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                          |
 | 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
 

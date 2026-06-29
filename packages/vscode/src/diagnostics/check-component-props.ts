@@ -10,7 +10,7 @@ import type { PathResolver } from '../pathResolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
-import { collectComponentLivePropMetadata } from '@aero-js/compiler'
+import { collectComponentReactivePropMetadata } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 import { getIgnoredRanges, isInRanges, attributeSectionBase, findAttributeRange, findTagNameRange, sliceRawAttrs, type ByteRange } from './helpers'
 
@@ -100,7 +100,7 @@ export function checkComponentProps(
 
 		const suffix = suffixMatch[1] as string
 		if (suffix === 'component') {
-			validateComponentLiveProps(
+			validateComponentReactiveProps(
 				document,
 				diagnostics,
 				tagStart,
@@ -181,7 +181,7 @@ export function checkComponentProps(
 	}
 }
 
-function getPassedLivePropNames(
+function getPassedReactivePropNames(
 	attrs: string,
 	stateVars: Map<string, VariableDefinition>
 ): Map<string, { bound: boolean; obsoleteReadonly: boolean; rawAttrName: string }> {
@@ -224,7 +224,7 @@ function collectStateScriptContent(componentContent: string): string {
 	return scripts.join('\n')
 }
 
-function collectLivePropLocalNames(stateScript: string): Set<string> {
+function collectReactivePropLocalNames(stateScript: string): Set<string> {
 	const names = new Set<string>()
 	const destructureRegex = /\bconst\s*\{([\s\S]*?)\}\s*=\s*Aero\.props\b/g
 	let match: RegExpExecArray | null
@@ -241,11 +241,11 @@ function collectLivePropLocalNames(stateScript: string): Set<string> {
 	return names
 }
 
-function collectWrittenLivePropNames(componentContent: string): Set<string> {
+function collectWrittenReactivePropNames(componentContent: string): Set<string> {
 	const stateScript = collectStateScriptContent(componentContent)
-	const liveProps = collectLivePropLocalNames(stateScript)
+	const reactiveProps = collectReactivePropLocalNames(stateScript)
 	const written = new Set<string>()
-	for (const name of liveProps) {
+	for (const name of reactiveProps) {
 		const escaped = escapeRegExp(name)
 		const writePattern = new RegExp(
 			`(?:\\b${escaped}\\s*(?:[+\\-*/%]?=)|(?:\\+\\+|--)\\s*${escaped}\\b|\\b${escaped}\\s*(?:\\+\\+|--))`
@@ -255,7 +255,7 @@ function collectWrittenLivePropNames(componentContent: string): Set<string> {
 	return written
 }
 
-function collectBindableLivePropNames(componentContent: string): Set<string> {
+function collectBindableReactivePropNames(componentContent: string): Set<string> {
 	const stateScript = collectStateScriptContent(componentContent)
 	const bindable = new Set<string>()
 	const destructureRegex = /\bconst\s*\{([\s\S]*?)\}\s*=\s*Aero\.props\b/g
@@ -273,7 +273,7 @@ function collectBindableLivePropNames(componentContent: string): Set<string> {
 	return bindable
 }
 
-function validateComponentLiveProps(
+function validateComponentReactiveProps(
 	document: vscode.TextDocument,
 	diagnostics: vscode.Diagnostic[],
 	tagStart: number,
@@ -285,28 +285,28 @@ function validateComponentLiveProps(
 	stateVars: Map<string, VariableDefinition>
 ): void {
 	if (stateVars.size === 0) return
-	let metadata: ReturnType<typeof collectComponentLivePropMetadata>
+	let metadata: ReturnType<typeof collectComponentReactivePropMetadata>
 	try {
-		metadata = collectComponentLivePropMetadata(path.dirname(resolvedPath))
+		metadata = collectComponentReactivePropMetadata(path.dirname(resolvedPath))
 	} catch {
 		return
 	}
-	const liveProps = metadata[importName] ?? metadata[baseName] ?? []
-	if (liveProps.length === 0) return
+	const reactiveProps = metadata[importName] ?? metadata[baseName] ?? []
+	if (reactiveProps.length === 0) return
 
 	const rawAttrs = sliceRawAttrs(tagName, fullTag)
 	const attrBase = attributeSectionBase(tagStart, tagName)
-	const passed = getPassedLivePropNames(rawAttrs, stateVars)
+	const passed = getPassedReactivePropNames(rawAttrs, stateVars)
 	const componentContent = fs.readFileSync(resolvedPath, 'utf-8')
-	const writtenLiveProps = collectWrittenLivePropNames(componentContent)
-	const bindableLiveProps = collectBindableLivePropNames(componentContent)
-	for (const liveProp of liveProps) {
-		const propName = liveProp.propName || liveProp.name
+	const writtenReactiveProps = collectWrittenReactivePropNames(componentContent)
+	const bindableReactiveProps = collectBindableReactivePropNames(componentContent)
+	for (const reactiveProp of reactiveProps) {
+		const propName = reactiveProp.propName || reactiveProp.name
 		const passedProp = passed.get(propName)
-		const metadataWrites = (liveProp as typeof liveProp & { writes?: boolean }).writes === true
-		const metadataBindable = (liveProp as typeof liveProp & { bindable?: boolean }).bindable === true
+		const metadataWrites = (reactiveProp as typeof reactiveProp & { writes?: boolean }).writes === true
+		const metadataBindable = (reactiveProp as typeof reactiveProp & { bindable?: boolean }).bindable === true
 		if (passedProp?.obsoleteReadonly === true) {
-			pushLivePropDiagnostic(
+			pushReactivePropDiagnostic(
 				document,
 				diagnostics,
 				tagStart,
@@ -314,12 +314,12 @@ function validateComponentLiveProps(
 				rawAttrs,
 				attrBase,
 				passedProp.rawAttrName,
-				`Component live prop \`${propName}:readonly\` is obsolete; use \`${propName}="{ ... }"\` because live props are readonly by default.`
+				`Component reactive prop \`${propName}:readonly\` is obsolete; use \`${propName}="{ ... }"\` because reactive props are readonly by default.`
 			)
 			continue
 		}
-		if (passedProp?.bound === true && !metadataBindable && !bindableLiveProps.has(liveProp.name)) {
-			pushLivePropDiagnostic(
+		if (passedProp?.bound === true && !metadataBindable && !bindableReactiveProps.has(reactiveProp.name)) {
+			pushReactivePropDiagnostic(
 				document,
 				diagnostics,
 				tagStart,
@@ -331,8 +331,8 @@ function validateComponentLiveProps(
 			)
 			continue
 		}
-		if ((metadataWrites || writtenLiveProps.has(liveProp.name)) && passedProp && !passedProp.bound) {
-			pushLivePropDiagnostic(
+		if ((metadataWrites || writtenReactiveProps.has(reactiveProp.name)) && passedProp && !passedProp.bound) {
+			pushReactivePropDiagnostic(
 				document,
 				diagnostics,
 				tagStart,
@@ -340,13 +340,13 @@ function validateComponentLiveProps(
 				rawAttrs,
 				attrBase,
 				passedProp.rawAttrName,
-				`Live prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`
+				`Reactive prop \`${propName}\` for <${tagName}> is readonly; use \`bind:${propName}="{ ... }"\` to allow child mutation.`
 			)
 			continue
 		}
-		if (!liveProp.required) continue
+		if (!reactiveProp.required) continue
 		if (passedProp) continue
-		pushLivePropDiagnostic(
+		pushReactivePropDiagnostic(
 			document,
 			diagnostics,
 			tagStart,
@@ -354,12 +354,12 @@ function validateComponentLiveProps(
 			rawAttrs,
 			attrBase,
 			null,
-			`Required live prop \`${propName}\` for <${tagName}> must be passed as a state signal.`
+			`Required reactive prop \`${propName}\` for <${tagName}> must be passed as a state signal.`
 		)
 	}
 }
 
-function livePropDiagnosticRange(
+function reactivePropDiagnosticRange(
 	tagStart: number,
 	tagName: string,
 	rawAttrs: string,
@@ -373,7 +373,7 @@ function livePropDiagnosticRange(
 	return findTagNameRange(tagStart, tagName)
 }
 
-function pushLivePropDiagnostic(
+function pushReactivePropDiagnostic(
 	document: vscode.TextDocument,
 	diagnostics: vscode.Diagnostic[],
 	tagStart: number,
@@ -383,7 +383,7 @@ function pushLivePropDiagnostic(
 	rawAttrName: string | null,
 	message: string
 ): void {
-	const range = livePropDiagnosticRange(tagStart, tagName, rawAttrs, attrBase, rawAttrName)
+	const range = reactivePropDiagnosticRange(tagStart, tagName, rawAttrs, attrBase, rawAttrName)
 	const diagnostic = new vscode.Diagnostic(
 		new vscode.Range(document.positionAt(range.start), document.positionAt(range.end)),
 		message,
