@@ -124,6 +124,8 @@ const x = 1
 		expect(text).not.toContain("declare module '*.html'")
 		const ambient = getEmbeddedText(code, 'ambient')!
 		expect(ambient).toContain("declare module '*.html'")
+		expect(ambient).toContain("declare module '*.jpg'")
+		expect(ambient).not.toContain("declare module '*.ts'")
 		const preambleEnd = text.indexOf('const x = 1')
 		expect(preambleEnd).toBeGreaterThan(0)
 	})

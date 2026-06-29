@@ -1,6 +1,11 @@
 import type { ParseResult, ScriptEntry } from './types'
 
-import { isOffsetInRanges, collectInterpolationBodyRanges, escapeInterpolationBodyMarkup } from '@aero-js/interpolation'
+import {
+	isOffsetInRanges,
+	collectInterpolationBodyRanges,
+	escapeEntityEncodedElementMarkup,
+	escapeInterpolationBodyMarkup,
+} from '@aero-js/interpolation'
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 import { AERO_ATTR_PREFIX, DATA_AERO_ATTR_PREFIX } from './constants'
@@ -295,7 +300,9 @@ function isLocalScriptSource(src: string): boolean {
 export function parse(html: string): ParseResult {
 	html = html.replace(BOM_PREFIX, '')
 
-	const { text: escapedHtml, restore } = escapeInterpolationBodyMarkup(html)
+	const { text: escapedHtml, restore } = escapeInterpolationBodyMarkup(
+		escapeEntityEncodedElementMarkup(html)
+	)
 
 	// Expand non-void self-closing tags so the HTML5 parser (linkedom) builds correct DOM.
 	// Otherwise e.g. <nav-component /> is parsed as opening-only and swallows following siblings.

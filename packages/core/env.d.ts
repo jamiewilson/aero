@@ -6,9 +6,9 @@
  *
  * These declarations type the globals available inside Aero template scripts.
  *
- * Single source of truth: the language server generates its preamble from this file.
+ * Single source of truth: @aero-js/compiler generates ambient preamble from this file.
  * When changing globals (Aero, renderComponent, *.html, aero:content), run:
- *   pnpm --dir packages/language-server exec npm run prebuild
+ *   pnpm --dir packages/compiler exec npm run prebuild
  */
 
 /**
@@ -91,6 +91,40 @@ declare module '*.md' {
 	}
 	const doc: ContentDocument
 	export default doc
+}
+
+/** Image asset imports (e.g. `import hero from '@images/hero.jpg'`). Resolved to a URL string at build time. */
+declare module '*.avif' {
+	const src: string
+	export default src
+}
+declare module '*.gif' {
+	const src: string
+	export default src
+}
+declare module '*.ico' {
+	const src: string
+	export default src
+}
+declare module '*.jpeg' {
+	const src: string
+	export default src
+}
+declare module '*.jpg' {
+	const src: string
+	export default src
+}
+declare module '*.png' {
+	const src: string
+	export default src
+}
+declare module '*.svg' {
+	const src: string
+	export default src
+}
+declare module '*.webp' {
+	const src: string
+	export default src
 }
 
 /** Content collections: getCollection, render. Used by the language server for IntelliSense. */

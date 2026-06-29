@@ -78,6 +78,18 @@ describe('Codegen', () => {
 		expect(output).toContain('<h1>&lt;b&gt;bold&lt;/b&gt;</h1>')
 	})
 
+	it('should render entity-encoded script snippets inside code as text, not script elements', async () => {
+		const html = `<script is:build></script>
+<p>in <code>&lt;script is:build&gt;</code> end</p>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, mockOptions)
+		const output = await execute(code)
+
+		expect(output).toContain('&lt;script is:build&gt;')
+		expect(output).not.toMatch(/<code><script[^>]*is:build/)
+	})
+
 	it('should support raw() to bypass escaping', async () => {
 		const html = `<script is:build>
 										const html = '<b>bold</b>';

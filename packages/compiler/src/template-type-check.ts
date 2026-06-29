@@ -6,11 +6,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
-import {
-	BUILD_SCRIPT_AMBIENT_PRELUDE,
-	IMPORT_MODULE_DECLARATIONS,
-	AERO_CONTENT_MODULE_DECLARATIONS,
-} from './build-script-ambient-prelude'
+import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import {
 	collectTemplateInterpolationSites,
@@ -98,8 +94,7 @@ function mapDiagnosticToHtmlInterpolation(
 	return { line, column, lineEnd, columnEnd }
 }
 
-const VIRTUAL_AMBIENT_DECLARATIONS =
-	IMPORT_MODULE_DECLARATIONS + '\n' + AERO_CONTENT_MODULE_DECLARATIONS + '\n'
+const VIRTUAL_AMBIENT_DECLARATIONS = AMBIENT_DECLARATIONS + '\n'
 
 function createVirtualProgramDiagnostics(
 	root: string,
@@ -175,7 +170,7 @@ export function checkTemplateTypes(
 
 	const out: TemplateTypeIssue[] = []
 
-	const prelude = BUILD_SCRIPT_AMBIENT_PRELUDE + '\n'
+	const prelude = BUILD_SCRIPT_PREAMBLE + '\n'
 	const { buildScriptBodies } = buildTemplateEditorAmbient(htmlSource)
 	const script = buildScriptBodies.join('\n\n')
 
@@ -217,7 +212,7 @@ export function checkTemplateTypes(
 				buildTemplateInterpolationVirtualText(
 					htmlSource,
 					site,
-					BUILD_SCRIPT_AMBIENT_PRELUDE + '\n'
+					BUILD_SCRIPT_PREAMBLE + '\n'
 				)
 			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
 
