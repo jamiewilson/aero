@@ -23,6 +23,8 @@ export { buildRequest, executeRequest, executeRequestWithRetry, normalizeMethod 
 export { applySelectFilter, isAbortError, shouldRetryError, shouldRetryStatus, MAX_REQUEST_ATTEMPTS } from './request-policy'
 export { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 export { resolveTarget, performSwap, performSwaps, parseSwapStyle, resolveSwapProcessContainer } from './swap'
+export { hasCompiledBindSubtree, isCompiledBindMarker } from './compiled-bindings'
+export { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
 export { dispatchLifecycleEvent } from './events'
 export type { LifecycleEventName, LifecycleDetail } from './events'
 export { GET, POST, PUT, PATCH, DELETE } from './actions'

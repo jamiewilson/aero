@@ -15,6 +15,14 @@ import { parseOobSwaps } from './oob'
 import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 import { syncMethodOverride } from './method-override'
 import { applySelectFilter, isAbortError } from './request-policy'
+import { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
+import {
+	type SseElementPatch,
+	handleSseMessage,
+	isEventStreamContentType,
+	readSseStream,
+	runSseSession,
+} from './sse'
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -36,6 +44,7 @@ export interface HypermediaRuntime {
 
 export interface HypermediaRuntimeOptions {
 	readonly debug?: boolean
+	readonly reactivity?: boolean
 	readonly defaultSwap?: SwapStyle
 	readonly defaultTarget?: string
 	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
@@ -239,6 +248,7 @@ function createFocusFallback(target: Element): () => void {
 
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
 	registerPopstateReload()
+	const reactivityEnabled = options.reactivity === true
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
 	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
@@ -400,6 +410,14 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			}
 
 			if (!isLatest()) {
+				return response
+			}
+
+			if (isJsonContentType(response.headers['content-type'])) {
+				if (reactivityEnabled) {
+					const patch = parseSignalPatch(response.html)
+					if (patch) applySignalPatch(defaultStore, patch)
+				}
 				return response
 			}
 

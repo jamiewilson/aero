@@ -38,6 +38,7 @@ export interface HypermediaBooleanSignal {
 export interface HypermediaSignalStore {
 	has?(path: string): boolean
 	get(path: string): { value: unknown }
+	merge?(values: Record<string, unknown>): void
 }
 
 export interface HypermediaRequest {

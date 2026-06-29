@@ -5,6 +5,7 @@ import {
 import { bootstrapReactivityRuntime, readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
 import { resolveSwapProcessContainer, type SwapStyle } from '@aero-js/hypermedia'
 import type { Aero } from './index'
+import { shouldRemountCompiledSwap } from './swap-remount'
 
 export { readBootstrappedReactivityRuntime }
 
@@ -127,7 +128,12 @@ export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElem
 		? installHypermediaSwapLifecycle({
 				root,
 				runtime,
-				shouldRemountCompiled: () => aero.hasStateBindingsForPath(pathname),
+				shouldRemountCompiled: operation =>
+					shouldRemountCompiledSwap(
+						root,
+						operation,
+						aero.hasStateBindingsForPath(pathname)
+					),
 				destroyPrevious() {
 					destroyStateBindings()
 					destroyStateBindings = () => {}

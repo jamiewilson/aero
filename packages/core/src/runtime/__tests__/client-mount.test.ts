@@ -4,6 +4,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { performSwap as hypermediaPerformSwap } from '@aero-js/hypermedia'
 import { installHypermediaSwapLifecycle, mountClientBindings } from '../client-mount'
+import { shouldRemountCompiledSwap } from '../swap-remount'
 import { HYPERMEDIA_RUNTIME_GLOBAL_KEY } from '../hypermedia-bootstrap'
 
 afterEach(() => {
@@ -154,7 +155,7 @@ describe('installHypermediaSwapLifecycle', () => {
 		installHypermediaSwapLifecycle({
 			root,
 			runtime,
-			shouldRemountCompiled: () => false,
+			shouldRemountCompiled: operation => shouldRemountCompiledSwap(root, operation, true),
 			destroyPrevious: vi.fn(),
 			remountCompiled,
 		})
@@ -168,6 +169,34 @@ describe('installHypermediaSwapLifecycle', () => {
 		expect(remountCompiled).not.toHaveBeenCalled()
 		expect(processSpy).toHaveBeenCalledWith(document.querySelector('#runtime'))
 		expect(document.querySelector('#runtime')?.innerHTML).toContain('data-aero-processed')
+	})
+
+	it('uses per-target remount policy from mountClientBindings', async () => {
+		vi.stubEnv('AERO_HYPERMEDIA', true as unknown as string)
+		document.body.innerHTML =
+			'<main id="app"><section id="runtime-host">old</section><section id="compiled"><span data-aero-text="0">x</span></section></main>'
+		const root = document.querySelector('#app') as HTMLElement
+		const runtime = createRuntimeHarness()
+		;(globalThis as unknown as Record<string, unknown>)[HYPERMEDIA_RUNTIME_GLOBAL_KEY] = runtime
+		const aero = {
+			mountStateBindingsForPath: vi.fn(() => () => {}),
+			hasStateBindingsForPath: vi.fn(() => true),
+		}
+
+		const cleanup = mountClientBindings(aero as never, '/', root)
+		expect(aero.mountStateBindingsForPath).toHaveBeenCalledTimes(1)
+
+		await runtime.swapElement(
+			'#runtime-host',
+			'<button data-aero-on-click="{ GET(\'/next\') }">next</button>',
+			'innerHTML'
+		)
+		expect(aero.mountStateBindingsForPath).toHaveBeenCalledTimes(1)
+
+		await runtime.swapElement('#compiled', '<span data-aero-text="0">y</span>', 'innerHTML')
+		expect(aero.mountStateBindingsForPath).toHaveBeenCalledTimes(2)
+
+		cleanup()
 	})
 
 	it('removes the adapter during cleanup', async () => {

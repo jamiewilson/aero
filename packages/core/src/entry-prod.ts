@@ -18,6 +18,7 @@ import {
 	readBootstrappedReactivityRuntime,
 	installHypermediaSwapLifecycle,
 } from './runtime/client-mount'
+import { shouldRemountCompiledSwap } from './runtime/swap-remount'
 import { resolveStateBindingsModule } from 'virtual:aero/state-bindings-registry.ts'
 
 let destroyStateBindings: (() => void) | null = null
@@ -69,7 +70,8 @@ function mount(options: MountOptions = {}): Promise<void> {
 			cleanupSwapLifecycle = installHypermediaSwapLifecycle({
 				root: el,
 				runtime: runtime as unknown as HypermediaRuntimeWithSwapLifecycle,
-				shouldRemountCompiled: () => hasActiveStateBindings,
+				shouldRemountCompiled: operation =>
+					shouldRemountCompiledSwap(el, operation, hasActiveStateBindings),
 				destroyPrevious() {
 					if (destroyStateBindings) {
 						destroyStateBindings()
