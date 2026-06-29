@@ -45,11 +45,11 @@
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@volar/vscode": "~2.4.28",
-		"jiti": "^2.6.1"
+		"jiti": "^2.7.0"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"@types/vscode": "^1.105.0",
+		"@types/vscode": "^1.125.0",
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
@@ -108,7 +108,7 @@
 				}
 			}
 		},
-	"configurationDefaults": {
+		"configurationDefaults": {
 			"emmet.includeLanguages": {
 				"aero": "html"
 			},
@@ -162,5 +162,7 @@
 	"engines": {
 		"vscode": "^1.105.0"
 	},
-	"extensionRecommendations": ["esbenp.prettier-vscode"]
+	"extensionRecommendations": [
+		"esbenp.prettier-vscode"
+	]
 }

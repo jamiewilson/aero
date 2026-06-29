@@ -9,15 +9,35 @@ This page describes how the **Aero framework repository** manages dependency ver
 
 Shared versions for framework development live in the root [`pnpm-workspace.yaml`](https://github.com/jamiewilson/aero/blob/main/pnpm-workspace.yaml) under `catalog:`. Packages reference them with the `catalog:` protocol in `package.json` (for example `"vite": "catalog:"`).
 
-Prefer **catalog** entries for tooling that should move together across packages (TypeScript, Vite, Vitest, tsdown, Nitro, and so on).
+Prefer **catalog** entries for tooling that should move together across packages (TypeScript, Vite, Vitest, Vitest UI, tsdown, Nitro, and `@types/node`).
+
+## Explicit versions
+
+When a package needs a version **different** from the catalog (for example a single package requires a newer patch), use an explicit semver range in that package's `package.json` and prefer a short note in the PR if the reason is not obvious.
 
 ## Root overrides
 
 The root [`package.json`](https://github.com/jamiewilson/aero/blob/main/package.json) may define `pnpm.overrides` for security fixes or to align a transitive dependency with a known-good version. Treat overrides as **explicit exceptions** — document why in the commit or a short comment when non-obvious.
 
-## Explicit versions
+After the 2025-06 refresh, only one override remains:
 
-When a package needs a version **different** from the catalog (for example a single package requires a newer patch), use an explicit semver range in that package's `package.json` and prefer a short note in the PR if the reason is not obvious.
+- **`js-yaml: ^3.15.0`** — patches a moderate CVE in `gray-matter`'s transitive `js-yaml` 3.x without jumping to js-yaml 4 (which breaks gray-matter's CommonJS require path).
+
+Previously removed overrides (`vite`, `nitro`, `brace-expansion`) were redundant with catalog + lockfile once duplicate exact pins were consolidated.
+
+## Peer dependency ranges
+
+Published packages use semver ranges for optional peers (for example `"vite": "^8.1.0"`), not exact pins. Starter `package-template.json` files use the same pattern so scaffolded apps can pick up patch releases.
+
+## Manual refresh checklist
+
+When bumping dependencies across the monorepo:
+
+1. **Consolidate pins first** — prefer `catalog:` over hardcoded versions; remove redundant `pnpm.overrides`.
+2. **Bump in tiers** — low-risk utilities, then catalog toolchain (vite, nitro, typescript, vitest, tsdown), then one ecosystem per PR (oxc, shiki, volar, etc.).
+3. **Sync starter templates** — `packages/starters/*/package-template.json` vite/nitro ranges must match catalog policy.
+4. **Regenerate lockfile** — `pnpm install` after every manifest edit.
+5. **Validate locally** — run `pnpm test:all` (typecheck + lint + vitest + e2e), not `release:prep` alone. Also run `pnpm website:build` before merging large toolchain bumps.
 
 ## CI and guardrails
 

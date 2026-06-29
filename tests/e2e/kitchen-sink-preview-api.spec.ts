@@ -57,7 +57,7 @@ test.describe('kitchen-sink preview:api', () => {
 	test('runs the Aero hypermedia demo through the client runtime', async ({ page }) => {
 		await page.goto(`${server.url}/demos/hypermedia`)
 
-		await expect(page.getByText('Ready')).toBeVisible()
+		await expect(page.getByRole('heading', { name: 'Hypermedia' })).toBeVisible()
 		await expect(page.locator('#hypermedia-result')).toContainText('Waiting')
 
 		await Promise.all([

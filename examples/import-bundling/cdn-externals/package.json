@@ -17,7 +17,7 @@
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@types/alpinejs": "^3.13.11",
-		"prettier": "^3.8.4",
+		"prettier": "^3.9.3",
 		"vite": "catalog:"
 	}
 }

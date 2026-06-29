@@ -92,14 +92,14 @@
 		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@aero-js/reactivity": "workspace:*",
-		"effect": "^3.21.0",
-		"get-tsconfig": "^4.13.7",
-		"html-minifier-next": "^5.2.2",
-		"jiti": "^2.6.1",
+		"effect": "^3.21.4",
+		"get-tsconfig": "^4.14.0",
+		"html-minifier-next": "^7.0.0",
+		"jiti": "^2.7.0",
 		"linkedom": "^0.18.12",
-		"nitro": "3.0.260311-beta",
-		"oxc-resolver": "^11.19.1",
-		"sharp": "^0.34.5",
+		"nitro": "catalog:",
+		"oxc-resolver": "^11.21.3",
+		"sharp": "^0.35.2",
 		"svgo": "^4.0.1",
 		"vite-plugin-image-optimizer": "^2.0.3"
 	},
@@ -110,7 +110,7 @@
 		"vitest": "catalog:"
 	},
 	"peerDependencies": {
-		"vite": "8.0.3"
+		"vite": "^8.1.0"
 	},
 	"peerDependenciesMeta": {
 		"vite": {

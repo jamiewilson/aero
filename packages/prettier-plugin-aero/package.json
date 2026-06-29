@@ -33,7 +33,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"prettier": "^3.8.4",
+		"prettier": "^3.9.3",
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
