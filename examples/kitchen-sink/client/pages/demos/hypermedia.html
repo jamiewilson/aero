@@ -3,21 +3,17 @@
 </script>
 
 <script is:state>
-	let status = 'Ready'
+	import { GET } from '@aero-js/core/hypermedia'
 
-	// TODO: Implement this
-	//const loadFragment = () => {
-	//	GET('/api/hypermedia-demo', { target: '#hypermedia-result' })
-	//}
+	const loadFragment = async () => {
+		await GET('/api/hypermedia-demo', { target: '#hypermedia-result' })
+	}
 </script>
 
 <base-layout>
 	<section>
 		<h1>Hypermedia demo</h1>
-		<p>{ status }</p>
-		<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">
-			Load fragment
-		</button>
+		<button on:click="{ loadFragment() }">Load fragment</button>
+		<div id="hypermedia-result" class="card">Waiting…</div>
 	</section>
-	<div id="hypermedia-result" class="card">Waiting…</div>
 </base-layout>

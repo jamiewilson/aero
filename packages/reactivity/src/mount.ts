@@ -123,6 +123,7 @@ export interface MountStateBindingsOptions {
 	readonly escapeHtml?: (value: unknown) => string
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
 	readonly hypermediaRuntime?: HypermediaRuntimeLike
+	readonly hypermediaTriggerRef?: HypermediaTriggerRef
 	readonly Aero?: unknown
 }
 
@@ -165,9 +166,13 @@ export type ReactivePropExpression =
 
 const HYPERMEDIA_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
 
+interface HypermediaTriggerRef {
+	current: Element | undefined
+}
+
 function createHypermediaActionScope(
 	runtime: HypermediaRuntimeLike,
-	trigger: Element,
+	getTrigger: () => Element | undefined,
 	resolveSignal: (name: string) => { value: boolean }
 ): Record<string, (...args: unknown[]) => unknown> {
 	const scope: Record<string, (...args: unknown[]) => unknown> = {}
@@ -175,7 +180,7 @@ function createHypermediaActionScope(
 		scope[method] = (url: unknown, opts: unknown = {}) =>
 			runtime.executeAction(
 				{ ...(opts as object), method, url: String(url) },
-				trigger
+				getTrigger()
 			)
 	}
 	scope.__aeroSignal = (name: unknown) => resolveSignal(String(name))
@@ -213,6 +218,7 @@ function compileHandler(
 	scope: StateScope,
 	options: {
 		hypermediaRuntime?: HypermediaRuntimeLike
+		hypermediaTriggerRef?: HypermediaTriggerRef
 		store: SignalStore
 		bindings: readonly StateBindingSpec[]
 	}
@@ -221,21 +227,27 @@ function compileHandler(
 	const rewrittenExpr = rewriteActionStateRefs(handlerExpr, signalNames)
 	const body = rewrittenExpr.trim().endsWith(';') ? rewrittenExpr.trim() : `${rewrittenExpr.trim()};`
 	return function (this: Element, event: Event) {
-		const actionScope = options.hypermediaRuntime
-			? createHypermediaActionScope(
-					options.hypermediaRuntime,
-					this,
-					name => getBooleanSignal(options.store, options.bindings, name)
-				)
-			: {}
-		// eslint-disable-next-line @typescript-eslint/no-implied-eval
-		const fn = new Function(
-			'scope',
-			'actions',
-			'event',
-			`return function() { with (scope) { with (actions) { with ({ event }) { ${body} } } } }`
-		)(scope, actionScope, event) as () => void
-		fn.call(this)
+		const triggerRef = options.hypermediaTriggerRef
+		if (triggerRef) triggerRef.current = this
+		try {
+			const actionScope = options.hypermediaRuntime
+				? createHypermediaActionScope(
+						options.hypermediaRuntime,
+						() => this,
+						name => getBooleanSignal(options.store, options.bindings, name)
+					)
+				: {}
+			// eslint-disable-next-line @typescript-eslint/no-implied-eval
+			const fn = new Function(
+				'scope',
+				'actions',
+				'event',
+				`return function() { with (scope) { with (actions) { with ({ event }) { ${body} } } } }`
+			)(scope, actionScope, event) as () => void
+			fn.call(this)
+		} finally {
+			if (triggerRef) triggerRef.current = undefined
+		}
 	}
 }
 
@@ -426,7 +438,13 @@ function mountBindingSubset(
 	subset: MountBindingSubset,
 	options: Pick<
 		MountStateBindingsOptions,
-		'store' | 'bindings' | 'escapeHtml' | 'hypermediaRuntime' | 'componentBinds' | 'Aero'
+		| 'store'
+		| 'bindings'
+		| 'escapeHtml'
+		| 'hypermediaRuntime'
+		| 'hypermediaTriggerRef'
+		| 'componentBinds'
+		| 'Aero'
 	>
 ): Cleanup[] {
 	const cleanups: Cleanup[] = []
@@ -446,6 +464,7 @@ function mountBindingSubset(
 		componentBinds: subset.componentBinds,
 		escapeHtml: options.escapeHtml,
 		hypermediaRuntime: options.hypermediaRuntime,
+		hypermediaTriggerRef: options.hypermediaTriggerRef,
 		Aero: options.Aero,
 		scope,
 	}
@@ -533,6 +552,14 @@ function toKey(value: unknown): string | number {
  * Wire compiled reactive text and base event handlers against a hydrated signal store.
  */
 export function mountStateBindings(options: MountStateBindingsOptions): Cleanup {
+	const hypermediaTriggerRef = options.hypermediaTriggerRef ?? { current: undefined }
+	const hypermediaScopeActions = options.hypermediaRuntime
+		? createHypermediaActionScope(
+				options.hypermediaRuntime,
+				() => hypermediaTriggerRef.current,
+				name => getBooleanSignal(options.store, options.bindings, name)
+			)
+		: undefined
 	const scope =
 		options.scope ??
 		createStateScope({
@@ -542,8 +569,15 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			reactiveProps: options.reactiveProps,
 			actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 			scopeConstants: options.scopeConstants,
+			hypermediaScopeActions,
 		})
 	const cleanups: Cleanup[] = []
+	const handlerOptions = {
+		hypermediaRuntime: options.hypermediaRuntime,
+		hypermediaTriggerRef,
+		store: options.store,
+		bindings: options.bindings,
+	}
 
 	for (const bind of options.textBinds) {
 		const target = queryBindTarget(options.root, bind.selector, options.componentBinds)
@@ -564,11 +598,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			bindEvent(
 				target as Element,
 				bind.event,
-				compileHandler(bind.handlerExpr, scope, {
-					hypermediaRuntime: options.hypermediaRuntime,
-					store: options.store,
-					bindings: options.bindings,
-				}),
+				compileHandler(bind.handlerExpr, scope, handlerOptions),
 				bind.modifiers ?? []
 			)
 		)
@@ -602,7 +632,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 					conditionExpr: branch.conditionExpr,
 					renderHtml: () => branch.render(options.Aero),
 					mountBranch: branchRoot => {
-						const subsetCleanups = mountBindingSubset(branchRoot, scope, branch.mounts, options)
+						const subsetCleanups = mountBindingSubset(branchRoot, scope, branch.mounts, {
+							...options,
+							hypermediaTriggerRef,
+						})
 						return () => {
 							for (const cleanup of subsetCleanups) cleanup()
 						}
@@ -631,7 +664,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 						key: toKey(keyReader()),
 						renderHtml: () => bind.renderRow(options.Aero),
 						mountRow: rowRoot => {
-							const subsetCleanups = mountBindingSubset(rowRoot, rowScope, bind.rowMounts, options)
+							const subsetCleanups = mountBindingSubset(rowRoot, rowScope, bind.rowMounts, {
+								...options,
+								hypermediaTriggerRef,
+							})
 							return () => {
 								for (const cleanup of subsetCleanups) cleanup()
 							}
@@ -656,7 +692,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 					comparandExprs: branch.comparandExprs,
 					renderHtml: () => branch.render(options.Aero),
 					mountBranch: branchRoot => {
-						const subsetCleanups = mountBindingSubset(branchRoot, scope, branch.mounts, options)
+						const subsetCleanups = mountBindingSubset(branchRoot, scope, branch.mounts, {
+							...options,
+							hypermediaTriggerRef,
+						})
 						return () => {
 							for (const cleanup of subsetCleanups) cleanup()
 						}
@@ -671,7 +710,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 										branchRoot,
 										scope,
 										bind.default!.mounts,
-										options
+										{ ...options, hypermediaTriggerRef }
 									)
 									return () => {
 										for (const cleanup of subsetCleanups) cleanup()
