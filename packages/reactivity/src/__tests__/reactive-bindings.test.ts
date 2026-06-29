@@ -10,7 +10,7 @@ import { bindReactiveIf } from '../structural/if'
 import { bindReactiveSwitch } from '../structural/switch'
 import { AeroReactivity, adoptFragment } from '../adopt'
 
-describe('phase 5 binding handlers', () => {
+describe('binding handlers', () => {
 	it('bindShow toggles display', () => {
 		const target = { style: { display: 'block' } } as unknown as HTMLElement
 		let visible = true
@@ -155,7 +155,7 @@ describe('phase 5 binding handlers', () => {
 	})
 })
 
-describe('phase 5 reactive if', () => {
+describe('reactive if', () => {
 	it('toggles visible branch when state changes', () => {
 		const store = new SignalStore()
 		store.merge({ showPositive: true, showNegative: false })
@@ -206,7 +206,7 @@ describe('phase 5 reactive if', () => {
 	})
 })
 
-describe('phase 5 reactive switch', () => {
+describe('reactive switch', () => {
 	it('toggles visible case branch when discriminant changes', () => {
 		const store = new SignalStore()
 		store.merge({ status: 'loading' })
@@ -301,6 +301,18 @@ describe('AeroReactivity.adopt', () => {
 		expect(typeof cleanup).toBe('function')
 		cleanup()
 		reactivity.destroy()
+	})
+
+	it('wires nested show and text bindings in real DOM', () => {
+		const store = new SignalStore()
+		store.merge({ note: 'hello', showNote: true })
+		const host = document.createElement('div')
+		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+		const cleanup = adoptFragment({ container: host, store })
+		expect(host.textContent).toBe('hello')
+		store.get<boolean>('showNote').value = false
+		expect(host.querySelector('p')?.style.display).toBe('none')
+		cleanup()
 	})
 
 	it('wires runtime switch branches with $ refs', () => {
