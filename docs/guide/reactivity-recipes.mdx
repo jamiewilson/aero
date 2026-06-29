@@ -1,0 +1,120 @@
+---
+title: 'Reactivity recipes'
+description: 'Common patterns for client state — counters, forms, lists, and component state — with Aero reactivity.'
+---
+
+These recipes assume [Reactivity](/getting-started/reactivity) is enabled. For full binding syntax, see the [reference pages](/guide/reactivity/bindings).
+
+## Counter or toggle
+
+Replace imperative listener wiring with state + events:
+
+```html
+<script is:state>
+	let count = 0
+	let open = false
+</script>
+
+<button on:click="{ count++ }">{ count }</button>
+<button on:click="{ open = !open }">Toggle</button>
+<div show="{ open }">Panel content</div>
+```
+
+**When to reach for Alpine instead:** complex component trees, third-party Alpine plugins, or existing `x-data` snippets you do not want to rewrite.
+
+## Form with live validation
+
+Two-way `value` / `checked` bindings keep inputs and summary in sync:
+
+```html
+<script is:state>
+	let email = ''
+	let agree = false
+
+	const isComplete = () => email.includes('@') && agree
+</script>
+
+<form class:is-valid="{ isComplete() }">
+	<input type="email" value="{ email }" />
+	<input type="checkbox" checked="{ agree }" />
+</form>
+<p>Valid: { isComplete() }</p>
+```
+
+See [Bindings reference](/guide/reactivity/bindings) for `select`, `textarea`, and radio groups.
+
+## Conditional sections
+
+Build-time `if` renders once; reactive `if` / `else-if` / `else` re-evaluates when state changes:
+
+```html
+<script is:state>
+	let step = 1
+</script>
+
+<div if="{ step === 1 }">Step one</div>
+<div else-if="{ step === 2 }">Step two</div>
+<div else>Done</div>
+
+<button on:click="{ step++ }">Next</button>
+```
+
+For value matching (status enums), use [structural `switch`](/guide/reactivity/structural).
+
+## Dynamic lists
+
+Keyed `for` preserves row DOM when items reorder or insert:
+
+```html
+<script is:state>
+	let items = [{ id: 'a', label: 'Alpha' }]
+
+	function addItem() {
+		items = [...items, { id: crypto.randomUUID(), label: 'New' }]
+	}
+</script>
+
+<ul>
+	<li for="{ const item of items }" key="{ item.id }" text="{ item.label }"></li>
+</ul>
+<button on:click="{ addItem() }">Add</button>
+```
+
+Pair with the [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in a client script for animated list changes.
+
+## State in a child component
+
+When a parent and child both edit the same value, use [live props](/guide/reactivity/live-props):
+
+```html
+<!-- parent -->
+<script is:state>
+	let count = 0
+</script>
+<counter-component bind:count="{ count }" />
+```
+
+```html
+<!-- components/counter.html -->
+<script is:state>
+	const { count = Aero.bindable(0) } = Aero.props
+</script>
+<button on:click="{ count++ }">{ count }</button>
+```
+
+Props without `Aero.bindable()` are readonly in the child.
+
+## Runtime-inserted markup
+
+Hypermedia swaps and manual `innerHTML` need [adopt](/guide/reactivity/adopt) so bindings attach to new nodes. When hypermedia and reactivity are both on, adoption after swaps is automatic.
+
+## Choosing Aero reactivity vs Alpine vs HTMX
+
+| Need | Good fit |
+| --- | --- |
+| Same-file state + bindings | Aero reactivity |
+| Server HTML partials | [Hypermedia](/guide/hypermedia) or HTMX |
+| Rich client-only widgets, ecosystem plugins | Alpine.js |
+| No client JS | Build-time directives only; no `is:state` |
+
+All three can coexist in one project. Aero passes `x-*` and `hx-*` through unchanged.

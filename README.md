@@ -351,7 +351,7 @@ Aero compiles templates to static HTML. Build-time code in `<script is:build>` i
 - **`<script is:inline>`** — Left in the HTML as-is; runs in the browser immediately (e.g. theme FOUC fix, analytics).
 - **`<script is:blocking>`** — Moved into `<head>` for blocking scripts.
 
-There is no hydration and no framework runtime in the output by default; you can deploy to any static host or use Nitro for a full server. Enable `reactivity: true` and `hypermedia: true` when you want native client bindings and fragment actions — see [Reactivity](docs/guide/reactivity.mdx) and [Hypermedia](docs/guide/hypermedia.mdx).
+There is no hydration and no framework runtime in the output by default; you can deploy to any static host or use Nitro for a full server. Enable `reactivity: true` and `hypermedia: true` when you want native client bindings and fragment actions — see [Reactivity](docs/getting-started/reactivity.mdx) and [Hypermedia](docs/getting-started/hypermedia.mdx).
 
 ---
 

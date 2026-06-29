@@ -39,7 +39,8 @@ import { createReactivityRuntime } from '@aero-js/core/reactivity'
 
 User-facing guides:
 
-- [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity.mdx)
+- [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/reactivity.mdx)
+- [Reactivity recipes](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity.mdx)
 - [Reactive bindings](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity/bindings.mdx)
 - [Structural reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity/structural.mdx)
 - [Live props](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity/live-props.mdx)

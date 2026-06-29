@@ -42,11 +42,15 @@ import { GET, createHypermediaRuntime } from '@aero-js/core/hypermedia'
 
 ## Documentation
 
-User-facing guide: [Hypermedia actions](https://github.com/jamiewilson/aero/blob/main/docs/guide/hypermedia.mdx)
+User-facing guides:
+
+- [Hypermedia](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/hypermedia.mdx)
+- [Hypermedia recipes](https://github.com/jamiewilson/aero/blob/main/docs/guide/hypermedia.mdx)
+- [Using hypermedia with reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/hypermedia/using-with-reactivity.mdx)
 
 Related:
 
-- [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity.mdx)
+- [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/reactivity.mdx)
 - [Adopt runtime fragments](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity/adopt.mdx)
 
 ## Tests

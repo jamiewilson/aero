@@ -29,6 +29,8 @@
 					"getting-started/content",
 					"getting-started/metadata",
 					"getting-started/server",
+					"getting-started/reactivity",
+					"getting-started/hypermedia",
 					"getting-started/deployment"
 				]
 			},
@@ -42,16 +44,20 @@
 						"pages": ["guide/philosophy", "guide/html-template", "guide/learners-guide"]
 					},
 					{
-						"group": "Interactivity",
+						"group": "Reactivity",
 						"icon": "sparkles",
 						"pages": [
-							"guide/reactivity",
+							"guide/reactivity-recipes",
 							"guide/reactivity/bindings",
 							"guide/reactivity/structural",
 							"guide/reactivity/live-props",
-							"guide/reactivity/adopt",
-							"guide/hypermedia"
+							"guide/reactivity/adopt"
 						]
+					},
+					{
+						"group": "Hypermedia",
+						"icon": "radio",
+						"pages": ["guide/hypermedia-recipes", "guide/hypermedia/using-with-reactivity"]
 					},
 					{
 						"group": "Practical guidance",

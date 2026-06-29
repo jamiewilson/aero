@@ -1,0 +1,114 @@
+---
+title: 'Hypermedia recipes'
+description: 'Common server-driven update patterns — inline panels, partial forms, loading UX, and lifecycle hooks.'
+---
+
+These recipes assume [Hypermedia](/getting-started/hypermedia) and [Server](/getting-started/server) are set up. For action options and swap modes, see the [getting started hypermedia page](/getting-started/hypermedia).
+
+## Inline panel on demand
+
+Load detail into a sidebar without a full navigation:
+
+```html
+<script is:state>
+	let selected = ''
+</script>
+
+<button on:click="{ selected = 'a'; GET('/api/detail/a', { target: '#detail' }) }">
+	Item A
+</button>
+<div id="detail" class="card">Select an item…</div>
+```
+
+Handler returns a small HTML fragment (not JSON). The client swaps it into `#detail`.
+
+## Append to a list
+
+Use `beforeend` to add server-rendered rows:
+
+```html
+<button on:click="{ GET('/api/items/next', { target: '#items', swap: 'beforeend' }) }">
+	Load more
+</button>
+<ul id="items"></ul>
+```
+
+## Form that updates a region
+
+Prevent double submission with `on:submit.prevent`:
+
+```html
+<script is:state>
+	let message = ''
+</script>
+
+<form on:submit.prevent="{ POST('/api/contact', { target: '#status', values: { message } }) }">
+	<textarea value="{ message }"></textarea>
+	<button type="submit">Send</button>
+</form>
+<div id="status"></div>
+```
+
+The handler can return a success or error fragment for `#status`.
+
+## Save with loading feedback
+
+Use `busy` or `state` so the trigger reflects in-flight requests (requires reactivity + hypermedia):
+
+```html
+<script is:state>
+	let isSaving = false
+</script>
+
+<button busy="{ isSaving }" on:click="{ POST('/api/save', { target: '#saved', state: isSaving }) }">
+	Save
+</button>
+<div id="saved"></div>
+```
+
+Phase classes `aero-loading`, `aero-swapping`, and `aero-settling` apply to involved elements during the lifecycle.
+
+## Progressive enhancement link
+
+Static navigation still works when JS is off:
+
+```html
+<a on:click="{ GET('/api/docs', { target: 'main' }) }">Docs</a>
+```
+
+The compiler emits `href="/api/docs"` for a static `GET` on an anchor. With JS, hypermedia intercepts the click and swaps into `main`.
+
+## Lifecycle hooks
+
+Listen for swap completion (analytics, focus management):
+
+```html
+<script>
+	document.body.addEventListener('settle', e => {
+		const target = e.detail?.target
+		target?.querySelector('input')?.focus()
+	})
+</script>
+```
+
+| Event | When |
+| --- | --- |
+| `request` | Before fetch |
+| `response` | After headers/body received |
+| `swap` | Before DOM mutation |
+| `settle` | After swap and adopt |
+| `error` | On failure |
+
+## Server-driven URL
+
+Return an `aero-push-url` response header to update the address bar without a client `pushUrl` option.
+
+## When to use HTMX instead
+
+| Situation | Consider |
+| --- | --- |
+| Existing HTMX attributes and docs | Keep `hx-*` — Aero passes them through |
+| Third-party HTMX extensions | HTMX ecosystem |
+| Same-template `GET()` / `POST()` actions | Aero hypermedia |
+
+See [HTMX and Alpine](/server/htmx-alpine) for HTMX attribute reference.

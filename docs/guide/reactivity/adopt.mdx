@@ -9,7 +9,7 @@ Hypermedia swaps and client `innerHTML` insert new markup after the initial moun
 
 ## How Aero helps
 
-`adopt(container)` scans a DOM subtree for `data-aero-*` directives and attaches the same binding handlers used at initial mount. Hypermedia calls `adopt` automatically after swaps when reactivity is enabled. You can also call it from client scripts for imperative inserts.
+`adopt(container)` scans a DOM subtree for `data-aero-*` directives and attaches the same binding handlers used at initial mount. Hypermedia swaps call adopt automatically when both flags are on. See [Using hypermedia with reactivity](/guide/hypermedia/using-with-reactivity).
 
 ## Hypermedia (automatic)
 

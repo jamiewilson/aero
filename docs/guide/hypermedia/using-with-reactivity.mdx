@@ -1,0 +1,112 @@
+---
+title: 'Using hypermedia with reactivity'
+description: 'Combine client state with server fragment swaps — loading signals, adopted bindings, and shared page store.'
+---
+
+Many flows need **both**: page-level state (form fields, selection) **and** server-rendered HTML patches (saved confirmation, refreshed list). Enable both flags and Nitro when you need API fragments.
+
+```ts aero.config.ts
+export default defineConfig({
+	reactivity: true,
+	hypermedia: true,
+	server: true,
+})
+```
+
+## How they connect
+
+| Layer | Role |
+| --- | --- |
+| Reactivity | `let` signals, `on:*` handlers, form bindings, structural UI |
+| Hypermedia | `GET` / `POST` / … fetch HTML, swap into targets, lifecycle events |
+| Together | Actions run from reactive handlers; swapped HTML is **adopted** into the page signal store |
+
+You do not call `adopt()` manually for standard hypermedia targets when both flags are on — the runtime runs destroy → swap → adopt for compiled regions.
+
+## Form state + partial server response
+
+Keep editable fields reactive; post current values; show server result in a target:
+
+```html
+<script is:state>
+	let title = ''
+	let body = ''
+	let isSaving = false
+</script>
+
+<form on:submit.prevent="{ POST('/api/posts', { target: '#result', values: { title, body }, state: isSaving }) }">
+	<input value="{ title }" placeholder="Title" />
+	<textarea value="{ body }" placeholder="Body"></textarea>
+	<button type="submit" busy="{ isSaving }">Publish</button>
+</form>
+<div id="result"></div>
+```
+
+The handler validates, persists, and returns an HTML fragment (success message or field errors). Swapped error markup with `data-aero-*` bindings is adopted automatically.
+
+## Reactive fragments from the server
+
+Return HTML that uses runtime directive attributes. Prefix signal paths with `$` to read the **page** store:
+
+```ts server/api/greeting.get.ts
+import { defineHandler } from 'nitro/h3'
+
+export default defineHandler(() => {
+	return `<p data-aero-text="$note"></p>`
+})
+```
+
+```html
+<script is:state>
+	let note = 'Hello from the page'
+</script>
+
+<input value="{ note }" />
+<button on:click="{ GET('/api/greeting', { target: '#greeting' }) }">Refresh greeting</button>
+<div id="greeting"></div>
+```
+
+After swap, the paragraph stays in sync with `note` because adoption wires `$note` to the shared store.
+
+## Manual adopt for client-inserted HTML
+
+When you insert markup outside hypermedia (for example a client script building a preview):
+
+```html
+<script>
+	import aero from '@aero-js/core'
+
+	host.innerHTML = '<span data-aero-text="$note"></span>'
+	aero.getReactivityRuntime?.()?.adopt(host)
+</script>
+```
+
+See [Adopt runtime fragments](/guide/reactivity/adopt) for structural `data-aero-switch` and other patterns.
+
+## `busy` requires both flags
+
+The `busy` attribute and hypermedia `state` option reference boolean `let` bindings. The compiler enforces `reactivity: true` **and** `hypermedia: true`.
+
+## Decision checklist
+
+1. **Client-only UI** (toggle, local form) → reactivity alone
+2. **Server HTML partial** (load panel, submit form region) → reactivity + hypermedia + server route
+3. **Swapped fragment must bind to page state** → both flags; use `$signal` in fragment or compile reactive markup server-side
+4. **No client JS** → hypermedia fallbacks on `<a>` / `<form>` only; reactive bindings will not run
+
+## Related
+
+<CardGroup cols={2}>
+	<Card title="Reactivity" icon="sparkles" href="/getting-started/reactivity">
+		Enable flag, `is:state`, and binding overview.
+	</Card>
+	<Card title="Hypermedia" icon="radio" href="/getting-started/hypermedia">
+		Actions, swap modes, and loading state.
+	</Card>
+	<Card title="Reactivity recipes" icon="book-open" href="/guide/reactivity">
+		Forms, lists, live props.
+	</Card>
+	<Card title="Hypermedia recipes" icon="book-open" href="/guide/hypermedia">
+		Panels, partial posts, lifecycle.
+	</Card>
+</CardGroup>
