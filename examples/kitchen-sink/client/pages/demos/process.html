@@ -8,9 +8,9 @@
 	let status = 'loading'
 </script>
 
-<base-layout title="Adopt runtime">
+<base-layout title="Process runtime">
 	<section class="v-stack">
-		<p class="secondary"><code>AeroReactivity.adopt()</code> for inserted HTML</p>
+		<p class="secondary"><code>runtime.process()</code> for inserted HTML</p>
 
 		<label class="h-stack items-center">
 			<input type="checkbox" checked="{ showNote }" />
@@ -31,25 +31,25 @@
 			</select>
 		</label>
 
-		<button type="button" id="adopt-insert">Insert fragment</button>
-		<button type="button" id="adopt-insert-switch">Insert switch fragment</button>
-		<div id="adopt-host" class="card secondary">Fragment mounts here…</div>
+		<button type="button" id="process-insert">Insert fragment</button>
+		<button type="button" id="process-insert-switch">Insert switch fragment</button>
+		<div id="process-host" class="card secondary">Fragment mounts here…</div>
 	</section>
 </base-layout>
 
 <script>
 	import aero from '@aero-js/core'
 
-	const insert = document.getElementById('adopt-insert')
-	const host = document.getElementById('adopt-host')
+	const insert = document.getElementById('process-insert')
+	const host = document.getElementById('process-host')
 	if (insert && host) {
 		insert.addEventListener('click', () => {
 			host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
-			aero.getReactivityRuntime?.()?.adopt(host)
+			aero.getReactivityRuntime?.()?.process(host)
 		})
 	}
 
-	const insertSwitch = document.getElementById('adopt-insert-switch')
+	const insertSwitch = document.getElementById('process-insert-switch')
 	if (insertSwitch && host) {
 		insertSwitch.addEventListener('click', () => {
 			host.innerHTML = `
@@ -59,7 +59,7 @@
 					<template data-aero-default><p>Runtime ready</p></template>
 				</div>
 			`
-			aero.getReactivityRuntime?.()?.adopt(host)
+			aero.getReactivityRuntime?.()?.process(host)
 		})
 	}
 </script>

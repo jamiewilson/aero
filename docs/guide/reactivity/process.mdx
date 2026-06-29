@@ -1,6 +1,6 @@
 ---
-title: 'Adopt runtime fragments'
-description: 'Mount reactive bindings on HTML inserted after page load with adopt().'
+title: 'Process runtime fragments'
+description: 'Mount reactive bindings on HTML inserted after page load with process().'
 ---
 
 ## The problem
@@ -9,17 +9,17 @@ Hypermedia swaps and client `innerHTML` insert new markup after the initial moun
 
 ## How Aero helps
 
-`adopt(container)` scans a DOM subtree for `data-aero-*` directives and attaches the same binding handlers used at initial mount. Hypermedia swaps call adopt automatically when both flags are on. See [Using hypermedia with reactivity](/guide/hypermedia/using-with-reactivity).
+`process(element)` scans a DOM subtree for `data-aero-*` directives and attaches the same binding handlers used at initial mount. Hypermedia swaps call `process` automatically when both flags are on. See [Using hypermedia with reactivity](/guide/hypermedia/using-with-reactivity).
 
 ## Hypermedia (automatic)
 
-When both `reactivity: true` and `hypermedia: true` are set, swapped fragment HTML is adopted into the shared page store. Compiled regions go through destroy → swap → remount/adopt so bindings stay consistent.
+When both `reactivity: true` and `hypermedia: true` are set, swapped fragment HTML is processed into the shared page store. Compiled regions go through destroy → swap → remount/process so bindings stay consistent.
 
 No extra client code is required for standard action targets.
 
-## Manual adopt from client scripts
+## Manual process from client scripts
 
-Insert HTML with `data-aero-*` attributes, then adopt:
+Insert HTML with `data-aero-*` attributes, then process:
 
 ```html
 <script is:state>
@@ -36,12 +36,12 @@ Insert HTML with `data-aero-*` attributes, then adopt:
 		const host = document.getElementById('host')
 		host.innerHTML =
 			'<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
-		aero.getReactivityRuntime?.()?.adopt(host)
+		aero.getReactivityRuntime?.()?.process(host)
 	})
 </script>
 ```
 
-In adopt fragments, prefix signal paths with `$` to read from the page store (`$note`, `$showNote`).
+In runtime fragments, prefix signal paths with `$` to read from the page store (`$note`, `$showNote`).
 
 ### Structural fragments
 
@@ -55,17 +55,17 @@ Runtime HTML can include structural directives:
 </div>
 ```
 
-Call `adopt(host)` after inserting the markup.
+Call `process(host)` after inserting the markup.
 
 ## Package API
 
-Lower-level adopters live in `@aero-js/reactivity`:
+Lower-level helpers live in `@aero-js/reactivity`:
 
 ```ts
-import { adoptFragment, createReactivityRuntime } from '@aero-js/reactivity'
+import { processFragment, createReactivityRuntime } from '@aero-js/reactivity'
 
 const runtime = createReactivityRuntime({ initialState: { count: 0 } })
-adoptFragment(container, runtime.store)
+processFragment({ element: host, store: runtime.store })
 ```
 
 Most apps use the composed runtime from `@aero-js/core` rather than calling these directly.

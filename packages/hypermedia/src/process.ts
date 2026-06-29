@@ -73,18 +73,18 @@ function shouldPreventDefault(eventName: string): boolean {
 	return eventName.includes('prevent')
 }
 
-export function adopt(container: ParentNode, runtime: HypermediaRuntime, store?: HypermediaSignalStore): void {
-	const all = container.querySelectorAll<Element>('*')
+export function process(element: ParentNode, runtime: HypermediaRuntime, store?: HypermediaSignalStore): void {
+	const all = element.querySelectorAll<Element>('*')
 	for (const el of all) {
-		if (el.hasAttribute('data-aero-adopted')) continue
-		let didAdopt = false
+		if (el.hasAttribute('data-aero-processed')) continue
+		let didProcess = false
 
 		const busyAttr = el.getAttribute(HYPERMEDIA_BUSY_ATTR)
 		if (busyAttr) {
 			const signalRef = stripBraces(busyAttr)
 			if (signalRef.startsWith('$')) {
 				runtime.registerBusyBinding(el, signalRef.slice(1), resolveSignalRef(signalRef, store))
-				didAdopt = true
+				didProcess = true
 			}
 		}
 
@@ -108,12 +108,12 @@ export function adopt(container: ParentNode, runtime: HypermediaRuntime, store?:
 				}, el)
 			})
 
-			didAdopt = true
+			didProcess = true
 			break
 		}
 
-		if (didAdopt) {
-			el.setAttribute('data-aero-adopted', '')
+		if (didProcess) {
+			el.setAttribute('data-aero-processed', '')
 		}
 	}
 }

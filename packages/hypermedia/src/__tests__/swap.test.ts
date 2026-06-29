@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { performSwap, performSwaps, resolveTarget, parseSwapStyle, resolveSwapAdoptContainer } from '../swap'
+import { performSwap, performSwaps, resolveTarget, parseSwapStyle, resolveSwapProcessContainer } from '../swap'
 import type { SwapOperation } from '../types'
 
 function createContainer(): { container: HTMLElement; target: HTMLElement } {
@@ -50,14 +50,14 @@ describe('parseSwapStyle', () => {
 	})
 })
 
-describe('resolveSwapAdoptContainer', () => {
+describe('resolveSwapProcessContainer', () => {
 	it('returns the connected target for innerHTML swaps', () => {
 		const { container, target } = createContainer()
 		document.body.append(container)
 		performSwap({ target, html: '<button>next</button>', style: 'innerHTML' })
-		const adoptTarget = resolveSwapAdoptContainer(target, 'innerHTML', '#target', container)
-		expect(adoptTarget).toBe(target)
-		expect(adoptTarget).toBe(container.querySelector('#target'))
+		const processTarget = resolveSwapProcessContainer(target, 'innerHTML', '#target', container)
+		expect(processTarget).toBe(target)
+		expect(processTarget).toBe(container.querySelector('#target'))
 	})
 
 	it('returns the replacement node after outerHTML swaps', () => {
@@ -68,10 +68,10 @@ describe('resolveSwapAdoptContainer', () => {
 			html: '<div id="target"><button>next</button></div>',
 			style: 'outerHTML',
 		})
-		const adoptTarget = resolveSwapAdoptContainer(target, 'outerHTML', '#target', container)
+		const processTarget = resolveSwapProcessContainer(target, 'outerHTML', '#target', container)
 		expect(target.isConnected).toBe(false)
-		expect(adoptTarget).toBe(container.querySelector('#target'))
-		expect(adoptTarget).not.toBe(target)
+		expect(processTarget).toBe(container.querySelector('#target'))
+		expect(processTarget).not.toBe(target)
 	})
 })
 

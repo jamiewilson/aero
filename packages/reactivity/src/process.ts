@@ -9,7 +9,7 @@ import { bindReactiveIf, type ReactiveIfBranchSpec } from './structural/if'
 import { bindKeyedFor } from './structural/for'
 import { bindReactiveSwitch } from './structural/switch'
 import { createStateScope, type StateScope } from './state-scope'
-import { compileRuntimeRead, wireAdoptStructuralBindings } from './adopt-structural'
+import { compileRuntimeRead, wireProcessStructuralBindings } from './process-structural'
 
 export interface BindingHandler {
 	readonly name: string
@@ -146,44 +146,44 @@ export function createDefaultHandlers(): BindingHandler[] {
 	]
 }
 
-export interface AdoptOptions {
-	readonly container: ParentNode
+export interface ProcessOptions {
+	readonly element: ParentNode
 	readonly store?: SignalStore
 	readonly handlers?: readonly BindingHandler[]
 }
 
-const STRUCTURAL_ADOPTED_SELECTOR =
-	'[data-aero-adopted][data-aero-switch], [data-aero-adopted][data-aero-if], [data-aero-adopted][data-aero-for]'
+const STRUCTURAL_PROCESSED_SELECTOR =
+	'[data-aero-processed][data-aero-switch], [data-aero-processed][data-aero-if], [data-aero-processed][data-aero-for]'
 
-function isInsideStructuralAdoptedSubtree(el: Element, container: ParentNode): boolean {
-	if (el === container) return false
+function isInsideStructuralProcessedSubtree(el: Element, element: ParentNode): boolean {
+	if (el === element) return false
 	if (typeof el.closest !== 'function') return false
-	return Boolean(el.closest(STRUCTURAL_ADOPTED_SELECTOR))
+	return Boolean(el.closest(STRUCTURAL_PROCESSED_SELECTOR))
 }
 
-export function adoptFragment(options: AdoptOptions): Cleanup {
+export function processFragment(options: ProcessOptions): Cleanup {
 	const store = options.store ?? new SignalStore()
 	const scope = createStateScope({ store, bindings: [], functionSources: [] })
 	const handlers = options.handlers ?? createDefaultHandlers()
 	const cleanups: Cleanup[] = []
 
-	const adoptNested = (nested: ParentNode): Cleanup =>
-		adoptFragment({ container: nested, store, handlers })
+	const processNested = (nested: ParentNode): Cleanup =>
+		processFragment({ element: nested, store, handlers })
 
 	cleanups.push(
-		...wireAdoptStructuralBindings({
-			container: options.container,
+		...wireProcessStructuralBindings({
+			element: options.element,
 			store,
-			adoptNested,
+			processNested,
 		})
 	)
 
-	const elements = options.container.querySelectorAll?.('*') ?? []
+	const elements = options.element.querySelectorAll?.('*') ?? []
 
 	for (const el of elements) {
-		if (el.hasAttribute('data-aero-adopted')) continue
-		if (isInsideStructuralAdoptedSubtree(el as Element, options.container)) continue
-		let adopted = false
+		if (el.hasAttribute('data-aero-processed')) continue
+		if (isInsideStructuralProcessedSubtree(el as Element, options.element)) continue
+		let processed = false
 
 		for (let i = 0; i < el.attributes.length; i++) {
 			const attr = el.attributes[i]!
@@ -197,7 +197,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					scope,
 				})
 				if (cleanup) cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 
 			if (name === 'data-aero-html' && attr.value) {
@@ -208,7 +208,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					scope,
 				})
 				if (cleanup) cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 
 			if (name === 'data-aero-show' && attr.value) {
@@ -218,7 +218,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					scope,
 				})
 				if (cleanup) cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 
 			if (name.startsWith('data-aero-class-')) {
@@ -230,7 +230,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					compileRuntimeRead(expr || '$true', store)
 				)
 				cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 
 			if (name.startsWith('data-aero-on-') && attr.value) {
@@ -241,7 +241,7 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					attrName: name,
 				} as never)
 				if (cleanup) cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 
 			const modelKind = inferFormModelKind(el, name)
@@ -253,11 +253,11 @@ export function adoptFragment(options: AdoptOptions): Cleanup {
 					attrName: name,
 				} as never)
 				if (cleanup) cleanups.push(cleanup)
-				adopted = true
+				processed = true
 			}
 		}
 
-		if (adopted) el.setAttribute('data-aero-adopted', '')
+		if (processed) el.setAttribute('data-aero-processed', '')
 	}
 
 	return () => {
@@ -273,8 +273,8 @@ export class AeroReactivity {
 		this.store = store ?? new SignalStore()
 	}
 
-	adopt(container: ParentNode, store?: SignalStore): Cleanup {
-		const cleanup = adoptFragment({ container, store: store ?? this.store })
+	process(element: ParentNode, store?: SignalStore): Cleanup {
+		const cleanup = processFragment({ element, store: store ?? this.store })
 		this.rootCleanups.push(cleanup)
 		return cleanup
 	}

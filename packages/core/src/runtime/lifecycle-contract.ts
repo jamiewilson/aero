@@ -6,13 +6,13 @@ export interface ReplacementLifecycleHooks {
 	destroyPrevious: DestroyFn
 	swap: () => void
 	remountCompiled: () => DestroyFn
-	adoptRuntime: () => DestroyFn
+	processRuntime: () => DestroyFn
 }
 
 /**
  * Phase 1 substrate contract:
  * - compiled replacement: destroy -> swap -> remount
- * - runtime fragment replacement: destroy -> swap -> adopt
+ * - runtime fragment replacement: destroy -> swap -> process
  */
 export function replaceRegionWithLifecycle(
 	sourceKind: ReplacementSourceKind,
@@ -23,16 +23,16 @@ export function replaceRegionWithLifecycle(
 	if (sourceKind === 'compiled') {
 		return hooks.remountCompiled()
 	}
-	return hooks.adoptRuntime()
+	return hooks.processRuntime()
 }
 
 /**
- * Guardrail: compiled roots must not be wired via adopt scanner.
+ * Guardrail: compiled roots must not be wired via process scanner.
  */
-export function assertAdoptAllowed(target: { isCompiledRoot?: boolean }): void {
+export function assertProcessAllowed(target: { isCompiledRoot?: boolean }): void {
 	if (target.isCompiledRoot === true) {
 		throw new Error(
-			'[aero] Invalid adopt() call on compiled root. Use destroy + remount lifecycle instead.'
+			'[aero] Invalid process() call on compiled root. Use destroy + remount lifecycle instead.'
 		)
 	}
 }

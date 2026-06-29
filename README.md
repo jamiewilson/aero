@@ -369,7 +369,7 @@ Aero is configured by passing options to the `aero()` Vite plugin. You can do th
 | **`dirs`**       | `object`                       | Override `client`, `server`, `dist` directories. Default `{ client, server, dist }`.                                                                         |
 | **`apiPrefix`**  | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                                                 |
 | **`reactivity`** | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.                                                                                           |
-| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware adoption.                                     |
+| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware processing.                                     |
 
 ### Configuring via the Vite plugin
 

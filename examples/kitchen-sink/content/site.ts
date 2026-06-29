@@ -35,7 +35,7 @@ export default {
 		{ label: 'Keyed list', href: '/demos/keyed-list' },
 		{ label: 'Form model', href: '/demos/form-model' },
 		{ label: 'Bindings', href: '/demos/bindings' },
-		{ label: 'Adopt runtime', href: '/demos/adopt' },
+		{ label: 'Process runtime', href: '/demos/process' },
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
 		{ label: 'HTMX form', href: '/demos/htmx-form' },
 	],

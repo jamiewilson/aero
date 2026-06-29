@@ -18,8 +18,8 @@ export {
 } from './runtime'
 
 export { buildRequest, executeRequest, normalizeMethod } from './request'
-export { resolveTarget, performSwap, performSwaps, parseSwapStyle, resolveSwapAdoptContainer } from './swap'
+export { resolveTarget, performSwap, performSwaps, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 export { dispatchLifecycleEvent } from './events'
 export type { LifecycleEventName, LifecycleDetail } from './events'
 export { GET, POST, PUT, PATCH, DELETE } from './actions'
-export { adopt } from './adopt'
+export { process } from './process'

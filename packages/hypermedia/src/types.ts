@@ -59,7 +59,7 @@ export interface HypermediaSwapLifecycleOperation extends SwapOperation {
 	trigger?: Element
 	targetSelector: string
 	performSwap(): void
-	adoptRuntime(container: ParentNode): void
+	processRuntime(element: ParentNode): void
 }
 
 export type HypermediaSwapLifecycleAdapter = (

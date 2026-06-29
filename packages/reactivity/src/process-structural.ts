@@ -46,22 +46,22 @@ function parseCaseComparand(raw: string, store: SignalStore): () => unknown {
 	}
 }
 
-function createAdoptScope(_store: SignalStore): StateScope {
+function createProcessScope(_store: SignalStore): StateScope {
 	return Object.create(null) as StateScope
 }
 
-export interface WireAdoptStructuralOptions {
-	readonly container: ParentNode
+export interface WireProcessStructuralOptions {
+	readonly element: ParentNode
 	readonly store: SignalStore
-	readonly adoptNested: (container: ParentNode) => Cleanup
+	readonly processNested: (element: ParentNode) => Cleanup
 }
 
-export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions): Cleanup[] {
-	const { container, store, adoptNested } = options
+export function wireProcessStructuralBindings(options: WireProcessStructuralOptions): Cleanup[] {
+	const { element, store, processNested } = options
 	const cleanups: Cleanup[] = []
-	const scope = createAdoptScope(store)
+	const scope = createProcessScope(store)
 
-	for (const anchor of container.querySelectorAll?.('[data-aero-switch]') ?? []) {
+	for (const anchor of element.querySelectorAll?.('[data-aero-switch]') ?? []) {
 		if (!isElementLike(anchor)) continue
 		const expr = anchor.getAttribute('data-aero-switch')
 		if (!expr || isCompiledBindMarker(expr)) continue
@@ -93,7 +93,7 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
 						branchRoot.innerHTML = child.innerHTML
-						return adoptNested(branchRoot)
+						return processNested(branchRoot)
 					},
 				})
 			}
@@ -102,7 +102,7 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
 						branchRoot.innerHTML = child.innerHTML
-						return adoptNested(branchRoot)
+						return processNested(branchRoot)
 					},
 				}
 			}
@@ -123,10 +123,10 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 				...(defaultBranch ? { defaultBranch } : {}),
 			})
 		)
-		anchor.setAttribute('data-aero-adopted', '')
+		anchor.setAttribute('data-aero-processed', '')
 	}
 
-	for (const anchor of container.querySelectorAll?.('[data-aero-if]') ?? []) {
+	for (const anchor of element.querySelectorAll?.('[data-aero-if]') ?? []) {
 		if (!isElementLike(anchor)) continue
 		const marker = anchor.getAttribute('data-aero-if')
 		if (marker != null && marker !== '' && isCompiledBindMarker(marker)) continue
@@ -146,7 +146,7 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
 						branchRoot.innerHTML = child.innerHTML
-						return adoptNested(branchRoot)
+						return processNested(branchRoot)
 					},
 				})
 			} else if (child.hasAttribute('data-aero-default')) {
@@ -155,7 +155,7 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
 						branchRoot.innerHTML = child.innerHTML
-						return adoptNested(branchRoot)
+						return processNested(branchRoot)
 					},
 				})
 			}
@@ -171,10 +171,10 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 				branches,
 			})
 		)
-		anchor.setAttribute('data-aero-adopted', '')
+		anchor.setAttribute('data-aero-processed', '')
 	}
 
-	for (const containerEl of container.querySelectorAll?.('[data-aero-for]') ?? []) {
+	for (const containerEl of element.querySelectorAll?.('[data-aero-for]') ?? []) {
 		if (!isElementLike(containerEl)) continue
 		const itemsExpr = containerEl.getAttribute('data-aero-for')
 		if (!itemsExpr || isCompiledBindMarker(itemsExpr)) continue
@@ -221,13 +221,13 @@ export function wireAdoptStructuralBindings(options: WireAdoptStructuralOptions)
 						renderHtml: () => rowHtml,
 						mountRow: rowRoot => {
 							rowRoot.innerHTML = rowHtml
-							return adoptNested(rowRoot)
+							return processNested(rowRoot)
 						},
 					}
 				},
 			})
 		)
-		containerEl.setAttribute('data-aero-adopted', '')
+		containerEl.setAttribute('data-aero-processed', '')
 	}
 
 	return cleanups

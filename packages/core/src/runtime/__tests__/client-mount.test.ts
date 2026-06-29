@@ -17,7 +17,7 @@ type TestSwapLifecycleOperation = {
 	style: string
 	targetSelector: string
 	performSwap(): void
-	adoptRuntime(container: ParentNode): void
+	processRuntime(element: ParentNode): void
 }
 
 type TestSwapLifecycleAdapter = (operation: TestSwapLifecycleOperation) => void | Promise<void>
@@ -26,7 +26,7 @@ type TestHypermediaRuntime = {
 	readonly kind: 'hypermedia-runtime'
 	executeAction: () => void
 	swapElement(targetSelector: string, html: string, style: string): Promise<void>
-	adopt: (container: ParentNode) => void
+	process: (element: ParentNode) => void
 	registerBusyBinding: () => void
 	setSwapLifecycleAdapter(adapter: TestSwapLifecycleAdapter | null): void
 }
@@ -47,8 +47,8 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 				performSwap() {
 					hypermediaPerformSwap({ target, html, style: style as never })
 				},
-				adoptRuntime(container: ParentNode) {
-					runtime.adopt(container)
+				processRuntime(element: ParentNode) {
+					runtime.process(element)
 				},
 			}
 			if (adapter) {
@@ -56,11 +56,11 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 				return
 			}
 			operation.performSwap()
-			operation.adoptRuntime(target)
+			operation.processRuntime(target)
 		},
-		adopt: vi.fn((container: ParentNode) => {
-			for (const el of container.querySelectorAll<Element>('[data-aero-on-click]')) {
-				el.setAttribute('data-aero-adopted', '')
+		process: vi.fn((element: ParentNode) => {
+			for (const el of element.querySelectorAll<Element>('[data-aero-on-click]')) {
+				el.setAttribute('data-aero-processed', '')
 			}
 		}),
 		registerBusyBinding: vi.fn(),
@@ -72,15 +72,15 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 }
 
 describe('installHypermediaSwapLifecycle', () => {
-	it('does not adopt-scan the compiled root during initial client mount', () => {
+	it('does not process-scan the compiled root during initial client mount', () => {
 		vi.stubEnv('AERO_HYPERMEDIA', true as unknown as string)
 		const root = document.createElement('main')
-		const hypermediaAdopt = vi.fn()
+		const hypermediaProcess = vi.fn()
 		const runtime = {
 			kind: 'hypermedia-runtime' as const,
 			executeAction: vi.fn(),
 			swapElement: vi.fn(),
-			adopt: hypermediaAdopt,
+			process: hypermediaProcess,
 			registerBusyBinding: vi.fn(),
 			setSwapLifecycleAdapter: vi.fn(),
 		}
@@ -92,8 +92,7 @@ describe('installHypermediaSwapLifecycle', () => {
 
 		const cleanup = mountClientBindings(aero as never, '/', root)
 
-		// composeHypermediaReactivityAdopt replaces runtime.adopt; assert on the original mock.
-		expect(hypermediaAdopt).not.toHaveBeenCalled()
+		expect(hypermediaProcess).not.toHaveBeenCalled()
 		expect(runtime.setSwapLifecycleAdapter).toHaveBeenCalledWith(expect.any(Function))
 		cleanup()
 	})
@@ -120,11 +119,11 @@ describe('installHypermediaSwapLifecycle', () => {
 		expect(root.innerHTML).toBe('<p>new</p>')
 	})
 
-	it('adopts runtime hypermedia after remount on outerHTML swaps', async () => {
+	it('processes runtime hypermedia after remount on outerHTML swaps', async () => {
 		document.body.innerHTML = '<main id="app"><div id="nested-host">old</div></main>'
 		const root = document.querySelector('#app') as HTMLElement
 		const runtime = createRuntimeHarness()
-		const adopt = vi.spyOn(runtime, 'adopt')
+		const processSpy = vi.spyOn(runtime, 'process')
 
 		installHypermediaSwapLifecycle({
 			root,
@@ -141,15 +140,15 @@ describe('installHypermediaSwapLifecycle', () => {
 		)
 
 		const nextHost = document.querySelector('#nested-host')
-		expect(adopt).toHaveBeenCalledWith(nextHost)
-		expect(nextHost?.querySelector('button')?.hasAttribute('data-aero-adopted')).toBe(true)
+		expect(processSpy).toHaveBeenCalledWith(nextHost)
+		expect(nextHost?.querySelector('button')?.hasAttribute('data-aero-processed')).toBe(true)
 	})
 
-	it('keeps runtime-authored fragments on the adopt path', async () => {
+	it('keeps runtime-authored fragments on the process path', async () => {
 		document.body.innerHTML = '<main id="app"><section id="runtime">old</section></main>'
 		const root = document.querySelector('#app') as HTMLElement
 		const runtime = createRuntimeHarness()
-		const adopt = vi.spyOn(runtime, 'adopt')
+		const processSpy = vi.spyOn(runtime, 'process')
 		const remountCompiled = vi.fn()
 
 		installHypermediaSwapLifecycle({
@@ -167,8 +166,8 @@ describe('installHypermediaSwapLifecycle', () => {
 		)
 
 		expect(remountCompiled).not.toHaveBeenCalled()
-		expect(adopt).toHaveBeenCalledWith(document.querySelector('#runtime'))
-		expect(document.querySelector('#runtime')?.innerHTML).toContain('data-aero-adopted')
+		expect(processSpy).toHaveBeenCalledWith(document.querySelector('#runtime'))
+		expect(document.querySelector('#runtime')?.innerHTML).toContain('data-aero-processed')
 	})
 
 	it('removes the adapter during cleanup', async () => {

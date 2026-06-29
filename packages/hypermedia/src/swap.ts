@@ -75,7 +75,7 @@ const SWAP_FUNCTIONS: Record<SwapStyle, (target: Element, html: string) => void>
 	none: swapNone,
 }
 
-export function resolveSwapAdoptContainer(
+export function resolveSwapProcessContainer(
 	target: Element,
 	style: SwapStyle,
 	targetSelector: string,
