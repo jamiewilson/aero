@@ -3,7 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { defineHandler } from 'nitro/h3'
 import { fragmentResponse, renderAeroFragment } from '@aero-js/core/runtime/fragment'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+// server/api/hypermedia → kitchen-sink root (client/ lives here)
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
 export default defineHandler(async () => {
 	const html = await renderAeroFragment(
