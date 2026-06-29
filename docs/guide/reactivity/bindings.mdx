@@ -1,0 +1,134 @@
+---
+title: 'Reactive bindings'
+description: 'Wire DOM to <script is:state> with event handlers, text, visibility, classes, properties, and form controls.'
+---
+
+## The problem
+
+Reactive UI needs more than text that updates: buttons need click handlers, sections need show/hide, forms need two-way input, and loading states need `disabled` or `aria-busy`. Wiring each concern by hand duplicates selectors and listener cleanup.
+
+## How Aero helps
+
+With `<script is:state>` and `reactivity: true`, bindings connect markup to state declarations. The compiler emits `data-aero-*` attributes and a mount pass that keeps the DOM in sync.
+
+All binding attribute names also accept `aero-*` and `data-aero-*` prefixes (for example `data-aero-on-click`).
+
+## Text interpolation
+
+`{ expression }` in markup becomes a live text binding when a state script is present:
+
+```html
+<script is:state>
+	let count = 0
+</script>
+
+<p>{ count }</p>
+```
+
+For binding text on a void or self-contained element, use the `text` attribute:
+
+```html
+<li for="{ const item of items }" key="{ item.id }" text="{ item.label }"></li>
+```
+
+## Event handlers
+
+Use `on:<event>` with an expression body. Modifiers use dot syntax (same idea as Vue):
+
+```html
+<button on:click="{ count++ }">Increment</button>
+
+<form on:submit.prevent="{ save() }">…</form>
+```
+
+Event expressions run with state bindings in scope. Assignments like `open = !open` update signals directly.
+
+## Visibility (`show`)
+
+Toggle presence without removing the node from the tree (display toggling):
+
+```html
+<script is:state>
+	let open = false
+</script>
+
+<button on:click="{ open = !open }">Toggle</button>
+<div show="{ open }">Visible when open is true</div>
+```
+
+## HTML (`html`)
+
+Set `innerHTML` from a state expression. Use only with trusted content:
+
+```html
+<script is:state>
+	let body = '<strong>Updated</strong>'
+</script>
+
+<div html="{ body }"></div>
+```
+
+## Class toggles (`class:<name>`)
+
+Bind a boolean to a class name:
+
+```html
+<button on:click="{ active = !active }" class:is-active="{ active }">
+	Toggle highlight
+</button>
+```
+
+## Property bindings
+
+Bind arbitrary element properties (not just attributes) with the property name as the attribute:
+
+```html
+<script is:state>
+	let saving = false
+</script>
+
+<button disabled="{ saving }" on:click="{ saving = !saving }">Save</button>
+```
+
+## Form model bindings
+
+Two-way bindings for common form controls:
+
+| Control | Attribute | Example |
+| --- | --- | --- |
+| Text input, textarea, select | `value` | `value="{ email }"` |
+| Checkbox | `checked` | `checked="{ agree }"` |
+| Radio group | `checked` | `checked="{ plan }"` (value from `value` on the input) |
+
+```html
+<script is:state>
+	let email = ''
+	let agree = false
+	let plan = ''
+</script>
+
+<input type="email" value="{ email }" />
+<input type="checkbox" checked="{ agree }" />
+<select value="{ plan }">
+	<option value="free">Free</option>
+	<option value="pro">Pro</option>
+</select>
+```
+
+## Loading state (`busy`)
+
+When **both** `reactivity: true` and `hypermedia: true` are enabled, `busy` ties a boolean state binding to hypermedia request lifecycle on an element:
+
+```html
+<script is:state>
+	let isSaving = false
+</script>
+
+<button busy="{ isSaving }" on:click="{ POST('/api/save', { state: isSaving }) }">
+	Save
+</button>
+```
+
+`busy` requires a declared boolean `let` binding. Hypermedia sets the signal while the request runs and restores it when the swap settles.
+
+See [Hypermedia actions](/guide/hypermedia) for action options.

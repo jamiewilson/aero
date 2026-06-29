@@ -1,0 +1,153 @@
+---
+title: 'Hypermedia actions'
+description: 'Fetch HTML fragments and swap them into the page with GET, POST, and lifecycle-aware targets.'
+---
+
+## The problem
+
+Partial page updates usually mean HTMX attributes or hand-written `fetch` plus `innerHTML`. You need target selectors, swap modes, loading indicators, and cleanup for every interaction.
+
+## What this looks like without Aero
+
+```html
+<button id="load">Load</button>
+<div id="result"></div>
+<script>
+	document.getElementById('load').addEventListener('click', async () => {
+		const res = await fetch('/api/fragment')
+		document.getElementById('result').innerHTML = await res.text()
+	})
+</script>
+```
+
+Loading state, error handling, and binding setup are all manual.
+
+## How Aero helps
+
+Enable `hypermedia: true` alongside `reactivity: true`. Action functions (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) are available in `<script is:state>` and in `on:*` handlers. Responses swap HTML into a target and dispatch lifecycle events. When reactivity is enabled, swapped markup is adopted into the page store.
+
+Hypermedia is **off by default**. HTMX remains a valid choice — see [HTMX and Alpine](/server/htmx-alpine).
+
+## Enable hypermedia
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	reactivity: true,
+	hypermedia: true,
+})
+```
+
+`busy` bindings require both flags.
+
+## Basic action
+
+```html
+<script is:state>
+	let status = 'Ready'
+</script>
+
+<button on:click="{ GET('/api/hypermedia-demo', { target: '#result' }) }">
+	Load fragment
+</button>
+<div id="result">Waiting…</div>
+```
+
+The server returns an HTML string (for example from a Nitro handler):
+
+```ts server/api/hypermedia-demo.get.ts
+import { defineHandler } from 'nitro/h3'
+
+export default defineHandler(() => {
+	return `<p class="secondary">Fragment loaded.</p>`
+})
+```
+
+## Action functions
+
+| Function | Use |
+| --- | --- |
+| `GET(url, options?)` | Load a fragment |
+| `POST(url, options?)` | Submit data (use `on:submit.prevent` on forms) |
+| `PUT`, `PATCH`, `DELETE` | Mutations (forms get `_method` fallback — see below) |
+
+### Options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `target` | `string` | CSS selector for swap target (for example `'#panel'`) |
+| `swap` | `string` | Swap mode (default `innerHTML`) — see table below |
+| `headers` | `object` | Extra request headers |
+| `values` | `object` | Form values for `POST` / `PUT` / `PATCH` |
+| `pushUrl` | `boolean \| string` | Push URL after success (`true` uses link `href` on anchors) |
+| `state` | boolean signal | Boolean state binding toggled during the request |
+| `autoDisable` | `boolean` | Disable trigger while loading |
+| `ariaBusy` | `boolean` | Mirror loading on `aria-busy` for targets |
+
+Example with loading signal:
+
+```html
+<script is:state>
+	let isSaving = false
+</script>
+
+<button busy="{ isSaving }" on:click="{ POST('/api/save', { target: '#panel', state: isSaving }) }">
+	Save
+</button>
+```
+
+## Swap modes
+
+| Mode | Effect |
+| --- | --- |
+| `innerHTML` | Replace target inner HTML (default) |
+| `outerHTML` | Replace the target element |
+| `beforebegin` / `afterbegin` / `beforeend` / `afterend` | Insert relative to target |
+| `replace` | Replace target (alias of outer swap) |
+| `remove` | Remove target |
+| `none` | Run lifecycle without swapping |
+
+## Lifecycle events
+
+Hypermedia dispatches DOM events on the trigger and target:
+
+| Event | When |
+| --- | --- |
+| `request` | Before fetch |
+| `response` | After response received |
+| `swap` | Before DOM swap |
+| `settle` | After swap and adopt complete |
+| `error` | On failure |
+
+Listen like any `CustomEvent`:
+
+```html
+<script>
+	document.body.addEventListener('settle', e => {
+		console.log('Swap settled', e.detail)
+	})
+</script>
+```
+
+Phase classes `aero-loading`, `aero-swapping`, and `aero-settling` are toggled on involved elements during the lifecycle.
+
+## Progressive enhancement (no-JS fallback)
+
+For static `GET` on `<a>` and `POST` on `<form>`, the compiler emits native `href` / `action` attributes when the action URL is a string literal. `PUT`, `PATCH`, and `DELETE` on forms emit a hidden `_method` input.
+
+JavaScript enhances these elements when hypermedia is active; without JS, native navigation and form submission still work for those patterns.
+
+<Warning>
+	Use `on:submit.prevent` on forms wired to `POST()` so the browser does not also perform a full-document submit.
+</Warning>
+
+## URL push from server
+
+Responses can include an `aero-push-url` header to update `history.pushUrl` without a client option.
+
+## Related
+
+- [Reactive bindings](/guide/reactivity/bindings) — `busy` and event handlers
+- [Adopt runtime fragments](/guide/reactivity/adopt) — bindings after swap
+- [Server routes](/getting-started/server) — Nitro handlers that return HTML fragments

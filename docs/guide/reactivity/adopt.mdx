@@ -1,0 +1,71 @@
+---
+title: 'Adopt runtime fragments'
+description: 'Mount reactive bindings on HTML inserted after page load with adopt().'
+---
+
+## The problem
+
+Hypermedia swaps and client `innerHTML` insert new markup after the initial mount. That HTML is not wired to the page signal store unless you manually re-run binding setup.
+
+## How Aero helps
+
+`adopt(container)` scans a DOM subtree for `data-aero-*` directives and attaches the same binding handlers used at initial mount. Hypermedia calls `adopt` automatically after swaps when reactivity is enabled. You can also call it from client scripts for imperative inserts.
+
+## Hypermedia (automatic)
+
+When both `reactivity: true` and `hypermedia: true` are set, swapped fragment HTML is adopted into the shared page store. Compiled regions go through destroy → swap → remount/adopt so bindings stay consistent.
+
+No extra client code is required for standard action targets.
+
+## Manual adopt from client scripts
+
+Insert HTML with `data-aero-*` attributes, then adopt:
+
+```html
+<script is:state>
+	let note = 'Hello from the page store'
+	let showNote = true
+</script>
+
+<div id="host"></div>
+
+<script>
+	import aero from '@aero-js/core'
+
+	document.getElementById('insert')?.addEventListener('click', () => {
+		const host = document.getElementById('host')
+		host.innerHTML =
+			'<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+		aero.getReactivityRuntime?.()?.adopt(host)
+	})
+</script>
+```
+
+In adopt fragments, prefix signal paths with `$` to read from the page store (`$note`, `$showNote`).
+
+### Structural fragments
+
+Runtime HTML can include structural directives:
+
+```html
+<div data-aero-switch="$status">
+	<template data-aero-case="loading"><p>Loading…</p></template>
+	<template data-aero-case="error"><p>Error</p></template>
+	<template data-aero-default><p>Ready</p></template>
+</div>
+```
+
+Call `adopt(host)` after inserting the markup.
+
+## Package API
+
+Lower-level adopters live in `@aero-js/reactivity`:
+
+```ts
+import { adoptFragment, createReactivityRuntime } from '@aero-js/reactivity'
+
+const runtime = createReactivityRuntime({ initialState: { count: 0 } })
+adoptFragment(container, runtime.store)
+```
+
+Most apps use the composed runtime from `@aero-js/core` rather than calling these directly.

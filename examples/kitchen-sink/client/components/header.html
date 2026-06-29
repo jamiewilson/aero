@@ -19,7 +19,7 @@
 		<h4>Reactive prop binding</h4>
 		<div class="h-stack items-center">
 			<button on:click="{ count-- }">−</button>
-			<code>{ `bind:count="{ ${count} }"` }</code>
+			<code>bind:count="{ count }"</code>
 			<button on:click="{ count++ }">+</button>
 		</div>
 	</div>
