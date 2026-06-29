@@ -51,13 +51,13 @@ describe('createHypermediaRuntime', () => {
 		expect(() => runtime.swapElement('#missing', 'x', 'innerHTML')).toThrow()
 	})
 
-	it('adopt wires hypermedia attributes in container', () => {
+	it('process wires hypermedia attributes in element', () => {
 		document.body.innerHTML = '<div id="container"><a data-aero-on-click="{ GET(\'/api\') }" href="/api">link</a></div>'
 		const runtime = createHypermediaRuntime()
-		const container = document.querySelector('#container')!
-		runtime.adopt(container)
-		const link = container.querySelector('a')!
-		expect(link.hasAttribute('data-aero-adopted')).toBe(true)
+		const element = document.querySelector('#container')!
+		runtime.process(element)
+		const link = element.querySelector('a')!
+		expect(link.hasAttribute('data-aero-processed')).toBe(true)
 	})
 
 	it('unregisters compiled busy bindings', async () => {

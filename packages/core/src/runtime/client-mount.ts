@@ -3,7 +3,7 @@ import {
 	readBootstrappedHypermediaRuntime,
 } from './hypermedia-bootstrap'
 import { bootstrapReactivityRuntime, readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
-import { resolveSwapAdoptContainer, type SwapStyle } from '@aero-js/hypermedia'
+import { resolveSwapProcessContainer, type SwapStyle } from '@aero-js/hypermedia'
 import type { Aero } from './index'
 
 export { readBootstrappedReactivityRuntime }
@@ -15,7 +15,7 @@ interface HypermediaSwapLifecycleOperation {
 	trigger?: Element
 	targetSelector: string
 	performSwap(): void
-	adoptRuntime(container: ParentNode): void
+	processRuntime(element: ParentNode): void
 }
 
 type HypermediaSwapLifecycleAdapter = (
@@ -42,26 +42,26 @@ export function createHypermediaRuntimeAccessor(): () => ReturnType<typeof readB
 	return () => readBootstrappedHypermediaRuntime()
 }
 
-let hypermediaReactivityAdoptComposed = false
+let hypermediaReactivityProcessComposed = false
 
-/** Compose hypermedia fragment adopt with reactivity adopt for runtime-inserted HTML. */
-export function composeHypermediaReactivityAdopt(): void {
-	if (hypermediaReactivityAdoptComposed) return
+/** Compose hypermedia and reactivity process() for runtime-inserted HTML. */
+export function composeHypermediaReactivityProcess(): void {
+	if (hypermediaReactivityProcessComposed) return
 	const hypermedia = readBootstrappedHypermediaRuntime() as (HypermediaRuntimeWithSwapLifecycle & {
-		adopt?: (container: ParentNode, store?: unknown) => void
+		process?: (element: ParentNode, store?: unknown) => void
 	}) | null
 	const reactivity = readBootstrappedReactivityRuntime() as {
-		adopt?: (container: ParentNode, store?: unknown) => () => void
+		process?: (element: ParentNode, store?: unknown) => () => void
 		store: unknown
 	} | null
-	if (!hypermedia?.adopt || !reactivity?.adopt) return
-	const hypermediaAdopt = hypermedia.adopt.bind(hypermedia)
-	const reactivityAdopt = reactivity.adopt
-	hypermedia.adopt = (container: ParentNode, store?: unknown) => {
-		hypermediaAdopt(container, store)
-		reactivityAdopt(container, reactivity.store)
+	if (!hypermedia?.process || !reactivity?.process) return
+	const hypermediaProcess = hypermedia.process.bind(hypermedia)
+	const reactivityProcess = reactivity.process
+	hypermedia.process = (element: ParentNode, store?: unknown) => {
+		hypermediaProcess(element, store)
+		reactivityProcess(element, reactivity.store)
 	}
-	hypermediaReactivityAdoptComposed = true
+	hypermediaReactivityProcessComposed = true
 }
 
 export interface HypermediaSwapLifecycleBinding {
@@ -76,14 +76,14 @@ function isWithinRoot(root: HTMLElement, target: Element): boolean {
 	return target === root || root.contains(target)
 }
 
-function adoptAfterSwap(operation: HypermediaSwapLifecycleOperation): void {
-	const container = resolveSwapAdoptContainer(
+function processAfterSwap(operation: HypermediaSwapLifecycleOperation): void {
+	const element = resolveSwapProcessContainer(
 		operation.target,
 		operation.style as SwapStyle,
 		operation.targetSelector,
 		operation.target.ownerDocument ?? document
 	)
-	operation.adoptRuntime(container)
+	operation.processRuntime(element)
 }
 
 export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleBinding): () => void {
@@ -93,7 +93,7 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 	runtime.setSwapLifecycleAdapter(async operation => {
 		if (!active) {
 			operation.performSwap()
-			adoptAfterSwap(operation)
+			processAfterSwap(operation)
 			return
 		}
 
@@ -104,12 +104,12 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 			binding.destroyPrevious()
 			operation.performSwap()
 			await binding.remountCompiled()
-			adoptAfterSwap(operation)
+			processAfterSwap(operation)
 			return
 		}
 
 		operation.performSwap()
-		adoptAfterSwap(operation)
+		processAfterSwap(operation)
 	})
 
 	return () => {
@@ -120,7 +120,7 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 
 export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElement): () => void {
 	bootstrapClientRuntimes()
-	composeHypermediaReactivityAdopt()
+	composeHypermediaReactivityProcess()
 	let destroyStateBindings = aero.mountStateBindingsForPath(pathname, root)
 	const runtime = readBootstrappedHypermediaRuntime() as HypermediaRuntimeWithSwapLifecycle | null
 	const cleanupSwapLifecycle = runtime

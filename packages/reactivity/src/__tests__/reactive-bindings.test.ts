@@ -8,7 +8,7 @@ import { SignalStore } from '../store'
 import { createStateScope } from '../state-scope'
 import { bindReactiveIf } from '../structural/if'
 import { bindReactiveSwitch } from '../structural/switch'
-import { AeroReactivity, adoptFragment } from '../adopt'
+import { AeroReactivity, processFragment } from '../process'
 
 describe('binding handlers', () => {
 	it('bindShow toggles display', () => {
@@ -265,12 +265,12 @@ describe('reactive switch', () => {
 	})
 })
 
-describe('AeroReactivity.adopt', () => {
+describe('AeroReactivity.process', () => {
 	it('wires runtime text bindings with $ refs', () => {
 		const store = new SignalStore()
 		store.signal('count', 3)
 		const text = { textContent: '' } as unknown as Element
-		const container = {
+		const element = {
 			querySelectorAll: () => [text],
 		} as unknown as ParentNode
 		Object.defineProperty(text, 'attributes', {
@@ -282,22 +282,22 @@ describe('AeroReactivity.adopt', () => {
 				},
 			},
 		})
-		text.hasAttribute = (name: string) => name === 'data-aero-adopted' ? false : name === 'data-aero-text'
+		text.hasAttribute = (name: string) => name === 'data-aero-processed' ? false : name === 'data-aero-text'
 		text.getAttribute = (name: string) => (name === 'data-aero-text' ? '$count' : null)
 		text.setAttribute = vi.fn()
 
 		const reactivity = new AeroReactivity(store)
-		const cleanup = reactivity.adopt(container)
+		const cleanup = reactivity.process(element)
 		expect(text.textContent).toBe('3')
 		cleanup()
 	})
 
-	it('returns cleanup and destroy clears adopted effects', () => {
+	it('returns cleanup and destroy clears processed effects', () => {
 		const store = new SignalStore()
 		store.signal('count', 1)
-		const container = { querySelectorAll: () => [] } as unknown as ParentNode
+		const element = { querySelectorAll: () => [] } as unknown as ParentNode
 		const reactivity = new AeroReactivity(store)
-		const cleanup = adoptFragment({ container, store })
+		const cleanup = processFragment({ element, store })
 		expect(typeof cleanup).toBe('function')
 		cleanup()
 		reactivity.destroy()
@@ -308,7 +308,7 @@ describe('AeroReactivity.adopt', () => {
 		store.merge({ note: 'hello', showNote: true })
 		const host = document.createElement('div')
 		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
-		const cleanup = adoptFragment({ container: host, store })
+		const cleanup = processFragment({ element: host, store })
 		expect(host.textContent).toBe('hello')
 		store.get<boolean>('showNote').value = false
 		expect(host.querySelector('p')?.style.display).toBe('none')
@@ -326,7 +326,7 @@ describe('AeroReactivity.adopt', () => {
 				<template data-aero-default><p id="ready">Ready</p></template>
 			</div>
 		`
-		const cleanup = adoptFragment({ container: host, store })
+		const cleanup = processFragment({ element: host, store })
 		expect(host.querySelector('#loading')).not.toBeNull()
 		store.get<string>('status').value = 'ready'
 		expect(host.querySelector('#ready')).not.toBeNull()

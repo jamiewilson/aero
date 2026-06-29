@@ -101,19 +101,19 @@ Server-rendered HTML is the first paint. Aero emits a `<script type="aero/state"
 
 ## Runtime access
 
-For imperative inserts (hypermedia swaps or `innerHTML`), adopt bindings into the page store:
+For imperative inserts (hypermedia swaps or `innerHTML`), process bindings into the page store:
 
 ```ts
 import aero from '@aero-js/core'
 
-aero.getReactivityRuntime?.()?.adopt(container)
+aero.getReactivityRuntime?.()?.process(element)
 ```
 
-See [Adopt runtime fragments](/guide/reactivity/adopt).
+See [Process runtime fragments](/guide/reactivity/process).
 
 ## Hypermedia
 
-Reactivity alone covers client-only UI. Pair it with [Hypermedia](/getting-started/hypermedia) when fragments come from the server. `busy` and post-swap binding adoption require both flags.
+Reactivity alone covers client-only UI. Pair it with [Hypermedia](/getting-started/hypermedia) when fragments come from the server. `busy` and post-swap binding processing require both flags.
 
 ## Next steps
 

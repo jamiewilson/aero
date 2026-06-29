@@ -5,7 +5,7 @@ import { mountStateBindings, bindEvent, bindText } from './mount'
 import { Signal } from './signal'
 import { createStateScope, type StateBindingSpec } from './state-scope'
 import { SignalStore } from './store'
-import { AeroReactivity, adoptFragment, createDefaultHandlers } from './adopt'
+import { AeroReactivity, processFragment, createDefaultHandlers } from './process'
 import { bindShow } from './bindings/show'
 import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
@@ -31,7 +31,7 @@ export {
 	bindKeyedFor,
 	bindReactiveSwitch,
 	AeroReactivity,
-	adoptFragment,
+	processFragment,
 	createDefaultHandlers,
 }
 export type { HydrationRoot, StateBindingSpec }
@@ -39,7 +39,7 @@ export type { HydrationRoot, StateBindingSpec }
 export interface ReactivityRuntime {
 	readonly kind: 'reactivity-runtime'
 	readonly store: SignalStore
-	readonly adopt: (container: ParentNode, store?: SignalStore) => () => void
+	readonly process: (element: ParentNode, store?: SignalStore) => () => void
 }
 
 export interface ReactivityRuntimeOptions {
@@ -49,7 +49,7 @@ export interface ReactivityRuntimeOptions {
 }
 
 /**
- * Phase 2+ reactivity entrypoint with optional adopt() for runtime fragments.
+ * Phase 2+ reactivity entrypoint with optional process() for runtime fragments.
  */
 export function createReactivityRuntime(options: ReactivityRuntimeOptions = {}): ReactivityRuntime {
 	const initial = options.initialState ?? readHydrationState(options.hydrationRoot)
@@ -59,6 +59,6 @@ export function createReactivityRuntime(options: ReactivityRuntimeOptions = {}):
 	return {
 		kind: 'reactivity-runtime',
 		store,
-		adopt: (container, sharedStore) => reactivity.adopt(container, sharedStore),
+		process: (element, sharedStore) => reactivity.process(element, sharedStore),
 	}
 }

@@ -8,9 +8,9 @@ import type {
 	SwapStyle,
 } from './types'
 import { buildRequest, executeRequest } from './request'
-import { resolveTarget, performSwap, parseSwapStyle, resolveSwapAdoptContainer } from './swap'
+import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
-import { adopt as adoptFragment } from './adopt'
+import { process as processFragment } from './process'
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -25,7 +25,7 @@ export interface HypermediaRuntime {
 	readonly debug?: boolean
 	executeAction(options: ActionOptions, trigger?: Element): Promise<HypermediaResponse>
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
-	adopt(container: ParentNode, store?: HypermediaSignalStore): void
+	process(element: ParentNode, store?: HypermediaSignalStore): void
 	registerBusyBinding(element: Element, signalName: string, signal: HypermediaBooleanSignal): () => void
 	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
@@ -228,8 +228,8 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				performSwap({ target: options.target, html: options.html, style: options.style })
 				applyFocusFallback()
 			},
-			adoptRuntime(container: ParentNode) {
-				runtime.adopt(container)
+			processRuntime(element: ParentNode) {
+				runtime.process(element)
 			},
 		}
 
@@ -239,8 +239,8 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 
 		operation.performSwap()
-		operation.adoptRuntime(
-			resolveSwapAdoptContainer(
+		operation.processRuntime(
+			resolveSwapProcessContainer(
 				options.target,
 				options.style,
 				options.targetSelector,
@@ -369,7 +369,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		debug: options.debug,
 		executeAction,
 		swapElement,
-		adopt: () => {},
+		process: () => {},
 		registerBusyBinding(element, signalName, signal) {
 			if (typeof signal.value !== 'boolean') {
 				throw new Error(`[aero] Hypermedia busy signal must be boolean: ${signalName}`)
@@ -385,9 +385,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			swapLifecycleAdapter = adapter
 		},
 	}
-	runtime.adopt = (container: ParentNode, store?: HypermediaSignalStore) => {
+	runtime.process = (element: ParentNode, store?: HypermediaSignalStore) => {
 		if (store) defaultStore = store
-		adoptFragment(container, runtime, store ?? defaultStore)
+		processFragment(element, runtime, store ?? defaultStore)
 	}
 	return runtime
 }
