@@ -45,7 +45,7 @@ You can put fallback content between the tags if you like.
 
 ```html
 <script is:build>
-	import child from '@layouts/child'
+	import child from '@layouts/child.html'
 </script>
 
 <child-component>

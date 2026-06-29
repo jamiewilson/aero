@@ -227,7 +227,7 @@ describe('runAeroCheck', () => {
 		fs.writeFileSync(
 			path.join(dir, 'client/pages/index.html'),
 			`<script is:build>
-				import counter from '@components/counter'
+				import counter from '@components/counter.html'
 			</script>
 			<script is:state>
 				let count = 1

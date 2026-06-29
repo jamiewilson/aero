@@ -10,8 +10,8 @@ export { COMPONENT_SUFFIX_REGEX } from '@aero-js/core/editor'
 
 /** Content globals: identifier → alias path. Files in `client/content/` are exposed as globals in Aero templates. */
 export const CONTENT_GLOBALS: Record<string, string> = {
-	site: '@content/site',
-	theme: '@content/theme',
+	site: '@content/site.ts',
+	theme: '@content/theme.ts',
 }
 
 /** Document selector for Aero-relevant files (html / aero, and .html opened as plaintext). */

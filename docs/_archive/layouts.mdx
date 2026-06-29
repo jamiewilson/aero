@@ -27,7 +27,7 @@ Use it in a page by importing and wrapping content:
 
 ```html client/pages/about.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -39,7 +39,7 @@ Use it in a page by importing and wrapping content:
 Everything between `<base-layout>` and `</base-layout>` renders where `<slot />` appears.
 
 <Note>
-	Import layouts without the `.html` extension: `import base from '@layouts/base'` resolves to
+	Include the `.html` extension: `import base from '@layouts/base.html'` resolves to
 	`client/layouts/base.html`.
 </Note>
 
@@ -49,7 +49,7 @@ A layout can use another layout. The inner layout's `<slot>` receives page conte
 
 ```html client/layouts/docs.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -62,7 +62,7 @@ A layout can use another layout. The inner layout's `<slot>` receives page conte
 
 ```html client/pages/docs/intro.html
 <script is:build>
-	import docs from '@layouts/docs'
+	import docs from '@layouts/docs.html'
 </script>
 
 <docs-layout>
@@ -85,7 +85,7 @@ A layout can define named slots using the `name` attribute. Pages pass content i
 
 ```html client/pages/home.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -102,7 +102,7 @@ In a three-level hierarchy (page, sub-layout, base layout), use both `name` and 
 
 ```html client/layouts/sub.html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>

@@ -142,7 +142,7 @@ describe('state reactive codegen (PR-2d)', () => {
 
 	it('injects layout component bind on html instead of span wrapper', () => {
 		const html = `<script is:build>
-			import base from '@layouts/base'
+			import base from '@layouts/base.html'
 		</script>
 		<script is:state>
 			let count = 0
@@ -177,7 +177,7 @@ describe('state reactive codegen (PR-2d)', () => {
 
 	it('emits component module refs for imported components with live props', () => {
 		const html = `<script is:build>
-			import header from '@components/header'
+			import header from '@components/header.html'
 		</script>
 		<script is:state>
 			let count = 1

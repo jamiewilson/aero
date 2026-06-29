@@ -349,11 +349,7 @@ function loadPathAliasesForImporter(importerFile: string): PathAlias[] {
 
 function tryResolveToHtml(candidateBasePath: string): string | null {
 	if (!candidateBasePath) return null
-	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html'))
-		return candidateBasePath
-	if (fs.existsSync(candidateBasePath + '.html')) return candidateBasePath + '.html'
-	const indexHtml = path.join(candidateBasePath, 'index.html')
-	if (fs.existsSync(indexHtml)) return indexHtml
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html')) return candidateBasePath
 	return null
 }
 

@@ -63,8 +63,8 @@ Here's the layout from the minimal template (`client/layouts/base.html`):
 
 ```html
 <script is:build>
-	import meta from '@components/meta'
-	import footer from '@components/footer'
+	import meta from '@components/meta.html'
+	import footer from '@components/footer.html'
 </script>
 
 <html lang="en">
@@ -88,7 +88,7 @@ To use a layout, import it in your page's `<script is:build>` and wrap your cont
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <base-layout>
@@ -120,8 +120,8 @@ Use it in a page:
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import greeting from '@components/greeting'
+	import base from '@layouts/base.html'
+	import greeting from '@components/greeting.html'
 </script>
 
 <base-layout>
@@ -180,7 +180,7 @@ Use it in any template or component:
 
 ```html
 <script is:build>
-	import site from '@content/site'
+	import site from '@content/site.ts'
 </script>
 
 <title>{ site.meta.title }</title>
@@ -203,8 +203,8 @@ Runs at build time in Node.js. Use it to import components, fetch data, and prep
 
 ```html
 <script is:build>
-	import header from '@components/header'
-	import site from '@content/site'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 
 	const title = site.meta.title
 </script>

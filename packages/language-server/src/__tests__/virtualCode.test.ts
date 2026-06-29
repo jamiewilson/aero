@@ -121,7 +121,9 @@ const x = 1
 
 		expect(text).toContain('declare const Aero:')
 		expect(text).toContain('declare function renderComponent(')
-		expect(text).toContain("declare module '*.html'")
+		expect(text).not.toContain("declare module '*.html'")
+		const ambient = getEmbeddedText(code, 'ambient')!
+		expect(ambient).toContain("declare module '*.html'")
 		const preambleEnd = text.indexOf('const x = 1')
 		expect(preambleEnd).toBeGreaterThan(0)
 	})
@@ -711,7 +713,7 @@ import card from './card.html'
 		const fixtureDir = '/Users/jamie/dev/aero/packages/language-server/src/__tests__/fixtures/slots'
 		const parentPath = fixtureDir + '/parent-alias.html'
 		const html = `<script is:build>
-import card from '@components/card'
+import card from '@components/card.html'
 </script>
 <card-component>
   <div slot="item">{ item.name }</div>

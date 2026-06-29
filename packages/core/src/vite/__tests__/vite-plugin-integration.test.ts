@@ -1,7 +1,7 @@
 /**
  * Integration tests for the Aero Vite plugin: transform (HTML → JS module), resolveId/load for
  * virtual client scripts, props preamble injection, rendering via Aero runtime,
- * resolveId for extensionless .html, and buildStart prefill.
+ * resolveId for explicit .html imports, and buildStart prefill.
  * HMR for templates/content is dependency-driven; plain in-template client scripts also register
  * a focused handleHotUpdate path so script changes refresh without restarting dev server.
  */
@@ -101,7 +101,7 @@ describe('Vite Plugin Integration', () => {
 			localConfigPlugin.configResolved({ root: tmpDir, command: 'serve' })
 			const pagePath = path.join(pagesDir, 'bad.html')
 			const html = `<script is:build>
-				import counter from '@components/counter'
+				import counter from '@components/counter.html'
 			</script>
 			<script is:state>
 				let count = 1
@@ -174,20 +174,18 @@ describe('Vite Plugin Integration', () => {
 		expect(finalOutput).toBe('<h1>Dynamic Title</h1>')
 	})
 
-	it('should resolve path-like extensionless imports to .html via resolveId', async () => {
-		const resolvedHtmlPath = path.join(process.cwd(), 'client/components/header.html')
+	it('should not resolve extensionless path-like imports via resolveId', async () => {
 		const resolveCtx = {
 			...pluginCtx,
 			resolve: async (id: string) => {
-				if (id === '@components/header') return null
-				if (id === '@components/header.html') return { id: resolvedHtmlPath }
+				if (id === '@components/header.html') {
+					return { id: path.join(process.cwd(), 'client/components/header.html') }
+				}
 				return null
 			},
 		}
-		// In dev (command: serve) we keep the real path so file watcher and transform work (HMR + fresh SSR)
 		const result = await virtualsPlugin.resolveId.call(resolveCtx, '@components/header', undefined)
-		expect(result).toBeDefined()
-		expect((result as { id: string }).id).toBe(resolvedHtmlPath)
+		expect(result).toBeNull()
 	})
 
 	it('should resolve Aero template .html to virtual id in build so vite:build-html never sees them', async () => {

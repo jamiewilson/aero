@@ -3,8 +3,8 @@
  * Generate ambient preamble from @aero-js/core/env.d.ts.
  *
  * Single source of truth: env.d.ts. This script strips comments and splits
- * into BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, *.html) and AMBIENT_DECLARATIONS
- * (aero:content) for the language server's virtual code.
+ * into BUILD_SCRIPT_PREAMBLE (Aero, renderComponent, raw) and AMBIENT_DECLARATIONS
+ * (*.html, *.md, aero:content) for the language server's virtual code.
  */
 
 import * as fs from 'node:fs'
@@ -29,10 +29,10 @@ function stripComments(text) {
 
 const stripped = stripComments(raw)
 
-const aeroContentStart = "declare module 'aero:content'"
-const idx = stripped.indexOf(aeroContentStart)
+const htmlModuleStart = "declare module '*.html'"
+const idx = stripped.indexOf(htmlModuleStart)
 if (idx === -1) {
-	throw new Error('env.d.ts: expected \'declare module "aero:content"\' not found')
+	throw new Error("env.d.ts: expected \"declare module '*.html'\" not found")
 }
 
 const preamble = stripped.slice(0, idx).trim()

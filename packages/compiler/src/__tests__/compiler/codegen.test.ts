@@ -1210,7 +1210,7 @@ describe('Codegen', () => {
 		// Self-closing <logo-component /> is expanded to <logo-component></logo-component> before parse;
 		// then compiled like any component. We assert on generated code (imports are module-level, so execute() has no logo).
 		const html = `<script is:build>
-										import logo from '@components/logo'
+										import logo from '@components/logo.html'
 									</script>
 									<div>
 										<logo-component />

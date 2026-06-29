@@ -28,7 +28,7 @@ export default defineConfig({
 	outDir: 'dist',
 	deps: {
 		neverBundle: [
-			'@content/site',
+			'@content/site.ts',
 			'@aero-js/diagnostics',
 			'virtual:aero/state-bindings-registry.ts',
 		],

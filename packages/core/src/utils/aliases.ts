@@ -14,11 +14,9 @@ import path from 'node:path'
 import { getTsconfig } from 'get-tsconfig'
 import { ResolverFactory } from 'oxc-resolver'
 
-const AERO_EXTENSIONS = ['.html', '.ts', '.js', '.json', '.node']
-
-/** Shared oxc-resolver instance for Aero resolution (tsconfig auto, ESM, .html support). */
+/** Shared oxc-resolver instance for Aero resolution (tsconfig paths, package exports). Import specifiers must include file extensions. */
 const resolver = new ResolverFactory({
-	extensions: AERO_EXTENSIONS,
+	extensions: [],
 	conditionNames: ['node', 'import'],
 	tsconfig: 'auto',
 })

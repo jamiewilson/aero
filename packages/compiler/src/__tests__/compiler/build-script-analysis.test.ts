@@ -13,11 +13,11 @@ import {
 describe('analyzeBuildScript', () => {
 	describe('imports', () => {
 		it('should extract default import', () => {
-			const script = `import logo from '@components/logo'
+			const script = `import logo from '@components/logo.html'
 const x = logo`
 			const result = analyzeBuildScript(script)
 			expect(result.imports).toHaveLength(1)
-			expect(result.imports[0].specifier).toBe('@components/logo')
+			expect(result.imports[0].specifier).toBe('@components/logo.html')
 			expect(result.imports[0].defaultBinding).toBe('logo')
 			expect(result.imports[0].namedBindings).toEqual([])
 			expect(result.imports[0].namespaceBinding).toBeNull()
@@ -151,7 +151,7 @@ const y = 2;`
 
 	describe('combined', () => {
 		it('should remove both imports and getStaticPaths', () => {
-			const script = `import header from '@components/header'
+			const script = `import header from '@components/header.html'
 export function getStaticPaths() { return [] }
 const title = 'Page'`
 			const result = analyzeBuildScript(script)
@@ -180,12 +180,12 @@ const title = 'Page'`
 
 describe('analyzeBuildScriptForEditor', () => {
 	it('should return imports with range and bindingRanges', () => {
-		const script = `import header from '@components/header'
+		const script = `import header from '@components/header.html'
 import { foo, bar as b } from './mod'
 const x = header`
 		const result = analyzeBuildScriptForEditor(script)
 		expect(result.imports).toHaveLength(2)
-		expect(result.imports[0].specifier).toBe('@components/header')
+		expect(result.imports[0].specifier).toBe('@components/header.html')
 		expect(result.imports[0].defaultBinding).toBe('header')
 		expect(result.imports[0].range[0]).toBe(0)
 		expect(result.imports[0].range[1]).toBe(script.indexOf('\n'))

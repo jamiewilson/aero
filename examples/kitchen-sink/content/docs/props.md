@@ -142,7 +142,7 @@ Usage: `<greeting-component name="World" />{:html}`
 
 ```html
 <script is:build>
-	import header from '@components/header'
+	import header from '@components/header.html'
 	const headerProps = {
 		title: site.home.title,
 		subtitle: site.home.subtitle.toUpperCase(),

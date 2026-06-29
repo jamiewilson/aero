@@ -199,7 +199,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 	it('should NOT flag imports from is:build as unused when a client script block is also present', () => {
 		const text = `
 <script is:build>
-  import base from '@layouts/base'
+  import base from '@layouts/base.html'
   import { render } from 'aero:content'
   const doc = Aero.props
   const { html } = await render(doc)
@@ -239,7 +239,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 	it('should flag is:build import as unused even if the same name is declared in client script', () => {
 		const text = `
 <script is:build>
-  import base from '@layouts/base'
+  import base from '@layouts/base.html'
 </script>
 <div>no template usage of base</div>
 <script>
@@ -590,7 +590,7 @@ describe('AeroDiagnostics Unused Variables', () => {
 
 	it('should NOT flag is:state bindings as unused when used in template or event handlers', () => {
 		const text = `<script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <script is:state>
@@ -820,7 +820,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 	it('should flag content global in build script when import is commented out', () => {
 		const text = `
 <script is:build>
-	//import site from '@content/site'
+	//import site from '@content/site.ts'
 	const headerProps = { title: site.home.title, subtitle: site.home.subtitle }
 </script>
 <div/>
@@ -850,7 +850,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 	it('should NOT flag content global in build script when imported', () => {
 		const text = `
 <script is:build>
-	import site from '@content/site'
+	import site from '@content/site.ts'
 	const headerProps = { title: site.home.title }
 </script>
 <div/>
@@ -879,7 +879,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 	it('should flag undefined is:state handler refs when bindings are removed from state script', () => {
 		const text = `<script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 </script>
 
 <script is:state>
@@ -1286,8 +1286,8 @@ describe('AeroDiagnostics Script Tags', () => {
 	it('should warn when is:inline has import in multi-script file structure', () => {
 		const text = `
 <script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
 </script>
 <base-layout>
 	<header-component />
@@ -1541,7 +1541,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 	it('should flag import conflicting with local declaration', () => {
 		const text = `
 <script is:build>
-	import header from '@components/header'
+	import header from '@components/header.html'
 	const header = { title: 'Test' }
 </script>
 <header-component />
@@ -1571,7 +1571,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 	it('should NOT flag when no duplicate', () => {
 		const text = `
 <script is:build>
-	import header from '@components/header'
+	import header from '@components/header.html'
 	const props = { title: 'Test' }
 </script>
 <header-component />
@@ -1601,7 +1601,7 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 	it('should NOT flag arrow param shadowing module-level const with same name', () => {
 		const text = `
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 	import { getCollection, render } from 'aero:content'
 
 	export async function getStaticPaths() {
@@ -1651,9 +1651,9 @@ describe('AeroDiagnostics Component References', () => {
 
 	it('should NOT flag layout/component tags as "not imported" when they are imported in <script is:build>', () => {
 		const text = `<script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
-	import form from '@components/form'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
+	import form from '@components/form.html'
 </script>
 <base-layout>
 	<header-component />

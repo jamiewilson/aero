@@ -109,13 +109,13 @@ vi.mock('../pathResolver', () => ({
 		root: '/workspace',
 		resolve: vi.fn((specifier: string) => {
 			if (specifier.startsWith('@components/')) {
-				return '/workspace/client/components/' + specifier.replace('@components/', '') + '.html'
+				return '/workspace/client/components/' + specifier.replace('@components/', '')
 			}
 			if (specifier.startsWith('@layouts/')) {
-				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '') + '.html'
+				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '')
 			}
 			if (specifier.startsWith('@content/')) {
-				return '/workspace/client/content/' + specifier.replace('@content/', '') + '.ts'
+				return '/workspace/content/' + specifier.replace('@content/', '')
 			}
 			return '/workspace/' + specifier
 		}),
@@ -280,7 +280,7 @@ describe('AeroDefinitionProvider', () => {
 		// not the content global or the imported 'site' variable.
 		const lines = [
 			'<script is:build>',
-			"import site from '@content/site'",
+			"import site from '@content/site.ts'",
 			'</script>',
 			'<div>{ Aero.site.url }</div>',
 		]

@@ -21,9 +21,9 @@ The build script runs in Node.js at build time and is never sent to the browser.
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import header from '@components/header'
-	import site from '@content/site'
+	import base from '@layouts/base.html'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 
 	const title: string = site.meta.title
 </script>

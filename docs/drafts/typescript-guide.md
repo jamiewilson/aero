@@ -79,8 +79,8 @@ When passing props from a page or parent component, type the object you spread:
 ```html
 <!-- client/pages/index.html -->
 <script is:build lang="ts">
-	import header from '@components/header'
-	import site from '@content/site'
+	import header from '@components/header.html'
+	import site from '@content/site.ts'
 	import type { HeaderProps } from 'types/props'
 
 	const headerProps: HeaderProps = {

@@ -51,8 +51,8 @@ Import the component in your page's `<script is:build>` block, then use `<greeti
 ```html
 <!-- client/pages/index.html -->
 <script is:build>
-	import base from '@layouts/base'
-	import greeting from '@components/greeting'
+	import base from '@layouts/base.html'
+	import greeting from '@components/greeting.html'
 </script>
 
 <base-layout>
@@ -61,7 +61,7 @@ Import the component in your page's `<script is:build>` block, then use `<greeti
 ```
 
 <Note>
-	Import the file without its extension: `import greeting from '@components/greeting'` resolves to
+	Import the file without its extension: `import greeting from '@components/greeting.html'` resolves to
 	`client/components/greeting.html`.
 </Note>
 
@@ -97,7 +97,7 @@ If you have a variable called `props` in the build script, the bare `props` attr
 ```html
 <!-- Page -->
 <script is:build>
-	import card from '@components/card'
+	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 
@@ -142,8 +142,8 @@ Use it on a page:
 
 ```html
 <script is:build>
-	import base from '@layouts/base'
-	import card from '@components/card'
+	import base from '@layouts/base.html'
+	import card from '@components/card.html'
 </script>
 
 <base-layout>

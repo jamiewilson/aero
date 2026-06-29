@@ -36,7 +36,7 @@ Export `getStaticPaths()` from `<script is:build>` to tell Aero which paths to g
 
 ```html client/pages/[id].html
 <script is:build>
-	import base from '@layouts/base'
+	import base from '@layouts/base.html'
 
 	export function getStaticPaths() {
 		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }]

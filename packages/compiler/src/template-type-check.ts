@@ -6,7 +6,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
-import { FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK } from './build-script-ambient-prelude'
+import {
+	BUILD_SCRIPT_AMBIENT_PRELUDE,
+	IMPORT_MODULE_DECLARATIONS,
+	AERO_CONTENT_MODULE_DECLARATIONS,
+} from './build-script-ambient-prelude'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import {
 	collectTemplateInterpolationSites,
@@ -94,6 +98,9 @@ function mapDiagnosticToHtmlInterpolation(
 	return { line, column, lineEnd, columnEnd }
 }
 
+const VIRTUAL_AMBIENT_DECLARATIONS =
+	IMPORT_MODULE_DECLARATIONS + '\n' + AERO_CONTENT_MODULE_DECLARATIONS + '\n'
+
 function createVirtualProgramDiagnostics(
 	root: string,
 	virtualAbsolutePath: string,
@@ -101,12 +108,27 @@ function createVirtualProgramDiagnostics(
 	options: ts.CompilerOptions,
 	extraExistingRootFiles: string[]
 ): ts.Diagnostic[] {
-	const roots = [virtualAbsolutePath, ...extraExistingRootFiles.filter(f => fs.existsSync(f))]
+	const virtualAmbientPath = path.join(root, '.aero', 'cache', '__aero_typecheck_ambient.d.ts')
+	const roots = [
+		virtualAbsolutePath,
+		virtualAmbientPath,
+		...extraExistingRootFiles.filter(f => fs.existsSync(f)),
+	]
 	const host = ts.createCompilerHost(options, true)
 	const origGetSourceFile = host.getSourceFile!.bind(host)
 	host.getSourceFile = (fileName, languageVersion, ...args) => {
-		if (path.normalize(fileName) === path.normalize(virtualAbsolutePath)) {
+		const normalized = path.normalize(fileName)
+		if (normalized === path.normalize(virtualAbsolutePath)) {
 			return ts.createSourceFile(fileName, content, languageVersion, true, ts.ScriptKind.TS)
+		}
+		if (normalized === path.normalize(virtualAmbientPath)) {
+			return ts.createSourceFile(
+				fileName,
+				VIRTUAL_AMBIENT_DECLARATIONS,
+				languageVersion,
+				true,
+				ts.ScriptKind.TS
+			)
 		}
 		return origGetSourceFile(fileName, languageVersion, ...args)
 	}
@@ -153,7 +175,7 @@ export function checkTemplateTypes(
 
 	const out: TemplateTypeIssue[] = []
 
-	const prelude = FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n'
+	const prelude = BUILD_SCRIPT_AMBIENT_PRELUDE + '\n'
 	const { buildScriptBodies } = buildTemplateEditorAmbient(htmlSource)
 	const script = buildScriptBodies.join('\n\n')
 
@@ -195,7 +217,7 @@ export function checkTemplateTypes(
 				buildTemplateInterpolationVirtualText(
 					htmlSource,
 					site,
-					FULL_BUILD_SCRIPT_AMBIENT_FOR_TYPECHECK + '\n'
+					BUILD_SCRIPT_AMBIENT_PRELUDE + '\n'
 				)
 			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
 
