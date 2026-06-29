@@ -1,1 +1,1 @@
-console.debug('[AERO] <script is:inline> from ./public')
+console.debug('[aero] <script is:inline> from ./public')

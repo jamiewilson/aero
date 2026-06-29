@@ -21,13 +21,15 @@ export default {
 		title: 'Welcome to Aero',
 		subtitle:
 			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
+	},
+	htmxForm: {
+		title: 'HTMX form',
+		subtitle: 'Alpine x-model with an HTMX POST and toast fragment.',
 		cta: 'Send POST Request',
 	},
-	about: {
-		title: 'About Aero',
-		subtitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-	},
 	demos: [
+		{ label: 'Scripts', href: '/demos/scripts' },
+		{ label: 'Image imports', href: '/demos/images' },
 		{ label: 'Counter (live props)', href: '/demos/counter' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
 		{ label: 'Keyed list', href: '/demos/keyed-list' },
@@ -35,11 +37,11 @@ export default {
 		{ label: 'Bindings', href: '/demos/bindings' },
 		{ label: 'Adopt runtime', href: '/demos/adopt' },
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
+		{ label: 'HTMX form', href: '/demos/htmx-form' },
 	],
 	footer: {
 		links: [
 			{ label: 'Home', path: '/' },
-			{ label: 'About', path: '/about' },
 			{ label: 'Demos', path: '/demos' },
 			{ label: 'Docs', path: '/docs' },
 		],

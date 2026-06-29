@@ -1,0 +1,64 @@
+<script is:build>
+	import base from '@layouts/base'
+	import header from '@components/header'
+
+	const data = 'Passed into <script props="{ data }">'
+</script>
+
+<base-layout title="Scripts">
+	<header-component
+		title="Scripts"
+		subtitle="Script types and loading behavior — open the browser console to see each case." />
+
+	<ul>
+		<li>
+			<code>script is:inline</code> nested in page content — stays in place, not bundled (demo
+			below)
+		</li>
+		<li><code>script props</code> — Vite-bundled client module with build-time data injection</li>
+		<li><code>script is:inline props</code> — inline script with build-time props</li>
+		<li>
+			Plain <code>script</code> — Vite-bundled client module, hoisted to end of <code>body</code>
+		</li>
+		<li>External <code>script src</code> — third-party URL, left unchanged (not bundled)</li>
+		<li><code>script is:blocking</code> — moved to <code>head</code> before paint</li>
+		<li>
+			Local <code>script src</code> — aliased path, bundled and rewritten to a hashed asset URL
+		</li>
+		<li><code>script async src</code> — local module loaded asynchronously</li>
+		<li>
+			<code>script defer src</code> — local module; <code>defer</code> stripped when Aero adds
+			<code>type="module"</code>
+		</li>
+		<li>Public static <code>script src</code> — file from <code>./public</code>, served as-is</li>
+	</ul>
+	<script is:inline>
+		console.debug('[aero] <script is:inline> nested in page content')
+	</script>
+</base-layout>
+
+<script props="{ data }">
+	import { allCaps } from '@scripts/utils/transform'
+	console.debug(allCaps('[aero]'), data)
+</script>
+
+<!-- Requires is:inline to use props? -->
+<script is:inline props="{ data }">
+	console.debug('[aero]', data)
+</script>
+
+<script>
+	import { allCaps } from '@scripts/utils/transform'
+	console.debug(allCaps('[aero] plain <script> in <body>'))
+</script>
+
+<script src="https://unpkg.com/js-hello-world/helloWorld.js"></script>
+
+<script is:blocking>
+	console.debug('[aero] <script is:blocking> moved to <head>')
+</script>
+
+<script src="@scripts/module.ts"></script>
+<script async src="@scripts/async.ts"></script>
+<script defer src="@scripts/defer.ts"></script>
+<script src="/scripts/static.js"></script>

@@ -1,1 +1,1 @@
-console.debug('[AERO] <script defer>')
+console.debug('[aero] <script defer>')
