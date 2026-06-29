@@ -30,7 +30,7 @@ export default defineConfig({
 | `middleware` | `Array`                        | Dev-only request handlers.                                             |
 | `dirs`       | `object`                       | Override `client`, `server`, and `dist` directory names.               |
 | `apiPrefix`  | `string`                       | URL prefix for API routes. Default `'/api'`.                           |
-| `reactivity` | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.       |
+| `reactivity` | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.     |
 | `hypermedia` | `boolean`                      | Enable `GET`/`POST`/… actions and fragment swaps. Default `false`.     |
 
 ```ts vite.config.ts
@@ -136,10 +136,10 @@ Vite loads `.env`, `.env.local`, `.env.[mode]`, and `.env.[mode].local` in order
 
 Optional client features behind feature flags (both default `false`):
 
-| Flag | Enables |
-| --- | --- |
-| `reactivity` | `<script is:state>`, live bindings, structural updates, reactive props |
-| `hypermedia` | `GET` / `POST` / … actions, fragment swaps, lifecycle events |
+| Flag         | Enables                                                                    |
+| ------------ | -------------------------------------------------------------------------- |
+| `reactivity` | `<script is:state>`, structural updates, reactive props, reactive bindings |
+| `hypermedia` | `GET` / `POST` / … actions, fragment swaps, lifecycle events               |
 
 `busy` and post-swap binding adoption require **both** flags.
 
