@@ -7,13 +7,14 @@ import type {
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
-import { buildRequest, executeRequest, normalizeMethod } from './request'
+import { buildRequest, executeRequestWithRetry, normalizeMethod } from './request'
 import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { process as processFragment } from './process'
 import { parseOobSwaps } from './oob'
 import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 import { syncMethodOverride } from './method-override'
+import { applySelectFilter, isAbortError } from './request-policy'
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -144,6 +145,66 @@ function createAriaBusyMirror(enabled: boolean): {
 	}
 }
 
+const SUPERSEDED_ABORT = Symbol('aero-hypermedia-superseded')
+
+function isSupersededAbort(signal: AbortSignal | undefined): boolean {
+	return Boolean(signal?.aborted && signal.reason === SUPERSEDED_ABORT)
+}
+
+function createSupersededResponse(): HypermediaResponse {
+	return { ok: false, status: 0, html: '', headers: {} }
+}
+
+function createRequestAbortControl(
+	trigger: Element | undefined,
+	opts: ActionOptions,
+	triggerCancelControllers: Map<Element, AbortController>,
+	triggerGeneration: Map<Element, number>
+): { signal?: AbortSignal; isLatest: () => boolean } {
+	let generation = 0
+	if (trigger) {
+		generation = (triggerGeneration.get(trigger) ?? 0) + 1
+		triggerGeneration.set(trigger, generation)
+	}
+
+	const cancel = opts.cancel ?? 'auto'
+	let requestController: AbortController | undefined
+
+	if (cancel !== 'disabled' && trigger) {
+		const previous = triggerCancelControllers.get(trigger)
+		if (previous && !previous.signal.aborted) {
+			previous.abort(SUPERSEDED_ABORT)
+		}
+		requestController = new AbortController()
+		triggerCancelControllers.set(trigger, requestController)
+	}
+
+	if (opts.signal) {
+		const external = opts.signal
+		if (requestController) {
+			if (external.aborted) requestController.abort(external.reason)
+			else {
+				external.addEventListener('abort', () => requestController!.abort(external.reason), {
+					once: true,
+				})
+			}
+		} else {
+			requestController = new AbortController()
+			if (external.aborted) requestController.abort(external.reason)
+			else {
+				external.addEventListener('abort', () => requestController!.abort(external.reason), {
+					once: true,
+				})
+			}
+		}
+	}
+
+	return {
+		signal: requestController?.signal,
+		isLatest: () => !trigger || triggerGeneration.get(trigger) === generation,
+	}
+}
+
 let popstateReloadRegistered = false
 
 function registerPopstateReload(): void {
@@ -182,6 +243,8 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 	const defaultTarget = options.defaultTarget
 	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
 	const inFlightCounts = new WeakMap<HypermediaBooleanSignal, number>()
+	const triggerCancelControllers = new Map<Element, AbortController>()
+	const triggerGeneration = new Map<Element, number>()
 	let defaultStore = options.store
 	let swapLifecycleAdapter = options.swapLifecycleAdapter ?? null
 
@@ -304,11 +367,24 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		setBusyForSignal(busySignal, true)
 		if (autoDisable) setDisabled(trigger, true)
 
+		const { signal: abortSignal, isLatest } = createRequestAbortControl(
+			trigger,
+			opts,
+			triggerCancelControllers,
+			triggerGeneration
+		)
+
 		let response: HypermediaResponse
 		try {
 			try {
-				response = await executeRequest(request)
+				response = await executeRequestWithRetry(request, {
+					retry: opts.retry ?? 'auto',
+					signal: abortSignal,
+				})
 			} catch (error) {
+				if (isAbortError(error) && isSupersededAbort(abortSignal)) {
+					return createSupersededResponse()
+				}
 				emitLifecycle(
 					'error',
 					{
@@ -322,6 +398,11 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				)
 				throw error
 			}
+
+			if (!isLatest()) {
+				return response
+			}
+
 
 			const headerSwap = response.headers['aero-swap']
 			const headerTarget = response.headers['aero-target']
@@ -341,12 +422,13 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			)
 
 			const { primaryHtml, oobSwaps } = parseOobSwaps(response.html)
+			const selectedHtml = applySelectFilter(primaryHtml, opts.select)
 
-			if (targetEl && effectiveSwap !== 'none') {
+			if (targetEl && effectiveSwap !== 'none' && selectedHtml !== null) {
 				setLifecyclePhase(effectiveElements, 'swapping')
 				await runSwapLifecycle({
 					target: targetEl,
-					html: primaryHtml,
+					html: selectedHtml,
 					style: effectiveSwap,
 					trigger,
 					targetSelector: lifecycleTarget,

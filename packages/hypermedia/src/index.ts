@@ -1,6 +1,8 @@
 export type {
 	HttpMethod,
 	SwapStyle,
+	RetryMode,
+	CancelMode,
 	ActionOptions,
 	HypermediaBooleanSignal,
 	HypermediaRequest,
@@ -17,7 +19,8 @@ export {
 	type HypermediaRuntimeOptions,
 } from './runtime'
 
-export { buildRequest, executeRequest, normalizeMethod } from './request'
+export { buildRequest, executeRequest, executeRequestWithRetry, normalizeMethod } from './request'
+export { applySelectFilter, isAbortError, shouldRetryError, shouldRetryStatus, MAX_REQUEST_ATTEMPTS } from './request-policy'
 export { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 export { resolveTarget, performSwap, performSwaps, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 export { dispatchLifecycleEvent } from './events'

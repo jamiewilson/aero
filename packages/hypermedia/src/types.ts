@@ -11,6 +11,9 @@ export type SwapStyle =
 	| 'remove'
 	| 'none'
 
+export type RetryMode = 'auto' | 'never' | 'error'
+export type CancelMode = 'auto' | 'disabled'
+
 export interface ActionOptions {
 	method?: HttpMethod
 	url?: string
@@ -22,6 +25,10 @@ export interface ActionOptions {
 	autoDisable?: boolean
 	ariaBusy?: boolean
 	state?: HypermediaBooleanSignal
+	retry?: RetryMode
+	cancel?: CancelMode
+	signal?: AbortSignal
+	select?: string
 }
 
 export interface HypermediaBooleanSignal {
