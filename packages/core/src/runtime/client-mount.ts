@@ -3,6 +3,7 @@ import {
 	readBootstrappedHypermediaRuntime,
 } from './hypermedia-bootstrap'
 import { bootstrapReactivityRuntime, readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
+import { resolveSwapAdoptContainer, type SwapStyle } from '@aero-js/hypermedia'
 import type { Aero } from './index'
 
 export { readBootstrappedReactivityRuntime }
@@ -75,6 +76,16 @@ function isWithinRoot(root: HTMLElement, target: Element): boolean {
 	return target === root || root.contains(target)
 }
 
+function adoptAfterSwap(operation: HypermediaSwapLifecycleOperation): void {
+	const container = resolveSwapAdoptContainer(
+		operation.target,
+		operation.style as SwapStyle,
+		operation.targetSelector,
+		operation.target.ownerDocument ?? document
+	)
+	operation.adoptRuntime(container)
+}
+
 export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleBinding): () => void {
 	const { root, runtime } = binding
 	let active = true
@@ -82,19 +93,23 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 	runtime.setSwapLifecycleAdapter(async operation => {
 		if (!active) {
 			operation.performSwap()
-			operation.adoptRuntime(operation.target)
+			adoptAfterSwap(operation)
 			return
 		}
 
-		if (isWithinRoot(root, operation.target) && await binding.shouldRemountCompiled(operation)) {
+		if (
+			isWithinRoot(root, operation.target) &&
+			(await binding.shouldRemountCompiled(operation))
+		) {
 			binding.destroyPrevious()
 			operation.performSwap()
 			await binding.remountCompiled()
+			adoptAfterSwap(operation)
 			return
 		}
 
 		operation.performSwap()
-		operation.adoptRuntime(operation.target)
+		adoptAfterSwap(operation)
 	})
 
 	return () => {

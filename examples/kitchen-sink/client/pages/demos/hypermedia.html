@@ -5,15 +5,159 @@
 <script is:state>
 	import { GET } from '@aero-js/core/hypermedia'
 
+	let isSaving = false
+	let itemCount = 0
+
 	const loadFragment = async () => {
 		await GET('/api/hypermedia-demo', { target: '#hypermedia-result' })
 	}
+
+	const appendItem = async () => {
+		itemCount++
+		await GET(`/api/hypermedia/item?n=${itemCount}`, { target: '#item-list', swap: 'beforeend' })
+	}
 </script>
 
-<base-layout>
-	<section>
-		<h1>Hypermedia demo</h1>
-		<button on:click="{ loadFragment() }">Load fragment</button>
-		<div id="hypermedia-result" class="card">Waiting…</div>
+<base-layout title="Hypermedia demo">
+	<section class="v-stack page">
+		<header class="v-stack">
+			<h1>Hypermedia</h1>
+			<p class="secondary">
+				Server-driven HTML fragments — <code>GET</code>, <code>POST</code>, swap modes, loading
+				state, and adopt after swap.
+			</p>
+		</header>
+
+		<section class="demo card v-stack">
+			<h2>Fragment load</h2>
+			<p class="secondary"><code>GET</code> with default <code>innerHTML</code> swap.</p>
+			<button on:click="{ loadFragment() }">Load fragment</button>
+			<div id="hypermedia-result" class="card secondary">Waiting…</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Inline panel</h2>
+			<p class="secondary">Swap detail into a target without full navigation.</p>
+			<div class="h-stack">
+				<button on:click="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
+					Panel A
+				</button>
+				<button on:click="{ GET('/api/hypermedia/panel/b', { target: '#panel-detail' }) }">
+					Panel B
+				</button>
+				<a
+					href="/api/hypermedia/panel/a"
+					on:click="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
+					Panel A (link)
+				</a>
+			</div>
+			<div id="panel-detail" class="card secondary">Select a panel…</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Append to list</h2>
+			<p class="secondary"><code>swap: 'beforeend'</code> appends server-rendered rows.</p>
+			<button on:click="{ appendItem() }">Append item</button>
+			<ul id="item-list" class="v-stack"></ul>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Form POST</h2>
+			<p class="secondary">
+				<code>on:submit.prevent</code> + <code>POST</code> — form fields serialize automatically.
+			</p>
+			<form on:submit.prevent="{ POST('/api/hypermedia/contact', { target: '#contact-status' }) }">
+				<div class="h-stack">
+					<input name="message" type="text" placeholder="Your message" required />
+					<button type="submit">Send</button>
+				</div>
+			</form>
+			<div id="contact-status" class="card secondary">No message yet.</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Loading state</h2>
+			<p class="secondary">
+				<code>busy</code> + <code>state</code> tie a signal to the request lifecycle.
+			</p>
+			<button
+				busy="{ isSaving }"
+				on:click="{ POST('/api/hypermedia/save', { target: '#save-status', state: isSaving }) }">
+				Save with loading state
+			</button>
+			<div id="save-status" class="card secondary">Not saved yet.</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Replace in place</h2>
+			<p class="secondary"><code>swap: 'outerHTML'</code> replaces the target element itself.</p>
+			<button
+				on:click="{ GET('/api/hypermedia/refresh-item', { target: '#item-refresh', swap: 'outerHTML' }) }">
+				Refresh item
+			</button>
+			<ul class="v-stack">
+				<li id="item-refresh" class="card secondary">Stale content</li>
+			</ul>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Remove target</h2>
+			<p class="secondary">
+				<code>swap: 'remove'</code> drops the target — response HTML is ignored.
+			</p>
+			<div id="toast" class="card">Dismiss removes this element from the DOM.</div>
+			<button on:click="{ POST('/api/hypermedia/dismiss', { target: '#toast', swap: 'remove' }) }">
+				Dismiss toast
+			</button>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Adopt after swap</h2>
+			<p class="secondary">
+				Server fragments can include <code>data-aero-on-*</code> — wired automatically after swap.
+			</p>
+			<button
+				on:click="{ GET('/api/hypermedia/nested', { target: '#nested-host', swap: 'outerHTML' }) }">
+				Load nested fragment
+			</button>
+			<div id="nested-host" class="card secondary">
+				Click above to load a fragment with its own hypermedia bindings.
+			</div>
+		</section>
 	</section>
 </base-layout>
+
+<style>
+	@scope {
+		.page {
+			max-width: 40rem;
+			margin-inline: auto;
+			padding-block: 2rem;
+		}
+
+		.demo h2 {
+			font-size: 1.1rem;
+			margin: 0;
+		}
+
+		.demo p {
+			margin: 0;
+			font-size: smaller;
+		}
+
+		#item-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+
+		form .h-stack {
+			flex-wrap: wrap;
+		}
+
+		input[type='text'] {
+			flex: 1;
+			min-width: 12rem;
+		}
+	}
+</style>

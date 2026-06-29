@@ -8,7 +8,7 @@ import type {
 	SwapStyle,
 } from './types'
 import { buildRequest, executeRequest } from './request'
-import { resolveTarget, performSwap, parseSwapStyle } from './swap'
+import { resolveTarget, performSwap, parseSwapStyle, resolveSwapAdoptContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { adopt as adoptFragment } from './adopt'
 
@@ -239,7 +239,14 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 
 		operation.performSwap()
-		operation.adoptRuntime(options.target)
+		operation.adoptRuntime(
+			resolveSwapAdoptContainer(
+				options.target,
+				options.style,
+				options.targetSelector,
+				options.target.ownerDocument ?? document
+			)
+		)
 	}
 
 	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
