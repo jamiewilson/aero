@@ -4,7 +4,7 @@
 
 	const props = Aero.props as HeaderProps
 	const isHomepage = Aero.page.routePath === '/'
-	const isCounterDemo = Aero.page.routePath === '/demos/counter'
+	const isReactivityDemo = Aero.page.routePath === '/demos/reactivity'
 </script>
 
 <script is:state>
@@ -15,7 +15,7 @@
 	<logo-component if="{ isHomepage }" class="logo" />
 	<h1 else-if="{ props.title }">{ props.title }</h1>
 
-	<div if="{ isCounterDemo }" class="card v-stack items-center">
+	<div if="{ isReactivityDemo }" class="card v-stack items-center">
 		<h4>Reactive prop binding</h4>
 		<div class="h-stack items-center">
 			<button on:click="{ count-- }">−</button>
