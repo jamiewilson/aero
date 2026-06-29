@@ -29,6 +29,7 @@ export interface ActionOptions {
 	cancel?: CancelMode
 	signal?: AbortSignal
 	select?: string
+	openWhenHidden?: boolean
 }
 
 export interface HypermediaBooleanSignal {
@@ -55,6 +56,7 @@ export interface HypermediaResponse {
 	readonly status: number
 	readonly html: string
 	readonly headers: Record<string, string>
+	readonly stream?: ReadableStream<Uint8Array> | null
 }
 
 export interface SwapOperation {

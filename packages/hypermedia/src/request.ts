@@ -6,6 +6,8 @@ import {
 	shouldRetryError,
 	shouldRetryStatus,
 } from './request-policy'
+import { isEventStreamContentType } from './sse'
+
 export function normalizeMethod(method: string): HttpMethod {
 	const upper = method.toUpperCase()
 	if (upper === 'GET' || upper === 'POST' || upper === 'PUT' || upper === 'PATCH' || upper === 'DELETE') {
@@ -68,6 +70,16 @@ export async function executeRequest(
 		headers[key.toLowerCase()] = value
 	})
 
+	if (isEventStreamContentType(headers['content-type'])) {
+		return {
+			ok: response.ok,
+			status: response.status,
+			html: '',
+			headers,
+			stream: response.body,
+		}
+	}
+
 	const html = await response.text()
 
 	return { ok: response.ok, status: response.status, html, headers, stream: null }
@@ -102,3 +114,9 @@ export async function executeRequestWithRetry(
 function urlCheck(_url: string): void {
 }
 
+export function openHypermediaRequest(
+	request: HypermediaRequest,
+	signal?: AbortSignal
+): Promise<Response> {
+	return fetch(request.url, buildFetchOptions(request, signal))
+}

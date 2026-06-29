@@ -7,7 +7,7 @@ import type {
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
-import { buildRequest, executeRequestWithRetry, normalizeMethod } from './request'
+import { buildRequest, executeRequestWithRetry, normalizeMethod, openHypermediaRequest } from './request'
 import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { process as processFragment } from './process'
@@ -343,6 +343,78 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		)
 	}
 
+	async function applySseElementPatches(
+		patches: readonly SseElementPatch[],
+		trigger: Element | undefined,
+		context: Document
+	): Promise<void> {
+		for (const patch of patches) {
+			const style = parseSwapStyle(patch.swap ?? '') ?? defaultSwap
+			const targetEl = resolveTarget(patch.target, context)
+			if (!targetEl) continue
+
+			const { primaryHtml, oobSwaps } = parseOobSwaps(patch.html)
+			const selectedHtml = applySelectFilter(primaryHtml, patch.select)
+			if (selectedHtml === null) continue
+
+			await runSwapLifecycle({
+				target: targetEl,
+				html: selectedHtml,
+				style,
+				trigger,
+				targetSelector: patch.target,
+			})
+
+			for (const oob of oobSwaps) {
+				const oobTarget = context.getElementById(oob.id)
+				if (!oobTarget) continue
+				await runSwapLifecycle({
+					target: oobTarget,
+					html: oob.html,
+					style: oob.style,
+					trigger,
+					targetSelector: `#${oob.id}`,
+				})
+			}
+		}
+	}
+
+	async function consumeSseResponse(
+		response: HypermediaResponse,
+		options: {
+			request: HypermediaRequest
+			trigger?: Element
+			context: Document
+			abortSignal?: AbortSignal
+			openWhenHidden: boolean
+		}
+	): Promise<void> {
+		const handlers = {
+			onElementsPatch: (patches: readonly SseElementPatch[]) =>
+				applySseElementPatches(patches, options.trigger, options.context),
+			onSignalsPatch: (patch: Record<string, unknown>) => {
+				if (reactivityEnabled) applySignalPatch(defaultStore, patch)
+			},
+		}
+
+		if (response.stream) {
+			const result = await readSseStream(
+				response.stream,
+				(event, data) => handleSseMessage(event, data, handlers, reactivityEnabled),
+				options.abortSignal
+			)
+			if (result !== 'error' || options.abortSignal?.aborted) return
+		}
+
+		await runSseSession({
+			open: () => openHypermediaRequest(options.request, options.abortSignal),
+			signal: options.abortSignal,
+			openWhenHidden: options.openWhenHidden,
+			reactivity: reactivityEnabled,
+			handlers,
+		})
+	}
+
 	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
 		const opts: ActionOptions = {
 			swap: actionOptions.swap ?? defaultSwap,
@@ -421,6 +493,23 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				return response
 			}
 
+			if (isEventStreamContentType(response.headers['content-type'])) {
+				setPhaseClass([...phasedElements], null)
+				emitLifecycle(
+					'response',
+					{ request, response, target: requestTargetSelector ?? 'sse', trigger },
+					trigger,
+					requestTarget
+				)
+				await consumeSseResponse(response, {
+					request,
+					trigger,
+					context,
+					abortSignal,
+					openWhenHidden: opts.openWhenHidden ?? true,
+				})
+				return response
+			}
 
 			const headerSwap = response.headers['aero-swap']
 			const headerTarget = response.headers['aero-target']
