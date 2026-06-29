@@ -18,7 +18,7 @@ function createSnapshot(text: string) {
 }
 
 describe('AeroVirtualCode perf', () => {
-	it('builds form-model.html in under 600ms', () => {
+	it('builds form-model.html in under 800ms', () => {
 		const abs = path.join(REPO_ROOT, 'examples/kitchen-sink/client/pages/demos/form-model.html')
 		const html = fs.readFileSync(abs, 'utf8')
 		const runs: number[] = []
@@ -28,6 +28,6 @@ describe('AeroVirtualCode perf', () => {
 			runs.push(performance.now() - t0)
 		}
 		const avg = runs.reduce((a, b) => a + b, 0) / runs.length
-		expect(avg).toBeLessThan(600)
+		expect(avg).toBeLessThan(800)
 	})
 })

@@ -27,7 +27,7 @@
 		"@aero-js/config": "workspace:*",
 		"@aero-js/content": "workspace:*",
 		"@aero-js/core": "workspace:*",
-		"effect": "^3.21.0",
+		"effect": "^3.21.4",
 		"vite": "catalog:"
 	},
 	"devDependencies": {
