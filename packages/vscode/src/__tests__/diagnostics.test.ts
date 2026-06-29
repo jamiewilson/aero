@@ -1833,8 +1833,8 @@ const spread = { title: 'hello' }
 		}
 	})
 
-	it('should report omitted required live props for imported components', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-'))
+	it('should report omitted required reactive props for imported components', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
 			const pagePath = path.join(dir, 'page.html')
@@ -1882,7 +1882,7 @@ let count = 1
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 			const missing = reportedDiagnostics.find(
 				(d: any) =>
-					d.message.includes('Required live prop `count`') &&
+					d.message.includes('Required reactive prop `count`') &&
 					d.message.includes('<counter-component>')
 			)
 			expect(missing).toBeDefined()
@@ -1893,8 +1893,8 @@ let count = 1
 		}
 	})
 
-	it('should not report required live props when passed as state signals', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-ok-'))
+	it('should not report required reactive props when passed as state signals', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-ok-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
 			const pagePath = path.join(dir, 'page.html')
@@ -1941,7 +1941,7 @@ let count = 1
 
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 			const missing = reportedDiagnostics.find((d: any) =>
-				d.message.includes('Required live prop `count`')
+				d.message.includes('Required reactive prop `count`')
 			)
 			expect(missing).toBeUndefined()
 		} finally {
@@ -1949,8 +1949,8 @@ let count = 1
 		}
 	})
 
-	it('should report obsolete readonly live prop syntax', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-readonly-'))
+	it('should report obsolete readonly reactive prop syntax', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-readonly-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
 			const pagePath = path.join(dir, 'page.html')
@@ -1998,7 +1998,7 @@ let count = 1
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 			const readonly = reportedDiagnostics.find(
 				(d: any) =>
-					d.message.includes('Component live prop `count:readonly` is obsolete')
+					d.message.includes('Component reactive prop `count:readonly` is obsolete')
 			)
 			expect(readonly).toBeDefined()
 			expect(readonly.code.value).toBe('AERO_COMPILE')
@@ -2008,8 +2008,8 @@ let count = 1
 		}
 	})
 
-	it('should report bind live props when child prop is not bindable', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-bind-'))
+	it('should report bind reactive props when child prop is not bindable', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-bind-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
 			const pagePath = path.join(dir, 'page.html')
@@ -2066,8 +2066,8 @@ let count = 1
 		}
 	})
 
-	it('should report plain live props when the child assigns them', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-live-props-write-'))
+	it('should report plain reactive props when the child assigns them', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-write-'))
 		try {
 			const compPath = path.join(dir, 'counter.html')
 			const pagePath = path.join(dir, 'page.html')
@@ -2125,7 +2125,7 @@ let count = 1
 		}
 	})
 
-	it('should explain how to bind when a child mutates a readonly live prop', () => {
+	it('should explain how to bind when a child mutates a readonly reactive prop', () => {
 		const text = `<script is:state>
 const { count } = Aero.props
 </script>
@@ -2157,7 +2157,7 @@ const { count } = Aero.props
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
 		const readonly = reportedDiagnostics.find((d: any) =>
 			d.message.includes(
-				'Live prop `count` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:count="{ ... }"` from the parent to allow mutation.'
+				'Reactive prop `count` is readonly; declare it with `Aero.bindable()` in the child and pass it with `bind:count="{ ... }"` from the parent to allow mutation.'
 			)
 		)
 		expect(readonly).toBeDefined()

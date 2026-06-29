@@ -10,7 +10,7 @@ import { collectBuildScriptTypeDeclarationTexts } from './build-scope-bindings'
 import { kebabToCamelCase } from './helpers'
 import { parse } from './parser'
 import { analyzeStateScript } from './state-script-analysis'
-import type { ComponentLivePropMetadata } from './types'
+import type { ComponentReactivePropMetadata } from './types'
 
 export const DEFAULT_COMPONENT_REGISTRY_REL = path.join(
 	'.aero',
@@ -82,14 +82,14 @@ export function collectComponentRegistryEntries(componentsDir: string): Componen
 	return out.sort((a, b) => a.tag.localeCompare(b.tag))
 }
 
-function collectLivePropsFromTemplate(fullPath: string): readonly ComponentLivePropMetadata[] {
+function collectReactivePropsFromTemplate(fullPath: string): readonly ComponentReactivePropMetadata[] {
 	const source = fs.readFileSync(fullPath, 'utf-8')
 	const parsed = parse(source)
 	const stateScript = parsed.stateScript?.content ?? ''
 	if (!stateScript.trim()) return []
 	const analysis = analyzeStateScript(stateScript)
 	return analysis.bindings
-		.filter(binding => binding.liveProp)
+		.filter(binding => binding.reactiveProp)
 		.map(binding => ({
 			name: binding.name,
 			propName: binding.propName ?? binding.name,
@@ -99,25 +99,25 @@ function collectLivePropsFromTemplate(fullPath: string): readonly ComponentLiveP
 		}))
 }
 
-function addComponentLivePropMetadata(
-	out: Record<string, readonly ComponentLivePropMetadata[]>,
+function addComponentReactivePropMetadata(
+	out: Record<string, readonly ComponentReactivePropMetadata[]>,
 	fullPath: string
 ): void {
 	const tag = kebabBasename(fullPath)
-	const liveProps = collectLivePropsFromTemplate(fullPath)
-	if (liveProps.length === 0) return
-	out[tag] = liveProps
-	out[kebabToCamelCase(tag)] = liveProps
+	const reactiveProps = collectReactivePropsFromTemplate(fullPath)
+	if (reactiveProps.length === 0) return
+	out[tag] = reactiveProps
+	out[kebabToCamelCase(tag)] = reactiveProps
 }
 
 /**
- * Scan compiled component/layout templates and return their `is:state` live-prop contracts.
+ * Scan compiled component/layout templates and return their `is:state` reactive-prop contracts.
  */
-export function collectComponentLivePropMetadata(
+export function collectComponentReactivePropMetadata(
 	templateDirs: string | readonly string[]
-): Record<string, readonly ComponentLivePropMetadata[]> {
+): Record<string, readonly ComponentReactivePropMetadata[]> {
 	const dirs = Array.isArray(templateDirs) ? templateDirs : [templateDirs]
-	const out: Record<string, readonly ComponentLivePropMetadata[]> = {}
+	const out: Record<string, readonly ComponentReactivePropMetadata[]> = {}
 
 	function walk(dir: string): void {
 		if (!fs.existsSync(dir)) return
@@ -128,7 +128,7 @@ export function collectComponentLivePropMetadata(
 				continue
 			}
 			if (!name.isFile() || !name.name.endsWith('.html')) continue
-			addComponentLivePropMetadata(out, full)
+			addComponentReactivePropMetadata(out, full)
 		}
 	}
 

@@ -25,7 +25,7 @@ import {
 	collectReactiveBinds,
 	createStateMountImportLine,
 	createHypermediaImportLine,
-	emitLivePropsMetadata,
+	emitReactivePropsMetadata,
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
@@ -176,7 +176,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const ownedStateBindingNames =
 		ta.stateAnalysis !== null
 			? ta.stateAnalysis.bindings
-					.filter(binding => !binding.derived && !binding.liveProp)
+					.filter(binding => !binding.derived && !binding.reactiveProp)
 					.map(binding => binding.name)
 			: []
 	const stateHydrationLine =
@@ -228,8 +228,8 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 					ta.defaultImportBindings
 				)
 			: ''
-	const livePropsMetadata =
-		ta.stateAnalysis !== null ? emitLivePropsMetadata(ta.stateAnalysis) : ''
+	const reactivePropsMetadata =
+		ta.stateAnalysis !== null ? emitReactivePropsMetadata(ta.stateAnalysis) : ''
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
@@ -240,7 +240,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 
 	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
 	let output = prefixLines.length > 0 ? `${prefixLines.join('\n')}\n` : '\n'
-	if (livePropsMetadata) output += `${livePropsMetadata}\n`
+	if (reactivePropsMetadata) output += `${reactivePropsMetadata}\n`
 	output += renderFn
 	if (mountFn) output += `\n\n${mountFn}`
 	return output

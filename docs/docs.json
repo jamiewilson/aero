@@ -50,7 +50,7 @@
 							"guide/reactivity-recipes",
 							"guide/reactivity/bindings",
 							"guide/reactivity/structural",
-							"guide/reactivity/live-props",
+							"guide/reactivity/reactive-props",
 							"guide/reactivity/adopt"
 						]
 					},

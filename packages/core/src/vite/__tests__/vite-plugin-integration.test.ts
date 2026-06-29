@@ -62,8 +62,8 @@ describe('Vite Plugin Integration', () => {
 		expect(result.code).toContain('Vite Test')
 	})
 
-	it('validates required component live props during Vite transforms', () => {
-		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-live-props-'))
+	it('validates required component reactive props during Vite transforms', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-reactive-props-'))
 		const pagesDir = path.join(tmpDir, 'client', 'pages')
 		const componentsDir = path.join(tmpDir, 'client', 'components')
 		fs.mkdirSync(pagesDir, { recursive: true })
@@ -109,10 +109,10 @@ describe('Vite Plugin Integration', () => {
 			<counter-component />`
 
 			expect(() => localTransformPlugin.transform.call(localCtx, html, pagePath)).toThrow(
-				'Required live prop `count` for <counter-component> must be passed as a state signal.'
+				'Required reactive prop `count` for <counter-component> must be passed as a state signal.'
 			)
 			expect(localErrorRef.current?.message).toContain(
-				'Required live prop `count` for <counter-component> must be passed as a state signal.'
+				'Required reactive prop `count` for <counter-component> must be passed as a state signal.'
 			)
 		} finally {
 			fs.rmSync(tmpDir, { recursive: true, force: true })

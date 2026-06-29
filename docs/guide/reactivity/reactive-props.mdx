@@ -1,5 +1,5 @@
 ---
-title: 'Live props'
+title: 'Reactive props'
 description: 'Share mutable state between parent pages and child components with bind: and Aero.bindable().'
 ---
 
@@ -13,9 +13,9 @@ Parents pass initial values; children copy them into local variables. Keeping pa
 
 ## How Aero helps
 
-**Live props** let a parent pass a state binding into a child with `bind:<name>`. The child declares the prop in `<script is:state>` and marks it mutable with `Aero.bindable()`.
+**Reactive props** let a parent pass a state binding into a child with `bind:<name>`. The child declares the prop in `<script is:state>` and marks it mutable with `Aero.bindable()`.
 
-Live props are **readonly by default**. Only props declared with `Aero.bindable()` (or `Aero.bindable(fallback)`) accept writes from the child.
+Reactive props are **readonly by default**. Only props declared with `Aero.bindable()` (or `Aero.bindable(fallback)`) accept writes from the child.
 
 ## Parent: pass a binding
 
@@ -29,7 +29,7 @@ Live props are **readonly by default**. Only props declared with `Aero.bindable(
 <button on:click="{ count++ }">{ count }</button>
 ```
 
-## Child: accept a bindable live prop
+## Child: accept a bindable reactive prop
 
 ```html
 <!-- components/header.html -->
@@ -46,7 +46,7 @@ Live props are **readonly by default**. Only props declared with `Aero.bindable(
 
 `Aero.bindable()` marks `count` as writable from the child. `Aero.bindable(0)` adds a default when the parent does not pass `bind:count`.
 
-## Readonly live props
+## Readonly reactive props
 
 Props destructured from `Aero.props` without `bindable()` are readonly in the child state script. Assigning to them is a compile-time diagnostic:
 
@@ -60,15 +60,15 @@ Props destructured from `Aero.props` without `bindable()` are readonly in the ch
 
 To allow the child to mutate a prop, use `Aero.bindable()` on the child and `bind:<name>` on the parent.
 
-## Required live props
+## Required reactive props
 
-If a child declares a required live prop (no default), the parent must pass `bind:<name>`. `aero check` and the VS Code extension report missing bindings.
+If a child declares a required reactive prop (no default), the parent must pass `bind:<name>`. `aero check` and the VS Code extension report missing bindings.
 
-## Build-time props vs live props
+## Build-time props vs reactive props
 
 | Mechanism | When | Example |
 | --- | --- | --- |
 | Build props | Static data at render time | `title="{ site.title }"` |
-| Live props | Shared mutable client state | `bind:count="{ count }"` |
+| Reactive props | Shared mutable client state | `bind:count="{ count }"` |
 
-Build scripts still use `Aero.props` for static attributes. State scripts use `Aero.props` with `bindable()` for live data.
+Build scripts still use `Aero.props` for static attributes. State scripts use `Aero.props` with `bindable()` for reactive data.

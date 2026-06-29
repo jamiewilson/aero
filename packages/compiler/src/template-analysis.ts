@@ -146,14 +146,14 @@ export function buildTemplateAnalysis(
 	const writableStateBindingNames = stateAnalysis
 		? new Set(
 				stateAnalysis.bindings
-					.filter(binding => !binding.derived && (!binding.liveProp || binding.bindable))
+					.filter(binding => !binding.derived && (!binding.reactiveProp || binding.bindable))
 					.map(binding => binding.name)
 			)
 		: undefined
 	const lowerer = new Lowerer(resolver, diag, stateBindingNames, {
 		writableStateBindingNames,
 		hypermedia: options.hypermedia,
-		componentLiveProps: options.componentLiveProps,
+		componentReactiveProps: options.componentReactiveProps,
 	})
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = stateImportAnalysis

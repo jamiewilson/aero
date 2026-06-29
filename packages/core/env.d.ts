@@ -26,7 +26,7 @@ declare const Aero: {
 	page: { url: URL; request: Request; params: Record<string, string>; routePath: string }
 	/** Site-scoped: canonical URL from config. Use `Aero.site.url`. Always defined (empty string when not configured). */
 	site: { url: string }
-	/** Declare a live prop as child-mutable inside `<script is:state>` `Aero.props` destructure defaults. */
+	/** Declare a reactive prop as child-mutable inside `<script is:state>` `Aero.props` destructure defaults. */
 	bindable(): undefined
 	bindable<T>(fallback: T): T
 }

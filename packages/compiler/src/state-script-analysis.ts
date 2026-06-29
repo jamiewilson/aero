@@ -1,15 +1,15 @@
 import { parseSync } from 'oxc-parser'
 import {
-	collectReadonlyLivePropWrites,
-	readonlyLivePropWriteMessage,
-} from './readonly-live-prop-writes'
+	collectReadonlyReactivePropWrites,
+	readonlyReactivePropWriteMessage,
+} from './readonly-reactive-prop-writes'
 
 export interface StateBinding {
 	name: string
 	derived: boolean
 	dependencies: string[]
 	initExpr: string
-	liveProp?: boolean
+	reactiveProp?: boolean
 	propName?: string
 	required?: boolean
 	bindable?: boolean
@@ -141,7 +141,7 @@ function propertyKeyName(property: any): string | null {
 	return null
 }
 
-function livePropBindingFromProperty(
+function reactivePropBindingFromProperty(
 	script: string,
 	property: any
 ): StateBinding | null {
@@ -158,7 +158,7 @@ function livePropBindingFromProperty(
 			derived: false,
 			dependencies: [],
 			initExpr: 'undefined',
-			liveProp: true,
+			reactiveProp: true,
 			required: true,
 		}
 	}
@@ -172,7 +172,7 @@ function livePropBindingFromProperty(
 			initExpr: bindable
 				? bindableFallbackExprSource(script, unwrapExpression(value.right))
 				: initExprSource(script, value.right),
-			liveProp: true,
+			reactiveProp: true,
 			required: false,
 			...(bindable ? { bindable: true } : {}),
 		}
@@ -180,12 +180,12 @@ function livePropBindingFromProperty(
 	return null
 }
 
-function livePropBindingsFromDeclarator(script: string, declarator: { id: any; init: any }): StateBinding[] {
+function reactivePropBindingsFromDeclarator(script: string, declarator: { id: any; init: any }): StateBinding[] {
 	if (declarator.id?.type !== 'ObjectPattern') return []
 	if (!isAeroPropsExpression(declarator.init)) return []
 	const out: StateBinding[] = []
 	for (const property of declarator.id.properties ?? []) {
-		const binding = livePropBindingFromProperty(script, property)
+		const binding = reactivePropBindingFromProperty(script, property)
 		if (binding) out.push(binding)
 	}
 	return out
@@ -203,16 +203,16 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	}
 
 	const declarators = topLevelVariableDeclarators(parsed.program)
-	const livePropBindings = declarators.flatMap(d => livePropBindingsFromDeclarator(script, d))
+	const reactivePropBindings = declarators.flatMap(d => reactivePropBindingsFromDeclarator(script, d))
 	const allNames = new Set<string>()
 	for (const d of declarators) {
 		if (d.id?.type === 'Identifier' && typeof d.id.name === 'string') {
 			allNames.add(d.id.name)
 		}
 	}
-	for (const binding of livePropBindings) allNames.add(binding.name)
+	for (const binding of reactivePropBindings) allNames.add(binding.name)
 
-	const bindings: StateBinding[] = [...livePropBindings]
+	const bindings: StateBinding[] = [...reactivePropBindings]
 	for (const d of declarators) {
 		if (d.id?.type !== 'Identifier' || typeof d.id.name !== 'string') continue
 		const deps = [...collectIdentifiersFromInit(d.init)].filter(dep => allNames.has(dep))
@@ -226,29 +226,29 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 
 	const derived = new Set(bindings.filter(b => b.derived).map(b => b.name))
 	const diagnostics: StateScriptDiagnostic[] = []
-	const livePropNames = new Set(livePropBindings.map(binding => binding.name))
-	const livePropNameToPropName = new Map(
-		livePropBindings.map(binding => [binding.name, binding.propName ?? binding.name])
+	const reactivePropNames = new Set(reactivePropBindings.map(binding => binding.name))
+	const reactivePropNameToPropName = new Map(
+		reactivePropBindings.map(binding => [binding.name, binding.propName ?? binding.name])
 	)
-	const bindableLivePropNames = new Set(
-		livePropBindings.filter(binding => binding.bindable).map(binding => binding.name)
+	const bindableReactivePropNames = new Set(
+		reactivePropBindings.filter(binding => binding.bindable).map(binding => binding.name)
 	)
-	const ownedNames = new Set(bindings.filter(binding => !binding.liveProp).map(binding => binding.name))
-	const writtenLiveProps = new Set<string>()
-	for (const name of livePropNames) {
+	const ownedNames = new Set(bindings.filter(binding => !binding.reactiveProp).map(binding => binding.name))
+	const writtenReactiveProps = new Set<string>()
+	for (const name of reactivePropNames) {
 		if (ownedNames.has(name)) {
 			diagnostics.push({
 				name,
-				message: `Live prop \`${name}\` conflicts with an owned state binding.`,
+				message: `Reactive prop \`${name}\` conflicts with an owned state binding.`,
 			})
 		}
 	}
 
-	for (const write of collectReadonlyLivePropWrites(parsed.program, new Set([...livePropNames].filter(name => !bindableLivePropNames.has(name))))) {
-		const propName = livePropNameToPropName.get(write.name) ?? write.name
+	for (const write of collectReadonlyReactivePropWrites(parsed.program, new Set([...reactivePropNames].filter(name => !bindableReactivePropNames.has(name))))) {
+		const propName = reactivePropNameToPropName.get(write.name) ?? write.name
 		diagnostics.push({
 			name: write.name,
-			message: readonlyLivePropWriteMessage(propName),
+			message: readonlyReactivePropWriteMessage(propName),
 			range: write.range,
 		})
 	}
@@ -256,7 +256,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	walkStateScriptAst(parsed.program, node => {
 		if (node?.type === 'AssignmentExpression' && node.left?.type === 'Identifier') {
 			const name = node.left.name
-			if (livePropNames.has(name)) writtenLiveProps.add(name)
+			if (reactivePropNames.has(name)) writtenReactiveProps.add(name)
 			if (derived.has(name)) {
 				diagnostics.push({
 					name,
@@ -267,7 +267,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 		if (node?.type === 'UpdateExpression' && node.argument?.type === 'Identifier') {
 			const name = node.argument.name
-			if (livePropNames.has(name)) writtenLiveProps.add(name)
+			if (reactivePropNames.has(name)) writtenReactiveProps.add(name)
 			if (derived.has(name)) {
 				diagnostics.push({
 					name,
@@ -278,7 +278,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 	})
 	for (const binding of bindings) {
-		if (binding.liveProp && writtenLiveProps.has(binding.name)) {
+		if (binding.reactiveProp && writtenReactiveProps.has(binding.name)) {
 			binding.writes = true
 		}
 	}

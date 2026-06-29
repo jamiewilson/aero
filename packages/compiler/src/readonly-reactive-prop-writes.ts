@@ -1,6 +1,6 @@
 import { parseSync } from 'oxc-parser'
 
-export interface ReadonlyLivePropWrite {
+export interface ReadonlyReactivePropWrite {
 	readonly name: string
 	readonly range?: [number, number]
 }
@@ -12,8 +12,8 @@ const EXPRESSION_PARSE_OPTIONS = {
 	lang: 'ts',
 } as const
 
-export function readonlyLivePropWriteMessage(name: string): string {
-	return `Live prop \`${name}\` is readonly; declare it with \`Aero.bindable()\` in the child and pass it with \`bind:${name}="{ ... }"\` from the parent to allow mutation.`
+export function readonlyReactivePropWriteMessage(name: string): string {
+	return `Reactive prop \`${name}\` is readonly; declare it with \`Aero.bindable()\` in the child and pass it with \`bind:${name}="{ ... }"\` from the parent to allow mutation.`
 }
 
 function walk(node: unknown, visit: (node: any) => void): void {
@@ -45,21 +45,21 @@ function nodeRange(node: unknown): [number, number] | undefined {
 	return undefined
 }
 
-export function collectReadonlyLivePropWrites(
+export function collectReadonlyReactivePropWrites(
 	program: unknown,
-	readonlyLivePropNames: ReadonlySet<string>
-): ReadonlyLivePropWrite[] {
-	const writes: ReadonlyLivePropWrite[] = []
+	readonlyReactivePropNames: ReadonlySet<string>
+): ReadonlyReactivePropWrite[] {
+	const writes: ReadonlyReactivePropWrite[] = []
 	walk(program, node => {
 		if (node?.type === 'AssignmentExpression' && node.left?.type === 'Identifier') {
 			const name = node.left.name
-			if (readonlyLivePropNames.has(name)) {
+			if (readonlyReactivePropNames.has(name)) {
 				writes.push({ name, range: nodeRange(node.left) ?? nodeRange(node) })
 			}
 		}
 		if (node?.type === 'UpdateExpression' && node.argument?.type === 'Identifier') {
 			const name = node.argument.name
-			if (readonlyLivePropNames.has(name)) {
+			if (readonlyReactivePropNames.has(name)) {
 				writes.push({ name, range: nodeRange(node.argument) ?? nodeRange(node) })
 			}
 		}
@@ -67,13 +67,13 @@ export function collectReadonlyLivePropWrites(
 	return writes
 }
 
-export function collectReadonlyLivePropWritesInExpression(
+export function collectReadonlyReactivePropWritesInExpression(
 	expression: string,
-	readonlyLivePropNames: ReadonlySet<string>
-): ReadonlyLivePropWrite[] {
-	if (readonlyLivePropNames.size === 0 || !expression.trim()) return []
+	readonlyReactivePropNames: ReadonlySet<string>
+): ReadonlyReactivePropWrite[] {
+	if (readonlyReactivePropNames.size === 0 || !expression.trim()) return []
 	const source = expression.trimEnd().endsWith(';') ? expression : `${expression};`
 	const parsed = parseSync(EXPRESSION_FILENAME, source, EXPRESSION_PARSE_OPTIONS)
 	if (parsed.errors.length > 0) return []
-	return collectReadonlyLivePropWrites(parsed.program, readonlyLivePropNames)
+	return collectReadonlyReactivePropWrites(parsed.program, readonlyReactivePropNames)
 }

@@ -56,7 +56,7 @@ export function bindEvent(
 export interface MountStateBindingsOptions {
 	readonly root: ParentNode
 	readonly store: SignalStore
-	readonly liveProps?: Record<string, { value: unknown }>
+	readonly reactiveProps?: Record<string, { value: unknown }>
 	readonly bindings: readonly StateBindingSpec[]
 	readonly functionSources: readonly string[]
 	/** When set, used instead of creating scope from store/bindings (e.g. keyed-for row scope). */
@@ -117,7 +117,7 @@ export interface MountStateBindingsOptions {
 	readonly componentBinds?: readonly {
 		selector: string
 		component: unknown
-		livePropExprs: Record<string, LivePropExpression>
+		reactivePropExprs: Record<string, ReactivePropExpression>
 	}[]
 	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
@@ -153,11 +153,11 @@ export interface MountBindingSubset {
 	readonly componentBinds: readonly {
 		selector: string
 		component: unknown
-		livePropExprs: Record<string, LivePropExpression>
+		reactivePropExprs: Record<string, ReactivePropExpression>
 	}[]
 }
 
-export type LivePropExpression =
+export type ReactivePropExpression =
 	{
 		readonly expr: string
 		readonly mutable: boolean
@@ -395,29 +395,29 @@ function readonlySignal(signalName: string, signal: { value: unknown }): { value
 			return signal.value
 		},
 		set value(_value: unknown) {
-			throw new Error(`[aero] Readonly live prop cannot be assigned: ${signalName}`)
+			throw new Error(`[aero] Readonly reactive prop cannot be assigned: ${signalName}`)
 		},
 	}
 }
 
-function resolveLivePropSignals(
+function resolveReactivePropSignals(
 	store: SignalStore,
-	livePropExprs: Record<string, LivePropExpression>
+	reactivePropExprs: Record<string, ReactivePropExpression>
 ): Record<string, { value: unknown }> {
-	const liveProps: Record<string, { value: unknown }> = {}
-	for (const [propName, livePropExpr] of Object.entries(livePropExprs)) {
-		const expr = livePropExpr.expr
+	const reactiveProps: Record<string, { value: unknown }> = {}
+	for (const [propName, reactivePropExpr] of Object.entries(reactivePropExprs)) {
+		const expr = reactivePropExpr.expr
 		const signalName = expr.trim()
 		if (!/^[A-Za-z_$][\w$]*$/.test(signalName)) {
-			throw new Error(`[aero] Live prop ${propName} must reference a state signal name.`)
+			throw new Error(`[aero] Reactive prop ${propName} must reference a state signal name.`)
 		}
 		const signal = store.get(signalName)
-		liveProps[propName] =
-			livePropExpr.mutable
+		reactiveProps[propName] =
+			reactivePropExpr.mutable
 				? signal
 				: readonlySignal(propName, signal)
 	}
-	return liveProps
+	return reactiveProps
 }
 
 function mountBindingSubset(
@@ -539,7 +539,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			store: options.store,
 			bindings: options.bindings,
 			functionSources: options.functionSources,
-			liveProps: options.liveProps,
+			reactiveProps: options.reactiveProps,
 			actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 			scopeConstants: options.scopeConstants,
 		})
@@ -695,7 +695,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		const childStore = new SignalStore()
 		const cleanup = mount(target, options.Aero, {
 			store: childStore,
-			liveProps: resolveLivePropSignals(options.store, bind.livePropExprs),
+			reactiveProps: resolveReactivePropSignals(options.store, bind.reactivePropExprs),
 		})
 		cleanups.push(() => {
 			if (typeof cleanup === 'function') cleanup()

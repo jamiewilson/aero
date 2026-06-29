@@ -67,7 +67,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).not.toContain('"doubled":2')
 	})
 
-	it('serializes live props declared from Aero.props in is:state', () => {
+	it('serializes reactive props declared from Aero.props in is:state', () => {
 		const html = `<script is:state>
 			const { count, label = 'Counter' } = Aero.props
 		</script>
@@ -76,18 +76,18 @@ describe('state reactive codegen (PR-2d)', () => {
 		const code = compile(parse(html), mockOptions)
 
 		expect(code).toContain('"name":"count"')
-		expect(code).toContain('"liveProp":true')
+		expect(code).toContain('"reactiveProp":true')
 		expect(code).toContain('"required":true')
 		expect(code).toContain('"name":"label"')
 		expect(code).toContain(`"initExpr":"'Counter'"`)
 		expect(code).toContain('"required":false')
-		expect(code).toContain('liveProps: opts.liveProps ?? {}')
+		expect(code).toContain('reactiveProps: opts.reactiveProps ?? {}')
 		expect(code).toContain('store: opts.store ?? runtime.store')
 		expect(code).not.toContain('"count": count')
 		expect(code).not.toContain('"label": label')
 	})
 
-	it('exports live prop metadata for parent component wiring', () => {
+	it('exports reactive prop metadata for parent component wiring', () => {
 		const html = `<script is:state>
 			const { count, title: heading, label = 'Counter', value = Aero.bindable(0) } = Aero.props
 		</script>
@@ -95,7 +95,7 @@ describe('state reactive codegen (PR-2d)', () => {
 
 		const code = compile(parse(html), mockOptions)
 
-		expect(code).toContain('export const __aeroLiveProps =')
+		expect(code).toContain('export const __aeroReactiveProps =')
 		expect(code).toContain('"name":"count"')
 		expect(code).toContain('"propName":"count"')
 		expect(code).toContain('"required":true')
@@ -121,10 +121,10 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('data-aero-component="0"')
 		expect(code).toContain('componentBinds:')
 		expect(code).toContain('component: counter')
-		expect(code).toContain('livePropExprs: {"count":{"expr":"count","mutable":false}}')
+		expect(code).toContain('reactivePropExprs: {"count":{"expr":"count","mutable":false}}')
 	})
 
-	it('emits mutable component live prop records for bind syntax', () => {
+	it('emits mutable component reactive prop records for bind syntax', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -135,7 +135,7 @@ describe('state reactive codegen (PR-2d)', () => {
 
 		const code = compile(parse(html), mockOptions)
 
-		expect(code).toContain('livePropExprs: {"count":{"expr":"count","mutable":true}}')
+		expect(code).toContain('reactivePropExprs: {"count":{"expr":"count","mutable":true}}')
 		expect(code).toContain('renderComponent(counter, { "count": count }')
 		expect(code).not.toContain('"bind:count"')
 	})
@@ -158,7 +158,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).not.toMatch(/<span data-aero-component="0">/)
 	})
 
-	it('emits component bind records for reactive parent components without live props', () => {
+	it('emits component bind records for reactive parent components without reactive props', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -172,10 +172,10 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('data-aero-component="0"')
 		expect(code).toContain('componentBinds:')
 		expect(code).toContain('component: counter')
-		expect(code).toContain('livePropExprs: {}')
+		expect(code).toContain('reactivePropExprs: {}')
 	})
 
-	it('emits component module refs for imported components with live props', () => {
+	it('emits component module refs for imported components with reactive props', () => {
 		const html = `<script is:build>
 			import header from '@components/header.html'
 		</script>
@@ -217,7 +217,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		)
 	})
 
-	it('rejects omitted required child live props when component metadata is available', () => {
+	it('rejects omitted required child reactive props when component metadata is available', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -229,12 +229,12 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(() =>
 			compile(parse(html), {
 				...mockOptions,
-				componentLiveProps: {
+				componentReactiveProps: {
 					counter: [{ name: 'count', propName: 'count', required: true }],
 				},
 			})
 		).toThrow(
-			'Required live prop `count` for <counter-component> must be passed as a state signal.'
+			'Required reactive prop `count` for <counter-component> must be passed as a state signal.'
 		)
 	})
 
@@ -250,7 +250,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(() =>
 			compile(parse(html), {
 				...mockOptions,
-				componentLiveProps: {
+				componentReactiveProps: {
 					counter: [{ name: 'count', propName: 'count', required: true }],
 				},
 			})
@@ -271,14 +271,14 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(() =>
 			compile(parse(html), {
 				...mockOptions,
-				componentLiveProps: {
+				componentReactiveProps: {
 					counter: [{ name: 'count', propName: 'count', required: false, bindable: true }],
 				},
 			})
 		).not.toThrow()
 	})
 
-	it('rejects plain live props when the child writes them', () => {
+	it('rejects plain reactive props when the child writes them', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -290,16 +290,16 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(() =>
 			compile(parse(html), {
 				...mockOptions,
-				componentLiveProps: {
+				componentReactiveProps: {
 					counter: [{ name: 'count', propName: 'count', required: false, bindable: true, writes: true }],
 				},
 			})
 		).toThrow(
-			'Live prop `count` for <counter-component> is readonly; use `bind:count="{ ... }"` to allow child mutation.'
+			'Reactive prop `count` for <counter-component> is readonly; use `bind:count="{ ... }"` to allow child mutation.'
 		)
 	})
 
-	it('rejects obsolete readonly component live prop syntax', () => {
+	it('rejects obsolete readonly component reactive prop syntax', () => {
 		const html = `<script is:build>
 			const counter = { name: 'counter' }
 		</script>
@@ -309,7 +309,7 @@ describe('state reactive codegen (PR-2d)', () => {
 		<counter-component count:readonly="{ count }" />`
 
 		expect(() => compile(parse(html), mockOptions)).toThrow(
-			'Component live prop `count:readonly` is obsolete; use `count="{ ... }"` because live props are readonly by default.'
+			'Component reactive prop `count:readonly` is obsolete; use `count="{ ... }"` because reactive props are readonly by default.'
 		)
 	})
 

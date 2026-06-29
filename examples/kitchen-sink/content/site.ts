@@ -30,7 +30,7 @@ export default {
 	demos: [
 		{ label: 'Scripts', href: '/demos/scripts' },
 		{ label: 'Image imports', href: '/demos/images' },
-		{ label: 'Counter (live props)', href: '/demos/counter' },
+		{ label: 'Counter (reactive props)', href: '/demos/counter' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
 		{ label: 'Keyed list', href: '/demos/keyed-list' },
 		{ label: 'Form model', href: '/demos/form-model' },
