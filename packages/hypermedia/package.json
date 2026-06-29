@@ -28,5 +28,8 @@
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
+	},
+	"dependencies": {
+		"idiomorph": "^0.7.4"
 	}
 }

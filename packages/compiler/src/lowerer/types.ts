@@ -19,6 +19,8 @@ export type LowererDiag =
 /** Result of parsing a generic element's attributes: attribute string for output, optional loop data, optional props expr. */
 export interface ParsedElementAttrs {
 	attrString: string
+	/** HTML emitted immediately after the opening tag (e.g. hypermedia _method override). */
+	prefixContent?: string
 	loopData: { binding: string; items: string; keyExpr?: string } | null
 	/** Discriminant from `switch` / `data-switch="{ … }"` when present. */
 	switchExpr: string | null

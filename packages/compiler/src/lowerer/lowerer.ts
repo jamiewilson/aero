@@ -232,6 +232,7 @@ export class Lowerer {
 
 		const {
 			attrString,
+			prefixContent,
 			loopData,
 			switchExpr,
 			passDataExpr,
@@ -353,6 +354,9 @@ export class Lowerer {
 				content: `<${tagName}${attrString}>`,
 				outVar,
 			})
+			if (prefixContent) {
+				inner.push({ kind: 'Append', content: prefixContent, outVar })
+			}
 
 			const isScript = tagName === 'script'
 			const isStyle = tagName === 'style'

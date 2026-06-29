@@ -42,6 +42,28 @@ describe('createHypermediaRuntime integration', () => {
 		expect(pushState).toHaveBeenCalledWith({}, '', '/new-path')
 	})
 
+	it('defaults pushUrl to true for GET anchor triggers', async () => {
+		document.body.innerHTML = '<a id="link" href="/page">go</a>'
+		const link = document.querySelector('#link') as HTMLAnchorElement
+		const runtime = createHypermediaRuntime()
+		const pushState = vi.spyOn(history, 'pushState').mockImplementation(() => {})
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<span>ok</span>', { status: 200 }))
+
+		await runtime.executeAction({ method: 'GET', url: '/page' }, link)
+		expect(pushState).toHaveBeenCalledWith({}, '', link.href)
+	})
+
+	it('does not pushUrl for button GET by default', async () => {
+		document.body.innerHTML = '<button id="btn">go</button>'
+		const btn = document.querySelector('#btn')!
+		const runtime = createHypermediaRuntime()
+		const pushState = vi.spyOn(history, 'pushState').mockImplementation(() => {})
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 200 }))
+
+		await runtime.executeAction({ method: 'GET', url: '/api/x', swap: 'none' }, btn)
+		expect(pushState).not.toHaveBeenCalled()
+	})
+
 	it('syncs anchor href before request for dynamic fallback', async () => {
 		document.body.innerHTML = '<a id="link">go</a>'
 		const link = document.querySelector('#link') as HTMLAnchorElement
@@ -277,5 +299,43 @@ describe('createHypermediaRuntime integration', () => {
 		expect(window.scrollX).toBe(11)
 		expect(window.scrollY).toBe(27)
 		expect(scrollTo).not.toHaveBeenCalled()
+	})
+
+	it('applies primary swap before OOB targets in document order', async () => {
+		document.body.innerHTML =
+			'<button id="btn">go</button><div id="primary">old</div><div id="oob-a">a</div><div id="oob-b">b</div>'
+		const btn = document.querySelector('#btn')!
+		const primary = document.querySelector('#primary')!
+		const oobA = document.querySelector('#oob-a')!
+		const oobB = document.querySelector('#oob-b')!
+		const runtime = createHypermediaRuntime()
+		const order: string[] = []
+		primary.addEventListener('swap', () => order.push('primary'))
+		oobA.addEventListener('swap', () => order.push('oob-a'))
+		oobB.addEventListener('swap', () => order.push('oob-b'))
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(
+				'<div id="primary">new</div><div id="oob-b" data-aero-oob="innerHTML">B</div><div id="oob-a" data-aero-oob="innerHTML">A</div>',
+				{ status: 200, headers: { 'Content-Type': 'text/html' } }
+			)
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', target: '#primary', swap: 'outerHTML' },
+			btn
+		)
+
+		expect(document.querySelector('#primary')?.textContent).toBe('new')
+		expect(oobA.textContent).toBe('A')
+		expect(oobB.textContent).toBe('B')
+		expect(order).toEqual(['primary', 'oob-b', 'oob-a'])
+	})
+
+	it('reloads the page on popstate after boosted navigation', () => {
+		const assign = vi.spyOn(location, 'assign').mockImplementation(() => {})
+		createHypermediaRuntime()
+		window.dispatchEvent(new PopStateEvent('popstate'))
+		expect(assign).toHaveBeenCalled()
 	})
 })

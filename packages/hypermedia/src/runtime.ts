@@ -7,10 +7,13 @@ import type {
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
-import { buildRequest, executeRequest } from './request'
+import { buildRequest, executeRequest, normalizeMethod } from './request'
 import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { process as processFragment } from './process'
+import { parseOobSwaps } from './oob'
+import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
+import { syncMethodOverride } from './method-override'
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -53,7 +56,8 @@ function resolveSwapTarget(
 function applyPushUrl(
 	response: HypermediaResponse,
 	opts: ActionOptions,
-	trigger?: Element
+	trigger?: Element,
+	requestMethod?: string
 ): void {
 	const headerPush = response.headers['aero-push-url']
 	if (headerPush) {
@@ -65,18 +69,24 @@ function applyPushUrl(
 		history.pushState({}, '', opts.pushUrl)
 		return
 	}
-	if (opts.pushUrl === true && trigger instanceof HTMLAnchorElement && trigger.href) {
+	const shouldDefaultPush =
+		opts.pushUrl === true ||
+		(opts.pushUrl === undefined &&
+			trigger instanceof HTMLAnchorElement &&
+			(requestMethod ?? 'GET').toUpperCase() === 'GET')
+	if (shouldDefaultPush && trigger instanceof HTMLAnchorElement && trigger.href) {
 		history.pushState({}, '', trigger.href)
 	}
 }
 
-function syncNativeFallback(trigger: Element | undefined, url: string): void {
+function syncNativeFallback(trigger: Element | undefined, url: string, method: string): void {
 	if (!trigger || !url) return
 	if (trigger instanceof HTMLAnchorElement) {
 		trigger.href = url
 	}
 	if (trigger instanceof HTMLFormElement) {
 		trigger.action = url
+		syncMethodOverride(trigger, normalizeMethod(method))
 	}
 }
 
@@ -134,6 +144,16 @@ function createAriaBusyMirror(enabled: boolean): {
 	}
 }
 
+let popstateReloadRegistered = false
+
+function registerPopstateReload(): void {
+	if (popstateReloadRegistered || typeof window === 'undefined') return
+	popstateReloadRegistered = true
+	window.addEventListener('popstate', () => {
+		location.assign(location.href)
+	})
+}
+
 function createFocusFallback(target: Element): () => void {
 	const doc = target.ownerDocument
 	const activeBeforeSwap = doc.activeElement
@@ -157,6 +177,7 @@ function createFocusFallback(target: Element): () => void {
 }
 
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
+	registerPopstateReload()
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
 	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
@@ -260,7 +281,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		const busySignal = resolveBusySignal(opts, trigger)
 		const autoDisable = shouldAutoDisable(request.method, opts)
 		const previousDisabled = trigger && 'disabled' in trigger ? Boolean((trigger as { disabled: boolean }).disabled) : undefined
-		syncNativeFallback(trigger, request.url)
+		syncNativeFallback(trigger, request.url, request.method)
 		const context = trigger?.ownerDocument ?? document
 		const requestTargetSelector = opts.target ?? defaultTarget
 		const requestTarget = resolveExplicitTarget(requestTargetSelector, context)
@@ -319,11 +340,13 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				explicitTargetEl
 			)
 
+			const { primaryHtml, oobSwaps } = parseOobSwaps(response.html)
+
 			if (targetEl && effectiveSwap !== 'none') {
 				setLifecyclePhase(effectiveElements, 'swapping')
 				await runSwapLifecycle({
 					target: targetEl,
-					html: response.html,
+					html: primaryHtml,
 					style: effectiveSwap,
 					trigger,
 					targetSelector: lifecycleTarget,
@@ -342,9 +365,42 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					explicitTargetEl
 				)
 				setPhaseClass([...phasedElements], null)
+
+				if (isFullPageRegionTarget(lifecycleTarget)) {
+					mergeHeadFromHtml(response.html)
+				}
 			}
 
-			applyPushUrl(response, opts, trigger)
+			for (const oob of oobSwaps) {
+				const oobTarget = context.getElementById(oob.id)
+				if (!oobTarget) continue
+				const oobSelector = `#${oob.id}`
+				const oobElements = uniqueElements(trigger, oobTarget)
+				setLifecyclePhase(oobElements, 'swapping')
+				await runSwapLifecycle({
+					target: oobTarget,
+					html: oob.html,
+					style: oob.style,
+					trigger,
+					targetSelector: oobSelector,
+				})
+				emitLifecycle(
+					'swap',
+					{ request, response, swapStyle: oob.style, target: oobSelector, trigger },
+					trigger,
+					oobTarget
+				)
+				setLifecyclePhase(oobElements, 'settling')
+				emitLifecycle(
+					'settle',
+					{ request, response, target: oobSelector, trigger },
+					trigger,
+					oobTarget
+				)
+				setPhaseClass([...phasedElements], null)
+			}
+
+			applyPushUrl(response, opts, trigger, request.method)
 
 			return response
 		} finally {
