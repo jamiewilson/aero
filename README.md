@@ -11,7 +11,9 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes      |
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
-| 🚢 Plain HTML output       | No hydration, no framework runtime; deploy anywhere                          |
+| 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags |
+| ⚡ Optional reactivity      | `<script is:state>`, bindings, live props — opt in with `reactivity: true`   |
+| 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                          |
 | 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
 
 ## Try it out
@@ -349,7 +351,7 @@ Aero compiles templates to static HTML. Build-time code in `<script is:build>` i
 - **`<script is:inline>`** — Left in the HTML as-is; runs in the browser immediately (e.g. theme FOUC fix, analytics).
 - **`<script is:blocking>`** — Moved into `<head>` for blocking scripts.
 
-There is no hydration and no framework runtime in the output; you can deploy to any static host or use Nitro for a full server.
+There is no hydration and no framework runtime in the output by default; you can deploy to any static host or use Nitro for a full server. Enable `reactivity: true` and `hypermedia: true` when you want native client bindings and fragment actions — see [Reactivity](docs/guide/reactivity.mdx) and [Hypermedia](docs/guide/hypermedia.mdx).
 
 ---
 
@@ -366,6 +368,8 @@ Aero is configured by passing options to the `aero()` Vite plugin. You can do th
 | **`middleware`** | `Array`                        | Optional request-time handlers in dev (redirects, rewrites, custom responses).                                                                               |
 | **`dirs`**       | `object`                       | Override `client`, `server`, `dist` directories. Default `{ client, server, dist }`.                                                                         |
 | **`apiPrefix`**  | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                                                 |
+| **`reactivity`** | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.                                                                                           |
+| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware adoption.                                     |
 
 ### Configuring via the Vite plugin
 
@@ -462,6 +466,8 @@ For more documentation, see the [`/docs`](/docs) directory, starting with [index
 ## Links
 
 - [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
+- [@aero-js/reactivity](https://www.npmjs.com/package/@aero-js/reactivity)
+- [@aero-js/hypermedia](https://www.npmjs.com/package/@aero-js/hypermedia)
 - [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
 - [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
 - [@aero-js/config](https://www.npmjs.com/package/@aero-js/config)

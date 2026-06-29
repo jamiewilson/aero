@@ -47,6 +47,12 @@ Aero is a static site generator (and optional full-stack framework) built around
   <Card title="HMR everywhere" icon="zap">
     CSS, HTML, content, and client scripts all hot-reload in dev. Powered by Vite.
   </Card>
+  <Card title="Optional reactivity" icon="sparkles">
+    Opt into `<script is:state>`, bindings, and live props — no Virtual DOM, no mandatory runtime.
+  </Card>
+  <Card title="Hypermedia actions" icon="radio">
+    `GET` / `POST` fragment swaps with lifecycle events when you enable `hypermedia: true`.
+  </Card>
 </CardGroup>
 
 ## Who it's for
@@ -91,6 +97,8 @@ Aero is published as a set of focused packages:
 | `@aero-js/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
 | `@aero-js/content` | Content collections — `getCollection()`, `render()`, schema validation |
 | `@aero-js/cli`     | `aero check` and `aero doctor` for type-checking and diagnostics       |
+| `@aero-js/reactivity` | Signal store, bindings, and adopt API (used via core when enabled)  |
+| `@aero-js/hypermedia` | Action functions, swap engine, and lifecycle events                 |
 
 <Note>
 	Most projects only need `@aero-js/core` and `@aero-js/vite` (or `@aero-js/create` to scaffold).
@@ -105,5 +113,8 @@ Aero is published as a set of focused packages:
 	</Card>
 	<Card title="Project structure" icon="folder-open" href="/getting-started/structure">
 		Learn how pages, layouts, components, and content are organized.
+	</Card>
+	<Card title="Reactivity" icon="sparkles" href="/guide/reactivity">
+		Client state and bindings with `<script is:state>`.
 	</Card>
 </CardGroup>

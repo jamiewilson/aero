@@ -19,6 +19,8 @@ The core package of the Aero static site generator. It provides the compiler, ru
 | `@aero-js/core/types`            | Shared TypeScript types.                                                                         |
 | `@aero-js/core/diagnostics`      | Re-exports `@aero-js/diagnostics` (`AeroDiagnostic`, formatters, mappers).                       |
 | `@aero-js/core/compile-check`    | **Node-only:** `compileTemplate` for tooling (e.g. `aero check`). Do not use in browser bundles. |
+| `@aero-js/core/reactivity`       | Re-exports `@aero-js/reactivity` when opt-in reactivity is enabled.                              |
+| `@aero-js/core/hypermedia`       | Re-exports `@aero-js/hypermedia` when opt-in hypermedia is enabled.                              |
 | `@aero-js/core/utils/aliases`    | `loadTsconfigAliases`, `mergeWithDefaultAliases`, `jitiAliasRecordFromProject`, `resolveDirs`.   |
 
 ## Script taxonomy
@@ -28,6 +30,7 @@ Script blocks are classified by attributes (see [Scripts](https://github.com/jam
 | Script type | Attribute              | When it runs      | Notes                                                                                     |
 | ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
 | Build       | `<script is:build>`    | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
+| State       | `<script is:state>`    | Browser           | Requires `reactivity: true`. Declares signals and reactive bindings.                       |
 | Client      | Plain `<script>`       | Browser           | Bundled as a Vite virtual module; HMR. Use `props` to inject build-time data.             |
 | Inline      | `<script is:inline>`   | Browser           | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention).     |
 | Blocking    | `<script is:blocking>` | Browser           | Extracted and emitted in `<head>`.                                                        |
@@ -107,6 +110,7 @@ aero.mount({
 
 - Path aliases (e.g. `@components/*`, `@layouts/*`, `@content/*`) are resolved from the project tsconfig.
 - Alpine.js and HTMX attributes (e.g. `x-data`, `:disabled`, `hx-post`) are preserved; attributes matching `^(x-|[@:.]).*` are not interpolated.
+- Optional **reactivity** (`reactivity: true`) and **hypermedia** (`hypermedia: true`) add `<script is:state>`, bindings, and fragment actions. See [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity.mdx) and [Hypermedia](https://github.com/jamiewilson/aero/blob/main/docs/guide/hypermedia.mdx).
 
 ## File structure
 

@@ -42,6 +42,18 @@
 						"pages": ["guide/philosophy", "guide/html-template", "guide/learners-guide"]
 					},
 					{
+						"group": "Interactivity",
+						"icon": "sparkles",
+						"pages": [
+							"guide/reactivity",
+							"guide/reactivity/bindings",
+							"guide/reactivity/structural",
+							"guide/reactivity/live-props",
+							"guide/reactivity/adopt",
+							"guide/hypermedia"
+						]
+					},
+					{
 						"group": "Practical guidance",
 						"icon": "compass",
 						"pages": [

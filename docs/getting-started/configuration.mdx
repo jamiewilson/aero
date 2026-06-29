@@ -30,6 +30,8 @@ export default defineConfig({
 | `middleware` | `Array`                        | Dev-only request handlers.                                             |
 | `dirs`       | `object`                       | Override `client`, `server`, and `dist` directory names.               |
 | `apiPrefix`  | `string`                       | URL prefix for API routes. Default `'/api'`.                           |
+| `reactivity` | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.       |
+| `hypermedia` | `boolean`                      | Enable `GET`/`POST`/… actions and fragment swaps. Default `false`.     |
 
 ```ts vite.config.ts
 import { defineConfig } from 'vite'
@@ -129,3 +131,25 @@ VITE_PUBLIC_API=https://api.example.com
 ```
 
 Vite loads `.env`, `.env.local`, `.env.[mode]`, and `.env.[mode].local` in order. Shell variables override file values.
+
+## Reactivity and hypermedia
+
+Aero ships optional client interactivity behind feature flags. Both default to `false` so static sites stay free of client runtime wiring.
+
+| Flag | Enables |
+| --- | --- |
+| `reactivity` | `<script is:state>`, `{ }` live text, `on:*`, `show`, form bindings, reactive `if` / `for` / `switch`, live props |
+| `hypermedia` | `GET` / `POST` / `PUT` / `PATCH` / `DELETE` actions, fragment swaps, lifecycle events |
+
+`busy` requires **both** flags. Hypermedia adoption into the signal store also requires reactivity.
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	reactivity: true,
+	hypermedia: true,
+})
+```
+
+See [Reactivity](/guide/reactivity) and [Hypermedia actions](/guide/hypermedia) for syntax and examples. HTMX and Alpine.js work without these flags — see [HTMX and Alpine](/server/htmx-alpine).

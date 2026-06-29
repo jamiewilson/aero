@@ -14,6 +14,7 @@ Aero gives each `<script>` tag a clear execution context via attributes. You alw
 | `<script>` (plain)     | Yes     | End of `<body>` | Browser; bundled by Vite              |
 | `<script is:inline>`   | No      | No              | Browser; runs in place immediately    |
 | `<script is:blocking>` | No      | `<head>`        | Browser; blocks page render           |
+| `<script is:state>`    | Yes     | End of `<body>` | Browser; reactive bindings (opt-in)   |
 
 ## `<script is:build>`
 
@@ -49,6 +50,24 @@ To opt out of TypeScript for a specific build script, add `type="js"`:
 </Note>
 
 For typing component props, content schemas, and environment variables in depth, see the [TypeScript guide](/guide/typescript).
+
+## `<script is:state>`
+
+State scripts declare client-side reactive bindings. They require `reactivity: true` in your Aero config.
+
+```html
+<script is:state>
+	let count = 0
+</script>
+
+<button on:click="{ count++ }">{ count }</button>
+```
+
+- One `<script is:state>` per template.
+- Top-level `let` declarations become signals.
+- Works with hypermedia actions when `hypermedia: true` is also set.
+
+See [Reactivity](/guide/reactivity) for bindings, structural directives, and live props.
 
 ## Plain `<script>` (client)
 

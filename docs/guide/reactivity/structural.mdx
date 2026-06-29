@@ -1,0 +1,96 @@
+---
+title: 'Structural reactivity'
+description: 'Reactive if/else, keyed for loops, and switch — compile-time directives that update at runtime when state changes.'
+---
+
+## The problem
+
+Build-time `if` and `for` directives render once at compile time. Showing different branches or lists that change after user interaction needs either client-side templating or manual DOM create/destroy.
+
+## How Aero helps
+
+With `<script is:state>`, structural directives reconcile against live state. The compiler still lowers templates to HTML, but the reactivity mount patches branches and list rows when bindings change.
+
+Build-time and runtime structural directives use the same syntax. The difference is the presence of a state script and `reactivity: true`.
+
+## Reactive conditionals
+
+`if`, `else-if`, and `else` choose one branch based on a state expression:
+
+```html
+<script is:state>
+	let n = 0
+</script>
+
+<div class="card">
+	<p if="{ n > 0 }">Positive</p>
+	<p else-if="{ n < 0 }">Negative</p>
+	<p else>Zero</p>
+</div>
+
+<button on:click="{ n++ }">+</button>
+<button on:click="{ n-- }">−</button>
+```
+
+## Reactive `switch`
+
+Match a state value against `case` branches, with `default` as fallback:
+
+```html
+<script is:state>
+	let status = 'loading'
+
+	function cycleStatus() {
+		status = status === 'loading' ? 'error' : status === 'error' ? 'ready' : 'loading'
+	}
+</script>
+
+<div switch="{ status }">
+	<p case="loading">Loading…</p>
+	<p case="error">Something went wrong</p>
+	<p default>Ready</p>
+</div>
+
+<button on:click="{ cycleStatus() }">Cycle status</button>
+```
+
+## Keyed `for` loops
+
+Reactive lists need a stable `key` so Aero can move or reuse DOM nodes instead of re-rendering the whole list:
+
+```html
+<script is:state>
+	let items = [{ id: 'a' }, { id: 'b' }]
+
+	function addItem() {
+		items = [...items, { id: crypto.randomUUID() }]
+	}
+</script>
+
+<ul>
+	<li
+		for="{ const item of items }"
+		key="{ item.id }"
+		text="{ item.id }"></li>
+</ul>
+
+<button on:click="{ addItem() }">Add</button>
+```
+
+### Destructuring in `for`
+
+The loop binding supports destructuring patterns:
+
+```html
+<li for="{ const { id, label } of items }" key="{ id }">{ label }</li>
+```
+
+### Requirements
+
+- `key` must evaluate to a string or number per row.
+- Duplicate keys in one reconciliation pass throw at runtime.
+- The iterable must be an array (or `null` / `undefined`, treated as empty).
+
+<Note>
+	Keyed reconciliation preserves focus and element state inside rows when items reorder. Pair with [view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in client scripts for animated list updates.
+</Note>
