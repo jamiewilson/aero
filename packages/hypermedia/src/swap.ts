@@ -75,6 +75,28 @@ const SWAP_FUNCTIONS: Record<SwapStyle, (target: Element, html: string) => void>
 	none: swapNone,
 }
 
+export function resolveSwapAdoptContainer(
+	target: Element,
+	style: SwapStyle,
+	targetSelector: string,
+	context: ParentNode = target.ownerDocument ?? document
+): ParentNode {
+	if (style === 'outerHTML' || style === 'replace') {
+		const next = resolveTarget(targetSelector, context)
+		if (next?.isConnected) return next
+	}
+
+	if (target.isConnected) return target
+
+	const resolved = resolveTarget(targetSelector, context)
+	if (resolved?.isConnected) return resolved
+
+	const parent = target.parentElement
+	if (parent?.isConnected) return parent
+
+	return context instanceof Document ? context.body : context
+}
+
 export function performSwap(op: SwapOperation): void {
 	const fn = SWAP_FUNCTIONS[op.style]
 	if (!fn) {

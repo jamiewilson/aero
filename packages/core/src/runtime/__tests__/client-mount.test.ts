@@ -2,6 +2,7 @@
  * @vitest-environment happy-dom
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { performSwap as hypermediaPerformSwap } from '@aero-js/hypermedia'
 import { installHypermediaSwapLifecycle, mountClientBindings } from '../client-mount'
 import { HYPERMEDIA_RUNTIME_GLOBAL_KEY } from '../hypermedia-bootstrap'
 
@@ -24,7 +25,7 @@ type TestSwapLifecycleAdapter = (operation: TestSwapLifecycleOperation) => void 
 type TestHypermediaRuntime = {
 	readonly kind: 'hypermedia-runtime'
 	executeAction: () => void
-	swapElement(targetSelector: string, html: string, style: string): void
+	swapElement(targetSelector: string, html: string, style: string): Promise<void>
 	adopt: (container: ParentNode) => void
 	registerBusyBinding: () => void
 	setSwapLifecycleAdapter(adapter: TestSwapLifecycleAdapter | null): void
@@ -35,7 +36,7 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 	const runtime: TestHypermediaRuntime = {
 		kind: 'hypermedia-runtime',
 		executeAction: vi.fn(),
-		swapElement(targetSelector: string, html: string, style: string): void {
+		swapElement: async (targetSelector: string, html: string, style: string): Promise<void> => {
 			const target = document.querySelector(targetSelector)
 			if (!target) throw new Error(`missing target ${targetSelector}`)
 			const operation = {
@@ -44,14 +45,14 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 				style,
 				targetSelector,
 				performSwap() {
-					target.innerHTML = html
+					hypermediaPerformSwap({ target, html, style: style as never })
 				},
 				adoptRuntime(container: ParentNode) {
 					runtime.adopt(container)
 				},
 			}
 			if (adapter) {
-				void adapter(operation)
+				await adapter(operation)
 				return
 			}
 			operation.performSwap()
@@ -113,11 +114,35 @@ describe('installHypermediaSwapLifecycle', () => {
 			},
 		})
 
-		runtime.swapElement('#app', '<p>new</p>', 'innerHTML')
-		await Promise.resolve()
+		await runtime.swapElement('#app', '<p>new</p>', 'innerHTML')
 
 		expect(calls).toEqual(['destroy', 'remount'])
 		expect(root.innerHTML).toBe('<p>new</p>')
+	})
+
+	it('adopts runtime hypermedia after remount on outerHTML swaps', async () => {
+		document.body.innerHTML = '<main id="app"><div id="nested-host">old</div></main>'
+		const root = document.querySelector('#app') as HTMLElement
+		const runtime = createRuntimeHarness()
+		const adopt = vi.spyOn(runtime, 'adopt')
+
+		installHypermediaSwapLifecycle({
+			root,
+			runtime,
+			shouldRemountCompiled: () => true,
+			destroyPrevious: vi.fn(),
+			remountCompiled: vi.fn(),
+		})
+
+		await runtime.swapElement(
+			'#nested-host',
+			'<div id="nested-host"><button data-aero-on-click="{ GET(\'/next\') }">next</button></div>',
+			'outerHTML'
+		)
+
+		const nextHost = document.querySelector('#nested-host')
+		expect(adopt).toHaveBeenCalledWith(nextHost)
+		expect(nextHost?.querySelector('button')?.hasAttribute('data-aero-adopted')).toBe(true)
 	})
 
 	it('keeps runtime-authored fragments on the adopt path', async () => {
@@ -135,19 +160,18 @@ describe('installHypermediaSwapLifecycle', () => {
 			remountCompiled,
 		})
 
-		runtime.swapElement(
+		await runtime.swapElement(
 			'#runtime',
 			'<button data-aero-on-click="{ GET(\'/next\') }">next</button>',
 			'innerHTML'
 		)
-		await Promise.resolve()
 
 		expect(remountCompiled).not.toHaveBeenCalled()
 		expect(adopt).toHaveBeenCalledWith(document.querySelector('#runtime'))
 		expect(document.querySelector('#runtime')?.innerHTML).toContain('data-aero-adopted')
 	})
 
-	it('removes the adapter during cleanup', () => {
+	it('removes the adapter during cleanup', async () => {
 		document.body.innerHTML = '<main id="app"><section id="runtime">old</section></main>'
 		const root = document.querySelector('#app') as HTMLElement
 		const runtime = createRuntimeHarness()
@@ -161,7 +185,7 @@ describe('installHypermediaSwapLifecycle', () => {
 		})
 
 		cleanup()
-		runtime.swapElement('#runtime', '<p>new</p>', 'innerHTML')
+		await runtime.swapElement('#runtime', '<p>new</p>', 'innerHTML')
 
 		expect(remountCompiled).not.toHaveBeenCalled()
 		expect(document.querySelector('#runtime')?.innerHTML).toBe('<p>new</p>')
