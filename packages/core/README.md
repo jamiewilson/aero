@@ -110,7 +110,7 @@ aero.mount({
 
 - Path aliases (e.g. `@components/*`, `@layouts/*`, `@content/*`) are resolved from the project tsconfig.
 - Alpine.js and HTMX attributes (e.g. `x-data`, `:disabled`, `hx-post`) are preserved; attributes matching `^(x-|[@:.]).*` are not interpolated.
-- Optional **reactivity** (`reactivity: true`) and **hypermedia** (`hypermedia: true`) add `<script is:state>`, bindings, and fragment actions. See [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/guide/reactivity.mdx) and [Hypermedia](https://github.com/jamiewilson/aero/blob/main/docs/guide/hypermedia.mdx).
+- Optional **reactivity** (`reactivity: true`) and **hypermedia** (`hypermedia: true`) add `<script is:state>`, bindings, and fragment actions. See [Reactivity](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/reactivity.mdx) and [Hypermedia](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/hypermedia.mdx).
 
 ## File structure
 

@@ -134,22 +134,13 @@ Vite loads `.env`, `.env.local`, `.env.[mode]`, and `.env.[mode].local` in order
 
 ## Reactivity and hypermedia
 
-Aero ships optional client interactivity behind feature flags. Both default to `false` so static sites stay free of client runtime wiring.
+Optional client features behind feature flags (both default `false`):
 
 | Flag | Enables |
 | --- | --- |
-| `reactivity` | `<script is:state>`, `{ }` live text, `on:*`, `show`, form bindings, reactive `if` / `for` / `switch`, live props |
-| `hypermedia` | `GET` / `POST` / `PUT` / `PATCH` / `DELETE` actions, fragment swaps, lifecycle events |
+| `reactivity` | `<script is:state>`, live bindings, structural updates, live props |
+| `hypermedia` | `GET` / `POST` / … actions, fragment swaps, lifecycle events |
 
-`busy` requires **both** flags. Hypermedia adoption into the signal store also requires reactivity.
+`busy` and post-swap binding adoption require **both** flags.
 
-```ts aero.config.ts
-import { defineConfig } from '@aero-js/config'
-
-export default defineConfig({
-	reactivity: true,
-	hypermedia: true,
-})
-```
-
-See [Reactivity](/guide/reactivity) and [Hypermedia actions](/guide/hypermedia) for syntax and examples. HTMX and Alpine.js work without these flags — see [HTMX and Alpine](/server/htmx-alpine).
+See [Reactivity](/getting-started/reactivity) and [Hypermedia](/getting-started/hypermedia) to enable and use them. HTMX and Alpine.js work without these flags — [HTMX and Alpine](/server/htmx-alpine).

@@ -1,0 +1,133 @@
+---
+title: 'Reactivity'
+description: 'Add client-side state and DOM bindings with <script is:state> — opt-in, no Virtual DOM.'
+icon: 'sparkles'
+---
+
+Aero is static-first: build-time `{ }` interpolation renders once. When a page needs counters, toggles, form state, or UI that updates after load, enable reactivity. You keep writing `.html` with a fifth script type — no separate client framework required.
+
+<Note>Reactivity defaults to `false`. Static sites ship no client binding runtime until you opt in.</Note>
+
+## Enable reactivity
+
+```ts aero.config.ts
+import { defineConfig } from '@aero-js/config'
+
+export default defineConfig({
+	reactivity: true,
+})
+```
+
+`aero check` reports templates that use reactive directives when the flag is off.
+
+## `<script is:state>`
+
+State scripts run in the browser after mount. Top-level `let` declarations become signals wired to markup:
+
+```html
+<script is:state>
+	let count = 0
+</script>
+
+<section>
+	<button on:click="{ count-- }">−</button>
+	<span>{ count }</span>
+	<button on:click="{ count++ }">+</button>
+</section>
+```
+
+| Rule | Detail |
+| --- | --- |
+| One per file | Only one `<script is:state>` per template |
+| Signals | Top-level `let` bindings are reactive |
+| Helpers | Top-level `const` functions can read state (for example `const isValid = () => …`) |
+| Imports | Hoisted into mount scope, same as client scripts |
+| With `is:build` | Separate script blocks — state can **read** build-scope values to seed initial data (see below) |
+
+See [Scripts](/getting-started/scripts) for how state scripts fit the script taxonomy.
+
+### Seeding state from `is:build`
+
+At render time, Aero runs `<script is:build>` then `<script is:state>` in the same scope. Declare data in the build script and assign it to state bindings:
+
+```html
+<script is:build>
+	import site from '@content/site.ts'
+
+	const initialItems = site.featuredPosts
+</script>
+
+<script is:state>
+	let items = initialItems
+</script>
+
+<ul>
+	<li for="{ const post of items }" key="{ post.id }">{ post.title }</li>
+</ul>
+```
+
+Build script runs once at compile (or request) time. Owned `let` values are serialized into a `<script type="aero/state">` hydration payload so the client store matches the HTML on first paint. Derived bindings (for example `let total = items.length`) are recomputed at mount — they are not included in the payload.
+
+Common sources for seed data:
+
+| Source | Example |
+| --- | --- |
+| Content collections | `const posts = await getCollection('blog')` → `let items = posts` |
+| Page props | In components: `const { count = Aero.bindable(0) } = Aero.props` |
+| Build constants | `const limit = 10` → `let pageSize = limit` |
+
+Build-time `{ expression }` in markup still renders static HTML. Use `is:state` when that data should stay reactive after load.
+
+## What you can bind
+
+With reactivity enabled, markup can update at runtime:
+
+| Pattern | Example |
+| --- | --- |
+| Text | `{ count }` or `text="{ label }"` |
+| Events | `on:click="{ count++ }"`, `on:submit.prevent="{ save() }"` |
+| Visibility | `show="{ open }"` |
+| Classes | `class:is-active="{ active }"` |
+| Properties | `disabled="{ saving }"` |
+| Forms | `value="{ email }"`, `checked="{ agree }"` |
+| Structure | Reactive `if` / `else`, keyed `for`, `switch` / `case` |
+| Components | `bind:count="{ count }"` with `Aero.bindable()` in the child |
+
+Attribute names also accept `aero-*` and `data-aero-*` prefixes.
+
+## Hydration
+
+Server-rendered HTML is the first paint. Aero emits a `<script type="aero/state">` JSON payload with owned `let` binding values from render time (including values seeded from `is:build`). At mount, the client store reads that payload and attaches bindings — no manual hydration API.
+
+## Runtime access
+
+For imperative inserts (hypermedia swaps or `innerHTML`), adopt bindings into the page store:
+
+```ts
+import aero from '@aero-js/core'
+
+aero.getReactivityRuntime?.()?.adopt(container)
+```
+
+See [Adopt runtime fragments](/guide/reactivity/adopt).
+
+## Hypermedia
+
+Reactivity alone covers client-only UI. Pair it with [Hypermedia](/getting-started/hypermedia) when fragments come from the server. `busy` and post-swap binding adoption require both flags.
+
+## Next steps
+
+<CardGroup cols={2}>
+	<Card title="Reactivity recipes" icon="book-open" href="/guide/reactivity">
+		Common patterns: forms, lists, live props, when to use Alpine instead.
+	</Card>
+	<Card title="Bindings reference" icon="link" href="/guide/reactivity/bindings">
+		Full syntax for events, show, html, class, property, and model bindings.
+	</Card>
+	<Card title="Structural updates" icon="git-branch" href="/guide/reactivity/structural">
+		Reactive `if`, keyed `for`, and `switch`.
+	</Card>
+	<Card title="Live props" icon="arrow-left-right" href="/guide/reactivity/live-props">
+		Share mutable state between parent and child components.
+	</Card>
+</CardGroup>
