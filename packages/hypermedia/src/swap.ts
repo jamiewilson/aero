@@ -1,4 +1,11 @@
+import { Idiomorph } from 'idiomorph'
 import type { SwapOperation, SwapStyle } from './types'
+
+const IGNORE_MORPH_ATTR = 'data-aero-ignore-morph'
+
+function shouldIgnoreMorph(node: Node): boolean {
+	return node instanceof Element && node.hasAttribute(IGNORE_MORPH_ATTR)
+}
 
 const SWAP_STYLES: readonly SwapStyle[] = [
 	'innerHTML',
@@ -53,7 +60,17 @@ function swapAfterEnd(target: Element, html: string): void {
 }
 
 function swapReplace(target: Element, html: string): void {
-	swapOuterHTML(target, html)
+	Idiomorph.morph(target, html, {
+		morphStyle: 'outerHTML',
+		ignoreActiveValue: true,
+		restoreFocus: true,
+		callbacks: {
+			beforeNodeMorphed(oldNode, newNode) {
+				if (shouldIgnoreMorph(oldNode) || shouldIgnoreMorph(newNode)) return false
+				return true
+			},
+		},
+	})
 }
 
 function swapRemove(target: Element, _html: string): void {

@@ -116,12 +116,37 @@ describe('performSwap', () => {
 		expect(next?.id).toBe('after')
 	})
 
-	it('replace falls back to outerHTML', () => {
+	it('replace morphs in place preserving matched ids', () => {
 		const { container, target } = createContainer()
-		const parent = target.parentElement!
-		performSwap({ target, html: '<div id="replaced">replaced</div>', style: 'replace' })
-		expect(parent.querySelector('#target')).toBeNull()
-		expect(parent.querySelector('#replaced')).not.toBeNull()
+		document.body.append(container)
+		target.innerHTML = '<input id="keep" value="typed">'
+		const input = target.querySelector('#keep') as HTMLInputElement
+		input.focus()
+		input.value = 'typed'
+
+		performSwap({
+			target,
+			html: '<div id="target"><input id="keep" value="server"><span>added</span></div>',
+			style: 'replace',
+		})
+
+		expect(container.querySelector('#target')).toBe(target)
+		expect(input.value).toBe('typed')
+		expect(target.querySelector('span')?.textContent).toBe('added')
+	})
+
+	it('replace skips nodes marked data-aero-ignore-morph', () => {
+		const { container, target } = createContainer()
+		document.body.append(container)
+		target.innerHTML = '<span id="locked" data-aero-ignore-morph>stay</span>'
+
+		performSwap({
+			target,
+			html: '<div id="target"><span id="locked" data-aero-ignore-morph>changed</span></div>',
+			style: 'replace',
+		})
+
+		expect(target.querySelector('#locked')?.textContent).toBe('stay')
 	})
 
 	it('remove removes target element', () => {

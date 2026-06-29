@@ -1,7 +1,6 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import fs from 'node:fs'
-import os from 'node:os'
 import { compileTemplate } from '@aero-js/compiler'
 import { Aero } from './index'
 import type {
@@ -131,11 +130,8 @@ export async function loadCompiledTemplateModule(
 		rewrittenForStandalone,
 		`globalThis.${resolveBridgeName}`
 	)
-	const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'aero-standalone-module-'))
-	const tmpModulePath = path.join(tmpDir, path.basename(importer, path.extname(importer)) + '.mjs')
-	await fs.promises.writeFile(tmpModulePath, bridgedSource, 'utf8')
 	try {
-		const mod = (await import(/* @vite-ignore */ pathToFileURL(tmpModulePath).href)) as {
+		const mod = (await import(/* @vite-ignore */ toDataUrl(bridgedSource))) as {
 			default?: unknown
 			getStaticPaths?: unknown
 		}
@@ -150,7 +146,6 @@ export async function loadCompiledTemplateModule(
 			`[aero] failed to load standalone compiled template module: ${String((error as Error).message ?? error)}`
 		)
 	} finally {
-		await fs.promises.rm(tmpDir, { recursive: true, force: true })
 		delete (globalThis as Record<string, unknown>)[resolveBridgeName]
 	}
 }

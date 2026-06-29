@@ -1,4 +1,5 @@
 import { createHypermediaRuntime, type HypermediaRuntime } from '../hypermedia'
+import { readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
 
 export const HYPERMEDIA_RUNTIME_GLOBAL_KEY = '__AERO_HYPERMEDIA_RUNTIME__'
 
@@ -17,7 +18,12 @@ export function readBootstrappedHypermediaRuntime(): HypermediaRuntime | null {
 export function bootstrapHypermediaRuntime(): HypermediaRuntime {
 	const existing = readBootstrappedHypermediaRuntime()
 	if (existing) return existing
-	const created = createHypermediaRuntime()
+	const reactivity = import.meta.env.AERO_REACTIVITY === true
+	const reactivityRuntime = reactivity ? readBootstrappedReactivityRuntime() : null
+	const created = createHypermediaRuntime({
+		reactivity,
+		store: reactivityRuntime?.store,
+	})
 	runtimeGlobal()[HYPERMEDIA_RUNTIME_GLOBAL_KEY] = created
 	return created
 }

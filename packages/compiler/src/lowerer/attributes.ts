@@ -22,6 +22,7 @@ import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
 import {
 	deriveHypermediaFallbackAttrs,
 	renderFallbackAttributeString,
+	renderMethodOverrideInput,
 } from '../hypermedia-fallback'
 import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
@@ -315,6 +316,7 @@ export function parseElementAttributes(
 	const classBinds: IRReactiveClassBind[] = []
 	const propertyBinds: IRReactivePropertyBind[] = []
 	const modelBinds: IRReactiveModelBind[] = []
+	let prefixContent: string | undefined
 	let loopData: { binding: string; items: string; keyExpr?: string } | null = null
 	let keyExpr: string | undefined
 	let switchExpr: string | null = null
@@ -398,6 +400,9 @@ export function parseElementAttributes(
 				if (fallback) {
 					const fallbackStr = renderFallbackAttributeString(fallback)
 					if (fallbackStr.trim()) attributes.push(fallbackStr.trim())
+					if (fallback.methodOverride) {
+						prefixContent = renderMethodOverrideInput(fallback.methodOverride)
+					}
 				}
 			}
 			return
@@ -499,6 +504,7 @@ export function parseElementAttributes(
 		loop && keyExpr ? { binding: loop.binding, items: loop.items, keyExpr } : loop
 	return {
 		attrString,
+		prefixContent,
 		loopData: resolvedLoopData,
 		switchExpr,
 		passDataExpr,

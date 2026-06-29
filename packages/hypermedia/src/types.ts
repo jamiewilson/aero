@@ -11,6 +11,9 @@ export type SwapStyle =
 	| 'remove'
 	| 'none'
 
+export type RetryMode = 'auto' | 'never' | 'error'
+export type CancelMode = 'auto' | 'disabled'
+
 export interface ActionOptions {
 	method?: HttpMethod
 	url?: string
@@ -22,6 +25,11 @@ export interface ActionOptions {
 	autoDisable?: boolean
 	ariaBusy?: boolean
 	state?: HypermediaBooleanSignal
+	retry?: RetryMode
+	cancel?: CancelMode
+	signal?: AbortSignal
+	select?: string
+	openWhenHidden?: boolean
 }
 
 export interface HypermediaBooleanSignal {
@@ -31,6 +39,7 @@ export interface HypermediaBooleanSignal {
 export interface HypermediaSignalStore {
 	has?(path: string): boolean
 	get(path: string): { value: unknown }
+	merge?(values: Record<string, unknown>): void
 }
 
 export interface HypermediaRequest {
@@ -47,6 +56,7 @@ export interface HypermediaResponse {
 	readonly status: number
 	readonly html: string
 	readonly headers: Record<string, string>
+	readonly stream?: ReadableStream<Uint8Array> | null
 }
 
 export interface SwapOperation {

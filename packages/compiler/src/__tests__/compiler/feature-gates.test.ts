@@ -45,6 +45,17 @@ describe('feature gates', () => {
 		expect(code).toContain('href="/api/items"')
 	})
 
+	it('emits _method hidden input for static PUT form fallback', () => {
+		const html = `<script is:state>
+			let id = 1
+		</script>
+		<form on:submit.prevent="{ PUT('/api/items/1') }"><button type="submit">Delete</button></form>`
+		const code = compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		expect(code).toContain('action="/api/items/1"')
+		expect(code).toContain('method="post"')
+		expect(code).toContain('name="_method" value="PUT"')
+	})
+
 	it('allows lifecycle handlers to contain state side effects', () => {
 		const html = `<script is:state>
 			let saved = false

@@ -112,6 +112,32 @@
 		</section>
 
 		<section class="demo card v-stack">
+			<h2>Server fragment</h2>
+			<p class="secondary">
+				<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server.
+			</p>
+			<button
+				on:click="{ GET('/api/hypermedia/fragment', { target: '#fragment-status', swap: 'outerHTML' }) }">
+				Load server fragment
+			</button>
+			<div id="fragment-status" class="card secondary">Fragment not loaded yet.</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Out-of-band swap</h2>
+			<p class="secondary">
+				Primary <code>#oob-primary</code> swaps first; <code>data-aero-oob</code> updates
+				<code>#oob-status</code> separately.
+			</p>
+			<button
+				on:click="{ GET('/api/hypermedia/oob', { target: '#oob-primary', swap: 'outerHTML' }) }">
+				Refresh with OOB status
+			</button>
+			<div id="oob-primary" class="card secondary">Primary target waiting…</div>
+			<div id="oob-status" class="card secondary">Status (OOB): idle</div>
+		</section>
+
+		<section class="demo card v-stack">
 			<h2>Process after swap</h2>
 			<p class="secondary">
 				Server fragments can include <code>data-aero-on-*</code> — wired automatically after swap.

@@ -7,10 +7,22 @@ import type {
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
-import { buildRequest, executeRequest } from './request'
+import { buildRequest, executeRequestWithRetry, normalizeMethod, openHypermediaRequest } from './request'
 import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { process as processFragment } from './process'
+import { parseOobSwaps } from './oob'
+import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
+import { syncMethodOverride } from './method-override'
+import { applySelectFilter, isAbortError } from './request-policy'
+import { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
+import {
+	type SseElementPatch,
+	handleSseMessage,
+	isEventStreamContentType,
+	readSseStream,
+	runSseSession,
+} from './sse'
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -32,6 +44,7 @@ export interface HypermediaRuntime {
 
 export interface HypermediaRuntimeOptions {
 	readonly debug?: boolean
+	readonly reactivity?: boolean
 	readonly defaultSwap?: SwapStyle
 	readonly defaultTarget?: string
 	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
@@ -53,7 +66,8 @@ function resolveSwapTarget(
 function applyPushUrl(
 	response: HypermediaResponse,
 	opts: ActionOptions,
-	trigger?: Element
+	trigger?: Element,
+	requestMethod?: string
 ): void {
 	const headerPush = response.headers['aero-push-url']
 	if (headerPush) {
@@ -65,18 +79,24 @@ function applyPushUrl(
 		history.pushState({}, '', opts.pushUrl)
 		return
 	}
-	if (opts.pushUrl === true && trigger instanceof HTMLAnchorElement && trigger.href) {
+	const shouldDefaultPush =
+		opts.pushUrl === true ||
+		(opts.pushUrl === undefined &&
+			trigger instanceof HTMLAnchorElement &&
+			(requestMethod ?? 'GET').toUpperCase() === 'GET')
+	if (shouldDefaultPush && trigger instanceof HTMLAnchorElement && trigger.href) {
 		history.pushState({}, '', trigger.href)
 	}
 }
 
-function syncNativeFallback(trigger: Element | undefined, url: string): void {
+function syncNativeFallback(trigger: Element | undefined, url: string, method: string): void {
 	if (!trigger || !url) return
 	if (trigger instanceof HTMLAnchorElement) {
 		trigger.href = url
 	}
 	if (trigger instanceof HTMLFormElement) {
 		trigger.action = url
+		syncMethodOverride(trigger, normalizeMethod(method))
 	}
 }
 
@@ -134,6 +154,76 @@ function createAriaBusyMirror(enabled: boolean): {
 	}
 }
 
+const SUPERSEDED_ABORT = Symbol('aero-hypermedia-superseded')
+
+function isSupersededAbort(signal: AbortSignal | undefined): boolean {
+	return Boolean(signal?.aborted && signal.reason === SUPERSEDED_ABORT)
+}
+
+function createSupersededResponse(): HypermediaResponse {
+	return { ok: false, status: 0, html: '', headers: {} }
+}
+
+function createRequestAbortControl(
+	trigger: Element | undefined,
+	opts: ActionOptions,
+	triggerCancelControllers: Map<Element, AbortController>,
+	triggerGeneration: Map<Element, number>
+): { signal?: AbortSignal; isLatest: () => boolean } {
+	let generation = 0
+	if (trigger) {
+		generation = (triggerGeneration.get(trigger) ?? 0) + 1
+		triggerGeneration.set(trigger, generation)
+	}
+
+	const cancel = opts.cancel ?? 'auto'
+	let requestController: AbortController | undefined
+
+	if (cancel !== 'disabled' && trigger) {
+		const previous = triggerCancelControllers.get(trigger)
+		if (previous && !previous.signal.aborted) {
+			previous.abort(SUPERSEDED_ABORT)
+		}
+		requestController = new AbortController()
+		triggerCancelControllers.set(trigger, requestController)
+	}
+
+	if (opts.signal) {
+		const external = opts.signal
+		if (requestController) {
+			if (external.aborted) requestController.abort(external.reason)
+			else {
+				external.addEventListener('abort', () => requestController!.abort(external.reason), {
+					once: true,
+				})
+			}
+		} else {
+			requestController = new AbortController()
+			if (external.aborted) requestController.abort(external.reason)
+			else {
+				external.addEventListener('abort', () => requestController!.abort(external.reason), {
+					once: true,
+				})
+			}
+		}
+	}
+
+	return {
+		signal: requestController?.signal,
+		isLatest: () => !trigger || triggerGeneration.get(trigger) === generation,
+	}
+}
+
+let popstateReloadRegistered = false
+
+function registerPopstateReload(): void {
+	if (popstateReloadRegistered || typeof window === 'undefined') return
+	popstateReloadRegistered = true
+	window.addEventListener('popstate', () => {
+		location.assign(location.href)
+	})
+}
+
 function createFocusFallback(target: Element): () => void {
 	const doc = target.ownerDocument
 	const activeBeforeSwap = doc.activeElement
@@ -157,10 +247,14 @@ function createFocusFallback(target: Element): () => void {
 }
 
 export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}): HypermediaRuntime {
+	registerPopstateReload()
+	const reactivityEnabled = options.reactivity === true
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
 	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
 	const inFlightCounts = new WeakMap<HypermediaBooleanSignal, number>()
+	const triggerCancelControllers = new Map<Element, AbortController>()
+	const triggerGeneration = new Map<Element, number>()
 	let defaultStore = options.store
 	let swapLifecycleAdapter = options.swapLifecycleAdapter ?? null
 
@@ -249,6 +343,78 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		)
 	}
 
+	async function applySseElementPatches(
+		patches: readonly SseElementPatch[],
+		trigger: Element | undefined,
+		context: Document
+	): Promise<void> {
+		for (const patch of patches) {
+			const style = parseSwapStyle(patch.swap ?? '') ?? defaultSwap
+			const targetEl = resolveTarget(patch.target, context)
+			if (!targetEl) continue
+
+			const { primaryHtml, oobSwaps } = parseOobSwaps(patch.html)
+			const selectedHtml = applySelectFilter(primaryHtml, patch.select)
+			if (selectedHtml === null) continue
+
+			await runSwapLifecycle({
+				target: targetEl,
+				html: selectedHtml,
+				style,
+				trigger,
+				targetSelector: patch.target,
+			})
+
+			for (const oob of oobSwaps) {
+				const oobTarget = context.getElementById(oob.id)
+				if (!oobTarget) continue
+				await runSwapLifecycle({
+					target: oobTarget,
+					html: oob.html,
+					style: oob.style,
+					trigger,
+					targetSelector: `#${oob.id}`,
+				})
+			}
+		}
+	}
+
+	async function consumeSseResponse(
+		response: HypermediaResponse,
+		options: {
+			request: HypermediaRequest
+			trigger?: Element
+			context: Document
+			abortSignal?: AbortSignal
+			openWhenHidden: boolean
+		}
+	): Promise<void> {
+		const handlers = {
+			onElementsPatch: (patches: readonly SseElementPatch[]) =>
+				applySseElementPatches(patches, options.trigger, options.context),
+			onSignalsPatch: (patch: Record<string, unknown>) => {
+				if (reactivityEnabled) applySignalPatch(defaultStore, patch)
+			},
+		}
+
+		if (response.stream) {
+			const result = await readSseStream(
+				response.stream,
+				(event, data) => handleSseMessage(event, data, handlers, reactivityEnabled),
+				options.abortSignal
+			)
+			if (result !== 'error' || options.abortSignal?.aborted) return
+		}
+
+		await runSseSession({
+			open: () => openHypermediaRequest(options.request, options.abortSignal),
+			signal: options.abortSignal,
+			openWhenHidden: options.openWhenHidden,
+			reactivity: reactivityEnabled,
+			handlers,
+		})
+	}
+
 	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
 		const opts: ActionOptions = {
 			swap: actionOptions.swap ?? defaultSwap,
@@ -260,7 +426,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		const busySignal = resolveBusySignal(opts, trigger)
 		const autoDisable = shouldAutoDisable(request.method, opts)
 		const previousDisabled = trigger && 'disabled' in trigger ? Boolean((trigger as { disabled: boolean }).disabled) : undefined
-		syncNativeFallback(trigger, request.url)
+		syncNativeFallback(trigger, request.url, request.method)
 		const context = trigger?.ownerDocument ?? document
 		const requestTargetSelector = opts.target ?? defaultTarget
 		const requestTarget = resolveExplicitTarget(requestTargetSelector, context)
@@ -283,11 +449,24 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		setBusyForSignal(busySignal, true)
 		if (autoDisable) setDisabled(trigger, true)
 
+		const { signal: abortSignal, isLatest } = createRequestAbortControl(
+			trigger,
+			opts,
+			triggerCancelControllers,
+			triggerGeneration
+		)
+
 		let response: HypermediaResponse
 		try {
 			try {
-				response = await executeRequest(request)
+				response = await executeRequestWithRetry(request, {
+					retry: opts.retry ?? 'auto',
+					signal: abortSignal,
+				})
 			} catch (error) {
+				if (isAbortError(error) && isSupersededAbort(abortSignal)) {
+					return createSupersededResponse()
+				}
 				emitLifecycle(
 					'error',
 					{
@@ -300,6 +479,36 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					requestTarget
 				)
 				throw error
+			}
+
+			if (!isLatest()) {
+				return response
+			}
+
+			if (isJsonContentType(response.headers['content-type'])) {
+				if (reactivityEnabled) {
+					const patch = parseSignalPatch(response.html)
+					if (patch) applySignalPatch(defaultStore, patch)
+				}
+				return response
+			}
+
+			if (isEventStreamContentType(response.headers['content-type'])) {
+				setPhaseClass([...phasedElements], null)
+				emitLifecycle(
+					'response',
+					{ request, response, target: requestTargetSelector ?? 'sse', trigger },
+					trigger,
+					requestTarget
+				)
+				await consumeSseResponse(response, {
+					request,
+					trigger,
+					context,
+					abortSignal,
+					openWhenHidden: opts.openWhenHidden ?? true,
+				})
+				return response
 			}
 
 			const headerSwap = response.headers['aero-swap']
@@ -319,11 +528,14 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				explicitTargetEl
 			)
 
-			if (targetEl && effectiveSwap !== 'none') {
+			const { primaryHtml, oobSwaps } = parseOobSwaps(response.html)
+			const selectedHtml = applySelectFilter(primaryHtml, opts.select)
+
+			if (targetEl && effectiveSwap !== 'none' && selectedHtml !== null) {
 				setLifecyclePhase(effectiveElements, 'swapping')
 				await runSwapLifecycle({
 					target: targetEl,
-					html: response.html,
+					html: selectedHtml,
 					style: effectiveSwap,
 					trigger,
 					targetSelector: lifecycleTarget,
@@ -342,9 +554,42 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					explicitTargetEl
 				)
 				setPhaseClass([...phasedElements], null)
+
+				if (isFullPageRegionTarget(lifecycleTarget)) {
+					mergeHeadFromHtml(response.html)
+				}
 			}
 
-			applyPushUrl(response, opts, trigger)
+			for (const oob of oobSwaps) {
+				const oobTarget = context.getElementById(oob.id)
+				if (!oobTarget) continue
+				const oobSelector = `#${oob.id}`
+				const oobElements = uniqueElements(trigger, oobTarget)
+				setLifecyclePhase(oobElements, 'swapping')
+				await runSwapLifecycle({
+					target: oobTarget,
+					html: oob.html,
+					style: oob.style,
+					trigger,
+					targetSelector: oobSelector,
+				})
+				emitLifecycle(
+					'swap',
+					{ request, response, swapStyle: oob.style, target: oobSelector, trigger },
+					trigger,
+					oobTarget
+				)
+				setLifecyclePhase(oobElements, 'settling')
+				emitLifecycle(
+					'settle',
+					{ request, response, target: oobSelector, trigger },
+					trigger,
+					oobTarget
+				)
+				setPhaseClass([...phasedElements], null)
+			}
+
+			applyPushUrl(response, opts, trigger, request.method)
 
 			return response
 		} finally {

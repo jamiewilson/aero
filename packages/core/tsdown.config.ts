@@ -14,6 +14,7 @@ const entry = [
 	'src/utils/redirects.ts',
 	'src/runtime/index.ts',
 	'src/runtime/standalone.ts',
+	'src/runtime/fragment.ts',
 	'src/runtime/instance.ts',
 	'src/runtime/lifecycle-contract.ts',
 	'src/reactivity.ts',

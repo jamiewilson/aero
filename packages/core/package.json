@@ -37,6 +37,10 @@
 			"types": "./dist/runtime/standalone.d.mts",
 			"default": "./dist/runtime/standalone.mjs"
 		},
+		"./runtime/fragment": {
+			"types": "./dist/runtime/fragment.d.mts",
+			"default": "./dist/runtime/fragment.mjs"
+		},
 		"./runtime/instance": {
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"

@@ -25,6 +25,20 @@ describe('standalone runtime helpers', () => {
 		expect(html).toContain('1')
 	})
 
+	it('does not write standalone modules to a temp .mjs file', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-standalone-'))
+		const importer = path.join(dir, 'page.html')
+		const compiled = compileTemplate('<p>ok</p>', { root: dir, importer })
+		const before = fs
+			.readdirSync(os.tmpdir())
+			.filter(name => name.startsWith('aero-standalone-module-'))
+		await loadCompiledTemplateModule({ compiledSource: compiled, root: dir, importer })
+		const after = fs
+			.readdirSync(os.tmpdir())
+			.filter(name => name.startsWith('aero-standalone-module-'))
+		expect(after).toEqual(before)
+	})
+
 	it('one-shot renderTemplate supports imports, slots, loop metadata, and globals', async () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-standalone-'))
 		const componentPath = path.join(dir, 'child.html')
