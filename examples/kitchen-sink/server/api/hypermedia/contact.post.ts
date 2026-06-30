@@ -7,5 +7,5 @@ interface ContactBody {
 export default defineHandler(async event => {
 	const body = (await readBody(event)) as ContactBody
 	const message = body.message?.trim() || '(empty)'
-	return `<p class="secondary">Received: <code>${message}</code></p>`
+	return `Received: <code>${message}</code>`
 })

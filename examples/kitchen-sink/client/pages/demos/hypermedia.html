@@ -4,17 +4,19 @@
 
 <script is:state>
 	import { GET } from '@aero-js/core/hypermedia'
+	import { withTransition } from '@scripts/utils/withTransition'
 
 	let isSaving = false
 	let itemCount = 0
 
-	const loadFragment = async () => {
-		await GET('/api/hypermedia-demo', { target: '#hypermedia-result' })
-	}
-
 	const appendItem = async () => {
 		itemCount++
-		await GET(`/api/hypermedia/item?n=${itemCount}`, { target: '#item-list', swap: 'beforeend' })
+		withTransition(async () => {
+			await GET(`/api/hypermedia/item?n=${itemCount}`, {
+				target: '#item-list',
+				swap: 'beforeend',
+			})
+		})
 	}
 </script>
 
@@ -31,8 +33,12 @@
 		<section class="demo card v-stack">
 			<h2>Fragment load</h2>
 			<p class="secondary"><code>GET</code> with default <code>innerHTML</code> swap.</p>
-			<button on:click="{ loadFragment() }">Load fragment</button>
-			<div id="hypermedia-result" class="card secondary">Waiting…</div>
+			<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">
+				Load fragment
+			</button>
+			<div id="hypermedia-result" class="card">
+				<span class="secondary">Waiting…</span>
+			</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -51,7 +57,9 @@
 					Panel A (link)
 				</a>
 			</div>
-			<div id="panel-detail" class="card secondary">Select a panel…</div>
+			<div id="panel-detail" class="card">
+				<span class="secondary">Select a panel…</span>
+			</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -72,7 +80,9 @@
 					<button type="submit">Send</button>
 				</div>
 			</form>
-			<div id="contact-status" class="card secondary">No message yet.</div>
+			<div id="contact-status" class="card">
+				<span class="secondary">No message yet.</span>
+			</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -85,7 +95,9 @@
 				on:click="{ POST('/api/hypermedia/save', { target: '#save-status', state: isSaving }) }">
 				Save with loading state
 			</button>
-			<div id="save-status" class="card secondary">Not saved yet.</div>
+			<div id="save-status" class="card">
+				<span class="secondary">Not saved yet.</span>
+			</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -154,36 +166,34 @@
 </base-layout>
 
 <style>
-	@scope {
-		.page {
-			max-width: 40rem;
-			margin-inline: auto;
-			padding-block: 2rem;
-		}
+	.page {
+		max-width: 40rem;
+		margin-inline: auto;
+		padding-block: 2rem;
+	}
 
-		.demo h2 {
-			font-size: 1.1rem;
-			margin: 0;
-		}
+	.demo h2 {
+		font-size: 1.1rem;
+		margin: 0;
+	}
 
-		.demo p {
-			margin: 0;
-			font-size: smaller;
-		}
+	.demo p {
+		margin: 0;
+		font-size: smaller;
+	}
 
-		#item-list {
-			list-style: none;
-			padding: 0;
-			margin: 0;
-		}
+	#item-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
 
-		form .h-stack {
-			flex-wrap: wrap;
-		}
+	form .h-stack {
+		flex-wrap: wrap;
+	}
 
-		input[type='text'] {
-			flex: 1;
-			min-width: 12rem;
-		}
+	input[type='text'] {
+		flex: 1;
+		min-width: 12rem;
 	}
 </style>
