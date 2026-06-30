@@ -62,18 +62,14 @@ describe('compileInterpolation', () => {
 })
 
 describe('compileReactiveTextReadExpr', () => {
-	it('uses String() for expressions because text binds write textContent', () => {
-		expect(compileReactiveTextReadExpr('{ count }')).toBe('String( count )')
+	it('escapes expression segments only, preserving literal quotes', () => {
+		expect(compileReactiveTextReadExpr('{ count }')).toBe('escapeHtml(String( count ))')
 		expect(compileReactiveTextReadExpr('bind:count="{ count }"')).toBe(
-			'"bind:count=\\"" + String( count ) + "\\""'
+			'"bind:count=\\"" + escapeHtml(String( count )) + "\\""'
 		)
 		expect(compileReactiveTextReadExpr('{ `bind:count="{ ${count} }"` }')).toBe(
-			'String( `bind:count="{ ${count} }"` )'
+			'escapeHtml(String( `bind:count="{ ${count} }"` ))'
 		)
-	})
-
-	it('does not HTML-escape reactive read output', () => {
-		expect(compileReactiveTextReadExpr('{ count }')).not.toContain('escapeHtml')
 	})
 })
 

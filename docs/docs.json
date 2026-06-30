@@ -51,7 +51,8 @@
 							"guide/reactivity/bindings",
 							"guide/reactivity/structural",
 							"guide/reactivity/reactive-props",
-							"guide/reactivity/process"
+							"guide/reactivity/process",
+							"guide/reactivity/csp"
 						]
 					},
 					{

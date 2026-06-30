@@ -18,7 +18,9 @@ describe('quoted interpolation in code text', () => {
 		const code = compile(parse(html), mockOptions)
 
 		expect(code).toContain('data-aero-text=')
-		expect(code).toContain('String( count )')
+		expect(code).toContain('scope.count')
+		expect(code).toContain('escapeHtml(String( scope.count ))')
+		expect(code).not.toMatch(/return escapeHtml\(/)
 		expect(code).not.toContain('bind:count=&quot;{ count }&quot;')
 	})
 
@@ -30,7 +32,8 @@ describe('quoted interpolation in code text', () => {
 
 		const code = compile(parse(html), mockOptions)
 
-		expect(code).toContain('readExpr":"String( `bind:count=\\"{ ${count} }\\"` )"')
+		expect(code).toContain('read: __aeroTextRead_')
+		expect(code).toContain('function __aeroTextRead_')
 		expect(code).not.toContain('readExpr":"escapeHtml')
 	})
 })

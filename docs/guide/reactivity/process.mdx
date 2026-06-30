@@ -43,6 +43,16 @@ Insert HTML with `data-aero-*` attributes, then process:
 
 In runtime fragments, prefix signal paths with `$` to read from the page store (`$note`, `$showNote`).
 
+### Restricted grammar (default)
+
+`process()` is **eval-free**. Supported attribute values:
+
+- **Store refs:** `$note`, `$items`, `$auth.state`
+- **Structural:** `$status` or string literals (`loading`, `"error"`)
+- **Events:** hypermedia action grammar only (`GET('/path')`) — wired by hypermedia `process()` before reactivity runs
+
+Arbitrary JavaScript in attributes (e.g. `{ count + 1 }`) is rejected. Use `<script is:state>` for compiled bindings, or `unsafeProcessFragment()` from `@aero-js/reactivity` for trusted dynamic HTML only. See [CSP and eval-free reactivity](/guide/reactivity/csp).
+
 ### Structural fragments
 
 Runtime HTML can include structural directives:
@@ -62,10 +72,13 @@ Call `process(host)` after inserting the markup.
 Lower-level helpers live in `@aero-js/reactivity`:
 
 ```ts
-import { processFragment, createReactivityRuntime } from '@aero-js/reactivity'
+import { processFragment, unsafeProcessFragment, createReactivityRuntime } from '@aero-js/reactivity'
 
 const runtime = createReactivityRuntime({ initialState: { count: 0 } })
 processFragment({ element: host, store: runtime.store })
+
+// Trusted content only — requires unsafe-eval CSP:
+unsafeProcessFragment({ element: trustedHost, store: runtime.store })
 ```
 
-Most apps use the composed runtime from `@aero-js/core` rather than calling these directly.
+Most apps use the composed runtime from `@aero-js/core` rather than calling these directly. `unsafeProcessFragment` is not re-exported from `@aero-js/core`.

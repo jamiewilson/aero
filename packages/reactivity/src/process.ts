@@ -5,11 +5,14 @@ import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
 import { bindProperty } from './bindings/property'
 import { bindFormModel, type FormModelKind } from './bindings/model'
-import { bindReactiveIf, type ReactiveIfBranchSpec } from './structural/if'
-import { bindKeyedFor } from './structural/for'
-import { bindReactiveSwitch } from './structural/switch'
 import { createStateScope, type StateScope } from './state-scope'
-import { compileRuntimeRead, wireProcessStructuralBindings } from './process-structural'
+import {
+	compileRestrictedRuntimeRead,
+	compileUnsafeRuntimeRead,
+	type RuntimeReadCompiler,
+	wireProcessStructuralBindings,
+} from './process-structural'
+import { parseRestrictedStoreRef } from './restricted-runtime-read'
 
 export interface BindingHandler {
 	readonly name: string
@@ -23,7 +26,8 @@ function stripBraces(value: string): string {
 		: trimmed
 }
 
-function compileRuntimeHandler(expr: string, store: SignalStore): (this: Element, event: Event) => void {
+/** @internal Eval-based handler for unsafeProcessFragment only. */
+function compileUnsafeRuntimeHandler(expr: string, store: SignalStore): (this: Element, event: Event) => void {
 	const code = expr.replace(/\$(\w+(?:\.\w+)*)/g, (_, path: string) => {
 		return `store.get(${JSON.stringify(path)}).value`
 	})
@@ -33,6 +37,23 @@ function compileRuntimeHandler(expr: string, store: SignalStore): (this: Element
 		this: Element,
 		event: Event
 	) => void
+}
+
+const HYPERMEDIA_ACTION_RE =
+	/^(POST|GET|PUT|PATCH|DELETE)\s*\(\s*(['"])([^'"]*)\2\s*(?:,\s*\{[^}]*\})?\s*\)$/
+
+function isHypermediaActionExpression(expr: string): boolean {
+	return HYPERMEDIA_ACTION_RE.test(stripBraces(expr).trim())
+}
+
+function compileRestrictedRuntimeHandler(expr: string): (this: Element, event: Event) => void {
+	const inner = stripBraces(expr).trim()
+	if (isHypermediaActionExpression(inner)) {
+		return function () {}
+	}
+	throw new Error(
+		`[aero] Restricted process() event handlers must use hypermedia action grammar (e.g. GET('/path')). Got: ${JSON.stringify(expr)}`
+	)
 }
 
 function getEventName(attrName: string): string {
@@ -62,20 +83,27 @@ function isReadonlyFormAttr(attrName: string): boolean {
 	return attrName.includes('readonly') || attrName.endsWith('-readonly')
 }
 
-export function createDefaultHandlers(): BindingHandler[] {
+export function createDefaultHandlers(options?: {
+	readonly compileRead?: RuntimeReadCompiler
+	readonly compileHandler?: (expr: string, store: SignalStore) => (this: Element, event: Event) => void
+}): BindingHandler[] {
+	const compileRead = options?.compileRead ?? compileRestrictedRuntimeRead
+	const compileHandler =
+		options?.compileHandler ??
+		((expr: string, _store: SignalStore) => compileRestrictedRuntimeHandler(expr))
 	return [
 		{
 			name: 'text',
 			setup(el, { expression, store }) {
 				if (!expression) return
-				return bindText(el, compileRuntimeRead(expression, store))
+				return bindText(el, compileRead(expression, store))
 			},
 		},
 		{
 			name: 'html',
 			setup(el, { expression, store }) {
 				if (!expression) return
-				return bindHtml(el, compileRuntimeRead(expression, store))
+				return bindHtml(el, compileRead(expression, store))
 			},
 		},
 		{
@@ -83,7 +111,7 @@ export function createDefaultHandlers(): BindingHandler[] {
 			setup(el, { expression, store }) {
 				if (!expression || !(el instanceof HTMLElement)) return
 				const original = el.style.display
-				return bindShow(el, compileRuntimeRead(expression, store), original)
+				return bindShow(el, compileRead(expression, store), original)
 			},
 		},
 		{
@@ -102,7 +130,7 @@ export function createDefaultHandlers(): BindingHandler[] {
 				return bindEvent(
 					el,
 					getEventName(attr),
-					compileRuntimeHandler(params.expression, params.store),
+					compileHandler(params.expression, params.store),
 					getModifiers(attr)
 				)
 			},
@@ -121,9 +149,14 @@ export function createDefaultHandlers(): BindingHandler[] {
 					return
 				}
 				const expr = params.expression
-				const read = compileRuntimeRead(expr, params.store)
+				const path = parseRestrictedStoreRef(stripBraces(expr))
+				if (!path) {
+					throw new Error(
+						`[aero] Restricted process() model bindings require $store refs. Got: ${JSON.stringify(expr)}`
+					)
+				}
+				const read = compileRead(`$${path}`, params.store)
 				const write = (value: unknown) => {
-					const path = stripBraces(expr).replace(/^\$/, '')
 					;(params.store.get(path) as { value: unknown }).value = value
 				}
 				return bindFormModel({
@@ -140,7 +173,7 @@ export function createDefaultHandlers(): BindingHandler[] {
 			setup(el, params) {
 				const propName = (params as { propertyName?: string }).propertyName
 				if (!propName || !params.expression) return
-				return bindProperty(el, propName, compileRuntimeRead(params.expression, params.store))
+				return bindProperty(el, propName, compileRead(params.expression, params.store))
 			},
 		},
 	]
@@ -161,20 +194,27 @@ function isInsideStructuralProcessedSubtree(el: Element, element: ParentNode): b
 	return Boolean(el.closest(STRUCTURAL_PROCESSED_SELECTOR))
 }
 
-export function processFragment(options: ProcessOptions): Cleanup {
+function runProcessFragment(
+	options: ProcessOptions,
+	runtime: { compileRead: RuntimeReadCompiler; compileHandler: (expr: string, store: SignalStore) => (this: Element, event: Event) => void }
+): Cleanup {
 	const store = options.store ?? new SignalStore()
 	const scope = createStateScope({ store, bindings: [], functionSources: [] })
-	const handlers = options.handlers ?? createDefaultHandlers()
+	const handlers = options.handlers ?? createDefaultHandlers({
+		compileRead: runtime.compileRead,
+		compileHandler: runtime.compileHandler,
+	})
 	const cleanups: Cleanup[] = []
 
 	const processNested = (nested: ParentNode): Cleanup =>
-		processFragment({ element: nested, store, handlers })
+		runProcessFragment({ element: nested, store, handlers }, runtime)
 
 	cleanups.push(
 		...wireProcessStructuralBindings({
 			element: options.element,
 			store,
 			processNested,
+			compileRead: runtime.compileRead,
 		})
 	)
 
@@ -227,7 +267,7 @@ export function processFragment(options: ProcessOptions): Cleanup {
 				const cleanup = bindClassToggle(
 					el,
 					className,
-					compileRuntimeRead(expr || '$true', store)
+					runtime.compileRead(expr || '$true', store)
 				)
 				cleanups.push(cleanup)
 				processed = true
@@ -263,6 +303,25 @@ export function processFragment(options: ProcessOptions): Cleanup {
 	return () => {
 		for (const cleanup of cleanups) cleanup()
 	}
+}
+
+/** Eval-free runtime wiring for swapped HTML fragments. */
+export function processFragment(options: ProcessOptions): Cleanup {
+	return runProcessFragment(options, {
+		compileRead: compileRestrictedRuntimeRead,
+		compileHandler: (expr, _store) => compileRestrictedRuntimeHandler(expr),
+	})
+}
+
+/**
+ * Trusted content only. Requires `unsafe-eval` CSP. Not used by hypermedia swaps.
+ * Supports arbitrary `{ expr }` in runtime directive attributes.
+ */
+export function unsafeProcessFragment(options: ProcessOptions): Cleanup {
+	return runProcessFragment(options, {
+		compileRead: compileUnsafeRuntimeRead,
+		compileHandler: compileUnsafeRuntimeHandler,
+	})
 }
 
 export class AeroReactivity {

@@ -121,6 +121,30 @@ export function validateFeatureGates(
 			file,
 		})
 	}
+
+	const hasBusyAttr = /\b(?:data-aero-|aero-)?busy\b\s*=/i.test(parsed.template)
+	if (hasBusyAttr && (options.reactivity === false || options.hypermedia === false)) {
+		throw new CompileError({
+			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
+			file,
+		})
+	}
+
+	if (!parsed.stateScript) {
+		validateRuntimeOnlyReactiveAttrs(parsed.template, file)
+	}
+}
+
+const RUNTIME_BRACED_ATTR_RE =
+	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
+
+function validateRuntimeOnlyReactiveAttrs(template: string, file: string | undefined): void {
+	if (!RUNTIME_BRACED_ATTR_RE.test(template)) return
+	throw new CompileError({
+		message:
+			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.',
+		file,
+	})
 }
 
 function simpleIdentifier(expression: string): string | null {

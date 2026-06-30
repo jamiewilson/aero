@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import ts from 'typescript'
 import {
 	collectTemplateInterpolationSites,
 	buildTemplateInterpolationVirtualText,
@@ -100,5 +101,35 @@ function syncAuthLink(event) { event.preventDefault() }
 		const sites = collectTemplateInterpolationSites(html)
 		expect(sites).toHaveLength(1)
 		expect(sites[0]?.expression.trim()).toBe('bar')
+	})
+
+	it('typechecks hypermedia state option with owned boolean binding', () => {
+		const html = `<script is:state>let isSaving = false</script>
+<button busy="{ isSaving }" on:click="{ POST('/api/save', { target: '#save-status', state: isSaving }) }">Save</button>`
+		const sites = collectTemplateInterpolationSites(html)
+		const eventSite = sites.find(s => s.isEventHandler)
+		expect(eventSite).toBeDefined()
+
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, eventSite!, '')
+		expect(virtualText).toContain('state: __aeroSignal("isSaving")')
+		expect(virtualText).toContain('declare function __aeroSignal')
+
+		const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('expr.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['expr.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2322)
 	})
 })

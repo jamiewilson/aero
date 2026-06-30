@@ -3,11 +3,17 @@
 </script>
 
 <script is:state>
-	let n = 0
+	let count = 0
 	let status = 'loading'
 
+	const nextStatus: Record<string, string> = {
+		'loading': 'error',
+		'error': 'ready',
+		'ready': 'loading',
+	}
+
 	function cycleStatus() {
-		status = status === 'loading' ? 'error' : status === 'error' ? 'ready' : 'loading'
+		status = nextStatus[status]
 	}
 </script>
 
@@ -16,14 +22,14 @@
 		<p class="secondary">Reactive <code>if</code> / <code>else-if</code> / <code>else</code></p>
 
 		<div class="h-stack items-center">
-			<button on:click="{ n-- }">−</button>
-			<code>n = { n }</code>
-			<button on:click="{ n++ }">+</button>
+			<button on:click="{ count-- }">−</button>
+			<code>count = { count }</code>
+			<button on:click="{ count++ }">+</button>
 		</div>
 
 		<div class="card v-stack">
-			<p if="{ n > 0 }">Positive branch</p>
-			<p else-if="{ n < 0 }">Negative branch</p>
+			<p if="{ count > 0 }">Positive branch</p>
+			<p else-if="{ count < 0 }">Negative branch</p>
 			<p else>Zero branch</p>
 		</div>
 

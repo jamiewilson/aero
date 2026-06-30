@@ -22,6 +22,7 @@ describe('hypermedia client integration', () => {
 
 		const store = new SignalStore()
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: document.body,
 			store,
 			bindings: [],

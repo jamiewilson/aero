@@ -12,10 +12,13 @@ export interface KeyedForRowSpec {
 export interface BindKeyedForOptions {
 	readonly container: Element
 	readonly scope: StateScope
-	readonly itemsExpr: string
-	readonly keyExpr: string
+	readonly itemsExpr?: string
+	readonly keyExpr?: string
+	readonly items?: (scope: StateScope) => unknown[]
+	readonly key?: (scope: StateScope) => string | number
 	readonly binding: string
 	readonly bindingNames: readonly string[]
+	readonly destructureRow?: (item: unknown) => Record<string, unknown>
 	readonly renderRow: (rowScope: StateScope) => KeyedForRowSpec
 }
 
@@ -24,8 +27,12 @@ function toKey(value: unknown): string | number {
 	throw new Error(`[aero] Loop key must be a string or number, got ${typeof value}.`)
 }
 
-function evalItems(itemsExpr: string, scope: StateScope): unknown[] {
-	const value = compileScopeRead(itemsExpr, scope)()
+function evalItems(options: BindKeyedForOptions, scope: StateScope): unknown[] {
+	const value = options.items
+		? options.items(scope)
+		: options.itemsExpr
+			? compileScopeRead(options.itemsExpr, scope)()
+			: undefined
 	if (value == null) return []
 	if (!Array.isArray(value)) {
 		throw new Error('[aero] Reactive for loop iterable must be an array.')
@@ -33,22 +40,33 @@ function evalItems(itemsExpr: string, scope: StateScope): unknown[] {
 	return value
 }
 
-function evalKey(keyExpr: string, rowScope: StateScope): string | number {
-	return toKey(compileScopeRead(keyExpr, rowScope)())
+function evalKey(options: BindKeyedForOptions, rowScope: StateScope): string | number {
+	const value = options.key
+		? options.key(rowScope)
+		: options.keyExpr
+			? compileScopeRead(options.keyExpr, rowScope)()
+			: undefined
+	return toKey(value)
 }
 
 function createRowScope(
 	parentScope: StateScope,
-	binding: string,
-	bindingNames: readonly string[],
+	options: Pick<BindKeyedForOptions, 'binding' | 'bindingNames' | 'destructureRow'>,
 	item: unknown
 ): StateScope {
+	const { binding, bindingNames, destructureRow } = options
 	const rowScope = Object.create(parentScope) as StateScope
 	const trimmed = binding.trim()
 	if (/^[A-Za-z_$][\w$]*$/.test(trimmed)) {
 		rowScope[trimmed] = item
+	} else if (destructureRow) {
+		const values = destructureRow(item)
+		for (const name of bindingNames) {
+			rowScope[name] = values[name]
+		}
 	} else {
 		const pairs = bindingNames.map(name => `${JSON.stringify(name)}: ${name}`).join(', ')
+		// eslint-disable-next-line @typescript-eslint/no-implied-eval
 		const values = new Function('item', `const ${trimmed} = item; return ({ ${pairs} });`)(
 			item
 		) as Record<string, unknown>
@@ -60,19 +78,19 @@ function createRowScope(
 }
 
 export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
-	const { container, scope, itemsExpr, keyExpr, binding, bindingNames, renderRow } = options
+	const { container, scope, binding, bindingNames, renderRow } = options
 	const rows = new Map<string | number, { element: Element; cleanup: Cleanup }>()
 	const seenKeys = new Set<string | number>()
 
 	const reconcile = (): void => {
-		const items = evalItems(itemsExpr, scope)
+		const items = evalItems(options, scope)
 		const doc = container.ownerDocument ?? globalThis.document
 		seenKeys.clear()
 		const nextKeys: Array<string | number> = []
 
 		for (const item of items) {
-			const rowScope = createRowScope(scope, binding, bindingNames, item)
-			const key = evalKey(keyExpr, rowScope)
+			const rowScope = createRowScope(scope, { binding, bindingNames, destructureRow: options.destructureRow }, item)
+			const key = evalKey(options, rowScope)
 			if (seenKeys.has(key)) {
 				throw new Error(`[aero] Duplicate loop key: ${String(key)}`)
 			}

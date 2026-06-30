@@ -16,6 +16,22 @@ import type {
 import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { emitToJS } from './emit'
+import {
+	collectMountScopeNames,
+	HYPERMEDIA_ACTION_NAMES,
+	rewriteExprForScope,
+	rewriteFunctionSourceForScope,
+	rewriteStmtForScope,
+} from './scope-expr-codegen'
+import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
+
+function isSimpleForBinding(binding: string): boolean {
+	return /^[A-Za-z_$][\w$]*$/.test(binding.trim())
+}
+
+function needsForDestructureCodegen(binding: string, bindingNames: readonly string[]): boolean {
+	return bindingNames.length > 0 && !isSimpleForBinding(binding)
+}
 
 function stripStructuralBranchOutVars(nodes: IRNode[]): IRNode[] {
 	return nodes.map(node => stripStructuralBranchOutVar(node))
@@ -212,24 +228,149 @@ function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
 	return JSON.stringify(analysis.functionSources)
 }
 
+function emitCompiledMountFunctions(
+	analysis: StateScriptAnalysisResult,
+	binds: CollectedReactiveBinds,
+	stateImports: readonly BuildScriptImport[] = []
+): string {
+	const owned = analysis.bindings.filter(binding => !binding.derived)
+	const signalNames = new Set(owned.map(binding => binding.name))
+	const scopeNames = collectMountScopeNames(analysis, stateImports)
+	const scopeExpr = (expr: string) =>
+		rewriteExprForScope(expr, scopeNames, { qualifyAllFreeIdentifiers: true })
+	const scopeStmt = (stmt: string, actions = false) =>
+		rewriteStmtForScope(stmt, scopeNames, {
+			actionsNames: actions ? HYPERMEDIA_ACTION_NAMES : undefined,
+			qualifyAllFreeIdentifiers: true,
+		})
+	const lines: string[] = []
+
+	for (const binding of analysis.bindings.filter(binding => !binding.derived)) {
+		lines.push(
+			`function __aeroInit_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
+		)
+	}
+	for (const binding of analysis.bindings.filter(binding => binding.derived)) {
+		lines.push(
+			`function __aeroDerived_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
+		)
+	}
+	if (analysis.functionSources.length > 0) {
+		lines.push(
+			`function __aeroInstallScopeFunctions(scope) {\n${analysis.functionSources.map(source => rewriteFunctionSourceForScope(source, scopeNames)).join('\n')}\n}`
+		)
+	}
+	for (const bind of binds.textBinds) {
+		lines.push(
+			`function __aeroTextRead_${bind.bindId}(scope, escapeHtml) { return (${scopeExpr(bind.readExpr)}); }`
+		)
+	}
+	for (const bind of binds.showBinds) {
+		lines.push(`function __aeroShowRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`)
+	}
+	for (const bind of binds.htmlBinds) {
+		lines.push(`function __aeroHtmlRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`)
+	}
+	for (const bind of binds.classBinds) {
+		lines.push(
+			`function __aeroClassRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`
+		)
+	}
+	for (const bind of binds.propertyBinds) {
+		lines.push(
+			`function __aeroPropertyRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`
+		)
+	}
+	for (const bind of binds.modelBinds) {
+		lines.push(
+			`function __aeroModelRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`
+		)
+		lines.push(
+			`function __aeroModelWrite_${bind.bindId}(scope, $value) { ${scopeExpr(bind.writeExpr)} = $value; }`
+		)
+	}
+	for (const bind of binds.eventBinds) {
+		const body = rewriteHypermediaActionStateRefs(bind.handlerExpr, signalNames)
+		const stmt = body.trim().endsWith(';') ? body.trim() : `${body.trim()};`
+		lines.push(
+			`function __aeroEvent_${bind.bindId}(scope, actions, event, self) { ${scopeStmt(stmt, true)} }`
+		)
+	}
+	for (const bind of binds.ifBinds) {
+		for (let i = 0; i < bind.branches.length; i++) {
+			const branch = bind.branches[i]!
+			if (branch.conditionExpr == null) continue
+			lines.push(
+				`function __aeroIfCond_${bind.bindId}_${i}(scope) { return (${scopeExpr(branch.conditionExpr)}); }`
+			)
+		}
+	}
+	for (const bind of binds.forBinds) {
+		lines.push(`function __aeroForItems_${bind.bindId}(scope) { return (${scopeExpr(bind.itemsExpr)}); }`)
+		lines.push(`function __aeroForKey_${bind.bindId}(scope) { return (${scopeExpr(bind.keyExpr)}); }`)
+		if (needsForDestructureCodegen(bind.binding, bind.bindingNames)) {
+			const pairs = bind.bindingNames.map(name => `${name}: item.${name}`).join(', ')
+			lines.push(
+				`function __aeroForDestructure_${bind.bindId}(item) { const ${bind.binding} = item; return ({ ${pairs} }); }`
+			)
+		}
+	}
+	for (const bind of binds.switchBinds) {
+		lines.push(
+			`function __aeroSwitchExpr_${bind.bindId}(scope) { return (${scopeExpr(bind.expression)}); }`
+		)
+		for (let i = 0; i < bind.cases.length; i++) {
+			for (let j = 0; j < bind.cases[i]!.comparandExprs.length; j++) {
+				const expr = bind.cases[i]!.comparandExprs[j]!
+				lines.push(
+					`function __aeroSwitchCmp_${bind.bindId}_${i}_${j}(scope) { return (${scopeExpr(expr)}); }`
+				)
+			}
+		}
+	}
+	return lines.join('\n\n')
+}
+
+function serializeCompiledBindings(analysis: StateScriptAnalysisResult): string {
+	const owned = analysis.bindings.filter(binding => !binding.derived)
+	const derived = analysis.bindings.filter(binding => binding.derived)
+	const rows = [
+		...owned.map(binding => {
+			const extras = [
+				binding.reactiveProp ? 'reactiveProp: true' : '',
+				binding.propName && binding.propName !== binding.name
+					? `propName: ${JSON.stringify(binding.propName)}`
+					: '',
+				binding.reactiveProp && binding.required ? 'required: true' : '',
+				binding.bindable ? 'bindable: true' : '',
+			].filter(Boolean)
+			return `\t\t{ name: ${JSON.stringify(binding.name)}, derived: false, init: __aeroInit_${binding.name}, dependencies: ${JSON.stringify(binding.dependencies)}${extras.length ? `, ${extras.join(', ')}` : ''} }`
+		}),
+		...derived.map(binding => {
+			return `\t\t{ name: ${JSON.stringify(binding.name)}, derived: true, init: __aeroDerived_${binding.name}, dependencies: ${JSON.stringify(binding.dependencies)} }`
+		}),
+	]
+	return `[\n${rows.join(',\n')}\n\t]`
+}
+
 function serializeTextBinds(binds: IRReactiveTextBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-text="${bind.bindId}"]`,
-			readExpr: bind.readExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-text="${bind.bindId}"]`)}, read: __aeroTextRead_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 function serializeEventBinds(binds: IRReactiveEventBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-event="${bind.bindId}"]`,
-			event: bind.event,
-			modifiers: bind.modifiers,
-			handlerExpr: bind.handlerExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-event="${bind.bindId}"]`)}, event: ${JSON.stringify(bind.event)}, modifiers: ${JSON.stringify(bind.modifiers ?? [])}, handler: __aeroEvent_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 export function createStateMountImportLine(): string {
@@ -246,53 +387,92 @@ function serializeBusyBinds(binds: IRReactiveBusyBind[]): string {
 }
 
 function serializeShowBinds(binds: IRReactiveShowBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-show="${bind.bindId}"]`,
-			readExpr: bind.readExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-show="${bind.bindId}"]`)}, read: __aeroShowRead_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 function serializeHtmlBinds(binds: IRReactiveHtmlBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-html="${bind.bindId}"]`,
-			readExpr: bind.readExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-html="${bind.bindId}"]`)}, read: __aeroHtmlRead_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 function serializeClassBinds(binds: IRReactiveClassBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-class-${bind.className}="${bind.bindId}"]`,
-			className: bind.className,
-			readExpr: bind.readExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-class-${bind.className}="${bind.bindId}"]`)}, className: ${JSON.stringify(bind.className)}, read: __aeroClassRead_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 function serializePropertyBinds(binds: IRReactivePropertyBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-property-${bind.propertyName}="${bind.bindId}"]`,
-			propertyName: bind.propertyName,
-			readExpr: bind.readExpr,
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(
+			bind =>
+				`\t\t{ selector: ${JSON.stringify(`[data-aero-property-${bind.propertyName}="${bind.bindId}"]`)}, propertyName: ${JSON.stringify(bind.propertyName)}, read: __aeroPropertyRead_${bind.bindId} },`
+		)
+		.join('\n')}\n\t]`
 }
 
 function serializeModelBinds(binds: IRReactiveModelBind[]): string {
-	return JSON.stringify(
-		binds.map(bind => ({
-			selector: `[data-aero-model-${bind.modelKind}="${bind.bindId}"]`,
-			modelKind: bind.modelKind,
-			readExpr: bind.readExpr,
-			writeExpr: bind.writeExpr,
-			...(bind.readonly ? { readonly: true } : {}),
-		}))
-	)
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(bind => {
+			const readonly = bind.readonly ? ', readonly: true' : ''
+			return `\t\t{ selector: ${JSON.stringify(`[data-aero-model-${bind.modelKind}="${bind.bindId}"]`)}, modelKind: ${JSON.stringify(bind.modelKind)}, read: __aeroModelRead_${bind.bindId}, write: __aeroModelWrite_${bind.bindId}${readonly} },`
+		})
+		.join('\n')}\n\t]`
+}
+
+function collectAllCodegenBinds(binds: CollectedReactiveBinds): CollectedReactiveBinds {
+	const merged: CollectedReactiveBinds = {
+		textBinds: [...binds.textBinds],
+		eventBinds: [...binds.eventBinds],
+		busyBinds: [...binds.busyBinds],
+		componentBinds: [...binds.componentBinds],
+		showBinds: [...binds.showBinds],
+		htmlBinds: [...binds.htmlBinds],
+		classBinds: [...binds.classBinds],
+		propertyBinds: [...binds.propertyBinds],
+		modelBinds: [...binds.modelBinds],
+		ifBinds: [...binds.ifBinds],
+		forBinds: [...binds.forBinds],
+		switchBinds: [...binds.switchBinds],
+	}
+
+	const appendBranch = (branch: BranchReactiveBinds) => {
+		merged.textBinds.push(...branch.textBinds)
+		merged.eventBinds.push(...branch.eventBinds)
+		merged.busyBinds.push(...branch.busyBinds)
+		merged.showBinds.push(...branch.showBinds)
+		merged.htmlBinds.push(...branch.htmlBinds)
+		merged.classBinds.push(...branch.classBinds)
+		merged.propertyBinds.push(...branch.propertyBinds)
+		merged.modelBinds.push(...branch.modelBinds)
+	}
+
+	for (const ifBind of binds.ifBinds) {
+		for (const branch of ifBind.branches) appendBranch(collectBranchBinds(branch.body))
+	}
+	for (const forBind of binds.forBinds) appendBranch(collectBranchBinds(forBind.body))
+	for (const switchBind of binds.switchBinds) {
+		for (const branch of switchBind.cases) appendBranch(collectBranchBinds(branch.body))
+		if (switchBind.defaultBody) appendBranch(collectBranchBinds(switchBind.defaultBody))
+	}
+
+	return merged
 }
 
 function serializeBranchMounts(branch: BranchReactiveBinds): string {
@@ -317,7 +497,7 @@ function serializeIfBinds(ifBinds: IRReactiveIfBind[]): string {
 				.map((branch, index) => {
 					const branchMounts = collectBranchBinds(branch.body)
 					return `\t\t\t{
-				conditionExpr: ${branch.conditionExpr == null ? 'null' : JSON.stringify(branch.conditionExpr)},
+				condition: ${branch.conditionExpr == null ? 'null' : `__aeroIfCond_${ifBind.bindId}_${index}`},
 				render: __aeroIfBranch_${ifBind.bindId}_${index},
 				mounts: ${serializeBranchMounts(branchMounts)}
 			}`
@@ -342,8 +522,8 @@ function serializeForBinds(forBinds: IRReactiveForBind[]): string {
 			selector: ${JSON.stringify(`[data-aero-for="${forBind.bindId}"]`)},
 			binding: ${JSON.stringify(forBind.binding)},
 			bindingNames: ${JSON.stringify(forBind.bindingNames)},
-			itemsExpr: ${JSON.stringify(forBind.itemsExpr)},
-			keyExpr: ${JSON.stringify(forBind.keyExpr)},
+			items: __aeroForItems_${forBind.bindId},
+			key: __aeroForKey_${forBind.bindId},${needsForDestructureCodegen(forBind.binding, forBind.bindingNames) ? `\n\t\t\tdestructureRow: __aeroForDestructure_${forBind.bindId},` : ''}
 			renderRow: __aeroForRow_${forBind.bindId},
 			rowMounts: ${serializeBranchMounts(rowMounts)}
 		}`
@@ -358,8 +538,11 @@ function serializeSwitchBinds(switchBinds: IRReactiveSwitchBind[]): string {
 			const cases = switchBind.cases
 				.map((branch, index) => {
 					const branchMounts = collectBranchBinds(branch.body)
+					const comparands = branch.comparandExprs
+						.map((_, j) => `__aeroSwitchCmp_${switchBind.bindId}_${index}_${j}`)
+						.join(', ')
 					return `\t\t\t{
-				comparandExprs: ${JSON.stringify(branch.comparandExprs)},
+				comparands: [${comparands}],
 				render: __aeroSwitchBranch_${switchBind.bindId}_${index},
 				mounts: ${serializeBranchMounts(branchMounts)}
 			}`
@@ -378,7 +561,7 @@ function serializeSwitchBinds(switchBinds: IRReactiveSwitchBind[]): string {
 					: ''
 			return `\t\t{
 			selector: ${JSON.stringify(`[data-aero-switch="${switchBind.bindId}"]`)},
-			expression: ${JSON.stringify(switchBind.expression)},
+			discriminant: __aeroSwitchExpr_${switchBind.bindId},
 			cases: [
 ${cases}
 			]${defaultBranch}
@@ -469,7 +652,7 @@ export function emitMountStateBindingsFunction(
 	stateImports: readonly BuildScriptImport[] = [],
 	actionFunctions?: string,
 	defaultImportBindings: ReadonlySet<string> = new Set()
-): string {
+): { preamble: string; mountExport: string } | '' {
 	if (!hasAnyBinds(binds)) return ''
 
 	const scopeConstants = serializeScopeConstants(stateImports)
@@ -478,18 +661,25 @@ export function emitMountStateBindingsFunction(
 		? '\n\t\thypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined,'
 		: ''
 	const branchFunctions = emitStructuralBranchFunctions(binds)
-	const branchFunctionsBlock = branchFunctions ? `${branchFunctions}\n\n` : ''
+	const compiledFunctions = emitCompiledMountFunctions(
+		analysis,
+		collectAllCodegenBinds(binds),
+		stateImports
+	)
+	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
+	const installScopeLine =
+		analysis.functionSources.length > 0
+			? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,'
+			: ''
 
-	return `${branchFunctionsBlock}
-export function mountStateBindings(root, Aero, opts = {}) {
+	const mountExport = `export function mountStateBindings(root, Aero, opts = {}) {
 	const runtime = Aero.getReactivityRuntime?.()
 	if (!runtime) return () => {}
 	return __aeroMountStateBindings({
 		root,
 		store: opts.store ?? runtime.store,
 		reactiveProps: opts.reactiveProps ?? {},
-		bindings: ${serializeBindings(analysis)},
-		functionSources: ${serializeFunctionSources(analysis)},
+		bindings: ${serializeCompiledBindings(analysis)},${installScopeLine}
 		textBinds: ${serializeTextBinds(binds.textBinds)},
 		eventBinds: ${serializeEventBinds(binds.eventBinds)},
 		busyBinds: ${serializeBusyBinds(binds.busyBinds)},
@@ -506,6 +696,8 @@ export function mountStateBindings(root, Aero, opts = {}) {
 		Aero,
 	})
 }`.trim()
+
+	return { preamble, mountExport }
 }
 
 export function createHypermediaImportLine(): string {

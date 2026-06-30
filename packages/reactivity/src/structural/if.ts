@@ -4,7 +4,8 @@ import { evalScopeCondition } from '../scope-eval'
 import type { StateScope } from '../state-scope'
 
 export interface ReactiveIfBranchSpec {
-	readonly conditionExpr: string | null
+	readonly conditionExpr?: string | null
+	readonly condition?: (scope: StateScope) => boolean
 	readonly renderHtml: () => string
 	readonly mountBranch: (branchRoot: ParentNode) => Cleanup
 }
@@ -21,8 +22,12 @@ function findActiveBranchIndex(
 ): number {
 	for (let i = 0; i < branches.length; i++) {
 		const branch = branches[i]!
-		if (branch.conditionExpr == null) return i
-		if (evalScopeCondition(branch.conditionExpr, scope)) return i
+		if (branch.condition == null && branch.conditionExpr == null) return i
+		if (branch.condition) {
+			if (branch.condition(scope)) return i
+			continue
+		}
+		if (branch.conditionExpr != null && evalScopeCondition(branch.conditionExpr, scope)) return i
 	}
 	return branches.length - 1
 }

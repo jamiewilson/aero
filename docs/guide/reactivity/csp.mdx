@@ -1,0 +1,74 @@
+---
+title: 'CSP and eval-free reactivity'
+description: 'How Aero stays eval-free on compiled mounts and restricted process(), and when unsafe-eval is required.'
+---
+
+## The problem
+
+Strict Content Security Policy blocks `eval`, `new Function`, and inline script. Frameworks that compile template expressions at runtime in the browser need `script-src 'unsafe-eval'` — a weaker policy than many teams want for production.
+
+## What this looks like without Aero
+
+Hand-written reactive fragments often use runtime expression eval:
+
+```js
+const fn = new Function('state', `return ${userSuppliedExpr}`)
+```
+
+That pattern is convenient for dynamic HTML but incompatible with `script-src 'self'` alone.
+
+## How Aero helps
+
+Aero splits CSP posture by path:
+
+| Path | Eval? | Typical CSP |
+| --- | --- | --- |
+| **Compiled** `<script is:state>` mounts | No — compiler emits real functions | `script-src 'self'` |
+| **Restricted** `process()` on swapped fragments | No — `$store` refs + hypermedia action grammar only | `script-src 'self'` |
+| **`unsafeProcessFragment()`** (opt-in) | Yes — arbitrary expressions | Requires `unsafe-eval` |
+
+There is **no** `strictCsp` config flag. Eval-free is the only shipped mode for compiled templates and default `process()`.
+
+### Recommended header
+
+Deploy your Aero client bundle with a strict baseline:
+
+```
+Content-Security-Policy: script-src 'self'; object-src 'none'; base-uri 'self'
+```
+
+CSP headers are deploy configuration, not `aero.config`.
+
+### Restricted `process()`
+
+After hypermedia swaps (or manual `innerHTML`), `process()` wires runtime fragments using:
+
+- `$path` store references (`$note`, `$items`)
+- Structural directives with `$path` or string literal conditions
+- Hypermedia `data-aero-on-*` actions (`GET('/path')`, etc.) — handled by the hypermedia runtime before reactivity `process()`
+
+Arbitrary `{ expr }` in `data-aero-*` attributes is **rejected** at runtime and **errored** at compile time in app `.html` without `<script is:state>`.
+
+### `unsafeProcessFragment()` — trusted content only
+
+For rare cases where you control the HTML and accept `unsafe-eval`:
+
+```ts
+import { unsafeProcessFragment } from '@aero-js/reactivity'
+
+unsafeProcessFragment({ element: host, store })
+```
+
+- Explicit per-call API (similar to React `dangerouslySetInnerHTML`)
+- **Not** re-exported from `@aero-js/core`
+- **Never** called by the hypermedia swap pipeline
+- **Never** use on untrusted HTML (user content, CMS HTML, search results)
+
+## Compile-time enforcement
+
+`aero check` and the VS Code extension error when a template has braced `data-aero-*` expression attributes but no `<script is:state>`. Use a compiled template or `unsafeProcessFragment()` from trusted JavaScript.
+
+## See also
+
+- [Process runtime fragments](/guide/reactivity/process) — restricted grammar and manual `process()`
+- [Using hypermedia with reactivity](/guide/hypermedia/using-with-reactivity) — automatic processing after swaps

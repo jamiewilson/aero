@@ -92,7 +92,7 @@ describe('reactive structural codegen', () => {
 		const topLevelTextBinds = mountBlock.match(/textBinds:\s*(\[[^\]]*\])/)?.[1]
 		expect(topLevelTextBinds).toBe('[]')
 		expect(code).toContain('rowMounts:')
-		expect(code).toMatch(/rowMounts:[\s\S]*item\.name/)
+		expect(code).toContain('scope.item.name')
 		expect(code).toMatch(/function __aeroForRow_0[\s\S]*data-aero-text=\\"0\\"/)
 	})
 
@@ -109,6 +109,8 @@ describe('reactive structural codegen', () => {
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain('data-aero-switch="0"')
 		expect(code).toContain('switchBinds:')
+		expect(code).toContain('discriminant: __aeroSwitchExpr_0')
+		expect(code).not.toMatch(/switchBinds:[\s\S]*expression: __aeroSwitchExpr_0/)
 		expect(code).toContain('__aeroSwitchBranch_0_0')
 		expect(code).toContain('__aeroSwitchDefault_0')
 	})

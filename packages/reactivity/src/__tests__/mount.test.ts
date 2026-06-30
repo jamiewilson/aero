@@ -24,8 +24,15 @@ describe('bindText', () => {
 
 	it('renders literal quotes instead of HTML entities', () => {
 		const target = { textContent: '' } as unknown as Node
-		const cleanup = bindText(target, () => `bind:count="{ 5 }"`)
-		expect(target.textContent).toBe('bind:count="{ 5 }"')
+		const escapeHtml = (s: unknown) =>
+			String(s)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+		const cleanup = bindText(target, () => `bind:count="${escapeHtml(String(5))}"`)
+		expect(target.textContent).toBe('bind:count="5"')
 		expect(target.textContent).not.toContain('&quot;')
 		cleanup()
 	})
@@ -72,6 +79,7 @@ describe('mountStateBindings', () => {
 
 		const store = new SignalStore()
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: target,
 			store,
 			bindings: [],
@@ -115,6 +123,7 @@ describe('mountStateBindings', () => {
 		} as unknown as Element
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: target,
 			store,
 			scope: rowScope,
@@ -143,6 +152,7 @@ describe('mountStateBindings', () => {
 		const childStore = new SignalStore()
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: childStore,
 			reactiveProps: { count: parentCount },
@@ -185,6 +195,7 @@ describe('mountStateBindings', () => {
 		const aero = {}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -234,6 +245,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -272,6 +284,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'title', derived: false, initExpr: "'Hello'", dependencies: [] }],
@@ -313,6 +326,7 @@ describe('mountStateBindings', () => {
 		const childMount = vi.fn(() => () => {})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: parentStore,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -360,6 +374,7 @@ describe('mountStateBindings', () => {
 		const childComponent = { mountStateBindings: childMount }
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [],
@@ -401,6 +416,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: parentStore,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -470,6 +486,7 @@ describe('mountStateBindings', () => {
 		const childComponent = { mountStateBindings: childMount }
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -535,6 +552,7 @@ describe('mountStateBindings', () => {
 		const childMount = vi.fn(() => () => {})
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -594,6 +612,7 @@ describe('mountStateBindings', () => {
 		const childModule = { default: vi.fn(), mountStateBindings: childMount }
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '2', dependencies: [] }],
@@ -651,6 +670,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: componentRoot,
 			store,
 			reactiveProps: { count: store.get('count') },
@@ -700,6 +720,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root: componentRoot,
 				store: new SignalStore(),
 				bindings: [],
@@ -735,6 +756,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root: componentRoot,
 				store: new SignalStore(),
 				bindings: [],
@@ -764,6 +786,7 @@ describe('mountStateBindings', () => {
 		const childStore = new SignalStore()
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: childStore,
 			reactiveProps: {},
@@ -881,6 +904,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -929,6 +953,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 0 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -961,6 +986,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [
@@ -992,6 +1018,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root,
 				store,
 				bindings: [
@@ -1062,6 +1089,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -1108,6 +1136,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'isSaving', derived: false, initExpr: 'false', dependencies: [] }],
@@ -1140,6 +1169,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root,
 				store,
 				bindings: [{ name: 'isSaving', derived: false, initExpr: '"no"', dependencies: [] }],
@@ -1185,6 +1215,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'isSaving', derived: false, initExpr: 'false', dependencies: [] }],
@@ -1209,3 +1240,72 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 })
+
+describe('mountStateBindings switch', () => {
+	it('toggles branches when compiled discriminant is wired', () => {
+		const store = new SignalStore()
+		store.merge({ status: 'loading' })
+		const anchor = { innerHTML: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-switch="0"]') return anchor
+				return null
+			},
+		} as unknown as ParentNode
+
+		const discriminant = (scope: ReturnType<typeof createStateScope>) => scope.status
+		const cmpLoading = () => 'loading'
+		const cmpError = () => 'error'
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'status', derived: false, init: () => 'loading', dependencies: [] }],
+			textBinds: [],
+			eventBinds: [],
+			switchBinds: [
+				{
+					selector: '[data-aero-switch="0"]',
+					discriminant,
+					cases: [
+						{
+							comparands: [cmpLoading],
+							render: () => '<p id="loading">Loading branch</p>',
+							mounts: emptyMounts(),
+						},
+						{
+							comparands: [cmpError],
+							render: () => '<p id="error">Error branch</p>',
+							mounts: emptyMounts(),
+						},
+					],
+					default: {
+						render: () => '<p id="ready">Ready branch</p>',
+						mounts: emptyMounts(),
+					},
+				},
+			],
+		})
+
+		expect(anchor.innerHTML).toContain('Loading branch')
+		;(store.get('status') as { value: string }).value = 'error'
+		expect(anchor.innerHTML).toContain('Error branch')
+		;(store.get('status') as { value: string }).value = 'ready'
+		expect(anchor.innerHTML).toContain('Ready branch')
+		cleanup()
+	})
+})
+
+function emptyMounts() {
+	return {
+		textBinds: [],
+		eventBinds: [],
+		busyBinds: [],
+		showBinds: [],
+		htmlBinds: [],
+		classBinds: [],
+		propertyBinds: [],
+		modelBinds: [],
+		componentBinds: [],
+	}
+}

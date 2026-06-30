@@ -4,7 +4,8 @@ import { SignalStore } from './store'
 export interface StateBindingSpec {
 	readonly name: string
 	readonly derived: boolean
-	readonly initExpr: string
+	readonly initExpr?: string
+	readonly init?: (scope: StateScope) => unknown
 	readonly dependencies: readonly string[]
 	readonly reactiveProp?: boolean
 	readonly propName?: string
@@ -15,7 +16,10 @@ export interface StateBindingSpec {
 export interface StateScopeOptions {
 	readonly store: SignalStore
 	readonly bindings: readonly StateBindingSpec[]
-	readonly functionSources: readonly string[]
+	readonly functionSources?: readonly string[]
+	readonly installScopeFunctions?: (scope: StateScope) => void
+	/** @internal Test-only escape hatch for initExpr/functionSources strings. */
+	readonly allowLegacyRuntimeCompile?: boolean
 	readonly reactiveProps?: Record<string, { value: unknown }>
 	/** Module-scope values from `<script is:state>` imports, merged into eval scope. */
 	readonly scopeConstants?: Record<string, unknown>
@@ -50,8 +54,25 @@ function topoSortDerived(bindings: readonly StateBindingSpec[]): StateBindingSpe
 	return sorted
 }
 
-function evalInit(initExpr: string, scope: StateScope): unknown {
-	return new Function('scope', `with (scope) { return (${initExpr}); }`)(scope)
+function evalInit(binding: StateBindingSpec, scope: StateScope, allowLegacyRuntimeCompile: boolean): unknown {
+	if (binding.init) return binding.init(scope)
+	if (allowLegacyRuntimeCompile && binding.initExpr) {
+		// eslint-disable-next-line @typescript-eslint/no-implied-eval
+		return new Function('scope', `with (scope) { return (${binding.initExpr}); }`)(scope)
+	}
+	if (!binding.initExpr) {
+		throw new Error(`[aero] Missing state initializer for ${binding.name}.`)
+	}
+	throw new Error(
+		`[aero] Runtime state initialization requires compiled init functions (CSP-safe path). Binding: ${binding.name}`
+	)
+}
+
+function wrapFunctionSource(source: string): string {
+	const match = /^function\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*)\}\s*$/.exec(source.trim())
+	if (!match) return source
+	const [, name, params, body] = match
+	return `scope.${name} = function(${params}) { with (scope) { ${body} } }`
 }
 
 function defineScopeAccessor(
@@ -68,18 +89,21 @@ function defineScopeAccessor(
 	})
 }
 
-function wrapFunctionSource(source: string): string {
-	const match = /^function\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*)\}\s*$/.exec(source.trim())
-	if (!match) return source
-	const [, name, params, body] = match
-	return `scope.${name} = function(${params}) { with (scope) { ${body} } }`
-}
 
 /**
  * Build a plain object scope backed by store signals/computeds for compiled state handlers.
  */
 export function createStateScope(options: StateScopeOptions): StateScope {
-	const { store, bindings, functionSources, actionFunctions, scopeConstants, hypermediaScopeActions } = options
+	const {
+		store,
+		bindings,
+		functionSources,
+		installScopeFunctions,
+		actionFunctions,
+		scopeConstants,
+		hypermediaScopeActions,
+		allowLegacyRuntimeCompile = false,
+	} = options
 	const reactiveProps = options.reactiveProps ?? {}
 	const scope: StateScope = { ...actionFunctions, ...scopeConstants, ...hypermediaScopeActions }
 
@@ -91,7 +115,7 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		} else if (binding.reactiveProp && binding.required) {
 			throw new Error(`[aero] Required reactive prop was not provided: ${binding.name}`)
 		} else if (!store.has(binding.name)) {
-			store.signal(binding.name, evalInit(binding.initExpr, scope))
+			store.signal(binding.name, evalInit(binding, scope, allowLegacyRuntimeCompile))
 		}
 		const write = binding.reactiveProp && !binding.bindable
 			? () => {
@@ -119,12 +143,21 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 				`[aero] Derived state path ${JSON.stringify(binding.name)} already registered as signal.`
 			)
 		}
-		store.computed(binding.name, () => evalInit(binding.initExpr, scope))
+		store.computed(binding.name, () => evalInit(binding, scope, allowLegacyRuntimeCompile))
 		defineScopeAccessor(scope, binding.name, () => store.get(binding.name).value)
 	}
 
-	if (functionSources.length > 0) {
-		new Function('scope', functionSources.map(wrapFunctionSource).join('\n'))(scope)
+	if (installScopeFunctions) {
+		installScopeFunctions(scope)
+	} else if (functionSources && functionSources.length > 0) {
+		if (allowLegacyRuntimeCompile) {
+			// eslint-disable-next-line @typescript-eslint/no-implied-eval
+			new Function('scope', functionSources.map(wrapFunctionSource).join('\n'))(scope)
+		} else {
+			throw new Error(
+				'[aero] Runtime function installation requires compiled scope installers (CSP-safe path).'
+			)
+		}
 	}
 
 	return scope

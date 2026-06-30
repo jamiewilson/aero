@@ -25,6 +25,7 @@ import {
 	formatPropsInjectedAmbientDecls,
 	EVENT_HANDLER_SCOPE_DECL,
 	annotateStateScriptForEditorTypecheck,
+	rewriteHypermediaActionStateRefs,
 	type BuildBindingProperties,
 } from '@aero-js/compiler'
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
@@ -714,6 +715,7 @@ export class AeroVirtualCode implements VirtualCode {
 			typeDeclarationTexts: buildTypeDeclTexts,
 			bindingNames: buildBindingNames,
 			writableStateBindingNames,
+			ownedStateBindingNames,
 			readonlyReactivePropNames,
 		} = buildTemplateEditorAmbient(sourceText)
 		this.buildBindingProperties = collectBuildBindingProperties(buildScriptBodies)
@@ -738,6 +740,7 @@ export class AeroVirtualCode implements VirtualCode {
 				buildBindingNames,
 				buildTypeDeclTexts,
 				writableStateBindingNames,
+				ownedStateBindingNames,
 				readonlyReactivePropNames,
 				cachedBindingTypes
 			),
@@ -756,6 +759,7 @@ export class AeroVirtualCode implements VirtualCode {
 		buildBindingNames: ReadonlySet<string>,
 		buildTypeDeclTexts: readonly string[],
 		writableStateBindingNames: ReadonlySet<string>,
+		ownedStateBindingNames: ReadonlySet<string>,
 		readonlyReactivePropNames: ReadonlySet<string>,
 		cachedBindingTypes?: ReadonlyMap<string, string>
 	): VirtualCode[] {
@@ -811,11 +815,12 @@ export class AeroVirtualCode implements VirtualCode {
 			const head = BUILD_SCRIPT_PREAMBLE + binderDecl + slotTypedBlock
 
 			if (options?.isEventHandler) {
+				const handlerExpr = rewriteHypermediaActionStateRefs(expression, ownedStateBindingNames)
 				const virtualText =
 					head +
 					EVENT_HANDLER_SCOPE_DECL +
-					expression +
-					(expression.trimEnd().endsWith(';') ? '' : ';')
+					handlerExpr +
+					(handlerExpr.trimEnd().endsWith(';') ? '' : ';')
 				const exprOffsetInVirtual = head.length + EVENT_HANDLER_SCOPE_DECL.length
 				return {
 					id: `expr_${exprIdx++}`,
