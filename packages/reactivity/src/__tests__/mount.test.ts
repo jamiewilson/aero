@@ -24,8 +24,15 @@ describe('bindText', () => {
 
 	it('renders literal quotes instead of HTML entities', () => {
 		const target = { textContent: '' } as unknown as Node
-		const cleanup = bindText(target, () => `bind:count="{ 5 }"`)
-		expect(target.textContent).toBe('bind:count="{ 5 }"')
+		const escapeHtml = (s: unknown) =>
+			String(s)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+		const cleanup = bindText(target, () => `bind:count="${escapeHtml(String(5))}"`)
+		expect(target.textContent).toBe('bind:count="5"')
 		expect(target.textContent).not.toContain('&quot;')
 		cleanup()
 	})
@@ -1233,3 +1240,72 @@ describe('mountStateBindings', () => {
 		cleanup()
 	})
 })
+
+describe('mountStateBindings switch', () => {
+	it('toggles branches when compiled discriminant is wired', () => {
+		const store = new SignalStore()
+		store.merge({ status: 'loading' })
+		const anchor = { innerHTML: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				if (selector === '[data-aero-switch="0"]') return anchor
+				return null
+			},
+		} as unknown as ParentNode
+
+		const discriminant = (scope: ReturnType<typeof createStateScope>) => scope.status
+		const cmpLoading = () => 'loading'
+		const cmpError = () => 'error'
+
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [{ name: 'status', derived: false, init: () => 'loading', dependencies: [] }],
+			textBinds: [],
+			eventBinds: [],
+			switchBinds: [
+				{
+					selector: '[data-aero-switch="0"]',
+					discriminant,
+					cases: [
+						{
+							comparands: [cmpLoading],
+							render: () => '<p id="loading">Loading branch</p>',
+							mounts: emptyMounts(),
+						},
+						{
+							comparands: [cmpError],
+							render: () => '<p id="error">Error branch</p>',
+							mounts: emptyMounts(),
+						},
+					],
+					default: {
+						render: () => '<p id="ready">Ready branch</p>',
+						mounts: emptyMounts(),
+					},
+				},
+			],
+		})
+
+		expect(anchor.innerHTML).toContain('Loading branch')
+		;(store.get('status') as { value: string }).value = 'error'
+		expect(anchor.innerHTML).toContain('Error branch')
+		;(store.get('status') as { value: string }).value = 'ready'
+		expect(anchor.innerHTML).toContain('Ready branch')
+		cleanup()
+	})
+})
+
+function emptyMounts() {
+	return {
+		textBinds: [],
+		eventBinds: [],
+		busyBinds: [],
+		showBinds: [],
+		htmlBinds: [],
+		classBinds: [],
+		propertyBinds: [],
+		modelBinds: [],
+		componentBinds: [],
+	}
+}

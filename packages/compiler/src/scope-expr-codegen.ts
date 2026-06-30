@@ -81,13 +81,14 @@ function nodeRange(node: EstNode): [number, number] | null {
 
 function walkAst(
 	node: unknown,
-	visit: (node: EstNode, parent?: EstNode, key?: string) => void,
+	visit: (node: EstNode, parent?: EstNode, key?: string) => void | 'skip-children',
 	parent?: EstNode,
 	key?: string
 ): void {
 	if (!node || typeof node !== 'object') return
 	const current = node as EstNode
-	visit(current, parent, key)
+	const result = visit(current, parent, key)
+	if (result === 'skip-children') return
 	for (const [childKey, value] of Object.entries(current)) {
 		if (childKey === 'parent' || childKey === 'range') continue
 		if (!value) continue
@@ -114,10 +115,19 @@ function isMemberPropertyIdentifier(node: EstNode, parent?: EstNode): boolean {
 	)
 }
 
+function isObjectLiteralKeyIdentifier(node: EstNode, parent?: EstNode): boolean {
+	return (
+		parent?.type === 'Property' &&
+		parent.key === node &&
+		parent.computed !== true &&
+		parent.shorthand !== true
+	)
+}
+
 function isBindingIdentifier(node: EstNode, parent?: EstNode, key?: string): boolean {
 	if (node.type !== 'Identifier') return false
 	if (isMemberPropertyIdentifier(node, parent)) return false
-	if (parent?.type === 'Property' && parent.key === node && parent.shorthand !== true) return false
+	if (isObjectLiteralKeyIdentifier(node, parent)) return false
 	if (parent?.type === 'LabeledStatement' && parent.label === node) return false
 	if (parent?.type === 'VariableDeclarator' && parent.id === node) return true
 	if (
@@ -167,7 +177,7 @@ function collectRewrites(
 		shadowStack.pop()
 	}
 
-	function visit(node: EstNode, parent?: EstNode, key?: string): void {
+	function visit(node: EstNode, parent?: EstNode, key?: string): void | 'skip-children' {
 		if (
 			node.type === 'FunctionDeclaration' ||
 			node.type === 'FunctionExpression' ||
@@ -181,16 +191,17 @@ function collectRewrites(
 				shadowStack.push(layer)
 				walkAst(node.body, visit)
 				shadowStack.pop()
-				return
+				return 'skip-children'
 			}
 			visitFunctionLike(node)
-			return
+			return 'skip-children'
 		}
 
 		if (node.type === 'Identifier' && typeof node.name === 'string') {
 			const name = node.name
 			if (RESERVED.has(name)) return
 			if (isMemberPropertyIdentifier(node, parent)) return
+			if (isObjectLiteralKeyIdentifier(node, parent)) return
 			if (isBindingIdentifier(node, parent, key)) return
 			if (activeShadows().has(name)) return
 
@@ -245,11 +256,13 @@ function parseWrappedStatements(stmt: string): {
 	offset: number
 } | null {
 	const trimmed = stmt.trim()
-	const source = `function __aeroStmt() { ${trimmed.endsWith(';') ? trimmed : `${trimmed};`} }`
+	const normalized = trimmed.endsWith(';') ? trimmed : `${trimmed};`
+	const source = `function __aeroStmt() { ${normalized} }`
 	const parsed = parseSync(FILENAME, source, PARSE_OPTS)
 	if (parsed.errors.length > 0) return null
-	const bodyStart = source.indexOf('{') + 1
-	return { program: parsed.program, source: trimmed, offset: bodyStart }
+	const stmtStart = source.indexOf(trimmed)
+	if (stmtStart < 0) return null
+	return { program: parsed.program, source: trimmed, offset: stmtStart }
 }
 
 export function rewriteExprForScope(
@@ -293,7 +306,7 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 		return merged
 	}
 
-	function visit(node: EstNode, parent?: EstNode, key?: string): void {
+	function visit(node: EstNode, parent?: EstNode, key?: string): void | 'skip-children' {
 		if (
 			node.type === 'FunctionDeclaration' ||
 			node.type === 'FunctionExpression' ||
@@ -310,13 +323,14 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 				walkAst(node.body, visit)
 			}
 			shadowStack.pop()
-			return
+			return 'skip-children'
 		}
 
 		if (node.type === 'Identifier' && typeof node.name === 'string') {
 			const name = node.name
 			if (RESERVED.has(name)) return
 			if (isMemberPropertyIdentifier(node, parent)) return
+			if (isObjectLiteralKeyIdentifier(node, parent)) return
 			if (isBindingIdentifier(node, parent, key)) return
 			if (activeShadows().has(name)) return
 			names.add(name)

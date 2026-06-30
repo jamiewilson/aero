@@ -19,6 +19,8 @@ describe('quoted interpolation in code text', () => {
 
 		expect(code).toContain('data-aero-text=')
 		expect(code).toContain('scope.count')
+		expect(code).toContain('escapeHtml(String( scope.count ))')
+		expect(code).not.toMatch(/return escapeHtml\(/)
 		expect(code).not.toContain('bind:count=&quot;{ count }&quot;')
 	})
 

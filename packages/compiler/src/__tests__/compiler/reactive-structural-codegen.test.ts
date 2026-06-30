@@ -109,6 +109,8 @@ describe('reactive structural codegen', () => {
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain('data-aero-switch="0"')
 		expect(code).toContain('switchBinds:')
+		expect(code).toContain('discriminant: __aeroSwitchExpr_0')
+		expect(code).not.toMatch(/switchBinds:[\s\S]*expression: __aeroSwitchExpr_0/)
 		expect(code).toContain('__aeroSwitchBranch_0_0')
 		expect(code).toContain('__aeroSwitchDefault_0')
 	})

@@ -25,6 +25,14 @@ import {
 } from './scope-expr-codegen'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 
+function isSimpleForBinding(binding: string): boolean {
+	return /^[A-Za-z_$][\w$]*$/.test(binding.trim())
+}
+
+function needsForDestructureCodegen(binding: string, bindingNames: readonly string[]): boolean {
+	return bindingNames.length > 0 && !isSimpleForBinding(binding)
+}
+
 function stripStructuralBranchOutVars(nodes: IRNode[]): IRNode[] {
 	return nodes.map(node => stripStructuralBranchOutVar(node))
 }
@@ -254,7 +262,7 @@ function emitCompiledMountFunctions(
 	}
 	for (const bind of binds.textBinds) {
 		lines.push(
-			`function __aeroTextRead_${bind.bindId}(scope, escapeHtml) { return escapeHtml(${scopeExpr(bind.readExpr)}); }`
+			`function __aeroTextRead_${bind.bindId}(scope, escapeHtml) { return (${scopeExpr(bind.readExpr)}); }`
 		)
 	}
 	for (const bind of binds.showBinds) {
@@ -300,7 +308,7 @@ function emitCompiledMountFunctions(
 	for (const bind of binds.forBinds) {
 		lines.push(`function __aeroForItems_${bind.bindId}(scope) { return (${scopeExpr(bind.itemsExpr)}); }`)
 		lines.push(`function __aeroForKey_${bind.bindId}(scope) { return (${scopeExpr(bind.keyExpr)}); }`)
-		if (bind.bindingNames.length > 0) {
+		if (needsForDestructureCodegen(bind.binding, bind.bindingNames)) {
 			const pairs = bind.bindingNames.map(name => `${name}: item.${name}`).join(', ')
 			lines.push(
 				`function __aeroForDestructure_${bind.bindId}(item) { const ${bind.binding} = item; return ({ ${pairs} }); }`
@@ -515,7 +523,7 @@ function serializeForBinds(forBinds: IRReactiveForBind[]): string {
 			binding: ${JSON.stringify(forBind.binding)},
 			bindingNames: ${JSON.stringify(forBind.bindingNames)},
 			items: __aeroForItems_${forBind.bindId},
-			key: __aeroForKey_${forBind.bindId},${forBind.bindingNames.length > 0 ? `\n\t\t\tdestructureRow: __aeroForDestructure_${forBind.bindId},` : ''}
+			key: __aeroForKey_${forBind.bindId},${needsForDestructureCodegen(forBind.binding, forBind.bindingNames) ? `\n\t\t\tdestructureRow: __aeroForDestructure_${forBind.bindId},` : ''}
 			renderRow: __aeroForRow_${forBind.bindId},
 			rowMounts: ${serializeBranchMounts(rowMounts)}
 		}`
@@ -553,7 +561,7 @@ function serializeSwitchBinds(switchBinds: IRReactiveSwitchBind[]): string {
 					: ''
 			return `\t\t{
 			selector: ${JSON.stringify(`[data-aero-switch="${switchBind.bindId}"]`)},
-			expression: __aeroSwitchExpr_${switchBind.bindId},
+			discriminant: __aeroSwitchExpr_${switchBind.bindId},
 			cases: [
 ${cases}
 			]${defaultBranch}
