@@ -607,6 +607,7 @@ function toKey(value: unknown): string | number {
 export function mountStateBindings(options: MountStateBindingsOptions): Cleanup {
 	const allowLegacyRuntimeCompile = options.allowLegacyRuntimeCompile === true
 	const hypermediaTriggerRef = options.hypermediaTriggerRef ?? { current: undefined }
+	const scopeCleanups: Cleanup[] = []
 	const hypermediaScopeActions = options.hypermediaRuntime
 		? createHypermediaActionScope(
 				options.hypermediaRuntime,
@@ -626,6 +627,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 			scopeConstants: options.scopeConstants,
 			hypermediaScopeActions,
+			registerCleanup: cleanup => {
+				scopeCleanups.push(cleanup)
+			},
+			aero: options.Aero,
 		})
 	const cleanups: Cleanup[] = []
 	const handlerOptions = {
@@ -814,6 +819,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	}
 
 	return () => {
+		for (const cleanup of scopeCleanups) cleanup()
 		for (const cleanup of cleanups) cleanup()
 	}
 }

@@ -2,7 +2,10 @@ import {
 	bootstrapHypermediaRuntime,
 	readBootstrappedHypermediaRuntime,
 } from './hypermedia-bootstrap'
-import { bootstrapReactivityRuntime, readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
+import {
+	bootstrapReactivityRuntime,
+	readBootstrappedReactivityRuntime,
+} from './reactivity-bootstrap'
 import { resolveSwapProcessContainer, type SwapStyle } from '@aero-js/hypermedia'
 import type { Aero } from './index'
 import { shouldRemountCompiledSwap } from './swap-remount'
@@ -39,7 +42,9 @@ export function bootstrapClientRuntimes(): void {
 	}
 }
 
-export function createHypermediaRuntimeAccessor(): () => ReturnType<typeof readBootstrappedHypermediaRuntime> {
+export function createHypermediaRuntimeAccessor(): () => ReturnType<
+	typeof readBootstrappedHypermediaRuntime
+> {
 	return () => readBootstrappedHypermediaRuntime()
 }
 
@@ -48,9 +53,11 @@ let hypermediaReactivityProcessComposed = false
 /** Compose hypermedia and reactivity process() for runtime-inserted HTML. */
 export function composeHypermediaReactivityProcess(): void {
 	if (hypermediaReactivityProcessComposed) return
-	const hypermedia = readBootstrappedHypermediaRuntime() as (HypermediaRuntimeWithSwapLifecycle & {
-		process?: (element: ParentNode, store?: unknown) => void
-	}) | null
+	const hypermedia = readBootstrappedHypermediaRuntime() as
+		| (HypermediaRuntimeWithSwapLifecycle & {
+				process?: (element: ParentNode, store?: unknown) => void
+		  })
+		| null
 	const reactivity = readBootstrappedReactivityRuntime() as {
 		process?: (element: ParentNode, store?: unknown) => () => void
 		store: unknown
@@ -68,7 +75,9 @@ export function composeHypermediaReactivityProcess(): void {
 export interface HypermediaSwapLifecycleBinding {
 	readonly root: HTMLElement
 	readonly runtime: HypermediaRuntimeWithSwapLifecycle
-	readonly shouldRemountCompiled: (operation: HypermediaSwapLifecycleOperation) => boolean | Promise<boolean>
+	readonly shouldRemountCompiled: (
+		operation: HypermediaSwapLifecycleOperation
+	) => boolean | Promise<boolean>
 	readonly destroyPrevious: () => void
 	readonly remountCompiled: () => void | Promise<void>
 }
@@ -87,7 +96,9 @@ function processAfterSwap(operation: HypermediaSwapLifecycleOperation): void {
 	operation.processRuntime(element)
 }
 
-export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleBinding): () => void {
+export function installHypermediaSwapLifecycle(
+	binding: HypermediaSwapLifecycleBinding
+): () => void {
 	const { root, runtime } = binding
 	let active = true
 
@@ -98,10 +109,7 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 			return
 		}
 
-		if (
-			isWithinRoot(root, operation.target) &&
-			(await binding.shouldRemountCompiled(operation))
-		) {
+		if (isWithinRoot(root, operation.target) && (await binding.shouldRemountCompiled(operation))) {
 			binding.destroyPrevious()
 			operation.performSwap()
 			await binding.remountCompiled()
@@ -129,11 +137,7 @@ export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElem
 				root,
 				runtime,
 				shouldRemountCompiled: operation =>
-					shouldRemountCompiledSwap(
-						root,
-						operation,
-						aero.hasStateBindingsForPath(pathname)
-					),
+					shouldRemountCompiledSwap(root, operation, aero.hasStateBindingsForPath(pathname)),
 				destroyPrevious() {
 					destroyStateBindings()
 					destroyStateBindings = () => {}

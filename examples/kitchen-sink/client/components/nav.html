@@ -2,9 +2,13 @@
 	import toggle from '@components/theme/toggle.html'
 </script>
 
+<script is:state>
+	const { theme = Aero.bindable() } = Aero.props
+</script>
+
 <nav>
 	<slot />
-	<toggle-component />
+	<toggle-component bind:theme="{ theme }" />
 
 	<style>
 		@scope {

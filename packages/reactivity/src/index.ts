@@ -6,6 +6,16 @@ import { Signal } from './signal'
 import { createStateScope, type StateBindingSpec } from './state-scope'
 import { SignalStore } from './store'
 import { AeroReactivity, processFragment, createDefaultHandlers } from './process'
+import {
+	attachPersistWriter,
+	createAeroPersist,
+	createPersistBinding,
+	namespacePersistKey,
+	readPersistedValue,
+	type AeroPersistFn,
+	type PersistBinding,
+	type PersistOptions,
+} from './persist'
 import { bindShow } from './bindings/show'
 import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
@@ -35,7 +45,20 @@ export {
 	unsafeProcessFragment,
 	createDefaultHandlers,
 }
-export type { HydrationRoot, StateBindingSpec }
+export {
+	attachPersistWriter,
+	createAeroPersist,
+	createPersistBinding,
+	namespacePersistKey,
+	readPersistedValue,
+}
+export type {
+	AeroPersistFn,
+	HydrationRoot,
+	PersistBinding,
+	PersistOptions,
+	StateBindingSpec,
+}
 
 export interface ReactivityRuntime {
 	readonly kind: 'reactivity-runtime'

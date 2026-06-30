@@ -19,6 +19,7 @@ import {
 	installHypermediaSwapLifecycle,
 } from './runtime/client-mount'
 import { shouldRemountCompiledSwap } from './runtime/swap-remount'
+import { createAeroPersist } from './reactivity'
 import { resolveStateBindingsModule } from 'virtual:aero/state-bindings-registry.ts'
 
 let destroyStateBindings: (() => void) | null = null
@@ -94,6 +95,7 @@ const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
 const getHypermediaRuntime = createHypermediaRuntimeAccessor()
 
 const aero = new Aero()
+Object.assign(aero, { persist: createAeroPersist() })
 aero.mount = mount
 ;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
 	getReactivityRuntime

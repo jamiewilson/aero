@@ -62,6 +62,31 @@ describe('binding handlers', () => {
 		expect(target.disabled).toBe(true)
 	})
 
+	it('bindProperty sets data-* and aria-* attributes', () => {
+		const attrs = new Map<string, string>()
+		const target = {
+			getAttribute(name: string) {
+				return attrs.get(name) ?? null
+			},
+			setAttribute(name: string, value: string) {
+				attrs.set(name, value)
+			},
+			removeAttribute(name: string) {
+				attrs.delete(name)
+			},
+		} as unknown as HTMLElement
+		let theme = 'dark'
+		const cleanup = bindProperty(target, 'data-theme', () => theme)
+		expect(attrs.get('data-theme')).toBe('dark')
+		theme = 'light'
+		cleanup()
+		bindProperty(target, 'data-theme', () => theme)
+		expect(attrs.get('data-theme')).toBe('light')
+		theme = null as unknown as string
+		bindProperty(target, 'data-theme', () => theme)
+		expect(attrs.has('data-theme')).toBe(false)
+	})
+
 	it('bindFormModel syncs input value two-way', () => {
 		const store = new SignalStore()
 		store.signal('email', 'a@b.c')

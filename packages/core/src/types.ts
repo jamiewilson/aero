@@ -196,6 +196,8 @@ export interface AeroRenderInput {
 	scripts?: Set<string>
 	/** Scripts to inject in <head>. */
 	headScripts?: Set<string>
+	/** Scripts to prepend immediately after `<head>` (before other head markup). */
+	headPrependScripts?: Set<string>
 	/** Canonical site URL from config. String for backward compat; object when passed from Aero.site. */
 	site?: string | { url: string }
 	/** Page context (url, request, params). When provided, overrides individual request/url/params. */
@@ -250,9 +252,12 @@ export interface AeroTemplateContext {
 		(): undefined
 		<T>(fallback: T): T
 	}
+	/** SSR stub for persisted owned state; returns fallback without reading storage. */
+	persist: <T>(key: string, fallback: T, options?: Record<string, unknown>) => T
 	styles?: Set<string>
 	scripts?: Set<string>
 	headScripts?: Set<string>
+	headPrependScripts?: Set<string>
 }
 
 /** Compiled template render function signature (`export default async function (Aero) { ... }`). */

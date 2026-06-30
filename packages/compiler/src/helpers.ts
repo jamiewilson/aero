@@ -212,7 +212,7 @@ export function emitSlotsObjectVars(slotsMap: Record<string, string>): string {
  * Internal context keys destructured from the render context and forwarded to child components.
  * User-facing data (`page`, `site`, `props`) is NOT destructured.
  */
-export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = ['styles', 'scripts', 'headScripts']
+export const RENDER_INTERNAL_CONTEXT_KEYS: string[] = ['styles', 'scripts', 'headScripts', 'headPrependScripts']
 
 // ============================================================================
 // Default render function emission (Aero-compatible)
@@ -248,6 +248,11 @@ function joinRenderFnHeadScripts(lines: string[]): string {
 	return joinRenderFnIndentedLines(lines, line => `headScripts?.add(${line});`)
 }
 
+/** `headPrependScripts?.add(expr)` lines joined with `\\n\\t\\t`. */
+function joinRenderFnHeadPrependScripts(lines: string[]): string {
+	return joinRenderFnIndentedLines(lines, line => `headPrependScripts?.add(${line});`)
+}
+
 /** `rootScriptsLines` joined with `\\n\\t\\t`. */
 function joinRenderFnRootScriptLines(lines: string[]): string {
 	return joinRenderFnIndentedLines(lines)
@@ -268,6 +273,7 @@ export function emitRenderFunction(
 		styleCode = '',
 		rootScriptsLines = [],
 		headScriptsLines = [],
+		headPrependScriptsLines = [],
 	} = options
 
 	const stylesCode =
@@ -281,6 +287,9 @@ export function emitRenderFunction(
 
 	const headScriptsBlock =
 		headScriptsLines.length > 0 ? joinRenderFnHeadScripts(headScriptsLines) : ''
+
+	const headPrependScriptsBlock =
+		headPrependScriptsLines.length > 0 ? joinRenderFnHeadPrependScripts(headPrependScriptsLines) : ''
 
 	const renderFn = new CodeBuilder()
 		.raw('export default async function(Aero) {\n')
@@ -297,6 +306,8 @@ export function emitRenderFunction(
 		.raw(scriptsCode)
 		.raw('\n\t\t')
 		.raw(rootScriptsBlock)
+		.raw('\n\t\t')
+		.raw(headPrependScriptsBlock)
 		.raw('\n\t\t')
 		.raw(headScriptsBlock)
 		.raw("\n\t\tlet __out = '';")

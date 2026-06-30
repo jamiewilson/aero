@@ -104,6 +104,60 @@ When a parent and child both edit the same value, use [reactive props](/guide/re
 
 Props without `Aero.bindable()` are readonly in the child.
 
+## Theme preference (persist + bind chain)
+
+Keep document-level theme on a single persisted signal in the layout; pass it through components with `bind:`:
+
+```html
+<!-- layouts/base.html -->
+<script is:build>
+	import site from '@content/site.ts'
+	const { storageKey, attribute, default: defaultTheme } = site.theme
+</script>
+
+<script is:state>
+	let theme = Aero.persist(storageKey, defaultTheme, { critical: true, attribute })
+</script>
+
+<html lang="en" data-theme="{ theme }">
+	<head>
+		<link rel="stylesheet" href="@styles/global.css" />
+	</head>
+	<body>
+		<nav-component bind:theme="{ theme }" />
+	</body>
+</html>
+```
+
+```html
+<!-- components/nav.html -->
+<script is:state>
+	const { theme = Aero.bindable() } = Aero.props
+</script>
+<toggle-component bind:theme="{ theme }" />
+```
+
+```html
+<!-- components/theme/toggle.html -->
+<script is:build>
+	import site from '@content/site.ts'
+	const themeOptions = site.theme.options
+</script>
+
+<script is:state>
+	const { theme = Aero.bindable() } = Aero.props
+
+	function cycleTheme() {
+		const index = themeOptions.indexOf(theme)
+		theme = themeOptions[(index + 1) % themeOptions.length]
+	}
+</script>
+
+<button on:click="{ cycleTheme() }">Toggle theme</button>
+```
+
+`critical: true` prepends a sync head script so `[data-theme]` CSS applies before first paint. Toggle updates the shared signal; `Aero.persist` writes `aero:theme` to `localStorage` automatically.
+
 ## Runtime-inserted markup
 
 Hypermedia swaps and manual `innerHTML` need [process](/guide/reactivity/process) so bindings attach to new nodes. When hypermedia and reactivity are both on, processing after swaps is automatic.

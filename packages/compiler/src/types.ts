@@ -96,6 +96,7 @@ export interface EmitRenderFunctionOptions {
 	styleCode?: string
 	rootScriptsLines?: string[]
 	headScriptsLines?: string[]
+	headPrependScriptsLines?: string[]
 }
 
 /**

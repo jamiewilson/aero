@@ -66,7 +66,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			const analysis = analyzeStateScript(stateBody)
 			for (const b of analysis.bindings) {
 				bindingNames.add(b.name)
-				if (!b.derived) ownedStateBindingNames.add(b.name)
+				if (!b.derived && !b.persist) ownedStateBindingNames.add(b.name)
 				if (!b.derived && (!b.reactiveProp || b.bindable)) writableStateBindingNames.add(b.name)
 				if (b.reactiveProp && !b.bindable) readonlyReactivePropNames.add(b.name)
 			}

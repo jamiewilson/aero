@@ -69,6 +69,37 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).not.toContain('"doubled":2')
 	})
 
+	it('excludes persisted bindings from hydration payload and emits critical head-prepend script', () => {
+		const html = `<script is:state>
+			let theme = Aero.persist('theme', 'system', { critical: true, attribute: 'data-theme' })
+		</script>
+		<html data-theme="{ theme }"></html>`
+
+		const code = compile(parse(html), mockOptions)
+
+		expect(code).not.toContain('escapeScriptJson({ "theme": theme })')
+		expect(code).toContain('headPrependScripts?.add')
+		expect(code).toContain('aero:theme')
+		expect(code).toContain('data-theme')
+		expect(code).toContain('persist:')
+	})
+
+	it('emits compiled persist key reader for dynamic Aero.persist keys', () => {
+		const html = `<script is:build>
+			const storageKey = 'theme'
+		</script>
+		<script is:state>
+			let theme = Aero.persist(storageKey, 'system')
+		</script>
+		<div>{ theme }</div>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain('function __aeroPersistKey_theme(scope, Aero)')
+		expect(code).toContain('keyRead: __aeroPersistKey_theme')
+		expect(code).not.toContain('keyExpr:')
+	})
+
 	it('serializes reactive props declared from Aero.props in is:state', () => {
 		const html = `<script is:state>
 			const { count, label = 'Counter' } = Aero.props
@@ -82,7 +113,9 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('required: true')
 		expect(code).toContain('"name":"label"')
 		expect(code).toContain('init: __aeroInit_label')
-		expect(code).not.toContain('name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true')
+		expect(code).not.toContain(
+			'name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true'
+		)
 		expect(code).toContain('reactiveProps: opts.reactiveProps ?? {}')
 		expect(code).toContain('store: opts.store ?? runtime.store')
 		expect(code).not.toContain('"count": count')
@@ -104,7 +137,9 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('"name":"heading"')
 		expect(code).toContain('"propName":"title"')
 		expect(code).toContain('"name":"label"')
-		expect(code).not.toContain('name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true')
+		expect(code).not.toContain(
+			'name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true'
+		)
 		expect(code).toContain('"name":"value"')
 		expect(code).toContain('"bindable":true')
 	})
@@ -140,6 +175,40 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('reactivePropExprs: {"count":{"expr":"count","mutable":true}}')
 		expect(code).toContain('renderComponent(counter, { "count": count }')
 		expect(code).not.toContain('"bind:count"')
+	})
+
+	it('passes Aero into __aeroBuildScope when build script references Aero.props', () => {
+		const html = `<script is:build>
+			const props = Aero.props
+		</script>
+		<script is:state>
+			let count = 1
+		</script>
+		<div>{ count }</div>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain('function __aeroBuildScope(Aero)')
+		expect(code).toContain('scopeConstants: __aeroBuildScope(Aero)')
+	})
+
+	it('emits layout-only mountStateBindings for pages without is:state', () => {
+		const html = `<script is:build>
+			import base from '@layouts/base.html'
+		</script>
+		<base-layout>
+			<p>Hello</p>
+		</base-layout>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
+		expect(code).toContain(
+			'__aeroMod_base.mountStateBindings?.(root.ownerDocument?.documentElement ?? root, Aero, opts)'
+		)
+		expect(code).not.toContain(
+			"import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'"
+		)
 	})
 
 	it('injects layout component bind on html instead of span wrapper', () => {
@@ -293,7 +362,9 @@ describe('state reactive codegen (PR-2d)', () => {
 			compile(parse(html), {
 				...mockOptions,
 				componentReactiveProps: {
-					counter: [{ name: 'count', propName: 'count', required: false, bindable: true, writes: true }],
+					counter: [
+						{ name: 'count', propName: 'count', required: false, bindable: true, writes: true },
+					],
 				},
 			})
 		).toThrow(

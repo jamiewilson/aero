@@ -4,7 +4,8 @@ export enum ThemeMode {
 	Dark = 'dark',
 }
 
+/** Shared contract for layout + toggle theme state. */
 export interface ThemeStore {
-	current: ThemeMode
-	set(): void
+	theme: ThemeMode
+	cycleTheme(): void
 }

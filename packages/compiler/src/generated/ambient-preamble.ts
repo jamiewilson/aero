@@ -15,6 +15,15 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 	
 	bindable(): undefined
 	bindable<T>(fallback: T): T
+	
+	persist<T>(key: string, fallback: T, options?: PersistOptions): T
+}
+
+interface PersistOptions {
+	storage?: 'local' | 'session'
+	sync?: boolean
+	critical?: boolean
+	attribute?: string
 }
 
 declare namespace Aero {

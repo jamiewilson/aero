@@ -99,6 +99,51 @@ Attribute names also accept `aero-*` and `data-aero-*` prefixes.
 
 Server-rendered HTML is the first paint. Aero emits a `<script type="aero/state">` JSON payload with owned `let` binding values from render time (including values seeded from `is:build`). At mount, the client store reads that payload and attaches bindings — no manual hydration API.
 
+Persisted bindings (`Aero.persist`) are excluded from that payload — the client restores them from `localStorage` or `sessionStorage` on mount so stored values win over SSR defaults.
+
+## Persisting state
+
+Use `Aero.persist()` for opt-in browser storage on owned signals:
+
+```html
+<script is:state>
+	let sidebarOpen = Aero.persist('sidebar', false, { storage: 'session' })
+	let draft = Aero.persist('draft', '', { sync: true })
+</script>
+```
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `storage` | `'local'` | `'local'` or `'session'` |
+| `sync` | `false` | Cross-tab updates via the `storage` event |
+| `critical` | `false` | Emit a sync inline `<head>` script before paint |
+| `attribute` | — | Required with `critical` — sets `document.documentElement` before first paint |
+
+Keys are namespaced as `aero:${key}` in storage. Values must be JSON-serializable.
+
+### Zero-flash document attributes
+
+When CSS or `color-scheme` depends on a value on `<html>` before first paint, use `critical` and `attribute`:
+
+```html
+<script is:build>
+	import site from '@content/site.ts'
+	const { storageKey, attribute, default: defaultTheme } = site.theme
+</script>
+
+<script is:state>
+	let theme = Aero.persist(storageKey, defaultTheme, { critical: true, attribute })
+</script>
+
+<html lang="en" data-theme="{ theme }">
+```
+
+Aero prepends a classic inline script at the start of `<head>` that reads storage and sets the attribute before stylesheets run. Mount-time `Aero.persist()` uses the same key namespace, so the signal and DOM stay in sync after load.
+
+For prefs that can flash briefly (sidebar open, drafts), omit `critical` — mount-time restore is enough.
+
+<Warning>Store UI preferences only — not tokens, secrets, or sensitive data.</Warning>
+
 ## Runtime access
 
 For imperative inserts (hypermedia swaps or `innerHTML`), process bindings into the page store:

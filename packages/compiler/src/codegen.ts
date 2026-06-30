@@ -18,6 +18,12 @@ import {
 	escapeTemplateLiteralContent,
 	validateSingleBracedExpression,
 } from './helpers'
+import { emitCriticalPersistHeadScriptLines } from './persist-head-codegen'
+import {
+	collectLayoutModuleNames,
+	emitLayoutOnlyMountExport,
+	prependLayoutMountsToPageExport,
+} from './layout-mount-codegen'
 import { parse } from './parser'
 import { Resolver } from './resolver'
 import { buildTemplateAnalysis } from './template-analysis'
@@ -176,7 +182,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const ownedStateBindingNames =
 		ta.stateAnalysis !== null
 			? ta.stateAnalysis.bindings
-					.filter(binding => !binding.derived && !binding.reactiveProp)
+					.filter(binding => !binding.derived && !binding.reactiveProp && !binding.persist)
 					.map(binding => binding.name)
 			: []
 	const stateHydrationLine =
@@ -218,6 +224,8 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				.join('\n')
 		: null
 	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
+	const layoutModuleNames =
+		options.reactivity === true ? collectLayoutModuleNames(ta.bodyIR) : []
 	const mountEmit =
 		ta.stateAnalysis !== null
 			? emitMountStateBindingsFunction(
@@ -225,17 +233,29 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 					reactiveBinds,
 					ta.stateImports,
 					mountActionFns,
-					ta.defaultImportBindings
+					ta.defaultImportBindings,
+					ta.scriptBody
 				)
 			: ''
+	let mountExport =
+		mountEmit && mountEmit.mountExport
+			? layoutModuleNames.length > 0
+				? prependLayoutMountsToPageExport(mountEmit.mountExport, layoutModuleNames)
+				: mountEmit.mountExport
+			: layoutModuleNames.length > 0
+				? emitLayoutOnlyMountExport(layoutModuleNames)
+				: ''
 	const reactivePropsMetadata =
 		ta.stateAnalysis !== null ? emitReactivePropsMetadata(ta.stateAnalysis) : ''
+	const headPrependLines =
+		ta.stateAnalysis !== null ? emitCriticalPersistHeadScriptLines(ta.stateAnalysis) : []
 
 	const renderFn = emitRenderFunction(script, ta.bodyCode, {
 		getStaticPathsFn: ta.getStaticPathsFn || undefined,
 		styleCode: ta.styleCode,
 		rootScriptsLines: stateHydrationLine ? [stateHydrationLine, ...rootScripts] : rootScripts,
 		headScriptsLines: headScripts,
+		headPrependScriptsLines: headPrependLines,
 	})
 
 	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
@@ -243,7 +263,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	if (reactivePropsMetadata) output += `${reactivePropsMetadata}\n`
 	if (mountEmit && mountEmit.preamble) output += `${mountEmit.preamble}\n\n`
 	output += renderFn
-	if (mountEmit) output += `\n\n${mountEmit.mountExport}`
+	if (mountExport) output += `\n\n${mountExport}`
 	return output
 }
 

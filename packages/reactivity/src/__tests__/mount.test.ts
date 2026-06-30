@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { bindEvent, bindText, mountStateBindings } from '../mount'
+import { createAeroPersist } from '../persist'
 import { createStateScope } from '../state-scope'
 import { SignalStore } from '../store'
 
@@ -1293,6 +1294,105 @@ describe('mountStateBindings switch', () => {
 		;(store.get('status') as { value: string }).value = 'ready'
 		expect(anchor.innerHTML).toContain('Ready branch')
 		cleanup()
+	})
+})
+
+describe('persist bindings', () => {
+	class MemoryStorage implements Storage {
+		private map = new Map<string, string>()
+		get length() {
+			return this.map.size
+		}
+		clear() {
+			this.map.clear()
+		}
+		getItem(key: string) {
+			return this.map.get(key) ?? null
+		}
+		key(index: number) {
+			return [...this.map.keys()][index] ?? null
+		}
+		removeItem(key: string) {
+			this.map.delete(key)
+		}
+		setItem(key: string, value: string) {
+			this.map.set(key, value)
+		}
+	}
+
+	it('restores persisted values instead of hydration snapshot', () => {
+		const local = new MemoryStorage()
+		local.setItem('aero:theme', JSON.stringify('dark'))
+		vi.stubGlobal('window', {
+			localStorage: local,
+			sessionStorage: new MemoryStorage(),
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+		})
+
+		const store = new SignalStore()
+		store.merge({ theme: 'system' })
+		const Aero = { persist: createAeroPersist() }
+		const root = document.createElement('div')
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			bindings: [
+				{
+					name: 'theme',
+					derived: false,
+					init: () => Aero.persist('theme', 'system'),
+					dependencies: [],
+					persist: { key: 'theme' },
+				},
+			],
+			textBinds: [],
+			eventBinds: [],
+			Aero,
+		})
+
+		expect(store.get('theme').value).toBe('dark')
+		cleanup()
+		vi.unstubAllGlobals()
+	})
+
+	it('resolves dynamic persist keys via compiled keyRead (CSP-safe)', () => {
+		const local = new MemoryStorage()
+		local.setItem('aero:dynamic-key', JSON.stringify('saved'))
+		vi.stubGlobal('window', {
+			localStorage: local,
+			sessionStorage: new MemoryStorage(),
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+		})
+
+		const store = new SignalStore()
+		const Aero = { persist: createAeroPersist() }
+		const root = document.createElement('div')
+		const cleanup = mountStateBindings({
+			root,
+			store,
+			scopeConstants: { storageKey: 'dynamic-key' },
+			bindings: [
+				{
+					name: 'theme',
+					derived: false,
+					init: (_scope, aero) =>
+						(aero as { persist: typeof Aero.persist }).persist('dynamic-key', 'default'),
+					dependencies: [],
+					persist: {
+						keyRead: scope => scope.storageKey,
+					},
+				},
+			],
+			textBinds: [],
+			eventBinds: [],
+			Aero,
+		})
+
+		expect(store.get('theme').value).toBe('saved')
+		cleanup()
+		vi.unstubAllGlobals()
 	})
 })
 

@@ -42,6 +42,7 @@ const RESERVED = new Set([
 	'isFinite',
 	'console',
 	'alert',
+	'Aero',
 	'Promise',
 	'Map',
 	'Set',
@@ -150,6 +151,23 @@ function isBindingIdentifier(node: EstNode, parent?: EstNode, key?: string): boo
 	return false
 }
 
+function currentShadowLayer(shadowStack: Set<string>[]): Set<string> {
+	return shadowStack[shadowStack.length - 1]!
+}
+
+function visitVariableDeclaration(
+	node: EstNode,
+	visit: (node: EstNode, parent?: EstNode, key?: string) => void | 'skip-children',
+	shadowStack: Set<string>[]
+): 'skip-children' {
+	const layer = currentShadowLayer(shadowStack)
+	for (const decl of (node.declarations as EstNode[] | undefined) ?? []) {
+		walkAst(decl.init, visit)
+		collectPatternNames(decl.id, layer)
+	}
+	return 'skip-children'
+}
+
 function collectRewrites(
 	program: unknown,
 	scopeNames: ReadonlySet<string>,
@@ -178,6 +196,33 @@ function collectRewrites(
 	}
 
 	function visit(node: EstNode, parent?: EstNode, key?: string): void | 'skip-children' {
+		if (node.type === 'VariableDeclaration') {
+			return visitVariableDeclaration(node, visit, shadowStack)
+		}
+
+		if (node.type === 'Property' && node.shorthand === true) {
+			const keyNode = node.key as EstNode | undefined
+			if (keyNode?.type === 'Identifier' && typeof keyNode.name === 'string') {
+				const name = keyNode.name
+				if (
+					!RESERVED.has(name) &&
+					!activeShadows().has(name) &&
+					(scopeNames.has(name) || actionsNames?.has(name))
+				) {
+					const range = nodeRange(node)
+					if (range) {
+						const qualified = actionsNames?.has(name) ? `actions.${name}` : `scope.${name}`
+						rewrites.push({
+							start: range[0] - sourceOffset,
+							end: range[1] - sourceOffset,
+							text: `${name}: ${qualified}`,
+						})
+						return 'skip-children'
+					}
+				}
+			}
+		}
+
 		if (
 			node.type === 'FunctionDeclaration' ||
 			node.type === 'FunctionExpression' ||
@@ -227,7 +272,13 @@ function collectRewrites(
 	}
 
 	walkAst(program, visit)
-	return rewrites
+	const deduped: Array<{ start: number; end: number; text: string }> = []
+	for (const rewrite of rewrites) {
+		const prev = deduped[deduped.length - 1]
+		if (prev && prev.start === rewrite.start && prev.end === rewrite.end) continue
+		deduped.push(rewrite)
+	}
+	return deduped
 }
 
 function applyRewrites(source: string, rewrites: Array<{ start: number; end: number; text: string }>): string {
@@ -307,6 +358,10 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 	}
 
 	function visit(node: EstNode, parent?: EstNode, key?: string): void | 'skip-children' {
+		if (node.type === 'VariableDeclaration') {
+			return visitVariableDeclaration(node, visit, shadowStack)
+		}
+
 		if (
 			node.type === 'FunctionDeclaration' ||
 			node.type === 'FunctionExpression' ||

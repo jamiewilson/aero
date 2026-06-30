@@ -585,8 +585,13 @@ function parsePropertyBinding(
 
 	const propertyName = attr.name.replace(/^aero-/, '').replace(/^data-aero-/, '')
 	const bindId = reactiveState.nextPropertyBindId()
+	const attributeLike =
+		propertyName.startsWith('data-') || propertyName.startsWith('aria-')
+	const ssrAttribute = attributeLike
+		? `${attr.name}="${Helper.compileAttributeInterpolation(raw)}" `
+		: ''
 	return {
-		emittedAttr: `data-aero-property-${propertyName}="${bindId}"`,
+		emittedAttr: `${ssrAttribute}data-aero-property-${propertyName}="${bindId}"`,
 		bind: {
 			kind: 'ReactivePropertyBind',
 			bindId,

@@ -278,7 +278,7 @@ describe('emitSlotOutput', () => {
 
 describe('renderComponent context (single source of truth)', () => {
 	it('RENDER_INTERNAL_CONTEXT_KEYS includes only internal plumbing keys', () => {
-		expect(RENDER_INTERNAL_CONTEXT_KEYS).toEqual(['styles', 'scripts', 'headScripts'])
+		expect(RENDER_INTERNAL_CONTEXT_KEYS).toEqual(['styles', 'scripts', 'headScripts', 'headPrependScripts'])
 	})
 
 	it('getRenderComponentContextArg forwards page/site from Aero and internal keys', () => {

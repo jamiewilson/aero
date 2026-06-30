@@ -1,16 +1,26 @@
 import { Computed } from './computed'
+import { attachPersistWriter } from './persist'
 import { SignalStore } from './store'
+
+export interface PersistBindingMetadata {
+	readonly key?: string
+	readonly keyExpr?: string
+	readonly keyRead?: (scope: StateScope, aero?: unknown) => unknown
+	readonly storage?: 'local' | 'session'
+	readonly sync?: boolean
+}
 
 export interface StateBindingSpec {
 	readonly name: string
 	readonly derived: boolean
 	readonly initExpr?: string
-	readonly init?: (scope: StateScope) => unknown
+	readonly init?: (scope: StateScope, aero?: unknown) => unknown
 	readonly dependencies: readonly string[]
 	readonly reactiveProp?: boolean
 	readonly propName?: string
 	readonly required?: boolean
 	readonly bindable?: boolean
+	readonly persist?: PersistBindingMetadata
 }
 
 export interface StateScopeOptions {
@@ -27,6 +37,10 @@ export interface StateScopeOptions {
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
 	/** Runtime-backed hypermedia actions; override imported fetch-only helpers in scope. */
 	readonly hypermediaScopeActions?: Record<string, unknown>
+	/** Called for each persist writer/storage listener registered while building scope. */
+	readonly registerCleanup?: (cleanup: () => void) => void
+	/** Client Aero runtime passed to compiled init/derived functions. */
+	readonly aero?: unknown
 }
 
 export type StateScope = Record<string, unknown>
@@ -54,8 +68,13 @@ function topoSortDerived(bindings: readonly StateBindingSpec[]): StateBindingSpe
 	return sorted
 }
 
-function evalInit(binding: StateBindingSpec, scope: StateScope, allowLegacyRuntimeCompile: boolean): unknown {
-	if (binding.init) return binding.init(scope)
+function evalInit(
+	binding: StateBindingSpec,
+	scope: StateScope,
+	allowLegacyRuntimeCompile: boolean,
+	aero?: unknown
+): unknown {
+	if (binding.init) return binding.init(scope, aero)
 	if (allowLegacyRuntimeCompile && binding.initExpr) {
 		// eslint-disable-next-line @typescript-eslint/no-implied-eval
 		return new Function('scope', `with (scope) { return (${binding.initExpr}); }`)(scope)
@@ -104,6 +123,7 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		hypermediaScopeActions,
 		allowLegacyRuntimeCompile = false,
 	} = options
+	const aero = options.aero
 	const reactiveProps = options.reactiveProps ?? {}
 	const scope: StateScope = { ...actionFunctions, ...scopeConstants, ...hypermediaScopeActions }
 
@@ -114,8 +134,15 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 			store.alias(binding.name, reactiveProp)
 		} else if (binding.reactiveProp && binding.required) {
 			throw new Error(`[aero] Required reactive prop was not provided: ${binding.name}`)
+		} else if (binding.persist) {
+			const value = evalInit(binding, scope, allowLegacyRuntimeCompile, aero)
+			if (!store.has(binding.name)) {
+				store.signal(binding.name, value)
+			} else {
+				;(store.get(binding.name) as { value: unknown }).value = value
+			}
 		} else if (!store.has(binding.name)) {
-			store.signal(binding.name, evalInit(binding, scope, allowLegacyRuntimeCompile))
+			store.signal(binding.name, evalInit(binding, scope, allowLegacyRuntimeCompile, aero))
 		}
 		const write = binding.reactiveProp && !binding.bindable
 			? () => {
@@ -130,6 +157,34 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 			() => store.get(binding.name).value,
 			write
 		)
+		if (binding.persist) {
+			const resolvedKey =
+				binding.persist.key ??
+				(binding.persist.keyRead
+					? String(binding.persist.keyRead(scope, aero))
+					: binding.persist.keyExpr
+						? String(
+								evalInit(
+									{
+										name: binding.name,
+										derived: false,
+										dependencies: [],
+										initExpr: binding.persist.keyExpr,
+									},
+									scope,
+									allowLegacyRuntimeCompile,
+									aero
+								)
+							)
+						: binding.name)
+			options.registerCleanup?.(
+				attachPersistWriter(store.get(binding.name), {
+					key: resolvedKey,
+					storage: binding.persist.storage,
+					sync: binding.persist.sync,
+				})
+			)
+		}
 	}
 
 	for (const binding of topoSortDerived(bindings)) {
@@ -143,7 +198,7 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 				`[aero] Derived state path ${JSON.stringify(binding.name)} already registered as signal.`
 			)
 		}
-		store.computed(binding.name, () => evalInit(binding, scope, allowLegacyRuntimeCompile))
+		store.computed(binding.name, () => evalInit(binding, scope, allowLegacyRuntimeCompile, aero))
 		defineScopeAccessor(scope, binding.name, () => store.get(binding.name).value)
 	}
 

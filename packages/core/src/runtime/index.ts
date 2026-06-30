@@ -105,6 +105,7 @@ export class Aero {
 		styles?: Set<string>
 		scripts?: Set<string>
 		headScripts?: Set<string>
+		headPrependScripts?: Set<string>
 	}): AeroTemplateContext {
 		const routePath = normalizeRoutePath(input.page?.routePath ?? input.routePath ?? '/')
 		const pageInput = input.page
@@ -137,6 +138,7 @@ export class Aero {
 		}
 
 		const bindable = (fallback?: unknown): unknown => fallback
+		const persist = <T>(_key: string, fallback: T): T => fallback
 
 		const createScriptTag = (attrs: string, src: string): string => {
 			const normalizedAttrs = attrs.trim()
@@ -157,12 +159,14 @@ export class Aero {
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
+			headPrependScripts: input.headPrependScripts,
 			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
 			createScriptTag,
 			escapeHtml: this.escapeHtml.bind(this),
 			escapeScriptJson,
 			bindable,
+			persist,
 			raw,
 			trim,
 			trimStart,
@@ -206,6 +210,7 @@ export class Aero {
 			renderInput.styles = new Set<string>()
 			renderInput.scripts = new Set<string>()
 			renderInput.headScripts = new Set<string>()
+			renderInput.headPrependScripts = new Set<string>()
 		}
 
 		const resolved = resolvePageTarget(component, this.pagesMap)
@@ -259,6 +264,7 @@ export class Aero {
 			styles: renderInput.styles,
 			scripts: renderInput.scripts,
 			headScripts: renderInput.headScripts,
+			headPrependScripts: renderInput.headPrependScripts,
 		})
 
 		// Handle module objects
@@ -279,6 +285,12 @@ export class Aero {
 				}
 
 				let headInjections = ''
+				if (context.headPrependScripts && context.headPrependScripts.size > 0) {
+					const prepend = Array.from(context.headPrependScripts).join('\n') + '\n'
+					if (html.includes('<head')) {
+						html = html.replace(/<head([^>]*)>/i, `<head$1>\n${prepend}`)
+					}
+				}
 				if (context.styles && context.styles.size > 0) {
 					headInjections += Array.from(context.styles).join('\n') + '\n'
 				}
@@ -339,6 +351,7 @@ export class Aero {
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
+			headPrependScripts: input.headPrependScripts,
 		})
 
 		if (typeof component === 'function') {

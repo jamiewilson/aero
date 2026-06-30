@@ -4,6 +4,17 @@ import {
 	readonlyReactivePropWriteMessage,
 } from './readonly-reactive-prop-writes'
 
+export interface PersistBindingAnalysis {
+	readonly key?: string
+	readonly keyExpr?: string
+	readonly defaultExpr: string
+	readonly storage?: 'local' | 'session'
+	readonly sync?: boolean
+	readonly critical?: boolean
+	readonly attribute?: string
+	readonly attributeExpr?: string
+}
+
 export interface StateBinding {
 	name: string
 	derived: boolean
@@ -14,6 +25,7 @@ export interface StateBinding {
 	required?: boolean
 	bindable?: boolean
 	writes?: boolean
+	persist?: PersistBindingAnalysis
 }
 
 export interface StateScriptDiagnostic {
@@ -127,6 +139,83 @@ function isAeroBindableCall(node: unknown): boolean {
 	)
 }
 
+function isAeroPersistCall(node: unknown): boolean {
+	const expr = unwrapExpression(node as any)
+	return (
+		expr?.type === 'CallExpression' &&
+		expr.callee?.type === 'MemberExpression' &&
+		expr.callee.object?.type === 'Identifier' &&
+		expr.callee.object.name === 'Aero' &&
+		expr.callee.property?.type === 'Identifier' &&
+		expr.callee.property.name === 'persist' &&
+		expr.callee.computed === false
+	)
+}
+
+function literalStringValue(node: unknown): string | null {
+	const expr = unwrapExpression(node as any)
+	if (expr?.type !== 'Literal' || typeof expr.value !== 'string') return null
+	return expr.value
+}
+
+function literalBooleanValue(node: unknown): boolean | null {
+	const expr = unwrapExpression(node as any)
+	if (expr?.type !== 'Literal' || typeof expr.value !== 'boolean') return null
+	return expr.value
+}
+
+function persistOptionsFromObject(node: unknown): Omit<PersistBindingAnalysis, 'key' | 'keyExpr' | 'defaultExpr'> {
+	const expr = unwrapExpression(node as any)
+	if (expr?.type !== 'ObjectExpression') return {}
+	const out: Omit<PersistBindingAnalysis, 'key' | 'keyExpr' | 'defaultExpr'> = {}
+	for (const property of expr.properties ?? []) {
+		if (property?.type !== 'Property' || property.computed) continue
+		const name = propertyKeyName(property)
+		if (!name) continue
+		const value = unwrapExpression(property.value)
+		if (name === 'storage' && value?.type === 'Literal' && (value.value === 'local' || value.value === 'session')) {
+			out.storage = value.value
+		}
+		if (name === 'sync') {
+			const bool = literalBooleanValue(value)
+			if (bool !== null) out.sync = bool
+		}
+		if (name === 'critical') {
+			const bool = literalBooleanValue(value)
+			if (bool !== null) out.critical = bool
+		}
+		if (name === 'attribute') {
+			const attr = literalStringValue(value)
+			if (attr !== null) {
+				out.attribute = attr
+			} else if (value?.type === 'Identifier' && typeof value.name === 'string') {
+				out.attributeExpr = value.name
+			}
+		}
+	}
+	return out
+}
+
+function persistBindingFromCall(script: string, call: any): PersistBindingAnalysis | null {
+	const keyArg = call?.arguments?.[0]
+	const defaultArg = call?.arguments?.[1]
+	const optionsArg = call?.arguments?.[2]
+	if (!keyArg || !defaultArg) return null
+	const keyExprNode = keyArg.expression ?? keyArg
+	const defaultExprNode = defaultArg.expression ?? defaultArg
+	const key = literalStringValue(keyExprNode)
+	const defaultExpr = initExprSource(script, defaultExprNode)
+	const options =
+		optionsArg === undefined
+			? {}
+			: persistOptionsFromObject(optionsArg.expression ?? optionsArg)
+	return {
+		...(key ? { key } : { keyExpr: initExprSource(script, keyExprNode) }),
+		defaultExpr,
+		...options,
+	}
+}
+
 function bindableFallbackExprSource(script: string, call: any): string {
 	const firstArg = call?.arguments?.[0]
 	if (!firstArg) return 'undefined'
@@ -215,12 +304,15 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	const bindings: StateBinding[] = [...reactivePropBindings]
 	for (const d of declarators) {
 		if (d.id?.type !== 'Identifier' || typeof d.id.name !== 'string') continue
+		const persistCall = isAeroPersistCall(d.init) ? unwrapExpression(d.init) : null
+		const persist = persistCall ? persistBindingFromCall(script, persistCall) : undefined
 		const deps = [...collectIdentifiersFromInit(d.init)].filter(dep => allNames.has(dep))
 		bindings.push({
 			name: d.id.name,
 			derived: deps.length > 0,
 			dependencies: deps,
 			initExpr: initExprSource(script, d.init),
+			...(persist ? { persist } : {}),
 		})
 	}
 
@@ -280,6 +372,12 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	for (const binding of bindings) {
 		if (binding.reactiveProp && writtenReactiveProps.has(binding.name)) {
 			binding.writes = true
+		}
+		if (binding.persist?.critical && !binding.persist.attribute && !binding.persist.attributeExpr) {
+			diagnostics.push({
+				name: binding.name,
+				message: `Persist binding \`${binding.name}\` uses \`{ critical: true }\` but is missing a static \`attribute\` option (e.g. \`'data-theme'\`).`,
+			})
 		}
 	}
 

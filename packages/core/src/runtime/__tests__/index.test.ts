@@ -147,6 +147,36 @@ describe('Aero class', () => {
 			expect(result).toBe('<div>Fallback</div>')
 		})
 
+		it('should expose persist SSR stub and prepend head scripts before head markup', async () => {
+			aero.registerPages({
+				'pages/index.html': {
+					default: (ctx: any) => {
+						ctx.headPrependScripts?.add('<script>critical</script>')
+						ctx.headScripts?.add('<script>tail</script>')
+						return '<html><head><link rel="stylesheet" href="/app.css" /></head><body></body></html>'
+					},
+				},
+			})
+
+			const result = await aero.render('index')
+			expect(result).toContain('<head>\n<script>critical</script>')
+			expect(result?.indexOf('<script>critical</script>')).toBeLessThan(
+				result?.indexOf('<link rel="stylesheet"') ?? -1
+			)
+			expect(result).toContain('<script>tail</script>')
+		})
+
+		it('should return persist fallback during SSR render', async () => {
+			aero.registerPages({
+				'pages/index.html': {
+					default: (ctx: any) => `<div>${ctx.persist('theme', 'system')}</div>`,
+				},
+			})
+
+			const result = await aero.render('index')
+			expect(result).toBe('<div>system</div>')
+		})
+
 		/** normalizeRenderInput merges input into context; request/url are built from routePath when not provided. */
 		it('should pass context with request, url, params, routePath', async () => {
 			let capturedCtx: any

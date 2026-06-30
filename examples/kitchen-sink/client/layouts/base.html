@@ -3,20 +3,23 @@
 	import nav from '@components/nav.html'
 	import footer from '@components/footer.html'
 	import site from '@content/site.ts'
-	const { storageKey, attribute } = site.theme
+
+	const { storageKey, attribute, default: defaultTheme } = site.theme
 	const props = Aero.props
 </script>
 
-<html lang="en">
+<script is:state>
+	let theme = Aero.persist(storageKey, defaultTheme, {
+		critical: true,
+		attribute,
+	})
+</script>
+
+<html lang="en" data-theme="{ theme }">
 	<head>
 		<meta-component props />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
-
-		<script props="{ storageKey, attribute }">
-			const theme = JSON.parse(localStorage.getItem(storageKey))
-			document.documentElement.setAttribute(attribute, theme)
-		</script>
 
 		<script>
 			import { allCaps } from '@scripts/utils/transform'
@@ -26,7 +29,7 @@
 	</head>
 
 	<body id="custom-target">
-		<nav-component>
+		<nav-component bind:theme="{ theme }">
 			<slot name="into-nav" />
 		</nav-component>
 

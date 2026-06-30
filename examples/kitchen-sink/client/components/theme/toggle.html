@@ -1,8 +1,28 @@
+<script is:build>
+	import site from '@content/site.ts'
+	const themeOptions = site.theme.options
+</script>
+
+<script is:state>
+	import type { ThemeStore } from '@shared/types/theme'
+	import { withTransition } from '@scripts/utils/withTransition'
+
+	const { theme = Aero.bindable() } = Aero.props as Pick<ThemeStore, 'theme'>
+
+	const cycleTheme: ThemeStore['cycleTheme'] = () => {
+		const index = themeOptions.indexOf(theme)
+		const next = themeOptions[(index + 1) % themeOptions.length]
+		withTransition(() => {
+			if (next) theme = next
+		})
+	}
+</script>
+
 <button
 	class="theme-toggle"
 	data-testid="theme-toggle"
 	aria-label="Toggle theme"
-	@click="$store.theme.set()"
+	on:click="{ cycleTheme() }"
 	tabindex="0">
 	<svg class="theme-icon system">
 		<path

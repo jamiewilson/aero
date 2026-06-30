@@ -14,6 +14,7 @@ import type {
 	IRReactiveTextBind,
 } from './ir'
 import type { BuildScriptImport } from './build-script-analysis'
+import { collectBuildScopeBindingNames } from './build-scope-bindings'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { emitToJS } from './emit'
 import {
@@ -206,6 +207,16 @@ function serializeBindings(analysis: StateScriptAnalysisResult): string {
 			...(binding.propName && binding.propName !== binding.name ? { propName: binding.propName } : {}),
 			...(binding.reactiveProp ? { required: binding.required === true } : {}),
 			...(binding.bindable ? { bindable: true } : {}),
+			...(binding.persist
+				? {
+						persist: {
+							...(binding.persist.key ? { key: binding.persist.key } : {}),
+							...(binding.persist.keyExpr ? { keyExpr: binding.persist.keyExpr } : {}),
+							...(binding.persist.storage ? { storage: binding.persist.storage } : {}),
+							...(binding.persist.sync ? { sync: true } : {}),
+						},
+					}
+				: {}),
 		}))
 	)
 }
@@ -247,12 +258,17 @@ function emitCompiledMountFunctions(
 
 	for (const binding of analysis.bindings.filter(binding => !binding.derived)) {
 		lines.push(
-			`function __aeroInit_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
+			`function __aeroInit_${binding.name}(scope, Aero) { return (${scopeExpr(binding.initExpr)}); }`
 		)
+		if (binding.persist?.keyExpr) {
+			lines.push(
+				`function __aeroPersistKey_${binding.name}(scope, Aero) { return (${scopeExpr(binding.persist.keyExpr)}); }`
+			)
+		}
 	}
 	for (const binding of analysis.bindings.filter(binding => binding.derived)) {
 		lines.push(
-			`function __aeroDerived_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
+			`function __aeroDerived_${binding.name}(scope, Aero) { return (${scopeExpr(binding.initExpr)}); }`
 		)
 	}
 	if (analysis.functionSources.length > 0) {
@@ -331,6 +347,16 @@ function emitCompiledMountFunctions(
 	return lines.join('\n\n')
 }
 
+function serializePersistMountMetadata(binding: StateScriptAnalysisResult['bindings'][number]): string {
+	if (!binding.persist) return ''
+	const parts: string[] = []
+	if (binding.persist.key) parts.push(`key: ${JSON.stringify(binding.persist.key)}`)
+	if (binding.persist.keyExpr) parts.push(`keyRead: __aeroPersistKey_${binding.name}`)
+	if (binding.persist.storage) parts.push(`storage: ${JSON.stringify(binding.persist.storage)}`)
+	if (binding.persist.sync) parts.push('sync: true')
+	return `persist: { ${parts.join(', ')} }`
+}
+
 function serializeCompiledBindings(analysis: StateScriptAnalysisResult): string {
 	const owned = analysis.bindings.filter(binding => !binding.derived)
 	const derived = analysis.bindings.filter(binding => binding.derived)
@@ -343,6 +369,7 @@ function serializeCompiledBindings(analysis: StateScriptAnalysisResult): string 
 					: '',
 				binding.reactiveProp && binding.required ? 'required: true' : '',
 				binding.bindable ? 'bindable: true' : '',
+				binding.persist ? serializePersistMountMetadata(binding) : '',
 			].filter(Boolean)
 			return `\t\t{ name: ${JSON.stringify(binding.name)}, derived: false, init: __aeroInit_${binding.name}, dependencies: ${JSON.stringify(binding.dependencies)}${extras.length ? `, ${extras.join(', ')}` : ''} }`
 		}),
@@ -598,6 +625,28 @@ function serializeScopeConstants(imports: readonly BuildScriptImport[]): string 
 	return `{ ${entries.join(', ')} }`
 }
 
+function emitBuildScopeFunction(buildScriptBody: string): string {
+	if (!buildScriptBody.trim()) return ''
+	const names = collectBuildScopeBindingNames([buildScriptBody])
+	if (names.size === 0) return ''
+	const returns = [...names].map(name => `${name}: ${name}`).join(', ')
+	return `function __aeroBuildScope(Aero) {\n${buildScriptBody}\n\treturn { ${returns} };\n}`
+}
+
+function serializeMountScopeConstants(
+	buildScriptBody: string,
+	stateImports: readonly BuildScriptImport[]
+): string | null {
+	const stateConstants = serializeScopeConstants(stateImports)
+	const hasBuildScope = buildScriptBody.trim().length > 0 && collectBuildScopeBindingNames([buildScriptBody]).size > 0
+	if (hasBuildScope && stateConstants) {
+		return `Object.assign({}, __aeroBuildScope(Aero), ${stateConstants})`
+	}
+	if (hasBuildScope) return `__aeroBuildScope(Aero)`
+	if (stateConstants) return stateConstants
+	return null
+}
+
 export function emitStructuralBranchFunctions(binds: CollectedReactiveBinds): string {
 	const lines: string[] = []
 	for (const ifBind of binds.ifBinds) {
@@ -651,11 +700,12 @@ export function emitMountStateBindingsFunction(
 	binds: CollectedReactiveBinds,
 	stateImports: readonly BuildScriptImport[] = [],
 	actionFunctions?: string,
-	defaultImportBindings: ReadonlySet<string> = new Set()
+	defaultImportBindings: ReadonlySet<string> = new Set(),
+	buildScriptBody = ''
 ): { preamble: string; mountExport: string } | '' {
 	if (!hasAnyBinds(binds)) return ''
 
-	const scopeConstants = serializeScopeConstants(stateImports)
+	const scopeConstants = serializeMountScopeConstants(buildScriptBody, stateImports)
 	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
 	const actionFnsLine = actionFunctions
 		? '\n\t\thypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined,'
@@ -666,7 +716,8 @@ export function emitMountStateBindingsFunction(
 		collectAllCodegenBinds(binds),
 		stateImports
 	)
-	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
+	const buildScopeFunction = emitBuildScopeFunction(buildScriptBody)
+	const preamble = [buildScopeFunction, branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
 	const installScopeLine =
 		analysis.functionSources.length > 0
 			? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,'

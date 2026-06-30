@@ -112,4 +112,37 @@ describe('analyzeStateScript', () => {
 		expect(result.diagnostics.length).toBeGreaterThanOrEqual(2)
 		expect(result.diagnostics[0]?.message).toMatch(/Derived state `b` is read-only/)
 	})
+
+	it('detects Aero.persist bindings and extracts metadata', () => {
+		const result = analyzeStateScript(`
+			let theme = Aero.persist('theme', 'system', { critical: true, attribute: 'data-theme' })
+			let sidebarOpen = Aero.persist('sidebar', false, { storage: 'session' })
+			let draft = Aero.persist('draft', '', { sync: true })
+		`)
+		const byName = new Map(result.bindings.map(b => [b.name, b]))
+
+		expect(byName.get('theme')?.persist).toMatchObject({
+			key: 'theme',
+			defaultExpr: "'system'",
+			critical: true,
+			attribute: 'data-theme',
+		})
+		expect(byName.get('sidebarOpen')?.persist).toMatchObject({
+			key: 'sidebar',
+			defaultExpr: 'false',
+			storage: 'session',
+		})
+		expect(byName.get('draft')?.persist).toMatchObject({
+			key: 'draft',
+			sync: true,
+		})
+	})
+
+	it('requires attribute when critical persist is enabled', () => {
+		const result = analyzeStateScript(`
+			let theme = Aero.persist('theme', 'system', { critical: true })
+		`)
+
+		expect(result.diagnostics[0]?.message).toContain('missing a static `attribute` option')
+	})
 })

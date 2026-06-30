@@ -29,6 +29,15 @@ declare const Aero: {
 	/** Declare a reactive prop as child-mutable inside `<script is:state>` `Aero.props` destructure defaults. */
 	bindable(): undefined
 	bindable<T>(fallback: T): T
+	/** Persist owned state to browser storage (client mount); SSR returns fallback only. */
+	persist<T>(key: string, fallback: T, options?: PersistOptions): T
+}
+
+interface PersistOptions {
+	storage?: 'local' | 'session'
+	sync?: boolean
+	critical?: boolean
+	attribute?: string
 }
 
 /**

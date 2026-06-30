@@ -9,6 +9,7 @@
  */
 
 import type { MountOptions } from './types'
+import { createAeroPersist } from './reactivity'
 import { Aero } from './runtime'
 import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
@@ -95,6 +96,7 @@ const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
 const getHypermediaRuntime = createHypermediaRuntimeAccessor()
 
 aero.mount = mount
+Object.assign(aero, { persist: createAeroPersist() })
 ;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
 	getReactivityRuntime
 ;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
