@@ -72,7 +72,11 @@ describe('runtime perf stress', () => {
 		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
 
 		for (let i = 0; i < 100; i++) {
-			processFragment({ element: host, store })()
+			const cleanup = processFragment({ element: host, store })
+			cleanup()
+			for (const el of host.querySelectorAll('[data-aero-processed]')) {
+				el.removeAttribute('data-aero-processed')
+			}
 		}
 
 		const cleanup = processFragment({ element: host, store })
