@@ -182,6 +182,17 @@ export function checkFeatureGates(
 		diagnostics.push(diagnostic)
 	}
 
+	if (!flags.hypermedia && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(text)) {
+		const actionRegex = /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/i
+		const diagnostic = new vscode.Diagnostic(
+			rangeForMatch(document, text, actionRegex),
+			'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
+			vscode.DiagnosticSeverity.Error
+		)
+		applyAeroDiagnosticIdentity(diagnostic, 'AERO_CONFIG', 'aero-config.md')
+		diagnostics.push(diagnostic)
+	}
+
 	const busyRegex = /\b(?:data-aero-|aero-)?busy\b\s*=\s*(['"])(.*?)\1/is
 	const busyMatch = text.match(busyRegex)
 	const stateBindings = flags.reactivity && flags.hypermedia ? collectStateBindings(text) : new Map<string, string>()

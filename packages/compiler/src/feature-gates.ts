@@ -121,6 +121,14 @@ export function validateFeatureGates(
 			file,
 		})
 	}
+
+	const hasBusyAttr = /\b(?:data-aero-|aero-)?busy\b\s*=/i.test(parsed.template)
+	if (hasBusyAttr && (options.reactivity === false || options.hypermedia === false)) {
+		throw new CompileError({
+			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
+			file,
+		})
+	}
 }
 
 function simpleIdentifier(expression: string): string | null {

@@ -87,6 +87,13 @@ describe('feature gates', () => {
 		).toThrow('Mixed hypermedia action expressions are not allowed')
 	})
 
+	it('rejects busy when feature flags are disabled without is:state', () => {
+		const html = '<button busy="{ isSaving }">Save</button>'
+		expect(() => compile(parse(html), { ...mockOptions, reactivity: false, hypermedia: false })).toThrow(
+			'`busy` requires both `reactivity: true` and `hypermedia: true`'
+		)
+	})
+
 	it('rejects busy references to missing state bindings', () => {
 		const html = `<script is:state>
 			let saved = false
