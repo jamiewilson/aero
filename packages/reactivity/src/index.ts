@@ -32,6 +32,7 @@ export {
 	bindReactiveSwitch,
 	AeroReactivity,
 	processFragment,
+	unsafeProcessFragment,
 	createDefaultHandlers,
 }
 export type { HydrationRoot, StateBindingSpec }

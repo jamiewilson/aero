@@ -94,6 +94,13 @@ describe('feature gates', () => {
 		)
 	})
 
+	it('rejects braced runtime-only data-aero attrs without is:state', () => {
+		const html = '<span data-aero-text="{ count }">x</span>'
+		expect(() => compile(parse(html), { ...mockOptions, reactivity: true })).toThrow(
+			'Braced reactive `data-aero-*` attributes require `<script is:state>`'
+		)
+	})
+
 	it('rejects busy references to missing state bindings', () => {
 		const html = `<script is:state>
 			let saved = false

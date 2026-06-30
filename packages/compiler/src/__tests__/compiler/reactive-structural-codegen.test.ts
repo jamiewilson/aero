@@ -92,7 +92,7 @@ describe('reactive structural codegen', () => {
 		const topLevelTextBinds = mountBlock.match(/textBinds:\s*(\[[^\]]*\])/)?.[1]
 		expect(topLevelTextBinds).toBe('[]')
 		expect(code).toContain('rowMounts:')
-		expect(code).toMatch(/rowMounts:[\s\S]*item\.name/)
+		expect(code).toContain('scope.item.name')
 		expect(code).toMatch(/function __aeroForRow_0[\s\S]*data-aero-text=\\"0\\"/)
 	})
 

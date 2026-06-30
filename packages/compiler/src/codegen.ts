@@ -218,7 +218,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				.join('\n')
 		: null
 	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
-	const mountFn =
+	const mountEmit =
 		ta.stateAnalysis !== null
 			? emitMountStateBindingsFunction(
 					ta.stateAnalysis,
@@ -241,8 +241,9 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	const prefixLines = [ta.importsCode, mountImportLine].filter(Boolean)
 	let output = prefixLines.length > 0 ? `${prefixLines.join('\n')}\n` : '\n'
 	if (reactivePropsMetadata) output += `${reactivePropsMetadata}\n`
+	if (mountEmit && mountEmit.preamble) output += `${mountEmit.preamble}\n\n`
 	output += renderFn
-	if (mountFn) output += `\n\n${mountFn}`
+	if (mountEmit) output += `\n\n${mountEmit.mountExport}`
 	return output
 }
 

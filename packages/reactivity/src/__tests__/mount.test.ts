@@ -72,6 +72,7 @@ describe('mountStateBindings', () => {
 
 		const store = new SignalStore()
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: target,
 			store,
 			bindings: [],
@@ -115,6 +116,7 @@ describe('mountStateBindings', () => {
 		} as unknown as Element
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: target,
 			store,
 			scope: rowScope,
@@ -143,6 +145,7 @@ describe('mountStateBindings', () => {
 		const childStore = new SignalStore()
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: childStore,
 			reactiveProps: { count: parentCount },
@@ -185,6 +188,7 @@ describe('mountStateBindings', () => {
 		const aero = {}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -234,6 +238,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -272,6 +277,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'title', derived: false, initExpr: "'Hello'", dependencies: [] }],
@@ -313,6 +319,7 @@ describe('mountStateBindings', () => {
 		const childMount = vi.fn(() => () => {})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: parentStore,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -360,6 +367,7 @@ describe('mountStateBindings', () => {
 		const childComponent = { mountStateBindings: childMount }
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [],
@@ -401,6 +409,7 @@ describe('mountStateBindings', () => {
 		})
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: parentStore,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -470,6 +479,7 @@ describe('mountStateBindings', () => {
 		const childComponent = { mountStateBindings: childMount }
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -535,6 +545,7 @@ describe('mountStateBindings', () => {
 		const childMount = vi.fn(() => () => {})
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -594,6 +605,7 @@ describe('mountStateBindings', () => {
 		const childModule = { default: vi.fn(), mountStateBindings: childMount }
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '2', dependencies: [] }],
@@ -651,6 +663,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: componentRoot,
 			store,
 			reactiveProps: { count: store.get('count') },
@@ -700,6 +713,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root: componentRoot,
 				store: new SignalStore(),
 				bindings: [],
@@ -735,6 +749,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root: componentRoot,
 				store: new SignalStore(),
 				bindings: [],
@@ -764,6 +779,7 @@ describe('mountStateBindings', () => {
 		const childStore = new SignalStore()
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store: childStore,
 			reactiveProps: {},
@@ -881,6 +897,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
@@ -929,6 +946,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 0 })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -961,6 +979,7 @@ describe('mountStateBindings', () => {
 		store.merge({ count: 1 })
 
 		mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [
@@ -992,6 +1011,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root,
 				store,
 				bindings: [
@@ -1062,6 +1082,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
@@ -1108,6 +1129,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'isSaving', derived: false, initExpr: 'false', dependencies: [] }],
@@ -1140,6 +1162,7 @@ describe('mountStateBindings', () => {
 
 		expect(() =>
 			mountStateBindings({
+				allowLegacyRuntimeCompile: true,
 				root,
 				store,
 				bindings: [{ name: 'isSaving', derived: false, initExpr: '"no"', dependencies: [] }],
@@ -1185,6 +1208,7 @@ describe('mountStateBindings', () => {
 		}
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root,
 			store,
 			bindings: [{ name: 'isSaving', derived: false, initExpr: 'false', dependencies: [] }],

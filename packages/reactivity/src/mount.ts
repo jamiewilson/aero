@@ -10,6 +10,13 @@ import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
 import { bindReactiveSwitch } from './structural/switch'
 import { compileScopeRead } from './scope-eval'
+import {
+	type CompiledEventHandler,
+	type ScopeReader,
+	type ScopeWriter,
+	unsafeCompileHandler,
+	unsafeCompileRead,
+} from './unsafe-compile'
 
 export type Cleanup = () => void
 
@@ -58,36 +65,49 @@ export interface MountStateBindingsOptions {
 	readonly store: SignalStore
 	readonly reactiveProps?: Record<string, { value: unknown }>
 	readonly bindings: readonly StateBindingSpec[]
-	readonly functionSources: readonly string[]
+	readonly functionSources?: readonly string[]
+	readonly installScopeFunctions?: (scope: StateScope) => void
+	/** @internal Test-only escape hatch for readExpr/handlerExpr strings. */
+	readonly allowLegacyRuntimeCompile?: boolean
 	/** When set, used instead of creating scope from store/bindings (e.g. keyed-for row scope). */
 	readonly scope?: StateScope
-	readonly textBinds: readonly { selector: string; readExpr: string }[]
+	readonly textBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
 	readonly eventBinds: readonly {
 		selector: string
 		event: string
-		handlerExpr: string
+		handler?: CompiledEventHandler
+		handlerExpr?: string
 		modifiers?: readonly string[]
 	}[]
 	readonly busyBinds?: readonly { selector: string; readExpr: string }[]
-	readonly showBinds?: readonly { selector: string; readExpr: string }[]
-	readonly htmlBinds?: readonly { selector: string; readExpr: string }[]
-	readonly classBinds?: readonly { selector: string; className: string; readExpr: string }[]
+	readonly showBinds?: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly htmlBinds?: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly classBinds?: readonly {
+		selector: string
+		className: string
+		read?: ScopeReader
+		readExpr?: string
+	}[]
 	readonly propertyBinds?: readonly {
 		selector: string
 		propertyName: string
-		readExpr: string
+		read?: ScopeReader
+		readExpr?: string
 	}[]
 	readonly modelBinds?: readonly {
 		selector: string
 		modelKind: 'value' | 'checked'
-		readExpr: string
-		writeExpr: string
+		read?: ScopeReader
+		write?: ScopeWriter
+		readExpr?: string
+		writeExpr?: string
 		readonly?: boolean
 	}[]
 	readonly ifBinds?: readonly {
 		selector: string
 		branches: readonly {
-			conditionExpr: string | null
+			condition?: ((scope: StateScope) => boolean) | null
+			conditionExpr?: string | null
 			render: (Aero: unknown) => string
 			mounts: MountBindingSubset
 		}[]
@@ -96,16 +116,21 @@ export interface MountStateBindingsOptions {
 		selector: string
 		binding: string
 		bindingNames: readonly string[]
-		itemsExpr: string
-		keyExpr: string
+		items?: (scope: StateScope) => unknown[]
+		key?: (scope: StateScope) => string | number
+		itemsExpr?: string
+		keyExpr?: string
+		destructureRow?: (item: unknown) => Record<string, unknown>
 		renderRow: (Aero: unknown) => string
 		rowMounts: MountBindingSubset
 	}[]
 	readonly switchBinds?: readonly {
 		selector: string
-		expression: string
+		discriminant?: (scope: StateScope) => unknown
+		expression?: string
 		cases: readonly {
-			comparandExprs: readonly string[]
+			comparands?: readonly ((scope: StateScope) => unknown)[]
+			comparandExprs?: readonly string[]
 			render: (Aero: unknown) => string
 			mounts: MountBindingSubset
 		}[]
@@ -128,27 +153,36 @@ export interface MountStateBindingsOptions {
 }
 
 export interface MountBindingSubset {
-	readonly textBinds: readonly { selector: string; readExpr: string }[]
+	readonly textBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
 	readonly eventBinds: readonly {
 		selector: string
 		event: string
-		handlerExpr: string
+		handler?: CompiledEventHandler
+		handlerExpr?: string
 		modifiers?: readonly string[]
 	}[]
 	readonly busyBinds: readonly { selector: string; readExpr: string }[]
-	readonly showBinds: readonly { selector: string; readExpr: string }[]
-	readonly htmlBinds: readonly { selector: string; readExpr: string }[]
-	readonly classBinds: readonly { selector: string; className: string; readExpr: string }[]
+	readonly showBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly htmlBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly classBinds: readonly {
+		selector: string
+		className: string
+		read?: ScopeReader
+		readExpr?: string
+	}[]
 	readonly propertyBinds: readonly {
 		selector: string
 		propertyName: string
-		readExpr: string
+		read?: ScopeReader
+		readExpr?: string
 	}[]
 	readonly modelBinds: readonly {
 		selector: string
 		modelKind: 'value' | 'checked'
-		readExpr: string
-		writeExpr: string
+		read?: ScopeReader
+		write?: ScopeWriter
+		readExpr?: string
+		writeExpr?: string
 		readonly?: boolean
 	}[]
 	readonly componentBinds: readonly {
@@ -198,6 +232,61 @@ function rewriteActionStateRefs(handlerExpr: string, signalNames: ReadonlySet<st
 	)
 }
 
+function wireScopeReader(
+	bind: { read?: ScopeReader; readExpr?: string },
+	scope: StateScope,
+	escapeHtml: ((value: unknown) => string) | undefined,
+	allowLegacyRuntimeCompile: boolean
+): () => unknown {
+	if (bind.read) {
+		return () => bind.read!(scope, escapeHtml)
+	}
+	if (allowLegacyRuntimeCompile && bind.readExpr) {
+		return unsafeCompileRead(bind.readExpr, scope, escapeHtml)
+	}
+	throw new Error('[aero] Compiled mounts must provide read functions (CSP-safe path).')
+}
+
+function wireEventHandler(
+	bind: { handler?: CompiledEventHandler; handlerExpr?: string },
+	scope: StateScope,
+	options: {
+		hypermediaRuntime?: HypermediaRuntimeLike
+		hypermediaTriggerRef?: HypermediaTriggerRef
+		store: SignalStore
+		bindings: readonly StateBindingSpec[]
+		allowLegacyRuntimeCompile: boolean
+	}
+): (this: Element, event: Event) => void {
+	if (bind.handler) {
+		return function (this: Element, event: Event) {
+			const triggerRef = options.hypermediaTriggerRef
+			if (triggerRef) triggerRef.current = this
+			try {
+				const actionScope = options.hypermediaRuntime
+					? createHypermediaActionScope(
+							options.hypermediaRuntime,
+							() => this,
+							name => getBooleanSignal(options.store, options.bindings, name)
+						)
+					: {}
+				bind.handler!(scope, actionScope, event, this)
+			} finally {
+				if (triggerRef) triggerRef.current = undefined
+			}
+		}
+	}
+	if (options.allowLegacyRuntimeCompile && bind.handlerExpr) {
+		return unsafeCompileHandler(bind.handlerExpr, scope, {
+			hypermediaRuntime: options.hypermediaRuntime,
+			store: options.store,
+			bindings: options.bindings,
+			hypermediaTriggerRef: options.hypermediaTriggerRef,
+		})
+	}
+	throw new Error('[aero] Compiled mounts must provide handler functions (CSP-safe path).')
+}
+
 function getBooleanSignal(store: SignalStore, bindings: readonly StateBindingSpec[], name: string): { value: boolean } {
 	const binding = bindings.find(item => item.name === name)
 	if (!binding) {
@@ -211,57 +300,6 @@ function getBooleanSignal(store: SignalStore, bindings: readonly StateBindingSpe
 		throw new Error(`[aero] Hypermedia state signal must be boolean: ${name}`)
 	}
 	return signal as { value: boolean }
-}
-
-function compileHandler(
-	handlerExpr: string,
-	scope: StateScope,
-	options: {
-		hypermediaRuntime?: HypermediaRuntimeLike
-		hypermediaTriggerRef?: HypermediaTriggerRef
-		store: SignalStore
-		bindings: readonly StateBindingSpec[]
-	}
-): (this: Element, event: Event) => void {
-	const signalNames = new Set(options.bindings.filter(binding => !binding.derived).map(binding => binding.name))
-	const rewrittenExpr = rewriteActionStateRefs(handlerExpr, signalNames)
-	const body = rewrittenExpr.trim().endsWith(';') ? rewrittenExpr.trim() : `${rewrittenExpr.trim()};`
-	return function (this: Element, event: Event) {
-		const triggerRef = options.hypermediaTriggerRef
-		if (triggerRef) triggerRef.current = this
-		try {
-			const actionScope = options.hypermediaRuntime
-				? createHypermediaActionScope(
-						options.hypermediaRuntime,
-						() => this,
-						name => getBooleanSignal(options.store, options.bindings, name)
-					)
-				: {}
-			// eslint-disable-next-line @typescript-eslint/no-implied-eval
-			const fn = new Function(
-				'scope',
-				'actions',
-				'event',
-				`return function() { with (scope) { with (actions) { with ({ event }) { ${body} } } } }`
-			)(scope, actionScope, event) as () => void
-			fn.call(this)
-		} finally {
-			if (triggerRef) triggerRef.current = undefined
-		}
-	}
-}
-
-function compileRead(
-	readExpr: string,
-	scope: StateScope,
-	escapeHtml?: (value: unknown) => string
-): () => unknown {
-	const params = escapeHtml ? ['scope', 'escapeHtml'] : ['scope']
-	const args = escapeHtml ? [scope, escapeHtml] : [scope]
-	// eslint-disable-next-line @typescript-eslint/no-implied-eval
-	return new Function(...params, `return function() { with (scope) { return (${readExpr}); } }`)(
-		...args
-	) as () => unknown
 }
 
 function registerBusyBinding(
@@ -452,7 +490,7 @@ function mountBindingSubset(
 		root,
 		store: options.store,
 		bindings: options.bindings,
-		functionSources: [],
+		allowLegacyRuntimeCompile: options.allowLegacyRuntimeCompile,
 		textBinds: subset.textBinds,
 		eventBinds: subset.eventBinds,
 		busyBinds: subset.busyBinds,
@@ -466,6 +504,7 @@ function mountBindingSubset(
 		hypermediaRuntime: options.hypermediaRuntime,
 		hypermediaTriggerRef: options.hypermediaTriggerRef,
 		Aero: options.Aero,
+		allowLegacyRuntimeCompile: options.allowLegacyRuntimeCompile,
 		scope,
 	}
 	cleanups.push(mountStateBindings(subsetOptions))
@@ -477,6 +516,7 @@ function mountShowHtmlClassPropertyModel(
 	scope: StateScope,
 	cleanups: Cleanup[]
 ): void {
+	const allowLegacy = options.allowLegacyRuntimeCompile === true
 	for (const bind of options.showBinds ?? []) {
 		const target = queryBindTarget(options.root, bind.selector, options.componentBinds)
 		if (!target || !(target instanceof HTMLElement)) {
@@ -484,7 +524,9 @@ function mountShowHtmlClassPropertyModel(
 			throw new Error(`[aero] Missing reactive show target: ${bind.selector}`)
 		}
 		const originalDisplay = target.style.display
-		cleanups.push(bindShow(target, compileRead(bind.readExpr, scope), originalDisplay))
+		cleanups.push(
+			bindShow(target, wireScopeReader(bind, scope, undefined, allowLegacy), originalDisplay)
+		)
 	}
 
 	for (const bind of options.htmlBinds ?? []) {
@@ -493,7 +535,7 @@ function mountShowHtmlClassPropertyModel(
 			if (ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive html target: ${bind.selector}`)
 		}
-		cleanups.push(bindHtml(target, compileRead(bind.readExpr, scope)))
+		cleanups.push(bindHtml(target, wireScopeReader(bind, scope, undefined, allowLegacy)))
 	}
 
 	for (const bind of options.classBinds ?? []) {
@@ -502,7 +544,9 @@ function mountShowHtmlClassPropertyModel(
 			if (ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive class target: ${bind.selector}`)
 		}
-		cleanups.push(bindClassToggle(target, bind.className, compileRead(bind.readExpr, scope)))
+		cleanups.push(
+			bindClassToggle(target, bind.className, wireScopeReader(bind, scope, undefined, allowLegacy))
+		)
 	}
 
 	for (const bind of options.propertyBinds ?? []) {
@@ -511,7 +555,9 @@ function mountShowHtmlClassPropertyModel(
 			if (ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive property target: ${bind.selector}`)
 		}
-		cleanups.push(bindProperty(target, bind.propertyName, compileRead(bind.readExpr, scope)))
+		cleanups.push(
+			bindProperty(target, bind.propertyName, wireScopeReader(bind, scope, undefined, allowLegacy))
+		)
 	}
 
 	for (const bind of options.modelBinds ?? []) {
@@ -524,19 +570,26 @@ function mountShowHtmlClassPropertyModel(
 			if (!target && ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive model target: ${bind.selector}`)
 		}
-		const read = compileRead(bind.readExpr, scope)
+		const read = wireScopeReader(bind, scope, undefined, allowLegacy)
+		const write = bind.write
+			? (value: unknown) => bind.write!(scope, value)
+			: allowLegacy && bind.writeExpr
+				? (value: unknown) => {
+						// eslint-disable-next-line @typescript-eslint/no-implied-eval
+						new Function('scope', '$value', `with (scope) { ${bind.writeExpr} = $value; }`)(
+							scope,
+							value
+						)
+					}
+				: () => {
+						throw new Error('[aero] Compiled mounts must provide model write functions (CSP-safe path).')
+					}
 		cleanups.push(
 			bindFormModel({
 				target,
 				kind: bind.modelKind,
 				read,
-				write: value => {
-					// eslint-disable-next-line @typescript-eslint/no-implied-eval
-					new Function('scope', '$value', `with (scope) { ${bind.writeExpr} = $value; }`)(
-						scope,
-						value
-					)
-				},
+				write,
 				readonly: bind.readonly,
 			})
 		)
@@ -552,6 +605,7 @@ function toKey(value: unknown): string | number {
  * Wire compiled reactive text and base event handlers against a hydrated signal store.
  */
 export function mountStateBindings(options: MountStateBindingsOptions): Cleanup {
+	const allowLegacyRuntimeCompile = options.allowLegacyRuntimeCompile === true
 	const hypermediaTriggerRef = options.hypermediaTriggerRef ?? { current: undefined }
 	const hypermediaScopeActions = options.hypermediaRuntime
 		? createHypermediaActionScope(
@@ -566,6 +620,8 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			store: options.store,
 			bindings: options.bindings,
 			functionSources: options.functionSources,
+			installScopeFunctions: options.installScopeFunctions,
+			allowLegacyRuntimeCompile,
 			reactiveProps: options.reactiveProps,
 			actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 			scopeConstants: options.scopeConstants,
@@ -577,6 +633,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		hypermediaTriggerRef,
 		store: options.store,
 		bindings: options.bindings,
+		allowLegacyRuntimeCompile,
 	}
 
 	for (const bind of options.textBinds) {
@@ -585,7 +642,9 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			if (ownsComponentMountRoot(options.root)) continue
 			throw new Error(`[aero] Missing reactive text target: ${bind.selector}`)
 		}
-		cleanups.push(bindText(target, compileRead(bind.readExpr, scope, options.escapeHtml)))
+		cleanups.push(
+			bindText(target, wireScopeReader(bind, scope, options.escapeHtml, allowLegacyRuntimeCompile))
+		)
 	}
 
 	for (const bind of options.eventBinds) {
@@ -598,7 +657,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			bindEvent(
 				target as Element,
 				bind.event,
-				compileHandler(bind.handlerExpr, scope, handlerOptions),
+				wireEventHandler(bind, scope, handlerOptions),
 				bind.modifiers ?? []
 			)
 		)
@@ -629,6 +688,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 				anchor,
 				scope,
 				branches: bind.branches.map(branch => ({
+					condition: branch.condition ?? undefined,
 					conditionExpr: branch.conditionExpr,
 					renderHtml: () => branch.render(options.Aero),
 					mountBranch: branchRoot => {
@@ -654,12 +714,21 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			bindKeyedFor({
 				container,
 				scope,
+				items: bind.items,
+				key: bind.key,
 				itemsExpr: bind.itemsExpr,
 				keyExpr: bind.keyExpr,
 				binding: bind.binding,
 				bindingNames: bind.bindingNames,
+				destructureRow: bind.destructureRow,
 				renderRow: rowScope => {
-					const keyReader = compileScopeRead(bind.keyExpr, rowScope)
+					const keyReader = bind.key
+						? () => bind.key!(rowScope)
+						: bind.keyExpr
+							? compileScopeRead(bind.keyExpr, rowScope)
+							: () => {
+									throw new Error('[aero] Compiled for loop requires a key reader.')
+								}
 					return {
 						key: toKey(keyReader()),
 						renderHtml: () => bind.renderRow(options.Aero),
@@ -687,8 +756,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			bindReactiveSwitch({
 				anchor,
 				scope,
+				discriminant: bind.discriminant,
 				expression: bind.expression,
 				cases: bind.cases.map(branch => ({
+					comparands: branch.comparands,
 					comparandExprs: branch.comparandExprs,
 					renderHtml: () => branch.render(options.Aero),
 					mountBranch: branchRoot => {

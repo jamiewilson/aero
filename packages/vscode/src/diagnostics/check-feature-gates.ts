@@ -20,6 +20,8 @@ interface CachedFlags extends FeatureFlags {
 const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/script>/i
+const RUNTIME_BRACED_ATTR_RE =
+	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
 
 const flagsCache = new Map<string, CachedFlags>()
 
@@ -176,6 +178,16 @@ export function checkFeatureGates(
 		const diagnostic = new vscode.Diagnostic(
 			rangeForMatch(document, text, IS_STATE_SCRIPT_RE),
 			'`<script is:state>` requires `reactivity: true` in aero.config.',
+			vscode.DiagnosticSeverity.Error
+		)
+		applyAeroDiagnosticIdentity(diagnostic, 'AERO_CONFIG', 'aero-config.md')
+		diagnostics.push(diagnostic)
+	}
+
+	if (!IS_STATE_SCRIPT_RE.test(text) && RUNTIME_BRACED_ATTR_RE.test(text)) {
+		const diagnostic = new vscode.Diagnostic(
+			rangeForMatch(document, text, RUNTIME_BRACED_ATTR_RE),
+			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript.',
 			vscode.DiagnosticSeverity.Error
 		)
 		applyAeroDiagnosticIdentity(diagnostic, 'AERO_CONFIG', 'aero-config.md')

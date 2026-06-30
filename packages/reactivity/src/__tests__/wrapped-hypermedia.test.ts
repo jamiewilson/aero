@@ -25,6 +25,7 @@ describe('wrapped GET hypermedia', () => {
 		store.merge({ isLoading: false })
 
 		const cleanup = mountStateBindings({
+			allowLegacyRuntimeCompile: true,
 			root: document.body,
 			store,
 			bindings: [
