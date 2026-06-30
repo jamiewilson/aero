@@ -23,6 +23,7 @@ import {
 	rewriteFunctionSourceForScope,
 	rewriteStmtForScope,
 } from './scope-expr-codegen'
+import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 
 function stripStructuralBranchOutVars(nodes: IRNode[]): IRNode[] {
 	return nodes.map(node => stripStructuralBranchOutVar(node))
@@ -219,17 +220,6 @@ function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
 	return JSON.stringify(analysis.functionSources)
 }
 
-function rewriteActionStateRefsForCodegen(handlerExpr: string, signalNames: ReadonlySet<string>): string {
-	if (signalNames.size === 0) return handlerExpr
-	return handlerExpr.replace(
-		/(\bstate\s*:\s*)([A-Za-z_$][\w$]*)/g,
-		(match, prefix: string, name: string) => {
-			if (!signalNames.has(name)) return match
-			return `${prefix}__aeroSignal(${JSON.stringify(name)})`
-		}
-	)
-}
-
 function emitCompiledMountFunctions(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
@@ -292,7 +282,7 @@ function emitCompiledMountFunctions(
 		)
 	}
 	for (const bind of binds.eventBinds) {
-		const body = rewriteActionStateRefsForCodegen(bind.handlerExpr, signalNames)
+		const body = rewriteHypermediaActionStateRefs(bind.handlerExpr, signalNames)
 		const stmt = body.trim().endsWith(';') ? body.trim() : `${body.trim()};`
 		lines.push(
 			`function __aeroEvent_${bind.bindId}(scope, actions, event, self) { ${scopeStmt(stmt, true)} }`

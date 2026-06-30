@@ -39,6 +39,7 @@ export {
 	EVENT_HANDLER_SCOPE_DECL,
 	type TemplateInterpolationSite,
 } from './template-interpolation-sites'
+export { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 
 export {
 	collectComponentReactivePropMetadata,

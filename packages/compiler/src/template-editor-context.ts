@@ -31,6 +31,8 @@ export type TemplateEditorAmbient = {
 	readonly bindingNames: ReadonlySet<string>
 	/** Non-derived `is:state` bindings that are writable in event handlers. */
 	readonly writableStateBindingNames: ReadonlySet<string>
+	/** Non-derived `is:state` bindings eligible for hypermedia `state:` signal rewrite. */
+	readonly ownedStateBindingNames: ReadonlySet<string>
 	/** Reactive props that are intentionally readonly but may need Aero-specific write diagnostics. */
 	readonly readonlyReactivePropNames: ReadonlySet<string>
 }
@@ -56,6 +58,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			: []
 	const bindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 	const writableStateBindingNames = new Set<string>()
+	const ownedStateBindingNames = new Set<string>()
 	const readonlyReactivePropNames = new Set<string>()
 	for (const stateBody of stateScriptBodies) {
 		collectBindingsFromBuildScriptContent(stateBody, bindingNames)
@@ -63,6 +66,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 			const analysis = analyzeStateScript(stateBody)
 			for (const b of analysis.bindings) {
 				bindingNames.add(b.name)
+				if (!b.derived) ownedStateBindingNames.add(b.name)
 				if (!b.derived && (!b.reactiveProp || b.bindable)) writableStateBindingNames.add(b.name)
 				if (b.reactiveProp && !b.bindable) readonlyReactivePropNames.add(b.name)
 			}
@@ -77,6 +81,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 		typeDeclarationTexts,
 		bindingNames,
 		writableStateBindingNames,
+		ownedStateBindingNames,
 		readonlyReactivePropNames,
 	}
 }

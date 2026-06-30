@@ -12,6 +12,7 @@ import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-
 import { isDirectiveAttr } from './directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
+import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
 
@@ -53,6 +54,7 @@ interface HypermediaActionOptions {
 	ariaBusy?: boolean
 	state?: { value: boolean }
 }
+declare function __aeroSignal(name: string): { value: boolean }
 declare function GET(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
 declare function POST(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
 declare function PUT(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
@@ -308,11 +310,15 @@ export function buildTemplateInterpolationVirtualText(
 	const head = preamble + binderDecl
 
 	if (site.isEventHandler) {
+		const handlerExpr = rewriteHypermediaActionStateRefs(
+			site.expression,
+			ambient.ownedStateBindingNames
+		)
 		const virtualText =
 			head +
 			EVENT_HANDLER_SCOPE_DECL +
-			site.expression +
-			(site.expression.trimEnd().endsWith(';') ? '' : ';')
+			handlerExpr +
+			(handlerExpr.trimEnd().endsWith(';') ? '' : ';')
 		return {
 			virtualText,
 			expressionOffsetInVirtual: head.length + EVENT_HANDLER_SCOPE_DECL.length,
