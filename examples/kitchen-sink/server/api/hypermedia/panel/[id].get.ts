@@ -7,6 +7,5 @@ const panels: Record<string, string> = {
 
 export default defineHandler(event => {
 	const id = getRouterParam(event, 'id') ?? 'a'
-	const body = panels[id] ?? `Unknown panel "${id}".`
-	return `<p class="secondary">${body}</p>`
+	return panels[id] ?? `Unknown panel "${id}".`
 })

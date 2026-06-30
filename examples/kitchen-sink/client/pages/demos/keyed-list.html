@@ -39,11 +39,7 @@
 		</div>
 	</section>
 	<ul>
-		<li
-			class="list-item"
-			for="{ const item of items }"
-			key="{ item.id }"
-			text="{ item.id.slice(-8) }"></li>
+		<li for="{ const item of items }" key="{ item.id }" text="{ item.id.slice(-8) }"></li>
 
 		<style>
 			@scope {
@@ -57,7 +53,6 @@
 
 					li {
 						view-transition-name: match-element;
-						view-transition-class: list-item;
 					}
 				}
 			}
