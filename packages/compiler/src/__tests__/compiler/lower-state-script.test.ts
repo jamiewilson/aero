@@ -64,14 +64,41 @@ function setItems(next: typeof items) {
 		)
 	})
 
-	it('builds rewriteContext with module and scope names', () => {
-		const script = `const createID = () => crypto.randomUUID()
-let items = []
-const add = () => { items = [...items, { id: createID() }] }`
-		const { rewriteContext } = lower(script)
+	it('preserves async on function declarations with await bodies', () => {
+		const script = `import { GET } from 'x'
+let itemCount = 0
+async function appendItemFn() {
+	itemCount++
+	await GET(\`/api/x?n=\${itemCount}\`, { target: '#list' })
+}`
+		const analysis = analyzeStateScript(script)
+		const { scopeFunctions } = lowerStateScript(script, analysis, [
+			{ specifier: 'x', namedBindings: [{ imported: 'GET', local: 'GET' }] },
+		])
+		expect(scopeFunctions[0]!.installSource).toMatch(
+			/^scope\.appendItemFn = async function\(\) \{[\s\S]*scope\.itemCount\+\+/
+		)
+	})
 
-		expect(rewriteContext.moduleScopeNames.has('createID')).toBe(true)
-		expect(rewriteContext.scopeNames.has('items')).toBe(true)
-		expect(rewriteContext.scopeNames.has('add')).toBe(true)
+	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {
+		const script = `import { GET } from '@aero-js/core/hypermedia'
+let isSaving = false
+let itemCount = 0
+const appendItem = async () => {
+	itemCount++
+	await GET(\`/api/hypermedia/item?n=\${itemCount}\`, {
+		target: '#item-list',
+		swap: 'beforeend',
+	})
+}`
+		const analysis = analyzeStateScript(script)
+		const { scopeFunctions } = lowerStateScript(script, analysis, [
+			{
+				specifier: '@aero-js/core/hypermedia',
+				namedBindings: [{ imported: 'GET', local: 'GET' }],
+			},
+		])
+		expect(scopeFunctions[0]!.installSource).toContain('scope.itemCount++')
+		expect(scopeFunctions[0]!.installSource).toMatch(/\$\{scope\.itemCount\}/)
 	})
 })

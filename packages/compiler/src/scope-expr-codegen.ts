@@ -348,13 +348,18 @@ function parseWrappedStatements(stmt: string): {
 	offset: number
 } | null {
 	const trimmed = stmt.trim()
+	if (!trimmed) return null
 	const normalized = trimmed.endsWith(';') ? trimmed : `${trimmed};`
-	const source = `function __aeroStmt() { ${normalized} }`
-	const parsed = parseSync(FILENAME, source, PARSE_OPTS)
-	if (parsed.errors.length > 0) return null
-	const stmtStart = source.indexOf(trimmed)
-	if (stmtStart < 0) return null
-	return { program: parsed.program, source: trimmed, offset: stmtStart }
+	for (const asyncFn of [false, true] as const) {
+		const prefix = asyncFn ? 'async function __aeroStmt() { ' : 'function __aeroStmt() { '
+		const source = `${prefix}${normalized} }`
+		const parsed = parseSync(FILENAME, source, PARSE_OPTS)
+		if (parsed.errors.length > 0) continue
+		const stmtStart = source.indexOf(trimmed)
+		if (stmtStart < 0) continue
+		return { program: parsed.program, source: trimmed, offset: stmtStart }
+	}
+	return null
 }
 
 export function rewriteExprForScope(

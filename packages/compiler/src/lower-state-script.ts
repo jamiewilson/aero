@@ -220,9 +220,10 @@ function lowerScopeFunction(
 	const inner = source.slice(rel(body.start) + 1, rel(body.end) - 1)
 	const rewrittenInner = rewriteStmtForScope(inner, ctx, rewriteOptions)
 	const params = [...paramNames].join(', ')
+	const asyncPrefix = fn.async === true ? 'async ' : ''
 
 	if (fn.type === 'FunctionDeclaration' || fn.type === 'FunctionExpression') {
-		return `scope.${name} = function(${params}) { ${rewrittenInner.trim()} }`
+		return `scope.${name} = ${asyncPrefix}function(${params}) { ${rewrittenInner.trim()} }`
 	}
 
 	const rewrittenInit =

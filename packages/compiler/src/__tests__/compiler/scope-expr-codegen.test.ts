@@ -63,6 +63,18 @@ describe('rewriteStmtForScope', () => {
 		).toBe('scope.items = [...scope.items, { id: scope.id }]')
 	})
 
+	it('rewrites await bodies in async arrow helpers', () => {
+		const names = new Set(['itemCount', 'GET'])
+		const stmt = `itemCount++
+await GET(\`/api/x?n=\${itemCount}\`, { target: '#list' })`
+		expect(
+			rewriteStmtForScope(stmt, names, {
+				qualifyAllFreeIdentifiers: true,
+				moduleScopeNames: new Set(['GET']),
+			})
+		).toContain('scope.itemCount++')
+	})
+
 	it('does not rewrite locals shadowed by const declarations', () => {
 		const names = new Set(['items', 'withTransition'])
 		expect(
