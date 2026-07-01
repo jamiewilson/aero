@@ -61,4 +61,17 @@ describe('reactive binding handlers codegen', () => {
 		expect(code).toContain('data-aero-model-value="0"')
 		expect(code).toContain('modelBinds:')
 	})
+
+	it('allows reactive class bindings that call const state helpers', () => {
+		const html = `<script is:state>
+			let email = ''
+			let agree = false
+			const isComplete = () => email.length > 0 && agree
+		</script>
+		<form class:is-valid="{ isComplete() }"></form>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('data-aero-class-is-valid="0"')
+		expect(code).toContain('classBinds:')
+	})
 })

@@ -22,10 +22,16 @@ export interface StateScriptDiagnostic {
 	range?: [number, number]
 }
 
+export interface StateModuleHelper {
+	name: string
+	source: string
+}
+
 export interface StateScriptAnalysisResult {
 	bindings: StateBinding[]
 	diagnostics: StateScriptDiagnostic[]
 	functionSources: string[]
+	moduleHelpers: StateModuleHelper[]
 }
 
 const STATE_SCRIPT_FILENAME = 'state.ts'
@@ -58,14 +64,43 @@ function collectIdentifiersFromInit(initNode: unknown): Set<string> {
 	return names
 }
 
-function topLevelVariableDeclarators(program: any): Array<{ id: any; init: any; range?: [number, number] }> {
-	const out: Array<{ id: any; init: any; range?: [number, number] }> = []
+function topLevelVariableDeclarators(
+	program: any
+): Array<{ id: any; init: any; range?: [number, number]; kind: 'const' | 'let' | 'var' }> {
+	const out: Array<{ id: any; init: any; range?: [number, number]; kind: 'const' | 'let' | 'var' }> = []
 	for (const stmt of program?.body ?? []) {
 		let declaration = stmt
 		if (stmt?.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration
 		if (declaration?.type !== 'VariableDeclaration') continue
+		const kind = declaration.kind as 'const' | 'let' | 'var'
 		for (const d of declaration.declarations ?? []) {
-			out.push({ id: d.id, init: d.init, range: d.range })
+			out.push({ id: d.id, init: d.init, range: d.range, kind })
+		}
+	}
+	return out
+}
+
+function isFunctionInitializer(init: unknown): boolean {
+	const expr = unwrapExpression(init as { type?: string; expression?: unknown })
+	return expr?.type === 'ArrowFunctionExpression' || expr?.type === 'FunctionExpression'
+}
+
+function topLevelConstModuleHelpers(
+	program: any,
+	script: string
+): StateModuleHelper[] {
+	const out: StateModuleHelper[] = []
+	for (const stmt of program?.body ?? []) {
+		let declaration = stmt
+		if (stmt?.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration
+		if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') continue
+		for (const d of declaration.declarations ?? []) {
+			if (d.id?.type !== 'Identifier' || typeof d.id.name !== 'string') continue
+			if (!isFunctionInitializer(d.init)) continue
+			out.push({
+				name: d.id.name,
+				source: `const ${d.id.name} = ${initExprSource(script, d.init)}`,
+			})
 		}
 	}
 	return out
@@ -192,7 +227,9 @@ function reactivePropBindingsFromDeclarator(script: string, declarator: { id: an
 }
 
 export function analyzeStateScript(script: string): StateScriptAnalysisResult {
-	if (!script.trim()) return { bindings: [], diagnostics: [], functionSources: [] }
+	if (!script.trim()) {
+		return { bindings: [], diagnostics: [], functionSources: [], moduleHelpers: [] }
+	}
 
 	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
 	if (parsed.errors.length > 0) {
@@ -204,18 +241,18 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 
 	const declarators = topLevelVariableDeclarators(parsed.program)
 	const reactivePropBindings = declarators.flatMap(d => reactivePropBindingsFromDeclarator(script, d))
-	const allNames = new Set<string>()
+	const writableStateNames = new Set<string>()
 	for (const d of declarators) {
 		if (d.id?.type === 'Identifier' && typeof d.id.name === 'string') {
-			allNames.add(d.id.name)
+			if (d.kind === 'let' || d.kind === 'var') writableStateNames.add(d.id.name)
 		}
 	}
-	for (const binding of reactivePropBindings) allNames.add(binding.name)
 
 	const bindings: StateBinding[] = [...reactivePropBindings]
 	for (const d of declarators) {
 		if (d.id?.type !== 'Identifier' || typeof d.id.name !== 'string') continue
-		const deps = [...collectIdentifiersFromInit(d.init)].filter(dep => allNames.has(dep))
+		if (d.kind === 'const' && isFunctionInitializer(d.init)) continue
+		const deps = [...collectIdentifiersFromInit(d.init)].filter(dep => writableStateNames.has(dep))
 		bindings.push({
 			name: d.id.name,
 			derived: deps.length > 0,
@@ -287,5 +324,17 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		bindings,
 		diagnostics,
 		functionSources: topLevelFunctionDeclarations(parsed.program, script),
+		moduleHelpers: topLevelConstModuleHelpers(parsed.program, script),
 	}
+}
+
+export function collectStateReferenceNames(analysis: StateScriptAnalysisResult): Set<string> {
+	const names = new Set<string>()
+	for (const binding of analysis.bindings) names.add(binding.name)
+	for (const helper of analysis.moduleHelpers) names.add(helper.name)
+	for (const source of analysis.functionSources) {
+		const match = /^function\s+(\w+)/.exec(source.trim())
+		if (match) names.add(match[1]!)
+	}
+	return names
 }

@@ -16,6 +16,7 @@ const RESERVED = new Set([
 	'self',
 	'$value',
 	'escapeHtml',
+	'__out',
 	'true',
 	'false',
 	'null',
@@ -52,6 +53,8 @@ const RESERVED = new Set([
 	'Intl',
 	'Reflect',
 	'Proxy',
+	'crypto',
+	'globalThis',
 ])
 
 export const HYPERMEDIA_ACTION_NAMES = new Set(['POST', 'GET', 'PUT', 'PATCH', 'DELETE'])
@@ -154,7 +157,8 @@ function collectRewrites(
 	program: unknown,
 	scopeNames: ReadonlySet<string>,
 	actionsNames: ReadonlySet<string> | undefined,
-	sourceOffset: number
+	sourceOffset: number,
+	moduleScopeNames?: ReadonlySet<string>
 ): Array<{ start: number; end: number; text: string }> {
 	const rewrites: Array<{ start: number; end: number; text: string }> = []
 	const shadowStack: Set<string>[] = [new Set()]
@@ -197,6 +201,39 @@ function collectRewrites(
 			return 'skip-children'
 		}
 
+		if (node.type === 'VariableDeclarator') {
+			walkAst(node.init, visit, node, 'init')
+			collectPatternNames(node.id, shadowStack[shadowStack.length - 1]!)
+			return 'skip-children'
+		}
+
+		if (node.type === 'Property' && node.shorthand === true && node.key?.type === 'Identifier') {
+			const name = node.key.name
+			if (
+				!RESERVED.has(name) &&
+				!activeShadows().has(name) &&
+				!moduleScopeNames?.has(name)
+			) {
+				const range = nodeRange(node)
+				if (range) {
+					if (actionsNames?.has(name)) {
+						rewrites.push({
+							start: range[0] - sourceOffset,
+							end: range[1] - sourceOffset,
+							text: `${name}: actions.${name}`,
+						})
+					} else if (scopeNames.has(name)) {
+						rewrites.push({
+							start: range[0] - sourceOffset,
+							end: range[1] - sourceOffset,
+							text: `${name}: scope.${name}`,
+						})
+					}
+				}
+			}
+			return 'skip-children'
+		}
+
 		if (node.type === 'Identifier' && typeof node.name === 'string') {
 			const name = node.name
 			if (RESERVED.has(name)) return
@@ -204,6 +241,7 @@ function collectRewrites(
 			if (isObjectLiteralKeyIdentifier(node, parent)) return
 			if (isBindingIdentifier(node, parent, key)) return
 			if (activeShadows().has(name)) return
+			if (moduleScopeNames?.has(name)) return
 
 			const range = nodeRange(node)
 			if (!range) return
@@ -268,20 +306,25 @@ function parseWrappedStatements(stmt: string): {
 export function rewriteExprForScope(
 	expr: string,
 	scopeNames: ReadonlySet<string>,
-	options?: { actionsNames?: ReadonlySet<string>; qualifyAllFreeIdentifiers?: boolean }
+	options?: {
+		actionsNames?: ReadonlySet<string>
+		qualifyAllFreeIdentifiers?: boolean
+		moduleScopeNames?: ReadonlySet<string>
+	}
 ): string {
 	const trimmed = expr.trim()
 	if (!trimmed) return expr
 	const wrapped = parseWrappedExpression(trimmed)
 	if (!wrapped) return expr
 	const effectiveScopeNames = options?.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset)
+		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset, options.moduleScopeNames)
 		: scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
 		effectiveScopeNames,
 		options?.actionsNames,
-		wrapped.offset
+		wrapped.offset,
+		options?.moduleScopeNames
 	)
 	return applyRewrites(wrapped.source, rewrites)
 }
@@ -289,10 +332,13 @@ export function rewriteExprForScope(
 function mergeQualifyAllScopeNames(
 	scopeNames: ReadonlySet<string>,
 	program: unknown,
-	sourceOffset: number
+	sourceOffset: number,
+	moduleScopeNames?: ReadonlySet<string>
 ): Set<string> {
 	const names = new Set(scopeNames)
-	collectFreeIdentifiers(program, sourceOffset).forEach(name => names.add(name))
+	collectFreeIdentifiers(program, sourceOffset).forEach(name => {
+		if (!moduleScopeNames?.has(name)) names.add(name)
+	})
 	return names
 }
 
@@ -344,22 +390,31 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 export function rewriteStmtForScope(
 	stmt: string,
 	scopeNames: ReadonlySet<string>,
-	options?: { actionsNames?: ReadonlySet<string>; qualifyAllFreeIdentifiers?: boolean }
+	options?: {
+		actionsNames?: ReadonlySet<string>
+		qualifyAllFreeIdentifiers?: boolean
+		moduleScopeNames?: ReadonlySet<string>
+	}
 ): string {
 	const trimmed = stmt.trim()
 	if (!trimmed) return stmt
 	const wrapped = parseWrappedStatements(trimmed)
 	if (!wrapped) return stmt
 	const effectiveScopeNames = options?.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset)
+		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset, options.moduleScopeNames)
 		: scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
 		effectiveScopeNames,
 		options?.actionsNames,
-		wrapped.offset
+		wrapped.offset,
+		options?.moduleScopeNames
 	)
 	return applyRewrites(wrapped.source, rewrites)
+}
+
+export function collectModuleHelperNames(analysis: StateScriptAnalysisResult): Set<string> {
+	return new Set(analysis.moduleHelpers.map(helper => helper.name))
 }
 
 export function collectMountScopeNames(
@@ -382,11 +437,17 @@ export function collectMountScopeNames(
 
 export function rewriteFunctionSourceForScope(
 	source: string,
-	scopeNames: ReadonlySet<string>
+	scopeNames: ReadonlySet<string>,
+	options?: {
+		qualifyAllFreeIdentifiers?: boolean
+		moduleScopeNames?: ReadonlySet<string>
+	}
 ): string {
 	const match = /^function\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*)\}\s*$/.exec(source.trim())
-	if (!match) return rewriteStmtForScope(source, scopeNames)
+	if (!match) {
+		return rewriteStmtForScope(source, scopeNames, options)
+	}
 	const [, name, params, body] = match
-	const rewrittenBody = rewriteStmtForScope(body, scopeNames)
+	const rewrittenBody = rewriteStmtForScope(body, scopeNames, options)
 	return `scope.${name} = function(${params}) { ${rewrittenBody} }`
 }
