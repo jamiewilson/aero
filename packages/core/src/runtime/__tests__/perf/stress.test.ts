@@ -10,10 +10,7 @@ import { SignalStore } from '@aero-js/reactivity'
 
 const baseline = JSON.parse(
 	readFileSync(
-		resolve(
-			dirname(fileURLToPath(import.meta.url)),
-			'../../../../../../_reference/plans/Reactivity-Hypermedia/perf-baseline.json'
-		),
+		resolve(dirname(fileURLToPath(import.meta.url)), 'perf-baseline.json'),
 		'utf8'
 	)
 ) as {
