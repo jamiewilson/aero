@@ -22,6 +22,10 @@ export function hasStateScript(parsed: ParsedDocument): boolean {
 	return parsed.scriptBlocks.some(block => /\bis:state\b/i.test(block.attrs))
 }
 
+export function hasBuildScript(parsed: ParsedDocument): boolean {
+	return parsed.scriptBlocks.some(block => block.kind === 'build')
+}
+
 /** Allowed globals that are always available in templates. */
 const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'site',
