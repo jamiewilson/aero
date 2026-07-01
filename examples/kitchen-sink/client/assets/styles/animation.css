@@ -18,4 +18,18 @@
 			opacity: 0;
 		}
 	}
+
+	@keyframes slide-in-from-right {
+		from {
+			opacity: 0;
+			transform: translateX(2em);
+		}
+	}
+
+	@keyframes slide-out-to-left {
+		to {
+			opacity: 0;
+			transform: translateX(-2em);
+		}
+	}
 }

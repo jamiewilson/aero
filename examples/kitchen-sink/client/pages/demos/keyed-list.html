@@ -1,61 +1,100 @@
 <script is:build>
 	import base from '@layouts/base.html'
-
-	const initialItems = [
-		{ id: crypto.randomUUID() },
-		{ id: crypto.randomUUID() },
-		{ id: crypto.randomUUID() },
-	]
 </script>
 
 <script is:state>
-	import { withTransition } from '@scripts/utils/withTransition'
+	import { withTransition } from '@scripts/utils/withTransition.ts'
 
-	let items = initialItems
+	const createID = () => crypto.randomUUID().split('-').pop()
+	let items = [{ id: createID() }, { id: createID() }, { id: createID() }]
 
-	function addItem() {
-		const id = crypto.randomUUID()
+	function add() {
+		const id = createID()
 		withTransition(() => (items = [...items, { id }]))
 	}
 
-	function removeFirst() {
+	function remove() {
 		if (items.length === 0) return
 		withTransition(() => (items = items.slice(1)))
 	}
 
-	function reverseItems() {
+	function addRandom() {
+		const id = createID()
+		const index = Math.floor(Math.random() * items.length)
+		withTransition(() => (items = [...items.slice(0, index), { id }, ...items.slice(index)]))
+	}
+
+	function removeRandom() {
+		const index = Math.floor(Math.random() * items.length)
+		withTransition(() => (items = [...items.slice(0, index), ...items.slice(index + 1)]))
+	}
+
+	function reverse() {
 		withTransition(() => (items = [...items].reverse()))
+	}
+
+	function shuffle() {
+		withTransition(() => (items = [...items].sort(() => Math.random() - 0.5)))
 	}
 </script>
 
 <base-layout title="Keyed list">
-	<section class="v-stack">
-		<p class="secondary">Keyed reactive <code>for</code> loop with <code>key</code></p>
-
-		<div class="h-stack">
-			<button on:click="{ addItem() }">Add</button>
-			<button on:click="{ removeFirst() }">Remove first</button>
-			<button on:click="{ reverseItems() }">Reverse</button>
+	<header>
+		<h2>Keyed list</h2>
+		<p class="secondary">
+			Keyed reactive <code>for</code> loop with <code>key</code> and view transitions
+		</p>
+	</header>
+	<article class="two-column">
+		<div class="v-stack">
+			<button on:click="{ add() }">Add</button>
+			<button on:click="{ remove() }">Remove first</button>
+			<button on:click="{ addRandom() }">Add random</button>
+			<button on:click="{ removeRandom() }">Remove random</button>
+			<button on:click="{ reverse() }">Reverse</button>
+			<button on:click="{ shuffle() }">Shuffle</button>
 		</div>
-	</section>
-	<ul>
-		<li for="{ const item of items }" key="{ item.id }" text="{ item.id.slice(-8) }"></li>
+		<ul class="card">
+			<li class="list-item" for="{ const { id } of items }" key="{ id }">{ id }</li>
 
-		<style>
-			@scope {
-				:scope {
-					list-style-type: decimal-leading-zero;
-					list-style-position: inside;
-					justify-self: center;
-					text-align: start;
-					font-family: var(--font-mono);
-					font-size: smaller;
+			<style>
+				@scope {
+					:scope {
+						list-style-type: decimal-leading-zero;
+						list-style-position: inside;
+						font-family: var(--font-mono);
+						font-size: smaller;
 
-					li {
-						view-transition-name: match-element;
+						li {
+							view-transition-name: match-element;
+							view-transition-class: list-item;
+							user-select: none;
+						}
 					}
 				}
-			}
-		</style>
-	</ul>
+
+				::view-transition-new(.list-item),
+				::view-transition-old(.list-item) {
+					animation-duration: var(--duration-fast);
+					animation-timing-function: var(--ease-in-out-cubic);
+				}
+
+				::view-transition-new(.list-item):only-child {
+					animation-name: slide-in-from-right;
+				}
+
+				::view-transition-old(.list-item):only-child {
+					animation-name: slide-out-to-left;
+				}
+			</style>
+		</ul>
+	</article>
 </base-layout>
+
+<style>
+	.two-column {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 2rem;
+	}
+</style>
