@@ -96,22 +96,17 @@ function scopeRewriteContextFromLegacy(
 export function createScopeRewriteContext(
 	analysis: StateScriptAnalysisResult,
 	stateImports: readonly BuildScriptImport[] = [],
-	options?: { actionsNames?: ReadonlySet<string> }
+	options?: {
+		actionsNames?: ReadonlySet<string>
+		extraScopeNames?: ReadonlySet<string>
+		moduleScopeNames?: ReadonlySet<string>
+	}
 ): ScopeRewriteContext {
-	const baseScopeNames = collectMountScopeNames(analysis, stateImports)
-	const allModuleHelperNames = collectModuleHelperNames(analysis)
-	const pureModuleHelpers = analysis.moduleHelpers.filter(
-		helper => !moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
-	)
-	const scopeModuleHelpers = analysis.moduleHelpers.filter(helper =>
-		moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
-	)
-	const scopeNames = new Set(baseScopeNames)
-	for (const helper of scopeModuleHelpers) scopeNames.add(helper.name)
-	const moduleScopeNames = new Set(pureModuleHelpers.map(helper => helper.name))
+	const scopeNames = new Set(collectMountScopeNames(analysis, stateImports))
+	for (const name of options?.extraScopeNames ?? []) scopeNames.add(name)
 	return {
 		scopeNames,
-		moduleScopeNames,
+		moduleScopeNames: options?.moduleScopeNames ?? new Set(),
 		actionsNames: options?.actionsNames,
 		qualifyAllFreeIdentifiers: true,
 	}
@@ -510,10 +505,6 @@ function rewriteStmtForScopeWithContext(
 	return applyRewrites(wrapped.source, rewrites)
 }
 
-export function collectModuleHelperNames(analysis: StateScriptAnalysisResult): Set<string> {
-	return new Set(analysis.moduleHelpers.map(helper => helper.name))
-}
-
 function parseModuleHelperInitializer(source: string): string | null {
 	const match = /^const\s+\w+\s*=\s*(.+)$/s.exec(source.trim())
 	return match?.[1]?.trim() ?? null
@@ -624,10 +615,6 @@ export function collectMountScopeNames(
 ): Set<string> {
 	const names = new Set<string>()
 	for (const binding of analysis.bindings) names.add(binding.name)
-	for (const source of analysis.functionSources) {
-		const match = /^function\s+(\w+)/.exec(source.trim())
-		if (match) names.add(match[1]!)
-	}
 	for (const imp of imports) {
 		if (imp.defaultBinding) names.add(imp.defaultBinding)
 		for (const binding of imp.namedBindings) names.add(binding.local)

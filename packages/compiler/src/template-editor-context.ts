@@ -12,7 +12,8 @@ import {
 	collectBuildScriptTypeDeclarationTexts,
 	collectBindingsFromBuildScriptContent,
 } from './build-scope-bindings'
-import { analyzeStateScript, collectStateReferenceNames } from './state-script-analysis'
+import { analyzeStateScript } from './state-script-analysis'
+import { collectStateReferenceNames } from './lower-state-script'
 
 /**
  * Ambient prelude inputs for template interpolations — same shape used by {@link formatBuildScopeAmbientPrelude}.
@@ -64,7 +65,7 @@ export function getTemplateEditorAmbientFromParsed(parsed: ParseResult): Templat
 		collectBindingsFromBuildScriptContent(stateBody, bindingNames)
 		try {
 			const analysis = analyzeStateScript(stateBody)
-			for (const name of collectStateReferenceNames(analysis)) bindingNames.add(name)
+			for (const name of collectStateReferenceNames(stateBody, analysis)) bindingNames.add(name)
 			for (const b of analysis.bindings) {
 				if (!b.derived) ownedStateBindingNames.add(b.name)
 				if (!b.derived && (!b.reactiveProp || b.bindable)) writableStateBindingNames.add(b.name)

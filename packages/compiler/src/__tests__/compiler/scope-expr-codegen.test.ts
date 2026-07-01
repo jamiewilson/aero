@@ -6,19 +6,28 @@ import {
 	rewriteStmtForScope,
 } from '../../scope-expr-codegen'
 import { analyzeStateScript } from '../../state-script-analysis'
+import { lowerStateScript } from '../../lower-state-script'
 
 describe('createScopeRewriteContext', () => {
-	it('separates pure module helpers from scope-installed helpers', () => {
+	it('separates pure module helpers from scope-installed helpers via lowering', () => {
 		const script = `const createID = () => crypto.randomUUID()
 let items = []
 const add = () => { items = [...items, { id: createID() }] }`
 		const analysis = analyzeStateScript(script)
-		const ctx = createScopeRewriteContext(analysis)
+		const ctx = lowerStateScript(script, analysis).rewriteContext
 
 		expect(ctx.moduleScopeNames.has('createID')).toBe(true)
 		expect(ctx.scopeNames.has('items')).toBe(true)
 		expect(ctx.scopeNames.has('add')).toBe(true)
 		expect(ctx.qualifyAllFreeIdentifiers).toBe(true)
+	})
+
+	it('builds binding-only context without lowered script', () => {
+		const analysis = analyzeStateScript('let items = []')
+		const ctx = createScopeRewriteContext(analysis)
+
+		expect(ctx.scopeNames.has('items')).toBe(true)
+		expect(ctx.moduleScopeNames.size).toBe(0)
 	})
 })
 

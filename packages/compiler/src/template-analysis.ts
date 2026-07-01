@@ -23,7 +23,8 @@ import {
 } from '@aero-js/interpolation'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
-import { analyzeStateScript, collectStateReferenceNames, type StateScriptAnalysisResult } from './state-script-analysis'
+import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
+import { collectStateReferenceNames } from './lower-state-script'
 
 function buildImportsCode(
 	imports: ReturnType<typeof analyzeBuildScript>['imports'],
@@ -142,7 +143,9 @@ export function buildTemplateAnalysis(
 	if (stateAnalysis && stateAnalysis.diagnostics.length > 0) {
 		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
 	}
-	const stateBindingNames = stateAnalysis ? collectStateReferenceNames(stateAnalysis) : undefined
+	const stateBindingNames = stateAnalysis
+		? collectStateReferenceNames(stateRaw, stateAnalysis, stateImportAnalysis?.imports ?? [])
+		: undefined
 	const writableStateBindingNames = stateAnalysis
 		? new Set(
 				stateAnalysis.bindings

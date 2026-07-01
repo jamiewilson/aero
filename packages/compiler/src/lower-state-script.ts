@@ -331,3 +331,22 @@ export function lowerStateScript(
 
 	return { moduleConstants, scopeFunctions, rewriteContext }
 }
+
+/** Names visible to template binds and handlers from bindings plus lowered declarations. */
+export function collectStateReferenceNames(
+	script: string,
+	analysis: StateScriptAnalysisResult,
+	stateImports: readonly BuildScriptImport[] = []
+): Set<string> {
+	const names = new Set<string>()
+	for (const binding of analysis.bindings) names.add(binding.name)
+	if (!script.trim()) return names
+
+	const lowered = lowerStateScript(script, analysis, stateImports)
+	for (const fn of lowered.scopeFunctions) names.add(fn.name)
+	for (const line of lowered.moduleConstants) {
+		const match = /^const\s+(\w+)\s*=/.exec(line.trim())
+		if (match) names.add(match[1]!)
+	}
+	return names
+}

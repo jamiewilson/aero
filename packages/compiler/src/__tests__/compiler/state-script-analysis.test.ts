@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeStateScript, collectStateReferenceNames } from '../../state-script-analysis'
+import { analyzeStateScript } from '../../state-script-analysis'
+import { collectStateReferenceNames, lowerStateScript } from '../../lower-state-script'
 
 describe('analyzeStateScript', () => {
 	it('marks bindings as derived when initializer references another binding', () => {
@@ -17,16 +18,19 @@ describe('analyzeStateScript', () => {
 		expect(byName.get('c')?.dependencies).toEqual(['b'])
 	})
 
-	it('captures init expressions and function declarations', () => {
-		const result = analyzeStateScript(`
+	it('captures init expressions without collecting function declarations in analysis', () => {
+		const script = `
 			let count = 1
 			let doubled = count * 2
 			function inc() { count++ }
-		`)
+		`
+		const result = analyzeStateScript(script)
 		const byName = new Map(result.bindings.map(b => [b.name, b]))
 		expect(byName.get('count')?.initExpr).toBe('1')
 		expect(byName.get('doubled')?.initExpr).toBe('count * 2')
-		expect(result.functionSources).toEqual(['function inc() { count++ }'])
+
+		const lowered = lowerStateScript(script, result)
+		expect(lowered.scopeFunctions.map(fn => fn.name)).toEqual(['inc'])
 	})
 
 	it('captures reactive props from Aero.props destructures', () => {
@@ -135,28 +139,29 @@ describe('analyzeStateScript', () => {
 		expect(byName.get('adjusted')?.dependencies).toEqual(['count'])
 	})
 
-	it('collects const arrow helpers as module helpers', () => {
-		const result = analyzeStateScript(`
+	it('excludes const arrow helpers from reactive bindings', () => {
+		const script = `
 			const createID = () => crypto.randomUUID().split('-').pop()
 			let items = [{ id: createID() }]
-		`)
-		expect(result.moduleHelpers).toEqual([
-			{
-				name: 'createID',
-				source: "const createID = () => crypto.randomUUID().split('-').pop()",
-			},
-		])
+		`
+		const result = analyzeStateScript(script)
 		const byName = new Map(result.bindings.map(b => [b.name, b]))
 		expect(byName.has('createID')).toBe(false)
 		expect(byName.get('items')?.derived).toBe(false)
+
+		const lowered = lowerStateScript(script, result)
+		expect(lowered.moduleConstants).toEqual([
+			"const createID = () => crypto.randomUUID().split('-').pop()",
+		])
 	})
 
 	it('collects state reference names from bindings, module helpers, and functions', () => {
-		const result = analyzeStateScript(`
+		const script = `
 			const createID = () => crypto.randomUUID()
 			let items = [{ id: createID() }]
 			function add() { items = [...items, { id: createID() }] }
-		`)
-		expect([...collectStateReferenceNames(result)].sort()).toEqual(['add', 'createID', 'items'])
+		`
+		const result = analyzeStateScript(script)
+		expect([...collectStateReferenceNames(script, result)].sort()).toEqual(['add', 'createID', 'items'])
 	})
 })
