@@ -14,6 +14,14 @@ export function readBootstrappedReactivityRuntime(): ReactivityRuntime | null {
 	return value as ReactivityRuntime
 }
 
+/** Drop the bootstrapped runtime so the next mount hydrates from the current document. */
+export function resetBootstrappedReactivityRuntime(): void {
+	const existing = readBootstrappedReactivityRuntime()
+	if (!existing) return
+	existing.store.destroy()
+	delete runtimeGlobal()[REACTIVITY_RUNTIME_GLOBAL_KEY]
+}
+
 export function bootstrapReactivityRuntime(): ReactivityRuntime {
 	const existing = readBootstrappedReactivityRuntime()
 	if (existing) return existing

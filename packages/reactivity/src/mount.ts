@@ -542,8 +542,9 @@ function mountShowHtmlClassPropertyModel(
 			throw new Error(`[aero] Missing reactive show target: ${bind.selector}`)
 		}
 		const originalDisplay = target.style.display
+		const read = wireScopeReader(bind, scope, undefined, allowLegacy)
 		cleanups.push(
-			bindShow(target, wireScopeReader(bind, scope, undefined, allowLegacy), originalDisplay)
+			bindShow(target, read, originalDisplay)
 		)
 	}
 
