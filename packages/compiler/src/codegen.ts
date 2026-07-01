@@ -227,7 +227,8 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 					reactiveBinds,
 					ta.stateImports,
 					mountActionFns,
-					ta.defaultImportBindings
+					ta.defaultImportBindings,
+					ta.stateScriptSource
 				)
 			: ''
 	const reactivePropsMetadata =

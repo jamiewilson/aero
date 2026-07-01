@@ -21,6 +21,7 @@ import { getRenderContextDestructurePattern } from './helpers'
 import {
 	collectModuleHelperNames,
 	collectMountScopeNames,
+	createScopeRewriteContext,
 	HYPERMEDIA_ACTION_NAMES,
 	moduleHelperNeedsScopeInstall,
 	rewriteExprForScope,
@@ -28,6 +29,7 @@ import {
 	rewriteModuleHelperForScope,
 	rewriteStmtForScope,
 } from './scope-expr-codegen'
+import { lowerStateScript } from './lower-state-script'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 
 const STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE = `const { ${getRenderContextDestructurePattern()
@@ -248,32 +250,34 @@ function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
 function emitCompiledMountFunctions(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
-	stateImports: readonly BuildScriptImport[] = []
+	stateImports: readonly BuildScriptImport[] = [],
+	stateScriptSource = ''
 ): string {
 	const owned = analysis.bindings.filter(binding => !binding.derived)
 	const signalNames = new Set(owned.map(binding => binding.name))
-	const baseScopeNames = collectMountScopeNames(analysis, stateImports)
-	const allModuleHelperNames = collectModuleHelperNames(analysis)
-	const pureModuleHelpers = analysis.moduleHelpers.filter(
-		helper => !moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
-	)
-	const scopeModuleHelpers = analysis.moduleHelpers.filter(helper =>
-		moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
-	)
-	const scopeNames = new Set(baseScopeNames)
-	for (const helper of scopeModuleHelpers) scopeNames.add(helper.name)
-	const moduleScopeNames = new Set(pureModuleHelpers.map(helper => helper.name))
-	const scopeRewriteOptions = { qualifyAllFreeIdentifiers: true, moduleScopeNames }
-	const scopeExpr = (expr: string) => rewriteExprForScope(expr, scopeNames, scopeRewriteOptions)
+	const lowered = stateScriptSource
+		? lowerStateScript(stateScriptSource, analysis, stateImports)
+		: null
+	const rewriteContext = lowered?.rewriteContext ?? createScopeRewriteContext(analysis, stateImports)
+	const scopeExpr = (expr: string) => rewriteExprForScope(expr, rewriteContext)
 	const scopeStmt = (stmt: string, actions = false) =>
-		rewriteStmtForScope(stmt, scopeNames, {
-			...scopeRewriteOptions,
+		rewriteStmtForScope(stmt, rewriteContext, {
 			actionsNames: actions ? HYPERMEDIA_ACTION_NAMES : undefined,
 		})
 	const lines: string[] = []
 
-	for (const helper of pureModuleHelpers) {
-		lines.push(helper.source)
+	if (lowered) {
+		for (const line of lowered.moduleConstants) {
+			lines.push(line)
+		}
+	} else {
+		const baseScopeNames = collectMountScopeNames(analysis, stateImports)
+		const allModuleHelperNames = collectModuleHelperNames(analysis)
+		for (const helper of analysis.moduleHelpers.filter(
+			helper => !moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
+		)) {
+			lines.push(helper.source)
+		}
 	}
 
 	for (const binding of analysis.bindings.filter(binding => !binding.derived)) {
@@ -286,18 +290,37 @@ function emitCompiledMountFunctions(
 			`function __aeroDerived_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
 		)
 	}
-	if (analysis.functionSources.length > 0 || scopeModuleHelpers.length > 0) {
-		const scopeFunctionLines = [
-			...analysis.functionSources.map(source =>
-				rewriteFunctionSourceForScope(source, scopeNames, scopeRewriteOptions)
-			),
-			...scopeModuleHelpers.map(helper =>
-				rewriteModuleHelperForScope(helper, scopeNames, scopeRewriteOptions)
-			),
-		]
-		lines.push(
-			`function __aeroInstallScopeFunctions(scope) {\n${scopeFunctionLines.join('\n')}\n}`
+	if (lowered) {
+		if (lowered.scopeFunctions.length > 0) {
+			lines.push(
+				`function __aeroInstallScopeFunctions(scope) {\n${lowered.scopeFunctions.map(fn => fn.installSource).join('\n')}\n}`
+			)
+		}
+	} else {
+		const baseScopeNames = collectMountScopeNames(analysis, stateImports)
+		const allModuleHelperNames = collectModuleHelperNames(analysis)
+		const scopeModuleHelpers = analysis.moduleHelpers.filter(helper =>
+			moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
 		)
+		if (analysis.functionSources.length > 0 || scopeModuleHelpers.length > 0) {
+			const scopeFunctionLines = [
+				...analysis.functionSources.map(source =>
+					rewriteFunctionSourceForScope(source, rewriteContext.scopeNames, {
+						qualifyAllFreeIdentifiers: rewriteContext.qualifyAllFreeIdentifiers,
+						moduleScopeNames: rewriteContext.moduleScopeNames,
+					})
+				),
+				...scopeModuleHelpers.map(helper =>
+					rewriteModuleHelperForScope(helper, rewriteContext.scopeNames, {
+						qualifyAllFreeIdentifiers: rewriteContext.qualifyAllFreeIdentifiers,
+						moduleScopeNames: rewriteContext.moduleScopeNames,
+					})
+				),
+			]
+			lines.push(
+				`function __aeroInstallScopeFunctions(scope) {\n${scopeFunctionLines.join('\n')}\n}`
+			)
+		}
 	}
 	for (const bind of binds.textBinds) {
 		lines.push(
@@ -723,7 +746,8 @@ export function emitMountStateBindingsFunction(
 	binds: CollectedReactiveBinds,
 	stateImports: readonly BuildScriptImport[] = [],
 	actionFunctions?: string,
-	defaultImportBindings: ReadonlySet<string> = new Set()
+	defaultImportBindings: ReadonlySet<string> = new Set(),
+	stateScriptSource = ''
 ): { preamble: string; mountExport: string } | '' {
 	if (!hasAnyBinds(binds)) return ''
 
@@ -736,17 +760,23 @@ export function emitMountStateBindingsFunction(
 	const compiledFunctions = emitCompiledMountFunctions(
 		analysis,
 		collectAllCodegenBinds(binds),
-		stateImports
+		stateImports,
+		stateScriptSource
 	)
 	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
+	const lowered = stateScriptSource
+		? lowerStateScript(stateScriptSource, analysis, stateImports)
+		: null
 	const installScopeLine =
-		analysis.functionSources.length > 0 || analysis.moduleHelpers.some(helper =>
-			moduleHelperNeedsScopeInstall(
-				helper,
-				collectMountScopeNames(analysis, stateImports),
-				collectModuleHelperNames(analysis)
-			)
-		)
+		(lowered ? lowered.scopeFunctions.length > 0 : analysis.functionSources.length > 0) ||
+		(!lowered &&
+			analysis.moduleHelpers.some(helper =>
+				moduleHelperNeedsScopeInstall(
+					helper,
+					collectMountScopeNames(analysis, stateImports),
+					collectModuleHelperNames(analysis)
+				)
+			))
 			? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,'
 			: ''
 

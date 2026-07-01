@@ -59,6 +59,64 @@ const RESERVED = new Set([
 
 export const HYPERMEDIA_ACTION_NAMES = new Set(['POST', 'GET', 'PUT', 'PATCH', 'DELETE'])
 
+/** Shared rewrite environment for one page's is:state script. */
+export interface ScopeRewriteContext {
+	readonly scopeNames: ReadonlySet<string>
+	readonly moduleScopeNames: ReadonlySet<string>
+	readonly actionsNames?: ReadonlySet<string>
+	readonly qualifyAllFreeIdentifiers: boolean
+}
+
+export interface ScopeRewriteCallOptions {
+	initialShadows?: ReadonlySet<string>
+	/** Per-call override; defaults to `ctx.actionsNames`. */
+	actionsNames?: ReadonlySet<string>
+}
+
+/** @deprecated Prefer `ScopeRewriteContext` via `createScopeRewriteContext`. */
+export interface LegacyScopeRewriteOptions {
+	actionsNames?: ReadonlySet<string>
+	qualifyAllFreeIdentifiers?: boolean
+	moduleScopeNames?: ReadonlySet<string>
+	initialShadows?: ReadonlySet<string>
+}
+
+function scopeRewriteContextFromLegacy(
+	scopeNames: ReadonlySet<string>,
+	options?: LegacyScopeRewriteOptions
+): ScopeRewriteContext {
+	return {
+		scopeNames,
+		moduleScopeNames: options?.moduleScopeNames ?? new Set(),
+		actionsNames: options?.actionsNames,
+		qualifyAllFreeIdentifiers: options?.qualifyAllFreeIdentifiers ?? false,
+	}
+}
+
+export function createScopeRewriteContext(
+	analysis: StateScriptAnalysisResult,
+	stateImports: readonly BuildScriptImport[] = [],
+	options?: { actionsNames?: ReadonlySet<string> }
+): ScopeRewriteContext {
+	const baseScopeNames = collectMountScopeNames(analysis, stateImports)
+	const allModuleHelperNames = collectModuleHelperNames(analysis)
+	const pureModuleHelpers = analysis.moduleHelpers.filter(
+		helper => !moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
+	)
+	const scopeModuleHelpers = analysis.moduleHelpers.filter(helper =>
+		moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
+	)
+	const scopeNames = new Set(baseScopeNames)
+	for (const helper of scopeModuleHelpers) scopeNames.add(helper.name)
+	const moduleScopeNames = new Set(pureModuleHelpers.map(helper => helper.name))
+	return {
+		scopeNames,
+		moduleScopeNames,
+		actionsNames: options?.actionsNames,
+		qualifyAllFreeIdentifiers: true,
+	}
+}
+
 type EstNode = {
 	type: string
 	start?: number
@@ -306,27 +364,44 @@ function parseWrappedStatements(stmt: string): {
 
 export function rewriteExprForScope(
 	expr: string,
+	ctx: ScopeRewriteContext,
+	options?: ScopeRewriteCallOptions
+): string
+export function rewriteExprForScope(
+	expr: string,
 	scopeNames: ReadonlySet<string>,
-	options?: {
-		actionsNames?: ReadonlySet<string>
-		qualifyAllFreeIdentifiers?: boolean
-		moduleScopeNames?: ReadonlySet<string>
-		initialShadows?: ReadonlySet<string>
-	}
+	options?: LegacyScopeRewriteOptions
+): string
+export function rewriteExprForScope(
+	expr: string,
+	ctxOrScopeNames: ScopeRewriteContext | ReadonlySet<string>,
+	options?: ScopeRewriteCallOptions | LegacyScopeRewriteOptions
+): string {
+	const ctx =
+		ctxOrScopeNames instanceof Set
+			? scopeRewriteContextFromLegacy(ctxOrScopeNames, options as LegacyScopeRewriteOptions | undefined)
+			: ctxOrScopeNames
+	return rewriteExprForScopeWithContext(expr, ctx, options)
+}
+
+function rewriteExprForScopeWithContext(
+	expr: string,
+	ctx: ScopeRewriteContext,
+	options?: ScopeRewriteCallOptions
 ): string {
 	const trimmed = expr.trim()
 	if (!trimmed) return expr
 	const wrapped = parseWrappedExpression(trimmed)
 	if (!wrapped) return expr
-	const effectiveScopeNames = options?.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset, options.moduleScopeNames)
-		: scopeNames
+	const effectiveScopeNames = ctx.qualifyAllFreeIdentifiers
+		? mergeQualifyAllScopeNames(ctx.scopeNames, wrapped.program, wrapped.offset, ctx.moduleScopeNames)
+		: ctx.scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
 		effectiveScopeNames,
-		options?.actionsNames,
+		options?.actionsNames ?? ctx.actionsNames,
 		wrapped.offset,
-		options?.moduleScopeNames,
+		ctx.moduleScopeNames,
 		options?.initialShadows
 	)
 	return applyRewrites(wrapped.source, rewrites)
@@ -345,7 +420,7 @@ function mergeQualifyAllScopeNames(
 	return names
 }
 
-function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<string> {
+export function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<string> {
 	const names = new Set<string>()
 	const shadowStack: Set<string>[] = [new Set()]
 
@@ -392,27 +467,44 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 
 export function rewriteStmtForScope(
 	stmt: string,
+	ctx: ScopeRewriteContext,
+	options?: ScopeRewriteCallOptions
+): string
+export function rewriteStmtForScope(
+	stmt: string,
 	scopeNames: ReadonlySet<string>,
-	options?: {
-		actionsNames?: ReadonlySet<string>
-		qualifyAllFreeIdentifiers?: boolean
-		moduleScopeNames?: ReadonlySet<string>
-		initialShadows?: ReadonlySet<string>
-	}
+	options?: LegacyScopeRewriteOptions
+): string
+export function rewriteStmtForScope(
+	stmt: string,
+	ctxOrScopeNames: ScopeRewriteContext | ReadonlySet<string>,
+	options?: ScopeRewriteCallOptions | LegacyScopeRewriteOptions
+): string {
+	const ctx =
+		ctxOrScopeNames instanceof Set
+			? scopeRewriteContextFromLegacy(ctxOrScopeNames, options as LegacyScopeRewriteOptions | undefined)
+			: ctxOrScopeNames
+	return rewriteStmtForScopeWithContext(stmt, ctx, options)
+}
+
+function rewriteStmtForScopeWithContext(
+	stmt: string,
+	ctx: ScopeRewriteContext,
+	options?: ScopeRewriteCallOptions
 ): string {
 	const trimmed = stmt.trim()
 	if (!trimmed) return stmt
 	const wrapped = parseWrappedStatements(trimmed)
 	if (!wrapped) return stmt
-	const effectiveScopeNames = options?.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(scopeNames, wrapped.program, wrapped.offset, options.moduleScopeNames)
-		: scopeNames
+	const effectiveScopeNames = ctx.qualifyAllFreeIdentifiers
+		? mergeQualifyAllScopeNames(ctx.scopeNames, wrapped.program, wrapped.offset, ctx.moduleScopeNames)
+		: ctx.scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
 		effectiveScopeNames,
-		options?.actionsNames,
+		options?.actionsNames ?? ctx.actionsNames,
 		wrapped.offset,
-		options?.moduleScopeNames,
+		ctx.moduleScopeNames,
 		options?.initialShadows
 	)
 	return applyRewrites(wrapped.source, rewrites)

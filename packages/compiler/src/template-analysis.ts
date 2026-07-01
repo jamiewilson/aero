@@ -110,6 +110,8 @@ export interface TemplateAnalysis {
 	readonly scriptBody: string
 	/** State script after TS-strip, for SSR initialization/hydration payload emission. */
 	readonly stateScriptBody: string
+	/** Raw `<script is:state>` source aligned with {@link analyzeStateScript}. */
+	readonly stateScriptSource: string
 	readonly getStaticPathsFn: string | null
 	readonly stateAnalysis: StateScriptAnalysisResult | null
 	/** Static imports from `<script is:state>` for client mount scope. */
@@ -188,6 +190,7 @@ export function buildTemplateAnalysis(
 		bodyCode,
 		scriptBody: script,
 		stateScriptBody,
+		stateScriptSource: stateRaw,
 		getStaticPathsFn: getStaticPathsFn || null,
 		stateAnalysis,
 		stateImports: stateImportAnalysis?.imports ?? [],

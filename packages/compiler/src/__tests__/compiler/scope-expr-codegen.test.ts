@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { rewriteFunctionSourceForScope, rewriteModuleHelperForScope, rewriteStmtForScope } from '../../scope-expr-codegen'
+import {
+	createScopeRewriteContext,
+	rewriteFunctionSourceForScope,
+	rewriteModuleHelperForScope,
+	rewriteStmtForScope,
+} from '../../scope-expr-codegen'
+import { analyzeStateScript } from '../../state-script-analysis'
+
+describe('createScopeRewriteContext', () => {
+	it('separates pure module helpers from scope-installed helpers', () => {
+		const script = `const createID = () => crypto.randomUUID()
+let items = []
+const add = () => { items = [...items, { id: createID() }] }`
+		const analysis = analyzeStateScript(script)
+		const ctx = createScopeRewriteContext(analysis)
+
+		expect(ctx.moduleScopeNames.has('createID')).toBe(true)
+		expect(ctx.scopeNames.has('items')).toBe(true)
+		expect(ctx.scopeNames.has('add')).toBe(true)
+		expect(ctx.qualifyAllFreeIdentifiers).toBe(true)
+	})
+})
 
 describe('rewriteStmtForScope', () => {
 	const scopeNames = new Set(['count'])
