@@ -4,18 +4,16 @@
 
 <script is:state>
 	import { GET } from '@aero-js/core/hypermedia'
-	import { withTransition } from '@scripts/utils/withTransition'
+	import { withTransition } from '@scripts/utils/withTransition.ts'
 
 	let isSaving = false
 	let itemCount = 0
 
 	const appendItem = async () => {
 		itemCount++
-		withTransition(async () => {
-			await GET(`/api/hypermedia/item?n=${itemCount}`, {
-				target: '#item-list',
-				swap: 'beforeend',
-			})
+		await GET(`/api/hypermedia/item?n=${itemCount}`, {
+			target: '#item-list',
+			swap: 'beforeend',
 		})
 	}
 </script>
