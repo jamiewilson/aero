@@ -24,6 +24,7 @@ import {
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
+import { collectStateReferenceNames } from './lower-state-script'
 
 function buildImportsCode(
 	imports: ReturnType<typeof analyzeBuildScript>['imports'],
@@ -110,6 +111,8 @@ export interface TemplateAnalysis {
 	readonly scriptBody: string
 	/** State script after TS-strip, for SSR initialization/hydration payload emission. */
 	readonly stateScriptBody: string
+	/** Raw `<script is:state>` source aligned with {@link analyzeStateScript}. */
+	readonly stateScriptSource: string
 	readonly getStaticPathsFn: string | null
 	readonly stateAnalysis: StateScriptAnalysisResult | null
 	/** Static imports from `<script is:state>` for client mount scope. */
@@ -141,7 +144,7 @@ export function buildTemplateAnalysis(
 		throw new CompileError({ message: stateAnalysis.diagnostics[0].message, file: options.importer })
 	}
 	const stateBindingNames = stateAnalysis
-		? new Set(stateAnalysis.bindings.map(binding => binding.name))
+		? collectStateReferenceNames(stateRaw, stateAnalysis, stateImportAnalysis?.imports ?? [])
 		: undefined
 	const writableStateBindingNames = stateAnalysis
 		? new Set(
@@ -190,6 +193,7 @@ export function buildTemplateAnalysis(
 		bodyCode,
 		scriptBody: script,
 		stateScriptBody,
+		stateScriptSource: stateRaw,
 		getStaticPathsFn: getStaticPathsFn || null,
 		stateAnalysis,
 		stateImports: stateImportAnalysis?.imports ?? [],

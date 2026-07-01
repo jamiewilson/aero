@@ -78,12 +78,13 @@
 		corner-shape: squircle;
 		user-select: none;
 		justify-self: center;
-		transition-property: background, opacity;
-		transition-duration: var(--duration-fast);
+		transition-property: background, color, opacity;
+		transition-duration: var(--duration-medium);
 
 		&:hover,
 		&:active {
-			background: --opacity(currentColor, 0.1);
+			color: contrast-color(var(--color-fg));
+			background: var(--color-fg);
 		}
 
 		&[disabled] {

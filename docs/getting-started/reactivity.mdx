@@ -40,7 +40,7 @@ State scripts run in the browser after mount. Top-level `let` declarations becom
 | --- | --- |
 | One per file | Only one `<script is:state>` per template |
 | Signals | Top-level `let` bindings are reactive |
-| Helpers | Top-level `const` functions can read state (for example `const isValid = () => …`) |
+| Helpers | Top-level `function` declarations and `const` arrows are equivalent — use either style for handlers and shared logic that reads or updates state |
 | Imports | Hoisted into mount scope, same as client scripts |
 | With `is:build` | Separate script blocks — state can **read** build-scope values to seed initial data (see below) |
 
@@ -77,6 +77,33 @@ Common sources for seed data:
 | Build constants | `const limit = 10` → `let pageSize = limit` |
 
 Build-time `{ expression }` in markup still renders static HTML. Use `is:state` when that data should stay reactive after load.
+
+### Helpers and handlers
+
+Declare helpers at the top level of `<script is:state>` with normal JavaScript — block or expression bodies, TypeScript parameter types, and mixed styles in one script:
+
+```html
+<script is:state>
+	import { withTransition } from '@scripts/utils/withTransition.ts'
+
+	const createID = () => crypto.randomUUID().split('-').pop()
+
+	let items = [{ id: createID() }]
+
+	function add() {
+		setItems([...items, { id: createID() }])
+	}
+
+	const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
+
+	const setItems = next => withTransition(() => (items = next))
+</script>
+
+<button on:click="{ add() }">Add</button>
+<button on:click="{ remove() }">Remove</button>
+```
+
+`function foo()` and `const foo = () => …` behave the same for templates and event handlers. Pure helpers that never touch reactive `let` bindings (for example `createID` above) stay at module scope; helpers that read or write state are available to bindings automatically.
 
 ## What you can bind
 

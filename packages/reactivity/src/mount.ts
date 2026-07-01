@@ -130,7 +130,7 @@ export interface MountStateBindingsOptions {
 		itemsExpr?: string
 		keyExpr?: string
 		destructureRow?: (item: unknown) => Record<string, unknown>
-		renderRow: (Aero: unknown) => string
+		renderRow: (scope: StateScope, Aero: unknown) => string
 		rowMounts: MountBindingSubset
 	}[]
 	readonly switchBinds?: readonly {
@@ -767,7 +767,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 								}
 					return {
 						key: toKey(keyReader()),
-						renderHtml: () => bind.renderRow(options.Aero),
+						renderHtml: () => bind.renderRow(rowScope, options.Aero),
 						mountRow: rowRoot => {
 							const subsetCleanups = mountBindingSubset(rowRoot, rowScope, bind.rowMounts, {
 								...options,

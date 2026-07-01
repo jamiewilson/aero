@@ -17,14 +17,19 @@ import type {
 import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { emitToJS } from './emit'
+import { getRenderContextDestructurePattern } from './helpers'
 import {
-	collectMountScopeNames,
 	HYPERMEDIA_ACTION_NAMES,
 	rewriteExprForScope,
-	rewriteFunctionSourceForScope,
 	rewriteStmtForScope,
 } from './scope-expr-codegen'
+import { lowerStateScript, type LoweredStateScript } from './lower-state-script'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
+
+const STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE = `const { ${getRenderContextDestructurePattern()
+	.split(', ')
+	.filter(name => name !== 'slots = {}' && name !== 'renderComponent')
+	.join(', ')} } = Aero;`
 
 function isSimpleForBinding(binding: string): boolean {
 	return /^[A-Za-z_$][\w$]*$/.test(binding.trim())
@@ -232,26 +237,24 @@ export function emitReactivePropsMetadata(analysis: StateScriptAnalysisResult): 
 	return `export const __aeroReactiveProps = ${JSON.stringify(reactiveProps)}`
 }
 
-function serializeFunctionSources(analysis: StateScriptAnalysisResult): string {
-	return JSON.stringify(analysis.functionSources)
-}
-
 function emitCompiledMountFunctions(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
-	stateImports: readonly BuildScriptImport[] = []
+	lowered: LoweredStateScript
 ): string {
 	const owned = analysis.bindings.filter(binding => !binding.derived)
 	const signalNames = new Set(owned.map(binding => binding.name))
-	const scopeNames = collectMountScopeNames(analysis, stateImports)
-	const scopeExpr = (expr: string) =>
-		rewriteExprForScope(expr, scopeNames, { qualifyAllFreeIdentifiers: true })
+	const rewriteContext = lowered.rewriteContext
+	const scopeExpr = (expr: string) => rewriteExprForScope(expr, rewriteContext)
 	const scopeStmt = (stmt: string, actions = false) =>
-		rewriteStmtForScope(stmt, scopeNames, {
+		rewriteStmtForScope(stmt, rewriteContext, {
 			actionsNames: actions ? HYPERMEDIA_ACTION_NAMES : undefined,
-			qualifyAllFreeIdentifiers: true,
 		})
 	const lines: string[] = []
+
+	for (const line of lowered.moduleConstants) {
+		lines.push(line)
+	}
 
 	for (const binding of analysis.bindings.filter(binding => !binding.derived)) {
 		lines.push(
@@ -263,9 +266,9 @@ function emitCompiledMountFunctions(
 			`function __aeroDerived_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
 		)
 	}
-	if (analysis.functionSources.length > 0) {
+	if (lowered.scopeFunctions.length > 0) {
 		lines.push(
-			`function __aeroInstallScopeFunctions(scope) {\n${analysis.functionSources.map(source => rewriteFunctionSourceForScope(source, scopeNames)).join('\n')}\n}`
+			`function __aeroInstallScopeFunctions(scope) {\n${lowered.scopeFunctions.map(fn => fn.installSource).join('\n')}\n}`
 		)
 	}
 	for (const bind of binds.textBinds) {
@@ -632,31 +635,37 @@ function serializeScopeConstants(imports: readonly BuildScriptImport[]): string 
 	return `{ ${entries.join(', ')} }`
 }
 
-export function emitStructuralBranchFunctions(binds: CollectedReactiveBinds): string {
+export function emitForRowRenderer(forBind: IRReactiveForBind): string {
+	const bodyJs = emitToJS(stripStructuralBranchOutVars(forBind.body), '__out')
+	const scopedBodyJs = rewriteStmtForScope(bodyJs, new Set(forBind.bindingNames), {
+		qualifyAllFreeIdentifiers: true,
+	})
+	return `function __aeroForRow_${forBind.bindId}(scope, Aero) {\n${STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE}\nlet __out = '';\n${scopedBodyJs}\nreturn __out;\n}`
+}
+
+function emitStructuralBranchFunctions(binds: CollectedReactiveBinds): string {
 	const lines: string[] = []
 	for (const ifBind of binds.ifBinds) {
 		for (let i = 0; i < ifBind.branches.length; i++) {
 			const branch = ifBind.branches[i]!
 			lines.push(
-				`function __aeroIfBranch_${ifBind.bindId}_${i}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(branch.body), '__out')}\nreturn __out;\n}`
+				`function __aeroIfBranch_${ifBind.bindId}_${i}(Aero) {\n${STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE}\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(branch.body), '__out')}\nreturn __out;\n}`
 			)
 		}
 	}
 	for (const forBind of binds.forBinds) {
-		lines.push(
-			`function __aeroForRow_${forBind.bindId}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(forBind.body), '__out')}\nreturn __out;\n}`
-		)
+		lines.push(emitForRowRenderer(forBind))
 	}
 	for (const switchBind of binds.switchBinds) {
 		for (let i = 0; i < switchBind.cases.length; i++) {
 			const branch = switchBind.cases[i]!
 			lines.push(
-				`function __aeroSwitchBranch_${switchBind.bindId}_${i}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(branch.body), '__out')}\nreturn __out;\n}`
+				`function __aeroSwitchBranch_${switchBind.bindId}_${i}(Aero) {\n${STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE}\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(branch.body), '__out')}\nreturn __out;\n}`
 			)
 		}
 		if (switchBind.defaultBody !== undefined) {
 			lines.push(
-				`function __aeroSwitchDefault_${switchBind.bindId}(Aero) {\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(switchBind.defaultBody), '__out')}\nreturn __out;\n}`
+				`function __aeroSwitchDefault_${switchBind.bindId}(Aero) {\n${STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE}\nlet __out = '';\n${emitToJS(stripStructuralBranchOutVars(switchBind.defaultBody), '__out')}\nreturn __out;\n}`
 			)
 		}
 	}
@@ -686,7 +695,8 @@ export function emitMountStateBindingsFunction(
 	binds: CollectedReactiveBinds,
 	stateImports: readonly BuildScriptImport[] = [],
 	actionFunctions?: string,
-	defaultImportBindings: ReadonlySet<string> = new Set()
+	defaultImportBindings: ReadonlySet<string> = new Set(),
+	stateScriptSource = ''
 ): { preamble: string; mountExport: string } | '' {
 	if (!hasAnyBinds(binds)) return ''
 
@@ -696,16 +706,15 @@ export function emitMountStateBindingsFunction(
 		? '\n\t\thypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined,'
 		: ''
 	const branchFunctions = emitStructuralBranchFunctions(binds)
+	const lowered = lowerStateScript(stateScriptSource, analysis, stateImports)
 	const compiledFunctions = emitCompiledMountFunctions(
 		analysis,
 		collectAllCodegenBinds(binds),
-		stateImports
+		lowered
 	)
 	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
 	const installScopeLine =
-		analysis.functionSources.length > 0
-			? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,'
-			: ''
+		lowered.scopeFunctions.length > 0 ? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,' : ''
 
 	const mountExport = `export function mountStateBindings(root, Aero, opts = {}) {
 	const runtime = Aero.getReactivityRuntime?.()
