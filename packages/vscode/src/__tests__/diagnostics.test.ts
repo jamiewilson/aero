@@ -269,6 +269,70 @@ describe('AeroDiagnostics Unused Variables', () => {
 		expect(unusedBaseDiag).toBeDefined()
 	})
 
+	it('should flag unused build var whose initializer references a same-named property', () => {
+		const text = `
+<script is:build>
+	import site from '@content/site.ts'
+	const links = site.footer.links
+</script>
+<template for="{ const { path, label } of other }">
+	<a href="{ path }">{ label }</a>
+</template>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedLinksDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'links' is declared but its value is never read")
+		)
+		expect(unusedLinksDiag).toBeDefined()
+	})
+
+	it('should NOT flag build var used as a for-loop iterable', () => {
+		const text = `
+<script is:build>
+	import site from '@content/site.ts'
+	const links = site.footer.links
+</script>
+<template for="{ const { path, label } of links }">
+	<a href="{ path }">{ label }</a>
+</template>
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => ({ line: 0, character: offset }),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const unusedLinksDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'links' is declared but its value is never read")
+		)
+		expect(unusedLinksDiag).toBeUndefined()
+	})
+
 	it('should NOT flag variable as unused when used in Alpine x-data attribute', () => {
 		const text = `
 <script is:build>

@@ -56,6 +56,24 @@ function isStateScopedName(parsed: ParsedDocument, name: string): boolean {
 	return false
 }
 
+/**
+ * Count standalone references to `name` in `content`, ignoring property accesses
+ * (`obj.name`) and object-literal keys (`name:`). A self-referential initializer like
+ * `const links = site.footer.links` must not count its own `.links` property as a usage.
+ */
+function countIdentifierUsages(content: string, name: string): number {
+	const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
+	let count = 0
+	let match: RegExpExecArray | null
+	while ((match = usageRegex.exec(content)) !== null) {
+		const charBefore = match.index > 0 ? content[match.index - 1] : ''
+		if (charBefore === '.') continue
+		count++
+	}
+	return count
+}
+
 function checkUnusedInScope(
 	parsed: ParsedDocument,
 	scope: 'build' | 'state' | 'bundled' | 'inline' | 'blocking',
@@ -77,10 +95,7 @@ function checkUnusedInScope(
 
 			if (isUsedInStateScript(parsed, name)) continue
 
-			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
-			const matches = maskedContent.match(usageRegex)
-			if (matches && matches.length > 1) continue
+			if (countIdentifierUsages(maskedContent, name) > 1) continue
 		} else if (scope === 'state' || scope === 'bundled' || scope === 'blocking' || scope === 'inline') {
 			if (scope === 'state' && usedInTemplate.has(name)) {
 				continue
@@ -90,13 +105,11 @@ function checkUnusedInScope(
 				continue
 			}
 
-			const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-			const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g')
-			const matches = maskedContent.match(usageRegex)
+			const usageCount = countIdentifierUsages(maskedContent, name)
 			if (def.kind === 'reference') {
-				if (matches && matches.length >= 1) continue
+				if (usageCount >= 1) continue
 			} else {
-				if (matches && matches.length > 1) continue
+				if (usageCount > 1) continue
 			}
 		}
 
