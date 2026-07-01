@@ -140,6 +140,11 @@ export function compileAttributeInterpolation(text: string): string {
 		.join('')
 }
 
+/** Emit a boolean HTML attribute only when `expr` is truthy at render time. */
+export function compileBooleanPresenceAttr(attrName: string, expr: string): string {
+	return `\${${expr.trim()} ? ' ${attrName}=""' : ''}`
+}
+
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `for` or `data-for`). */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr

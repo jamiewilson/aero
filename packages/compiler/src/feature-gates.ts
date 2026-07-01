@@ -74,6 +74,7 @@ export function validateFeatureGates(
 				showBinds: [],
 				htmlBinds: [],
 				classBinds: [],
+				attributeBinds: [],
 				propertyBinds: [],
 				modelBinds: [],
 				ifBinds: [],

@@ -306,6 +306,7 @@ function emitNodeAppend(b: CodeBuilder, node: IRNode, outVar: string): void {
 		case 'ReactiveShowBind':
 		case 'ReactiveHtmlBind':
 		case 'ReactiveClassBind':
+		case 'ReactiveAttributeBind':
 		case 'ReactivePropertyBind':
 		case 'ReactiveModelBind':
 		case 'ReactiveIfBind':

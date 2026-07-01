@@ -35,7 +35,20 @@ describe('reactive binding handlers codegen', () => {
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain('data-aero-class-is-active="0"')
 		expect(code).toContain('classBinds:')
+		expect(code).toContain('data-aero-property-disabled="0"')
 		expect(code).toContain('propertyBinds:')
+	})
+
+	it('emits attribute bind records for data-theme', () => {
+		const html = `<script is:state>
+			let theme = 'dark'
+		</script>
+		<html data-theme="{ theme }"></html>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('data-aero-bind="0"')
+		expect(code).toContain('attributeBinds:')
+		expect(code).not.toContain('data-aero-property-')
 	})
 
 	it('emits form model bind records for input value', () => {

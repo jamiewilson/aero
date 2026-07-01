@@ -25,6 +25,7 @@ export type IRNode =
 	| IRReactiveShowBind
 	| IRReactiveHtmlBind
 	| IRReactiveClassBind
+	| IRReactiveAttributeBind
 	| IRReactivePropertyBind
 	| IRReactiveModelBind
 	| IRReactiveIfBind
@@ -189,6 +190,15 @@ export interface IRReactiveClassBind {
 	bindId: number
 	className: string
 	readExpr: string
+}
+
+export interface IRReactiveAttributeBind {
+	kind: 'ReactiveAttributeBind'
+	bindId: number
+	attributes: readonly {
+		name: string
+		readExpr: string
+	}[]
 }
 
 export interface IRReactivePropertyBind {

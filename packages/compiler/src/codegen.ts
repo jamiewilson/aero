@@ -193,6 +193,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				showBinds: [],
 				htmlBinds: [],
 				classBinds: [],
+				attributeBinds: [],
 				propertyBinds: [],
 				modelBinds: [],
 				ifBinds: [],
@@ -207,6 +208,7 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 		reactiveBinds.showBinds.length > 0 ||
 		reactiveBinds.htmlBinds.length > 0 ||
 		reactiveBinds.classBinds.length > 0 ||
+		reactiveBinds.attributeBinds.length > 0 ||
 		reactiveBinds.propertyBinds.length > 0 ||
 		reactiveBinds.modelBinds.length > 0 ||
 		reactiveBinds.ifBinds.length > 0 ||
