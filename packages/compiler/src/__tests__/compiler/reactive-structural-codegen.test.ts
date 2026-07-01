@@ -111,6 +111,22 @@ describe('reactive structural codegen', () => {
 		expect(code).toContain('escapeHtml( scope.id )')
 	})
 
+	it('qualifies for-row id from loop scope via emitForRowRenderer', () => {
+		const html = `<script is:state>
+			let items = [{ id: 'row-a' }]
+			let id = 'page-level'
+		</script>
+		<ul>
+			<li for="{ const { id } of items }" key="{ id }">{ id }</li>
+		</ul>`
+
+		const code = compile(parse(html), mockOptions)
+		const fnBody = code.match(/function __aeroForRow_0\(scope, Aero\) \{([\s\S]*?)\n\}/)?.[1]
+		expect(fnBody).toBeTruthy()
+		expect(fnBody).toContain('escapeHtml( scope.id )')
+		expect(fnBody).not.toContain('page-level')
+	})
+
 	it('emits keyed for row html with a single root element', () => {
 		const html = `<script is:state>
 			let items = [{ id: 'a' }]

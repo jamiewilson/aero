@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-	createScopeRewriteContext,
-	rewriteFunctionSourceForScope,
-	rewriteModuleHelperForScope,
-	rewriteStmtForScope,
-} from '../../scope-expr-codegen'
+import { createScopeRewriteContext, rewriteStmtForScope } from '../../scope-expr-codegen'
 import { analyzeStateScript } from '../../state-script-analysis'
 import { lowerStateScript } from '../../lower-state-script'
 
@@ -82,34 +77,5 @@ describe('rewriteStmtForScope', () => {
 		).toBe(
 			'const id = createID()\nscope.withTransition(() => (scope.items = [...scope.items, { id }]))'
 		)
-	})
-})
-
-describe('rewriteFunctionSourceForScope', () => {
-	it('strips TS param types and preserves param identifiers in the body', () => {
-		const scopeNames = new Set(['items', 'withTransition', 'setItems'])
-		const source =
-			'function setItems(next: typeof items) {\n\twithTransition(() => { items = next })\n}'
-		expect(
-			rewriteFunctionSourceForScope(source, scopeNames, {
-				qualifyAllFreeIdentifiers: true,
-			})
-		).toBe(
-			'scope.setItems = function(next) { scope.withTransition(() => { scope.items = next }) }'
-		)
-	})
-})
-
-describe('rewriteModuleHelperForScope', () => {
-	it('preserves arrow param shadows in expression bodies', () => {
-		const scopeNames = new Set(['items', 'withTransition', 'setItems'])
-		const source = 'const setItems = next => withTransition(() => (items = next))'
-		expect(
-			rewriteModuleHelperForScope(
-				{ name: 'setItems', source },
-				scopeNames,
-				{ qualifyAllFreeIdentifiers: true }
-			)
-		).toBe('scope.setItems = next => scope.withTransition(() => (scope.items = next))')
 	})
 })
