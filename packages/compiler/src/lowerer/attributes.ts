@@ -504,8 +504,9 @@ export function parseElementAttributes(
 		const attributeBinding = parseAttributeBindingEntry(node, diag, attr, reactiveState)
 		if (attributeBinding) {
 			pendingAttributeBindEntries.push(attributeBinding)
-			const val = Helper.compileAttributeInterpolation(attr.value ?? '')
-			attributes.push(`${attributeBinding.name}="${val}"`)
+			attributes.push(
+				Helper.compileAttributeBindEmission(attributeBinding.name, attributeBinding.readExpr)
+			)
 			return
 		}
 

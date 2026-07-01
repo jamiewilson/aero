@@ -145,6 +145,11 @@ export function compileBooleanPresenceAttr(attrName: string, expr: string): stri
 	return `\${${expr.trim()} ? ' ${attrName}=""' : ''}`
 }
 
+/** Emit SSR attribute bind via runtime coercion (matches mount-time bindAttribute). */
+export function compileAttributeBindEmission(attrName: string, expr: string): string {
+	return `\${formatAttributeBind(${JSON.stringify(attrName)}, ${expr.trim()})}`
+}
+
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `for` or `data-for`). */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
@@ -326,7 +331,7 @@ export function getRenderComponentContextArg(): string {
 
 /** Build destructuring pattern for the render function. */
 export function getRenderContextDestructurePattern(): string {
-	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd`
+	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, formatAttributeBind, raw, trim, trimStart, trimEnd`
 }
 
 // ============================================================================
