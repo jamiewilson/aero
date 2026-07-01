@@ -12,6 +12,18 @@ describe('coerceAttributeValue', () => {
 		expect(coerceAttributeValue('data-visible', false)).toEqual({ action: 'remove' })
 	})
 
+	it('boolean is-even: true → presence (same as data-*)', () => {
+		expect(coerceAttributeValue('is-even', true)).toEqual({ action: 'set', value: '' })
+	})
+
+	it('boolean is-even: false → remove', () => {
+		expect(coerceAttributeValue('is-even', false)).toEqual({ action: 'remove' })
+	})
+
+	it('boolean href: stringify (no hyphen flag semantics)', () => {
+		expect(coerceAttributeValue('href', true)).toEqual({ action: 'set', value: 'true' })
+	})
+
 	it('string data-theme: "dark" → set', () => {
 		expect(coerceAttributeValue('data-theme', 'dark')).toEqual({ action: 'set', value: 'dark' })
 	})
@@ -62,6 +74,25 @@ describe('bindAttribute', () => {
 		cleanup()
 		bindAttribute(target, 'data-visible', () => visible)
 		expect(attrs.has('data-visible')).toBe(false)
+	})
+
+	it('boolean is-even: false removes attribute', () => {
+		const attrs = new Map<string, string>([['is-even', '']])
+		const target = {
+			setAttribute(name: string, value: string) {
+				attrs.set(name, value)
+			},
+			removeAttribute(name: string) {
+				attrs.delete(name)
+			},
+		} as unknown as Element
+		let isEven = true
+		const cleanup = bindAttribute(target, 'is-even', () => isEven)
+		expect(attrs.has('is-even')).toBe(true)
+		isEven = false
+		cleanup()
+		bindAttribute(target, 'is-even', () => isEven)
+		expect(attrs.has('is-even')).toBe(false)
 	})
 
 	it('coexists with bindProperty on same element', () => {
