@@ -296,6 +296,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 
 	function shouldAutoDisable(method: string, opts: ActionOptions): boolean {
 		if (opts.autoDisable === false) return false
+		if (opts.autoDisable === true) return true
 		return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE'
 	}
 

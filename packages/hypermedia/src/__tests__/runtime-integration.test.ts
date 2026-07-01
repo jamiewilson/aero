@@ -208,6 +208,24 @@ describe('createHypermediaRuntime integration', () => {
 		expect(post.disabled).toBe(false)
 	})
 
+	it('auto-disables GET when autoDisable is explicitly true', async () => {
+		document.body.innerHTML = '<button id="get">get</button>'
+		const get = document.querySelector('#get') as HTMLButtonElement
+		const runtime = createHypermediaRuntime()
+		const response = deferredResponse()
+		vi.spyOn(globalThis, 'fetch').mockReturnValueOnce(response.promise)
+
+		const request = runtime.executeAction(
+			{ method: 'GET', url: '/read', autoDisable: true, swap: 'none' },
+			get
+		)
+
+		expect(get.disabled).toBe(true)
+		response.resolve(new Response('', { status: 200 }))
+		await request
+		expect(get.disabled).toBe(false)
+	})
+
 	it('applies lifecycle classes to trigger and explicit target during each phase', async () => {
 		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
 		const btn = document.querySelector('#btn')!

@@ -5,36 +5,28 @@
 <script is:state>
 	import { withTransition } from '@scripts/utils/withTransition.ts'
 
+	// Helpers
 	const createID = () => crypto.randomUUID().split('-').pop()
+	const getRandomIndex = () => Math.floor(Math.random() * items.length)
+	const setItems = next => withTransition(() => (items = next))
+
+	// State
 	let items = [{ id: createID() }, { id: createID() }, { id: createID() }]
 
-	function add() {
-		const id = createID()
-		withTransition(() => (items = [...items, { id }]))
+	// Handlers
+	const add = () => setItems([...items, { id: createID() }])
+	const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
+	const reverse = () => setItems([...items].reverse())
+	const shuffle = () => setItems([...items].sort(() => Math.random() - 0.5))
+
+	const addRandom = () => {
+		const index = getRandomIndex()
+		setItems([...items.slice(0, index), { id: createID() }, ...items.slice(index)])
 	}
 
-	function remove() {
-		if (items.length === 0) return
-		withTransition(() => (items = items.slice(1)))
-	}
-
-	function addRandom() {
-		const id = createID()
-		const index = Math.floor(Math.random() * items.length)
-		withTransition(() => (items = [...items.slice(0, index), { id }, ...items.slice(index)]))
-	}
-
-	function removeRandom() {
-		const index = Math.floor(Math.random() * items.length)
-		withTransition(() => (items = [...items.slice(0, index), ...items.slice(index + 1)]))
-	}
-
-	function reverse() {
-		withTransition(() => (items = [...items].reverse()))
-	}
-
-	function shuffle() {
-		withTransition(() => (items = [...items].sort(() => Math.random() - 0.5)))
+	const removeRandom = () => {
+		const index = getRandomIndex()
+		setItems([...items.slice(0, index), ...items.slice(index + 1)])
 	}
 </script>
 
