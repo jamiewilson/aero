@@ -1304,6 +1304,7 @@ function emptyMounts() {
 		showBinds: [],
 		htmlBinds: [],
 		classBinds: [],
+		attributeBinds: [],
 		propertyBinds: [],
 		modelBinds: [],
 		componentBinds: [],
