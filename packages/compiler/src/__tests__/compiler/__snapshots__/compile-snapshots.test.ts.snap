@@ -3,7 +3,7 @@
 exports[`compileTemplate snapshots > component props and static attribute with special characters 1`] = `
 "
 export default async function(Aero) {
-		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } = Aero;
+		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, formatAttributeBind, raw, trim, trimStart, trimEnd } = Aero;
 		const x = 1;
 
 		
@@ -21,7 +21,7 @@ return __out;
 exports[`compileTemplate snapshots > minimal page with build script and interpolation 1`] = `
 "
 export default async function(Aero) {
-		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } = Aero;
+		const { slots = {}, renderComponent, styles, scripts, headScripts, nextPassDataId, escapeHtml, escapeScriptJson, formatAttributeBind, raw, trim, trimStart, trimEnd } = Aero;
 		const title = "Hi";
 
 		

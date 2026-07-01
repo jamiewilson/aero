@@ -16,6 +16,7 @@ import type {
 	MountOptions,
 } from '../types'
 import { escapeScriptJson } from '@aero-js/compiler/helpers'
+import { formatAttributeBind } from '@aero-js/reactivity'
 import { pagePathToKey, pageNameToRoutePath, normalizeRoutePath, resolvePageName, resolvePageTarget } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 
@@ -161,6 +162,8 @@ export class Aero {
 			renderComponent: this.renderComponent.bind(this),
 			createScriptTag,
 			escapeHtml: this.escapeHtml.bind(this),
+			formatAttributeBind: (name: string, value: unknown) =>
+				formatAttributeBind(name, value, this.escapeHtml.bind(this)),
 			escapeScriptJson,
 			bindable,
 			raw,

@@ -4,7 +4,7 @@
 
 <script is:state>
 	let open = false
-	let body = '<strong>html</strong> binding'
+	let body = '<code>html="{ body }"</code> binding'
 	let active = false
 	let saving = false
 </script>
@@ -17,7 +17,7 @@
 
 		<div class="v-stack">
 			<button on:click="{ open = !open }">Toggle show</button>
-			<div show="{ open }" class="card">Shown when <code>open</code> is true</div>
+			<div show="{ open }">Shown when <code>open</code> is true</div>
 		</div>
 
 		<div class="card" html="{ body }"></div>
@@ -33,8 +33,7 @@
 </base-layout>
 
 <style>
-	button.class\:is-active,
-	button.is-active {
+	.is-active {
 		outline: 2px solid var(--accent, #0b57d0);
 	}
 </style>

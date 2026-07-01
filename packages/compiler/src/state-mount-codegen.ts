@@ -2,6 +2,7 @@ import type {
 	IRNode,
 	IRReactiveBusyBind,
 	IRReactiveClassBind,
+	IRReactiveAttributeBind,
 	IRReactiveComponentBind,
 	IRReactiveEventBind,
 	IRReactiveForBind,
@@ -80,6 +81,7 @@ export interface BranchReactiveBinds {
 	showBinds: IRReactiveShowBind[]
 	htmlBinds: IRReactiveHtmlBind[]
 	classBinds: IRReactiveClassBind[]
+	attributeBinds: IRReactiveAttributeBind[]
 	propertyBinds: IRReactivePropertyBind[]
 	modelBinds: IRReactiveModelBind[]
 	componentBinds: IRReactiveComponentBind[]
@@ -93,6 +95,7 @@ export interface CollectedReactiveBinds {
 	showBinds: IRReactiveShowBind[]
 	htmlBinds: IRReactiveHtmlBind[]
 	classBinds: IRReactiveClassBind[]
+	attributeBinds: IRReactiveAttributeBind[]
 	propertyBinds: IRReactivePropertyBind[]
 	modelBinds: IRReactiveModelBind[]
 	ifBinds: IRReactiveIfBind[]
@@ -108,6 +111,7 @@ function collectBranchBinds(body: IRNode[]): BranchReactiveBinds {
 		showBinds: [],
 		htmlBinds: [],
 		classBinds: [],
+		attributeBinds: [],
 		propertyBinds: [],
 		modelBinds: [],
 		componentBinds: [],
@@ -119,6 +123,7 @@ function collectBranchBinds(body: IRNode[]): BranchReactiveBinds {
 	branch.showBinds = collected.showBinds
 	branch.htmlBinds = collected.htmlBinds
 	branch.classBinds = collected.classBinds
+	branch.attributeBinds = collected.attributeBinds
 	branch.propertyBinds = collected.propertyBinds
 	branch.modelBinds = collected.modelBinds
 	branch.componentBinds = collected.componentBinds
@@ -133,6 +138,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 	const showBinds: IRReactiveShowBind[] = []
 	const htmlBinds: IRReactiveHtmlBind[] = []
 	const classBinds: IRReactiveClassBind[] = []
+	const attributeBinds: IRReactiveAttributeBind[] = []
 	const propertyBinds: IRReactivePropertyBind[] = []
 	const modelBinds: IRReactiveModelBind[] = []
 	const ifBinds: IRReactiveIfBind[] = []
@@ -148,6 +154,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 			if (node.kind === 'ReactiveShowBind') showBinds.push(node)
 			if (node.kind === 'ReactiveHtmlBind') htmlBinds.push(node)
 			if (node.kind === 'ReactiveClassBind') classBinds.push(node)
+			if (node.kind === 'ReactiveAttributeBind') attributeBinds.push(node)
 			if (node.kind === 'ReactivePropertyBind') propertyBinds.push(node)
 			if (node.kind === 'ReactiveModelBind') modelBinds.push(node)
 			if (node.kind === 'ReactiveIfBind') ifBinds.push(node)
@@ -187,6 +194,7 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 		showBinds,
 		htmlBinds,
 		classBinds,
+		attributeBinds,
 		propertyBinds,
 		modelBinds,
 		ifBinds,
@@ -275,6 +283,14 @@ function emitCompiledMountFunctions(
 		lines.push(
 			`function __aeroClassRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`
 		)
+	}
+	for (const bind of binds.attributeBinds) {
+		for (let i = 0; i < bind.attributes.length; i++) {
+			const attr = bind.attributes[i]!
+			lines.push(
+				`function __aeroAttrRead_${bind.bindId}_${i}(scope) { return (${scopeExpr(attr.readExpr)}); }`
+			)
+		}
 	}
 	for (const bind of binds.propertyBinds) {
 		lines.push(
@@ -416,6 +432,21 @@ function serializeClassBinds(binds: IRReactiveClassBind[]): string {
 		.join('\n')}\n\t]`
 }
 
+function serializeAttributeBinds(binds: IRReactiveAttributeBind[]): string {
+	if (binds.length === 0) return '[]'
+	return `[\n${binds
+		.map(bind => {
+			const attributes = bind.attributes
+				.map(
+					(attr, index) =>
+						`\t\t\t{ name: ${JSON.stringify(attr.name)}, read: __aeroAttrRead_${bind.bindId}_${index} }`
+				)
+				.join(',\n')
+			return `\t\t{ selector: ${JSON.stringify(`[data-aero-bind="${bind.bindId}"]`)}, attributes: [\n${attributes}\n\t\t] }`
+		})
+		.join(',\n')}\n\t]`
+}
+
 function serializePropertyBinds(binds: IRReactivePropertyBind[]): string {
 	if (binds.length === 0) return '[]'
 	return `[\n${binds
@@ -445,6 +476,7 @@ function collectAllCodegenBinds(binds: CollectedReactiveBinds): CollectedReactiv
 		showBinds: [...binds.showBinds],
 		htmlBinds: [...binds.htmlBinds],
 		classBinds: [...binds.classBinds],
+		attributeBinds: [...binds.attributeBinds],
 		propertyBinds: [...binds.propertyBinds],
 		modelBinds: [...binds.modelBinds],
 		ifBinds: [...binds.ifBinds],
@@ -459,6 +491,7 @@ function collectAllCodegenBinds(binds: CollectedReactiveBinds): CollectedReactiv
 		merged.showBinds.push(...branch.showBinds)
 		merged.htmlBinds.push(...branch.htmlBinds)
 		merged.classBinds.push(...branch.classBinds)
+		merged.attributeBinds.push(...branch.attributeBinds)
 		merged.propertyBinds.push(...branch.propertyBinds)
 		merged.modelBinds.push(...branch.modelBinds)
 	}
@@ -483,6 +516,7 @@ function serializeBranchMounts(branch: BranchReactiveBinds): string {
 			showBinds: ${serializeShowBinds(branch.showBinds)},
 			htmlBinds: ${serializeHtmlBinds(branch.htmlBinds)},
 			classBinds: ${serializeClassBinds(branch.classBinds)},
+			attributeBinds: ${serializeAttributeBinds(branch.attributeBinds)},
 			propertyBinds: ${serializePropertyBinds(branch.propertyBinds)},
 			modelBinds: ${serializeModelBinds(branch.modelBinds)},
 			componentBinds: []
@@ -638,6 +672,7 @@ function hasAnyBinds(binds: CollectedReactiveBinds): boolean {
 		binds.showBinds.length > 0 ||
 		binds.htmlBinds.length > 0 ||
 		binds.classBinds.length > 0 ||
+		binds.attributeBinds.length > 0 ||
 		binds.propertyBinds.length > 0 ||
 		binds.modelBinds.length > 0 ||
 		binds.ifBinds.length > 0 ||
@@ -686,6 +721,7 @@ export function emitMountStateBindingsFunction(
 		showBinds: ${serializeShowBinds(binds.showBinds)},
 		htmlBinds: ${serializeHtmlBinds(binds.htmlBinds)},
 		classBinds: ${serializeClassBinds(binds.classBinds)},
+		attributeBinds: ${serializeAttributeBinds(binds.attributeBinds)},
 		propertyBinds: ${serializePropertyBinds(binds.propertyBinds)},
 		modelBinds: ${serializeModelBinds(binds.modelBinds)},
 		ifBinds: ${serializeIfBinds(binds.ifBinds)},

@@ -1,4 +1,5 @@
 const COMPILED_MARKER_ATTRS = [
+	'data-aero-bind',
 	'data-aero-text',
 	'data-aero-event',
 	'data-aero-show',

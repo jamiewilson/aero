@@ -24,7 +24,13 @@ import {
 	renderFallbackAttributeString,
 	renderMethodOverrideInput,
 } from '../hypermedia-fallback'
-import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
+import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactiveAttributeBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
+import {
+	bareAttributeName,
+	idlPropertyNameForAttribute,
+	isBooleanIdlProperty,
+	isReactiveIdlPropertyAttribute,
+} from '../reactive-idl-properties'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 import { referencesStateBindingExpression } from '../state-mount-codegen'
 
@@ -314,8 +320,10 @@ export function parseElementAttributes(
 	const showBinds: IRReactiveShowBind[] = []
 	const htmlBinds: IRReactiveHtmlBind[] = []
 	const classBinds: IRReactiveClassBind[] = []
+	const attributeBinds: IRReactiveAttributeBind[] = []
 	const propertyBinds: IRReactivePropertyBind[] = []
 	const modelBinds: IRReactiveModelBind[] = []
+	const pendingAttributeBindEntries: { name: string; readExpr: string }[] = []
 	let prefixContent: string | undefined
 	let loopData: { binding: string; items: string; keyExpr?: string } | null = null
 	let keyExpr: string | undefined
@@ -486,9 +494,19 @@ export function parseElementAttributes(
 
 		const propertyBinding = parsePropertyBinding(node, diag, attr, reactiveState)
 		if (propertyBinding) {
-			const { emittedAttr, bind } = propertyBinding
-			propertyBinds.push(bind)
-			attributes.push(emittedAttr)
+			for (const emittedAttr of propertyBinding.emittedAttrs) {
+				attributes.push(emittedAttr)
+			}
+			propertyBinds.push(propertyBinding.bind)
+			return
+		}
+
+		const attributeBinding = parseAttributeBindingEntry(node, diag, attr, reactiveState)
+		if (attributeBinding) {
+			pendingAttributeBindEntries.push(attributeBinding)
+			attributes.push(
+				Helper.compileAttributeBindEmission(attributeBinding.name, attributeBinding.readExpr)
+			)
 			return
 		}
 
@@ -496,6 +514,16 @@ export function parseElementAttributes(
 		if (!emitted) return
 		attributes.push(emitted)
 	})
+
+	if (pendingAttributeBindEntries.length > 0 && reactiveState) {
+		const bindId = reactiveState.nextAttributeBindId()
+		attributes.push(`data-aero-bind="${bindId}"`)
+		attributeBinds.push({
+			kind: 'ReactiveAttributeBind',
+			bindId,
+			attributes: pendingAttributeBindEntries,
+		})
+	}
 
 	const attrString = attributes.length ? ' ' + attributes.join(' ') : ''
 	type LoopData = { binding: string; items: string; keyExpr?: string }
@@ -514,6 +542,7 @@ export function parseElementAttributes(
 		showBinds,
 		htmlBinds,
 		classBinds,
+		attributeBinds,
 		propertyBinds,
 		modelBinds,
 	}
@@ -569,12 +598,12 @@ function parseFormModelBinding(
 	}
 }
 
-function parsePropertyBinding(
+function parseAttributeBindingEntry(
 	node: NodeLike,
 	diag: LowererDiag,
 	attr: AttrLike,
 	reactiveState?: LowererReactiveState
-): { emittedAttr: string; bind: IRReactivePropertyBind } | null {
+): { name: string; readExpr: string } | null {
 	if (!reactiveState) return null
 	if (isDirectiveAttr(attr.name)) return null
 	const raw = attr.value ?? ''
@@ -582,11 +611,39 @@ function parsePropertyBinding(
 	const expr = Helper.stripBraces(raw)
 	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
 	if (parseFormModelBinding(node, diag, attr, reactiveState)) return null
+	if (isReactiveIdlPropertyAttribute(attr.name)) return null
 
-	const propertyName = attr.name.replace(/^aero-/, '').replace(/^data-aero-/, '')
+	return { name: bareAttributeName(attr.name), readExpr: expr }
+}
+
+function parsePropertyBinding(
+	node: NodeLike,
+	diag: LowererDiag,
+	attr: AttrLike,
+	reactiveState?: LowererReactiveState
+): { emittedAttrs: string[]; bind: IRReactivePropertyBind } | null {
+	if (!reactiveState) return null
+	if (isDirectiveAttr(attr.name)) return null
+	if (!isReactiveIdlPropertyAttribute(attr.name)) return null
+	const raw = attr.value ?? ''
+	if (!isSingleWrappedExpression(raw)) return null
+	const expr = Helper.stripBraces(raw)
+	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
+	if (parseFormModelBinding(node, diag, attr, reactiveState)) return null
+
+	const bareName = bareAttributeName(attr.name)
+	const propertyName = idlPropertyNameForAttribute(attr.name)
 	const bindId = reactiveState.nextPropertyBindId()
+	const emittedAttrs: string[] = []
+	if (isBooleanIdlProperty(propertyName)) {
+		emittedAttrs.push(Helper.compileBooleanPresenceAttr(bareName, expr))
+	} else {
+		const val = Helper.compileAttributeInterpolation(raw)
+		emittedAttrs.push(`${bareName}="${val}"`)
+	}
+	emittedAttrs.push(`data-aero-property-${bareName}="${bindId}"`)
 	return {
-		emittedAttr: `data-aero-property-${propertyName}="${bindId}"`,
+		emittedAttrs,
 		bind: {
 			kind: 'ReactivePropertyBind',
 			bindId,

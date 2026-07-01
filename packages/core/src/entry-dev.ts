@@ -18,6 +18,7 @@ import {
 	mountClientBindings,
 	readBootstrappedReactivityRuntime,
 } from './runtime/client-mount'
+import { resetBootstrappedReactivityRuntime } from './runtime/reactivity-bootstrap'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
 const coreRender = aero.render.bind(aero)
@@ -72,6 +73,7 @@ function mount(options: MountOptions = {}): Promise<void> {
 				destroyStateBindings = null
 			}
 			void renderPage(el, coreRender).then(() => {
+				resetBootstrappedReactivityRuntime()
 				destroyStateBindings = mountClientBindings(aero, pathname, el)
 				if (onRender) onRender(el)
 			})

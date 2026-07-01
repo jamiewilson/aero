@@ -3,6 +3,7 @@ import {
 	REACTIVITY_RUNTIME_GLOBAL_KEY,
 	bootstrapReactivityRuntime,
 	readBootstrappedReactivityRuntime,
+	resetBootstrappedReactivityRuntime,
 } from '../reactivity-bootstrap'
 
 describe('bootstrapReactivityRuntime', () => {
@@ -23,6 +24,31 @@ describe('bootstrapReactivityRuntime', () => {
 			expect(
 				(first as { store?: { snapshot(): Record<string, unknown> } }).store?.snapshot()
 			).toEqual({ count: 4 })
+		} finally {
+			if (prevDocument === undefined) delete globalObj.document
+			else globalObj.document = prevDocument
+			delete globalObj[REACTIVITY_RUNTIME_GLOBAL_KEY]
+		}
+	})
+
+	it('resetBootstrappedReactivityRuntime clears global so next bootstrap re-hydrates', () => {
+		const globalObj = globalThis as unknown as Record<string, unknown>
+		delete globalObj[REACTIVITY_RUNTIME_GLOBAL_KEY]
+		const prevDocument = globalObj.document
+		globalObj.document = {
+			querySelector: () => ({ textContent: '{"count":1}' }),
+		}
+
+		try {
+			const first = bootstrapReactivityRuntime()
+			resetBootstrappedReactivityRuntime()
+			expect(readBootstrappedReactivityRuntime()).toBeNull()
+			globalObj.document = {
+				querySelector: () => ({ textContent: '{"count":9}' }),
+			}
+			const second = bootstrapReactivityRuntime()
+			expect(second).not.toBe(first)
+			expect(second.store.snapshot()).toEqual({ count: 9 })
 		} finally {
 			if (prevDocument === undefined) delete globalObj.document
 			else globalObj.document = prevDocument

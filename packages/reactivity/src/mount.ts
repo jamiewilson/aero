@@ -4,6 +4,7 @@ import { SignalStore } from './store'
 import { bindShow } from './bindings/show'
 import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
+import { bindAttribute } from './bindings/attribute'
 import { bindProperty } from './bindings/property'
 import { bindFormModel } from './bindings/model'
 import { bindReactiveIf } from './structural/if'
@@ -88,6 +89,14 @@ export interface MountStateBindingsOptions {
 		read?: ScopeReader
 		readExpr?: string
 	}[]
+	readonly attributeBinds?: readonly {
+		selector: string
+		attributes: readonly {
+			name: string
+			read?: ScopeReader
+			readExpr?: string
+		}[]
+	}[]
 	readonly propertyBinds?: readonly {
 		selector: string
 		propertyName: string
@@ -169,6 +178,14 @@ export interface MountBindingSubset {
 		className: string
 		read?: ScopeReader
 		readExpr?: string
+	}[]
+	readonly attributeBinds: readonly {
+		selector: string
+		attributes: readonly {
+			name: string
+			read?: ScopeReader
+			readExpr?: string
+		}[]
 	}[]
 	readonly propertyBinds: readonly {
 		selector: string
@@ -497,6 +514,7 @@ function mountBindingSubset(
 		showBinds: subset.showBinds,
 		htmlBinds: subset.htmlBinds,
 		classBinds: subset.classBinds,
+		attributeBinds: subset.attributeBinds,
 		propertyBinds: subset.propertyBinds,
 		modelBinds: subset.modelBinds,
 		componentBinds: subset.componentBinds,
@@ -524,8 +542,9 @@ function mountShowHtmlClassPropertyModel(
 			throw new Error(`[aero] Missing reactive show target: ${bind.selector}`)
 		}
 		const originalDisplay = target.style.display
+		const read = wireScopeReader(bind, scope, undefined, allowLegacy)
 		cleanups.push(
-			bindShow(target, wireScopeReader(bind, scope, undefined, allowLegacy), originalDisplay)
+			bindShow(target, read, originalDisplay)
 		)
 	}
 
@@ -547,6 +566,23 @@ function mountShowHtmlClassPropertyModel(
 		cleanups.push(
 			bindClassToggle(target, bind.className, wireScopeReader(bind, scope, undefined, allowLegacy))
 		)
+	}
+
+	for (const bind of options.attributeBinds ?? []) {
+		const target = queryBindTarget(options.root, bind.selector, options.componentBinds)
+		if (!target) {
+			if (ownsComponentMountRoot(options.root)) continue
+			throw new Error(`[aero] Missing reactive attribute target: ${bind.selector}`)
+		}
+		for (const attr of bind.attributes) {
+			cleanups.push(
+				bindAttribute(
+					target,
+					attr.name,
+					wireScopeReader(attr, scope, undefined, allowLegacy)
+				)
+			)
+		}
 	}
 
 	for (const bind of options.propertyBinds ?? []) {

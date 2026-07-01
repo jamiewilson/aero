@@ -78,9 +78,28 @@ Bind a boolean to a class name:
 </button>
 ```
 
-## Property bindings
+## Attribute bindings (default)
 
-Bind arbitrary element properties (not just attributes) with the property name as the attribute:
+With `<script is:state>`, `{ stateRef }` on an ordinary attribute keeps the attribute name in the DOM and updates it reactively via `setAttribute` / `removeAttribute`:
+
+```html
+<script is:state>
+	let theme = 'system'
+	let path = '/dashboard'
+</script>
+
+<html data-theme="{ theme }">
+	<body>
+		<a href="{ path }">Dashboard</a>
+	</body>
+</html>
+```
+
+Boolean flag bindings (`data-*` or any hyphenated name like `is-even`) use presence-only semantics: `true` adds the attribute; `false` removes it. String `data-*` values (like `data-theme`) are emitted as strings. `aria-*` booleans emit `"true"` / `"false"`. Non-hyphenated attrs (like `href`) stringify booleans.
+
+## Property bindings (IDL exceptions)
+
+Bind IDL properties that do not round-trip through content attributes (`disabled`, `readOnly`, `tabIndex`, `hidden`, `indeterminate`):
 
 ```html
 <script is:state>

@@ -298,6 +298,7 @@ describe('renderComponent context (single source of truth)', () => {
 		expect(pattern).toContain('slots = {}')
 		expect(pattern).toContain('renderComponent')
 		expect(pattern).toContain('headScripts')
+		expect(pattern).toContain('formatAttributeBind')
 		// Must NOT destructure page or site (they stay on Aero)
 		expect(pattern).not.toContain('page')
 		expect(pattern).not.toContain('site')

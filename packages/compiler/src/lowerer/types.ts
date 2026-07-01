@@ -31,6 +31,7 @@ export interface ParsedElementAttrs {
 	showBinds: import('../ir').IRReactiveShowBind[]
 	htmlBinds: import('../ir').IRReactiveHtmlBind[]
 	classBinds: import('../ir').IRReactiveClassBind[]
+	attributeBinds: import('../ir').IRReactiveAttributeBind[]
 	propertyBinds: import('../ir').IRReactivePropertyBind[]
 	modelBinds: import('../ir').IRReactiveModelBind[]
 }
@@ -45,6 +46,7 @@ export interface LowererReactiveState {
 	nextShowBindId(): number
 	nextHtmlBindId(): number
 	nextClassBindId(): number
+	nextAttributeBindId(): number
 	nextPropertyBindId(): number
 	nextModelBindId(): number
 	nextIfBindId(): number

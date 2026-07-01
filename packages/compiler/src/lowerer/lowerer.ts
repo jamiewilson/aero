@@ -242,6 +242,7 @@ export class Lowerer {
 			showBinds,
 			htmlBinds,
 			classBinds,
+			attributeBinds,
 			propertyBinds,
 			modelBinds,
 		} = parseElementAttributes(
@@ -293,6 +294,7 @@ export class Lowerer {
 				...showBinds,
 				...htmlBinds,
 				...classBinds,
+				...attributeBinds,
 				...propertyBinds,
 				...modelBinds,
 			])
@@ -419,6 +421,7 @@ export class Lowerer {
 				...showBinds,
 				...htmlBinds,
 				...classBinds,
+				...attributeBinds,
 				...propertyBinds,
 				...modelBinds,
 				...(switchBind ? [switchBind] : []),
@@ -432,6 +435,7 @@ export class Lowerer {
 		...showBinds,
 		...htmlBinds,
 		...classBinds,
+		...attributeBinds,
 		...propertyBinds,
 		...modelBinds,
 		...(switchBind ? [switchBind] : []),
@@ -746,6 +750,7 @@ function createLowererReactiveState(
 	let showBindId = 0
 	let htmlBindId = 0
 	let classBindId = 0
+	let attributeBindId = 0
 	let propertyBindId = 0
 	let modelBindId = 0
 	let ifBindId = 0
@@ -761,6 +766,7 @@ function createLowererReactiveState(
 		nextShowBindId: () => showBindId++,
 		nextHtmlBindId: () => htmlBindId++,
 		nextClassBindId: () => classBindId++,
+		nextAttributeBindId: () => attributeBindId++,
 		nextPropertyBindId: () => propertyBindId++,
 		nextModelBindId: () => modelBindId++,
 		nextIfBindId: () => ifBindId++,
