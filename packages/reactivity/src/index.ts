@@ -11,7 +11,7 @@ import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
 import { bindAttribute } from './bindings/attribute'
 import { bindProperty } from './bindings/property'
-import { coerceAttributeValue, applyAttributeCoercion } from './bindings/coerce-attribute-value'
+import { coerceAttributeValue, applyAttributeCoercion, formatAttributeBind } from './bindings/coerce-attribute-value'
 import { bindFormModel } from './bindings/model'
 import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
@@ -30,6 +30,7 @@ export {
 	bindAttribute,
 	coerceAttributeValue,
 	applyAttributeCoercion,
+	formatAttributeBind,
 	bindProperty,
 	bindFormModel,
 	bindReactiveIf,

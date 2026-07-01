@@ -46,3 +46,15 @@ export function applyAttributeCoercion(target: Element, name: string, value: unk
 		target.setAttribute(name, result.value)
 	}
 }
+
+/** SSR/render helper: coerced attribute fragment with leading space, or empty when omitted. */
+export function formatAttributeBind(
+	name: string,
+	value: unknown,
+	escapeHtml?: (value: unknown) => string
+): string {
+	const result = coerceAttributeValue(name, value)
+	if (result.action === 'remove') return ''
+	const escape = escapeHtml ?? ((v: unknown) => String(v ?? ''))
+	return ` ${name}="${escape(result.value)}"`
+}

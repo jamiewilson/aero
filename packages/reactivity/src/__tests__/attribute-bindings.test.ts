@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coerceAttributeValue } from '../bindings/coerce-attribute-value'
+import { coerceAttributeValue, formatAttributeBind } from '../bindings/coerce-attribute-value'
 import { bindAttribute } from '../bindings/attribute'
 import { bindProperty } from '../bindings/property'
 
@@ -34,6 +34,24 @@ describe('coerceAttributeValue', () => {
 
 	it('href empty string → remove', () => {
 		expect(coerceAttributeValue('href', '')).toEqual({ action: 'remove' })
+	})
+})
+
+describe('formatAttributeBind', () => {
+	it('boolean is-even false → empty fragment', () => {
+		expect(formatAttributeBind('is-even', false)).toBe('')
+	})
+
+	it('boolean is-even true → presence with leading space', () => {
+		expect(formatAttributeBind('is-even', true)).toBe(' is-even=""')
+	})
+
+	it('string data-theme → quoted value', () => {
+		expect(formatAttributeBind('data-theme', 'dark')).toBe(' data-theme="dark"')
+	})
+
+	it('aria-expanded false → explicit false string', () => {
+		expect(formatAttributeBind('aria-expanded', false)).toBe(' aria-expanded="false"')
 	})
 })
 
