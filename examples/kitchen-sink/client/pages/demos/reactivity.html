@@ -11,7 +11,7 @@
 	<header-component bind:count="{ count }" />
 	<section class="h-stack justify-center items-center">
 		<button on:click="{ count-- }">−</button>
-		<h2>{ count }</h2>
+		<h2 is-even="{ count % 2 === 0 }">{ count }</h2>
 		<button on:click="{ count++ }">+</button>
 	</section>
 </base-layout>

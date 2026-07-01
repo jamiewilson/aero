@@ -95,7 +95,7 @@ With `<script is:state>`, `{ stateRef }` on an ordinary attribute keeps the attr
 </html>
 ```
 
-Boolean `data-*` bindings use presence-only semantics: `true` adds the attribute; `false` removes it. String `data-*` values (like `data-theme`) are emitted as strings. `aria-*` booleans emit `"true"` / `"false"`.
+Boolean flag bindings (`data-*` or any hyphenated name like `is-even`) use presence-only semantics: `true` adds the attribute; `false` removes it. String `data-*` values (like `data-theme`) are emitted as strings. `aria-*` booleans emit `"true"` / `"false"`. Non-hyphenated attrs (like `href`) stringify booleans.
 
 ## Property bindings (IDL exceptions)
 
