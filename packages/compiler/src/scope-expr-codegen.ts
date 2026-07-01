@@ -158,10 +158,11 @@ function collectRewrites(
 	scopeNames: ReadonlySet<string>,
 	actionsNames: ReadonlySet<string> | undefined,
 	sourceOffset: number,
-	moduleScopeNames?: ReadonlySet<string>
+	moduleScopeNames?: ReadonlySet<string>,
+	initialShadows?: ReadonlySet<string>
 ): Array<{ start: number; end: number; text: string }> {
 	const rewrites: Array<{ start: number; end: number; text: string }> = []
-	const shadowStack: Set<string>[] = [new Set()]
+	const shadowStack: Set<string>[] = [new Set(initialShadows)]
 
 	function activeShadows(): Set<string> {
 		const merged = new Set<string>()
@@ -310,6 +311,7 @@ export function rewriteExprForScope(
 		actionsNames?: ReadonlySet<string>
 		qualifyAllFreeIdentifiers?: boolean
 		moduleScopeNames?: ReadonlySet<string>
+		initialShadows?: ReadonlySet<string>
 	}
 ): string {
 	const trimmed = expr.trim()
@@ -324,7 +326,8 @@ export function rewriteExprForScope(
 		effectiveScopeNames,
 		options?.actionsNames,
 		wrapped.offset,
-		options?.moduleScopeNames
+		options?.moduleScopeNames,
+		options?.initialShadows
 	)
 	return applyRewrites(wrapped.source, rewrites)
 }
@@ -394,6 +397,7 @@ export function rewriteStmtForScope(
 		actionsNames?: ReadonlySet<string>
 		qualifyAllFreeIdentifiers?: boolean
 		moduleScopeNames?: ReadonlySet<string>
+		initialShadows?: ReadonlySet<string>
 	}
 ): string {
 	const trimmed = stmt.trim()
@@ -408,13 +412,118 @@ export function rewriteStmtForScope(
 		effectiveScopeNames,
 		options?.actionsNames,
 		wrapped.offset,
-		options?.moduleScopeNames
+		options?.moduleScopeNames,
+		options?.initialShadows
 	)
 	return applyRewrites(wrapped.source, rewrites)
 }
 
 export function collectModuleHelperNames(analysis: StateScriptAnalysisResult): Set<string> {
 	return new Set(analysis.moduleHelpers.map(helper => helper.name))
+}
+
+function parseModuleHelperInitializer(source: string): string | null {
+	const match = /^const\s+\w+\s*=\s*(.+)$/s.exec(source.trim())
+	return match?.[1]?.trim() ?? null
+}
+
+export function moduleHelperNeedsScopeInstall(
+	helper: { name: string; source: string },
+	scopeNames: ReadonlySet<string>,
+	moduleScopeNames: ReadonlySet<string>
+): boolean {
+	const init = parseModuleHelperInitializer(helper.source)
+	if (!init) return false
+	const wrapped = parseWrappedExpression(init)
+	if (!wrapped) return false
+	const freeIds = collectFreeIdentifiers(wrapped.program, wrapped.offset)
+	for (const id of freeIds) {
+		if (scopeNames.has(id) && !moduleScopeNames.has(id)) return true
+	}
+	return false
+}
+
+export function rewriteModuleHelperForScope(
+	helper: { name: string; source: string },
+	scopeNames: ReadonlySet<string>,
+	options?: {
+		qualifyAllFreeIdentifiers?: boolean
+		moduleScopeNames?: ReadonlySet<string>
+	}
+): string {
+	const source = helper.source.trim()
+	const parsed = parseSync(FILENAME, source, PARSE_OPTS)
+	if (parsed.errors.length > 0) return helper.source
+
+	let init: EstNode | undefined
+	for (const stmt of (parsed.program as { body?: EstNode[] }).body ?? []) {
+		const decl =
+			stmt.type === 'ExportNamedDeclaration'
+				? (stmt.declaration as EstNode | undefined)
+				: stmt
+		if (decl?.type !== 'VariableDeclaration' || decl.kind !== 'const') continue
+		const declarator = (decl.declarations as EstNode[] | undefined)?.[0]
+		if (!declarator) continue
+		init = declarator.init as EstNode | undefined
+		break
+	}
+	if (
+		!init ||
+		(init.type !== 'ArrowFunctionExpression' && init.type !== 'FunctionExpression')
+	) {
+		return helper.source
+	}
+
+	const paramNames = new Set<string>()
+	for (const param of (init.params as EstNode[] | undefined) ?? []) {
+		if (param.type === 'Identifier' && typeof param.name === 'string') {
+			paramNames.add(param.name)
+			continue
+		}
+		walkAst(param, (node, parent, key) => {
+			if (key === 'typeAnnotation' || key === 'typeParameters') return 'skip-children'
+			if (
+				node.type === 'Identifier' &&
+				typeof node.name === 'string' &&
+				isBindingIdentifier(node, parent, key)
+			) {
+				paramNames.add(node.name)
+			}
+		})
+	}
+
+	const rewriteOptions = {
+		...options,
+		initialShadows: paramNames,
+	}
+
+	if (
+		init.type === 'ArrowFunctionExpression' &&
+		init.body?.type !== 'BlockStatement'
+	) {
+		if (typeof init.body?.start !== 'number' || typeof init.body?.end !== 'number') {
+			return helper.source
+		}
+		const bodySource = source.slice(init.body.start, init.body.end)
+		const rewrittenBody = rewriteExprForScope(bodySource, scopeNames, rewriteOptions)
+		const rewrittenInit =
+			source.slice(init.start ?? 0, init.body.start) +
+			rewrittenBody +
+			source.slice(init.body.end, init.end ?? source.length)
+		return `scope.${helper.name} = ${rewrittenInit.trim()}`
+	}
+
+	const body = init.body
+	if (!body || body.type !== 'BlockStatement') return helper.source
+	if (typeof body.start !== 'number' || typeof body.end !== 'number') return helper.source
+
+	const inner = source.slice(body.start + 1, body.end - 1)
+	const rewrittenInner = rewriteStmtForScope(inner, scopeNames, rewriteOptions)
+	const rewrittenInit =
+		source.slice(init.start ?? 0, body.start + 1) +
+		rewrittenInner +
+		source.slice(body.end - 1, init.end ?? source.length)
+	return `scope.${helper.name} = ${rewrittenInit.trim()}`
 }
 
 export function collectMountScopeNames(
@@ -443,11 +552,57 @@ export function rewriteFunctionSourceForScope(
 		moduleScopeNames?: ReadonlySet<string>
 	}
 ): string {
-	const match = /^function\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*)\}\s*$/.exec(source.trim())
-	if (!match) {
+	const parsed = parseSync(FILENAME, source.trim(), PARSE_OPTS)
+	if (parsed.errors.length > 0) {
 		return rewriteStmtForScope(source, scopeNames, options)
 	}
-	const [, name, params, body] = match
-	const rewrittenBody = rewriteStmtForScope(body, scopeNames, options)
-	return `scope.${name} = function(${params}) { ${rewrittenBody} }`
+
+	let fn: EstNode | undefined
+	for (const stmt of (parsed.program as { body?: EstNode[] }).body ?? []) {
+		const decl =
+			stmt.type === 'ExportNamedDeclaration'
+				? (stmt.declaration as EstNode | undefined)
+				: stmt
+		if (decl?.type === 'FunctionDeclaration') {
+			fn = decl
+			break
+		}
+	}
+	if (!fn || fn.type !== 'FunctionDeclaration' || fn.id?.type !== 'Identifier') {
+		return rewriteStmtForScope(source, scopeNames, options)
+	}
+
+	const name = fn.id.name!
+	const paramNames = new Set<string>()
+	for (const param of (fn.params as EstNode[] | undefined) ?? []) {
+		if (param.type === 'Identifier' && typeof param.name === 'string') {
+			paramNames.add(param.name)
+			continue
+		}
+		walkAst(param, (node, parent, key) => {
+			if (key === 'typeAnnotation' || key === 'typeParameters') return 'skip-children'
+			if (
+				node.type === 'Identifier' &&
+				typeof node.name === 'string' &&
+				isBindingIdentifier(node, parent, key)
+			) {
+				paramNames.add(node.name)
+			}
+		})
+	}
+	const body = fn.body
+	if (!body || body.type !== 'BlockStatement') {
+		return rewriteStmtForScope(source, scopeNames, options)
+	}
+	if (typeof body.start !== 'number' || typeof body.end !== 'number') {
+		return rewriteStmtForScope(source, scopeNames, options)
+	}
+
+	const bodySource = source.trim().slice(body.start + 1, body.end - 1)
+	const rewrittenBody = rewriteStmtForScope(bodySource, scopeNames, {
+		...options,
+		initialShadows: paramNames,
+	})
+	const params = [...paramNames].join(', ')
+	return `scope.${name} = function(${params}) { ${rewrittenBody.trim()} }`
 }

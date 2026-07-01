@@ -131,6 +131,31 @@ describe('reactive structural codegen', () => {
 		expect(htmlOut).toMatch(/^<li class="list-item">a<\/li>$/)
 	})
 
+	it('emits setItems helper with typed params in state scope functions', () => {
+		const html = `<script is:state>
+			import { withTransition } from '@scripts/utils/withTransition.ts'
+			const createID = () => crypto.randomUUID().split('-').pop()
+			let items = [{ id: createID() }]
+			function setItems(next: typeof items) {
+				withTransition(() => { items = next })
+			}
+			function add() {
+				setItems([...items, { id: createID() }])
+			}
+		</script>
+		<ul>
+			<li for="{ const { id } of items }" key="{ id }">{ id }</li>
+			<button on:click="{ add() }">Add</button>
+		</ul>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain(
+			'scope.setItems = function(next) { scope.withTransition(() => { scope.items = next }) }'
+		)
+		expect(code).not.toContain('next: typeof')
+		expect(code).not.toContain('scope.next')
+	})
+
 	it('emits const arrow helpers and keeps crypto unqualified in state handlers', () => {
 		const html = `<script is:state>
 			const createID = () => crypto.randomUUID().split('-').pop()

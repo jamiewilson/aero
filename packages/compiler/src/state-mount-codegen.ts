@@ -22,8 +22,10 @@ import {
 	collectModuleHelperNames,
 	collectMountScopeNames,
 	HYPERMEDIA_ACTION_NAMES,
+	moduleHelperNeedsScopeInstall,
 	rewriteExprForScope,
 	rewriteFunctionSourceForScope,
+	rewriteModuleHelperForScope,
 	rewriteStmtForScope,
 } from './scope-expr-codegen'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
@@ -250,8 +252,17 @@ function emitCompiledMountFunctions(
 ): string {
 	const owned = analysis.bindings.filter(binding => !binding.derived)
 	const signalNames = new Set(owned.map(binding => binding.name))
-	const scopeNames = collectMountScopeNames(analysis, stateImports)
-	const moduleScopeNames = collectModuleHelperNames(analysis)
+	const baseScopeNames = collectMountScopeNames(analysis, stateImports)
+	const allModuleHelperNames = collectModuleHelperNames(analysis)
+	const pureModuleHelpers = analysis.moduleHelpers.filter(
+		helper => !moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
+	)
+	const scopeModuleHelpers = analysis.moduleHelpers.filter(helper =>
+		moduleHelperNeedsScopeInstall(helper, baseScopeNames, allModuleHelperNames)
+	)
+	const scopeNames = new Set(baseScopeNames)
+	for (const helper of scopeModuleHelpers) scopeNames.add(helper.name)
+	const moduleScopeNames = new Set(pureModuleHelpers.map(helper => helper.name))
 	const scopeRewriteOptions = { qualifyAllFreeIdentifiers: true, moduleScopeNames }
 	const scopeExpr = (expr: string) => rewriteExprForScope(expr, scopeNames, scopeRewriteOptions)
 	const scopeStmt = (stmt: string, actions = false) =>
@@ -261,7 +272,7 @@ function emitCompiledMountFunctions(
 		})
 	const lines: string[] = []
 
-	for (const helper of analysis.moduleHelpers) {
+	for (const helper of pureModuleHelpers) {
 		lines.push(helper.source)
 	}
 
@@ -275,9 +286,17 @@ function emitCompiledMountFunctions(
 			`function __aeroDerived_${binding.name}(scope) { return (${scopeExpr(binding.initExpr)}); }`
 		)
 	}
-	if (analysis.functionSources.length > 0) {
+	if (analysis.functionSources.length > 0 || scopeModuleHelpers.length > 0) {
+		const scopeFunctionLines = [
+			...analysis.functionSources.map(source =>
+				rewriteFunctionSourceForScope(source, scopeNames, scopeRewriteOptions)
+			),
+			...scopeModuleHelpers.map(helper =>
+				rewriteModuleHelperForScope(helper, scopeNames, scopeRewriteOptions)
+			),
+		]
 		lines.push(
-			`function __aeroInstallScopeFunctions(scope) {\n${analysis.functionSources.map(source => rewriteFunctionSourceForScope(source, scopeNames, scopeRewriteOptions)).join('\n')}\n}`
+			`function __aeroInstallScopeFunctions(scope) {\n${scopeFunctionLines.join('\n')}\n}`
 		)
 	}
 	for (const bind of binds.textBinds) {
@@ -721,7 +740,13 @@ export function emitMountStateBindingsFunction(
 	)
 	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
 	const installScopeLine =
-		analysis.functionSources.length > 0
+		analysis.functionSources.length > 0 || analysis.moduleHelpers.some(helper =>
+			moduleHelperNeedsScopeInstall(
+				helper,
+				collectMountScopeNames(analysis, stateImports),
+				collectModuleHelperNames(analysis)
+			)
+		)
 			? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,'
 			: ''
 
