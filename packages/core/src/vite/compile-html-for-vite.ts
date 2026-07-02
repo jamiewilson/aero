@@ -32,7 +32,7 @@ interface CompileHtmlForViteParams {
 
 /**
  * Parse template source, sync client script map, rewrite virtual URLs, and run codegen.
- * Caller wraps in `htmlCompileTry` / `compileExitToGeneratedOrReport`.
+ * Caller wraps in `htmlCompileTry` / `compileOrReport`.
  */
 export function compileHtmlSourceForVite(
 	code: string,

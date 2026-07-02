@@ -33,14 +33,12 @@ import {
 } from './defaults'
 
 import {
-	type AeroCompileError,
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
 	enrichDiagnosticsWithSourceFrames,
-	exitFailureToAeroDiagnostics,
+	thrownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
-import { Effect, Exit } from 'effect'
-import { htmlCompileTry } from './compile-html-effect'
+import { htmlCompileTry } from './compile-html-try'
 import { compileHtmlSourceForVite } from './compile-html-for-vite'
 import { CompileWarningDeduper, type CompileWarningPayload } from './compile-warning-dedup'
 import { syncClientScriptsForTemplate } from './client-script-sync'
@@ -318,25 +316,28 @@ function isAeroTemplateHtml(
 	)
 }
 
-/** Turn a compile Effect exit into JS source, or call Vite `error` on failure. */
-function compileExitToGeneratedOrReport(
+/** Turn a compile failure into JS source, or call Vite `error` on failure. */
+function compileOrReport(
 	ctx: { error(payload: unknown): never },
-	exit: Exit.Exit<string, AeroCompileError>,
+	compileFn: () => string,
 	filePath: string,
 	pluginName: string
 ): string {
-	if (Exit.isSuccess(exit)) return exit.value
-	const raw = exitFailureToAeroDiagnostics(exit)
-	const merged = enrichDiagnosticsWithSourceFrames(
-		raw.map(d => ({
-			...d,
-			file: d.file ?? d.span?.file ?? filePath,
-		}))
-	)
-	const fields = aeroDiagnosticToViteErrorFields(merged[0]!, pluginName)
-	const payload =
-		merged.length > 1 ? { ...fields, message: diagnosticsToSingleMessage(merged) } : fields
-	ctx.error(payload)
+	try {
+		return compileFn()
+	} catch (err) {
+		const raw = thrownToAeroDiagnostics(err)
+		const merged = enrichDiagnosticsWithSourceFrames(
+			raw.map(d => ({
+				...d,
+				file: d.file ?? d.span?.file ?? filePath,
+			}))
+		)
+		const fields = aeroDiagnosticToViteErrorFields(merged[0]!, pluginName)
+		const payload =
+			merged.length > 1 ? { ...fields, message: diagnosticsToSingleMessage(merged) } : fields
+		ctx.error(payload)
+	}
 }
 
 function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
@@ -520,29 +521,27 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const resolvedAlias = state.aliasResult
 				// So Vite invalidates this virtual module when the source .html changes (HMR).
 				this.addWatchFile(filePath)
-				const exit = Effect.runSyncExit(
-					htmlCompileTry(filePath, () => {
-						const code = readFileSync(filePath, 'utf-8')
-					return compileHtmlWithDedupedWarnings(
-						code,
-						filePath,
-						{
-							resolvedConfig,
-							resolvePath: resolvedAlias.resolve,
-							reactivity: state.options.reactivity,
-							hypermedia: state.options.hypermedia,
-							dirs: state.dirs,
-						},
-						state.clientScripts,
-						state.compileWarningDeduper
-					)
-				})
-			)
-			const generated = compileExitToGeneratedOrReport(
-				this,
-				exit,
-				filePath,
-				'vite-plugin-aero-virtuals'
+				const generated = compileOrReport(
+					this,
+					() =>
+						htmlCompileTry(filePath, () => {
+							const code = readFileSync(filePath, 'utf-8')
+							return compileHtmlWithDedupedWarnings(
+								code,
+								filePath,
+								{
+									resolvedConfig,
+									resolvePath: resolvedAlias.resolve,
+									reactivity: state.options.reactivity,
+									hypermedia: state.options.hypermedia,
+									dirs: state.dirs,
+								},
+								state.clientScripts,
+								state.compileWarningDeduper
+							)
+						}),
+					filePath,
+					'vite-plugin-aero-virtuals'
 				)
 				return { code: generated, map: null }
 			}
@@ -578,24 +577,27 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 			const resolvedConfig = state.config
 			const resolvedAlias = state.aliasResult
 
-			const exit = Effect.runSyncExit(
-				htmlCompileTry(id, () =>
-					compileHtmlWithDedupedWarnings(
-						code,
-						id,
-						{
-							resolvedConfig,
-							resolvePath: resolvedAlias.resolve,
-							reactivity: state.options.reactivity,
-							hypermedia: state.options.hypermedia,
-							dirs: state.dirs,
-						},
-						state.clientScripts,
-						state.compileWarningDeduper
-					)
-				)
+			const generated = compileOrReport(
+				this,
+				() =>
+					htmlCompileTry(id, () =>
+						compileHtmlWithDedupedWarnings(
+							code,
+							id,
+							{
+								resolvedConfig,
+								resolvePath: resolvedAlias.resolve,
+								reactivity: state.options.reactivity,
+								hypermedia: state.options.hypermedia,
+								dirs: state.dirs,
+							},
+							state.clientScripts,
+							state.compileWarningDeduper
+						)
+					),
+				id,
+				'vite-plugin-aero-transform'
 			)
-			const generated = compileExitToGeneratedOrReport(this, exit, id, 'vite-plugin-aero-transform')
 			return {
 				code: generated,
 				map: null,

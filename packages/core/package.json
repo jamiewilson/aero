@@ -96,7 +96,6 @@
 		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@aero-js/reactivity": "workspace:*",
-		"effect": "^3.21.4",
 		"get-tsconfig": "^4.14.0",
 		"html-minifier-next": "^7.0.0",
 		"jiti": "^2.7.0",

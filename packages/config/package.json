@@ -37,7 +37,6 @@
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
 		"@aero-js/vite": "workspace:*",
-		"effect": "^3.21.4",
 		"jiti": "^2.7.0"
 	},
 	"devDependencies": {

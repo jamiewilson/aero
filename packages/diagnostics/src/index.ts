@@ -51,11 +51,7 @@ export {
 	unknownValueToDiagnostic,
 } from './error-to-diagnostic'
 export { unknownToAeroDiagnostics } from './from-unknown'
-export {
-	exitFailureToAeroDiagnostics,
-	failureToAeroDiagnostics,
-	mapCauseToAeroDiagnostics,
-} from './cause-map'
+export { failureToAeroDiagnostics, thrownToAeroDiagnostics } from './cause-map'
 
 // --- Error types ---
 export { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'

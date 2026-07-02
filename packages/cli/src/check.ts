@@ -32,7 +32,6 @@ import {
 	mergeWithDefaultAliases,
 	resolveDirs,
 } from '@aero-js/core/utils/aliases'
-import { Effect } from 'effect'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -294,172 +293,144 @@ type AeroCheckOptions = {
  * @returns Exit code `0` when clean; otherwise {@link exitCodeForDiagnostics} (10–14) from the primary error, matching static build buckets.
  */
 export async function runAeroCheck(root: string, options: AeroCheckOptions = {}): Promise<number> {
-	return Effect.runPromise(
-		Effect.gen(function* () {
-			const span = startDebugSpan('cli-check')
-			const diagnostics: AeroDiagnostic[] = []
-			const loadedRaw = yield* Effect.try({
-				try: () => loadAeroConfig(root),
-				catch: err => err,
-			}).pipe(
-				Effect.catchAll(err => {
-					diagnostics.push(...unknownToAeroDiagnostics(err))
-					return Effect.succeed<ReturnType<typeof loadAeroConfig>>(null)
+	const span = startDebugSpan('cli-check')
+	const diagnostics: AeroDiagnostic[] = []
+
+	let loadedRaw: ReturnType<typeof loadAeroConfig> = null
+	try {
+		loadedRaw = loadAeroConfig(root)
+	} catch (err) {
+		diagnostics.push(...unknownToAeroDiagnostics(err))
+	}
+
+	const aero = resolveAeroConfigObject(loadedRaw)
+	const featureFlags = resolveFeatureFlags(aero)
+
+	const dirs = resolveDirs(aero.dirs)
+	const mergedAliases = mergeWithDefaultAliases(loadTsconfigAliases(root), root, dirs)
+	const resolvePath = mergedAliases.resolve
+	diagnostics.push(...collectRouteCollisionDiagnostics(root, dirs.client))
+	diagnostics.push(...ensureRouteArtifacts(root, dirs.client))
+
+	const contentRel = contentConfigPathFromAero(root, aero)
+	if (shouldRunContentCheck(aero, root, contentRel)) {
+		const contentLoad = loadContentConfigFileSync(root, contentRel)
+		if (!contentLoad.ok) {
+			if (contentLoad.reason === 'missing' && aero.content === true) {
+				diagnostics.push({
+					severity: 'error',
+					code: 'AERO_CONFIG',
+					message: `[aero check] content is enabled but no config file at "${path.resolve(root, contentRel)}".`,
+					file: path.resolve(root, contentRel),
 				})
-			)
-			const aero = resolveAeroConfigObject(loadedRaw)
-			const featureFlags = resolveFeatureFlags(aero)
+			} else if (contentLoad.reason === 'error') {
+				diagnostics.push(...unknownToAeroDiagnostics(contentLoad.error))
+			}
+		} else {
+			try {
+				await initProcessor(contentLoad.config.markdown)
+				const { schemaIssues } = await loadAllCollections(contentLoad.config, root, {
+					contentConfigPath: contentRel,
+				})
+				if (schemaIssues.length > 0) {
+					diagnostics.push(...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error'))
+				}
+			} catch (err) {
+				diagnostics.push(...unknownToAeroDiagnostics(err))
+			}
+		}
+	}
 
-			const dirs = resolveDirs(aero.dirs)
-			const mergedAliases = mergeWithDefaultAliases(loadTsconfigAliases(root), root, dirs)
-			const resolvePath = mergedAliases.resolve
-			diagnostics.push(...collectRouteCollisionDiagnostics(root, dirs.client))
-			diagnostics.push(...ensureRouteArtifacts(root, dirs.client))
+	const htmlFiles: string[] = []
+	for (const dir of templateDirs(root, dirs.client)) {
+		htmlFiles.push(...walkHtmlFiles(dir))
+	}
+	const sorted = [...new Set(htmlFiles)].sort()
+	const runTypes = options.types === true
+	const projectTs = runTypes ? loadProjectTsConfig(root) : null
+	const componentsDir = path.join(root, dirs.client, 'components')
+	const layoutsDir = path.join(root, dirs.client, 'layouts')
+	const componentReactiveProps = collectComponentReactivePropMetadata([componentsDir, layoutsDir])
+	const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
+	const registryPath = registryWritten?.path
 
-			const contentRel = contentConfigPathFromAero(root, aero)
-			if (shouldRunContentCheck(aero, root, contentRel)) {
-				const contentLoad = loadContentConfigFileSync(root, contentRel)
-				if (!contentLoad.ok) {
-					if (contentLoad.reason === 'missing' && aero.content === true) {
-						diagnostics.push({
-							severity: 'error',
-							code: 'AERO_CONFIG',
-							message: `[aero check] content is enabled but no config file at "${path.resolve(root, contentRel)}".`,
-							file: path.resolve(root, contentRel),
-						})
-					} else if (contentLoad.reason === 'error') {
-						diagnostics.push(...unknownToAeroDiagnostics(contentLoad.error))
-					}
-				} else {
-					yield* Effect.tryPromise({
-						try: async () => {
-							await initProcessor(contentLoad.config.markdown)
-							const { schemaIssues } = await loadAllCollections(contentLoad.config, root, {
-								contentConfigPath: contentRel,
-							})
-							if (schemaIssues.length > 0) {
-								diagnostics.push(...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error'))
-							}
+	for (const file of sorted) {
+		let source: string
+		try {
+			source = fs.readFileSync(file, 'utf-8')
+		} catch (err) {
+			diagnostics.push(...unknownToAeroDiagnostics(err))
+			continue
+		}
+
+		try {
+			diagnostics.push(...collectTemplateFeatureGateDiagnostics(source, file, featureFlags))
+			compileTemplate(source, {
+				root,
+				resolvePath,
+				importer: file,
+				reactivity: featureFlags.reactivity,
+				hypermedia: featureFlags.hypermedia,
+				componentReactiveProps,
+				onWarning: warning => {
+					diagnostics.push({
+						severity: 'warning',
+						code: warning.code,
+						message: warning.message,
+						file: warning.file ?? file,
+						...(warning.line !== undefined && warning.column !== undefined
+							? {
+									span: {
+										file: warning.file ?? file,
+										line: warning.line,
+										column: warning.column,
+									},
+								}
+							: {}),
+					})
+				},
+			})
+			if (runTypes) {
+				for (const issue of checkTemplateTypesWithFile(source, file, {
+					root,
+					project: projectTs ?? undefined,
+					interpolations: true,
+					componentRegistryDtsPath: registryPath,
+				})) {
+					const code = issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
+					diagnostics.push({
+						severity: 'error',
+						code,
+						message: issue.message,
+						file: issue.file,
+						span: {
+							file: issue.file,
+							line: issue.line,
+							column: issue.column,
+							lineEnd: issue.lineEnd,
+							columnEnd: issue.columnEnd,
 						},
-						catch: err => err,
-					}).pipe(
-						Effect.catchAll(err => {
-							diagnostics.push(...unknownToAeroDiagnostics(err))
-							return Effect.void
-						})
-					)
+					})
 				}
 			}
+		} catch (err) {
+			diagnostics.push(...unknownToAeroDiagnostics(err))
+		}
+	}
 
-			const htmlFiles: string[] = []
-			for (const dir of templateDirs(root, dirs.client)) {
-				htmlFiles.push(...walkHtmlFiles(dir))
-			}
-			const sorted = [...new Set(htmlFiles)].sort()
-			const runTypes = options.types === true
-			const projectTs = runTypes ? loadProjectTsConfig(root) : null
-			const componentsDir = path.join(root, dirs.client, 'components')
-			const layoutsDir = path.join(root, dirs.client, 'layouts')
-			const componentReactiveProps = collectComponentReactivePropMetadata([componentsDir, layoutsDir])
-			const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
-			const registryPath = registryWritten?.path
-
-			yield* Effect.forEach(
-				sorted,
-				file =>
-					Effect.try({
-						try: () => fs.readFileSync(file, 'utf-8'),
-						catch: err => err,
-					}).pipe(
-						Effect.catchAll(err => {
-							diagnostics.push(...unknownToAeroDiagnostics(err))
-							return Effect.succeed<string | null>(null)
-						}),
-						Effect.flatMap(source => {
-							if (source === null) return Effect.void
-							return Effect.try({
-								try: () => {
-									diagnostics.push(
-										...collectTemplateFeatureGateDiagnostics(source, file, featureFlags)
-									)
-									compileTemplate(source, {
-										root,
-										resolvePath,
-										importer: file,
-										reactivity: featureFlags.reactivity,
-										hypermedia: featureFlags.hypermedia,
-										componentReactiveProps,
-										onWarning: warning => {
-											diagnostics.push({
-												severity: 'warning',
-												code: warning.code,
-												message: warning.message,
-												file: warning.file ?? file,
-												...(warning.line !== undefined && warning.column !== undefined
-													? {
-															span: {
-																file: warning.file ?? file,
-																line: warning.line,
-																column: warning.column,
-															},
-														}
-													: {}),
-											})
-										},
-									})
-									if (runTypes) {
-										for (const issue of checkTemplateTypesWithFile(source, file, {
-											root,
-											project: projectTs ?? undefined,
-											interpolations: true,
-											componentRegistryDtsPath: registryPath,
-										})) {
-											const code =
-												issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
-											diagnostics.push({
-												severity: 'error',
-												code,
-												message: issue.message,
-												file: issue.file,
-												span: {
-													file: issue.file,
-													line: issue.line,
-													column: issue.column,
-													lineEnd: issue.lineEnd,
-													columnEnd: issue.columnEnd,
-												},
-											})
-										}
-									}
-								},
-								catch: err => err,
-							}).pipe(
-								Effect.catchAll(err => {
-									diagnostics.push(...unknownToAeroDiagnostics(err))
-									return Effect.void
-								}),
-								Effect.asVoid
-							)
-						})
-					),
-				{ discard: true }
-			)
-
-			const errors = diagnostics.filter(d => d.severity === 'error')
-			const warnings = diagnostics.filter(d => d.severity === 'warning')
-			if (warnings.length > 0) {
-				const warningText = formatDiagnosticsTerminal(warnings, { plain: true })
-				process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))
-			}
-			if (errors.length === 0) {
-				span.end(warnings.length > 0 ? `warnings=${warnings.length}` : 'clean')
-				return 0
-			}
-			recordCliDiagnosticsMetrics(errors)
-			const text = formatDiagnosticsTerminal(errors, { plain: true })
-			process.stderr.write(text + (text.endsWith('\n') ? '' : '\n'))
-			span.end(`errors=${errors.length}`)
-			return exitCodeForDiagnostics(errors)
-		})
-	)
+	const errors = diagnostics.filter(d => d.severity === 'error')
+	const warnings = diagnostics.filter(d => d.severity === 'warning')
+	if (warnings.length > 0) {
+		const warningText = formatDiagnosticsTerminal(warnings, { plain: true })
+		process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))
+	}
+	if (errors.length === 0) {
+		span.end(warnings.length > 0 ? `warnings=${warnings.length}` : 'clean')
+		return 0
+	}
+	recordCliDiagnosticsMetrics(errors)
+	const text = formatDiagnosticsTerminal(errors, { plain: true })
+	process.stderr.write(text + (text.endsWith('\n') ? '' : '\n'))
+	span.end(`errors=${errors.length}`)
+	return exitCodeForDiagnostics(errors)
 }

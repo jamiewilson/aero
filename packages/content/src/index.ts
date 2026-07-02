@@ -22,8 +22,6 @@ export {
 export { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
 export {
 	loadAllCollections,
-	loadAllCollectionsEffect,
-	loadCollectionEffect,
 	type LoadAllCollectionsOptions,
 } from './loader'
 export {

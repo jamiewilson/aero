@@ -3,12 +3,10 @@
  * schema validation, transforms, and virtual module serialization.
  */
 import { describe, it, expect } from 'vitest'
-import { Effect } from 'effect'
 import fs from 'node:fs'
 import os from 'node:os'
 import {
 	loadAllCollections,
-	loadAllCollectionsEffect,
 	getWatchedDirs,
 	getContentRoot,
 	toExportName,
@@ -205,16 +203,6 @@ describe('loadAllCollections', () => {
 			if (previous === undefined) delete process.env.AERO_CONTENT_STRICT
 			else process.env.AERO_CONTENT_STRICT = previous
 		}
-	})
-
-	it('loadAllCollectionsEffect matches loadAllCollections results', async () => {
-		const config = defineConfig({ collections: [docsCollection] })
-		const fromPromise = await loadAllCollections(config, '/')
-		const fromEffect = await Effect.runPromise(loadAllCollectionsEffect(config, '/'))
-
-		expect(Array.from(fromEffect.loaded.keys())).toEqual(Array.from(fromPromise.loaded.keys()))
-		expect(fromEffect.schemaIssues).toEqual(fromPromise.schemaIssues)
-		expect(fromEffect.loaded.get('docs')?.length).toBe(fromPromise.loaded.get('docs')?.length)
 	})
 
 	it('parses frontmatter with ArkType schema (Standard Schema)', async () => {
