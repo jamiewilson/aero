@@ -13,6 +13,7 @@ import { isDirectiveAttr } from './directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
+import { buildHypermediaActionScopeDecl } from '@aero-js/hypermedia'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
 
@@ -37,30 +38,7 @@ const PROPS_ATTR_NAMES = new Set([
 ])
 
 /** Hypermedia action functions injected into `on:*` handler scope at mount (reactivity mount compileHandler). */
-export const HYPERMEDIA_ACTION_SCOPE_DECL = `interface HypermediaResponse {
-	readonly ok: boolean
-	readonly status: number
-	readonly html: string
-	readonly headers: Record<string, string>
-}
-interface HypermediaActionOptions {
-	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-	target?: string
-	swap?: string
-	headers?: Record<string, string>
-	values?: Record<string, string>
-	pushUrl?: boolean | string
-	autoDisable?: boolean
-	ariaBusy?: boolean
-	state?: { value: boolean }
-}
-declare function __aeroSignal(name: string): { value: boolean }
-declare function GET(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
-declare function POST(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
-declare function PUT(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
-declare function PATCH(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
-declare function DELETE(url: string, options?: HypermediaActionOptions): Promise<HypermediaResponse>
-`
+export const HYPERMEDIA_ACTION_SCOPE_DECL = buildHypermediaActionScopeDecl()
 
 /** Virtual TS prelude for `on:*` handler bodies — matches runtime mount `compileHandler` scope. */
 export const EVENT_HANDLER_SCOPE_DECL =

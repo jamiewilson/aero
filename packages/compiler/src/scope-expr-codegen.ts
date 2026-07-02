@@ -1,4 +1,8 @@
 import { parseSync } from 'oxc-parser'
+import {
+	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
+	HYPERMEDIA_HTTP_METHOD_SET,
+} from '@aero-js/hypermedia'
 import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
@@ -9,62 +13,22 @@ const PARSE_OPTS = {
 	lang: 'ts',
 } as const
 
-const RESERVED = new Set([
-	'scope',
-	'actions',
-	'event',
-	'self',
-	'$value',
-	'escapeHtml',
-	'__out',
-	'true',
-	'false',
-	'null',
-	'undefined',
-	'this',
-	'arguments',
-	'typeof',
-	'void',
-	'delete',
-	'new',
-	'in',
-	'instanceof',
-	'String',
-	'Number',
-	'Boolean',
-	'Array',
-	'Object',
-	'Math',
-	'JSON',
-	'Date',
-	'parseInt',
-	'parseFloat',
-	'isNaN',
-	'isFinite',
-	'console',
-	'alert',
-	'Promise',
-	'Map',
-	'Set',
-	'Symbol',
-	'BigInt',
-	'Error',
-	'RegExp',
-	'Intl',
-	'Reflect',
-	'Proxy',
-	'crypto',
-	'globalThis',
-])
+export const HYPERMEDIA_ACTION_NAMES = HYPERMEDIA_HTTP_METHOD_SET
 
-export const HYPERMEDIA_ACTION_NAMES = new Set(['POST', 'GET', 'PUT', 'PATCH', 'DELETE'])
+/** @deprecated Prefer `HYPERMEDIA_EVENT_HANDLER_ACTION_SET` from `@aero-js/hypermedia`. */
+export const HYPERMEDIA_HANDLER_ACTION_NAMES = HYPERMEDIA_EVENT_HANDLER_ACTION_SET
+
+/** Params injected into generated event handler signatures. */
+export const EVENT_HANDLER_SHADOWS = new Set(['event', 'self'])
+
+/** Params injected into generated model write handler signatures. */
+export const MODEL_WRITE_SHADOWS = new Set(['$value'])
 
 /** Shared rewrite environment for one page's is:state script. */
 export interface ScopeRewriteContext {
 	readonly scopeNames: ReadonlySet<string>
 	readonly moduleScopeNames: ReadonlySet<string>
 	readonly actionsNames?: ReadonlySet<string>
-	readonly qualifyAllFreeIdentifiers: boolean
 }
 
 export interface ScopeRewriteCallOptions {
@@ -73,23 +37,17 @@ export interface ScopeRewriteCallOptions {
 	actionsNames?: ReadonlySet<string>
 }
 
-/** @deprecated Prefer `ScopeRewriteContext` via `createScopeRewriteContext`. */
-export interface LegacyScopeRewriteOptions {
-	actionsNames?: ReadonlySet<string>
-	qualifyAllFreeIdentifiers?: boolean
-	moduleScopeNames?: ReadonlySet<string>
-	initialShadows?: ReadonlySet<string>
-}
-
-function scopeRewriteContextFromLegacy(
+export function scopeRewriteContext(
 	scopeNames: ReadonlySet<string>,
-	options?: LegacyScopeRewriteOptions
+	options?: {
+		moduleScopeNames?: ReadonlySet<string>
+		actionsNames?: ReadonlySet<string>
+	}
 ): ScopeRewriteContext {
 	return {
 		scopeNames,
 		moduleScopeNames: options?.moduleScopeNames ?? new Set(),
 		actionsNames: options?.actionsNames,
-		qualifyAllFreeIdentifiers: options?.qualifyAllFreeIdentifiers ?? false,
 	}
 }
 
@@ -108,7 +66,6 @@ export function createScopeRewriteContext(
 		scopeNames,
 		moduleScopeNames: options?.moduleScopeNames ?? new Set(),
 		actionsNames: options?.actionsNames,
-		qualifyAllFreeIdentifiers: true,
 	}
 }
 
@@ -164,11 +121,7 @@ function collectPatternNames(pattern: EstNode | undefined, names: Set<string>): 
 }
 
 function isMemberPropertyIdentifier(node: EstNode, parent?: EstNode): boolean {
-	return (
-		parent?.type === 'MemberExpression' &&
-		parent.property === node &&
-		parent.computed !== true
-	)
+	return parent?.type === 'MemberExpression' && parent.property === node && parent.computed !== true
 }
 
 function isObjectLiteralKeyIdentifier(node: EstNode, parent?: EstNode): boolean {
@@ -264,7 +217,7 @@ function collectRewrites(
 		if (node.type === 'Property' && node.shorthand === true && node.key?.type === 'Identifier') {
 			const name = node.key.name
 			if (
-				!RESERVED.has(name) &&
+				typeof name === 'string' &&
 				!activeShadows().has(name) &&
 				!moduleScopeNames?.has(name)
 			) {
@@ -290,7 +243,6 @@ function collectRewrites(
 
 		if (node.type === 'Identifier' && typeof node.name === 'string') {
 			const name = node.name
-			if (RESERVED.has(name)) return
 			if (isMemberPropertyIdentifier(node, parent)) return
 			if (isObjectLiteralKeyIdentifier(node, parent)) return
 			if (isBindingIdentifier(node, parent, key)) return
@@ -322,7 +274,10 @@ function collectRewrites(
 	return rewrites
 }
 
-function applyRewrites(source: string, rewrites: Array<{ start: number; end: number; text: string }>): string {
+function applyRewrites(
+	source: string,
+	rewrites: Array<{ start: number; end: number; text: string }>
+): string {
 	if (rewrites.length === 0) return source
 	let out = source
 	for (const rewrite of [...rewrites].sort((a, b) => b.start - a.start)) {
@@ -366,39 +321,14 @@ export function rewriteExprForScope(
 	expr: string,
 	ctx: ScopeRewriteContext,
 	options?: ScopeRewriteCallOptions
-): string
-export function rewriteExprForScope(
-	expr: string,
-	scopeNames: ReadonlySet<string>,
-	options?: LegacyScopeRewriteOptions
-): string
-export function rewriteExprForScope(
-	expr: string,
-	ctxOrScopeNames: ScopeRewriteContext | ReadonlySet<string>,
-	options?: ScopeRewriteCallOptions | LegacyScopeRewriteOptions
-): string {
-	const ctx =
-		ctxOrScopeNames instanceof Set
-			? scopeRewriteContextFromLegacy(ctxOrScopeNames, options as LegacyScopeRewriteOptions | undefined)
-			: ctxOrScopeNames
-	return rewriteExprForScopeWithContext(expr, ctx, options)
-}
-
-function rewriteExprForScopeWithContext(
-	expr: string,
-	ctx: ScopeRewriteContext,
-	options?: ScopeRewriteCallOptions
 ): string {
 	const trimmed = expr.trim()
 	if (!trimmed) return expr
 	const wrapped = parseWrappedExpression(trimmed)
 	if (!wrapped) return expr
-	const effectiveScopeNames = ctx.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(ctx.scopeNames, wrapped.program, wrapped.offset, ctx.moduleScopeNames)
-		: ctx.scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
-		effectiveScopeNames,
+		ctx.scopeNames,
 		options?.actionsNames ?? ctx.actionsNames,
 		wrapped.offset,
 		ctx.moduleScopeNames,
@@ -407,20 +337,7 @@ function rewriteExprForScopeWithContext(
 	return applyRewrites(wrapped.source, rewrites)
 }
 
-function mergeQualifyAllScopeNames(
-	scopeNames: ReadonlySet<string>,
-	program: unknown,
-	sourceOffset: number,
-	moduleScopeNames?: ReadonlySet<string>
-): Set<string> {
-	const names = new Set(scopeNames)
-	collectFreeIdentifiers(program, sourceOffset).forEach(name => {
-		if (!moduleScopeNames?.has(name)) names.add(name)
-	})
-	return names
-}
-
-export function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<string> {
+function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<string> {
 	const names = new Set<string>()
 	const shadowStack: Set<string>[] = [new Set()]
 
@@ -452,7 +369,6 @@ export function collectFreeIdentifiers(program: unknown, sourceOffset: number): 
 
 		if (node.type === 'Identifier' && typeof node.name === 'string') {
 			const name = node.name
-			if (RESERVED.has(name)) return
 			if (isMemberPropertyIdentifier(node, parent)) return
 			if (isObjectLiteralKeyIdentifier(node, parent)) return
 			if (isBindingIdentifier(node, parent, key)) return
@@ -465,29 +381,20 @@ export function collectFreeIdentifiers(program: unknown, sourceOffset: number): 
 	return names
 }
 
-export function rewriteStmtForScope(
-	stmt: string,
-	ctx: ScopeRewriteContext,
-	options?: ScopeRewriteCallOptions
-): string
-export function rewriteStmtForScope(
-	stmt: string,
-	scopeNames: ReadonlySet<string>,
-	options?: LegacyScopeRewriteOptions
-): string
-export function rewriteStmtForScope(
-	stmt: string,
-	ctxOrScopeNames: ScopeRewriteContext | ReadonlySet<string>,
-	options?: ScopeRewriteCallOptions | LegacyScopeRewriteOptions
-): string {
-	const ctx =
-		ctxOrScopeNames instanceof Set
-			? scopeRewriteContextFromLegacy(ctxOrScopeNames, options as LegacyScopeRewriteOptions | undefined)
-			: ctxOrScopeNames
-	return rewriteStmtForScopeWithContext(stmt, ctx, options)
+/** Free identifiers in `program` that reference known scope names. */
+export function collectScopeReferences(
+	program: unknown,
+	sourceOffset: number,
+	scopeNames: ReadonlySet<string>
+): Set<string> {
+	const refs = new Set<string>()
+	for (const name of collectFreeIdentifiers(program, sourceOffset)) {
+		if (scopeNames.has(name)) refs.add(name)
+	}
+	return refs
 }
 
-function rewriteStmtForScopeWithContext(
+export function rewriteStmtForScope(
 	stmt: string,
 	ctx: ScopeRewriteContext,
 	options?: ScopeRewriteCallOptions
@@ -496,12 +403,9 @@ function rewriteStmtForScopeWithContext(
 	if (!trimmed) return stmt
 	const wrapped = parseWrappedStatements(trimmed)
 	if (!wrapped) return stmt
-	const effectiveScopeNames = ctx.qualifyAllFreeIdentifiers
-		? mergeQualifyAllScopeNames(ctx.scopeNames, wrapped.program, wrapped.offset, ctx.moduleScopeNames)
-		: ctx.scopeNames
 	const rewrites = collectRewrites(
 		wrapped.program,
-		effectiveScopeNames,
+		ctx.scopeNames,
 		options?.actionsNames ?? ctx.actionsNames,
 		wrapped.offset,
 		ctx.moduleScopeNames,

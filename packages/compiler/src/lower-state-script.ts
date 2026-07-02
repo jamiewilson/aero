@@ -1,10 +1,11 @@
 import { parseSync } from 'oxc-parser'
 import type { BuildScriptImport } from './build-script-analysis'
 import {
-	collectFreeIdentifiers,
+	collectScopeReferences,
 	collectMountScopeNames,
 	rewriteExprForScope,
 	rewriteStmtForScope,
+	HYPERMEDIA_ACTION_NAMES,
 	type ScopeRewriteContext,
 } from './scope-expr-codegen'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
@@ -179,11 +180,8 @@ function functionInitReferencesScope(
 	const wrapped = `(${slice})`
 	const parsed = parseSync('scope-fn.ts', wrapped, PARSE_OPTS)
 	if (parsed.errors.length > 0) return false
-	const freeIds = collectFreeIdentifiers(parsed.program, 1)
-	for (const id of freeIds) {
-		if (baseScopeNames.has(id)) return true
-	}
-	return false
+	const scopeRefs = collectScopeReferences(parsed.program, 1, baseScopeNames)
+	return scopeRefs.size > 0
 }
 
 function lowerScopeFunction(
@@ -239,10 +237,10 @@ function buildRewriteContext(
 ): ScopeRewriteContext {
 	const scopeNames = new Set(collectMountScopeNames(analysis, stateImports))
 	for (const name of scopeInstalledNames) scopeNames.add(name)
+	for (const name of HYPERMEDIA_ACTION_NAMES) scopeNames.add(name)
 	return {
 		scopeNames,
 		moduleScopeNames,
-		qualifyAllFreeIdentifiers: true,
 	}
 }
 

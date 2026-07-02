@@ -18,13 +18,20 @@ import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { emitToJS } from './emit'
 import { getRenderContextDestructurePattern } from './helpers'
+import { FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import {
-	HYPERMEDIA_ACTION_NAMES,
+	EVENT_HANDLER_SHADOWS,
+	HYPERMEDIA_HANDLER_ACTION_NAMES,
+	MODEL_WRITE_SHADOWS,
 	rewriteExprForScope,
 	rewriteStmtForScope,
+	scopeRewriteContext,
+	type ScopeRewriteCallOptions,
+	type ScopeRewriteContext,
 } from './scope-expr-codegen'
 import { lowerStateScript, type LoweredStateScript } from './lower-state-script'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
+import { COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE } from '@aero-js/hypermedia'
 
 const STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE = `const { ${getRenderContextDestructurePattern()
 	.split(', ')
@@ -33,6 +40,18 @@ const STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE = `const { ${getRenderContextDestruc
 
 function isSimpleForBinding(binding: string): boolean {
 	return /^[A-Za-z_$][\w$]*$/.test(binding.trim())
+}
+
+function withStructuralScopeNames(
+	ctx: ScopeRewriteContext,
+	binds: CollectedReactiveBinds
+): ScopeRewriteContext {
+	const scopeNames = new Set(ctx.scopeNames)
+	for (const forBind of binds.forBinds) {
+		for (const name of forBind.bindingNames) scopeNames.add(name)
+		for (const name of FOR_LOOP_IMPLICIT_NAMES) scopeNames.add(name)
+	}
+	return { ...ctx, scopeNames }
 }
 
 function needsForDestructureCodegen(binding: string, bindingNames: readonly string[]): boolean {
@@ -244,11 +263,16 @@ function emitCompiledMountFunctions(
 ): string {
 	const owned = analysis.bindings.filter(binding => !binding.derived)
 	const signalNames = new Set(owned.map(binding => binding.name))
-	const rewriteContext = lowered.rewriteContext
-	const scopeExpr = (expr: string) => rewriteExprForScope(expr, rewriteContext)
-	const scopeStmt = (stmt: string, actions = false) =>
+	const rewriteContext = withStructuralScopeNames(lowered.rewriteContext, binds)
+	const scopeExpr = (expr: string, options?: ScopeRewriteCallOptions) =>
+		rewriteExprForScope(expr, rewriteContext, options)
+	const scopeStmt = (
+		stmt: string,
+		options?: { actions?: boolean; initialShadows?: ReadonlySet<string> }
+	) =>
 		rewriteStmtForScope(stmt, rewriteContext, {
-			actionsNames: actions ? HYPERMEDIA_ACTION_NAMES : undefined,
+			actionsNames: options?.actions ? HYPERMEDIA_HANDLER_ACTION_NAMES : undefined,
+			initialShadows: options?.initialShadows,
 		})
 	const lines: string[] = []
 
@@ -305,14 +329,16 @@ function emitCompiledMountFunctions(
 			`function __aeroModelRead_${bind.bindId}(scope) { return (${scopeExpr(bind.readExpr)}); }`
 		)
 		lines.push(
-			`function __aeroModelWrite_${bind.bindId}(scope, $value) { ${scopeExpr(bind.writeExpr)} = $value; }`
+			`function __aeroModelWrite_${bind.bindId}(scope, $value) { ${scopeExpr(bind.writeExpr, { initialShadows: MODEL_WRITE_SHADOWS })} = $value; }`
 		)
 	}
 	for (const bind of binds.eventBinds) {
-		const body = rewriteHypermediaActionStateRefs(bind.handlerExpr, signalNames)
+		const body = rewriteHypermediaActionStateRefs(bind.handlerExpr, signalNames, {
+			signalCallee: COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
+		})
 		const stmt = body.trim().endsWith(';') ? body.trim() : `${body.trim()};`
 		lines.push(
-			`function __aeroEvent_${bind.bindId}(scope, actions, event, self) { ${scopeStmt(stmt, true)} }`
+			`function __aeroEvent_${bind.bindId}(scope, actions, event, self) { ${scopeStmt(stmt, { actions: true, initialShadows: EVENT_HANDLER_SHADOWS })} }`
 		)
 	}
 	for (const bind of binds.ifBinds) {
@@ -637,9 +663,9 @@ function serializeScopeConstants(imports: readonly BuildScriptImport[]): string 
 
 export function emitForRowRenderer(forBind: IRReactiveForBind): string {
 	const bodyJs = emitToJS(stripStructuralBranchOutVars(forBind.body), '__out')
-	const scopedBodyJs = rewriteStmtForScope(bodyJs, new Set(forBind.bindingNames), {
-		qualifyAllFreeIdentifiers: true,
-	})
+	const scopeNames = new Set<string>(forBind.bindingNames)
+	for (const name of FOR_LOOP_IMPLICIT_NAMES) scopeNames.add(name)
+	const scopedBodyJs = rewriteStmtForScope(bodyJs, scopeRewriteContext(scopeNames))
 	return `function __aeroForRow_${forBind.bindId}(scope, Aero) {\n${STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE}\nlet __out = '';\n${scopedBodyJs}\nreturn __out;\n}`
 }
 

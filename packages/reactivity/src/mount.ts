@@ -18,6 +18,7 @@ import {
 	unsafeCompileHandler,
 	unsafeCompileRead,
 } from './unsafe-compile'
+import { createEventHandlerActionScope } from '@aero-js/hypermedia'
 
 export type Cleanup = () => void
 
@@ -215,38 +216,8 @@ export type ReactivePropExpression =
 		readonly mutable: boolean
 	}
 
-const HYPERMEDIA_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
-
 interface HypermediaTriggerRef {
 	current: Element | undefined
-}
-
-function createHypermediaActionScope(
-	runtime: HypermediaRuntimeLike,
-	getTrigger: () => Element | undefined,
-	resolveSignal: (name: string) => { value: boolean }
-): Record<string, (...args: unknown[]) => unknown> {
-	const scope: Record<string, (...args: unknown[]) => unknown> = {}
-	for (const method of HYPERMEDIA_METHODS) {
-		scope[method] = (url: unknown, opts: unknown = {}) =>
-			runtime.executeAction(
-				{ ...(opts as object), method, url: String(url) },
-				getTrigger()
-			)
-	}
-	scope.__aeroSignal = (name: unknown) => resolveSignal(String(name))
-	return scope
-}
-
-function rewriteActionStateRefs(handlerExpr: string, signalNames: ReadonlySet<string>): string {
-	if (signalNames.size === 0) return handlerExpr
-	return handlerExpr.replace(
-		/(\bstate\s*:\s*)([A-Za-z_$][\w$]*)/g,
-		(match, prefix: string, name: string) => {
-			if (!signalNames.has(name)) return match
-			return `${prefix}__aeroSignal(${JSON.stringify(name)})`
-		}
-	)
 }
 
 function wireScopeReader(
@@ -281,7 +252,7 @@ function wireEventHandler(
 			if (triggerRef) triggerRef.current = this
 			try {
 				const actionScope = options.hypermediaRuntime
-					? createHypermediaActionScope(
+					? createEventHandlerActionScope(
 							options.hypermediaRuntime,
 							() => this,
 							name => getBooleanSignal(options.store, options.bindings, name)
@@ -644,7 +615,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	const allowLegacyRuntimeCompile = options.allowLegacyRuntimeCompile === true
 	const hypermediaTriggerRef = options.hypermediaTriggerRef ?? { current: undefined }
 	const hypermediaScopeActions = options.hypermediaRuntime
-		? createHypermediaActionScope(
+		? createEventHandlerActionScope(
 				options.hypermediaRuntime,
 				() => hypermediaTriggerRef.current,
 				name => getBooleanSignal(options.store, options.bindings, name)

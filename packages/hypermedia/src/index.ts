@@ -42,3 +42,21 @@ export { dispatchLifecycleEvent } from './events'
 export type { LifecycleEventName, LifecycleDetail } from './events'
 export { GET, POST, PUT, PATCH, DELETE } from './actions'
 export { process } from './process'
+export {
+	HYPERMEDIA_HTTP_METHODS,
+	HYPERMEDIA_SIGNAL_RESOLVER,
+	HYPERMEDIA_EVENT_HANDLER_ACTIONS,
+	HYPERMEDIA_HTTP_METHOD_SET,
+	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
+	HYPERMEDIA_COMPILED_SIGNAL_CALLEE,
+	buildHypermediaActionScopeDecl,
+} from './event-handler-action-scope'
+export {
+	rewriteHypermediaActionStateRefs,
+	COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
+	type RewriteHypermediaActionStateRefsOptions,
+} from './action-state-refs'
+export {
+	createEventHandlerActionScope,
+	type EventHandlerActionExecutor,
+} from './create-event-handler-action-scope'

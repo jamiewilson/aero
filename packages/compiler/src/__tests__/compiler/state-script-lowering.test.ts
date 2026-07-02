@@ -204,6 +204,18 @@ let label = 'Items'
 			const code = compile(parse(html), hypermediaOptions)
 			expect(code).toMatch(/function __aeroEvent_0\(scope, actions[\s\S]*actions\.GET\('\/api\/items'\)/)
 		})
+
+		it('routes hypermedia state signal refs through actions in event handlers', () => {
+			const html = `<script is:state>
+let isSaving = false
+</script>
+<button on:click="{ GET('/api/demo', { target: '#x', state: isSaving }) }">go</button>`
+
+			const code = compile(parse(html), hypermediaOptions)
+			expect(code).toMatch(
+				/function __aeroEvent_0\(scope, actions[\s\S]*actions\.__aeroSignal\("isSaving"\)/
+			)
+		})
 	})
 
 	describe('mixed declaration styles', () => {
