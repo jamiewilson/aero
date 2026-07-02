@@ -105,6 +105,7 @@
 		"oxc-transform": "^0.138.0"
 	},
 	"devDependencies": {
+		"@aero-js/diagnostics": "workspace:*",
 		"@types/node": "catalog:",
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
