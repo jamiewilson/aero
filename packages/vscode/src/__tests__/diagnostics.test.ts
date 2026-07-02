@@ -986,7 +986,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		}
 	})
 
-	it('should NOT flag content globals as undefined', () => {
+	it('should flag content globals when not imported in build script or template', () => {
 		const text = `
 <div>{site.title}</div>
 `
@@ -1009,7 +1009,43 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
 			d.message.includes("'site' is not defined")
 		)
-		expect(undefinedDiag).toBeUndefined()
+		expect(undefinedDiag).toBeDefined()
+	})
+
+	it('should flag site in for-loop iterable when import is commented out', () => {
+		const text = `<script is:build>
+	import base from '@layouts/base.html'
+	//import site from '@content/site'
+</script>
+<div for="{ const demo of site }">
+	<a href="{ demo.href }">{ demo.label }</a>
+</div>`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => {
+				const lines = text.slice(0, offset).split('\n')
+				return { line: lines.length - 1, character: lines[lines.length - 1]?.length ?? 0 }
+			},
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0][1]
+		const siteDiag = reportedDiagnostics.find((d: any) =>
+			d.message.includes("'site' is not defined")
+		)
+		expect(siteDiag).toBeDefined()
+		const siteStart = text.indexOf('site', text.indexOf('for='))
+		expect(siteDiag.range.start).toEqual(positionAtOffset(text, siteStart))
+		expect(siteDiag.range.end).toEqual(positionAtOffset(text, siteStart + 'site'.length))
 	})
 
 	it('should NOT flag undefined variable in Alpine x-data', () => {

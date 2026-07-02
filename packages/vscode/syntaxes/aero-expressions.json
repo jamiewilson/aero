@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.expressions.injection",
-	"injectionSelector": "L:text.html.aero -source.css -source.js -source.ts -comment.block.html, L:text.html.aero string.quoted.double.html -source.css -source.js -source.ts, L:text.html.aero string.quoted.single.html -source.css -source.js -source.ts",
+	"injectionSelector": "L:text.html.aero -source.css -source.js -source.ts -source.css.embedded.html -comment.block.html, L:text.html.aero string.quoted.double.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero, L:text.html.aero string.quoted.single.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero",
 	"patterns": [
 		{
 			"begin": "\\{",

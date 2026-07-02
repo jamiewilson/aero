@@ -603,15 +603,16 @@ const o = { a: 1 }
 		expect(expr1).toContain(' item.label ')
 	})
 
-	it('does not create interpolation virtual fragment for the for-directive attribute value itself', () => {
+	it('creates interpolation virtual fragment for the for-directive head and body expressions', () => {
 		const html = `<li for="{ const item of items }">{ item.name }</li>`
 
 		const code = new AeroVirtualCode(createSnapshot(html))
-		// Only the template expression should produce a virtual fragment, not the for-directive value
 		const allExprs = code.embeddedCodes?.filter(c => c.id.startsWith('expr_')) ?? []
-		expect(allExprs).toHaveLength(1)
-		const text = getEmbeddedText(code, 'expr_0')!
-		expect(text).toContain(' item.name ')
+		expect(allExprs).toHaveLength(2)
+		const forHead = getEmbeddedText(code, 'expr_0')!
+		expect(forHead).toContain('for (const item of items) {}')
+		const bodyExpr = getEmbeddedText(code, 'expr_1')!
+		expect(bodyExpr).toContain(' item.name ')
 	})
 
 	it('extracts interpolations from attribute values', () => {

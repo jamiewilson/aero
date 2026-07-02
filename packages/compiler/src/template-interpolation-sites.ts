@@ -8,7 +8,11 @@
 import { escapeInterpolationBodyMarkup, tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/html-parser'
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
-import { collectForDirectiveBindingNames, FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
+import {
+	collectForDirectiveBindingNames,
+	FOR_LOOP_IMPLICIT_NAMES,
+	parseForDirective,
+} from './for-directive'
 import { isDirectiveAttr } from './directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
@@ -28,6 +32,13 @@ export type TemplateInterpolationSite = {
 	readonly wrapPropsObjectLiteral?: boolean
 	/** Aero `on:*` event handler — type-check as statement with writable state bindings. */
 	readonly isEventHandler?: boolean
+	/** `for="{ const … of … }"` head — type-check as `for (…) {}` (iterable must be array-like). */
+	readonly isForDirectiveHead?: boolean
+	/**
+	 * When set, HTML anchor for diagnostics is this offset (trimmed expression start inside `{…}`).
+	 * Otherwise {@link braceOffset} `{` is used and leading whitespace is skipped.
+	 */
+	readonly expressionOffset?: number
 }
 
 const FOR_ATTR_NAMES = new Set(['for', `${AERO_ATTR_PREFIX}for`, `${DATA_AERO_ATTR_PREFIX}for`])
@@ -210,6 +221,67 @@ function collectForDirectiveScopes(roots: Node[]): ForDirectiveScope[] {
 	return scopes
 }
 
+function collectForDirectiveTypeCheckSites(
+	roots: Node[],
+	sourceText: string
+): TemplateInterpolationSite[] {
+	const out: TemplateInterpolationSite[] = []
+
+	for (const node of walkHtmlNodes(roots)) {
+		if (!node.tag || node.startTagEnd == null) continue
+		const tag = node.tag.toLowerCase()
+		if (tag === 'script' || tag === 'style') continue
+
+		const attrs = node.attributes
+		if (!attrs) continue
+
+		let rawValue: string | undefined
+		for (const name of buildDirectiveAttributeNames(ATTR_FOR)) {
+			if (attrs[name] != null) {
+				rawValue = attrs[name]
+				break
+			}
+		}
+		if (rawValue == null) continue
+
+		const inner = normalizeForDirectiveValue(rawValue)
+		if (!inner) continue
+
+		try {
+			parseForDirective(inner)
+		} catch {
+			continue
+		}
+
+		const open = sourceText.substring(node.start, node.startTagEnd)
+		const attrRegex = /\b(?:aero-|data-aero-)?for\s*=\s*(['"])([\s\S]*?)\1/i
+		const forAttrMatch = attrRegex.exec(open)
+		if (!forAttrMatch) continue
+
+		const fullMatch = forAttrMatch[0]
+		const value = forAttrMatch[2]
+		const matchStartInOpen = forAttrMatch.index
+		const quote = forAttrMatch[1]
+		const quoteIndex = fullMatch.indexOf(quote)
+		const absValueStart = node.start + matchStartInOpen + quoteIndex + 1
+		const braceIndex = value.indexOf('{')
+		if (braceIndex < 0) continue
+
+		const absBraceOffset = absValueStart + braceIndex
+		const innerRaw = value.slice(braceIndex + 1)
+		const leadingTrim = innerRaw.length - innerRaw.trimStart().length
+		const expressionOffset = absBraceOffset + 1 + leadingTrim
+		out.push({
+			expression: inner,
+			braceOffset: absBraceOffset,
+			expressionOffset,
+			isForDirectiveHead: true,
+		})
+	}
+
+	return out
+}
+
 function getForBindingsAtOffset(offset: number, scopes: ForDirectiveScope[]): Set<string> {
 	const names = new Set<string>()
 	for (const scope of scopes) {
@@ -273,6 +345,18 @@ export function formatInterpolationBinderPreludeFromTemplate(
 	)
 }
 
+/**
+ * Build-scope ambient prelude only (no for-loop bindings at `braceOffset`).
+ */
+function formatBuildScopeAmbientPreludeFromTemplate(sourceText: string): string {
+	const ambient = buildTemplateEditorAmbient(sourceText)
+	return formatBuildScopeAmbientPrelude(
+		ambient.bindingNames,
+		ambient.typeDeclarationTexts,
+		[...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
+	)
+}
+
 /** Build virtual TS for a template interpolation/event site (language server + type-check). */
 export function buildTemplateInterpolationVirtualText(
 	sourceText: string,
@@ -280,11 +364,17 @@ export function buildTemplateInterpolationVirtualText(
 	preamble: string
 ): { virtualText: string; expressionOffsetInVirtual: number } {
 	const ambient = buildTemplateEditorAmbient(sourceText)
-	const binderDecl = formatInterpolationBinderPreludeFromTemplate(sourceText, site.braceOffset, {
-		writableNames: site.isEventHandler
-			? new Set([...ambient.writableStateBindingNames, ...ambient.readonlyReactivePropNames])
-			: undefined,
-	})
+	const binderDecl =
+		site.isForDirectiveHead === true
+			? formatBuildScopeAmbientPreludeFromTemplate(sourceText)
+			: formatInterpolationBinderPreludeFromTemplate(sourceText, site.braceOffset, {
+					writableNames: site.isEventHandler
+						? new Set([
+								...ambient.writableStateBindingNames,
+								...ambient.readonlyReactivePropNames,
+							])
+						: undefined,
+				})
 	const head = preamble + binderDecl
 
 	if (site.isEventHandler) {
@@ -300,6 +390,15 @@ export function buildTemplateInterpolationVirtualText(
 		return {
 			virtualText,
 			expressionOffsetInVirtual: head.length + EVENT_HANDLER_SCOPE_DECL.length,
+		}
+	}
+
+	if (site.isForDirectiveHead === true) {
+		const stmt = `for (${site.expression}) {}`
+		const virtualText = head + stmt
+		return {
+			virtualText,
+			expressionOffsetInVirtual: head.length + 'for ('.length,
 		}
 	}
 
@@ -327,6 +426,10 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 			...(i.wrapPropsObjectLiteral ? { wrapPropsObjectLiteral: true as const } : {}),
 			...(i.isEventHandler ? { isEventHandler: true as const } : {}),
 		})
+	}
+
+	for (const site of collectForDirectiveTypeCheckSites(roots, sourceText)) {
+		out.push(site)
 	}
 
 	const masked = applyMasks(maskForDirectiveValues(maskScriptAndStyleInner(sourceText)), masks)
