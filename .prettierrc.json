@@ -1,14 +1,14 @@
 {
-	"semi": false,
-	"printWidth": 100,
-	"useTabs": true,
-	"tabWidth": 2,
-	"singleQuote": true,
 	"arrowParens": "avoid",
 	"bracketSameLine": true,
 	"bracketSpacing": true,
+	"experimentalTernaries": true,
+	"semi": false,
 	"singleAttributePerLine": false,
+	"singleQuote": true,
+	"tabWidth": 2,
 	"trailingComma": "es5",
+	"useTabs": true,
 	"plugins": ["@aero-js/prettier-plugin-aero"],
 	"overrides": [
 		{

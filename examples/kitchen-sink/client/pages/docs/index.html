@@ -4,12 +4,16 @@
 	import header from '@components/header.html'
 	import { getCollection } from 'aero:content'
 
-	const docs = (await getCollection('docs')).sort((a, b) => b.data.published - a.data.published)
+	const docs = (await getCollection('docs')).sort(
+		(a, b) => b.data.published - a.data.published
+	)
 </script>
 
 <base-layout title="Docs" description="Learn about Aero">
 	<header-component title="Docs">
-		<p slot="subtitle" class="secondary">Pages loaded from <code>client/content/docs</code></p>
+		<p slot="subtitle" class="secondary">
+			Pages loaded from <code>client/content/docs</code>
+		</p>
 	</header-component>
 
 	<ul class="card" data-testid="docs-list">
