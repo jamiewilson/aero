@@ -2,41 +2,20 @@
 	import base from '@layouts/base.html'
 </script>
 
-<base-layout title="Keyed list">
-	<header>
-		<h2>Keyed list</h2>
-		<p class="secondary">
-			Keyed reactive <code>for</code> loop with <code>key</code> and view transitions
-		</p>
-	</header>
-	<article class="two-column">
-		<div class="v-stack">
-			<button on:click="{ add() }">Add</button>
-			<button on:click="{ remove() }">Remove first</button>
-			<button on:click="{ addRandom() }">Add random</button>
-			<button on:click="{ removeRandom() }">Remove random</button>
-			<button on:click="{ reverse() }">Reverse</button>
-			<button on:click="{ shuffle() }">Shuffle</button>
-		</div>
-
-		<ul class="card scrollable">
-			<li for="{ const { id } of items }" key="{ id }"><code>{ id }</code></li>
-		</ul>
-	</article>
-</base-layout>
-
 <script is:state>
-	import { withTransition, createID, getRandomIndex } from '@scripts/utils'
+	import { createID, getRandomIndex } from '@scripts/utils'
 
-	// Helpers
-	const setItems = newItems => withTransition(() => (items = newItems))
+	const setItems = next =>
+		document.startViewTransition({
+			update: () => (items = next),
+			types: ['list-update'],
+		})
 
-	// State
 	let items = Array.from({ length: 10 }, () => ({ id: createID() }))
+	let hasItems = items.length > 0
 
-	// Handlers
 	const add = () => setItems([...items, { id: createID() }])
-	const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
+	const remove = () => hasItems && setItems(items.slice(1))
 	const reverse = () => setItems([...items].reverse())
 	const shuffle = () => setItems([...items].sort(() => Math.random() - 0.5))
 
@@ -51,20 +30,54 @@
 	}
 </script>
 
+<base-layout title="Keyed list">
+	<header>
+		<h2>Keyed list</h2>
+		<p class="secondary">
+			Keyed reactive <code>for</code> loop with <code>key</code> and view transitions
+		</p>
+	</header>
+	<article class="two-column">
+		<div class="v-stack">
+			<button on:click="{ add() }">Add</button>
+			<button on:click="{ addRandom() }">Add random</button>
+			<button on:click="{ remove() }" disabled="{ !hasItems }">Remove first</button>
+			<button on:click="{ removeRandom() }" disabled="{ !hasItems }">Remove random</button>
+			<button on:click="{ reverse() }" disabled="{ !hasItems }">Reverse</button>
+			<button on:click="{ shuffle() }" disabled="{ !hasItems }">Shuffle</button>
+		</div>
+
+		<div class="list-panel">
+			<ul class="card scrollable">
+				<li for="{ const { id } of items }" key="{ id }"><code>{ id }</code></li>
+			</ul>
+		</div>
+	</article>
+</base-layout>
+
 <style>
+	html:active-view-transition-type(list-update) {
+		view-transition-name: none;
+	}
+
 	.two-column {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 2rem;
-		max-height: 400px;
+		gap: 1rem;
+	}
+
+	.list-panel {
+		height: 0;
+		min-height: 100%;
 	}
 
 	.scrollable {
+		height: 100%;
 		overflow-y: auto;
 		overflow-x: hidden;
+		scrollbar-width: none;
 		view-transition-name: keyed-list;
 		view-transition-group: contain;
-		scrollbar-width: none;
 	}
 
 	::view-transition-group-children(keyed-list) {
@@ -76,25 +89,20 @@
 		list-style-position: inside;
 		font-family: var(--font-mono);
 		font-size: smaller;
-
-		li {
-			view-transition-name: match-element;
-			view-transition-class: list-item;
-			user-select: none;
-		}
 	}
 
-	::view-transition-new(.list-item),
-	::view-transition-old(.list-item) {
-		animation-duration: var(--duration-fast);
-		animation-timing-function: var(--ease-in-out-cubic);
+	li {
+		view-transition-name: match-element;
+		view-transition-class: list-item;
+		animation-timing-function: var(--ease-in-out-quadratic);
+		user-select: none;
 	}
 
 	::view-transition-new(.list-item):only-child {
-		animation-name: slide-in-from-right;
+		animation-name: slide-in;
 	}
 
 	::view-transition-old(.list-item):only-child {
-		animation-name: slide-out-to-left;
+		animation-name: slide-out;
 	}
 </style>

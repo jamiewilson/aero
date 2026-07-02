@@ -1,35 +1,37 @@
-@layer root {
-	@view-transition {
-		navigation: auto;
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition {
+	pointer-events: none;
+}
+
+:root {
+	--duration-fast: 150ms;
+	--duration-medium: 300ms;
+	--duration-slow: 500ms;
+	--duration-glacial: 1s;
+
+	--ease-in-out-cubic: cubic-bezier(0.65, 0.05, 0.36, 1);
+	--ease-in-out-quadratic: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
 	}
+}
 
-	:root {
-		--duration-fast: 150ms;
-		--duration-medium: 300ms;
-		--duration-slow: 500ms;
-		--duration-glacial: 1s;
-
-		--ease-in-out-cubic: cubic-bezier(0.65, 0.05, 0.36, 1);
-		--ease-in-out-quadratic: cubic-bezier(0.77, 0, 0.175, 1);
+@keyframes slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(2em);
 	}
+}
 
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-	}
-
-	@keyframes slide-in-from-right {
-		from {
-			opacity: 0;
-			transform: translateX(2em);
-		}
-	}
-
-	@keyframes slide-out-to-left {
-		to {
-			opacity: 0;
-			transform: translateX(-2em);
-		}
+@keyframes slide-out {
+	to {
+		opacity: 0;
+		transform: translateX(-2em);
 	}
 }
