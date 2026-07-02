@@ -3,16 +3,16 @@ import {
 	buildDirectiveAttributeNames,
 	canonicalBuildDirectiveName,
 	canonicalBuildDirectiveNameForFormatting,
+	classifyBuildAttribute,
 	formatBuildDirectiveName,
+	getBuildDirectiveValidationIssue,
 	isBuildDirectiveAttribute,
 	isBuildDirectiveAttributeForFormatting,
 	isBuildDirectiveName,
 	isBuildDirectiveNameForFormatting,
-	isNativeBareAttribute,
 	isPrefixedBuildDirectiveName,
 	looksBracedDirectiveValue,
 	normalizeAttributeValue,
-	requiresBracedDirectiveValue,
 	resolveBuildDirectiveName,
 	resolveBuildDirectiveNameForFormatting,
 } from '../../build-directive-attributes'
@@ -110,52 +110,104 @@ describe('build-directive-attributes', () => {
 		})
 	})
 
-	describe('isNativeBareAttribute', () => {
-		it('treats native bare attributes on their host tags', () => {
-			expect(isNativeBareAttribute('label', 'for', 'email')).toBe(true)
-			expect(isNativeBareAttribute('output', 'for', 'a b')).toBe(true)
-			expect(isNativeBareAttribute('input', 'switch', '')).toBe(true)
-			expect(isNativeBareAttribute('track', 'default', '')).toBe(true)
+	describe('classifyBuildAttribute', () => {
+		it('classifies native HTML passthrough on host tags', () => {
+			expect(classifyBuildAttribute({ tagName: 'label', attrName: 'for', rawValue: 'email' })).toEqual({
+				kind: 'native-html',
+				directive: 'for',
+			})
+			expect(classifyBuildAttribute({ tagName: 'output', attrName: 'for', rawValue: 'a b' })).toEqual({
+				kind: 'native-html',
+				directive: 'for',
+			})
+			expect(classifyBuildAttribute({ tagName: 'input', attrName: 'switch', rawValue: '' })).toEqual({
+				kind: 'native-html',
+				directive: 'switch',
+			})
+			expect(classifyBuildAttribute({ tagName: 'track', attrName: 'default', rawValue: '' })).toEqual({
+				kind: 'native-html',
+				directive: 'default',
+			})
 		})
 
 		it('does not treat bare names as native on wrong tag, when braced, or in prefixed form', () => {
-			expect(isNativeBareAttribute('li', 'for', 'const x of xs')).toBe(false)
-			expect(isNativeBareAttribute('span', 'default', '')).toBe(false)
-			expect(isNativeBareAttribute('label', 'for', '{ const x of xs }')).toBe(false)
-			expect(isNativeBareAttribute('track', 'aero-default', '')).toBe(false)
-			expect(isNativeBareAttribute('label', 'aero-for', 'email')).toBe(false)
-			expect(isNativeBareAttribute('label', 'data-aero-for', 'email')).toBe(false)
+			expect(classifyBuildAttribute({ tagName: 'li', attrName: 'for', rawValue: 'const x of xs' }).kind).toBe(
+				'build-directive'
+			)
+			expect(classifyBuildAttribute({ tagName: 'span', attrName: 'default', rawValue: '' }).kind).toBe(
+				'misplaced-switch-branch'
+			)
+			expect(
+				classifyBuildAttribute({ tagName: 'label', attrName: 'for', rawValue: '{ const x of xs }' }).kind
+			).toBe('invalid-braced-for-on-native-host')
+			expect(classifyBuildAttribute({ tagName: 'label', attrName: 'aero-for', rawValue: 'email' }).kind).toBe(
+				'build-directive'
+			)
+		})
+
+		it('classifies switch branch markers with parent context', () => {
+			expect(
+				classifyBuildAttribute({
+					tagName: 'span',
+					attrName: 'default',
+					rawValue: '',
+					parentHasSwitch: true,
+				}).kind
+			).toBe('switch-branch')
+			expect(
+				classifyBuildAttribute({
+					tagName: 'span',
+					attrName: 'default',
+					rawValue: '',
+					parentHasSwitch: false,
+				}).kind
+			).toBe('misplaced-switch-branch')
+		})
+
+		it('requires braced values for build directives', () => {
+			expect(classifyBuildAttribute({ tagName: 'div', attrName: 'if', rawValue: 'ok' })).toEqual({
+				kind: 'build-directive',
+				directive: 'if',
+				attrName: 'if',
+				requiresBracedValue: true,
+			})
+			expect(classifyBuildAttribute({ tagName: 'div', attrName: 'if', rawValue: '{ ok }' })).toEqual({
+				kind: 'build-directive',
+				directive: 'if',
+				attrName: 'if',
+				requiresBracedValue: false,
+			})
+			expect(classifyBuildAttribute({ tagName: 'label', attrName: 'for', rawValue: 'email' }).kind).toBe(
+				'native-html'
+			)
+			expect(classifyBuildAttribute({ tagName: 'label', attrName: 'aero-for', rawValue: 'email' })).toEqual({
+				kind: 'build-directive',
+				directive: 'for',
+				attrName: 'aero-for',
+				requiresBracedValue: true,
+			})
 		})
 	})
 
-	describe('requiresBracedDirectiveValue', () => {
-		it('requires braces for braced-value directives', () => {
-			expect(requiresBracedDirectiveValue('if', 'ok')).toBe(true)
-			expect(requiresBracedDirectiveValue('aero-if', 'ok')).toBe(true)
-			expect(requiresBracedDirectiveValue('for', 'const x of xs', 'li')).toBe(true)
-			expect(requiresBracedDirectiveValue('props', 'title')).toBe(true)
+	describe('getBuildDirectiveValidationIssue', () => {
+		it('returns brace messages for missing braced values', () => {
+			expect(getBuildDirectiveValidationIssue({ tagName: 'div', attrName: 'if', rawValue: 'ok' })).toContain(
+				'must use a braced expression'
+			)
+			expect(getBuildDirectiveValidationIssue({ tagName: 'li', attrName: 'for', rawValue: 'const x of xs' })).toContain(
+				'must use a braced expression'
+			)
 		})
 
-		it('passes when value is braced', () => {
-			expect(requiresBracedDirectiveValue('if', '{ ok }')).toBe(false)
-			expect(requiresBracedDirectiveValue('for', '{ const x of xs }', 'li')).toBe(false)
+		it('returns null for valid native and braced directives', () => {
+			expect(getBuildDirectiveValidationIssue({ tagName: 'label', attrName: 'for', rawValue: 'email' })).toBeNull()
+			expect(getBuildDirectiveValidationIssue({ tagName: 'div', attrName: 'if', rawValue: '{ ok }' })).toBeNull()
 		})
 
-		it('exempts native HTML attributes on their host tags', () => {
-			expect(requiresBracedDirectiveValue('for', 'email', 'label')).toBe(false)
-			expect(requiresBracedDirectiveValue('for', 'a b', 'output')).toBe(false)
-		})
-
-		it('never exempts explicit prefixed form on native tags', () => {
-			expect(requiresBracedDirectiveValue('aero-for', 'email', 'label')).toBe(true)
-			expect(requiresBracedDirectiveValue('data-aero-for', 'email', 'label')).toBe(true)
-		})
-
-		it('does not apply to else, default, case, or switch', () => {
-			expect(requiresBracedDirectiveValue('else', '')).toBe(false)
-			expect(requiresBracedDirectiveValue('default', '')).toBe(false)
-			expect(requiresBracedDirectiveValue('case', 'active')).toBe(false)
-			expect(requiresBracedDirectiveValue('switch', '{ x }')).toBe(false)
+		it('flags braced for on native host tags', () => {
+			expect(
+				getBuildDirectiveValidationIssue({ tagName: 'label', attrName: 'for', rawValue: '{ id }' })
+			).toContain('native IDREF')
 		})
 	})
 })

@@ -57,6 +57,18 @@ describe('attribute range helpers', () => {
 		expect(findAttributeRange(attrs, attrBase, 'count')).toBeNull()
 	})
 
+	it('finds multiline quoted attribute values', () => {
+		const fullTag = `<button on:click="\n    submit()\n  "></button>`
+		const tagName = 'button'
+		const attrs = sliceRawAttrs(tagName, fullTag)
+		const attrBase = attributeSectionBase(0, tagName)
+		const range = findAttributeRange(attrs, attrBase, 'on:click')
+		expect(range).toEqual({
+			start: fullTag.indexOf('on:click'),
+			end: fullTag.indexOf('on:click') + 'on:click="\n    submit()\n  "'.length,
+		})
+	})
+
 	it('covers only the tag name for import diagnostics', () => {
 		const tagStart = 12
 		const tagName = 'header-component'

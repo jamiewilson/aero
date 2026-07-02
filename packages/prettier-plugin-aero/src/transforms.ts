@@ -5,9 +5,9 @@ import prettier from 'prettier'
 import {
 	BUILD_DIRECTIVES,
 	canonicalBuildDirectiveNameForFormatting,
+	classifyBuildAttribute,
 	formatBuildDirectiveName,
 	isBuildDirectiveAttributeForFormatting,
-	isNativeBareAttribute,
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
 import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
@@ -34,7 +34,15 @@ function collectAttributeEdits(
 			const effectiveValue = rawValue ?? '""'
 			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
 			// prefixed form would change their meaning.
-			if (isNativeBareAttribute(node.tag, name, effectiveValue)) continue
+			if (
+				classifyBuildAttribute({
+					tagName: node.tag,
+					attrName: name,
+					rawValue: effectiveValue,
+				}).kind === 'native-html'
+			) {
+				continue
+			}
 			if (!isBuildDirectiveAttributeForFormatting(name, effectiveValue)) continue
 			const canonical = canonicalBuildDirectiveNameForFormatting(name)
 			const desired = formatBuildDirectiveName(canonical, prefixMode)

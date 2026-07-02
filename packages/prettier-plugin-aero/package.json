@@ -32,6 +32,7 @@
 		"@aero-js/interpolation": "workspace:*"
 	},
 	"devDependencies": {
+		"@aero-js/diagnostics": "workspace:*",
 		"@types/node": "catalog:",
 		"prettier": "^3.9.3",
 		"tsdown": "catalog:",

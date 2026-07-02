@@ -1,22 +1,59 @@
 /**
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
-import { requiresBracedDirectiveValue } from '@aero-js/compiler/build-directive-attributes'
+import {
+	getBuildDirectiveValidationIssue,
+	looksBracedDirectiveValue,
+	normalizeAttributeValue,
+	resolveBuildDirectiveName,
+} from '@aero-js/compiler/build-directive-attributes'
 import { parseEventDirectiveName } from '@aero-js/compiler'
+import { parseAeroHtmlDocument, type Node } from '@aero-js/html-parser'
 import * as vscode from 'vscode'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
-import { getIgnoredRanges, isInRanges } from './helpers'
+import {
+	attributeSectionBase,
+	findAttributeRange,
+	getIgnoredRanges,
+	isInRanges,
+	sliceRawAttrs,
+} from './helpers'
 
-/** Matches opening tags and captures the attributes part */
-const OPEN_TAG_REGEX = /<([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
+function nodeHasSwitchAttr(node: Node | null | undefined): boolean {
+	const attrs = node?.attributes
+	if (!attrs) return false
+	for (const name of Object.keys(attrs)) {
+		if (resolveBuildDirectiveName(name) === 'switch') return true
+	}
+	return false
+}
 
-/** Full attribute names with quoted values (avoids matching `on:` inside `hx-on:*`). */
-const ATTR_WITH_VALUE_REGEX =
-	/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:\-.]*)\s*=\s*(['"])([\s\S]*?)\2/g
+function* walkElementsWithParent(
+	nodes: Node[],
+	parent: Node | null
+): Generator<{ node: Node; parent: Node | null }> {
+	for (const node of nodes) {
+		yield { node, parent }
+		if (node.children?.length) {
+			yield* walkElementsWithParent(node.children, node)
+		}
+	}
+}
 
-function isSingleBracedExpression(value: string): boolean {
-	const trimmed = value.trim()
-	return trimmed.startsWith('{') && trimmed.endsWith('}') && trimmed.length >= 2
+function pushDirectiveDiagnostic(
+	document: vscode.TextDocument,
+	diagnostics: vscode.Diagnostic[],
+	start: number,
+	end: number,
+	message: string
+): void {
+	const diagnostic = new vscode.Diagnostic(
+		new vscode.Range(document.positionAt(start), document.positionAt(end)),
+		message,
+		vscode.DiagnosticSeverity.Error
+	)
+	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
+	diagnostics.push(diagnostic)
 }
 
 export function checkDirectiveExpressionBraces(
@@ -25,37 +62,45 @@ export function checkDirectiveExpressionBraces(
 	diagnostics: vscode.Diagnostic[]
 ): void {
 	const ignoredRanges = getIgnoredRanges(text)
+	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())
 
-	OPEN_TAG_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
+	for (const { node, parent } of walkElementsWithParent(htmlDoc.roots, null)) {
+		const attrs = node.attributes
+		if (!attrs || node.start == null || node.startTagEnd == null || !node.tag) continue
+		if (isInRanges(node.start, ignoredRanges)) continue
 
-	while ((match = OPEN_TAG_REGEX.exec(text)) !== null) {
-		const tagStart = match.index
-		if (isInRanges(tagStart, ignoredRanges)) continue
+		const fullTag = text.slice(node.start, node.startTagEnd)
+		const nameMatch = fullTag.match(/^<\s*\/?\s*([a-zA-Z][\w-]*)/)
+		if (!nameMatch) continue
 
-		const tagName = (match[1] || '').toLowerCase()
-		const attrs = match[2] || ''
-		if (!attrs) continue
+		const tagName = nameMatch[1].toLowerCase()
+		const tagStart = node.start
+		const rawAttrs = sliceRawAttrs(nameMatch[1], fullTag)
+		const attrBase = attributeSectionBase(tagStart, nameMatch[1])
+		const parentHasSwitch = nodeHasSwitchAttr(parent)
 
-		const attrsStart = tagStart + match[0].indexOf(attrs)
+		for (const [attrName, rawParserValue] of Object.entries(attrs)) {
+			if (rawParserValue == null) continue
 
-		ATTR_WITH_VALUE_REGEX.lastIndex = 0
-		let attrMatch: RegExpExecArray | null
-		while ((attrMatch = ATTR_WITH_VALUE_REGEX.exec(attrs)) !== null) {
-			const attrName = attrMatch[1]
-			const attrValue = (attrMatch[3] || '').trim()
-			const start = attrsStart + attrMatch.index
-			const end = start + attrMatch[0].length
+			const attrRange = findAttributeRange(rawAttrs, attrBase, attrName)
+			if (!attrRange) continue
 
-			if (requiresBracedDirectiveValue(attrName, attrValue, tagName)) {
-				const example = `${attrName}="{ expression }"`
-				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(document.positionAt(start), document.positionAt(end)),
-					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
-					vscode.DiagnosticSeverity.Error
+			const attrValue = normalizeAttributeValue(rawParserValue)
+
+			const buildIssue = getBuildDirectiveValidationIssue({
+				tagName,
+				attrName,
+				rawValue: attrValue,
+				parentHasSwitch,
+			})
+			if (buildIssue) {
+				pushDirectiveDiagnostic(
+					document,
+					diagnostics,
+					attrRange.start,
+					attrRange.end,
+					buildIssue
 				)
-				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-				diagnostics.push(diagnostic)
 				continue
 			}
 
@@ -63,25 +108,25 @@ export function checkDirectiveExpressionBraces(
 			if (parsed.kind === 'non-event') continue
 
 			if (parsed.kind === 'invalid') {
-				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(document.positionAt(start), document.positionAt(end)),
-					`Directive \`${attrName}\` is invalid: ${parsed.message}`,
-					vscode.DiagnosticSeverity.Error
+				pushDirectiveDiagnostic(
+					document,
+					diagnostics,
+					attrRange.start,
+					attrRange.end,
+					`Directive \`${attrName}\` is invalid: ${parsed.message}`
 				)
-				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-				diagnostics.push(diagnostic)
 				continue
 			}
 
-			if (!isSingleBracedExpression(attrValue)) {
+			if (!looksBracedDirectiveValue(attrValue)) {
 				const example = `${attrName}="{ expression }"`
-				const diagnostic = new vscode.Diagnostic(
-					new vscode.Range(document.positionAt(start), document.positionAt(end)),
-					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
-					vscode.DiagnosticSeverity.Error
+				pushDirectiveDiagnostic(
+					document,
+					diagnostics,
+					attrRange.start,
+					attrRange.end,
+					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`
 				)
-				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-				diagnostics.push(diagnostic)
 			}
 		}
 	}

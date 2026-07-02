@@ -1594,6 +1594,26 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		)
 		expect(findBraceDiag()).toBeUndefined()
 	})
+
+	it('should flag event directive without braced expression on multiline tag', () => {
+		runDiagnostics(
+			makeDoc(`<button
+  on:click="
+    submit()
+  "
+>Save</button>`)
+		)
+		expect(findBraceDiag()).toBeDefined()
+	})
+
+	it('should NOT flag native for on multiline label tag', () => {
+		runDiagnostics(
+			makeDoc(`<label
+  for="email"
+>Email</label>`)
+		)
+		expect(findBraceDiag()).toBeUndefined()
+	})
 })
 
 /** Same name declared in same scope (e.g. import + const) → "declared multiple times". */

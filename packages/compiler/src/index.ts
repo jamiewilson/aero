@@ -192,10 +192,10 @@ export {
 	isBuildDirectiveNameForFormatting,
 	canonicalBuildDirectiveName,
 	canonicalBuildDirectiveNameForFormatting,
-	isNativeBareAttribute,
+	classifyBuildAttribute,
+	getBuildDirectiveValidationIssue,
 	isBuildDirectiveAttribute,
 	isBuildDirectiveAttributeForFormatting,
-	requiresBracedDirectiveValue,
 	formatBuildDirectiveName,
 	resolveBuildDirectiveName,
 	resolveBuildDirectiveNameForFormatting,
@@ -205,7 +205,18 @@ export {
 	isPrefixedBuildDirectiveName,
 	type BuildDirective,
 	type BuildDirectivePrefixMode,
+	type ClassifyBuildAttributeInput,
+	type BuildAttributeClassification,
 } from './build-directive-attributes'
+
+// Reactive attribute bind dispatch (compiler lowerer)
+export {
+	REACTIVE_BIND_DISPATCH_ORDER,
+	classifyReactiveAttribute,
+	type ReactiveBindDispatchStep,
+	type ClassifyReactiveAttributeInput,
+	type ReactiveAttributeClassification,
+} from './reactive-attribute-classification'
 
 // Resolver
 export { Resolver } from './resolver'
