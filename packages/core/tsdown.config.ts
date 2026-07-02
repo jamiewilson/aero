@@ -7,6 +7,7 @@ const entry = [
 	'src/types.ts',
 	'src/vite/index.ts',
 	'src/diagnostics.ts',
+	'src/template-diagnostics-api.ts',
 	'src/compile-check-api.ts',
 	'src/routing/route-manifest.ts',
 	'src/routing/route-typegen.ts',

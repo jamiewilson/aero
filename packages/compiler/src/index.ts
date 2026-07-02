@@ -42,6 +42,13 @@ export {
 export { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
 
 export {
+	collectFeatureGateIssues,
+	collectFeatureGateIssuesFromSource,
+	type FeatureGateFlags,
+	type FeatureGateIssue,
+} from './feature-gates'
+
+export {
 	collectComponentReactivePropMetadata,
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,

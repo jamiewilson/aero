@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
-import * as documentAnalysis from '../document-analysis'
+import * as coreTemplateDiagnostics from '@aero-js/core/template-diagnostics'
 
 const mockSet = vi.fn()
 const mockCollection = {
@@ -122,10 +122,10 @@ describe('AeroDiagnostics orchestration', () => {
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
 		} as any
 
-		const parseSpy = vi.spyOn(documentAnalysis, 'parseDocument')
+		const collectSpy = vi.spyOn(coreTemplateDiagnostics, 'collectTemplateDiagnostics')
 		runDiagnostics(doc)
 
-		expect(parseSpy).toHaveBeenCalledTimes(1)
+		expect(collectSpy).toHaveBeenCalledTimes(1)
 	})
 })
 
@@ -740,6 +740,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 	it('should flag undefined variable in template expression', () => {
 		const text = `
+<script is:build></script>
 <div>{undefinedVar}</div>
 `
 		const doc = {
@@ -988,6 +989,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 
 	it('should flag content globals when not imported in build script or template', () => {
 		const text = `
+<script is:build></script>
 <div>{site.title}</div>
 `
 		const doc = {

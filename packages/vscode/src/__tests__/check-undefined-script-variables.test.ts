@@ -24,7 +24,7 @@ vi.mock('vscode', () => ({
 }))
 
 import { parseDocument } from '../document-analysis'
-import { checkUndefinedScriptVariables } from '../diagnostics/check-undefined-script-variables'
+import { checkUndefinedScriptVariables } from '../../../core/src/template-diagnostics/checks/check-undefined-script-variables'
 
 function makeDoc(text: string) {
 	return {

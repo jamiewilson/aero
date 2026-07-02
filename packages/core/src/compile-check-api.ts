@@ -11,6 +11,7 @@ export {
 	checkTemplateBuildScriptTypes,
 	checkTemplateBuildScriptTypesWithFile,
 	collectComponentReactivePropMetadata,
+	collectFeatureGateIssuesFromSource,
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/compiler'

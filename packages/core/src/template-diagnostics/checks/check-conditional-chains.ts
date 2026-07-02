@@ -1,8 +1,9 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: orphaned else-if / else without preceding if.
  */
-import * as vscode from 'vscode'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { getIgnoredRanges, isInRanges } from './helpers'
 
 /** Matches control flow attributes */
@@ -33,9 +34,9 @@ const VOID_ELEMENTS = new Set([
 ])
 
 export function checkConditionalChains(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
 	let depth = 0
@@ -89,13 +90,15 @@ export function checkConditionalChains(
 					const attrBase = tagStart + match[0].indexOf(attrs)
 					const start = attrBase + attrMatch.index
 					const end = start + attrMatch[0].length
-					const diagnostic = new vscode.Diagnostic(
-						new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					pushOffsetDiagnostic(
+						diagnostics,
+						document,
+						start,
+						end,
 						'else-if must follow an element with if or else-if',
-						vscode.DiagnosticSeverity.Error
+						'AERO_COMPILE',
+						'error'
 					)
-					applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-					diagnostics.push(diagnostic)
 				}
 			}
 			setLastConditionalType(currentDepth, 'else-if')
@@ -110,13 +113,15 @@ export function checkConditionalChains(
 					const attrBase = tagStart + match[0].indexOf(attrs)
 					const start = attrBase + attrMatch.index
 					const end = start + attrMatch[0].length
-					const diagnostic = new vscode.Diagnostic(
-						new vscode.Range(document.positionAt(start), document.positionAt(end)),
+					pushOffsetDiagnostic(
+						diagnostics,
+						document,
+						start,
+						end,
 						'else must follow an element with if or else-if',
-						vscode.DiagnosticSeverity.Error
+						'AERO_COMPILE',
+						'error'
 					)
-					applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-					diagnostics.push(diagnostic)
 				}
 			}
 			setLastConditionalType(currentDepth, null)

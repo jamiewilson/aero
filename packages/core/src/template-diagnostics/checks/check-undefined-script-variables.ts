@@ -1,14 +1,15 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: undefined variables in client script bodies unless injected via
  * that block's `props` attribute or declared locally.
  */
-import * as vscode from 'vscode'
 import { parsePropsAttributeBindings, type BuildBindingProperties } from '@aero-js/compiler'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import type { ParsedDocument } from '../document-analysis'
 import type { VariableDefinition } from '../analyzer'
 import { collectIdentifierReferences } from '../analyzer/references'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { isInsideHtmlComment } from '../analyzer/helpers'
 import { parseScriptBlocks } from '../script-tag'
 
@@ -96,26 +97,21 @@ function collectDefinedNamesInScriptBlock(
 }
 
 function pushUndefinedDiagnostic(
-	diagnostics: vscode.Diagnostic[],
-	range: vscode.Range,
+	diagnostics: AeroDiagnostic[],
+	document: SourceDocument,
+	range: SourceRange,
 	name: string
 ): void {
-	const diagnostic = new vscode.Diagnostic(
-		range,
-		`Variable '${name}' is not defined`,
-		vscode.DiagnosticSeverity.Error
-	)
-	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-	diagnostics.push(diagnostic)
+	pushSpanDiagnostic(diagnostics, document, range, `Variable '${name}' is not defined`, 'AERO_COMPILE', 'error')
 }
 
 function checkPropsExpressionRefs(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	blockAttrs: string,
 	tagStart: number,
 	expressionRefs: readonly string[],
 	buildScopeNames: ReadonlySet<string>,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	if (expressionRefs.length === 0) return
 
@@ -137,14 +133,14 @@ function checkPropsExpressionRefs(
 		if (reported.has(ref.content)) continue
 		reported.add(ref.content)
 		if (!expressionRefs.includes(ref.content)) continue
-		pushUndefinedDiagnostic(diagnostics, ref.range, ref.content)
+		pushUndefinedDiagnostic(diagnostics, document, ref.range, ref.content)
 	}
 }
 
 export function checkUndefinedScriptVariables(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	parsed: ParsedDocument,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const { text, definedVariables } = parsed
 	const buildBindingProperties = toBuildBindingProperties(definedVariables)
@@ -180,12 +176,12 @@ export function checkUndefinedScriptVariables(
 				// Build-scope names are not in scope inside client scripts without props injection.
 				if (reported.has(ref.content)) continue
 				reported.add(ref.content)
-				pushUndefinedDiagnostic(diagnostics, ref.range, ref.content)
+				pushUndefinedDiagnostic(diagnostics, document, ref.range, ref.content)
 				continue
 			}
 			if (reported.has(ref.content)) continue
 			reported.add(ref.content)
-			pushUndefinedDiagnostic(diagnostics, ref.range, ref.content)
+			pushUndefinedDiagnostic(diagnostics, document, ref.range, ref.content)
 		}
 	}
 }

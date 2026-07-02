@@ -1,12 +1,14 @@
-import * as vscode from 'vscode'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import { maskJsComments } from '../analyzer'
 import type { ParsedDocument } from '../document-analysis'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 
 export function checkUnusedVariables(
+	document: SourceDocument,
 	parsed: ParsedDocument,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const usedInTemplate = new Set<string>()
 	for (const ref of parsed.templateReferences) {
@@ -25,11 +27,11 @@ export function checkUnusedVariables(
 		}
 	}
 
-	checkUnusedInScope(parsed, 'build', usedInTemplate, diagnostics)
-	checkUnusedInScope(parsed, 'state', usedInTemplate, diagnostics)
-	checkUnusedInScope(parsed, 'bundled', usedInTemplate, diagnostics)
-	checkUnusedInScope(parsed, 'inline', usedInTemplate, diagnostics)
-	checkUnusedInScope(parsed, 'blocking', usedInTemplate, diagnostics)
+	checkUnusedInScope(document, parsed, 'build', usedInTemplate, diagnostics)
+	checkUnusedInScope(document, parsed, 'state', usedInTemplate, diagnostics)
+	checkUnusedInScope(document, parsed, 'bundled', usedInTemplate, diagnostics)
+	checkUnusedInScope(document, parsed, 'inline', usedInTemplate, diagnostics)
+	checkUnusedInScope(document, parsed, 'blocking', usedInTemplate, diagnostics)
 }
 
 function isUsedInStateScript(parsed: ParsedDocument, name: string): boolean {
@@ -75,10 +77,11 @@ function countIdentifierUsages(content: string, name: string): number {
 }
 
 function checkUnusedInScope(
+	document: SourceDocument,
 	parsed: ParsedDocument,
 	scope: 'build' | 'state' | 'bundled' | 'inline' | 'blocking',
 	usedInTemplate: Set<string>,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const definedVars = parsed.variablesByScope[scope]
 	const scopeContent = parsed.scriptContentByScope[scope]
@@ -113,13 +116,6 @@ function checkUnusedInScope(
 			}
 		}
 
-		const diagnostic = new vscode.Diagnostic(
-			def.range,
-			`'${name}' is declared but its value is never read.`,
-			vscode.DiagnosticSeverity.Hint
-		)
-		diagnostic.tags = [vscode.DiagnosticTag.Unnecessary]
-		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-		diagnostics.push(diagnostic)
+		pushSpanDiagnostic(diagnostics, document, def.range, `'${name}' is declared but its value is never read.`, 'AERO_COMPILE', 'info')
 	}
 }

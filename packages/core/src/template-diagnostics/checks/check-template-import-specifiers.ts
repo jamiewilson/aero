@@ -1,16 +1,17 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: template imports must include an explicit `.html` extension.
  */
-import * as vscode from 'vscode'
-import { analyzeBuildScriptForEditor } from '@aero-js/core/editor'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
+import { analyzeBuildScriptForEditor } from '../../entry-editor'
 import { isTemplateAliasSpecifier } from '../importResolution'
 import { parseScriptBlocks } from '../script-tag'
 
 export function checkTemplateImportSpecifiers(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	for (const block of parseScriptBlocks(text)) {
 		if (block.kind !== 'build') continue
@@ -29,13 +30,15 @@ export function checkTemplateImportSpecifiers(
 			const [specStart, specEnd] = imp.specifierRange
 			const absStart = block.contentStart + specStart
 			const absEnd = block.contentStart + specEnd
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(document.positionAt(absStart), document.positionAt(absEnd)),
+			pushOffsetDiagnostic(
+				diagnostics,
+				document,
+				absStart,
+				absEnd,
 				`Template imports must include the .html extension (for example '${imp.specifier}.html').`,
-				vscode.DiagnosticSeverity.Error
+				'AERO_RESOLVE',
+				'error'
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_RESOLVE', 'importing-and-bundling.md')
-			diagnostics.push(diagnostic)
 		}
 	}
 }

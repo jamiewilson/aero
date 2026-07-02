@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isInHead } from '../diagnostics/helpers'
+import { isInHead } from '../../../core/src/template-diagnostics/checks/helpers'
 
 describe('isInHead', () => {
 	it('returns false after a closed head section', () => {

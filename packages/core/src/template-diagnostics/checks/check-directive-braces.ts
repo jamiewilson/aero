@@ -1,3 +1,6 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
@@ -9,8 +12,6 @@ import {
 } from '@aero-js/compiler/build-directive-attributes'
 import { parseEventDirectiveName } from '@aero-js/compiler'
 import { parseAeroHtmlDocument, type Node } from '@aero-js/html-parser'
-import * as vscode from 'vscode'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import {
 	attributeSectionBase,
 	findAttributeRange,
@@ -41,25 +42,19 @@ function* walkElementsWithParent(
 }
 
 function pushDirectiveDiagnostic(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	start: number,
 	end: number,
 	message: string
 ): void {
-	const diagnostic = new vscode.Diagnostic(
-		new vscode.Range(document.positionAt(start), document.positionAt(end)),
-		message,
-		vscode.DiagnosticSeverity.Error
-	)
-	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-	diagnostics.push(diagnostic)
+	pushOffsetDiagnostic(diagnostics, document, start, end, message, 'AERO_COMPILE', 'error')
 }
 
 export function checkDirectiveExpressionBraces(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const ignoredRanges = getIgnoredRanges(text)
 	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())

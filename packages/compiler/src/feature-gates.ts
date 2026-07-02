@@ -5,6 +5,363 @@ import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
+export interface FeatureGateFlags {
+	readonly reactivity: boolean
+	readonly hypermedia: boolean
+}
+
+export interface FeatureGateIssue {
+	readonly message: string
+	readonly code: 'AERO_CONFIG'
+	readonly start?: number
+	readonly end?: number
+}
+
+const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
+const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/script>/i
+const RUNTIME_BRACED_ATTR_RE =
+	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
+
+function spanForMatch(source: string, re: RegExp): { start: number; end: number } | undefined {
+	const match = re.exec(source)
+	if (!match || match.index === undefined) return undefined
+	return { start: match.index, end: match.index + match[0].length }
+}
+
+function stripBraces(value: string): string {
+	const trimmed = value.trim()
+	return trimmed.startsWith('{') && trimmed.endsWith('}')
+		? trimmed.slice(1, -1).trim()
+		: trimmed
+}
+
+function simpleIdentifier(expression: string): string | null {
+	const trimmed = expression.trim()
+	return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? trimmed : null
+}
+
+function isDefinitelyNonBooleanInit(initExpr: string): boolean {
+	const trimmed = initExpr.trim()
+	return (
+		trimmed === 'undefined' ||
+		trimmed === 'null' ||
+		/^(['"]).*\1$/.test(trimmed) ||
+		/^-?\d+(?:\.\d+)?$/.test(trimmed) ||
+		/^[\[{]/.test(trimmed)
+	)
+}
+
+function collectStateBindings(source: string): Map<string, string> {
+	const match = source.match(STATE_SCRIPT_BLOCK_RE)
+	const bindings = new Map<string, string>()
+	if (!match) return bindings
+	const script = match[1]
+	for (const declaration of script.matchAll(/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g)) {
+		bindings.set(declaration[1], declaration[2])
+	}
+	return bindings
+}
+
+function pushSourceIssue(
+	out: FeatureGateIssue[],
+	source: string,
+	re: RegExp,
+	message: string
+): void {
+	const span = spanForMatch(source, re)
+	out.push({
+		message,
+		code: 'AERO_CONFIG',
+		...(span ? { start: span.start, end: span.end } : {}),
+	})
+}
+
+function validateSourceSignalReference(
+	out: FeatureGateIssue[],
+	source: string,
+	re: RegExp,
+	bindings: ReadonlyMap<string, string>,
+	name: string,
+	missingMessage: (name: string) => string,
+	nonBooleanMessage: (name: string) => string
+): void {
+	const initExpr = bindings.get(name)
+	if (initExpr === undefined) {
+		pushSourceIssue(out, source, re, missingMessage(name))
+		return
+	}
+	if (isDefinitelyNonBooleanInit(initExpr)) {
+		pushSourceIssue(out, source, re, nonBooleanMessage(name))
+	}
+}
+
+/** Source-level feature gate checks with byte spans for IDE/CLI diagnostics. */
+export function collectFeatureGateIssuesFromSource(
+	source: string,
+	flags: FeatureGateFlags
+): FeatureGateIssue[] {
+	const out: FeatureGateIssue[] = []
+
+	if (!flags.reactivity && IS_STATE_SCRIPT_RE.test(source)) {
+		pushSourceIssue(
+			out,
+			source,
+			IS_STATE_SCRIPT_RE,
+			'`<script is:state>` requires `reactivity: true` in aero.config.'
+		)
+	}
+
+	if (!IS_STATE_SCRIPT_RE.test(source) && RUNTIME_BRACED_ATTR_RE.test(source)) {
+		pushSourceIssue(
+			out,
+			source,
+			RUNTIME_BRACED_ATTR_RE,
+			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript.'
+		)
+	}
+
+	if (!flags.hypermedia && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(source)) {
+		pushSourceIssue(
+			out,
+			source,
+			/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/i,
+			'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.'
+		)
+	}
+
+	const busyRegex = /\b(?:data-aero-|aero-)?busy\b\s*=\s*(['"])(.*?)\1/is
+	const busyMatch = source.match(busyRegex)
+	const stateBindings =
+		flags.reactivity && flags.hypermedia ? collectStateBindings(source) : new Map<string, string>()
+
+	if (busyMatch) {
+		if (!flags.reactivity || !flags.hypermedia) {
+			const missing: string[] = []
+			if (!flags.hypermedia) missing.push('hypermedia: true')
+			if (!flags.reactivity) missing.push('reactivity: true')
+			pushSourceIssue(
+				out,
+				source,
+				busyRegex,
+				`\`busy\` requires ${missing.join(' and ')} in aero.config.`
+			)
+		} else if (!IS_STATE_SCRIPT_RE.test(source)) {
+			pushSourceIssue(
+				out,
+				source,
+				busyRegex,
+				'`busy` attribute references must be declared in `<script is:state>`.'
+			)
+		} else {
+			const signalName = simpleIdentifier(stripBraces(busyMatch[2] ?? ''))
+			if (!signalName) {
+				pushSourceIssue(
+					out,
+					source,
+					busyRegex,
+					'`busy` must reference one declared boolean state binding.'
+				)
+			} else {
+				validateSourceSignalReference(
+					out,
+					source,
+					busyRegex,
+					stateBindings,
+					signalName,
+					name => `Hypermedia busy signal not found: ${name}`,
+					name => `Hypermedia busy signal must be boolean: ${name}`
+				)
+			}
+		}
+	}
+
+	if (flags.reactivity && flags.hypermedia && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(source)) {
+		const stringStateRegex = /\bstate\s*:\s*(['"])[^'"]+\1/is
+		if (stringStateRegex.test(source)) {
+			pushSourceIssue(
+				out,
+				source,
+				stringStateRegex,
+				'Hypermedia action `state` must reference a boolean state binding, not a string.'
+			)
+			return out
+		}
+
+		const identifierStateRegex = /\bstate\s*:\s*([A-Za-z_$][\w$]*)/is
+		const stateMatch = source.match(identifierStateRegex)
+		if (stateMatch) {
+			validateSourceSignalReference(
+				out,
+				source,
+				identifierStateRegex,
+				stateBindings,
+				stateMatch[1],
+				name => `Hypermedia action state signal not found: ${name}`,
+				name => `Hypermedia action state signal must be boolean: ${name}`
+			)
+		}
+	}
+
+	return out
+}
+
+export function collectFeatureGateIssues(
+	parsed: ParseResult,
+	options: CompileOptions,
+	bodyIR: IRNode[],
+	stateAnalysis?: StateScriptAnalysisResult | null
+): FeatureGateIssue[] {
+	const out: FeatureGateIssue[] = []
+	const file = options.importer
+
+	if (parsed.stateScript && options.reactivity === false) {
+		out.push({
+			code: 'AERO_CONFIG',
+			message:
+				'`<script is:state>` requires `reactivity: true` in aero.config. Enable the reactivity flag or remove the state script.',
+		})
+	}
+
+	const bindingNames = parsed.stateScript
+		? new Set(
+				(parsed.stateScript.content.match(/\blet\s+(\w+)/g) ?? []).map(m => m.replace(/\blet\s+/, ''))
+			)
+		: new Set<string>()
+
+	if (options.reactivity === false && walkIRForLiveDirectives(bodyIR, bindingNames)) {
+		out.push({
+			code: 'AERO_CONFIG',
+			message:
+				'Reactive directives (`text`, `on:*`, `busy`, or state-backed `{ }` interpolation) require `reactivity: true` in aero.config.',
+		})
+	}
+
+	const reactiveBinds = parsed.stateScript
+		? collectReactiveBinds(bodyIR)
+		: {
+				textBinds: [],
+				eventBinds: [],
+				busyBinds: [],
+				componentBinds: [],
+				showBinds: [],
+				htmlBinds: [],
+				classBinds: [],
+				attributeBinds: [],
+				propertyBinds: [],
+				modelBinds: [],
+				ifBinds: [],
+				forBinds: [],
+				switchBinds: [],
+			}
+	const eventBinds: IRReactiveEventBind[] = reactiveBinds.eventBinds
+
+	if (options.hypermedia === false) {
+		for (const bind of eventBinds) {
+			if (/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(bind.handlerExpr)) {
+				out.push({
+					code: 'AERO_CONFIG',
+					message:
+						'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
+				})
+				break
+			}
+		}
+		if (
+			out.length === 0 &&
+			parsed.stateScript &&
+			/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(parsed.stateScript.content)
+		) {
+			out.push({
+				code: 'AERO_CONFIG',
+				message:
+					'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
+			})
+		}
+	}
+
+	if (reactiveBinds.busyBinds.length > 0 && (options.reactivity === false || options.hypermedia === false)) {
+		out.push({
+			code: 'AERO_CONFIG',
+			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
+		})
+	}
+
+	const hasBusyAttr = /\b(?:data-aero-|aero-)?busy\b\s*=/i.test(parsed.template)
+	if (hasBusyAttr && (options.reactivity === false || options.hypermedia === false)) {
+		const busyMessage = '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.'
+		if (!out.some(issue => issue.message === busyMessage)) {
+			out.push({ code: 'AERO_CONFIG', message: busyMessage })
+		}
+	}
+
+	if (!parsed.stateScript && RUNTIME_BRACED_ATTR_RE.test(parsed.template)) {
+		out.push({
+			code: 'AERO_CONFIG',
+			message:
+				'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.',
+		})
+	}
+
+	if (options.hypermedia === true && stateAnalysis) {
+		for (const bind of reactiveBinds.busyBinds) {
+			const name = simpleIdentifier(bind.readExpr)
+			if (!name) {
+				out.push({
+					code: 'AERO_CONFIG',
+					message: '`busy` must reference one declared boolean state binding.',
+				})
+				continue
+			}
+			const binding = stateAnalysis.bindings.find(item => item.name === name)
+			if (!binding) {
+				out.push({
+					code: 'AERO_CONFIG',
+					message: `Hypermedia busy signal not found: ${name}`,
+				})
+			} else if (binding.derived || isDefinitelyNonBooleanInit(binding.initExpr)) {
+				out.push({
+					code: 'AERO_CONFIG',
+					message: `Hypermedia busy signal must be boolean: ${name}`,
+				})
+			}
+		}
+
+		for (const bind of eventBinds) {
+			const handler = bind.handlerExpr
+			if (!/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(handler)) continue
+
+			if (/\bstate\s*:\s*(['"])[^'"]+\1/.test(handler)) {
+				out.push({
+					code: 'AERO_CONFIG',
+					message:
+						'Hypermedia action `state` must reference a boolean state binding, not a string.',
+				})
+				continue
+			}
+
+			const refs = handler.matchAll(/\bstate\s*:\s*([A-Za-z_$][\w$]*)/g)
+			for (const match of refs) {
+				const name = match[1]
+				const binding = stateAnalysis.bindings.find(item => item.name === name)
+				if (!binding) {
+					out.push({
+						code: 'AERO_CONFIG',
+						message: `Hypermedia action state signal not found: ${name}`,
+					})
+				} else if (binding.derived || isDefinitelyNonBooleanInit(binding.initExpr)) {
+					out.push({
+						code: 'AERO_CONFIG',
+						message: `Hypermedia action state signal must be boolean: ${name}`,
+					})
+				}
+			}
+		}
+	}
+
+	void file
+	return out
+}
+
 function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<string>): boolean {
 	for (const node of nodes) {
 		if (node.kind === 'ReactiveTextBind' || node.kind === 'ReactiveEventBind' || node.kind === 'ReactiveBusyBind') {
@@ -42,26 +399,8 @@ export function validateFeatureGates(
 ): void {
 	const file = options.importer
 
-	if (parsed.stateScript && options.reactivity === false) {
-		throw new CompileError({
-			message:
-				'`<script is:state>` requires `reactivity: true` in aero.config. Enable the reactivity flag or remove the state script.',
-			file,
-		})
-	}
-
-	const bindingNames = parsed.stateScript
-		? new Set(
-				(parsed.stateScript.content.match(/\blet\s+(\w+)/g) ?? []).map(m => m.replace(/\blet\s+/, ''))
-			)
-		: new Set<string>()
-
-	if (options.reactivity === false && walkIRForLiveDirectives(bodyIR, bindingNames)) {
-		throw new CompileError({
-			message:
-				'Reactive directives (`text`, `on:*`, `busy`, or state-backed `{ }` interpolation) require `reactivity: true` in aero.config.',
-			file,
-		})
+	for (const issue of collectFeatureGateIssues(parsed, options, bodyIR, stateAnalysis)) {
+		throw new CompileError({ message: issue.message, file })
 	}
 
 	const reactiveBinds = parsed.stateScript
@@ -83,25 +422,6 @@ export function validateFeatureGates(
 			}
 	const eventBinds: IRReactiveEventBind[] = reactiveBinds.eventBinds
 
-	if (options.hypermedia === false) {
-		for (const bind of eventBinds) {
-			if (/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(bind.handlerExpr)) {
-				throw new CompileError({
-					message:
-						'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
-					file,
-				})
-			}
-		}
-		if (parsed.stateScript && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(parsed.stateScript.content)) {
-			throw new CompileError({
-				message:
-					'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
-				file,
-			})
-		}
-	}
-
 	if (options.hypermedia === true) {
 		const issues = detectHypermediaIssues(eventBinds, parsed.template, parsed.stateScript !== null)
 		for (const issue of issues) {
@@ -109,122 +429,6 @@ export function validateFeatureGates(
 				throw new CompileError({ message: issue.message, file })
 			}
 			options.onWarning?.({ code: 'AERO_COMPILE', message: issue.message, file })
-		}
-
-		if (stateAnalysis) {
-			validateHypermediaSignalRefs(reactiveBinds.busyBinds, eventBinds, stateAnalysis, file)
-		}
-	}
-
-	if (reactiveBinds.busyBinds.length > 0 && (options.reactivity === false || options.hypermedia === false)) {
-		throw new CompileError({
-			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
-			file,
-		})
-	}
-
-	const hasBusyAttr = /\b(?:data-aero-|aero-)?busy\b\s*=/i.test(parsed.template)
-	if (hasBusyAttr && (options.reactivity === false || options.hypermedia === false)) {
-		throw new CompileError({
-			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
-			file,
-		})
-	}
-
-	if (!parsed.stateScript) {
-		validateRuntimeOnlyReactiveAttrs(parsed.template, file)
-	}
-}
-
-const RUNTIME_BRACED_ATTR_RE =
-	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
-
-function validateRuntimeOnlyReactiveAttrs(template: string, file: string | undefined): void {
-	if (!RUNTIME_BRACED_ATTR_RE.test(template)) return
-	throw new CompileError({
-		message:
-			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.',
-		file,
-	})
-}
-
-function simpleIdentifier(expression: string): string | null {
-	const trimmed = expression.trim()
-	return /^[A-Za-z_$][\w$]*$/.test(trimmed) ? trimmed : null
-}
-
-function isDefinitelyNonBooleanInit(initExpr: string): boolean {
-	const trimmed = initExpr.trim()
-	return (
-		trimmed === 'undefined' ||
-		trimmed === 'null' ||
-		/^(['"]).*\1$/.test(trimmed) ||
-		/^-?\d+(?:\.\d+)?$/.test(trimmed) ||
-		/^[\[{]/.test(trimmed)
-	)
-}
-
-function assertBooleanStateBinding(
-	name: string,
-	analysis: StateScriptAnalysisResult,
-	file: string | undefined,
-	missingMessage: (name: string) => string,
-	nonBooleanMessage: (name: string) => string
-): void {
-	const binding = analysis.bindings.find(item => item.name === name)
-	if (!binding) {
-		throw new CompileError({ message: missingMessage(name), file })
-	}
-	if (binding.derived || isDefinitelyNonBooleanInit(binding.initExpr)) {
-		throw new CompileError({ message: nonBooleanMessage(name), file })
-	}
-}
-
-function validateHypermediaSignalRefs(
-	busyBinds: readonly { readExpr: string }[],
-	eventBinds: readonly IRReactiveEventBind[],
-	analysis: StateScriptAnalysisResult,
-	file: string | undefined
-): void {
-	for (const bind of busyBinds) {
-		const name = simpleIdentifier(bind.readExpr)
-		if (!name) {
-			throw new CompileError({
-				message: '`busy` must reference one declared boolean state binding.',
-				file,
-			})
-		}
-		assertBooleanStateBinding(
-			name,
-			analysis,
-			file,
-			ref => `Hypermedia busy signal not found: ${ref}`,
-			ref => `Hypermedia busy signal must be boolean: ${ref}`
-		)
-	}
-
-	for (const bind of eventBinds) {
-		const handler = bind.handlerExpr
-		if (!/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(handler)) continue
-
-		if (/\bstate\s*:\s*(['"])[^'"]+\1/.test(handler)) {
-			throw new CompileError({
-				message:
-					'Hypermedia action `state` must reference a boolean state binding, not a string.',
-				file,
-			})
-		}
-
-		const refs = handler.matchAll(/\bstate\s*:\s*([A-Za-z_$][\w$]*)/g)
-		for (const match of refs) {
-			const name = match[1]
-			assertBooleanStateBinding(
-				name,
-				analysis,
-				file,
-				ref => `Hypermedia action state signal not found: ${ref}`,
-				ref => `Hypermedia action state signal must be boolean: ${ref}`
-			)
 		}
 	}
 }

@@ -1,4 +1,6 @@
-import * as vscode from 'vscode'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import {
 	analyzeStateScript,
 	collectReadonlyReactivePropWritesInExpression,
@@ -6,12 +8,11 @@ import {
 	readonlyReactivePropWriteMessage,
 } from '@aero-js/compiler'
 import type { ParsedDocument } from '../document-analysis'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 
 export function checkReadonlyReactivePropWrites(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	parsed: ParsedDocument,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const stateBlocks = parsed.scriptBlocks.filter(block => block.kind === 'state')
 	if (stateBlocks.length === 0) return
@@ -62,17 +63,19 @@ export function checkReadonlyReactivePropWrites(
 }
 
 function pushReadonlyReactivePropDiagnostic(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	startOffset: number,
 	endOffset: number,
 	name: string
 ): void {
-	const diagnostic = new vscode.Diagnostic(
-		new vscode.Range(document.positionAt(startOffset), document.positionAt(endOffset)),
+	pushOffsetDiagnostic(
+		diagnostics,
+		document,
+		startOffset,
+		endOffset,
 		readonlyReactivePropWriteMessage(name),
-		vscode.DiagnosticSeverity.Error
+		'AERO_COMPILE',
+		'error'
 	)
-	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'reactivity.md')
-	diagnostics.push(diagnostic)
 }

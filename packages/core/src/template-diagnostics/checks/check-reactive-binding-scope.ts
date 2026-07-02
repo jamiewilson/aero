@@ -1,6 +1,7 @@
-import * as vscode from 'vscode'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import type { ParsedDocument } from '../document-analysis'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { hasStateScript } from './check-undefined-variables'
 
 /** Matches `show="{ expr }"` / `html="{ expr }"` (bare or `aero-` / `data-aero-` prefixed). */
@@ -42,20 +43,17 @@ function buildOnlyBindingNames(
 }
 
 function rangeForIdentifierInBracedValue(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
 	bracedStart: number,
 	braced: string,
 	name: string
-): vscode.Range | null {
+): SourceRange | null {
 	const slice = text.slice(bracedStart, bracedStart + braced.length)
 	const match = new RegExp(`\\b${escapeRegExp(name)}\\b`).exec(slice)
 	if (!match || match.index === undefined) return null
 	const start = bracedStart + match.index
-	return new vscode.Range(
-		document.positionAt(start),
-		document.positionAt(start + name.length)
-	)
+	return rangeFromOffsets(document, start, start + name.length)
 }
 
 function reactiveBindingScopeMessage(attrName: string): string {
@@ -63,9 +61,9 @@ function reactiveBindingScopeMessage(attrName: string): string {
 }
 
 export function checkReactiveBindingScope(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	parsed: ParsedDocument,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	if (!hasStateScript(parsed)) return
 
@@ -92,13 +90,7 @@ export function checkReactiveBindingScope(
 		for (const name of offendingNames) {
 			const range = rangeForIdentifierInBracedValue(document, text, bracedStart, braced, name)
 			if (!range) continue
-			const diagnostic = new vscode.Diagnostic(
-				range,
-				reactiveBindingScopeMessage(attrName),
-				vscode.DiagnosticSeverity.Error
-			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'reactivity.md')
-			diagnostics.push(diagnostic)
+			pushSpanDiagnostic(diagnostics, document, range, reactiveBindingScopeMessage(attrName), 'AERO_COMPILE', 'error')
 		}
 	}
 }
