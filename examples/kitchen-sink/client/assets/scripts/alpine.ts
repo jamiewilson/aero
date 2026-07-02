@@ -1,5 +1,4 @@
 import type { ThemeStore } from '@shared/types/theme'
-import { withTransition } from './utils'
 import site from '@content/site'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
@@ -20,7 +19,7 @@ Alpine.store(site.theme.storageKey, {
 		const options = site.theme.options
 		const index = options.indexOf(this.current)
 		const next = options[(index + 1) % options.length]
-		withTransition(() => {
+		document.startViewTransition(() => {
 			if (next) this.current = next
 		})
 	},
