@@ -4,6 +4,7 @@ import { getResolver } from '../pathResolver'
 import { isAeroDocument } from '../scope'
 import { checkComponentProps } from './check-component-props'
 import { checkComponentReferences } from './check-component-references'
+import { checkTemplateImportSpecifiers } from './check-template-import-specifiers'
 import { checkConditionalChains } from './check-conditional-chains'
 import { checkDirectiveExpressionBraces } from './check-directive-braces'
 import { checkDuplicateDeclarations } from './check-duplicate-declarations'
@@ -25,6 +26,7 @@ export function collectDiagnosticsForDocument(document: vscode.TextDocument): vs
 	checkScriptTags(document, text, diagnostics, parsed)
 	checkConditionalChains(document, text, diagnostics)
 	checkDirectiveExpressionBraces(document, text, diagnostics)
+	checkTemplateImportSpecifiers(document, text, diagnostics)
 	checkComponentReferences(document, text, diagnostics, resolver)
 	checkComponentProps(
 		document,

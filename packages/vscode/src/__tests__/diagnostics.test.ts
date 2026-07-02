@@ -1747,6 +1747,39 @@ describe('AeroDiagnostics Component References', () => {
 		expect(notImported).toHaveLength(0)
 	})
 
+	it('should flag extensionless template imports and treat layout usage as not imported', () => {
+		const text = `<script is:build>
+	import base from '@layouts/base'
+</script>
+<base-layout />
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///test.html',
+				fsPath: '/test.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => positionAtOffset(text, offset),
+			languageId: 'html',
+			fileName: '/test.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+			offsetAt: (pos: any) => (typeof pos.character === 'number' ? pos.character : 0),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		const missingExtension = reportedDiagnostics.find((d: any) =>
+			d.message.includes('Template imports must include the .html extension')
+		)
+		const notImported = reportedDiagnostics.find((d: any) =>
+			d.message.includes("Component 'base' is not imported")
+		)
+		expect(missingExtension).toBeDefined()
+		expect(notImported).toBeDefined()
+	})
+
 	it('should underline only the tag name when a component is not imported', () => {
 		const text = `<missing-component />`
 		const doc = {

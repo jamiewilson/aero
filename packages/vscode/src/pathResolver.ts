@@ -17,6 +17,7 @@ import {
 	resolveDirs,
 	type ResolvedAeroDirs,
 } from '@aero-js/core/utils/aliases'
+import { resolveImportToFile } from './importResolution'
 
 const require = createRequire(import.meta.url)
 
@@ -127,8 +128,11 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 
 			const importer = fromFile ?? document.uri.fsPath
 			const rawResolved = resolveFn(specifier, importer)
-			const resolved = resolveToExistingPath(rawResolved)
-			return resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier) ? resolved : undefined
+			const resolved = resolveImportToFile(specifier, rawResolved)
+
+			return resolved && (resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier)) ?
+					resolved
+				:	undefined
 		},
 	}
 
@@ -139,10 +143,4 @@ export function getResolver(document: vscode.TextDocument): PathResolver {
 /** Clear the resolver cache (e.g. when tsconfig changes). */
 export function clearResolverCache(): void {
 	resolverCache.clear()
-}
-
-function resolveToExistingPath(candidate: string): string {
-	if (!candidate) return candidate
-	if (fs.existsSync(candidate)) return candidate
-	return candidate
 }

@@ -62,8 +62,8 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 			case 'component-tag': {
 				const alias =
 					classification.suffix === 'component'
-						? `@components/${classification.baseName}`
-						: `@layouts/${classification.baseName}`
+						? `@components/${classification.baseName}.html`
+						: `@layouts/${classification.baseName}.html`
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 

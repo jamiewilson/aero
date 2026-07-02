@@ -2,11 +2,11 @@
  * Diagnostic check: missing component/layout files.
  */
 import * as vscode from 'vscode'
-import * as fs from 'node:fs'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import type { PathResolver } from '../pathResolver'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
+import { isValidTemplateImportSpecifier } from '../importResolution'
 import { getIgnoredRanges, isInRanges, findTagNameRange } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
@@ -38,7 +38,7 @@ export function checkComponentReferences(
 		const importName = kebabToCamelCase(baseName)
 		const importedSpecifier = imports.get(importName)
 
-		if (!importedSpecifier) {
+		if (!importedSpecifier || !isValidTemplateImportSpecifier(importedSpecifier)) {
 			const nameRange = findTagNameRange(match.index, tagName)
 			const diagnostic = new vscode.Diagnostic(
 				new vscode.Range(
@@ -54,8 +54,7 @@ export function checkComponentReferences(
 		}
 
 		const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
-		const resolvedExists = resolved && fs.existsSync(resolved)
-		if (resolved && !resolvedExists) {
+		if (!resolved) {
 			const nameRange = findTagNameRange(match.index, tagName)
 			const diagnostic = new vscode.Diagnostic(
 				new vscode.Range(
