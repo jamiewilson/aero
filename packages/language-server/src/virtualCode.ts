@@ -775,7 +775,11 @@ export class AeroVirtualCode implements VirtualCode {
 		const makeExprVirtualCode = (
 			expression: string,
 			sourceOffset: number,
-			options?: { wrapPropsObjectLiteral?: boolean; isEventHandler?: boolean }
+			options?: {
+				wrapPropsObjectLiteral?: boolean
+				isEventHandler?: boolean
+				isForDirectiveHead?: boolean
+			}
 		): VirtualCode => {
 			const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 			const slotBindings = getSlotBindingsAtOffset(sourceOffset, slotScopes)
@@ -783,9 +787,11 @@ export class AeroVirtualCode implements VirtualCode {
 			const slotTypeDecls = getSlotTypeDeclsAtOffset(sourceOffset, slotScopes)
 			const slotTypedBindingDecls = getSlotTypedBindingDeclsAtOffset(sourceOffset, slotScopes)
 			const combinedBindings =
-				forBindings.size > 0 || slotBindings.size > 0
-					? new Set([...buildBindingNames, ...forBindings, ...slotBindings])
-					: new Set(buildBindingNames)
+				options?.isForDirectiveHead === true
+					? new Set(buildBindingNames)
+					: forBindings.size > 0 || slotBindings.size > 0
+						? new Set([...buildBindingNames, ...forBindings, ...slotBindings])
+						: new Set(buildBindingNames)
 			for (const typedName of slotTypedBindingNames) {
 				combinedBindings.delete(typedName)
 			}
@@ -838,6 +844,26 @@ export class AeroVirtualCode implements VirtualCode {
 				}
 			}
 
+			if (options?.isForDirectiveHead === true) {
+				const stmt = `for (${expression}) {}`
+				const exprOffsetInVirtual = head.length + 'for ('.length
+				const virtualText = head + stmt
+				return {
+					id: `expr_${exprIdx++}`,
+					languageId: 'typescript',
+					snapshot: asEmbeddedModuleSnapshot(virtualText),
+					mappings: [
+						{
+							sourceOffsets: [sourceOffset],
+							generatedOffsets: [exprOffsetInVirtual],
+							lengths: [expression.length],
+							data: BUILD_SCRIPT_FEATURES,
+						},
+					],
+					embeddedCodes: [],
+				}
+			}
+
 			const open = options?.wrapPropsObjectLiteral ? '[{' : '['
 			const close = options?.wrapPropsObjectLiteral ? '}]' : ']'
 			const exprOffsetInVirtual = head.length + open.length
@@ -861,9 +887,10 @@ export class AeroVirtualCode implements VirtualCode {
 
 		for (const site of collectTemplateInterpolationSites(sourceText)) {
 			out.push(
-				makeExprVirtualCode(site.expression, site.braceOffset, {
+				makeExprVirtualCode(site.expression, site.expressionOffset ?? site.braceOffset, {
 					wrapPropsObjectLiteral: site.wrapPropsObjectLiteral === true,
 					isEventHandler: site.isEventHandler === true,
+					isForDirectiveHead: site.isForDirectiveHead === true,
 				})
 			)
 		}

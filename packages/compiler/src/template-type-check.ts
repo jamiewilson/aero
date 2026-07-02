@@ -60,27 +60,35 @@ function offsetToOneBasedLineColumn(
 	return { line, column: offset - lineStart + 1 }
 }
 
+function expressionAnchorInHtml(htmlSource: string, braceOffset: number): number {
+	let i = braceOffset + 1
+	while (i < htmlSource.length && /\s/.test(htmlSource[i]!)) i++
+	return i
+}
+
 function mapDiagnosticToHtmlInterpolation(
 	diagnostic: ts.Diagnostic,
 	fullSourceFile: ts.SourceFile,
 	exprText: string,
 	exprStartInVirtual: number,
 	htmlSource: string,
-	braceOffset: number
+	braceOffset: number,
+	expressionOffset?: number
 ): Pick<TemplateTypeIssue, 'line' | 'column' | 'lineEnd' | 'columnEnd'> | null {
 	if (diagnostic.start === undefined || diagnostic.file !== fullSourceFile) return null
 	const start = diagnostic.start
 	if (start < exprStartInVirtual) return null
 
 	const posInExpr = start - exprStartInVirtual
-	const bracePos = braceOffset
-	const base = offsetToOneBasedLineColumn(htmlSource, bracePos)
+	const anchorOffset =
+		expressionOffset ?? expressionAnchorInHtml(htmlSource, braceOffset)
+	const base = offsetToOneBasedLineColumn(htmlSource, anchorOffset)
 	const exprLine1 = offsetToOneBasedLineColumn(
 		exprText,
 		Math.min(Math.max(0, posInExpr), exprText.length)
 	)
 	const line = base.line + exprLine1.line - 1
-	const column = exprLine1.line === 1 ? base.column + 1 + exprLine1.column - 1 : exprLine1.column
+	const column = exprLine1.line === 1 ? base.column + exprLine1.column : exprLine1.column
 
 	let lineEnd: number | undefined
 	let columnEnd: number | undefined
@@ -88,7 +96,7 @@ function mapDiagnosticToHtmlInterpolation(
 		const endInExpr = posInExpr + diagnostic.length
 		const endLc = offsetToOneBasedLineColumn(exprText, Math.min(endInExpr, exprText.length))
 		lineEnd = base.line + endLc.line - 1
-		columnEnd = endLc.line === 1 ? base.column + 1 + endLc.column - 1 : endLc.column
+		columnEnd = endLc.line === 1 ? base.column + endLc.column : endLc.column
 	}
 
 	return { line, column, lineEnd, columnEnd }
@@ -238,7 +246,8 @@ export function checkTemplateTypes(
 					site.expression,
 					exprStartInVirtual,
 					htmlSource,
-					site.braceOffset
+					site.braceOffset,
+					site.expressionOffset
 				)
 				if (!span) continue
 				out.push({

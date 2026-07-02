@@ -25,7 +25,7 @@
 					},
 					"end": "(?=\\s|/?>)",
 					"name": "meta.attribute.aero",
-					"patterns": [{ "include": "#aero-attribute-value" }]
+					"patterns": [{ "include": "#aero-for-attribute-value" }]
 				},
 				{
 					"comment": "Aero if with value",
@@ -101,6 +101,65 @@
 					},
 					"contentName": "string.quoted.single.html"
 				}
+			]
+		},
+		"aero-for-attribute-value": {
+			"comment": "for=\"{ const … of … }\" — for-of head highlighting (not bare source.ts block)",
+			"begin": "(=)\\s*",
+			"beginCaptures": {
+				"1": { "name": "punctuation.separator.key-value.html" }
+			},
+			"end": "(?<=[\"'])",
+			"patterns": [
+				{
+					"begin": "(\")",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "(\")",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.string.end.html" }
+					},
+					"patterns": [{ "include": "#aero-for-braced-value" }]
+				},
+				{
+					"begin": "(')",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "(')",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.string.end.html" }
+					},
+					"patterns": [{ "include": "#aero-for-braced-value" }]
+				}
+			]
+		},
+		"aero-for-braced-value": {
+			"begin": "(\\{)",
+			"end": "(\\})",
+			"beginCaptures": {
+				"1": { "name": "punctuation.section.embedded.begin.aero" }
+			},
+			"endCaptures": {
+				"1": { "name": "punctuation.section.embedded.end.aero" }
+			},
+			"contentName": "meta.embedded.for-directive.aero",
+			"patterns": [{ "include": "#aero-for-of-head" }]
+		},
+		"aero-for-of-head": {
+			"comment": "JavaScript for-of loop head inside for=\"{ … }\"",
+			"patterns": [
+				{
+					"match": "(?x)\\s*(const|let)\\s+((?:\\{[^}]*\\}|\\w+(?:\\s*,\\s*\\w+)*))\\s+(of)\\s+(.+?)\\s*(?=\\})",
+					"captures": {
+						"1": { "name": "storage.type.js" },
+						"2": { "name": "variable.other.readwrite.js" },
+						"3": { "name": "keyword.control.flow.js" },
+						"4": { "patterns": [{ "include": "source.ts" }] }
+					}
+				},
+				{ "include": "source.ts" }
 			]
 		}
 	}

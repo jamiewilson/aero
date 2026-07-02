@@ -132,4 +132,53 @@ function syncAuthLink(event) { event.preventDefault() }
 		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
 		expect(codes).not.toContain(2322)
 	})
+
+	it('collects for-directive heads as type-check sites', () => {
+		const html = `<div for="{ const item of items }"></div>`
+		const sites = collectTemplateInterpolationSites(html)
+		const forHead = sites.find(s => s.isForDirectiveHead)
+		expect(forHead?.expression.trim()).toBe('const item of items')
+		expect(forHead?.expressionOffset).toBeGreaterThan(forHead!.braceOffset)
+		const { virtualText } = buildTemplateInterpolationVirtualText(html, forHead!, '')
+		expect(virtualText).toContain('for (const item of items) {}')
+	})
+
+	it('flags non-iterable for-directive iterable in virtual TS', () => {
+		const html = `<script is:build>
+const site = { demos: [{ label: 'A', href: '/a' }] }
+</script>
+<li for="{ const demo of site }">{ demo.label }</li>`
+		const sites = collectTemplateInterpolationSites(html)
+		const forHead = sites.find(s => s.isForDirectiveHead)
+		expect(forHead).toBeDefined()
+		const { virtualText } = buildTemplateInterpolationVirtualText(
+			html,
+			forHead!,
+			'declare const Aero: { props: Record<string, unknown> }\n'
+		)
+		expect(virtualText).toContain('declare const site:')
+		const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('expr.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['expr.ts'], opts, host)
+		const diags = program.getSemanticDiagnostics(source)
+		expect(
+			diags.some(d =>
+				/iterable|Symbol\.iterator|must have a '\[Symbol\.iterator\]'/i.test(
+					ts.flattenDiagnosticMessageText(d.messageText, '\n')
+				)
+			)
+		).toBe(true)
+	})
 })

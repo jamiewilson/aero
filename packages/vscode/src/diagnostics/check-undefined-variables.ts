@@ -28,8 +28,6 @@ export function hasBuildScript(parsed: ParsedDocument): boolean {
 
 /** Allowed globals that are always available in templates. */
 const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
-	'site',
-	'theme',
 	'Aero',
 	// Shorthand: { url }, { request }, { params } compile to Aero.page.*
 	'url',
