@@ -132,8 +132,11 @@ export const DIRECTIVE_PARITY_SCENARIOS: readonly DirectiveParityScenario[] = [
 				outcome: 'fail',
 				messageIncludes: 'for directive must be valid JavaScript',
 			},
-			vscode: { outcome: 'pass' },
+			vscode: {
+				outcome: 'fail',
+				code: 'AERO_COMPILE',
+				messageIncludes: 'cannot use a braced loop expression',
+			},
 		},
-		knownGap: 'VS Code should classify braced-for-on-label as invalid directive in Phase 2',
 	},
 ]

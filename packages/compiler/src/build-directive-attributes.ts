@@ -65,6 +65,26 @@ type AttributeNode = {
 	getAttribute?: (name: string) => string | null
 }
 
+export interface ClassifyBuildAttributeInput {
+	tagName: string
+	attrName: string
+	rawValue: string | null | undefined
+	parentHasSwitch?: boolean
+}
+
+export type BuildAttributeClassification =
+	| { kind: 'not-build-directive' }
+	| { kind: 'native-html'; directive: BuildDirective }
+	| {
+			kind: 'build-directive'
+			directive: BuildDirective
+			attrName: string
+			requiresBracedValue: boolean
+	  }
+	| { kind: 'switch-branch'; directive: typeof ATTR_CASE | typeof ATTR_DEFAULT }
+	| { kind: 'misplaced-switch-branch'; directive: typeof ATTR_CASE | typeof ATTR_DEFAULT }
+	| { kind: 'invalid-braced-for-on-native-host'; directive: typeof ATTR_FOR }
+
 function matchesBuildDirectiveName(name: string, directive: BuildDirective): boolean {
 	return (
 		name === directive ||
@@ -75,6 +95,19 @@ function matchesBuildDirectiveName(name: string, directive: BuildDirective): boo
 
 function matchesBuildDirectiveNameForFormatting(name: string, directive: BuildDirective): boolean {
 	return matchesBuildDirectiveName(name, directive) || name === LEGACY_BUILD_ATTR_PREFIX + directive
+}
+
+function isNativeBareAttributeMatch(
+	tag: string,
+	attrName: string,
+	value: string | null | undefined
+): boolean {
+	const tagName = tag.toLowerCase()
+	const canonical = resolveBuildDirectiveName(attrName)
+	if (canonical == null) return false
+	if (attrName !== canonical) return false
+	if (looksBracedDirectiveValue(value)) return false
+	return NATIVE_BARE_ATTR_ELEMENTS[canonical]?.has(tagName) ?? false
 }
 
 /** All attribute names that represent a build directive (bare + prefixed). */
@@ -192,22 +225,60 @@ export function getBuildDirectiveAttribute(
 }
 
 /**
- * True when a bare directive-named attribute should be left as native HTML: the attribute name
- * matches a build directive, its value is not brace-shaped, and the tag is one where that name is
- * genuinely native.
+ * Classify a build-time attribute: native HTML passthrough, switch branch marker, or Aero directive.
  */
-export function isNativeBareAttribute(
-	tag: string | undefined,
-	attrName: string,
-	value: string | null | undefined
-): boolean {
-	if (!tag) return false
+export function classifyBuildAttribute(input: ClassifyBuildAttributeInput): BuildAttributeClassification {
+	const tagName = input.tagName.toLowerCase()
+	const { attrName, rawValue } = input
 	const canonical = resolveBuildDirectiveName(attrName)
-	if (canonical == null) return false
-	// Prefixed forms are always directives, never native passthrough.
-	if (attrName !== canonical) return false
-	if (looksBracedDirectiveValue(value)) return false
-	return NATIVE_BARE_ATTR_ELEMENTS[canonical]?.has(tag.toLowerCase()) ?? false
+	if (canonical == null) return { kind: 'not-build-directive' }
+
+	const parentHasSwitch = input.parentHasSwitch ?? false
+
+	if (canonical === ATTR_CASE || canonical === ATTR_DEFAULT) {
+		if (parentHasSwitch) return { kind: 'switch-branch', directive: canonical }
+		if (isNativeBareAttributeMatch(tagName, attrName, rawValue)) {
+			return { kind: 'native-html', directive: canonical }
+		}
+		return { kind: 'misplaced-switch-branch', directive: canonical }
+	}
+
+	if (isNativeBareAttributeMatch(tagName, attrName, rawValue)) {
+		return { kind: 'native-html', directive: canonical }
+	}
+
+	if (
+		canonical === ATTR_FOR &&
+		attrName === ATTR_FOR &&
+		NATIVE_BARE_ATTR_ELEMENTS[ATTR_FOR].has(tagName) &&
+		looksBracedDirectiveValue(rawValue)
+	) {
+		return { kind: 'invalid-braced-for-on-native-host', directive: ATTR_FOR }
+	}
+
+	const requiresBracedValue =
+		BRACED_VALUE_DIRECTIVES.has(canonical) && !looksBracedDirectiveValue(rawValue)
+
+	return {
+		kind: 'build-directive',
+		directive: canonical,
+		attrName,
+		requiresBracedValue,
+	}
+}
+
+/** Validation message for VS Code / compile-time brace checks, or null when valid. */
+export function getBuildDirectiveValidationIssue(input: ClassifyBuildAttributeInput): string | null {
+	const classification = classifyBuildAttribute(input)
+	switch (classification.kind) {
+		case 'build-directive':
+			if (!classification.requiresBracedValue) return null
+			return `Directive \`${input.attrName}\` must use a braced expression, e.g. ${input.attrName}="{ expression }"`
+		case 'invalid-braced-for-on-native-host':
+			return `Directive \`for\` on <${input.tagName}> cannot use a braced loop expression; use a plain \`for\` value for native IDREF.`
+		default:
+			return null
+	}
 }
 
 /** Bare sugar: braced values, string `case`, boolean `else`/`default`, bare `props`. */
@@ -238,21 +309,4 @@ export function isBuildDirectiveAttributeForFormatting(
 	if (canonical === ATTR_FOR) return looksBracedDirectiveValue(trimmed)
 	if (canonical === ATTR_CASE) return trimmed.length > 0
 	return looksBracedDirectiveValue(trimmed)
-}
-
-/**
- * True when a valued attribute should be flagged for missing brace-wrapped expression (VSCode /
- * compile validation). Returns false for native passthrough and already-braced values.
- */
-export function requiresBracedDirectiveValue(
-	attrName: string,
-	value: string,
-	tagName?: string
-): boolean {
-	const canonical = resolveBuildDirectiveName(attrName)
-	if (canonical == null) return false
-	if (!BRACED_VALUE_DIRECTIVES.has(canonical)) return false
-	if (looksBracedDirectiveValue(value)) return false
-	if (tagName && isNativeBareAttribute(tagName, attrName, value)) return false
-	return true
 }

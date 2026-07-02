@@ -1,7 +1,7 @@
 /**
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
-import { requiresBracedDirectiveValue } from '@aero-js/compiler/build-directive-attributes'
+import { getBuildDirectiveValidationIssue } from '@aero-js/compiler/build-directive-attributes'
 import { parseEventDirectiveName } from '@aero-js/compiler'
 import * as vscode from 'vscode'
 import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
@@ -47,11 +47,15 @@ export function checkDirectiveExpressionBraces(
 			const start = attrsStart + attrMatch.index
 			const end = start + attrMatch[0].length
 
-			if (requiresBracedDirectiveValue(attrName, attrValue, tagName)) {
-				const example = `${attrName}="{ expression }"`
+			const buildIssue = getBuildDirectiveValidationIssue({
+				tagName,
+				attrName,
+				rawValue: attrValue,
+			})
+			if (buildIssue) {
 				const diagnostic = new vscode.Diagnostic(
 					new vscode.Range(document.positionAt(start), document.positionAt(end)),
-					`Directive \`${attrName}\` must use a braced expression, e.g. ${example}`,
+					buildIssue,
 					vscode.DiagnosticSeverity.Error
 				)
 				applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')

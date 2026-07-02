@@ -48,9 +48,9 @@ function makeDoc(text: string) {
 	} as unknown as vscode.TextDocument
 }
 
-const BRACED_EXPR_MESSAGE = 'must use a braced expression'
+const BUILD_DIRECTIVE_ISSUE = /must use a braced expression|cannot use a braced loop expression/
 
-function collectDirectiveBraceDiagnostics(html: string): vscode.Diagnostic[] {
+function collectDirectiveDiagnostics(html: string): vscode.Diagnostic[] {
 	const diagnostics: vscode.Diagnostic[] = []
 	checkDirectiveExpressionBraces(makeDoc(html), html, diagnostics)
 	return diagnostics
@@ -62,22 +62,20 @@ describe('directive parity — vscode surface', () => {
 		if (!expectation) continue
 
 		it(`${scenario.id}: ${scenario.description}`, () => {
-			const diagnostics = collectDirectiveBraceDiagnostics(scenario.html)
-			const braceDiags = diagnostics.filter(d => d.message.includes(BRACED_EXPR_MESSAGE))
+			const diagnostics = collectDirectiveDiagnostics(scenario.html)
+			const buildDiags = diagnostics.filter(d => BUILD_DIRECTIVE_ISSUE.test(d.message))
 
 			if (expectation.outcome === 'pass') {
-				expect(braceDiags, scenario.knownGap ?? 'expected no braced-expression diagnostics').toEqual(
-					[]
-				)
+				expect(buildDiags).toEqual([])
 				return
 			}
 
-			expect(braceDiags.length).toBeGreaterThan(0)
+			expect(buildDiags.length).toBeGreaterThan(0)
 			if (expectation.messageIncludes) {
-				expect(braceDiags.some(d => d.message.includes(expectation.messageIncludes!))).toBe(true)
+				expect(buildDiags.some(d => d.message.includes(expectation.messageIncludes!))).toBe(true)
 			}
 			if (expectation.code) {
-				const match = braceDiags.find(
+				const match = buildDiags.find(
 					d =>
 						typeof d.code === 'object' &&
 						d.code &&

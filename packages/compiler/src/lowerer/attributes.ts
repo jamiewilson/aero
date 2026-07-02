@@ -5,9 +5,9 @@
 import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import {
+	classifyBuildAttribute,
 	getBuildDirectiveAttribute,
 	hasBuildDirectiveAttribute,
-	isNativeBareAttribute,
 	resolveBuildDirectiveName,
 	type BuildDirective,
 } from '../build-directive-attributes'
@@ -127,8 +127,12 @@ function parseForAttribute(
 	attr: AttrLike
 ): { binding: string; items: string } | null {
 	if (resolveBuildDirectiveName(attr.name) !== CONST.ATTR_FOR) return null
-	// Bare `for` on <label>/<output> with a non-braced value is the native HTML attribute.
-	if (isNativeBareAttribute(getTagName(node), attr.name, attr.value ?? null)) {
+	const classification = classifyBuildAttribute({
+		tagName: getTagName(node),
+		attrName: attr.name,
+		rawValue: attr.value ?? null,
+	})
+	if (classification.kind === 'native-html' || classification.kind === 'not-build-directive') {
 		return null
 	}
 	const rawValue = attr.value || ''
@@ -357,16 +361,25 @@ export function parseElementAttributes(
 		// only a bare `default` on <track> survives (the native boolean); every other placement is a
 		// misplaced branch that the lowerer's switch guard reports.
 		if (isDirectiveAttrName(attr.name, [CONST.ATTR_CASE, CONST.ATTR_DEFAULT])) {
-			const nativeTrackDefault = isNativeBareAttribute(
-				getTagName(node),
-				attr.name,
-				attr.value ?? null
-			)
-			if (parentIsSwitchContainer(node) || !nativeTrackDefault) return
+			const branchClassification = classifyBuildAttribute({
+				tagName: getTagName(node),
+				attrName: attr.name,
+				rawValue: attr.value ?? null,
+				parentHasSwitch: parentIsSwitchContainer(node),
+			})
+			if (
+				branchClassification.kind === 'switch-branch' ||
+				branchClassification.kind === 'misplaced-switch-branch'
+			) {
+				return
+			}
 		} else if (resolveBuildDirectiveName(attr.name) === CONST.ATTR_SWITCH) {
-			// Bare boolean `switch` on <input> is the native attribute; pass it through.
-			const tagName = getTagName(node)
-			if (!isNativeBareAttribute(tagName, attr.name, attr.value ?? null)) {
+			const switchClassification = classifyBuildAttribute({
+				tagName: getTagName(node),
+				attrName: attr.name,
+				rawValue: attr.value ?? null,
+			})
+			if (switchClassification.kind !== 'native-html') {
 				switchExpr = Helper.stripBraces(
 					validateBracedDirectiveValue(node, diag, attr.name, attr.value || '')
 				)

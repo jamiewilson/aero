@@ -192,10 +192,10 @@ export {
 	isBuildDirectiveNameForFormatting,
 	canonicalBuildDirectiveName,
 	canonicalBuildDirectiveNameForFormatting,
-	isNativeBareAttribute,
+	classifyBuildAttribute,
+	getBuildDirectiveValidationIssue,
 	isBuildDirectiveAttribute,
 	isBuildDirectiveAttributeForFormatting,
-	requiresBracedDirectiveValue,
 	formatBuildDirectiveName,
 	resolveBuildDirectiveName,
 	resolveBuildDirectiveNameForFormatting,
@@ -205,6 +205,8 @@ export {
 	isPrefixedBuildDirectiveName,
 	type BuildDirective,
 	type BuildDirectivePrefixMode,
+	type ClassifyBuildAttributeInput,
+	type BuildAttributeClassification,
 } from './build-directive-attributes'
 
 // Resolver
