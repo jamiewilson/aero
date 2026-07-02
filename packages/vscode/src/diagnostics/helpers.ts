@@ -33,7 +33,7 @@ export function findAttributeRange(
 	attrName: string
 ): ByteRange | null {
 	const re = new RegExp(
-		`(?:^|\\s)(${escapeRegExp(attrName)})\\s*=\\s*("(?:[^"]*)"|'(?:[^']*)')`
+		`(?:^|\\s)(${escapeRegExp(attrName)})\\s*=\\s*(["'])([\\s\\S]*?)\\2`
 	)
 	const match = re.exec(attrs)
 	if (!match || match.index === undefined) return null
