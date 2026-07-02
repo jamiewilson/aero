@@ -1,21 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { rewriteHypermediaActionStateRefs } from '../hypermedia-action-state-refs'
+import {
+	COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
+	rewriteHypermediaActionStateRefs,
+} from '@aero-js/hypermedia'
 
-describe('rewriteHypermediaActionStateRefs', () => {
-	it('rewrites owned binding names in state option', () => {
+describe('rewriteHypermediaActionStateRefs (compiler re-export)', () => {
+	it('re-exports hypermedia rewrite with compiled callee constant', () => {
 		const names = new Set(['isSaving'])
 		expect(
 			rewriteHypermediaActionStateRefs(
-				"POST('/api/save', { target: '#x', state: isSaving })",
-				names
+				"POST('/api/save', { state: isSaving })",
+				names,
+				{ signalCallee: COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE }
 			)
-		).toBe("POST('/api/save', { target: '#x', state: __aeroSignal(\"isSaving\") })")
-	})
-
-	it('leaves unknown identifiers unchanged', () => {
-		const names = new Set(['isSaving'])
-		expect(
-			rewriteHypermediaActionStateRefs("POST('/api/save', { state: other })", names)
-		).toBe("POST('/api/save', { state: other })")
+		).toBe("POST('/api/save', { state: actions.__aeroSignal(\"isSaving\") })")
 	})
 })

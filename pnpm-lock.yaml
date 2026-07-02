@@ -307,6 +307,9 @@ importers:
       '@aero-js/html-parser':
         specifier: workspace:*
         version: link:../html-parser
+      '@aero-js/hypermedia':
+        specifier: workspace:*
+        version: link:../hypermedia
       '@aero-js/interpolation':
         specifier: workspace:*
         version: link:../interpolation
@@ -610,7 +613,7 @@ importers:
         version: 20.10.6
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -711,6 +714,10 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/ui@4.1.9)(happy-dom@20.10.6)(vite@8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0))
 
   packages/reactivity:
+    dependencies:
+      '@aero-js/hypermedia':
+        specifier: workspace:*
+        version: link:../hypermedia
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

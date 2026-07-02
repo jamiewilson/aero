@@ -80,6 +80,16 @@ async function appendItemFn() {
 		)
 	})
 
+	it('does not qualify document in stateful handlers', () => {
+		const script = `let items = []
+const setItems = next => document.startViewTransition({ update: () => (items = next), types: ['list-update'] })`
+		const { scopeFunctions } = lower(script)
+
+		expect(scopeFunctions[0]!.installSource).toBe(
+			"scope.setItems = next => document.startViewTransition({ update: () => (scope.items = next), types: ['list-update'] })"
+		)
+	})
+
 	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {
 		const script = `import { GET } from '@aero-js/core/hypermedia'
 let isSaving = false

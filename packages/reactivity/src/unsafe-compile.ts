@@ -2,6 +2,10 @@ import type { StateScope } from './state-scope'
 import type { StateBindingSpec } from './state-scope'
 import type { SignalStore } from './store'
 import type { HypermediaRuntimeLike } from './mount'
+import {
+	createEventHandlerActionScope,
+	rewriteHypermediaActionStateRefs,
+} from '@aero-js/hypermedia'
 
 export type ScopeReader = (
 	scope: StateScope,
@@ -42,20 +46,14 @@ export function unsafeCompileHandler(
 	}
 ): (this: Element, event: Event) => void {
 	const signalNames = new Set(options.bindings.filter(binding => !binding.derived).map(binding => binding.name))
-	const rewrittenExpr = handlerExpr.replace(
-		/(\bstate\s*:\s*)([A-Za-z_$][\w$]*)/g,
-		(match, prefix: string, name: string) => {
-			if (!signalNames.has(name)) return match
-			return `${prefix}__aeroSignal(${JSON.stringify(name)})`
-		}
-	)
+	const rewrittenExpr = rewriteHypermediaActionStateRefs(handlerExpr, signalNames)
 	const body = rewrittenExpr.trim().endsWith(';') ? rewrittenExpr.trim() : `${rewrittenExpr.trim()};`
 	return function (this: Element, event: Event) {
 		const triggerRef = options.hypermediaTriggerRef
 		if (triggerRef) triggerRef.current = this
 		try {
 			const actionScope = options.hypermediaRuntime
-				? createUnsafeHypermediaActionScope(
+				? createEventHandlerActionScope(
 						options.hypermediaRuntime,
 						() => this,
 						name => {
@@ -81,21 +79,4 @@ export function unsafeCompileHandler(
 			if (triggerRef) triggerRef.current = undefined
 		}
 	}
-}
-
-function createUnsafeHypermediaActionScope(
-	runtime: HypermediaRuntimeLike,
-	getTrigger: () => Element | undefined,
-	resolveSignal: (name: string) => { value: boolean }
-): Record<string, unknown> {
-	const scope: Record<string, unknown> = {}
-	for (const method of ['POST', 'GET', 'PUT', 'PATCH', 'DELETE'] as const) {
-		scope[method] = (url: unknown, opts: unknown = {}) =>
-			runtime.executeAction(
-				{ ...(opts as object), method, url: String(url) },
-				getTrigger()
-			)
-	}
-	scope.__aeroSignal = (name: unknown) => resolveSignal(String(name))
-	return scope
 }
