@@ -15,30 +15,40 @@
 			<code>script is:inline</code> nested in page content — stays in place, not bundled (demo
 			below)
 		</li>
+
 		<li><code>script props</code> — Vite-bundled client module with build-time data injection</li>
+
 		<li><code>script is:inline props</code> — inline script with build-time props</li>
+
 		<li>
 			Plain <code>script</code> — Vite-bundled client module, hoisted to end of <code>body</code>
 		</li>
+
 		<li>External <code>script src</code> — third-party URL, left unchanged (not bundled)</li>
+
 		<li><code>script is:blocking</code> — moved to <code>head</code> before paint</li>
+
 		<li>
 			Local <code>script src</code> — aliased path, bundled and rewritten to a hashed asset URL
 		</li>
+
 		<li><code>script async src</code> — local module loaded asynchronously</li>
+
+		<script is:inline>
+			console.debug('[aero] <script is:inline> nested in page content')
+		</script>
+
 		<li>
 			<code>script defer src</code> — local module; <code>defer</code> stripped when Aero adds
 			<code>type="module"</code>
 		</li>
+
 		<li>Public static <code>script src</code> — file from <code>./public</code>, served as-is</li>
 	</ul>
-	<script is:inline>
-		console.debug('[aero] <script is:inline> nested in page content')
-	</script>
 </base-layout>
 
 <script props="{ data }">
-	import { allCaps } from '@scripts/utils/transform'
+	import { allCaps } from '@scripts/utils'
 	console.debug(allCaps('[aero]'), data)
 </script>
 
@@ -48,7 +58,7 @@
 </script>
 
 <script>
-	import { allCaps } from '@scripts/utils/transform'
+	import { allCaps } from '@scripts/utils'
 	console.debug(allCaps('[aero] plain <script> in <body>'))
 </script>
 

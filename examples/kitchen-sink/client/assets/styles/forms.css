@@ -79,9 +79,10 @@
 		user-select: none;
 		justify-self: center;
 		transition-property: background, color, opacity;
-		transition-duration: var(--duration-medium);
+		transition-duration: var(--duration-fast);
 
 		&:hover,
+		&:focus-visible,
 		&:active {
 			color: contrast-color(var(--color-fg));
 			background: var(--color-fg);
