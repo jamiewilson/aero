@@ -9,6 +9,7 @@ import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import type { PathResolver } from '../pathResolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
+import { isValidTemplateImportSpecifier } from '../importResolution'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
 import { collectComponentReactivePropMetadata } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
@@ -91,7 +92,7 @@ export function checkComponentProps(
 		const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
 		const importName = kebabToCamelCase(baseName)
 		const importedSpecifier = imports.get(importName)
-		if (!importedSpecifier) continue
+		if (!importedSpecifier || !isValidTemplateImportSpecifier(importedSpecifier)) continue
 
 		const rawResolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
 		const resolvedPath =

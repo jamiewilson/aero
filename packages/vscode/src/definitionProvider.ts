@@ -58,8 +58,8 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 				const alias =
 					importedSpecifier ||
 					(classification.suffix === 'component'
-						? `@components/${classification.baseName}`
-						: `@layouts/${classification.baseName}`)
+						? `@components/${classification.baseName}.html`
+						: `@layouts/${classification.baseName}.html`)
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]
