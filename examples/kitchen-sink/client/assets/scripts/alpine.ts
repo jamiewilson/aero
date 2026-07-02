@@ -1,18 +1,11 @@
 import type { ThemeStore } from '@shared/types/theme'
-import site from '@content/site.ts'
+import { withTransition } from './utils'
+import site from '@content/site'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
 
 Alpine.start()
 Alpine.plugin(persist)
-
-const withViewTransition = (update: () => void) => {
-	if (typeof document.startViewTransition === 'function') {
-		document.startViewTransition(update)
-		return
-	}
-	update()
-}
 
 Alpine.store(site.theme.storageKey, {
 	current: Alpine.$persist(site.theme.default).as(site.theme.storageKey),
@@ -27,7 +20,7 @@ Alpine.store(site.theme.storageKey, {
 		const options = site.theme.options
 		const index = options.indexOf(this.current)
 		const next = options[(index + 1) % options.length]
-		withViewTransition(() => {
+		withTransition(() => {
 			if (next) this.current = next
 		})
 	},

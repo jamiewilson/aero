@@ -2,34 +2,6 @@
 	import base from '@layouts/base.html'
 </script>
 
-<script is:state>
-	import { withTransition } from '@scripts/utils/withTransition.ts'
-
-	// Helpers
-	const createID = () => crypto.randomUUID().split('-').pop()
-	const getRandomIndex = () => Math.floor(Math.random() * items.length)
-	const setItems = next => withTransition(() => (items = next))
-
-	// State
-	let items = [{ id: createID() }, { id: createID() }, { id: createID() }]
-
-	// Handlers
-	const add = () => setItems([...items, { id: createID() }])
-	const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
-	const reverse = () => setItems([...items].reverse())
-	const shuffle = () => setItems([...items].sort(() => Math.random() - 0.5))
-
-	const addRandom = () => {
-		const index = getRandomIndex()
-		setItems([...items.slice(0, index), { id: createID() }, ...items.slice(index)])
-	}
-
-	const removeRandom = () => {
-		const index = getRandomIndex()
-		setItems([...items.slice(0, index), ...items.slice(index + 1)])
-	}
-</script>
-
 <base-layout title="Keyed list">
 	<header>
 		<h2>Keyed list</h2>
@@ -46,47 +18,83 @@
 			<button on:click="{ reverse() }">Reverse</button>
 			<button on:click="{ shuffle() }">Shuffle</button>
 		</div>
-		<ul class="card">
-			<li class="list-item" for="{ const { id } of items }" key="{ id }">{ id }</li>
 
-			<style>
-				@scope {
-					:scope {
-						list-style-type: decimal-leading-zero;
-						list-style-position: inside;
-						font-family: var(--font-mono);
-						font-size: smaller;
-
-						li {
-							view-transition-name: match-element;
-							view-transition-class: list-item;
-							user-select: none;
-						}
-					}
-				}
-
-				::view-transition-new(.list-item),
-				::view-transition-old(.list-item) {
-					animation-duration: var(--duration-fast);
-					animation-timing-function: var(--ease-in-out-cubic);
-				}
-
-				::view-transition-new(.list-item):only-child {
-					animation-name: slide-in-from-right;
-				}
-
-				::view-transition-old(.list-item):only-child {
-					animation-name: slide-out-to-left;
-				}
-			</style>
+		<ul class="card scrollable">
+			<li for="{ const { id } of items }" key="{ id }"><code>{ id }</code></li>
 		</ul>
 	</article>
 </base-layout>
+
+<script is:state>
+	import { withTransition, createID, getRandomIndex } from '@scripts/utils'
+
+	// Helpers
+	const setItems = newItems => withTransition(() => (items = newItems))
+
+	// State
+	let items = Array.from({ length: 10 }, () => ({ id: createID() }))
+
+	// Handlers
+	const add = () => setItems([...items, { id: createID() }])
+	const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
+	const reverse = () => setItems([...items].reverse())
+	const shuffle = () => setItems([...items].sort(() => Math.random() - 0.5))
+
+	const addRandom = () => {
+		const index = getRandomIndex(items)
+		setItems([...items.slice(0, index), { id: createID() }, ...items.slice(index)])
+	}
+
+	const removeRandom = () => {
+		const index = getRandomIndex(items)
+		setItems([...items.slice(0, index), ...items.slice(index + 1)])
+	}
+</script>
 
 <style>
 	.two-column {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 2rem;
+		max-height: 400px;
+	}
+
+	.scrollable {
+		overflow-y: auto;
+		overflow-x: hidden;
+		view-transition-name: keyed-list;
+		view-transition-group: contain;
+		scrollbar-width: none;
+	}
+
+	::view-transition-group-children(keyed-list) {
+		overflow: clip;
+	}
+
+	ul {
+		list-style-type: decimal-leading-zero;
+		list-style-position: inside;
+		font-family: var(--font-mono);
+		font-size: smaller;
+
+		li {
+			view-transition-name: match-element;
+			view-transition-class: list-item;
+			user-select: none;
+		}
+	}
+
+	::view-transition-new(.list-item),
+	::view-transition-old(.list-item) {
+		animation-duration: var(--duration-fast);
+		animation-timing-function: var(--ease-in-out-cubic);
+	}
+
+	::view-transition-new(.list-item):only-child {
+		animation-name: slide-in-from-right;
+	}
+
+	::view-transition-old(.list-item):only-child {
+		animation-name: slide-out-to-left;
 	}
 </style>
