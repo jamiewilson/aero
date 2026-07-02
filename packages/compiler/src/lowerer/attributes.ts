@@ -26,11 +26,9 @@ import {
 } from '../hypermedia-fallback'
 import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactiveAttributeBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
 import {
-	bareAttributeName,
-	idlPropertyNameForAttribute,
 	isBooleanIdlProperty,
-	isReactiveIdlPropertyAttribute,
 } from '../reactive-idl-properties'
+import { classifyReactiveAttribute } from '../reactive-attribute-classification'
 import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
 import { referencesStateBindingExpression } from '../state-mount-codegen'
 
@@ -565,6 +563,25 @@ function isKeyAttribute(name: string): boolean {
 	return name === 'key' || name === `${CONST.AERO_ATTR_PREFIX}key` || name === `${CONST.DATA_AERO_ATTR_PREFIX}key`
 }
 
+function getInputType(node: NodeLike): string | null | undefined {
+	return (node as { getAttribute?: (n: string) => string | null }).getAttribute?.('type') ?? undefined
+}
+
+function classifyAttrForReactiveBind(
+	node: NodeLike,
+	attr: AttrLike,
+	reactiveState?: LowererReactiveState
+) {
+	return classifyReactiveAttribute({
+		tagName: getTagName(node),
+		attrName: attr.name,
+		rawValue: attr.value,
+		inputType: getInputType(node),
+		reactiveEnabled: reactiveState != null,
+		stateBindingNames: reactiveState?.bindingNames,
+	})
+}
+
 function parseFormModelBinding(
 	node: NodeLike,
 	diag: LowererDiag,
@@ -572,41 +589,20 @@ function parseFormModelBinding(
 	reactiveState?: LowererReactiveState
 ): { emittedAttr: string; bind: IRReactiveModelBind } | null {
 	if (!reactiveState) return null
-	const tag = getTagName(node)
-	const raw = attr.value ?? ''
-	if (!isSingleWrappedExpression(raw)) return null
-	const expr = Helper.stripBraces(raw)
-	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
+	const classification = classifyAttrForReactiveBind(node, attr, reactiveState)
+	if (classification.kind !== 'form-model') return null
 
-	const name = attr.name
-	const readonly = name.includes(':readonly') || name.endsWith('-readonly')
-	const bare = name.replace(/^aero-/, '').replace(/^data-aero-/, '')
-
-	let modelKind: 'value' | 'checked' | null = null
-	if (bare === 'value' || bare.startsWith('value-')) modelKind = 'value'
-	if (bare === 'checked' || bare.startsWith('checked-')) modelKind = 'checked'
-
-	const isFormControl =
-		tag === 'textarea' ||
-		tag === 'select' ||
-		(tag === 'input' &&
-			!['button', 'submit', 'reset', 'image', 'hidden'].includes(
-				(node as { getAttribute?: (n: string) => string | null }).getAttribute?.('type')?.toLowerCase?.() ??
-					'text'
-			))
-
-	if (!modelKind || !isFormControl) return null
-
+	const expr = Helper.stripBraces(attr.value ?? '')
 	const bindId = reactiveState.nextModelBindId()
 	return {
-		emittedAttr: `data-aero-model-${modelKind}="${bindId}"`,
+		emittedAttr: `data-aero-model-${classification.modelKind}="${bindId}"`,
 		bind: {
 			kind: 'ReactiveModelBind',
 			bindId,
-			modelKind,
+			modelKind: classification.modelKind,
 			readExpr: expr,
 			writeExpr: expr,
-			...(readonly ? { readonly: true } : {}),
+			...(classification.readonly ? { readonly: true } : {}),
 		},
 	}
 }
@@ -618,15 +614,10 @@ function parseAttributeBindingEntry(
 	reactiveState?: LowererReactiveState
 ): { name: string; readExpr: string } | null {
 	if (!reactiveState) return null
-	if (isDirectiveAttr(attr.name)) return null
-	const raw = attr.value ?? ''
-	if (!isSingleWrappedExpression(raw)) return null
-	const expr = Helper.stripBraces(raw)
-	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
-	if (parseFormModelBinding(node, diag, attr, reactiveState)) return null
-	if (isReactiveIdlPropertyAttribute(attr.name)) return null
-
-	return { name: bareAttributeName(attr.name), readExpr: expr }
+	const classification = classifyAttrForReactiveBind(node, attr, reactiveState)
+	if (classification.kind !== 'attribute-bind') return null
+	const expr = Helper.stripBraces(attr.value ?? '')
+	return { name: classification.bareName, readExpr: expr }
 }
 
 function parsePropertyBinding(
@@ -636,16 +627,12 @@ function parsePropertyBinding(
 	reactiveState?: LowererReactiveState
 ): { emittedAttrs: string[]; bind: IRReactivePropertyBind } | null {
 	if (!reactiveState) return null
-	if (isDirectiveAttr(attr.name)) return null
-	if (!isReactiveIdlPropertyAttribute(attr.name)) return null
-	const raw = attr.value ?? ''
-	if (!isSingleWrappedExpression(raw)) return null
-	const expr = Helper.stripBraces(raw)
-	if (!referencesStateBindingExpression(expr, reactiveState.bindingNames)) return null
-	if (parseFormModelBinding(node, diag, attr, reactiveState)) return null
+	const classification = classifyAttrForReactiveBind(node, attr, reactiveState)
+	if (classification.kind !== 'idl-property') return null
 
-	const bareName = bareAttributeName(attr.name)
-	const propertyName = idlPropertyNameForAttribute(attr.name)
+	const raw = attr.value ?? ''
+	const expr = Helper.stripBraces(raw)
+	const { bareName, propertyName } = classification
 	const bindId = reactiveState.nextPropertyBindId()
 	const emittedAttrs: string[] = []
 	if (isBooleanIdlProperty(propertyName)) {

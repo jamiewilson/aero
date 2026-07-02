@@ -209,6 +209,15 @@ export {
 	type BuildAttributeClassification,
 } from './build-directive-attributes'
 
+// Reactive attribute bind dispatch (compiler lowerer)
+export {
+	REACTIVE_BIND_DISPATCH_ORDER,
+	classifyReactiveAttribute,
+	type ReactiveBindDispatchStep,
+	type ClassifyReactiveAttributeInput,
+	type ReactiveAttributeClassification,
+} from './reactive-attribute-classification'
+
 // Resolver
 export { Resolver } from './resolver'
 

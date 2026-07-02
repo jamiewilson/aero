@@ -3,6 +3,8 @@
  *
  * Used by the compiler lowerer, prettier plugin, and VSCode diagnostics so native HTML
  * collision rules and braced-value requirements stay in sync.
+ *
+ * Reactive `{ stateRef }` bind dispatch lives in {@link ./reactive-attribute-classification.ts}.
  */
 
 import {
