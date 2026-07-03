@@ -465,15 +465,13 @@ For more documentation, see the [`/docs`](/docs) directory, starting with [index
 
 ## Links
 
-- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
+- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — includes `@aero-js/core/vite`, `@aero-js/core/config`, and `@aero-js/core/vite-config` subpaths
 - [@aero-js/reactivity](https://www.npmjs.com/package/@aero-js/reactivity)
 - [@aero-js/hypermedia](https://www.npmjs.com/package/@aero-js/hypermedia)
-- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
+- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — ships minimal and fullstack templates
 - [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
-- [@aero-js/core/config](https://www.npmjs.com/package/@aero-js/core/config)
-- [@aero-js/core/vite](https://www.npmjs.com/package/@aero-js/core/vite)
-- [@aero-js/starter-minimal](https://www.npmjs.com/package/@aero-js/starter-minimal)
-- [@aero-js/starter-fullstack](https://www.npmjs.com/package/@aero-js/starter-fullstack)
+- [@aero-js/cli](https://www.npmjs.com/package/@aero-js/cli)
+- [@aero-js/diagnostics](https://www.npmjs.com/package/@aero-js/diagnostics)
 - [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ## Inspiration

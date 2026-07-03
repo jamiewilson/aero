@@ -447,13 +447,10 @@ For more documentation, see the `/docs` directory, starting with [index.mdx](htt
 
 ### Links
 
-- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
-- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
+- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — includes `@aero-js/core/vite`, `@aero-js/core/config`, and `@aero-js/core/vite-config` subpaths
+- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — ships minimal and fullstack templates
 - [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
-- [@aero-js/core/config](https://www.npmjs.com/package/@aero-js/core/config)
-- [@aero-js/core/vite](https://www.npmjs.com/package/@aero-js/core/vite)
-- [@aero-js/starter-minimal](https://www.npmjs.com/package/@aero-js/starter-minimal)
-- [@aero-js/starter-fullstack](https://www.npmjs.com/package/@aero-js/starter-fullstack)
+- [@aero-js/cli](https://www.npmjs.com/package/@aero-js/cli)
 - [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ### Inspiration

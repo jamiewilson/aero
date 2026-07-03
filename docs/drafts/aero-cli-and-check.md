@@ -9,7 +9,7 @@ This document describes `@aero-js/cli`, the `aero check`, `aero doctor`, and `ae
 
 ## Why `@aero-js/cli` is a separate package
 
-`@aero-js/core/config` already depends on `@aero-js/core` for alias resolution helpers. Putting the CLI inside core and importing config loading from `@aero-js/core/config` would create a circular dependency. The CLI therefore lives in `packages/cli`, depends on `@aero-js/core`, `@aero-js/core/config`, and `@aero-js/content`, and publishes the `aero` binary.
+The CLI lives in `packages/cli`, depends on `@aero-js/core` (including `@aero-js/core/config` and `@aero-js/core/compile-check` subpaths) and `@aero-js/content`, and publishes the `aero` binary. Keeping check/doctor/build out of core avoids coupling the runtime package to CLI orchestration.
 
 ## Installing and running
 
@@ -110,7 +110,7 @@ Relationship to the default check: **`aero check` without `--types`** still vali
 
 - Node.js version, failing with exit `1` if below the minimum supported version, currently `18`
 - `vite` presence from `package.json`
-- `@aero-js/core` or `@aero-js/core/vite` presence from `package.json`
+- ``@aero-js/core` presence from `package.json`
 - `@aero-js/cli` version
 - A reminder about the Aero VS Code extension
 
@@ -120,7 +120,7 @@ Lines use `[ok]`, `[warn]`, `[info]`, or `[fail]`. Warnings still exit `0`.
 
 ### `aero check`
 
-On failure, the exit code is `exitCodeForDiagnostics(errors)` from `@aero-js/core/diagnostics`, using the same primary buckets as static prerender failures. Typical buckets are:
+On failure, the exit code is `exitCodeForDiagnostics(errors)` from `@aero-js/diagnostics`, using the same primary buckets as static prerender failures. Typical buckets are:
 
 - `10` config
 - `12` compile, resolve, or build-script
@@ -171,9 +171,9 @@ See [content-api.md](content-api.md) for the broader content API.
 | ----------------- | -------------------------------------------------------------------------------------------------------- |
 | `compileTemplate` | Node-only compile entry for tooling so callers do not pull codegen through browser-oriented entrypoints. |
 
-### `@aero-js/core/diagnostics`
+### `@aero-js/diagnostics`
 
-Use `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`, `AeroDiagnostic`, and related helpers from `@aero-js/core/diagnostics` or `@aero-js/diagnostics`. `aero check` uses the same diagnostics contract as the other tooling and dev surfaces.
+Use `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`, `AeroDiagnostic`, and related helpers from `@aero-js/diagnostics` or `@aero-js/diagnostics`. `aero check` uses the same diagnostics contract as the other tooling and dev surfaces.
 
 ## CI example
 

@@ -29,7 +29,7 @@ The core client entry bootstraps the runtime and exposes `aero.getReactivityRunt
 | `mountStateBindings`, `bindEvent`, `bindText`, … | Low-level binding helpers (used by compiler output) |
 | `AeroReactivity`, `processFragment` | Fragment processing API |
 
-Re-exported from `@aero-js/core`:
+Import directly when building tooling or tests against the package:
 
 ```ts
 import { createReactivityRuntime } from '@aero-js/reactivity'

@@ -99,7 +99,7 @@ Use `--root` when your CI job's working directory is not the app root:
 
 ## Why the CLI is a separate package
 
-`@aero-js/core/config` already depends on `@aero-js/core` for alias resolution. Putting the CLI inside core and importing config loading would risk a circular dependency. The CLI lives in `packages/cli`, depends on `@aero-js/core`, `@aero-js/core/config`, and `@aero-js/content`, and publishes the `aero` binary.
+The CLI lives in `packages/cli`, depends on `@aero-js/core` (including `@aero-js/core/config` and `@aero-js/core/compile-check` subpaths) and `@aero-js/content`, and publishes the `aero` binary. Keeping check/doctor/build out of core avoids coupling the runtime package to CLI orchestration.
 
 ## How `aero check` works (summary)
 
@@ -124,7 +124,7 @@ Use `--root` when your CI job's working directory is not the app root:
 		**`@aero-js/core/compile-check`** — `compileTemplate` for Node-only tooling that needs compile
 		checks without browser-oriented entrypoints.
 
-		**`@aero-js/core/diagnostics`** — `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`,
+		**`@aero-js/diagnostics`** — `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`,
 		`AeroDiagnostic`, and related helpers; `aero check` uses the same diagnostics contract as other
 		tooling surfaces.
 	</Accordion>

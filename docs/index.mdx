@@ -89,19 +89,27 @@ External references: [Vite](https://vitejs.dev/), [Nitro](https://nitro.build/),
 
 Aero is published as a set of focused packages:
 
-| Package            | Description                                                            |
-| ------------------ | ---------------------------------------------------------------------- |
-| `@aero-js/core`    | Runtime, Vite integration, and Aero orchestration                      |
-| `@aero-js/create`  | Scaffold new projects from the minimal or fullstack template           |
-| `@aero-js/core/vite`    | The Aero Vite plugin                                                   |
-| `@aero-js/core/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
-| `@aero-js/content` | Content collections — `getCollection()`, `render()`, schema validation |
-| `@aero-js/cli`     | `aero check` and `aero doctor` for type-checking and diagnostics       |
-| `@aero-js/reactivity` | Signal store, bindings, and process API (used via core when enabled)  |
-| `@aero-js/hypermedia` | Action functions, swap engine, and lifecycle events                 |
+| Package                 | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `@aero-js/core`         | Runtime, Vite plugin, config helpers, and compile-check (see subpaths below) |
+| `@aero-js/create`       | Scaffold new projects from bundled minimal or fullstack templates           |
+| `@aero-js/content`      | Content collections — `getCollection()`, `render()`, schema validation      |
+| `@aero-js/cli`          | `aero check` and `aero doctor` for type-checking and diagnostics            |
+| `@aero-js/reactivity`   | Signal store, bindings, and process API (used via core when enabled)        |
+| `@aero-js/hypermedia`   | Action functions, swap engine, and lifecycle events                         |
+| `@aero-js/diagnostics`  | Shared diagnostic types and formatters for CLI, core, and the VS Code extension |
+
+### `@aero-js/core` subpath exports
+
+| Subpath                    | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `@aero-js/core/vite`       | The Aero Vite plugin                                     |
+| `@aero-js/core/config`     | `defineConfig`, `loadAeroConfig`, and config types       |
+| `@aero-js/core/vite-config`| `createViteConfig` and `getDefaultOptions` for Vite      |
+| `@aero-js/core/compile-check` | Node-only template compile checks for tooling         |
 
 <Note>
-	Most projects only need `@aero-js/core` and `@aero-js/core/vite` (or `@aero-js/create` to scaffold).
+	Most projects only need `@aero-js/core` (import subpaths as needed) or `@aero-js/create` to scaffold.
 	The other packages are opt-in.
 </Note>
 
