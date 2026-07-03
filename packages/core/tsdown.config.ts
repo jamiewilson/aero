@@ -18,6 +18,7 @@ const entry = [
 	'src/runtime/fragment.ts',
 	'src/runtime/instance.ts',
 	'src/utils/aero-config.ts',
+	'src/utils/load-project-module.ts',
 	'src/reactivity.ts',
 	'src/hypermedia.ts',
 ]

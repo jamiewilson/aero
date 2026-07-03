@@ -3,13 +3,10 @@
  * Used when createViteConfig() is called with no config so the app can use a single vite.config.
  */
 import { AERO_CONFIG_NAMES } from '@aero-js/core/utils/aero-config'
-import { jitiAliasRecordFromProject } from '@aero-js/core/utils/aliases'
-import { createRequire } from 'node:module'
+import { loadProjectModule } from '@aero-js/core/utils/load-project-module'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import type { AeroConfig, AeroConfigFunction } from './types'
-
-const require = createRequire(import.meta.url)
 
 export const CONFIG_NAMES = AERO_CONFIG_NAMES
 
@@ -29,14 +26,9 @@ export function loadAeroConfigDetailed(root: string): LoadAeroConfigDetailedResu
 		const filePath = path.join(root, name)
 		if (!existsSync(filePath)) continue
 		try {
-			// jiti(projectRoot) uses projectRoot as base for resolving; pass relative path from root
-			const alias = jitiAliasRecordFromProject(root)
-			const jiti = require('jiti')(root, { esmResolve: true, alias })
-			const relativePath = './' + name
-			const mod = jiti(relativePath)
-			const config = mod?.default ?? mod
+			const config = loadProjectModule<AeroConfig | AeroConfigFunction>(root, './' + name)
 			if (config && (typeof config === 'object' || typeof config === 'function')) {
-				return { ok: true, filePath, config: config as AeroConfig | AeroConfigFunction }
+				return { ok: true, filePath, config }
 			}
 			lastFailure = { ok: false, reason: 'invalid-export', filePath }
 		} catch (error) {

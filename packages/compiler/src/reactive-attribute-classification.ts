@@ -8,7 +8,7 @@
  * @see _reference/plans/Reactivity-Hypermedia/attribute-binding-refactor.plan.md
  */
 
-import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { tokenizeCurlyInterpolation, stripBraces } from '@aero-js/interpolation'
 import { isDirectiveAttr } from './directive-attributes'
 import { parseEventDirectiveName } from './event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
@@ -71,14 +71,6 @@ function isSingleWrappedExpression(value: string): boolean {
 		segments[0].start === 0 &&
 		segments[0].end === trimmed.length
 	)
-}
-
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-		return trimmed.slice(1, -1).trim()
-	}
-	return trimmed
 }
 
 function isFormControlTag(tagName: string, inputType: string | null | undefined): boolean {

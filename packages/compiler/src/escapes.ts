@@ -6,10 +6,7 @@
  * context) mirror the HTML rules where applicable.
  */
 
-/** Escape characters with special meaning inside generated template literals. */
-export function escapeTemplateLiteralContent(s: string): string {
-	return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
-}
+export { escapeTemplateLiteralContent } from '@aero-js/interpolation'
 
 /**
  * Escape `\\` and `` ` `` only — preserves `${…}` so nested codegen interpolations stay valid.

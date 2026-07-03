@@ -6,11 +6,12 @@
  * User `vite` is merged via Vite's mergeConfig; explicit `minify`/`cssMinify` from base are preserved when user sets them to true/null.
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
+import type { UserConfig } from 'vite'
+import type { AeroConfig, AeroConfigFunction } from './types'
+
 import { mergeConfig } from 'vite'
 import { aero } from '@aero-js/vite'
 import { aeroContent } from '@aero-js/content/vite'
-import type { UserConfig } from 'vite'
-import type { AeroConfig, AeroConfigFunction } from './types'
 import { defaultViteConfig } from './defaults'
 import { loadAeroConfig } from './loadAeroConfig'
 

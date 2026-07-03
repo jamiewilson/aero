@@ -62,6 +62,10 @@
 			"types": "./dist/utils/aero-config.d.mts",
 			"default": "./dist/utils/aero-config.mjs"
 		},
+		"./utils/load-project-module": {
+			"types": "./dist/utils/load-project-module.d.mts",
+			"default": "./dist/utils/load-project-module.mjs"
+		},
 		"./utils/redirects": {
 			"types": "./dist/utils/redirects.d.mts",
 			"default": "./dist/utils/redirects.mjs"

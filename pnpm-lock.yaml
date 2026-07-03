@@ -572,6 +572,9 @@ importers:
 
   packages/hypermedia:
     dependencies:
+      '@aero-js/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
       idiomorph:
         specifier: ^0.7.4
         version: 0.7.4
@@ -692,6 +695,9 @@ importers:
       '@aero-js/hypermedia':
         specifier: workspace:*
         version: link:../hypermedia
+      '@aero-js/interpolation':
+        specifier: workspace:*
+        version: link:../interpolation
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

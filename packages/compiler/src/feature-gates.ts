@@ -4,6 +4,7 @@ import { CompileError } from './types'
 import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
+import { stripBraces } from '@aero-js/interpolation'
 
 export interface FeatureGateFlags {
 	readonly reactivity: boolean
@@ -26,13 +27,6 @@ function spanForMatch(source: string, re: RegExp): { start: number; end: number 
 	const match = re.exec(source)
 	if (!match || match.index === undefined) return undefined
 	return { start: match.index, end: match.index + match[0].length }
-}
-
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	return trimmed.startsWith('{') && trimmed.endsWith('}')
-		? trimmed.slice(1, -1).trim()
-		: trimmed
 }
 
 function simpleIdentifier(expression: string): string | null {

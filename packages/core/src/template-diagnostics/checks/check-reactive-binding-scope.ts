@@ -1,4 +1,5 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { stripBraces } from '@aero-js/interpolation'
 import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
 import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import type { ParsedDocument } from '../document-analysis'
@@ -7,13 +8,6 @@ import { hasStateScript } from './check-undefined-variables'
 /** Matches `show="{ expr }"` / `html="{ expr }"` (bare or `aero-` / `data-aero-` prefixed). */
 const REACTIVE_SHOW_HTML_ATTR_RE =
 	/\b(?:(?:aero-|data-aero-)?(show|html))\s*=\s*(['"])\s*(\{[^'"]*\})\s*\2/gi
-
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	return trimmed.startsWith('{') && trimmed.endsWith('}')
-		? trimmed.slice(1, -1).trim()
-		: trimmed
-}
 
 function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

@@ -14,17 +14,11 @@ import {
 	isCompiledBindMarker,
 } from './process-structural'
 import { parseRestrictedStoreRef } from './restricted-runtime-read'
+import { stripBraces } from '@aero-js/interpolation'
 
 export interface BindingHandler {
 	readonly name: string
 	setup(el: Element, params: { expression: string | null; store: SignalStore; scope: StateScope }): Cleanup | void
-}
-
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	return trimmed.startsWith('{') && trimmed.endsWith('}')
-		? trimmed.slice(1, -1).trim()
-		: trimmed
 }
 
 /** @internal Eval-based handler for unsafeProcessFragment only. */

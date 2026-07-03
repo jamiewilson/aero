@@ -1,7 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { createRequire } from 'node:module'
 import { parseDocument } from './document-analysis'
 import { getResolver } from './path-resolver'
 import { checkComponentProps } from './checks/check-component-props'
@@ -24,17 +23,14 @@ import { checkReadonlyReactivePropWrites } from './checks/check-readonly-reactiv
 import { checkReactiveBindingScope } from './checks/check-reactive-binding-scope'
 import type { SourceDocument } from './source-document'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
-
-const require = createRequire(import.meta.url)
+import { loadProjectModule } from '../utils/load-project-module'
 
 function loadFeatureFlags(root: string): FeatureGateFlags {
 	for (const name of AERO_CONFIG_NAMES) {
 		const filePath = path.join(root, name)
 		if (!fs.existsSync(filePath)) continue
 		try {
-			const jiti = require('jiti')(root, { esmResolve: true })
-			const mod = jiti('./' + name)
-			const loaded = mod?.default ?? mod
+			const loaded = loadProjectModule(root, './' + name)
 			const config =
 				typeof loaded === 'function'
 					? loaded({ command: 'dev', mode: 'development' })

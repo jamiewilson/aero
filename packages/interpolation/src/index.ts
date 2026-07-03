@@ -28,8 +28,18 @@ export interface TokenizeOptions {
 	attributeMode?: boolean
 }
 
-function escapeTemplateLiteralContent(value: string): string {
+/** Escape characters with special meaning inside generated template literals. */
+export function escapeTemplateLiteralContent(value: string): string {
 	return value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+}
+
+/** Remove outer braces: `"{ expr }"` → `expr`. */
+export function stripBraces(s: string): string {
+	const trimmed = s.trim()
+	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+		return trimmed.slice(1, -1).trim()
+	}
+	return trimmed
 }
 
 /**

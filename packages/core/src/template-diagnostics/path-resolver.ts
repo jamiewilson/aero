@@ -3,7 +3,6 @@
  */
 import * as path from 'node:path'
 import * as fs from 'node:fs'
-import { createRequire } from 'node:module'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
@@ -11,9 +10,8 @@ import {
 	type ResolvedAeroDirs,
 } from '../utils/aliases'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
+import { loadProjectModule } from '../utils/load-project-module'
 import { resolveImportToFile } from './importResolution'
-
-const require = createRequire(import.meta.url)
 
 /** Default dirs when no aero config is available (matches framework defaults). */
 const DEFAULT_DIRS: ResolvedAeroDirs = {
@@ -27,9 +25,7 @@ function loadAeroConfigDirs(root: string): ResolvedAeroDirs | undefined {
 		const filePath = path.join(root, name)
 		if (!fs.existsSync(filePath)) continue
 		try {
-			const jiti = require('jiti')(root, { esmResolve: true })
-			const mod = jiti('./' + name)
-			const config = mod?.default ?? mod
+			const config = loadProjectModule(root, './' + name)
 			if (!config || (typeof config !== 'object' && typeof config !== 'function')) continue
 			const resolved =
 				typeof config === 'function' ? config({ command: 'dev', mode: 'development' }) : config
