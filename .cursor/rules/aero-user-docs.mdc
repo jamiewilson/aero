@@ -1,0 +1,51 @@
+---
+description: User-facing documentation should start with the real-world problem a feature solves
+globs:
+  - "README.md"
+  - "docs/**/*.md"
+  - "website/content/**/*.md"
+  - "packages/**/README.md"
+  - "examples/**/README.md"
+alwaysApply: false
+---
+
+# Aero User-Facing Documentation
+
+When writing or revising user-facing documentation for Aero, begin with the real-world problem the feature helps solve before explaining the feature itself.
+
+## Required opening structure
+
+1. **Problem** — State a concrete problem a developer would actually run into when building with plain HTML, CSS, JavaScript, or adjacent tooling.
+2. **Friction without Aero** — Show a short example, scenario, or code snippet that demonstrates why the problem is awkward, repetitive, brittle, or hard to maintain without Aero.
+3. **How Aero helps** — Explain how the Aero feature mitigates or reduces that problem.
+4. **Usage** — Only after the problem framing, document the feature's syntax, API, behavior, and examples.
+
+## Writing rules
+
+- Lead with the user's pain point, not the feature name, syntax, or implementation details.
+- Use honest, concrete problems. Do not exaggerate minor ergonomics into major pain.
+- Prefer examples from ordinary web development: repeated markup, awkward composition, routing boilerplate, build-time data flow, content reuse, script loading, or HTML limitations.
+- Keep the problem framing brief: usually 1-3 short paragraphs and, when useful, a minimal code example.
+- Present Aero as a practical mitigation, not magic. If a feature is mostly ergonomic, say so plainly.
+- Preserve Aero's HTML-first, web-platform-oriented tone. Avoid hype and generic framework marketing language.
+- If a feature has tradeoffs, constraints, or a narrow use case, say so.
+
+## Preferred section pattern
+
+```md
+## The problem
+<real-world issue>
+
+## What this looks like without Aero
+<brief example>
+
+## How Aero helps
+<brief bridge to the feature>
+
+## Using <feature>
+<actual documentation>
+```
+
+## Example framing
+
+For Aero components or single-file HTML components, explain that plain HTML has no built-in way to compose and reuse chunks of markup with shared inputs across pages. Show a brief repeated-markup example, then explain that Aero lets authors import `.html` templates as components and pass data through props while still producing plain HTML output.

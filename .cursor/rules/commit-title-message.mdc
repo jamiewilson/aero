@@ -1,0 +1,39 @@
+---
+description: How to write commit titles and messages
+globs: "**/*"
+alwaysApply: true
+---
+
+## Title rules
+
+The commit title is a short imperative description of the changes in the diff if given or a summary of all commit messages if given. The commit title should be one line.
+
+The commit title should be in the following format:
+
+`type(package1, package2, etc): short imperative description`
+
+Allowed types (pick one):
+
+- feat
+- fix
+- docs
+- style
+- refactor
+- perf
+- test
+- chore
+- build
+- ci.
+
+## Message rules
+
+Max ~72 characters; no period at the end; describe what changed, not the process.
+
+A short intro line if needed, then a bulleted list of concrete changes (one bullet per logical change). Mention breaking changes or migration notes if any. No vague bullets like “fixed bugs”—name files, behaviors, or APIs touched.
+
+- Explain what were the changes and why the changes were done.
+- Focus the most important changes.
+- Use the present tense.
+- Use a semantic commit prefix.
+- Do not start any lines with the hash symbol.
+- Only respond with the commit message.
