@@ -109,6 +109,21 @@ describe('process', () => {
 		)
 	})
 
+	it('parses autoDisable option from runtime action expressions', () => {
+		const element = document.createElement('div')
+		element.innerHTML =
+			'<button data-aero-on-click="{ GET(\'/api/demo\', { target: \'#result\', autoDisable: true }) }">go</button>'
+		const runtime = createMockRuntime()
+		process(element, runtime)
+
+		const btn = element.querySelector('button')!
+		btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+		expect(runtime.executeAction).toHaveBeenCalledWith(
+			expect.objectContaining({ method: 'GET', url: '/api/demo', target: '#result', autoDisable: true }),
+			btn
+		)
+	})
+
 	it('throws when runtime $ refs resolve to non-boolean signals', () => {
 		const element = document.createElement('div')
 		element.innerHTML = '<button data-aero-busy="{ $isSaving }">Save</button>'

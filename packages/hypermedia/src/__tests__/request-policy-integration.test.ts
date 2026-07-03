@@ -100,6 +100,37 @@ describe('request policy integration', () => {
 		expect(errors).toEqual([])
 	})
 
+	it('swallows superseded abort when fetch rejects with signal.reason symbol', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="host">old</div>'
+		const btn = document.querySelector('#btn')!
+		const runtime = createHypermediaRuntime()
+		const fetchMock = vi.spyOn(globalThis, 'fetch')
+		fetchMock.mockImplementationOnce((_url, init) => {
+			return new Promise((_resolve, reject) => {
+				const signal = init?.signal
+				if (signal?.aborted) {
+					reject(signal.reason)
+					return
+				}
+				signal?.addEventListener('abort', () => reject(signal.reason), { once: true })
+			})
+		})
+		fetchMock.mockResolvedValueOnce(new Response('<div id="host">new</div>', { status: 200 }))
+
+		const firstRequest = runtime.executeAction(
+			{ method: 'GET', url: '/slow', target: '#host', swap: 'outerHTML' },
+			btn
+		)
+		const secondRequest = runtime.executeAction(
+			{ method: 'GET', url: '/fast', target: '#host', swap: 'outerHTML' },
+			btn
+		)
+
+		await expect(firstRequest).resolves.toEqual(expect.objectContaining({ ok: false, status: 0 }))
+		await secondRequest
+		expect(document.querySelector('#host')?.outerHTML).toContain('new')
+	})
+
 	it('discards stale completed responses when latest-wins', async () => {
 		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
 		const btn = document.querySelector('#btn')!

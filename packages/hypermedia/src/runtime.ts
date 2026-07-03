@@ -465,7 +465,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					signal: abortSignal,
 				})
 			} catch (error) {
-				if (isAbortError(error) && isSupersededAbort(abortSignal)) {
+				if (isSupersededAbort(abortSignal)) {
 					return createSupersededResponse()
 				}
 				emitLifecycle(

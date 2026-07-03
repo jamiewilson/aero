@@ -100,7 +100,7 @@ export async function executeRequestWithRetry(
 			}
 			return response
 		} catch (error) {
-			if (isAbortError(error)) throw error
+			if (isAbortError(error) || options.signal?.aborted) throw error
 			lastError = error
 			if (!shouldRetryError(error, retry) || attempt >= MAX_REQUEST_ATTEMPTS - 1) {
 				throw error
