@@ -136,4 +136,20 @@ describe('createStateScope reactive wiring', () => {
 		;(scope.formModel as { email: string }).email = 'x@y.z'
 		expect(email).toBe('x@y.z')
 	})
+
+	it('wraps pre-hydrated store values from mergeBindings', () => {
+		const store = new SignalStore()
+		store.mergeBindings({ formModel: { email: '' } })
+		const scope = createStateScope({
+			store,
+			bindings: [{ name: 'formModel', derived: false, init: () => ({ email: '' }), dependencies: [] }],
+			functionSources: [],
+		})
+		let email = ''
+		new Effect(() => {
+			email = (scope.formModel as { email: string }).email
+		})
+		;(scope.formModel as { email: string }).email = 'hydrated@x.y'
+		expect(email).toBe('hydrated@x.y')
+	})
 })

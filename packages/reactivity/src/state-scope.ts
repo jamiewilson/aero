@@ -120,6 +120,15 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 			const signal = store.signal(binding.name)
 			const initial = evalInit(binding, scope, allowLegacyRuntimeCompile)
 			signal.value = makeReactive(initial, () => (store.get(binding.name) as Signal<unknown>).notify())
+		} else {
+			const signal = store.get(binding.name) as Signal<unknown>
+			if (!(signal instanceof Computed)) {
+				const current = signal.value
+				const wrapped = makeReactive(current, () => signal.notify())
+				if (!Object.is(current, wrapped)) {
+					signal.value = wrapped
+				}
+			}
 		}
 		const notifyBinding = (): void => {
 			;(store.get(binding.name) as Signal<unknown>).notify()
