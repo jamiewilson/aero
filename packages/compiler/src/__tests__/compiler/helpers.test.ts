@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import { escapeScriptJson } from '../../escapes'
 import {
 	compileInterpolation,
 	compileReactiveTextReadExpr,
@@ -309,5 +310,18 @@ describe('renderComponent context (single source of truth)', () => {
 	it('emitRenderFunction destructuring matches getRenderContextDestructurePattern', () => {
 		const fn = emitRenderFunction('', '')
 		expect(fn).toContain(getRenderContextDestructurePattern())
+	})
+})
+
+describe('escapeScriptJson', () => {
+	it('serializes Map and Set with __aero markers', () => {
+		const json = escapeScriptJson({
+			numbersMap: new Map([[1, 'one']]),
+			numbersSet: new Set([1, 2, 3]),
+		})
+		expect(json).toContain('"__aero":"Map"')
+		expect(json).toContain('"entries":[[1,"one"]]')
+		expect(json).toContain('"__aero":"Set"')
+		expect(json).toContain('"values":[1,2,3]')
 	})
 })

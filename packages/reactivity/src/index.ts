@@ -1,6 +1,6 @@
 import { Computed } from './computed'
 import { Effect } from './effect'
-import { readHydrationState, type HydrationRoot } from './hydration'
+import { readHydrationState, reviveStateValue, type HydrationRoot } from './hydration'
 import { mountStateBindings, bindEvent, bindText } from './mount'
 import { Signal } from './signal'
 import { createStateScope, type StateBindingSpec } from './state-scope'
@@ -20,6 +20,7 @@ import { bindReactiveSwitch } from './structural/switch'
 export { Computed, Effect, Signal, SignalStore }
 export {
 	readHydrationState,
+	reviveStateValue,
 	mountStateBindings,
 	bindEvent,
 	bindText,
@@ -61,7 +62,7 @@ export interface ReactivityRuntimeOptions {
 export function createReactivityRuntime(options: ReactivityRuntimeOptions = {}): ReactivityRuntime {
 	const initial = options.initialState ?? readHydrationState(options.hydrationRoot)
 	const store = new SignalStore()
-	store.merge(initial)
+	store.mergeBindings(initial)
 	const reactivity = new AeroReactivity(store)
 	return {
 		kind: 'reactivity-runtime',

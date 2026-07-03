@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Effect } from '../effect'
+import { reviveStateValue } from '../hydration'
 import { isReactive, makeReactive, toRaw } from '../reactive'
 import { Signal } from '../signal'
 import { createStateScope } from '../state-scope'
@@ -97,6 +98,26 @@ describe('makeReactive', () => {
 		const first = makeReactive({ x: 1 }, notify)
 		const second = makeReactive(first, notify)
 		expect(second).toBe(first)
+	})
+})
+
+describe('mergeBindings', () => {
+	it('preserves top-level object shape without flattening', () => {
+		const store = new SignalStore()
+		store.mergeBindings({ formModel: { email: 'a@b.c' } })
+		expect(store.get<{ email: string }>('formModel').value).toEqual({ email: 'a@b.c' })
+		expect(() => store.get('formModel.email')).toThrow(/Missing signal path/)
+	})
+})
+
+describe('reviveStateValue', () => {
+	it('revives Map and Set hydration payloads', () => {
+		const map = reviveStateValue({ __aero: 'Map', entries: [[1, 'one']] }) as Map<number, string>
+		expect(map).toBeInstanceOf(Map)
+		expect(map.get(1)).toBe('one')
+		const set = reviveStateValue({ __aero: 'Set', values: [1, 2, 3] }) as Set<number>
+		expect(set).toBeInstanceOf(Set)
+		expect([...set]).toEqual([1, 2, 3])
 	})
 })
 

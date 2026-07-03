@@ -4,6 +4,8 @@ import { bindHtml } from '../bindings/html'
 import { bindClassToggle } from '../bindings/class'
 import { bindProperty } from '../bindings/property'
 import { bindFormModel } from '../bindings/model'
+import { bindKeyedFor } from '../structural/for'
+import { createReactivityRuntime } from '../index'
 import { SignalStore } from '../store'
 import { createStateScope } from '../state-scope'
 import { bindReactiveIf } from '../structural/if'
@@ -152,6 +154,155 @@ describe('binding handlers', () => {
 		pro.checked = true
 		pro.dispatchEvent(new Event('change'))
 		expect(store.get('plan').value).toBe('pro')
+	})
+
+	it('syncs nested formModel fields in place', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [
+				{
+					name: 'formModel',
+					derived: false,
+					init: () => ({ email: '', agree: false }),
+					dependencies: [],
+				},
+			],
+			functionSources: [],
+		})
+		const target = document.createElement('input')
+		target.value = ''
+		const cleanup = bindFormModel({
+			target,
+			kind: 'value',
+			read: () => (scope.formModel as { email: string }).email,
+			write: value => {
+				;(scope.formModel as { email: string }).email = String(value)
+			},
+		})
+		target.value = 'a@b.c'
+		target.dispatchEvent(new Event('input'))
+		expect((scope.formModel as { email: string }).email).toBe('a@b.c')
+		target.value = 'updated@x.y'
+		;(scope.formModel as { email: string }).email = 'updated@x.y'
+		expect(target.value).toBe('updated@x.y')
+		cleanup()
+	})
+})
+
+describe('reactive collections', () => {
+	function createForHarness(
+		scope: ReturnType<typeof createStateScope>,
+		itemsExpr: string,
+		binding: string,
+		bindingNames: string[],
+		keyExpr: string
+	) {
+		const template = {
+			innerHTML: '',
+			content: { firstElementChild: { remove() {} } as Element },
+		} as unknown as HTMLTemplateElement
+		const fragmentNodes: Element[] = []
+		const doc = {
+			createElement: () => template,
+			createDocumentFragment: () =>
+				({
+					appendChild(node: Element) {
+						fragmentNodes.push(node)
+					},
+				}) as unknown as DocumentFragment,
+		}
+		let rowCount = 0
+		const container = {
+			ownerDocument: doc,
+			replaceChildren() {
+				rowCount = fragmentNodes.length
+				fragmentNodes.length = 0
+			},
+		} as unknown as Element
+		const cleanup = bindKeyedFor({
+			container,
+			scope,
+			itemsExpr,
+			keyExpr,
+			binding,
+			bindingNames,
+			renderRow: rowScope => ({
+				key: 'unused',
+				renderHtml: () => {
+					if (bindingNames.length === 2) {
+						return `<li>${rowScope[bindingNames[0]]}:${rowScope[bindingNames[1]]}</li>`
+					}
+					return `<li>${rowScope[bindingNames[0] ?? binding]}</li>`
+				},
+				mountRow: () => () => {},
+			}),
+		})
+		return { cleanup, get rowCount() { return rowCount } }
+	}
+
+	it('updates keyed for when array mutates in place', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [{ name: 'numbersArray', derived: false, init: () => [1, 2, 3], dependencies: [] }],
+			functionSources: [],
+		})
+		const harness = createForHarness(scope, 'numbersArray', 'number', ['number'], 'number')
+		expect(harness.rowCount).toBe(3)
+		;(scope.numbersArray as number[]).push(4)
+		expect(harness.rowCount).toBe(4)
+		harness.cleanup()
+	})
+
+	it('updates keyed for when Set mutates in place', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [{ name: 'numbersSet', derived: false, init: () => new Set([1, 2]), dependencies: [] }],
+			functionSources: [],
+		})
+		const harness = createForHarness(scope, 'numbersSet', 'number', ['number'], 'number')
+		expect(harness.rowCount).toBe(2)
+		;(scope.numbersSet as Set<number>).add(3)
+		expect(harness.rowCount).toBe(3)
+		harness.cleanup()
+	})
+
+	it('updates keyed for when Map mutates in place', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [
+				{
+					name: 'numbersMap',
+					derived: false,
+					init: () => new Map([[1, 'one'], [2, 'two']]),
+					dependencies: [],
+				},
+			],
+			functionSources: [],
+		})
+		const harness = createForHarness(scope, 'numbersMap', '[ key, value ]', ['key', 'value'], 'key')
+		expect(harness.rowCount).toBe(2)
+		;(scope.numbersMap as Map<number, string>).set(3, 'three')
+		expect(harness.rowCount).toBe(3)
+		harness.cleanup()
+	})
+
+	it('hydrates collection bindings without flattening', () => {
+		const runtime = createReactivityRuntime({
+			initialState: {
+				formModel: { email: 'seed@x.y' },
+				numbersArray: [1, 2],
+				numbersMap: new Map([[1, 'one']]),
+				numbersSet: new Set([1, 2]),
+			},
+		})
+		expect(runtime.store.get<{ email: string }>('formModel').value).toEqual({ email: 'seed@x.y' })
+		expect(runtime.store.get<number[]>('numbersArray').value).toEqual([1, 2])
+		expect(runtime.store.get<Map<number, string>>('numbersMap').value.get(1)).toBe('one')
+		expect([...runtime.store.get<Set<number>>('numbersSet').value]).toEqual([1, 2])
 	})
 })
 

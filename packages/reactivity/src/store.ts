@@ -1,4 +1,5 @@
 import { Computed } from './computed'
+import { toRaw } from './reactive'
 import { Signal } from './signal'
 
 type SignalLike<T = unknown> = { value: T }
@@ -95,6 +96,20 @@ export class SignalStore {
 		}
 	}
 
+	mergeBindings(values: Record<string, unknown>): void {
+		for (const [path, value] of Object.entries(values)) {
+			const existing = this.entries.get(path)
+			if (existing && !(existing instanceof Computed)) {
+				existing.value = value
+				continue
+			}
+			if (existing && existing instanceof Computed) {
+				throw new Error(`[aero] Cannot merge into computed path: ${JSON.stringify(path)}`)
+			}
+			this.signal(path, value)
+		}
+	}
+
 	evaluate(expr: string): unknown {
 		const code = expr.replace(/\$(\w+(?:\.\w+)*)/g, (_, path: string) => {
 			return `store.get(${JSON.stringify(path)}).value`
@@ -105,7 +120,7 @@ export class SignalStore {
 	snapshot(): Record<string, unknown> {
 		const out: Record<string, unknown> = {}
 		for (const [path, entry] of this.entries.entries()) {
-			assignNested(out, path, entry.value)
+			assignNested(out, path, toRaw(entry.value))
 		}
 		return out
 	}

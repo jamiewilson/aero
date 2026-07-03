@@ -2,6 +2,57 @@ export interface HydrationRoot {
 	querySelector(selector: string): { textContent?: string | null } | null
 }
 
+const AERO_MAP = 'Map'
+const AERO_SET = 'Set'
+
+interface AeroMapPayload {
+	readonly __aero: typeof AERO_MAP
+	readonly entries: ReadonlyArray<readonly [unknown, unknown]>
+}
+
+interface AeroSetPayload {
+	readonly __aero: typeof AERO_SET
+	readonly values: readonly unknown[]
+}
+
+function isAeroMapPayload(value: unknown): value is AeroMapPayload {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		(value as AeroMapPayload).__aero === AERO_MAP &&
+		Array.isArray((value as AeroMapPayload).entries)
+	)
+}
+
+function isAeroSetPayload(value: unknown): value is AeroSetPayload {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		(value as AeroSetPayload).__aero === AERO_SET &&
+		Array.isArray((value as AeroSetPayload).values)
+	)
+}
+
+export function reviveStateValue(value: unknown): unknown {
+	if (isAeroMapPayload(value)) {
+		return new Map(value.entries.map(([k, v]) => [reviveStateValue(k), reviveStateValue(v)]))
+	}
+	if (isAeroSetPayload(value)) {
+		return new Set(value.values.map(reviveStateValue))
+	}
+	if (Array.isArray(value)) {
+		return value.map(reviveStateValue)
+	}
+	if (value && typeof value === 'object') {
+		const out: Record<string, unknown> = {}
+		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+			out[k] = reviveStateValue(v)
+		}
+		return out
+	}
+	return value
+}
+
 export function readHydrationState(root?: HydrationRoot): Record<string, unknown> {
 	const fallbackRoot =
 		root ??
@@ -14,7 +65,12 @@ export function readHydrationState(root?: HydrationRoot): Record<string, unknown
 	if (!text) return {}
 	try {
 		const parsed = JSON.parse(text)
-		return parsed && typeof parsed === 'object' ? parsed : {}
+		if (!parsed || typeof parsed !== 'object') return {}
+		const revived: Record<string, unknown> = {}
+		for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+			revived[k] = reviveStateValue(v)
+		}
+		return revived
 	} catch {
 		return {}
 	}

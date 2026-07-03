@@ -27,17 +27,26 @@ function toKey(value: unknown): string | number {
 	throw new Error(`[aero] Loop key must be a string or number, got ${typeof value}.`)
 }
 
+function normalizeIterable(value: unknown): unknown[] {
+	if (value == null) return []
+	if (Array.isArray(value)) return value
+	if (value instanceof Set) return [...value]
+	if (value instanceof Map) return [...value.entries()]
+	if (typeof value === 'object' && value !== null && Symbol.iterator in value) {
+		return [...(value as Iterable<unknown>)]
+	}
+	throw new Error(
+		'[aero] Reactive for loop iterable must be an array, Set, Map, or other iterable value.'
+	)
+}
+
 function evalItems(options: BindKeyedForOptions, scope: StateScope): unknown[] {
 	const value = options.items
 		? options.items(scope)
 		: options.itemsExpr
 			? compileScopeRead(options.itemsExpr, scope)()
 			: undefined
-	if (value == null) return []
-	if (!Array.isArray(value)) {
-		throw new Error('[aero] Reactive for loop iterable must be an array.')
-	}
-	return value
+	return normalizeIterable(value)
 }
 
 function evalKey(options: BindKeyedForOptions, rowScope: StateScope): string | number {
