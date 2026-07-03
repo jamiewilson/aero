@@ -35,14 +35,31 @@
 		</section>
 
 		<section class="demo card v-stack">
-			<h2>Fragment load</h2>
+			<h2>Server fragment</h2>
 			<p class="secondary"><code>GET</code> with default <code>innerHTML</code> swap.</p>
-			<button on:click="{ GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }">
+			<button
+				on:click="{ GET('/api/hypermedia/fragment', { target: '#fragment-result', autoDisable: true }) }">
 				Load fragment
 			</button>
-			<div id="hypermedia-result" class="card">
+			<div id="fragment-result" class="card">
 				<span class="secondary">Waiting…</span>
 			</div>
+		</section>
+
+		<section class="demo card v-stack">
+			<h2>Render fragment</h2>
+			<p class="secondary">
+				<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server.
+			</p>
+			<button
+				on:click="{ GET('/api/hypermedia/render-fragment', {
+	target: '#render-fragment',
+	swap: 'outerHTML',
+	autoDisable: true,
+}) }">
+				Load rendered fragment
+			</button>
+			<div id="render-fragment" class="card secondary">Fragment not loaded yet.</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -75,12 +92,12 @@
 				<div class="h-stack">
 					<button
 						busy="{ isSaving }"
-						on:click="{ GET('/api/hypermedia-demo', { target: '#load-status', state: isSaving }) }">
+						on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
 						<code>busy</code> only
 					</button>
 					<button
 						disabled="{ isSaving }"
-						on:click="{ GET('/api/hypermedia-demo', { target: '#load-status', state: isSaving }) }">
+						on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
 						<code>disabled</code> only
 					</button>
 				</div>
@@ -167,22 +184,10 @@
 			<p class="secondary">
 				<code>swap: 'remove'</code> drops the target — response HTML is ignored.
 			</p>
-			<div id="toast" class="card">Dismiss removes this element from the DOM.</div>
 			<button on:click="{ POST('/api/hypermedia/dismiss', { target: '#toast', swap: 'remove' }) }">
 				Dismiss toast
 			</button>
-		</section>
-
-		<section class="demo card v-stack">
-			<h2>Server fragment</h2>
-			<p class="secondary">
-				<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/fragment', { target: '#fragment-status', swap: 'outerHTML' }) }">
-				Load server fragment
-			</button>
-			<div id="fragment-status" class="card secondary">Fragment not loaded yet.</div>
+			<div id="toast" class="card">Dismiss removes this element from the DOM.</div>
 		</section>
 
 		<section class="demo card v-stack">
@@ -205,7 +210,7 @@
 				Server fragments can include <code>data-aero-on-*</code> — wired automatically after swap.
 			</p>
 			<button
-				on:click="{ GET('/api/hypermedia/nested', { target: '#nested-host', swap: 'outerHTML' }) }">
+				on:click="{ GET('/api/hypermedia/nested', { target: '#nested-host', swap: 'outerHTML', autoDisable: true }) }">
 				Load nested fragment
 			</button>
 			<div id="nested-host" class="card secondary">
