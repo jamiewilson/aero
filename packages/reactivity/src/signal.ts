@@ -1,4 +1,5 @@
 import { Effect } from './effect'
+import { toRaw } from './reactive'
 
 export class Signal<T> {
 	private _value: T
@@ -19,6 +20,10 @@ export class Signal<T> {
 	set value(val: T) {
 		if (Object.is(this._value, val)) return
 		this._value = val
+		this.notify()
+	}
+
+	notify(): void {
 		for (const eff of Array.from(this.effects)) {
 			eff.schedule()
 		}
@@ -39,6 +44,6 @@ export class Signal<T> {
 	}
 
 	toJSON(): T {
-		return this._value
+		return toRaw(this._value)
 	}
 }
