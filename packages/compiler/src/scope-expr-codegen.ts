@@ -2,7 +2,7 @@ import { parseSync } from 'oxc-parser'
 import {
 	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
 	HYPERMEDIA_HTTP_METHOD_SET,
-} from '@aero-js/hypermedia'
+} from './event-handler-action-scope'
 import type { BuildScriptImport } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
@@ -15,7 +15,7 @@ const PARSE_OPTS = {
 
 export const HYPERMEDIA_ACTION_NAMES = HYPERMEDIA_HTTP_METHOD_SET
 
-/** @deprecated Prefer `HYPERMEDIA_EVENT_HANDLER_ACTION_SET` from `@aero-js/hypermedia`. */
+/** @deprecated Prefer `HYPERMEDIA_EVENT_HANDLER_ACTION_SET` from `@aero-js/compiler`. */
 export const HYPERMEDIA_HANDLER_ACTION_NAMES = HYPERMEDIA_EVENT_HANDLER_ACTION_SET
 
 /** Params injected into generated event handler signatures. */

@@ -98,7 +98,6 @@
 	},
 	"dependencies": {
 		"@aero-js/html-parser": "workspace:*",
-		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"linkedom": "^0.18.12",
 		"oxc-parser": "^0.138.0",

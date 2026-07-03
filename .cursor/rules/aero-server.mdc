@@ -1,6 +1,6 @@
 ---
 description: Nitro API and server conventions
-globs: examples/**/server/**/*.ts,examples/**/backend/**/*.ts,packages/starters/**/server/**/*.ts
+globs: examples/**/server/**/*.ts,examples/**/backend/**/*.ts,packages/create/templates/**/server/**/*.ts
 alwaysApply: false
 ---
 

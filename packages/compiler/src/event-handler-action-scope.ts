@@ -1,13 +1,7 @@
-import type { HttpMethod } from './types'
-
 /** HTTP verbs exposed as functions on the `actions` param in compiled `on:*` handlers. */
-export const HYPERMEDIA_HTTP_METHODS = [
-	'GET',
-	'POST',
-	'PUT',
-	'PATCH',
-	'DELETE',
-] as const satisfies readonly HttpMethod[]
+export const HYPERMEDIA_HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
+
+export type HypermediaHttpMethod = (typeof HYPERMEDIA_HTTP_METHODS)[number]
 
 /** Resolves a writable boolean state binding for hypermedia `state` options. */
 export const HYPERMEDIA_SIGNAL_RESOLVER = '__aeroSignal' as const

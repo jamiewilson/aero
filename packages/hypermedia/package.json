@@ -30,6 +30,7 @@
 		"vitest": "catalog:"
 	},
 	"dependencies": {
+		"@aero-js/compiler": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"idiomorph": "^0.7.4"
 	}

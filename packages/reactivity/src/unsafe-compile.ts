@@ -5,7 +5,7 @@ import type { HypermediaRuntimeLike } from './mount'
 import {
 	createEventHandlerActionScope,
 	rewriteHypermediaActionStateRefs,
-} from '@aero-js/hypermedia'
+} from '@aero-js/compiler'
 
 export type ScopeReader = (
 	scope: StateScope,

@@ -29,8 +29,7 @@ const packagePaths = [
 	'packages/html-parser/package.json',
 	'packages/interpolation/package.json',
 	'packages/language-server/package.json',
-	'packages/starters/minimal/package.json',
-	'packages/starters/fullstack/package.json',
+	'packages/language-server/package.json',
 	'packages/vscode/package.json',
 ]
 
