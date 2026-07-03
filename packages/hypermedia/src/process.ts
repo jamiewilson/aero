@@ -53,9 +53,11 @@ function parseActionExpression(expr: string, store?: HypermediaSignalStore): Par
 		const targetMatch = optsRaw.match(/target:\s*['"]([^'"]+)['"]/)
 		const swapMatch = optsRaw.match(/swap:\s*['"]([^'"]+)['"]/)
 		const stateMatch = optsRaw.match(/state:\s*\$(\w+(?:\.\w+)*)/)
+		const autoDisableMatch = optsRaw.match(/autoDisable:\s*(true|false)/)
 		if (targetMatch) options.target = targetMatch[1]
 		if (swapMatch) options.swap = swapMatch[1] as SwapStyle
 		if (stateMatch) options.state = resolveSignalRef(`$${stateMatch[1]}`, store)
+		if (autoDisableMatch) options.autoDisable = autoDisableMatch[1] === 'true'
 	}
 
 	return { method, url, options }
