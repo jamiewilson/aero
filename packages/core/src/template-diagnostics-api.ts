@@ -11,3 +11,21 @@ export {
 	type SourceRange,
 	type SourcePosition,
 } from './template-diagnostics/index'
+
+export {
+	collectBuildScriptContentGlobalReferences,
+	collectDefinedVariables,
+	collectIdentifierReferences,
+	collectTemplateReferences,
+	collectTemplateScopes,
+	collectVariablesByScope,
+	maskJsComments,
+	maskTemplateLiteralStatic,
+} from './template-diagnostics/analyzer'
+
+export type {
+	ScriptScope,
+	TemplateReference,
+	TemplateScope,
+	VariableDefinition,
+} from './template-diagnostics/analyzer'

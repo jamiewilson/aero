@@ -4,7 +4,12 @@ import { classifyPosition } from './positionAt'
 import { getResolver, type PathResolver } from './pathResolver'
 import { isAeroDocument } from './scope'
 import { CONTENT_GLOBALS } from './constants'
-import { collectDefinedVariables, collectTemplateScopes, VariableDefinition } from './analyzer'
+import {
+	collectDefinedVariables,
+	collectTemplateScopes,
+	type SourceRange,
+	type VariableDefinition,
+} from './analyzer'
 import {
 	kebabToCamelCase,
 	collectImportedSpecifiersFromDocument,
@@ -216,16 +221,27 @@ function resolveContentRefFromExpression(
 	return null
 }
 
+function toVsCodeRange(range: SourceRange): vscode.Range {
+	return new vscode.Range(
+		new vscode.Position(range.start.line, range.start.character),
+		new vscode.Position(range.end.line, range.end.character)
+	)
+}
+
 function makeDocumentLink(
 	originRange: vscode.Range,
 	targetUri: vscode.Uri,
-	targetSelectionRange: vscode.Range
+	targetSelectionRange: SourceRange | vscode.Range
 ): vscode.LocationLink {
+	const targetRange =
+		targetSelectionRange instanceof vscode.Range
+			? targetSelectionRange
+			: toVsCodeRange(targetSelectionRange)
 	return {
 		originSelectionRange: originRange,
 		targetUri,
-		targetRange: targetSelectionRange,
-		targetSelectionRange,
+		targetRange,
+		targetSelectionRange: targetRange,
 	}
 }
 

@@ -37,7 +37,8 @@ vi.mock('vscode', () => {
 describe('collectTemplateReferences', () => {
 	const mockDoc = {
 		positionAt: (offset: number) => ({ line: 0, character: offset }),
-		uri: { toString: () => 'file:///mock/aero.html' },
+		offsetAt: (pos: { line: number; character: number }) => pos.character,
+		uri: { fsPath: '/mock/aero.html' },
 	} as any
 
 	it('should ignore components inside HTML comments', () => {
