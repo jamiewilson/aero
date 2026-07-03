@@ -156,6 +156,30 @@ describe('binding handlers', () => {
 		expect(store.get('plan').value).toBe('pro')
 	})
 
+	it('bindFormModel skips write when control already matches state', () => {
+		let valueSets = 0
+		const target = {
+			_value: 'same',
+			get value() {
+				return this._value
+			},
+			set value(next: string) {
+				valueSets++
+				this._value = next
+			},
+			addEventListener: () => {},
+			removeEventListener: () => {},
+			hasAttribute: () => false,
+		} as unknown as HTMLInputElement
+		bindFormModel({
+			target,
+			kind: 'value',
+			read: () => 'same',
+			write: () => {},
+		})
+		expect(valueSets).toBe(0)
+	})
+
 	it('syncs nested formModel fields in place', () => {
 		const store = new SignalStore()
 		const scope = createStateScope({

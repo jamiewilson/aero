@@ -1,0 +1,39 @@
+<script is:build>
+	import base from '@layouts/base.html'
+</script>
+
+<script is:state>
+	const numbers = Array.from({ length: 5 }, (_, i) => i + 1)
+
+	let numbersArray = numbers
+	let numbersSet = new Set(numbers)
+	let numbersMap = new Map(numbers.map(n => [n, 'Item ' + n]))
+</script>
+
+<base-layout title="Iterables">
+	<div class="h-stack">
+		<section>
+			<h2>Array</h2>
+			<button on:click="{ numbersArray.push(11) }">Add</button>
+			<button on:click="{ numbersArray.splice(1, 1) }">Delete</button>
+			<button on:click="{ numbersArray = [] }">Clear array</button>
+			<div for="{ const number of numbersArray }" key="{ number }">{ number }</div>
+		</section>
+
+		<section>
+			<h2>Set</h2>
+			<button on:click="{ numbersSet.add(11) }">Add</button>
+			<button on:click="{ numbersSet.delete(1) }">Delete</button>
+			<button on:click="{ numbersSet.clear() }">Clear set</button>
+			<div for="{ const number of numbersSet }" key="{ number }">{ number }</div>
+		</section>
+
+		<section>
+			<h2>Map</h2>
+			<button on:click="{ numbersMap.set(11, 'eleven') }">Add</button>
+			<button on:click="{ numbersMap.delete(1) }">Delete</button>
+			<button on:click="{ numbersMap.clear() }">Clear map</button>
+			<div for="{ const [key, value] of numbersMap }" key="{ key }">{ key }: { value }</div>
+		</section>
+	</div>
+</base-layout>
