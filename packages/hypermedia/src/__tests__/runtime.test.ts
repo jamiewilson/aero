@@ -39,9 +39,7 @@ describe('createHypermediaRuntime', () => {
 		const adapter = vi.fn()
 		const runtime = createHypermediaRuntime({ swapLifecycleAdapter: adapter })
 
-		;(runtime as { setSwapLifecycleAdapter(adapter: typeof adapter): void }).setSwapLifecycleAdapter(
-			null
-		)
+		runtime.setSwapLifecycleAdapter(null)
 		runtime.swapElement('#result', '<span>new</span>', 'innerHTML')
 
 		expect(adapter).not.toHaveBeenCalled()

@@ -9,6 +9,7 @@ function createMockRuntime(): HypermediaRuntime {
 		swapElement: vi.fn(),
 		process: vi.fn(),
 		registerBusyBinding: vi.fn(() => () => {}),
+		setSwapLifecycleAdapter: vi.fn(),
 	}
 }
 

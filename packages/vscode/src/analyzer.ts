@@ -12,6 +12,7 @@ export {
 
 export type {
 	ScriptScope,
+	SourceRange,
 	TemplateReference,
 	TemplateScope,
 	VariableDefinition,

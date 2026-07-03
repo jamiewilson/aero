@@ -39,6 +39,7 @@ export interface HypermediaRuntime {
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
 	process(element: ParentNode, store?: HypermediaSignalStore): void
 	registerBusyBinding(element: Element, signalName: string, signal: HypermediaBooleanSignal): () => void
+	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
 
 export interface HypermediaRuntimeOptions {
@@ -634,8 +635,6 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null) {
 			swapLifecycleAdapter = adapter
 		},
-	} satisfies HypermediaRuntime & {
-		setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 	}
 	runtime.process = (element: ParentNode, store?: HypermediaSignalStore) => {
 		if (store) defaultStore = store

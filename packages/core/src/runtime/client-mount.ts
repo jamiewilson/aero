@@ -20,7 +20,7 @@ interface HypermediaSwapLifecycleOperation {
 	processRuntime(element: ParentNode): void
 }
 
-interface HypermediaRuntimeWithSwapLifecycle {
+export interface HypermediaRuntimeWithSwapLifecycle {
 	setSwapLifecycleAdapter(
 		adapter: ((operation: HypermediaSwapLifecycleOperation) => void | Promise<void>) | null
 	): void
