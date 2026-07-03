@@ -1,7 +1,7 @@
 /**
  * `aero graph` — print Fallow/knip-friendly entry globs and optional template path listing.
  */
-import { getAeroAnalyzerEntryGlobs, listAeroTemplatePaths } from '@aero-js/config/analyzer-entries'
+import { getAeroAnalyzerEntryGlobs, listAeroTemplatePaths } from './analyzer-entries'
 
 type GraphFormat = 'json' | 'lines' | 'fallow-entry'
 

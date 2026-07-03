@@ -4,8 +4,7 @@
  */
 import path from 'node:path'
 import { discoverRuntimeTemplatePaths, resolveDirs } from '@aero-js/core/vite'
-import { loadAeroConfig } from './loadAeroConfig'
-import type { AeroConfig } from './types'
+import { loadAeroConfig, type AeroConfig } from '@aero-js/config'
 
 function resolveLoadedConfig(root: string): AeroConfig {
 	const loaded = loadAeroConfig(root)
