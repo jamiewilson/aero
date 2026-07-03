@@ -1,40 +1,12 @@
 import { DIRECTIVE_PARITY_SCENARIOS } from '@aero-js/diagnostics/parity'
-import { describe, expect, it, vi } from 'vitest'
-import * as vscode from 'vscode'
-import { checkDirectiveExpressionBraces } from '../diagnostics/check-directive-braces'
+import { describe, expect, it } from 'vitest'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { checkDirectiveExpressionBraces } from '../../../core/src/template-diagnostics/checks/check-directive-braces'
+import type { SourceDocument } from '../../../core/src/template-diagnostics/source-document'
 
-vi.mock('vscode', () => ({
-	Diagnostic: class {
-		range: unknown
-		message: string
-		severity: unknown
-		code?: { value: string }
-		constructor(range: unknown, message: string, severity: unknown) {
-			this.range = range
-			this.message = message
-			this.severity = severity
-		}
-	},
-	DiagnosticSeverity: { Error: 0 },
-	Range: class {
-		start: unknown
-		end: unknown
-		constructor(start: unknown, end?: unknown, endLine?: number, endChar?: number) {
-			if (typeof start === 'object' && start !== null && 'line' in start) {
-				this.start = start
-				this.end = end
-				return
-			}
-			this.start = { line: start, character: end }
-			this.end = { line: endLine, character: endChar }
-		}
-	},
-	Uri: { parse: (s: string) => ({ toString: () => s }) },
-}))
-
-function makeDoc(text: string) {
+function makeDoc(text: string): SourceDocument {
 	return {
-		uri: { toString: () => 'file:///test.html', fsPath: '/test.html', scheme: 'file' },
+		uri: { fsPath: '/test.html' },
 		getText: () => text,
 		positionAt: (offset: number) => {
 			const lines = text.slice(0, offset).split('\n')
@@ -43,15 +15,14 @@ function makeDoc(text: string) {
 				character: lines[lines.length - 1]?.length ?? 0,
 			}
 		},
-		languageId: 'html',
-		fileName: '/test.html',
-	} as unknown as vscode.TextDocument
+		offsetAt: () => 0,
+	}
 }
 
 const BUILD_DIRECTIVE_ISSUE = /must use a braced expression|cannot use a braced loop expression/
 
-function collectDirectiveDiagnostics(html: string): vscode.Diagnostic[] {
-	const diagnostics: vscode.Diagnostic[] = []
+function collectDirectiveDiagnostics(html: string): AeroDiagnostic[] {
+	const diagnostics: AeroDiagnostic[] = []
 	checkDirectiveExpressionBraces(makeDoc(html), html, diagnostics)
 	return diagnostics
 }
@@ -75,13 +46,7 @@ describe('directive parity — vscode surface', () => {
 				expect(buildDiags.some(d => d.message.includes(expectation.messageIncludes!))).toBe(true)
 			}
 			if (expectation.code) {
-				const match = buildDiags.find(
-					d =>
-						typeof d.code === 'object' &&
-						d.code &&
-						'value' in d.code &&
-						d.code.value === expectation.code
-				)
+				const match = buildDiags.find(d => d.code === expectation.code)
 				expect(match).toBeDefined()
 			}
 		})

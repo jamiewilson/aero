@@ -1,9 +1,11 @@
 /**
  * Shared diagnostic helpers: HTML comment/script masking, position checks.
  */
-import { getIgnoredRanges, isInRanges, type IgnoredRange } from '../utils'
-
-export { getIgnoredRanges, isInRanges, type IgnoredRange }
+export {
+	getIgnoredRanges,
+	isInRanges,
+	type IgnoredRange,
+} from '../utils'
 
 export interface ByteRange {
 	readonly start: number

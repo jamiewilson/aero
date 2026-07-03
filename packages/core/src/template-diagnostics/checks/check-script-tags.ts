@@ -1,15 +1,16 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: script tag validation (missing type="module" on inline scripts with imports).
  */
-import * as vscode from 'vscode'
 import type { ParsedDocument } from '../document-analysis'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { getIgnoredRanges, isInRanges, isInHead } from './helpers'
 
 export function checkScriptTags(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[],
+	diagnostics: AeroDiagnostic[],
 	parsed: ParsedDocument
 ): void {
 	const ignoredRanges = getIgnoredRanges(text)
@@ -33,13 +34,15 @@ export function checkScriptTags(
 				if (importMatch) {
 					const importStart = block.contentStart + importMatch.index
 					const importEnd = importStart + 6
-					const diagnostic = new vscode.Diagnostic(
-						new vscode.Range(document.positionAt(importStart), document.positionAt(importEnd)),
+					pushOffsetDiagnostic(
+						diagnostics,
+						document,
+						importStart,
+						importEnd,
 						'Imports in <script is:inline> require type="module" attribute.',
-						vscode.DiagnosticSeverity.Error
+						'AERO_BUILD_SCRIPT',
+						'error'
 					)
-					applyAeroDiagnosticIdentity(diagnostic, 'AERO_BUILD_SCRIPT', 'script-taxonomy.md')
-					diagnostics.push(diagnostic)
 				}
 			}
 		}

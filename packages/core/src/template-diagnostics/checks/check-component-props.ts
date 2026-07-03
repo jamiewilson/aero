@@ -1,12 +1,13 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: cross-file prop validation for components and layouts.
  */
-import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import path from 'node:path'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
-import type { PathResolver } from '../pathResolver'
+import type { PathResolver } from '../path-resolver'
 import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { isValidTemplateImportSpecifier } from '../importResolution'
@@ -47,8 +48,8 @@ export function resolvePropsSpreadVariable(attrs: string): string | null {
 }
 
 function validateSpreadProps(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	tagStart: number,
 	tagLength: number,
 	spreadVar: string,
@@ -66,9 +67,9 @@ function validateSpreadProps(
 }
 
 export function checkComponentProps(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[],
+	diagnostics: AeroDiagnostic[],
 	resolver: PathResolver,
 	definedVars: Map<string, VariableDefinition>,
 	stateVars: Map<string, VariableDefinition> = new Map()
@@ -275,8 +276,8 @@ function collectBindableReactivePropNames(componentContent: string): Set<string>
 }
 
 function validateComponentReactiveProps(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	tagStart: number,
 	fullTag: string,
 	tagName: string,
@@ -375,8 +376,8 @@ function reactivePropDiagnosticRange(
 }
 
 function pushReactivePropDiagnostic(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	tagStart: number,
 	tagName: string,
 	rawAttrs: string,
@@ -385,37 +386,31 @@ function pushReactivePropDiagnostic(
 	message: string
 ): void {
 	const range = reactivePropDiagnosticRange(tagStart, tagName, rawAttrs, attrBase, rawAttrName)
-	const diagnostic = new vscode.Diagnostic(
-		new vscode.Range(document.positionAt(range.start), document.positionAt(range.end)),
-		message,
-		vscode.DiagnosticSeverity.Error
-	)
-	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-	diagnostics.push(diagnostic)
+	pushOffsetDiagnostic(diagnostics, document, range.start, range.end, message, 'AERO_COMPILE', 'error')
 }
 
 function pushPropDiagnostic(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	tagStart: number,
 	tagLength: number,
 	missing: string[],
 	baseName: string,
 	suffix: string
 ): void {
-	const startPos = document.positionAt(tagStart)
-	const endPos = document.positionAt(tagStart + tagLength)
 	const msg =
 		missing.length === 1
 			? `Missing required prop '${missing[0]}' for ${baseName}-${suffix}`
 			: `Missing required props: ${missing.map(m => `'${m}'`).join(', ')} for ${baseName}-${suffix}`
-	const diagnostic = new vscode.Diagnostic(
-		new vscode.Range(startPos, endPos),
+	pushOffsetDiagnostic(
+		diagnostics,
+		document,
+		tagStart,
+		tagStart + tagLength,
 		msg,
-		vscode.DiagnosticSeverity.Error
+		'AERO_COMPILE',
+		'error'
 	)
-	applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-	diagnostics.push(diagnostic)
 }
 
 /** Extract attribute names from a tag's attribute string, excluding Aero directives. */

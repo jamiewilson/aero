@@ -1,10 +1,11 @@
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 /**
  * Diagnostic check: missing component/layout files.
  */
-import * as vscode from 'vscode'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
-import type { PathResolver } from '../pathResolver'
+import type { PathResolver } from '../path-resolver'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { isValidTemplateImportSpecifier } from '../importResolution'
 import { getIgnoredRanges, isInRanges, findTagNameRange } from './helpers'
@@ -14,9 +15,9 @@ const COMPONENT_TAG_OPEN_REGEX =
 	/<([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:component|layout))\b[^>]*\/?>/gi
 
 export function checkComponentReferences(
-	document: vscode.TextDocument,
+	document: SourceDocument,
 	text: string,
-	diagnostics: vscode.Diagnostic[],
+	diagnostics: AeroDiagnostic[],
 	resolver: PathResolver
 ): void {
 	const imports = collectImportedSpecifiersFromDocument(text)
@@ -40,32 +41,30 @@ export function checkComponentReferences(
 
 		if (!importedSpecifier || !isValidTemplateImportSpecifier(importedSpecifier)) {
 			const nameRange = findTagNameRange(match.index, tagName)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(
-					document.positionAt(nameRange.start),
-					document.positionAt(nameRange.end)
-				),
+			pushOffsetDiagnostic(
+				diagnostics,
+				document,
+				nameRange.start,
+				nameRange.end,
 				`Component '${baseName}' is not imported. Explicit imports are required.`,
-				vscode.DiagnosticSeverity.Error
+				'AERO_RESOLVE',
+				'error'
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_RESOLVE', 'importing-and-bundling.md')
-			diagnostics.push(diagnostic)
 			continue
 		}
 
 		const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
 		if (!resolved) {
 			const nameRange = findTagNameRange(match.index, tagName)
-			const diagnostic = new vscode.Diagnostic(
-				new vscode.Range(
-					document.positionAt(nameRange.start),
-					document.positionAt(nameRange.end)
-				),
+			pushOffsetDiagnostic(
+				diagnostics,
+				document,
+				nameRange.start,
+				nameRange.end,
 				`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
-				vscode.DiagnosticSeverity.Warning
+				'AERO_RESOLVE',
+				'warning'
 			)
-			applyAeroDiagnosticIdentity(diagnostic, 'AERO_RESOLVE', 'tsconfig-aliases.md')
-			diagnostics.push(diagnostic)
 		}
 	}
 }

@@ -436,9 +436,15 @@ importers:
       '@aero-js/compiler':
         specifier: workspace:*
         version: link:../compiler
+      '@aero-js/config':
+        specifier: workspace:*
+        version: link:../config
       '@aero-js/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@aero-js/html-parser':
+        specifier: workspace:*
+        version: link:../html-parser
       '@aero-js/hypermedia':
         specifier: workspace:*
         version: link:../hypermedia

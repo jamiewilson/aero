@@ -1,57 +1,16 @@
 import * as vscode from 'vscode'
-import { parseDocument } from '../document-analysis'
-import { getResolver } from '../pathResolver'
+import { collectTemplateDiagnostics } from '@aero-js/core/template-diagnostics'
 import { isAeroDocument } from '../scope'
-import { checkComponentProps } from './check-component-props'
-import { checkComponentReferences } from './check-component-references'
-import { checkTemplateImportSpecifiers } from './check-template-import-specifiers'
-import { checkConditionalChains } from './check-conditional-chains'
-import { checkDirectiveExpressionBraces } from './check-directive-braces'
-import { checkDuplicateDeclarations } from './check-duplicate-declarations'
-import { checkScriptTags } from './check-script-tags'
-import { checkUndefinedVariables, hasBuildScript, hasStateScript } from './check-undefined-variables'
-import { checkUndefinedScriptVariables } from './check-undefined-script-variables'
-import { checkUnusedVariables } from './check-unused-variables'
-import { checkRouteContract } from './check-route-contract'
-import { checkFeatureGates } from './check-feature-gates'
-import { checkReadonlyReactivePropWrites } from './check-readonly-reactive-prop-writes'
-import { checkReactiveBindingScope } from './check-reactive-binding-scope'
+import { mapAeroDiagnosticToVscode } from './map-aero-diagnostic'
 
 export function collectDiagnosticsForDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
-	const parsed = parseDocument(document)
-	const diagnostics: vscode.Diagnostic[] = []
-	const resolver = getResolver(document)
-	const { text } = parsed
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath
 
-	checkScriptTags(document, text, diagnostics, parsed)
-	checkConditionalChains(document, text, diagnostics)
-	checkDirectiveExpressionBraces(document, text, diagnostics)
-	checkTemplateImportSpecifiers(document, text, diagnostics)
-	checkComponentReferences(document, text, diagnostics, resolver)
-	checkComponentProps(
+	return collectTemplateDiagnostics({
 		document,
-		text,
-		diagnostics,
-		resolver,
-		parsed.definedVariables,
-		parsed.variablesByScope.state
-	)
-	checkUndefinedScriptVariables(document, parsed, diagnostics)
-	checkReadonlyReactivePropWrites(document, parsed, diagnostics)
-	checkReactiveBindingScope(document, parsed, diagnostics)
-	checkRouteContract(document, diagnostics, resolver)
-	const regexUndefined =
-		vscode.workspace
-			.getConfiguration('aero')
-			.get<boolean>('diagnostics.regexUndefinedVariables') === true
-	if (regexUndefined || hasStateScript(parsed) || hasBuildScript(parsed)) {
-		checkUndefinedVariables(parsed, diagnostics)
-	}
-	checkUnusedVariables(parsed, diagnostics)
-	checkDuplicateDeclarations(parsed, diagnostics)
-	checkFeatureGates(document, text, diagnostics)
-
-	return diagnostics
+		root: workspaceRoot ?? document.uri.fsPath,
+		workspaceRoot,
+	}).map(mapAeroDiagnosticToVscode)
 }
 
 export function registerDiagnostics(context: vscode.ExtensionContext): vscode.Disposable {

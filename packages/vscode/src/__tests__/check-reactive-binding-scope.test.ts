@@ -24,7 +24,7 @@ vi.mock('vscode', () => ({
 }))
 
 import { parseDocument } from '../document-analysis'
-import { checkReactiveBindingScope } from '../diagnostics/check-reactive-binding-scope'
+import { checkReactiveBindingScope } from '../../../core/src/template-diagnostics/checks/check-reactive-binding-scope'
 
 function makeDoc(text: string) {
 	return {
@@ -56,10 +56,10 @@ describe('checkReactiveBindingScope', () => {
 
 		expect(diagnostics).toHaveLength(1)
 		expect(diagnostics[0].message).toContain('`show` binding must reference a declared state variable')
-		expect(diagnostics[0].severity).toBe(0)
+		expect(diagnostics[0].severity).toBe('error')
 		const openOffset = text.indexOf('open', text.indexOf('show'))
-		expect(diagnostics[0].range.start).toEqual(doc.positionAt(openOffset))
-		expect(diagnostics[0].range.end).toEqual(doc.positionAt(openOffset + 'open'.length))
+		expect(diagnostics[0].span?.line).toBe(doc.positionAt(openOffset).line)
+		expect(diagnostics[0].span?.column).toBe(doc.positionAt(openOffset).character)
 	})
 
 	it('errors when html references a build-time variable with is:state present', () => {

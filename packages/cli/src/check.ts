@@ -13,6 +13,7 @@ import {
 	checkTemplateTypesWithFile,
 	collectComponentReactivePropMetadata,
 	compileTemplate,
+	collectFeatureGateIssuesFromSource,
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/core/compile-check'
@@ -215,32 +216,26 @@ function collectTemplateFeatureGateDiagnostics(
 	file: string,
 	flags: { reactivity: boolean; hypermedia: boolean }
 ): AeroDiagnostic[] {
-	const out: AeroDiagnostic[] = []
+	// When both flags are on, compile-time validateFeatureGates covers hypermedia semantics.
+	if (flags.reactivity && flags.hypermedia) return []
 
-	if (!flags.reactivity && /<script\b[^>]*\bis:state\b/i.test(source)) {
-		out.push({
-			severity: 'error',
-			code: 'AERO_CONFIG',
-			message: '[aero check] `<script is:state>` requires `reactivity: true` in aero.config.',
-			file,
-		})
-	}
-
-	if (/\b(?:data-aero-|aero-)?busy\b\s*=\s*(["']).*?\1/is.test(source)) {
-		if (!flags.hypermedia || !flags.reactivity) {
-			const missing: string[] = []
-			if (!flags.hypermedia) missing.push('hypermedia: true')
-			if (!flags.reactivity) missing.push('reactivity: true')
-			out.push({
-				severity: 'error',
-				code: 'AERO_CONFIG',
-				message: `[aero check] \`busy\` requires ${missing.join(' and ')} in aero.config.`,
-				file,
-			})
-		}
-	}
-
-	return out
+	return collectFeatureGateIssuesFromSource(source, flags).map(issue => ({
+		severity: 'error' as const,
+		code: issue.code,
+		message: `[aero check] ${issue.message}`,
+		file,
+		...(issue.start !== undefined && issue.end !== undefined
+			? {
+					span: {
+						file,
+						line: 0,
+						column: issue.start,
+						lineEnd: 0,
+						columnEnd: issue.end,
+					},
+				}
+			: {}),
+	}))
 }
 
 function contentConfigPathFromAero(root: string, aero: AeroConfig): string {

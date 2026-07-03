@@ -4,7 +4,7 @@ import {
 	findAttributeRange,
 	findTagNameRange,
 	sliceRawAttrs,
-} from '../diagnostics/helpers'
+} from '../../../core/src/template-diagnostics/checks/helpers'
 
 describe('attribute range helpers', () => {
 	it('finds a double-quoted attribute with leading whitespace', () => {

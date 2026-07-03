@@ -34,7 +34,7 @@ import {
 	checkUndefinedVariables,
 	hasBuildScript,
 	hasStateScript,
-} from '../diagnostics/check-undefined-variables'
+} from '../../../core/src/template-diagnostics/checks/check-undefined-variables'
 
 function makeDoc(text: string) {
 	return {
@@ -72,9 +72,10 @@ describe('for-loop undefined diagnostics (build-only templates)', () => {
 	})
 
 	it('flags undefined links iterable and label binding', () => {
-		const parsed = parseDocument(makeDoc(footerLike))
+		const doc = makeDoc(footerLike)
+		const parsed = parseDocument(doc)
 		const diagnostics: any[] = []
-		checkUndefinedVariables(parsed, diagnostics)
+		checkUndefinedVariables(doc, parsed, diagnostics)
 		const messages = diagnostics.map((d: { message: string }) => d.message)
 		expect(messages.some(m => m.includes("'links' is not defined"))).toBe(true)
 		expect(messages.some(m => m.includes("'label' is not defined"))).toBe(true)
@@ -87,9 +88,10 @@ describe('for-loop undefined diagnostics (build-only templates)', () => {
 <template for="{ const { path, label } of links }">
 	<a href="{ path }">{ label }</a>
 </template>`
-		const parsed = parseDocument(makeDoc(text))
+		const doc = makeDoc(text)
+		const parsed = parseDocument(doc)
 		const diagnostics: any[] = []
-		checkUndefinedVariables(parsed, diagnostics)
+		checkUndefinedVariables(doc, parsed, diagnostics)
 		const undefinedMsgs = diagnostics
 			.map((d: { message: string }) => d.message)
 			.filter(m => m.includes('is not defined') && m.includes('Variable'))

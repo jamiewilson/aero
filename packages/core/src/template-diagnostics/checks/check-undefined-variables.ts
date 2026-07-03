@@ -1,7 +1,8 @@
-import * as vscode from 'vscode'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import type { ParsedDocument } from '../document-analysis'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
 import { findInnermostScope } from '../utils'
 import type { TemplateScope } from '../analyzer'
 
@@ -95,8 +96,9 @@ function isBoundByForScope(scope: TemplateScope, id: string): boolean {
 }
 
 export function checkUndefinedVariables(
+	document: SourceDocument,
 	parsed: ParsedDocument,
-	diagnostics: vscode.Diagnostic[]
+	diagnostics: AeroDiagnostic[]
 ): void {
 	const definedVars = parsed.definedVariables
 	const stateBindings = collectStateBindingNames(parsed)
@@ -115,13 +117,7 @@ export function checkUndefinedVariables(
 				if (!def.properties.has(firstProp)) {
 					const range =
 						ref.propertyRanges && ref.propertyRanges.length > 0 ? ref.propertyRanges[0] : ref.range
-					const diagnostic = new vscode.Diagnostic(
-						range,
-						`Property '${firstProp}' does not exist on type '${ref.content}'`,
-						vscode.DiagnosticSeverity.Error
-					)
-					applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'props.md')
-					diagnostics.push(diagnostic)
+					pushSpanDiagnostic(diagnostics, document, range, `Property '${firstProp}' does not exist on type '${ref.content}'`, 'AERO_COMPILE', 'error')
 				}
 			}
 			continue
@@ -147,21 +143,13 @@ export function checkUndefinedVariables(
 			? `Component '${ref.content}' is not defined`
 			: `Variable '${ref.content}' is not defined`
 
-		const diagnostic = new vscode.Diagnostic(ref.range, message, vscode.DiagnosticSeverity.Error)
-		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-		diagnostics.push(diagnostic)
+		pushSpanDiagnostic(diagnostics, document, ref.range, message, 'AERO_COMPILE', 'error')
 	}
 
 	for (const ref of buildContentGlobalRefs) {
 		if (definedVars.has(ref.content) || stateBindings.has(ref.content)) continue
 
-		const diagnostic = new vscode.Diagnostic(
-			ref.range,
-			`Variable '${ref.content}' is not defined`,
-			vscode.DiagnosticSeverity.Error
-		)
-		applyAeroDiagnosticIdentity(diagnostic, 'AERO_COMPILE', 'interpolation.md')
-		diagnostics.push(diagnostic)
+		pushSpanDiagnostic(diagnostics, document, ref.range, `Variable '${ref.content}' is not defined`, 'AERO_COMPILE', 'error')
 	}
 }
 

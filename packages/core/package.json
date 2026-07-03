@@ -70,6 +70,10 @@
 			"types": "./dist/diagnostics.d.mts",
 			"default": "./dist/diagnostics.mjs"
 		},
+		"./template-diagnostics": {
+			"types": "./dist/template-diagnostics-api.d.mts",
+			"default": "./dist/template-diagnostics-api.mjs"
+		},
 		"./compile-check": {
 			"types": "./dist/compile-check-api.d.mts",
 			"default": "./dist/compile-check-api.mjs"
@@ -93,6 +97,7 @@
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
+		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@aero-js/reactivity": "workspace:*",

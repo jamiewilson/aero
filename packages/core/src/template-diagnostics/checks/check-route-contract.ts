@@ -1,7 +1,8 @@
-import * as vscode from 'vscode'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import * as path from 'node:path'
-import type { PathResolver } from '../pathResolver'
-import { applyAeroDiagnosticIdentity } from '../diagnostic-metadata'
+import type { PathResolver } from '../path-resolver'
 
 const SUPPORTED_PARAM_SEGMENT = /^[A-Za-z_][A-Za-z0-9_]*$/
 
@@ -17,11 +18,11 @@ function unsupportedSegmentHint(segment: string): string {
 }
 
 export function checkRouteContract(
-	document: vscode.TextDocument,
-	diagnostics: vscode.Diagnostic[],
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
 	resolver: PathResolver
 ): void {
-	const abs = path.resolve(document.fileName)
+	const abs = path.resolve(document.uri.fsPath)
 	const pagesDir = path.resolve(resolver.pagesDir)
 	if (abs !== pagesDir && !abs.startsWith(pagesDir + path.sep)) return
 	if (!abs.endsWith('.html')) return
@@ -33,12 +34,14 @@ export function checkRouteContract(
 		if (!seg.startsWith('[') || !seg.endsWith(']')) continue
 		const inner = seg.slice(1, -1)
 		if (SUPPORTED_PARAM_SEGMENT.test(inner)) continue
-		const diagnostic = new vscode.Diagnostic(
-			new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1)),
+		pushOffsetDiagnostic(
+			diagnostics,
+			document,
+			0,
+			1,
 			`Unsupported route segment ${JSON.stringify(seg)} in ${JSON.stringify(pageName)}. ${unsupportedSegmentHint(seg)}`,
-			vscode.DiagnosticSeverity.Error
+			'AERO_ROUTE',
+			'error'
 		)
-		applyAeroDiagnosticIdentity(diagnostic, 'AERO_ROUTE', 'routing.md')
-		diagnostics.push(diagnostic)
 	}
 }
