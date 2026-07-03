@@ -8,8 +8,6 @@ export type {
 	HypermediaRequest,
 	HypermediaResponse,
 	HypermediaSignalStore,
-	HypermediaSwapLifecycleAdapter,
-	HypermediaSwapLifecycleOperation,
 	SwapOperation,
 } from './types'
 
