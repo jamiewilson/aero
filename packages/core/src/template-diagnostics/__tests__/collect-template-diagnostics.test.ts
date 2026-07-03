@@ -86,3 +86,24 @@ const title = 'Hello'
 		expect(diagnostics.some(d => d.message.includes("Variable 'missingVar' is not defined"))).toBe(true)
 	})
 })
+
+describe('collectTemplateDiagnostics unused variables', () => {
+	it('does not flag spread parameter as unused in is:state', () => {
+		const html = `<script is:state>
+const nextNumber = (values: number[]) => Math.max(0, ...values) + 1
+let numbersArray = [1, 2, 3]
+</script>
+<button on:click="{ numbersArray.push(nextNumber(numbersArray)) }">Add</button>`
+
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(html, '/tmp/client/pages/iterables.html'),
+			root: '/tmp',
+			flags: { reactivity: true, hypermedia: false },
+		})
+
+		const unusedValues = diagnostics.find(d =>
+			d.message.includes("'values' is declared but its value is never read")
+		)
+		expect(unusedValues).toBeUndefined()
+	})
+})

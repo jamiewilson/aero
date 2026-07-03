@@ -1,5 +1,6 @@
 import { parseSync } from 'oxc-parser'
 import type { BuildScriptImport } from './build-script-analysis'
+import { stripBuildScriptTypes } from './build-script-analysis'
 import {
 	collectScopeReferences,
 	collectMountScopeNames,
@@ -9,6 +10,10 @@ import {
 	type ScopeRewriteContext,
 } from './scope-expr-codegen'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
+
+function stripModuleConstantSource(source: string): string {
+	return stripBuildScriptTypes(source, STATE_SCRIPT_FILENAME).trim().replace(/;$/, '')
+}
 
 const STATE_SCRIPT_FILENAME = 'state.ts'
 const PARSE_OPTS = {
@@ -304,15 +309,14 @@ export function lowerStateScript(
 					})
 				} else {
 					moduleScopeNames.add(name)
-					moduleConstants.push(`const ${name} = ${initSource}`)
+					moduleConstants.push(stripModuleConstantSource(`const ${name} = ${initSource}`))
 				}
 				continue
 			}
 
 			if (typeof declarator.init.start !== 'number' || typeof declarator.init.end !== 'number') continue
-			moduleConstants.push(
-				`const ${name} = ${script.slice(declarator.init.start, declarator.init.end)}`
-			)
+			const initSource = script.slice(declarator.init.start, declarator.init.end)
+			moduleConstants.push(stripModuleConstantSource(`const ${name} = ${initSource}`))
 		}
 	}
 

@@ -16,7 +16,7 @@
 	let mapSize = numbersMap.size
 	let hasMapItems = numbersMap.size > 0
 
-	const nextNumber = values => Math.max(0, ...values) + 1
+	const nextNumber = (values: Array<number> | Set<number>) => Math.max(0, ...values) + 1
 </script>
 
 <base-layout title="Iterables">
