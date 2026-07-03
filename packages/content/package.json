@@ -51,7 +51,6 @@
 		"@aero-js/core": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@standard-schema/spec": "^1.1.0",
-		"effect": "^3.21.4",
 		"fast-glob": "^3.3.3",
 		"gray-matter": "^4.0.3",
 		"jiti": "^2.7.0",

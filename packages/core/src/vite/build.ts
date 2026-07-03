@@ -17,7 +17,6 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
-import { Effect } from 'effect'
 import { parseHTML } from 'linkedom'
 import { analyzeBuildScript, parse } from '@aero-js/compiler'
 import { pagePathToKey } from '../utils/routing'
@@ -68,7 +67,7 @@ const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 function aeroStaticBuildDebug(message: string): void {
 	const v = process.env.AERO_LOG
 	if (v === 'debug' || (typeof v === 'string' && v.split(/[\s,]+/).includes('debug'))) {
-		void Effect.runPromise(Effect.log(`[aero] ${message}`))
+		console.log(`[aero] ${message}`)
 	}
 }
 
@@ -151,18 +150,21 @@ function createStaticPrerenderServices(): StaticPrerenderServices {
 			signal: AbortSignal
 			worker: (item: T) => Promise<void>
 		}): Promise<void> => {
-			await Effect.runPromise(
-				Effect.forEach(
-					items,
-					item =>
-						Effect.tryPromise({
-							try: () => worker(item),
-							catch: e => (e instanceof Error ? e : new Error(String(e))),
-						}),
-					{ concurrency, discard: true }
-				),
-				{ signal }
-			)
+			let index = 0
+			const poolSize = Math.max(1, Math.min(concurrency, items.length || 1))
+			async function runWorker(): Promise<void> {
+				while (true) {
+					if (signal.aborted) {
+						throw new AeroBuildCancelledError({
+							message: 'Static prerender cancelled (SIGINT)',
+						})
+					}
+					const current = index++
+					if (current >= items.length) return
+					await worker(items[current]!)
+				}
+			}
+			await Promise.all(Array.from({ length: poolSize }, () => runWorker()))
 		},
 	}
 }

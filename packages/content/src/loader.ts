@@ -19,7 +19,6 @@ import fg from 'fast-glob'
 import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Cause, Effect, Exit, Option } from 'effect'
 
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
@@ -106,21 +105,6 @@ async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>
 	}
 
 	return { documents, schemaIssues }
-}
-
-/**
- * Effect program for one collection (maps to {@link loadCollectionAsync}).
- * Composed by {@link loadAllCollectionsEffect}; keeps a single Node boundary for tests and future services.
- */
-export function loadCollectionEffect<TSchema extends Record<string, any>, TOutput>(
-	config: ContentCollectionConfig<TSchema, TOutput>,
-	root: string,
-	session?: ContentDiskCacheSession | null
-): Effect.Effect<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }, Error, never> {
-	return Effect.tryPromise({
-		try: () => loadCollectionAsync(config, root, session),
-		catch: e => (e instanceof Error ? e : new Error(String(e))),
-	})
 }
 
 /** Loaded content keyed by collection name. */
@@ -221,40 +205,11 @@ export interface LoadAllCollectionsOptions {
 }
 
 /**
- * Effect program for loading all collections; {@link loadAllCollections} runs this with `Effect.runPromise`.
- */
-export function loadAllCollectionsEffect(
-	config: ContentConfig,
-	root: string,
-	session?: ContentDiskCacheSession | null
-): Effect.Effect<{ loaded: LoadedContent; schemaIssues: ContentSchemaIssue[] }, Error, never> {
-	const collections = config.collections ?? []
-	return Effect.forEach(collections, collection =>
-		loadCollectionEffect(collection, root, session)
-	).pipe(
-		Effect.map(results => {
-			const loaded: LoadedContent = new Map()
-			const schemaIssues: ContentSchemaIssue[] = []
-			for (let i = 0; i < collections.length; i++) {
-				const collection = collections[i]!
-				const result = results[i]!
-				loaded.set(collection.name, result.documents)
-				schemaIssues.push(...result.schemaIssues)
-			}
-			return { loaded, schemaIssues }
-		}),
-		Effect.flatMap(({ loaded, schemaIssues }) => {
-			if (isStrictSchemaEnabled(config) && schemaIssues.length > 0) {
-				return Effect.fail(contentSchemaAggregateError(schemaIssues))
-			}
-			return Effect.succeed({ loaded, schemaIssues })
-		})
-	)
-}
-
-/**
- * Load all collections. Uses the same logic as {@link loadAllCollectionsEffect} without `Effect.runPromise`
- * so strict-mode {@link ContentSchemaAggregateError} propagates to callers unchanged.
+ * Load all collections; returns a map from collection name to document array plus any schema issues.
+ *
+ * @param config - ContentConfig (collections array).
+ * @param root - Project root.
+ * @returns Loaded collections and schema issues for invalid files (skipped unless `strictSchema` or `AERO_CONTENT_STRICT`).
  */
 export async function loadAllCollections(
 	config: ContentConfig,
@@ -266,17 +221,18 @@ export async function loadAllCollections(
 		session = new ContentDiskCacheSession(root, options.contentConfigPath)
 	}
 	try {
-		const exit = await Effect.runPromiseExit(loadAllCollectionsEffect(config, root, session))
-		return Exit.match(exit, {
-			onSuccess: value => value,
-			onFailure: cause => {
-				const failure = Cause.failureOption(cause)
-				if (Option.isSome(failure)) {
-					throw failure.value
-				}
-				throw new Error(Cause.pretty(cause))
-			},
-		})
+		const collections = config.collections ?? []
+		const loaded: LoadedContent = new Map()
+		const schemaIssues: ContentSchemaIssue[] = []
+		for (const collection of collections) {
+			const result = await loadCollectionAsync(collection, root, session)
+			loaded.set(collection.name, result.documents)
+			schemaIssues.push(...result.schemaIssues)
+		}
+		if (isStrictSchemaEnabled(config) && schemaIssues.length > 0) {
+			throw contentSchemaAggregateError(schemaIssues)
+		}
+		return { loaded, schemaIssues }
 	} finally {
 		session?.flush()
 	}

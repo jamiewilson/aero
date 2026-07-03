@@ -8,7 +8,6 @@
 import { formatDiagnosticsTerminal } from '@aero-js/diagnostics'
 import type { ContentSchemaIssue } from './types'
 import { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
-import { Data } from 'effect'
 
 const LENIENT_FOOTER =
 	'[aero:content] These files were skipped. ' +
@@ -24,10 +23,16 @@ export function formatContentSchemaIssuesReport(issues: readonly ContentSchemaIs
 }
 
 /** All schema validation failures from a load run (strict mode throws this). */
-export class ContentSchemaAggregateError extends Data.TaggedError('ContentSchemaAggregateError')<{
+export class ContentSchemaAggregateError extends Error {
+	readonly _tag = 'ContentSchemaAggregateError' as const
 	readonly issues: readonly ContentSchemaIssue[]
-	readonly message: string
-}> {}
+
+	constructor(fields: { readonly issues: readonly ContentSchemaIssue[]; readonly message: string }) {
+		super(fields.message)
+		this.name = 'ContentSchemaAggregateError'
+		this.issues = fields.issues
+	}
+}
 
 export function contentSchemaAggregateError(
 	issues: readonly ContentSchemaIssue[]

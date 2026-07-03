@@ -42,9 +42,6 @@
 		"test": "pnpm gen-templates && vitest run",
 		"prepack": "cp ../../LICENSE ."
 	},
-	"dependencies": {
-		"effect": "^3.21.4"
-	},
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"tsdown": "catalog:",

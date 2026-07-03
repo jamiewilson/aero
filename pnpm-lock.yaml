@@ -282,9 +282,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
       vite:
         specifier: 'catalog:'
         version: 8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0)
@@ -350,9 +347,6 @@ importers:
       '@aero-js/vite':
         specifier: workspace:*
         version: link:../vite
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
@@ -384,9 +378,6 @@ importers:
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -457,9 +448,6 @@ importers:
       '@aero-js/reactivity':
         specifier: workspace:*
         version: link:../reactivity
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
       get-tsconfig:
         specifier: ^4.14.0
         version: 4.14.0
@@ -518,10 +506,6 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/ui@4.1.9)(happy-dom@20.10.6)(vite@8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0))
 
   packages/diagnostics:
-    dependencies:
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -2332,9 +2316,6 @@ packages:
       oxc-resolver:
         optional: true
 
-  effect@3.21.4:
-    resolution: {integrity: sha512-B89v/xSgPbl1J2Ai2u18jxq3odpFauU1rC6/eSs4FeNHi72kwKdJp12VGigvRV2lK+kRnx+OOz41XV8guZd4gQ==}
-
   electron-to-chromium@1.5.381:
     resolution: {integrity: sha512-n9Wa6yB+vDsGuA8AKbl/0z7HbvWqt5jxIdvr1IUicd0ryPrk7/xzwqLv8D9AbbvZ6avVNtXYLTfmgFHkwkyelg==}
 
@@ -2409,10 +2390,6 @@ packages:
 
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
-
-  fast-check@3.23.2:
-    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
-    engines: {node: '>=8.0.0'}
 
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
@@ -2943,9 +2920,6 @@ packages:
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
-
-  pure-rand@6.1.0:
-    resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
   quansync@1.0.0:
     resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
@@ -4547,11 +4521,6 @@ snapshots:
     optionalDependencies:
       oxc-resolver: 11.21.3
 
-  effect@3.21.4:
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      fast-check: 3.23.2
-
   electron-to-chromium@1.5.381: {}
 
   empathic@2.0.1: {}
@@ -4620,10 +4589,6 @@ snapshots:
       is-extendable: 0.1.1
 
   extend@3.0.2: {}
-
-  fast-check@3.23.2:
-    dependencies:
-      pure-rand: 6.1.0
 
   fast-glob@3.3.3:
     dependencies:
@@ -5369,8 +5334,6 @@ snapshots:
   prettier@3.9.3: {}
 
   property-information@7.1.0: {}
-
-  pure-rand@6.1.0: {}
 
   quansync@1.0.0: {}
 
