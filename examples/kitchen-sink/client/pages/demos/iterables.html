@@ -8,32 +8,106 @@
 	let numbersArray = numbers
 	let numbersSet = new Set(numbers)
 	let numbersMap = new Map(numbers.map(n => [n, 'Item ' + n]))
+
+	let arrayCount = numbersArray.length
+	let hasArrayItems = numbersArray.length > 0
+	let setSize = numbersSet.size
+	let hasSetItems = numbersSet.size > 0
+	let mapSize = numbersMap.size
+	let hasMapItems = numbersMap.size > 0
+
+	const nextNumber = values => Math.max(0, ...values) + 1
 </script>
 
 <base-layout title="Iterables">
-	<div class="h-stack">
-		<section>
-			<h2>Array</h2>
-			<button on:click="{ numbersArray.push(Math.max(0, ...numbersArray) + 1) }">Add</button>
-			<button on:click="{ numbersArray.splice(1, 1) }">Delete</button>
-			<button on:click="{ numbersArray = [] }">Clear array</button>
-			<div for="{ const number of numbersArray }" key="{ number }">{ number }</div>
+	<header>
+		<h2>Reactive collection state</h2>
+		<p class="secondary">
+			In-place mutations on arrays, <code>Set</code>, and <code>Map</code> notify the owning
+			<code>let</code> binding. Keyed <code>for</code> loops and derived counts update without
+			replacing the whole collection.
+		</p>
+	</header>
+
+	<div class="demo-grid">
+		<section class="card v-stack">
+			<h3>Array</h3>
+			<p class="secondary">Mutate in place or replace immutably</p>
+			<div class="h-stack wrap">
+				<button on:click="{ numbersArray.push(nextNumber(numbersArray)) }">Add (push)</button>
+				<button on:click="{ numbersArray.splice(1, 1) }" disabled="{ !hasArrayItems }">
+					Delete (splice)
+				</button>
+				<button on:click="{ numbersArray.reverse() }" disabled="{ !hasArrayItems }">
+					Reverse (in place)
+				</button>
+				<button
+					on:click="{ numbersArray = [...numbersArray, nextNumber(numbersArray)] }"
+					disabled="{ !hasArrayItems }">
+					Append (immutable)
+				</button>
+				<button on:click="{ numbersArray = [] }" disabled="{ !hasArrayItems }">Clear</button>
+			</div>
+			<p class="meta">Count: <code>{ arrayCount }</code></p>
+			<ul class="list" for="{ const number of numbersArray }" key="{ number }">
+				<li><code>{ number }</code></li>
+			</ul>
 		</section>
 
-		<section>
-			<h2>Set</h2>
-			<button on:click="{ numbersSet.add(11) }">Add</button>
-			<button on:click="{ numbersSet.delete(1) }">Delete</button>
-			<button on:click="{ numbersSet.clear() }">Clear set</button>
-			<div for="{ const number of numbersSet }" key="{ number }">{ number }</div>
+		<section class="card v-stack">
+			<h3>Set</h3>
+			<p class="secondary"><code>add</code>, <code>delete</code>, <code>clear</code></p>
+			<div class="h-stack wrap">
+				<button on:click="{ numbersSet.add(nextNumber(numbersSet)) }">Add</button>
+				<button on:click="{ numbersSet.delete(1) }" disabled="{ !hasSetItems }">
+					Delete key 1
+				</button>
+				<button on:click="{ numbersSet.clear() }" disabled="{ !hasSetItems }">Clear</button>
+			</div>
+			<p class="meta">Size: <code>{ setSize }</code></p>
+			<ul class="list" for="{ const number of numbersSet }" key="{ number }">
+				<li><code>{ number }</code></li>
+			</ul>
 		</section>
 
-		<section>
-			<h2>Map</h2>
-			<button on:click="{ numbersMap.set(11, 'eleven') }">Add</button>
-			<button on:click="{ numbersMap.delete(1) }">Delete</button>
-			<button on:click="{ numbersMap.clear() }">Clear map</button>
-			<div for="{ const [key, value] of numbersMap }" key="{ key }">{ key }: { value }</div>
+		<section class="card v-stack">
+			<h3>Map</h3>
+			<p class="secondary">Destructured <code>for</code> over entries</p>
+			<div class="h-stack wrap">
+				<button on:click="{ numbersMap.set(nextNumber([...numbersMap.keys()]), 'new') }">
+					Add entry
+				</button>
+				<button on:click="{ numbersMap.delete(1) }" disabled="{ !hasMapItems }">
+					Delete key 1
+				</button>
+				<button on:click="{ numbersMap.clear() }" disabled="{ !hasMapItems }">Clear</button>
+			</div>
+			<p class="meta">Size: <code>{ mapSize }</code></p>
+			<ul class="list" for="{ const [key, value] of numbersMap }" key="{ key }">
+				<li><code>{ key }: { value }</code></li>
+			</ul>
 		</section>
 	</div>
+
+	<aside class="info v-stack">
+		<div>Array count: <code>{ arrayCount }</code> · has items: <code>{ hasArrayItems }</code></div>
+		<div>Set size: <code>{ setSize }</code> · has items: <code>{ hasSetItems }</code></div>
+		<div>Map size: <code>{ mapSize }</code> · has items: <code>{ hasMapItems }</code></div>
+	</aside>
 </base-layout>
+
+<style>
+	.demo-grid {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+	}
+
+	.wrap {
+		flex-wrap: wrap;
+	}
+
+	.meta {
+		font-size: smaller;
+	}
+</style>
