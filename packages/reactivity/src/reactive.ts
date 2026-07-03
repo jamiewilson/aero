@@ -106,6 +106,9 @@ function createMapProxy(map: Map<unknown, unknown>, notify: ReactiveNotify): Map
 					return result
 				}
 			}
+			if (prop === 'size') {
+				return target.size
+			}
 			const value = Reflect.get(target, prop, receiver)
 			return typeof value === 'function' ? value.bind(target) : value
 		},
@@ -131,6 +134,9 @@ function createSetProxy(set: Set<unknown>, notify: ReactiveNotify): Set<unknown>
 					if (changed) notify()
 					return result
 				}
+			}
+			if (prop === 'size') {
+				return target.size
 			}
 			const value = Reflect.get(target, prop, receiver)
 			return typeof value === 'function' ? value.bind(target) : value

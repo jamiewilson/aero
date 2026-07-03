@@ -99,6 +99,13 @@ describe('makeReactive', () => {
 		const second = makeReactive(first, notify)
 		expect(second).toBe(first)
 	})
+
+	it('reads Set and Map size through reactive proxy', () => {
+		const set = makeReactive(new Set([1, 2, 3]), () => {})
+		expect(set.size).toBe(3)
+		const map = makeReactive(new Map([[1, 'one'], [2, 'two']]), () => {})
+		expect(map.size).toBe(2)
+	})
 })
 
 describe('mergeBindings', () => {
