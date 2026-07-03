@@ -1,0 +1,32 @@
+---
+description: Nitro API and server conventions
+globs: examples/**/server/**/*.ts,examples/**/backend/**/*.ts,packages/starters/**/server/**/*.ts
+alwaysApply: false
+---
+
+# Aero Server (Nitro)
+
+Document discoveries from code exploration in [_reference/DISCOVERY.md](../../_reference/DISCOVERY.md).
+
+## Layout
+
+API handlers and Nitro routes live in the **app’s** server directory—commonly `server/` (e.g. `packages/starters/fullstack/server/`) or `backend/` when configured (e.g. `examples/kitchen-sink/backend/`). Nitro is configured at the **app root** (`nitro.config.ts`) alongside `aero.config.ts` / Vite config.
+
+## API handlers
+
+- Use Nitro/H3: `defineHandler`, `readBody`, etc. from `nitro/h3`.
+- File naming follows Nitro conventions (e.g. `submit.post.ts` → `POST /api/submit`).
+- Types: use project types or types exported from `@aero-js/core` where applicable.
+
+## Example
+
+```ts
+import { defineHandler, readBody } from 'nitro/h3'
+
+export default defineHandler(async event => {
+	const body = await readBody(event)
+	return { ok: true, data: body }
+})
+```
+
+See [Nitro](../../docs/server/nitro.mdx) and [Deploy with Nitro](../../docs/deploy/nitro.mdx).

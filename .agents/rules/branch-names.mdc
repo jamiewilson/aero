@@ -1,0 +1,13 @@
+---
+description: How to write branch names
+globs: "**/*"
+alwaysApply: true
+---
+
+A branch name represent a brief description of the changes in the diff if given or a summary of all commit messages if given.
+
+Branch names should contain no whitespace and instead use dashes to separate words.
+
+Branch names should contain a maximum of 5 words.
+
+Where applicable, the name of the package where the majority of the changes have been made should be used as a prefix, e.g. core/ or vscode/. If spread across multiple packages, use a term like 'refactor/', 'fix/' or similar to indicate the type of changes.
