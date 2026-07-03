@@ -264,7 +264,7 @@ export function lowerStateScript(
 	const scopeFunctionNodes: Array<{ name: string; node: EstNode; source: string }> = []
 	const moduleScopeNames = new Set<string>()
 
-	for (const stmt of (parsed.program as { body?: EstNode[] }).body ?? []) {
+	for (const stmt of (parsed.program as unknown as { body?: EstNode[] }).body ?? []) {
 		if (isImportOrSkippedBinding(stmt)) continue
 		if (isTypeOnlyStatement(stmt)) continue
 

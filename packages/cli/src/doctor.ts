@@ -78,11 +78,11 @@ export function runAeroDoctor(root: string): number {
 					`[warn] No vite dependency in package.json (Aero apps normally depend on Vite ^8)`
 				)
 			}
-			if (deps['@aero-js/core'] || deps['@aero-js/vite']) {
+			if (deps['@aero-js/core'] || deps['@aero-js/core/vite']) {
 				lines.push(`[ok]   Aero framework dependency present`)
 			} else {
 				lines.push(
-					`[info] No @aero-js/core / @aero-js/vite in package.json (normal in some monorepos)`
+					`[info] No @aero-js/core / @aero-js/core/vite in package.json (normal in some monorepos)`
 				)
 			}
 		} catch {

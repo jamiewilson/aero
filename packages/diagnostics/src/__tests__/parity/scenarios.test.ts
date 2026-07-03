@@ -1,4 +1,4 @@
-import { PARITY_SCENARIOS, ROUTE_PARITY_SCENARIOS } from '../../parity/scenarios'
+import { PARITY_SCENARIOS, ROUTE_PARITY_SCENARIOS } from '../fixtures/parity/scenarios'
 import { describe, expect, it } from 'vitest'
 
 describe('parity scenarios contract', () => {

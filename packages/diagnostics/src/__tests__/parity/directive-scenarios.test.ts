@@ -2,7 +2,7 @@ import {
 	DIRECTIVE_PARITY_SCENARIOS,
 	PARITY_SCENARIOS,
 	ROUTE_PARITY_SCENARIOS,
-} from '../../parity'
+} from '../fixtures/parity'
 import { describe, expect, it } from 'vitest'
 
 describe('parity scenarios contract', () => {

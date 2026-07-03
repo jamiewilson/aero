@@ -40,7 +40,6 @@ import {
 } from '@aero-js/diagnostics'
 import { htmlCompileTry } from './compile-html-try'
 import { compileHtmlSourceForVite } from './compile-html-for-vite'
-import { CompileWarningDeduper, type CompileWarningPayload } from './compile-warning-dedup'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
@@ -59,6 +58,7 @@ import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
@@ -90,7 +90,32 @@ interface AeroPluginState {
 	apiPrefix: string
 	options: AeroOptions
 	/** Dedupes compile warnings when unchanged templates are recompiled during dev HMR. */
-	compileWarningDeduper: CompileWarningDeduper
+	compileWarningHashes: Map<string, string>
+}
+
+export interface CompileWarningPayload {
+	line?: number
+	column?: number
+	file?: string
+	code: string
+	message: string
+}
+
+/** Emit warnings only when `source` changed since the last flush for `filePath`. */
+export function flushCompileWarnings(
+	lastLoggedHashByFile: Map<string, string>,
+	filePath: string,
+	source: string,
+	warnings: readonly CompileWarningPayload[],
+	log: (warning: CompileWarningPayload) => void
+): void {
+	if (warnings.length === 0) return
+	const hash = createHash('sha256').update(source).digest('hex').slice(0, 16)
+	if (lastLoggedHashByFile.get(filePath) === hash) return
+	lastLoggedHashByFile.set(filePath, hash)
+	for (const warning of warnings) {
+		log(warning)
+	}
 }
 
 const AERO_DIR = '.aero'
@@ -121,7 +146,7 @@ function compileHtmlWithDedupedWarnings(
 		dirs: AeroPluginState['dirs']
 	},
 	clientScripts: Map<string, ScriptEntry>,
-	deduper: CompileWarningDeduper
+	compileWarningHashes: Map<string, string>
 ): string {
 	const warnings: CompileWarningPayload[] = []
 	const componentReactiveProps = collectComponentReactivePropMetadata([
@@ -140,7 +165,7 @@ function compileHtmlWithDedupedWarnings(
 		},
 		clientScripts
 	)
-	deduper.flushWarnings(filePath, code, warnings, warning =>
+	flushCompileWarnings(compileWarningHashes, filePath, code, warnings, warning =>
 		logCompileWarning(params.resolvedConfig, filePath, warning)
 	)
 	return generated
@@ -537,7 +562,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 									dirs: state.dirs,
 								},
 								state.clientScripts,
-								state.compileWarningDeduper
+								state.compileWarningHashes
 							)
 						}),
 					filePath,
@@ -592,7 +617,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 								dirs: state.dirs,
 							},
 							state.clientScripts,
-							state.compileWarningDeduper
+							state.compileWarningHashes
 						)
 					),
 				id,
@@ -651,7 +676,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		dirs,
 		apiPrefix,
 		options,
-		compileWarningDeduper: new CompileWarningDeduper(),
+		compileWarningHashes: new Map<string, string>(),
 	}
 
 	const aeroConfigPlugin = createAeroConfigPlugin(state)

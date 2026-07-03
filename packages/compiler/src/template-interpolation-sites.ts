@@ -17,7 +17,7 @@ import { isDirectiveAttr } from './directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
 import { buildTemplateEditorAmbient } from './template-editor-context'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
-import { buildHypermediaActionScopeDecl } from '@aero-js/hypermedia'
+import { buildHypermediaActionScopeDecl } from './event-handler-action-scope'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
 

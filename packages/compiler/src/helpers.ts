@@ -2,7 +2,7 @@
  * Helpers for the template codegen: interpolation, attributes, slots, and render-function emission.
  */
 
-import { tokenizeCurlyInterpolation } from './tokenizer'
+import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { CompileError } from './types'
 import { CodeBuilder } from './code-builder'
 import { escapeHtml, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
@@ -14,6 +14,7 @@ export {
 	escapeHtml,
 	escapeScriptJson,
 } from './escapes'
+export { stripBraces } from '@aero-js/interpolation'
 
 /** Compute line and column from a byte offset in source text (1-based line, 0-based column). */
 export function lineColumnAtOffset(
@@ -153,15 +154,6 @@ export function compileAttributeBindEmission(attrName: string, expr: string): st
 /** True if `name` equals `attr` or `prefix + attr` (e.g. `for` or `data-for`). */
 export function isAttr(name: string, attr: string, prefix: string): boolean {
 	return name === attr || name === prefix + attr
-}
-
-/** Remove outer braces: `"{ expr }"` → `expr`. */
-export function stripBraces(s: string): string {
-	const trimmed = s.trim()
-	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-		return trimmed.slice(1, -1).trim()
-	}
-	return trimmed
 }
 
 /** Convert kebab-case to camelCase (e.g. `my-component` → `myComponent`). */

@@ -8,7 +8,7 @@
  * @see _reference/plans/Reactivity-Hypermedia/attribute-binding-refactor.plan.md
  */
 
-import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import { tokenizeCurlyInterpolation, stripBraces } from '@aero-js/interpolation'
 import { isDirectiveAttr } from './directive-attributes'
 import { parseEventDirectiveName } from './event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from './runtime-directive-attributes'
@@ -73,20 +73,22 @@ function isSingleWrappedExpression(value: string): boolean {
 	)
 }
 
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-		return trimmed.slice(1, -1).trim()
-	}
-	return trimmed
-}
-
 function isFormControlTag(tagName: string, inputType: string | null | undefined): boolean {
 	const tag = tagName.toLowerCase()
 	if (tag === 'textarea' || tag === 'select') return true
 	if (tag !== 'input') return false
 	const type = (inputType ?? 'text').toLowerCase()
 	return !['button', 'submit', 'reset', 'image', 'hidden'].includes(type)
+}
+
+function referencesStateBindings(
+	expr: string,
+	stateBindingNames: Iterable<string> | undefined
+): boolean {
+	if (!stateBindingNames) return false
+	const names =
+		stateBindingNames instanceof Set ? stateBindingNames : new Set(stateBindingNames)
+	return referencesStateBindingExpression(expr, names)
 }
 
 function classifyFormModel(
@@ -98,7 +100,7 @@ function classifyFormModel(
 ): Extract<ReactiveAttributeClassification, { kind: 'form-model' }> | null {
 	if (!isSingleWrappedExpression(raw)) return null
 	const expr = stripBraces(raw)
-	if (!referencesStateBindingExpression(expr, stateBindingNames)) return null
+	if (!referencesStateBindings(expr, stateBindingNames)) return null
 
 	const readonly = attrName.includes(':readonly') || attrName.endsWith('-readonly')
 	const bare = bareAttributeName(attrName)
@@ -155,7 +157,7 @@ export function classifyReactiveAttribute(
 	if (formModel) return formModel
 
 	const expr = stripBraces(raw)
-	if (!referencesStateBindingExpression(expr, input.stateBindingNames)) {
+	if (!referencesStateBindings(expr, input.stateBindingNames)) {
 		return { kind: 'not-applicable' }
 	}
 

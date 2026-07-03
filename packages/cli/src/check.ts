@@ -1,8 +1,8 @@
 /**
  * `aero check` — validate aero config, content collections, and template compilation without starting a server.
  */
-import type { AeroConfig, AeroConfigFunction } from '@aero-js/config'
-import { loadAeroConfig } from '@aero-js/config'
+import type { AeroConfig, AeroConfigFunction } from '@aero-js/core/config'
+import { loadAeroConfig } from '@aero-js/core/config'
 import {
 	contentSchemaIssuesToAeroDiagnostics,
 	loadAllCollections,
@@ -17,12 +17,12 @@ import {
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/core/compile-check'
-import type { AeroDiagnostic } from '@aero-js/core/diagnostics'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import {
 	exitCodeForDiagnostics,
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
-} from '@aero-js/core/diagnostics'
+} from '@aero-js/diagnostics'
 import {
 	buildRouteManifestWithDiagnostics,
 	writeRouteManifestGenerated,

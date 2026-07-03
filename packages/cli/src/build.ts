@@ -2,8 +2,8 @@
  * `aero build` — run `vite build` with optional incremental env (same as `AERO_INCREMENTAL`).
  */
 import { build } from 'vite'
-import { createViteConfig, getDefaultOptions } from '@aero-js/config/vite'
-import { exitCodeForThrown } from '@aero-js/core/diagnostics'
+import { createViteConfig, getDefaultOptions } from '@aero-js/core/vite-config'
+import { exitCodeForThrown } from '@aero-js/diagnostics'
 
 type AeroBuildOptions = {
 	/** Set `AERO_INCREMENTAL=1` when unset (matches `incremental: true` in aero.config). */

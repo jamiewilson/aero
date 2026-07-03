@@ -26,11 +26,10 @@ describe('bump-versions.js packagePaths', () => {
 		}
 	})
 
-	it('includes starters and compiler', () => {
+	it('includes compiler and create', () => {
 		const paths = packagePathsFromBumpScript()
 		expect(paths).toContain('packages/compiler/package.json')
-		expect(paths).toContain('packages/starters/minimal/package.json')
-		expect(paths).toContain('packages/starters/fullstack/package.json')
-		expect(paths.some((p) => p.includes('templates/'))).toBe(false)
+		expect(paths).toContain('packages/create/package.json')
+		expect(paths.some((p) => p.includes('starters/'))).toBe(false)
 	})
 })

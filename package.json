@@ -18,7 +18,7 @@
 		"test:e2e:debug": "node scripts/run-playwright-local.js test --debug",
 		"test:all": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e:ci",
 		"typecheck": "pnpm -r typecheck",
-		"build": "pnpm -r --filter @aero-js/interpolation --filter @aero-js/html-parser --filter @aero-js/highlight --filter @aero-js/diagnostics --filter @aero-js/compiler --filter @aero-js/prettier-plugin-aero --filter @aero-js/reactivity --filter @aero-js/hypermedia --filter @aero-js/core --filter @aero-js/vite --filter @aero-js/content --filter @aero-js/config --filter @aero-js/cli --filter @aero-js/create run build",
+		"build": "pnpm -r --filter @aero-js/interpolation --filter @aero-js/html-parser --filter @aero-js/highlight --filter @aero-js/diagnostics --filter @aero-js/compiler --filter @aero-js/prettier-plugin-aero --filter @aero-js/reactivity --filter @aero-js/hypermedia --filter @aero-js/core --filter @aero-js/content --filter @aero-js/cli --filter @aero-js/create run build",
 		"vscode:build": "pnpm --dir packages/vscode build",
 		"vscode:package": "pnpm build:vscode && pnpm --dir packages/vscode exec vsce package --no-dependencies",
 		"website:build": "pnpm build && pnpm --filter aero-website build",

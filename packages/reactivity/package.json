@@ -29,6 +29,7 @@
 		"vitest": "catalog:"
 	},
 	"dependencies": {
-		"@aero-js/hypermedia": "workspace:*"
+		"@aero-js/compiler": "workspace:*",
+		"@aero-js/interpolation": "workspace:*"
 	}
 }

@@ -35,7 +35,7 @@ Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs co
 
 ## Dependencies
 
-- `@aero-js/config`, `@aero-js/content`, `@aero-js/core` (workspace)
+- `@aero-js/core/config`, `@aero-js/content`, `@aero-js/core` (workspace)
 - Optional: Alpine.js, HTMX (included in this starter)
 
 ## Path aliases (tsconfig)

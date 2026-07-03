@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AeroBuildCancelledError, AERO_EXIT_BUILD_CANCELLED } from '@aero-js/core/diagnostics'
+import { AeroBuildCancelledError, AERO_EXIT_BUILD_CANCELLED } from '@aero-js/diagnostics'
 import { resolveAeroBuildExitCode } from '../build'
 
 describe('resolveAeroBuildExitCode', () => {

@@ -10,7 +10,7 @@ Entry point for Aero's Vite plugin. At minimum it registers the `aero()` plugin:
 
 ```ts vite.config.ts
 import { defineConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 export default defineConfig({
 	plugins: [aero()],
@@ -33,10 +33,10 @@ See [Vite plugin](/configuration/vite-plugin) for the full surface.
 
 ## aero.config.ts
 
-Projects using `@aero-js/config` (included in the fullstack template) can put Aero options in `aero.config.ts` for typed, env-aware config and a smaller `vite.config.ts`:
+Projects using `@aero-js/core/config` (included in the fullstack template) can put Aero options in `aero.config.ts` for typed, env-aware config and a smaller `vite.config.ts`:
 
 ```ts aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	site: { url: 'https://example.com' },
@@ -46,7 +46,7 @@ export default defineConfig({
 ```
 
 ```ts vite.config.ts
-import { createViteConfig } from '@aero-js/config/vite'
+import { createViteConfig } from '@aero-js/core/vite-config'
 import aeroConfig from './aero.config.ts'
 
 export default createViteConfig(aeroConfig)

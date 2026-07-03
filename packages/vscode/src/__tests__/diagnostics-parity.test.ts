@@ -1,4 +1,4 @@
-import { PARITY_SCENARIOS } from '@aero-js/diagnostics/parity'
+import { PARITY_SCENARIOS } from '../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { describe, expect, it } from 'vitest'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import { checkFeatureGates } from '../../../core/src/template-diagnostics/checks/check-feature-gates'

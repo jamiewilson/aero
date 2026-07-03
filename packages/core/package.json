@@ -29,6 +29,14 @@
 			"types": "./dist/vite/index.d.mts",
 			"default": "./dist/vite/index.mjs"
 		},
+		"./config": {
+			"types": "./dist/config-api.d.mts",
+			"default": "./dist/config-api.mjs"
+		},
+		"./vite-config": {
+			"types": "./dist/vite-config-api.d.mts",
+			"default": "./dist/vite-config-api.mjs"
+		},
 		"./runtime": {
 			"types": "./dist/runtime/index.d.mts",
 			"default": "./dist/runtime/index.mjs"
@@ -45,18 +53,18 @@
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"
 		},
-		"./reactivity": {
-			"types": "./dist/reactivity.d.mts",
-			"default": "./dist/reactivity.mjs"
-		},
-		"./hypermedia": {
-			"types": "./dist/hypermedia.d.mts",
-			"default": "./dist/hypermedia.mjs"
-		},
 		"./types": "./dist/types.d.mts",
 		"./utils/aliases": {
 			"types": "./dist/utils/aliases.d.mts",
 			"default": "./dist/utils/aliases.mjs"
+		},
+		"./utils/aero-config": {
+			"types": "./dist/utils/aero-config.d.mts",
+			"default": "./dist/utils/aero-config.mjs"
+		},
+		"./utils/load-project-module": {
+			"types": "./dist/utils/load-project-module.d.mts",
+			"default": "./dist/utils/load-project-module.mjs"
 		},
 		"./utils/redirects": {
 			"types": "./dist/utils/redirects.d.mts",
@@ -65,10 +73,6 @@
 		"./editor": {
 			"types": "./dist/entry-editor.d.mts",
 			"default": "./dist/entry-editor.mjs"
-		},
-		"./diagnostics": {
-			"types": "./dist/diagnostics.d.mts",
-			"default": "./dist/diagnostics.mjs"
 		},
 		"./template-diagnostics": {
 			"types": "./dist/template-diagnostics-api.d.mts",
@@ -96,6 +100,7 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
+		"@aero-js/content": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/hypermedia": "workspace:*",

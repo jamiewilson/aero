@@ -15,7 +15,7 @@ Enable Nitro in your Aero config:
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	server: true,
@@ -47,7 +47,7 @@ After a production build, choose how you preview:
 | `pnpm preview` (typically `AERO_SERVER=false vite build && vite preview`)    | Static files only — no Nitro APIs                                                    |
 | `pnpm preview:api` (typically `vite build && node .output/server/index.mjs`) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, etc. |
 
-The **`@aero-js/starter-fullstack`** template (`packages/starters/fullstack` in the Aero repo) ships both scripts and a working `server/` tree you can copy from.
+The **fullstack template** bundled with `@aero-js/create` (`packages/create/templates/fullstack` in the Aero repo) ships both scripts and a working `server/` tree you can copy from.
 
 ## Cookbook index
 
@@ -61,7 +61,7 @@ This page is the **Nitro-in-Aero cookbook**: short, copy-paste patterns for comm
 - [Route rules and runtime config](#route-rules-and-runtime-config)
 - [Deployment presets](#deployment-presets)
 
-For a **full runnable project** that exercises these patterns together, use the monorepo’s `packages/starters/fullstack` package (`pnpm create` / starter selection when available) or clone the repo and run `pnpm install && pnpm dev` inside that starter.
+For a **full runnable project** that exercises these patterns together, run `pnpm create @aero-js my-app --template fullstack` or use the monorepo’s `packages/create/templates/fullstack` tree as reference.
 
 ### Starter parity map (current)
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { maskTemplateLiteralStatic } from '../analyzer/helpers'
+import { maskTemplateLiteralStatic } from '../analyzer'
 
 describe('maskTemplateLiteralStatic', () => {
 	it('masks static spans but keeps ${count}', () => {

@@ -42,6 +42,8 @@ const setItems = next => withTransition(() => (items = next))`
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
 			{
 				specifier: 'x',
+				defaultBinding: null,
+				namespaceBinding: null,
 				namedBindings: [{ imported: 'withTransition', local: 'withTransition' }],
 			},
 		])
@@ -73,7 +75,12 @@ async function appendItemFn() {
 }`
 		const analysis = analyzeStateScript(script)
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
-			{ specifier: 'x', namedBindings: [{ imported: 'GET', local: 'GET' }] },
+			{
+				specifier: 'x',
+				defaultBinding: null,
+				namespaceBinding: null,
+				namedBindings: [{ imported: 'GET', local: 'GET' }],
+			},
 		])
 		expect(scopeFunctions[0]!.installSource).toMatch(
 			/^scope\.appendItemFn = async function\(\) \{[\s\S]*scope\.itemCount\+\+/
@@ -91,7 +98,7 @@ const setItems = next => document.startViewTransition({ update: () => (items = n
 	})
 
 	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {
-		const script = `import { GET } from '@aero-js/core/hypermedia'
+		const script = `import { GET } from '@aero-js/hypermedia'
 let isSaving = false
 let itemCount = 0
 const appendItem = async () => {
@@ -104,7 +111,9 @@ const appendItem = async () => {
 		const analysis = analyzeStateScript(script)
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
 			{
-				specifier: '@aero-js/core/hypermedia',
+				specifier: '@aero-js/hypermedia',
+				defaultBinding: null,
+				namespaceBinding: null,
 				namedBindings: [{ imported: 'GET', local: 'GET' }],
 			},
 		])

@@ -1,5 +1,6 @@
 import type { ActionOptions, HttpMethod, HypermediaBooleanSignal, HypermediaSignalStore, SwapStyle } from './types'
 import type { HypermediaRuntime } from './runtime'
+import { stripBraces } from '@aero-js/interpolation'
 
 const HYPERMEDIA_ON_PREFIX = 'data-aero-on-'
 const HYPERMEDIA_BUSY_ATTR = 'data-aero-busy'
@@ -8,13 +9,6 @@ interface ParsedAction {
 	method: HttpMethod
 	url: string
 	options: ActionOptions
-}
-
-function stripBraces(value: string): string {
-	const trimmed = value.trim()
-	return trimmed.startsWith('{') && trimmed.endsWith('}')
-		? trimmed.slice(1, -1).trim()
-		: trimmed
 }
 
 function resolveSignalRef(ref: string, store: HypermediaSignalStore | undefined): HypermediaBooleanSignal {

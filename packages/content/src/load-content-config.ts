@@ -5,12 +5,9 @@
  * Shared by the Vite content plugin and `aero check` so behavior stays aligned.
  */
 import type { ContentConfig } from './types'
-import { jitiAliasRecordFromProject } from '@aero-js/core/utils/aliases'
-import { createRequire } from 'node:module'
+import { loadProjectModule } from '@aero-js/core/utils/load-project-module'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
-
-const require = createRequire(import.meta.url)
 
 export type LoadContentConfigResult =
 	| { ok: true; config: ContentConfig }
@@ -32,11 +29,8 @@ export function loadContentConfigFileSync(
 		return { ok: false, reason: 'missing' }
 	}
 	try {
-		const alias = jitiAliasRecordFromProject(root)
-		const jiti = require('jiti')(root, { esmResolve: true, alias })
 		const relativePath = './' + path.relative(root, configPath).replace(/\\/g, '/')
-		const mod = jiti(relativePath)
-		const config = (mod?.default ?? mod) as ContentConfig
+		const config = loadProjectModule<ContentConfig>(root, relativePath)
 		return { ok: true, config }
 	} catch (error) {
 		return { ok: false, reason: 'error', error }

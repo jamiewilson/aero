@@ -9,7 +9,6 @@
 		"preview": "vite build && vite preview"
 	},
 	"dependencies": {
-		"@aero-js/config": "workspace:*",
 		"@aero-js/content": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/highlight": "workspace:*",

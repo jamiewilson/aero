@@ -31,7 +31,7 @@ import {
 } from './scope-expr-codegen'
 import { lowerStateScript, type LoweredStateScript } from './lower-state-script'
 import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
-import { COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE } from '@aero-js/hypermedia'
+import { COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE } from './hypermedia-action-state-refs'
 
 const STRUCTURAL_BRANCH_CONTEXT_DESTRUCTURE = `const { ${getRenderContextDestructurePattern()
 	.split(', ')

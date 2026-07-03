@@ -7,7 +7,7 @@ import { runAeroCheck } from './check'
 import { runAeroDoctor } from './doctor'
 import { parseGraphFormat, runAeroGraph } from './graph'
 import { parseRootArgs } from './parse-cli-args'
-import { exitCodeForThrown } from '@aero-js/core/diagnostics'
+import { exitCodeForThrown } from '@aero-js/diagnostics'
 
 function printHelp(): void {
 	process.stdout.write(`Aero — HTML-first static sites

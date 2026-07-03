@@ -632,7 +632,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				}
 			}
 		},
-		setSwapLifecycleAdapter(adapter) {
+		setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null) {
 			swapLifecycleAdapter = adapter
 		},
 	}

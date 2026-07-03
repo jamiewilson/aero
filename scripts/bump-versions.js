@@ -21,7 +21,6 @@ if (!newVersion || !/^\d+\.\d+\.\d+(-[a-z0-9.-]+)?$/i.test(newVersion)) {
 const packagePaths = [
 	'packages/cli/package.json',
 	'packages/compiler/package.json',
-	'packages/config/package.json',
 	'packages/content/package.json',
 	'packages/core/package.json',
 	'packages/diagnostics/package.json',
@@ -30,9 +29,7 @@ const packagePaths = [
 	'packages/html-parser/package.json',
 	'packages/interpolation/package.json',
 	'packages/language-server/package.json',
-	'packages/starters/minimal/package.json',
-	'packages/starters/fullstack/package.json',
-	'packages/vite/package.json',
+	'packages/language-server/package.json',
 	'packages/vscode/package.json',
 ]
 

@@ -15,10 +15,15 @@ import { contentSchemaAggregateError } from './content-issues'
 import type { ContentCacheFileEntry } from './content-cache'
 import { ContentDiskCacheSession, isContentDiskCacheEnabled } from './content-cache'
 import { createHash } from 'node:crypto'
-import fg from 'fast-glob'
+import { glob } from 'node:fs/promises'
 import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
+
+async function globCollectionFiles(dir: string, pattern: string): Promise<string[]> {
+	const matched = await Array.fromAsync(glob(pattern, { cwd: dir }))
+	return matched.map(file => path.resolve(dir, file)).sort((a, b) => a.localeCompare(b))
+}
 
 /** Load one collection: glob files in directory, parse frontmatter, validate schema, apply transform. */
 async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>(
@@ -28,7 +33,8 @@ async function loadCollectionAsync<TSchema extends Record<string, any>, TOutput>
 ): Promise<{ documents: TOutput[]; schemaIssues: ContentSchemaIssue[] }> {
 	const dir = path.resolve(root, config.directory)
 	const pattern = config.include || '**/*.md'
-	const files = (await fg(pattern, { cwd: dir, absolute: true })).sort((a, b) => a.localeCompare(b))
+	const matched = await globCollectionFiles(dir, pattern)
+	const files = matched
 
 	const documents: TOutput[] = []
 	const schemaIssues: ContentSchemaIssue[] = []
@@ -154,7 +160,7 @@ export async function loadSingleFile(
 		for (const collection of config.collections) {
 			const dir = path.resolve(root, collection.directory)
 			const pattern = collection.include || '**/*.md'
-			const files = await fg(pattern, { cwd: dir, absolute: true })
+			const files = await globCollectionFiles(dir, pattern)
 			if (!files.includes(absolutePath)) continue
 
 			if (collection.schema) {

@@ -1,4 +1,4 @@
-import { DIRECTIVE_PARITY_SCENARIOS } from '@aero-js/diagnostics/parity'
+import { DIRECTIVE_PARITY_SCENARIOS } from '../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { describe, expect, it } from 'vitest'
 import prettier from 'prettier'
 import plugin from '../index.js'
@@ -15,17 +15,18 @@ const baseOptions = {
 
 describe('directive parity — prettier surface', () => {
 	for (const scenario of DIRECTIVE_PARITY_SCENARIOS) {
-		if (!scenario.prettier) continue
+		const prettierExpectation = scenario.prettier
+		if (!prettierExpectation) continue
 
 		it(`${scenario.id}: ${scenario.description}`, async () => {
 			const output = await prettier.format(scenario.html, {
 				...baseOptions,
-				aeroAttributePrefix: scenario.prettier.aeroAttributePrefix,
+				aeroAttributePrefix: prettierExpectation.aeroAttributePrefix,
 			})
-			for (const fragment of scenario.prettier.mustContain ?? []) {
+			for (const fragment of prettierExpectation.mustContain ?? []) {
 				expect(output).toContain(fragment)
 			}
-			for (const fragment of scenario.prettier.mustNotContain ?? []) {
+			for (const fragment of prettierExpectation.mustNotContain ?? []) {
 				expect(output).not.toContain(fragment)
 			}
 		})

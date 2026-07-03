@@ -116,7 +116,7 @@ Many libraries ship an **ESM build** on the CDN (e.g. Alpine's `module.esm.min.j
 
 ```typescript
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	vite: {
@@ -181,7 +181,7 @@ Demo: [examples/import-bundling/cdn-externals](../examples/import-bundling/cdn-e
 
 ```typescript
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	vite: {

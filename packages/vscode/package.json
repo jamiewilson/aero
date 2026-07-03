@@ -39,13 +39,11 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
-		"@aero-js/config": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
-		"@volar/vscode": "~2.4.28",
-		"jiti": "^2.7.0"
+		"@volar/vscode": "~2.4.28"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
@@ -99,12 +97,7 @@
 				"aero.debug": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
-				},
-				"aero.diagnostics.regexUndefinedVariables": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "When false (default), skip regex-based “undefined variable in `{ }`” diagnostics — rely on the Volar language server and `aero check --types` for expression typing. Enable only if you need the legacy heuristic without the LS."
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML\u2192Aero language switching decisions."
 				}
 			}
 		},

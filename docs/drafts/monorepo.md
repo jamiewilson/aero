@@ -10,12 +10,10 @@ aero/
 ├── pnpm-workspace.yaml
 ├── packages/
 │   ├── compiler/          # Standalone template compiler (@aero-js/compiler)
-│   ├── core/             # Framework: codegen, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
+│   ├── core/             # Framework: codegen, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/core/vite)
 │   ├── vscode/           # VS Code extension
 │   ├── create/            # Project initializer (@aero-js/create)
-│   ├── starters/
-│   │   ├── minimal/       # Static starter template (@aero-js/starter-minimal)
-│   │   └── fullstack/     # Nitro starter template (@aero-js/starter-fullstack)
+│   │   └── templates/     # Bundled minimal and fullstack starter templates
 ├── examples/
 │   └── kitchen-sink/      # Full demo app (@aero-js/example-kitchen-sink)
 │       ├── frontend/      # Or client/; pages, components, layouts, assets (per aero.config dirs)
@@ -49,14 +47,17 @@ aero/
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
 - **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `examples/kitchen-sink/vite.config.ts` imports `createViteConfig` from `@aero-js/config/vite` and depends on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
+- **Consumption:** `examples/kitchen-sink/vite.config.ts` imports `createViteConfig` from `@aero-js/core/vite-config` and depends on `@aero-js/core` (and optionally `@aero-js/content`).
 - **Exports (package.json):**
   - `@aero-js/core` → main entry and types
-  - `@aero-js/vite` → Vite plugin (re-exports from core)
+  - `@aero-js/core/vite` → Vite plugin
+  - `@aero-js/core/config` → `defineConfig`, `loadAeroConfig`, config types
+  - `@aero-js/core/vite-config` → `createViteConfig`, `getDefaultOptions`
   - `@aero-js/core/runtime`, `@aero-js/core/runtime/standalone`, `@aero-js/core/runtime/instance` → runtime
+  - `@aero-js/core/compile-check` → Node-only template compile checks
   - `@aero-js/core/types` → TypeScript types
 - **Key directories:**
-  - `codegen/` — Aero-specific codegen that wraps @aero-js/compiler; tests in `codegen/__tests__/`
+  - `config/` — Aero config loading and Vite config factory (formerly `@aero-js/config`)
   - `vite/` — plugin entry, build orchestration, defaults; tests in `vite/__tests__/`
   - `runtime/` — Aero class, instance context, client entry
   - `utils/` — aliases (tsconfig path loading), routing
@@ -79,13 +80,13 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## packages/vscode
 
-- **Purpose:** [VS Code / Cursor extension](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode) for Aero templates: TextMate grammars, **Volar** language service (completions, diagnostics, go-to-definition), stable **`AeroDiagnosticCode`** values with doc links, palette command **Aero: Run check**, and settings such as **`aero.scopeMode`** and **`aero.diagnostics.regexUndefinedVariables`**.
+- **Purpose:** [VS Code / Cursor extension](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode) for Aero templates: TextMate grammars, **Volar** language service (completions, diagnostics, go-to-definition), stable **`AeroDiagnosticCode`** values with doc links, palette command **Aero: Run check**, and settings such as **`aero.scopeMode`**.
 - **Contents:** `package.json`, `syntaxes/`, `src/`, README. Separate from the core framework; not required for build or dev. User-facing details: [packages/vscode/README.md](../packages/vscode/README.md).
 
 ## packages/create (@aero-js/create)
 
-- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published. Depends on the starter packages under `packages/starters/`.
-- **No app source** in create; starters live in `packages/starters/` and are copied from node_modules.
+- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published.
+- **Templates:** Bundled under `packages/create/templates/` (`minimal`, `fullstack`); copied at scaffold time — not separate npm packages.
 
 ## examples/kitchen-sink (demo app)
 
@@ -94,12 +95,12 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 - **Path aliases:** Defined in `examples/kitchen-sink/tsconfig.json`; the Aero resolver merges these with framework defaults when resolving component/layout imports in HTML.
 - **Server:** When `server: true`, Aero generates `.aero/nitro.config.mjs` and extends the app's root `nitro.config.ts` when present. API stays in backend/ (or server/), routes in backend/routes.
 
-## packages/starters/minimal
+## packages/create/templates/minimal
 
 - **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm create @aero-js <name>` by default.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
 
-## packages/starters/fullstack
+## packages/create/templates/fullstack
 
 - **Purpose:** Nitro-enabled starter template. Includes root `nitro.config.ts`, `server/` routes, `server/plugins/`, `server/tasks/`, `server/entry.ts`, and `preview:api`.
 - **Structure:** `client/`, `content/site.ts`, `server/`, `server/plugins/`, `server/tasks/`, `server/entry.ts`, `nitro.config.ts`.
@@ -107,7 +108,7 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 ## Build and test flow
 
 1. **Install:** `pnpm install` (pnpm workspace installs root + packages).
-2. **Build framework:** Root `pnpm build` builds packages (interpolation, highlight, core, content, config, vite) in order.
+2. **Build framework:** Root `pnpm build` builds published packages (interpolation, compiler, core, content, cli, create, etc.).
 3. **Dev:** Run from **examples/kitchen-sink** (e.g. `pnpm --dir examples/kitchen-sink dev` or `cd examples/kitchen-sink && pnpm dev`). Root has no dev script.
 4. **Build app:** Run from the app directory (e.g. `pnpm --dir examples/kitchen-sink build`). Output to that app's dist/ (or custom build dir) and `.output/` when server is enabled.
 5. **Tests:** `pnpm test` from repo root runs Vitest (packages/core compiler and vite tests).
@@ -137,7 +138,7 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 ## Summary
 
-- **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). `packages/vite` re-exports the plugin as `@aero-js/vite`; core also exports it as `@aero-js/core/vite`.
+- **Framework code** lives in `packages/core` (runtime, Vite plugin, config helpers, compile-check). Config and the Vite plugin are subpath exports — `@aero-js/config` and `@aero-js/vite` packages were removed.
 - **Demo app** is `examples/kitchen-sink`; run dev/build/preview from that directory. Root has no app dev script.
-- **@aero-js/create** lives in `packages/create`; scaffolds from `packages/starters/minimal`.
+- **@aero-js/create** lives in `packages/create`; scaffolds from bundled templates under `packages/create/templates/`.
 - **Path conventions** use `client/` and `content/` by default (or custom dirs via aero.config, e.g. frontend/, backend/).

@@ -13,6 +13,12 @@ import {
 
 export type RuntimeReadCompiler = (expr: string, store: SignalStore) => () => unknown
 
+function setInnerHtml(node: ParentNode, html: string): void {
+	if (node instanceof Element) {
+		node.innerHTML = html
+	}
+}
+
 /** @internal Eval-based reader for unsafeProcessFragment only. */
 export function compileUnsafeRuntimeRead(expr: string, store: SignalStore): () => unknown {
 	const code = expr.replace(/\$(\w+(?:\.\w+)*)/g, (_, path: string) => {
@@ -114,7 +120,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 					comparandExprs: [`__aeroCase_${caseIndex}`],
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
-						branchRoot.innerHTML = child.innerHTML
+						setInnerHtml(branchRoot, child.innerHTML)
 						return processNested(branchRoot)
 					},
 				})
@@ -123,7 +129,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 				defaultBranch = {
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
-						branchRoot.innerHTML = child.innerHTML
+						setInnerHtml(branchRoot, child.innerHTML)
 						return processNested(branchRoot)
 					},
 				}
@@ -167,7 +173,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 					conditionExpr: `__aeroWhen_${branchIndex}`,
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
-						branchRoot.innerHTML = child.innerHTML
+						setInnerHtml(branchRoot, child.innerHTML)
 						return processNested(branchRoot)
 					},
 				})
@@ -176,7 +182,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 					conditionExpr: null,
 					renderHtml: () => child.innerHTML,
 					mountBranch: branchRoot => {
-						branchRoot.innerHTML = child.innerHTML
+						setInnerHtml(branchRoot, child.innerHTML)
 						return processNested(branchRoot)
 					},
 				})
@@ -230,7 +236,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 						key: String(keyRead()),
 						renderHtml: () => rowHtml,
 						mountRow: rowRoot => {
-							rowRoot.innerHTML = rowHtml
+							setInnerHtml(rowRoot, rowHtml)
 							return processNested(rowRoot)
 						},
 					}

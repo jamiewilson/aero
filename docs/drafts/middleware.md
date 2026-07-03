@@ -9,7 +9,7 @@ Use the **`redirects`** config for path → URL redirects that should work in **
 **aero.config.ts:**
 
 ```ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	site: { url: 'https://example.com' },
@@ -42,10 +42,10 @@ During `pnpm run build`, the plugin discovers all pages and renders each once; n
 
 ## Configuration
 
-**With @aero-js/config (aero.config.ts):**
+**With @aero-js/core/config (aero.config.ts):**
 
 ```ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 import type { AeroMiddleware } from '@aero-js/core/types'
 
 // Option A: block body — use explicit `return` so all code paths return (satisfies noImplicitReturns)
@@ -69,7 +69,7 @@ export default defineConfig({
 **With the Vite plugin directly:**
 
 ```ts
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 function redirectOldPath(ctx) {
 	if (ctx.routePath === '/old-page') {

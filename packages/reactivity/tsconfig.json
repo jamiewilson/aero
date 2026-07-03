@@ -6,8 +6,8 @@
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"strict": true,
 		"skipLibCheck": true,
-		"rootDir": "src",
-		"outDir": "dist"
+		"types": ["node"],
+		"noEmit": true
 	},
-	"include": ["src/**/*.ts", "src/**/__tests__/*.ts"]
+	"include": ["src/**/*.ts", "../hypermedia/src/idiomorph.d.ts"]
 }

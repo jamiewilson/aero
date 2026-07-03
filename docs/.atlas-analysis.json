@@ -74,9 +74,9 @@
 	],
 	"publicApiSurface": [
 		"pnpm create @aero-js (project scaffolding)",
-		"aero() — Vite plugin from @aero-js/vite",
-		"defineConfig() — from @aero-js/config",
-		"createViteConfig() — from @aero-js/config/vite",
+		"aero() — Vite plugin from @aero-js/core/vite",
+		"defineConfig() — from @aero-js/core/config",
+		"createViteConfig() — from @aero-js/core/vite-config",
 		"Aero.props — read component props in build scripts",
 		"Aero.page.params — dynamic route parameters",
 		"Aero.page.url — current page URL object",

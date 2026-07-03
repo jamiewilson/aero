@@ -124,51 +124,6 @@ interface StaticBuildOptions {
 	resolvedConfig?: ResolvedConfig
 }
 
-/**
- * Internal service boundary for prerender scheduling + interruption.
- * Keeps Effect orchestration behind a small adapter so call sites stay declarative.
- */
-interface StaticPrerenderServices {
-	runForEach<T>(args: {
-		items: readonly T[]
-		concurrency: number
-		signal: AbortSignal
-		worker: (item: T) => Promise<void>
-	}): Promise<void>
-}
-
-function createStaticPrerenderServices(): StaticPrerenderServices {
-	return {
-		runForEach: async <T>({
-			items,
-			concurrency,
-			signal,
-			worker,
-		}: {
-			items: readonly T[]
-			concurrency: number
-			signal: AbortSignal
-			worker: (item: T) => Promise<void>
-		}): Promise<void> => {
-			let index = 0
-			const poolSize = Math.max(1, Math.min(concurrency, items.length || 1))
-			async function runWorker(): Promise<void> {
-				while (true) {
-					if (signal.aborted) {
-						throw new AeroBuildCancelledError({
-							message: 'Static prerender cancelled (SIGINT)',
-						})
-					}
-					const current = index++
-					if (current >= items.length) return
-					await worker(items[current]!)
-				}
-			}
-			await Promise.all(Array.from({ length: poolSize }, () => runWorker()))
-		},
-	}
-}
-
 function trimEdgeSlashes(value: string): string {
 	let start = 0
 	let end = value.length
@@ -178,7 +133,6 @@ function trimEdgeSlashes(value: string): string {
 }
 
 interface RunPrerenderWithCancellationArgs<T> {
-	services: StaticPrerenderServices
 	items: readonly T[]
 	concurrency: number
 	signal: AbortSignal
@@ -186,19 +140,27 @@ interface RunPrerenderWithCancellationArgs<T> {
 }
 
 async function runPrerenderWithCancellation<T>({
-	services,
 	items,
 	concurrency,
 	signal,
 	worker,
 }: RunPrerenderWithCancellationArgs<T>): Promise<void> {
 	try {
-		await services.runForEach({
-			items,
-			concurrency,
-			signal,
-			worker,
-		})
+		let index = 0
+		const poolSize = Math.max(1, Math.min(concurrency, items.length || 1))
+		async function runWorker(): Promise<void> {
+			while (true) {
+				if (signal.aborted) {
+					throw new AeroBuildCancelledError({
+						message: 'Static prerender cancelled (SIGINT)',
+					})
+				}
+				const current = index++
+				if (current >= items.length) return
+				await worker(items[current]!)
+			}
+		}
+		await Promise.all(Array.from({ length: poolSize }, () => runWorker()))
 	} catch (prerenderErr) {
 		if (signal.aborted) {
 			throw new AeroBuildCancelledError({
@@ -890,7 +852,6 @@ export async function renderStaticPages(
 
 		const routeSet = new Set(pagesToRender.map(p => p.routePath))
 		const concurrency = resolveStaticPrerenderConcurrency()
-		const prerenderServices = createStaticPrerenderServices()
 		aeroStaticBuildDebug(
 			`static prerender: using concurrency ${concurrency} (set AERO_STATIC_PRERENDER_CONCURRENCY to override)`
 		)
@@ -903,7 +864,6 @@ export async function renderStaticPages(
 		const tPrerender = Date.now()
 		try {
 			await runPrerenderWithCancellation({
-				services: prerenderServices,
 				items: pagesToPrerender,
 				concurrency,
 				signal: prerenderAbort.signal,
@@ -1077,7 +1037,6 @@ export const __internal = {
 	discoverPages,
 	writeSitemap,
 	resolveStaticPrerenderConcurrency,
-	createStaticPrerenderServices,
 	runPrerenderWithCancellation,
 	trimEdgeSlashes,
 }

@@ -381,12 +381,11 @@ import h from '@components/h.html'
 		})
 	})
 
-	describe('createStaticPrerenderServices', () => {
+	describe('runPrerenderWithCancellation', () => {
 		it('runs worker for each item', async () => {
-			const services = __internal.createStaticPrerenderServices()
 			const seen: number[] = []
 			const abort = new AbortController()
-			await services.runForEach({
+			await __internal.runPrerenderWithCancellation({
 				items: [1, 2, 3],
 				concurrency: 2,
 				signal: abort.signal,
@@ -398,10 +397,9 @@ import h from '@components/h.html'
 		})
 
 		it('propagates worker failures', async () => {
-			const services = __internal.createStaticPrerenderServices()
 			const abort = new AbortController()
 			await expect(
-				services.runForEach({
+				__internal.runPrerenderWithCancellation({
 					items: [1, 2, 3],
 					concurrency: 2,
 					signal: abort.signal,
@@ -411,19 +409,12 @@ import h from '@components/h.html'
 				})
 			).rejects.toThrow('boom')
 		})
-	})
 
-	describe('runPrerenderWithCancellation', () => {
 		it('maps aborted prerender failure to AeroBuildCancelledError', async () => {
 			const abort = new AbortController()
 			abort.abort()
 			await expect(
 				__internal.runPrerenderWithCancellation({
-					services: {
-						runForEach: async () => {
-							throw new Error('interrupted')
-						},
-					},
 					items: [1],
 					concurrency: 1,
 					signal: abort.signal,
@@ -436,15 +427,12 @@ import h from '@components/h.html'
 			const abort = new AbortController()
 			await expect(
 				__internal.runPrerenderWithCancellation({
-					services: {
-						runForEach: async () => {
-							throw new Error('boom')
-						},
-					},
 					items: [1],
 					concurrency: 1,
 					signal: abort.signal,
-					worker: async () => {},
+					worker: async () => {
+						throw new Error('boom')
+					},
 				})
 			).rejects.toThrow('boom')
 		})

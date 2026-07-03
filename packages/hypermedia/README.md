@@ -37,7 +37,7 @@ Action functions are injected into `<script is:state>` mount scope — no manual
 Re-exported from `@aero-js/core`:
 
 ```ts
-import { GET, createHypermediaRuntime } from '@aero-js/core/hypermedia'
+import { GET, createHypermediaRuntime } from '@aero-js/hypermedia'
 ```
 
 ## Documentation

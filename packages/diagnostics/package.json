@@ -27,15 +27,11 @@
 		"./ide-catalog": {
 			"types": "./dist/ide-catalog.d.mts",
 			"default": "./dist/ide-catalog.mjs"
-		},
-		"./parity": {
-			"types": "./dist/parity/index.d.mts",
-			"default": "./dist/parity/index.mjs"
 		}
 	},
 	"scripts": {
 		"gen-templates": "node scripts/embed-templates.mjs",
-		"compile": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts src/parity/index.ts --format esm --dts --clean --out-dir dist",
+		"compile": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
 		"embed-templates": "pnpm gen-templates && pnpm compile",
 		"build": "pnpm embed-templates",
 		"typecheck": "pnpm gen-templates && tsc --noEmit",

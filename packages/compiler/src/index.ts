@@ -39,7 +39,21 @@ export {
 	EVENT_HANDLER_SCOPE_DECL,
 	type TemplateInterpolationSite,
 } from './template-interpolation-sites'
-export { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs'
+export { rewriteHypermediaActionStateRefs, COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE, type RewriteHypermediaActionStateRefsOptions } from './hypermedia-action-state-refs'
+export {
+	HYPERMEDIA_HTTP_METHODS,
+	HYPERMEDIA_SIGNAL_RESOLVER,
+	HYPERMEDIA_EVENT_HANDLER_ACTIONS,
+	HYPERMEDIA_HTTP_METHOD_SET,
+	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
+	HYPERMEDIA_COMPILED_SIGNAL_CALLEE,
+	buildHypermediaActionScopeDecl,
+	type HypermediaHttpMethod,
+} from './event-handler-action-scope'
+export {
+	createEventHandlerActionScope,
+	type EventHandlerActionExecutor,
+} from './create-event-handler-action-scope'
 
 export {
 	collectFeatureGateIssues,

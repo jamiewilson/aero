@@ -15,7 +15,8 @@
 	"files": [
 		"index.js",
 		"lib.js",
-		"README.md"
+		"README.md",
+		"templates"
 	],
 	"type": "module",
 	"scripts": {
@@ -23,10 +24,6 @@
 		"create-aero-js": "node index.js",
 		"test": "vitest run",
 		"prepack": "cp ../../LICENSE ."
-	},
-	"dependencies": {
-		"@aero-js/starter-fullstack": "workspace:*",
-		"@aero-js/starter-minimal": "workspace:*"
 	},
 	"devDependencies": {
 		"vitest": "catalog:"

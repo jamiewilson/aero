@@ -66,7 +66,7 @@ If you rename your top-level directories (for example, using `frontend/` instead
 <CodeGroup>
 
 ```ts aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	dirs: {
@@ -77,7 +77,7 @@ export default defineConfig({
 
 ```ts vite.config.ts (inline)
 import { defineConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 export default defineConfig({
 	plugins: [aero({ dirs: { client: 'frontend' } })],

@@ -22,7 +22,7 @@ pnpm create @aero-js my-app
 # or use dlx (or npx)
 pnpm dlx @aero-js/create@latest my-app
 # add to an existing project
-pnpm add @aero-js/core @aero-js/vite
+pnpm add @aero-js/core @aero-js/core/vite
 ```
 
 ## [The Basics](#the-basics)
@@ -351,7 +351,7 @@ There is no hydration and no framework runtime in the output; you can deploy to 
 
 ## [Configuration](#configuration)
 
-Aero is configured by passing options to the `aero()` Vite plugin. You can do that either directly in `vite.config.ts` or via a separate `aero.config.ts` when using `@aero-js/config`.
+Aero is configured by passing options to the `aero()` Vite plugin. You can do that either directly in `vite.config.ts` or via a separate `aero.config.ts` when using `@aero-js/core/config`.
 
 | Property         | Type                           | Description                                                                                                                                                  |
 | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -370,7 +370,7 @@ Pass options to `aero()` in `vite.config.ts`. Use this when you want everything 
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 export default defineConfig({
 	plugins: [
@@ -386,7 +386,7 @@ export default defineConfig({
 
 ### Using aero.config
 
-Projects that use `createViteConfig()` from `@aero-js/config` (e.g. @aero-js/create and the kitchen-sink example) can put Aero options in a separate **`aero.config.ts`**. The config package loads it, applies framework defaults, and passes the options into the plugin—so you keep `vite.config.ts` minimal and get typed, env-aware config in one place.
+Projects that use `createViteConfig()` from `@aero-js/core/config` (e.g. @aero-js/create and the kitchen-sink example) can put Aero options in a separate **`aero.config.ts`**. The config package loads it, applies framework defaults, and passes the options into the plugin—so you keep `vite.config.ts` minimal and get typed, env-aware config in one place.
 
 **Why use it:** Aero options live in a dedicated file with `defineConfig` for types and autocomplete; you can still override Vite settings via the `vite` key. Config can be a function `(env) => ({ ... })` for different behaviour in dev vs build. If you omit the config argument, `createViteConfig()` auto-loads `aero.config.ts` from the project root.
 
@@ -394,7 +394,7 @@ Projects that use `createViteConfig()` from `@aero-js/config` (e.g. @aero-js/cre
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	site: { url: 'https://example.com' },
@@ -412,7 +412,7 @@ export default defineConfig({
 
 ```ts
 // vite.config.ts
-import { createViteConfig } from '@aero-js/config/vite'
+import { createViteConfig } from '@aero-js/core/vite-config'
 import aeroConfig from './aero.config.ts'
 
 export default createViteConfig(aeroConfig)
@@ -447,13 +447,10 @@ For more documentation, see the `/docs` directory, starting with [index.mdx](htt
 
 ### Links
 
-- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core)
-- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create)
+- [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — includes `@aero-js/core/vite`, `@aero-js/core/config`, and `@aero-js/core/vite-config` subpaths
+- [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — ships minimal and fullstack templates
 - [@aero-js/content](https://www.npmjs.com/package/@aero-js/content)
-- [@aero-js/config](https://www.npmjs.com/package/@aero-js/config)
-- [@aero-js/vite](https://www.npmjs.com/package/@aero-js/vite)
-- [@aero-js/starter-minimal](https://www.npmjs.com/package/@aero-js/starter-minimal)
-- [@aero-js/starter-fullstack](https://www.npmjs.com/package/@aero-js/starter-fullstack)
+- [@aero-js/cli](https://www.npmjs.com/package/@aero-js/cli)
 - [Aero VSCode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
 ### Inspiration

@@ -3,14 +3,14 @@ title: 'Vite Plugin'
 description: 'Configure Aero by passing options to the aero() plugin in your Vite config.'
 ---
 
-Aero integrates with Vite through the `aero()` plugin. You add it to `vite.config.ts` and pass options to enable features like content collections, the Nitro server, redirects, and directory overrides. For projects with more complex configuration, consider using [`@aero-js/config`](/configuration/aero-config) to keep Aero options in a dedicated `aero.config.ts` file.
+Aero integrates with Vite through the `aero()` plugin. You add it to `vite.config.ts` and pass options to enable features like content collections, the Nitro server, redirects, and directory overrides. For projects with more complex configuration, consider using [`@aero-js/core/config`](/configuration/aero-config) to keep Aero options in a dedicated `aero.config.ts` file.
 
 ## Install
 
 <Tabs>
-	<Tab title="pnpm">```bash pnpm add @aero-js/vite ```</Tab>
-	<Tab title="npm">```bash npm install @aero-js/vite ```</Tab>
-	<Tab title="yarn">```bash yarn add @aero-js/vite ```</Tab>
+	<Tab title="pnpm">```bash pnpm add @aero-js/core/vite ```</Tab>
+	<Tab title="npm">```bash npm install @aero-js/core/vite ```</Tab>
+	<Tab title="yarn">```bash yarn add @aero-js/core/vite ```</Tab>
 </Tabs>
 
 ## Configure
@@ -20,7 +20,7 @@ Add `aero()` to the `plugins` array in your `vite.config.ts`:
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 export default defineConfig({
 	plugins: [aero()],
@@ -48,7 +48,7 @@ A `vite.config.ts` with common options enabled:
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 
 export default defineConfig({
 	plugins: [
@@ -69,7 +69,7 @@ export default defineConfig({
 ```
 
 <Note>
-	For projects with more complex configuration needs, use `@aero-js/config` to define options in a
+	For projects with more complex configuration needs, use `@aero-js/core/config` to define options in a
 	separate `aero.config.ts`. This keeps `vite.config.ts` minimal and gives you typed, env-aware
 	config. See [Aero Config](/configuration/aero-config).
 </Note>

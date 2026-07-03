@@ -20,12 +20,10 @@ interface HypermediaSwapLifecycleOperation {
 	processRuntime(element: ParentNode): void
 }
 
-type HypermediaSwapLifecycleAdapter = (
-	operation: HypermediaSwapLifecycleOperation
-) => void | Promise<void>
-
 export interface HypermediaRuntimeWithSwapLifecycle {
-	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
+	setSwapLifecycleAdapter(
+		adapter: ((operation: HypermediaSwapLifecycleOperation) => void | Promise<void>) | null
+	): void
 }
 
 /** True when the Vite/Aero plugin enabled hypermedia for this app build. */

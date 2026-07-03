@@ -13,15 +13,16 @@ The core package of the Aero static site generator. It provides the compiler, ru
 | Export                           | Description                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `@aero-js/core`                  | Default: shared `aero` instance with `mount()` for the client entry.                             |
-| `@aero-js/vite`                  | `aero()` Vite plugin for build and dev. (Re-exported from core.)                                 |
+| `@aero-js/core/config`       | `defineConfig`, `loadAeroConfig`, and Aero config types.                                         |
+| `@aero-js/core/vite-config`  | `createViteConfig`, `getDefaultOptions` for `vite.config.ts`.                                    |
+| `@aero-js/core/vite`         | `aero()` Vite plugin for build and dev.                                                          |
 | `@aero-js/core/runtime`          | `Aero` class for programmatic rendering.                                                         |
 | `@aero-js/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR.                                                   |
 | `@aero-js/core/types`            | Shared TypeScript types.                                                                         |
-| `@aero-js/core/diagnostics`      | Re-exports `@aero-js/diagnostics` (`AeroDiagnostic`, formatters, mappers).                       |
 | `@aero-js/core/compile-check`    | **Node-only:** `compileTemplate` for tooling (e.g. `aero check`). Do not use in browser bundles. |
-| `@aero-js/core/reactivity`       | Re-exports `@aero-js/reactivity` when opt-in reactivity is enabled.                              |
-| `@aero-js/core/hypermedia`       | Re-exports `@aero-js/hypermedia` when opt-in hypermedia is enabled.                              |
 | `@aero-js/core/utils/aliases`    | `loadTsconfigAliases`, `mergeWithDefaultAliases`, `jitiAliasRecordFromProject`, `resolveDirs`.   |
+
+For diagnostics, reactivity, and hypermedia, import `@aero-js/diagnostics`, `@aero-js/reactivity`, and `@aero-js/hypermedia` directly.
 
 ## Script taxonomy
 
@@ -71,20 +72,20 @@ const html = await aero.render('index', { props: { title: 'Home' } })
 
 ### Vite plugin
 
-- **Plugin** from `@aero-js/vite`: `aero(options?)`. Options: `server`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
+- **Plugin** from `@aero-js/core/vite`: `aero(options?)`. Options: `server`, `apiPrefix`, `dirs`, `site` (canonical URL; exposed as `import.meta.env.SITE` and `Aero.site`; when set, generates `dist/sitemap.xml` after build).
 - Sub-plugins: config resolution, virtual client modules (`\0`-prefixed), HTML transform, SSR middleware, HMR.
 - Build: page discovery, static render, optional Nitro build, optional image optimizer (sharp/svgo).
 
 **Example**
 
 ```js
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 export default {
 	plugins: [aero({ server: true })],
 }
 ```
 
-Apps typically use `createViteConfig` from `@aero-js/config/vite` with `defineConfig` from `@aero-js/config` in `aero.config.ts`, which wires the Aero plugin for them.
+Apps typically use `createViteConfig` from `@aero-js/core/vite-config` with `defineConfig` from `@aero-js/core/config` in `aero.config.ts`, which wires the Aero plugin for them.
 
 ### Client entry
 
@@ -119,6 +120,7 @@ Template compilation lives in **`@aero-js/compiler`**; this package integrates i
 ```
 src/
   vite/         # aero() plugin, static build, build manifest, SSR helpers
+  config/       # defineConfig, loadAeroConfig, createViteConfig
   runtime/      # Aero class, instance, client entry helpers
   utils/        # aliases, routing
   compile-check-api.ts   # re-exports for aero check

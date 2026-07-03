@@ -8,8 +8,6 @@ export type {
 	HypermediaRequest,
 	HypermediaResponse,
 	HypermediaSignalStore,
-	HypermediaSwapLifecycleAdapter,
-	HypermediaSwapLifecycleOperation,
 	SwapOperation,
 } from './types'
 
@@ -50,13 +48,13 @@ export {
 	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
 	HYPERMEDIA_COMPILED_SIGNAL_CALLEE,
 	buildHypermediaActionScopeDecl,
-} from './event-handler-action-scope'
+} from '@aero-js/compiler/event-handler-action-scope'
 export {
 	rewriteHypermediaActionStateRefs,
 	COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
 	type RewriteHypermediaActionStateRefsOptions,
-} from './action-state-refs'
+} from '@aero-js/compiler/hypermedia-action-state-refs'
 export {
 	createEventHandlerActionScope,
 	type EventHandlerActionExecutor,
-} from './create-event-handler-action-scope'
+} from '@aero-js/compiler/create-event-handler-action-scope'

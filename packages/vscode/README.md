@@ -27,7 +27,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 - **Project-only activation**
   - The extension only switches `.html`/`.htm` files to the `aero` language inside detected Aero projects.
-  - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/config`, `@aero-js/vite`, or `@aero-js/*` deps).
+  - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/core/config`, `@aero-js/core/vite`, or `@aero-js/*` deps).
 
 - **Cache invalidation**
   - Caches cleared when relevant project files change (`tsconfig.json`, `package.json`, `vite.config.*`, `aero.config.*`).
@@ -65,8 +65,6 @@ Plain HTML files outside detected Aero projects are left untouched.
 In VS Code settings, search for **Aero**:
 
 - **aero.debug** — Default **`false`**. When enabled, writes project-detection and language-switch decisions to the **Aero** Output channel.
-
-- **aero.diagnostics.regexUndefinedVariables** — Default **`false`**. When **`false`**, the extension does **not** run regex-based “undefined variable inside `{ }`” diagnostics; use the Volar language server and, for CI, **`aero check --types`** for expression typing. Set to **`true`** only if you need that legacy heuristic without relying on the language server.
 
 ## Development
 

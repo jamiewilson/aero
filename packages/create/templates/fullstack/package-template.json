@@ -1,0 +1,22 @@
+{
+	"name": "<name>",
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "AERO_SERVER=false vite build && vite preview",
+		"preview:api": "vite build && node .output/server/index.mjs",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check ."
+	},
+	"dependencies": {
+		"@aero-js/core": "<version>"
+	},
+	"devDependencies": {
+		"nitro": "^3.0.0",
+		"vite": "^8.1.0",
+		"prettier": "^3.8.4",
+		"@aero-js/prettier-plugin-aero": "<version>"
+	}
+}

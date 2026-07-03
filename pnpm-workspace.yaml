@@ -1,6 +1,5 @@
 packages:
   - 'packages/*'
-  - 'packages/starters/*'
   - 'packages/create/dist/*'
   - 'examples/*'
   - 'examples/import-bundling/*'

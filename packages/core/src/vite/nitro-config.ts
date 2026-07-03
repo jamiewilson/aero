@@ -1,10 +1,9 @@
 import type { RedirectRule } from '../types'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import path from 'node:path'
 import { redirectsToRouteRules } from '../utils/redirects'
-
-const require = createRequire(import.meta.url)
+import { loadProjectModule } from '../utils/load-project-module'
+import { toPosix } from '../utils/path'
 
 const NITRO_CONFIG_NAMES = [
 	'nitro.config.ts',
@@ -48,20 +47,16 @@ function isRelativePath(value: string): boolean {
 	return value.startsWith('./') || value.startsWith('../')
 }
 
-function toPosixModulePath(value: string): string {
-	return value.replace(/\\/g, '/')
-}
-
 function normalizeRelativeModulePath(value: unknown, configDir: string): unknown {
 	if (typeof value !== 'string' || !isRelativePath(value)) return value
-	return toPosixModulePath(path.resolve(configDir, value))
+	return toPosix(path.resolve(configDir, value))
 }
 
 function normalizeScanDirs(scanDirs: unknown, configDir: string): string[] {
 	if (!Array.isArray(scanDirs)) return []
 	return scanDirs.map(entry => {
 		if (typeof entry !== 'string' || !isRelativePath(entry)) return entry
-		return toPosixModulePath(path.resolve(configDir, entry))
+		return toPosix(path.resolve(configDir, entry))
 	})
 }
 
@@ -142,11 +137,9 @@ export function loadProjectNitroConfigDetailed(root: string): LoadProjectNitroCo
 	if (!filePath) return { ok: false, reason: 'not-found' }
 
 	try {
-		const jiti = require('jiti')(root, { esmResolve: true })
-		const mod = jiti('./' + path.basename(filePath))
-		const config = mod?.default ?? mod
+		const config = loadProjectModule<NitroConfigObject>(root, './' + path.basename(filePath))
 		if (config && typeof config === 'object' && !Array.isArray(config)) {
-			return { ok: true, filePath, config: config as NitroConfigObject }
+			return { ok: true, filePath, config }
 		}
 		return { ok: false, reason: 'invalid-export', filePath }
 	} catch (error) {
