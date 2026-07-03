@@ -15,6 +15,7 @@ interface HypermediaSwapLifecycleOperation {
 	style: string
 	trigger?: Element
 	targetSelector: string
+	insertedRoots: readonly Element[]
 	performSwap(): void
 	processRuntime(element: ParentNode): void
 }
@@ -82,7 +83,8 @@ function processAfterSwap(operation: HypermediaSwapLifecycleOperation): void {
 		operation.target,
 		operation.style as SwapStyle,
 		operation.targetSelector,
-		operation.target.ownerDocument ?? document
+		operation.target.ownerDocument ?? document,
+		operation.insertedRoots
 	)
 	operation.processRuntime(element)
 }

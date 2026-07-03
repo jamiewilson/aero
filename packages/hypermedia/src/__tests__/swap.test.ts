@@ -63,15 +63,35 @@ describe('resolveSwapProcessContainer', () => {
 	it('returns the replacement node after outerHTML swaps', () => {
 		const { container, target } = createContainer()
 		document.body.append(container)
-		performSwap({
+		const inserted = performSwap({
 			target,
 			html: '<div id="target"><button>next</button></div>',
 			style: 'outerHTML',
 		})
-		const processTarget = resolveSwapProcessContainer(target, 'outerHTML', '#target', container)
+		const processTarget = resolveSwapProcessContainer(target, 'outerHTML', '#target', container, inserted)
 		expect(target.isConnected).toBe(false)
 		expect(processTarget).toBe(container.querySelector('#target'))
 		expect(processTarget).not.toBe(target)
+	})
+
+	it('returns inserted node when outerHTML changes the id', () => {
+		const { container, target } = createContainer()
+		document.body.append(container)
+		const inserted = performSwap({
+			target,
+			html: '<span id="fragment-status">replaced</span>',
+			style: 'outerHTML',
+		})
+		const processTarget = resolveSwapProcessContainer(
+			target,
+			'outerHTML',
+			'#target',
+			container,
+			inserted
+		)
+		expect(target.isConnected).toBe(false)
+		expect(processTarget).toBe(container.querySelector('#fragment-status'))
+		expect(processTarget).not.toBe(document.body)
 	})
 })
 
