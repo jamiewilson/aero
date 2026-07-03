@@ -340,5 +340,3 @@ export class AeroReactivity {
 		this.store.destroy()
 	}
 }
-
-export { bindReactiveIf, bindKeyedFor, bindReactiveSwitch, type ReactiveIfBranchSpec }

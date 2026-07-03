@@ -8,8 +8,6 @@
 			"@aero-js/core/utils/aliases": ["../core/dist/utils/aliases.d.mts"]
 		},
 		"lib": ["ES2020"],
-		"outDir": "dist",
-		"rootDir": "src",
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
@@ -17,7 +15,8 @@
 		"resolveJsonModule": true,
 		"declaration": false,
 		"sourceMap": true,
-		"types": ["node", "vscode"]
+		"types": ["node", "vscode"],
+		"noEmit": true
 	},
 	"include": ["src/**/*.ts", "src/**/*.d.ts", "../html-parser/src/**/*.d.ts"],
 	"exclude": ["node_modules", "dist", "src/server.ts"]

@@ -77,7 +77,7 @@ describe('runtime perf stress', () => {
 		}
 
 		const cleanup = processFragment({ element: host, store })
-		store.get<string>('note').value = 'updated'
+		store.merge({ note: 'updated' })
 		expect(host.textContent).toBe('updated')
 		cleanup()
 	})

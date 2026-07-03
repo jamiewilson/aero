@@ -42,6 +42,8 @@ const setItems = next => withTransition(() => (items = next))`
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
 			{
 				specifier: 'x',
+				defaultBinding: null,
+				namespaceBinding: null,
 				namedBindings: [{ imported: 'withTransition', local: 'withTransition' }],
 			},
 		])
@@ -73,7 +75,12 @@ async function appendItemFn() {
 }`
 		const analysis = analyzeStateScript(script)
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
-			{ specifier: 'x', namedBindings: [{ imported: 'GET', local: 'GET' }] },
+			{
+				specifier: 'x',
+				defaultBinding: null,
+				namespaceBinding: null,
+				namedBindings: [{ imported: 'GET', local: 'GET' }],
+			},
 		])
 		expect(scopeFunctions[0]!.installSource).toMatch(
 			/^scope\.appendItemFn = async function\(\) \{[\s\S]*scope\.itemCount\+\+/
@@ -105,6 +112,8 @@ const appendItem = async () => {
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
 			{
 				specifier: '@aero-js/hypermedia',
+				defaultBinding: null,
+				namespaceBinding: null,
 				namedBindings: [{ imported: 'GET', local: 'GET' }],
 			},
 		])

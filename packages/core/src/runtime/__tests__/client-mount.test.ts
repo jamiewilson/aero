@@ -17,6 +17,7 @@ type TestSwapLifecycleOperation = {
 	html: string
 	style: string
 	targetSelector: string
+	insertedRoots: readonly Element[]
 	performSwap(): void
 	processRuntime(element: ParentNode): void
 }
@@ -45,6 +46,7 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 				html,
 				style,
 				targetSelector,
+				insertedRoots: [target],
 				performSwap() {
 					hypermediaPerformSwap({ target, html, style: style as never })
 				},

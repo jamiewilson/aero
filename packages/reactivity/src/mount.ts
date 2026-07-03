@@ -471,6 +471,7 @@ function mountBindingSubset(
 		| 'hypermediaTriggerRef'
 		| 'componentBinds'
 		| 'Aero'
+		| 'allowLegacyRuntimeCompile'
 	>
 ): Cleanup[] {
 	const cleanups: Cleanup[] = []
@@ -493,7 +494,6 @@ function mountBindingSubset(
 		hypermediaRuntime: options.hypermediaRuntime,
 		hypermediaTriggerRef: options.hypermediaTriggerRef,
 		Aero: options.Aero,
-		allowLegacyRuntimeCompile: options.allowLegacyRuntimeCompile,
 		scope,
 	}
 	cleanups.push(mountStateBindings(subsetOptions))
@@ -759,6 +759,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		if (!anchor) {
 			throw new Error(`[aero] Missing reactive switch anchor: ${bind.selector}`)
 		}
+		const defaultBranch = bind.default
 		cleanups.push(
 			bindReactiveSwitch({
 				anchor,
@@ -779,15 +780,15 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 						}
 					},
 				})),
-				...(bind.default
+				...(defaultBranch
 					? {
 							defaultBranch: {
-								renderHtml: () => bind.default.render(options.Aero),
+								renderHtml: () => defaultBranch.render(options.Aero),
 								mountBranch: branchRoot => {
 									const subsetCleanups = mountBindingSubset(
 										branchRoot,
 										scope,
-										bind.default!.mounts,
+										defaultBranch.mounts,
 										{ ...options, hypermediaTriggerRef }
 									)
 									return () => {

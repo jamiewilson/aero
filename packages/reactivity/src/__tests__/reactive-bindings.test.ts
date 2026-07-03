@@ -310,7 +310,7 @@ describe('AeroReactivity.process', () => {
 		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
 		const cleanup = processFragment({ element: host, store })
 		expect(host.textContent).toBe('hello')
-		store.get<boolean>('showNote').value = false
+		store.merge({ showNote: false })
 		expect(host.querySelector('p')?.style.display).toBe('none')
 		cleanup()
 	})
@@ -328,7 +328,7 @@ describe('AeroReactivity.process', () => {
 		`
 		const cleanup = processFragment({ element: host, store })
 		expect(host.querySelector('#loading')).not.toBeNull()
-		store.get<string>('status').value = 'ready'
+		store.merge({ status: 'ready' })
 		expect(host.querySelector('#ready')).not.toBeNull()
 		cleanup()
 	})
