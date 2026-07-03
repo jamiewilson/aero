@@ -11,6 +11,7 @@ import {
 	compileUnsafeRuntimeRead,
 	type RuntimeReadCompiler,
 	wireProcessStructuralBindings,
+	isCompiledBindMarker,
 } from './process-structural'
 import { parseRestrictedStoreRef } from './restricted-runtime-read'
 
@@ -230,6 +231,7 @@ function runProcessFragment(
 			const name = attr.name
 
 			if (name === 'data-aero-text' && attr.value) {
+				if (isCompiledBindMarker(attr.value) && !el.hasAttribute('data-aero-text-expr')) continue
 				const expr = el.getAttribute('data-aero-text-expr') ?? attr.value
 				const cleanup = handlers.find(h => h.name === 'text')?.setup(el, {
 					expression: expr.startsWith('$') ? expr : `$${expr}`,

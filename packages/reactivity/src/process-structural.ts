@@ -38,7 +38,7 @@ function isTemplateLike(node: unknown): node is HTMLTemplateElement {
 	return isElementLike(node) && 'innerHTML' in node && (node as Element).tagName === 'TEMPLATE'
 }
 
-function isCompiledBindMarker(value: string | null): boolean {
+export function isCompiledBindMarker(value: string | null): boolean {
 	return value != null && /^\d+$/.test(value.trim())
 }
 

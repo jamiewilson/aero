@@ -312,15 +312,19 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		trigger?: Element
 		targetSelector: string
 	}): Promise<void> {
+		let insertedRoots: readonly Element[] = []
 		const operation = {
 			target: options.target,
 			html: options.html,
 			style: options.style,
 			trigger: options.trigger,
 			targetSelector: options.targetSelector,
+			get insertedRoots() {
+				return insertedRoots
+			},
 			performSwap() {
 				const applyFocusFallback = createFocusFallback(options.target)
-				performSwap({ target: options.target, html: options.html, style: options.style })
+				insertedRoots = performSwap({ target: options.target, html: options.html, style: options.style })
 				applyFocusFallback()
 			},
 			processRuntime(element: ParentNode) {
@@ -339,7 +343,8 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 				options.target,
 				options.style,
 				options.targetSelector,
-				options.target.ownerDocument ?? document
+				options.target.ownerDocument ?? document,
+				insertedRoots
 			)
 		)
 	}

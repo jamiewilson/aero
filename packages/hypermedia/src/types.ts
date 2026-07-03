@@ -68,6 +68,7 @@ export interface SwapOperation {
 export interface HypermediaSwapLifecycleOperation extends SwapOperation {
 	trigger?: Element
 	targetSelector: string
+	insertedRoots: readonly Element[]
 	performSwap(): void
 	processRuntime(element: ParentNode): void
 }
