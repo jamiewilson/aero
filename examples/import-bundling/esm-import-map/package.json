@@ -12,7 +12,6 @@
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
-		"@aero-js/vite": "workspace:*",
 		"alpinejs": "^3.15.12",
 		"htmx.org": "^2.0.10"
 	},

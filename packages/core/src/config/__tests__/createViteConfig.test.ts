@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 const aeroSpy = vi.fn(() => ({ name: 'aero-plugin' }))
 const aeroContentSpy = vi.fn(() => ({ name: 'aero-content-plugin' }))
 
-vi.mock('@aero-js/vite', () => ({
+vi.mock('../../vite/index', () => ({
 	aero: (options: unknown) => aeroSpy(options),
 }))
 

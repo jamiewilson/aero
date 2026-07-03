@@ -68,7 +68,7 @@ describe('scope', () => {
 
 	describe('shouldSwitchToAeroLanguage', () => {
 		it('switches html files in a detected Aero project', async () => {
-			setFile('/workspace/apps/site/vite.config.ts', "import { aero } from '@aero-js/vite'")
+			setFile('/workspace/apps/site/vite.config.ts', "import { aero } from '@aero-js/core/vite'")
 			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
 			clearScopeCache()
 

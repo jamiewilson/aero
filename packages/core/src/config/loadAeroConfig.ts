@@ -2,8 +2,8 @@
  * Load aero.config.ts or aero.config.js from a project root (sync via jiti).
  * Used when createViteConfig() is called with no config so the app can use a single vite.config.
  */
-import { AERO_CONFIG_NAMES } from '@aero-js/core/utils/aero-config'
-import { loadProjectModule } from '@aero-js/core/utils/load-project-module'
+import { AERO_CONFIG_NAMES } from '../utils/aero-config'
+import { loadProjectModule } from '../utils/load-project-module'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import type { AeroConfig, AeroConfigFunction } from './types'

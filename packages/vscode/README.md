@@ -27,7 +27,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
 
 - **Project-only activation**
   - The extension only switches `.html`/`.htm` files to the `aero` language inside detected Aero projects.
-  - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/config`, `@aero-js/vite`, or `@aero-js/*` deps).
+  - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/core/config`, `@aero-js/core/vite`, or `@aero-js/*` deps).
 
 - **Cache invalidation**
   - Caches cleared when relevant project files change (`tsconfig.json`, `package.json`, `vite.config.*`, `aero.config.*`).

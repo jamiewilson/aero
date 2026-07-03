@@ -2,7 +2,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { getAeroAnalyzerEntryGlobs, listAeroTemplatePaths } from '../analyzer-entries'
-import type { AeroConfig } from '@aero-js/config'
+import type { AeroConfig } from '@aero-js/core/config'
 
 describe('getAeroAnalyzerEntryGlobs', () => {
 	it('uses default client/server dirs when config empty', () => {

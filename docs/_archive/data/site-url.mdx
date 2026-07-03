@@ -10,7 +10,7 @@ Sitemaps, RSS feeds, canonical `<link>` tags, and Open Graph metadata all need a
 <Tabs>
   <Tab title="aero.config.ts">
     ```ts
-    import { defineConfig } from '@aero-js/config'
+    import { defineConfig } from '@aero-js/core/config'
 
     export default defineConfig({
       content: true,
@@ -23,7 +23,7 @@ Sitemaps, RSS feeds, canonical `<link>` tags, and Open Graph metadata all need a
   <Tab title="vite.config.ts">
     ```ts
     import { defineConfig } from 'vite'
-    import { aero } from '@aero-js/vite'
+    import { aero } from '@aero-js/core/vite'
 
     export default defineConfig({
       plugins: [

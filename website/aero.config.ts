@@ -1,4 +1,4 @@
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	site: {

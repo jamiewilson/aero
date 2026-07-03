@@ -30,8 +30,7 @@
 		"prepack": "cp ../../../LICENSE ."
 	},
 	"dependencies": {
-		"@aero-js/core": "workspace:*",
-		"@aero-js/vite": "workspace:*"
+		"@aero-js/core": "workspace:*"
 	},
 	"devDependencies": {
 		"vite": "catalog:"

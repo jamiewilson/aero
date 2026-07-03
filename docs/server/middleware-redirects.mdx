@@ -22,7 +22,7 @@ Use `redirects` when you want a path-to-URL redirect that works in dev and stays
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	site: { url: 'https://example.com' },
@@ -61,7 +61,7 @@ Use `middleware` for request-time logic that only needs to run during developmen
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 import type { AeroMiddleware } from '@aero-js/core/types'
 
 const redirectHome: AeroMiddleware = ctx => {

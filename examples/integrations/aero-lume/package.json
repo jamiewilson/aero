@@ -12,7 +12,6 @@
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
-		"@aero-js/vite": "workspace:*",
 		"lume-js": "^2.2.1"
 	},
 	"devDependencies": {

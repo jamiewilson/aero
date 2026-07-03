@@ -15,7 +15,7 @@ Enable Nitro in your Aero config:
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig({
 	server: true,

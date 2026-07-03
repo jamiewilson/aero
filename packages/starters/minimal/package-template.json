@@ -10,8 +10,7 @@
 		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
-		"@aero-js/core": "<version>",
-		"@aero-js/vite": "<version>"
+		"@aero-js/core": "<version>"
 	},
 	"devDependencies": {
 		"vite": "^8.1.0",

@@ -34,7 +34,7 @@ pnpm dlx @aero-js/create@latest my-app
 4. Prints next steps
 5. With `--strict`, runs `aero doctor`, `aero check`, and a best-effort `aero check --types`
 
-The `fullstack` template also adds `@aero-js/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
+The `fullstack` template also adds `@aero-js/core/config`, `nitro`, a root `nitro.config.ts`, and a `preview:api` command.
 
 ## Project structure
 

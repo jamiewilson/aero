@@ -3,25 +3,25 @@ title: 'Aero Config'
 description: 'Use aero.config.ts with defineConfig() to manage Aero options in a dedicated file.'
 ---
 
-As your project grows, mixing Aero options into `vite.config.ts` alongside Vite-specific settings becomes cluttered. `@aero-js/config` lets you move all Aero options into a dedicated `aero.config.ts` with typed config via `defineConfig()`, a clean separation from Vite settings, and support for env-aware configuration.
+As your project grows, mixing Aero options into `vite.config.ts` alongside Vite-specific settings becomes cluttered. `@aero-js/core/config` lets you move all Aero options into a dedicated `aero.config.ts` with typed config via `defineConfig()`, a clean separation from Vite settings, and support for env-aware configuration.
 
 ## Install
 
 <Tabs>
-	<Tab title="pnpm">```bash pnpm add @aero-js/config ```</Tab>
-	<Tab title="npm">```bash npm install @aero-js/config ```</Tab>
-	<Tab title="yarn">```bash yarn add @aero-js/config ```</Tab>
+	<Tab title="pnpm">```bash pnpm add @aero-js/core/config ```</Tab>
+	<Tab title="npm">```bash npm install @aero-js/core/config ```</Tab>
+	<Tab title="yarn">```bash yarn add @aero-js/core/config ```</Tab>
 </Tabs>
 
 ## Set up
 
 <Steps>
   <Step title="Create aero.config.ts">
-    Define your Aero options using `defineConfig()` from `@aero-js/config`. You can also override Vite settings via the `vite` key:
+    Define your Aero options using `defineConfig()` from `@aero-js/core/config`. You can also override Vite settings via the `vite` key:
 
     ```ts
     // aero.config.ts
-    import { defineConfig } from '@aero-js/config'
+    import { defineConfig } from '@aero-js/core/config'
 
     export default defineConfig({
       site: { url: 'https://example.com' },
@@ -39,11 +39,11 @@ As your project grows, mixing Aero options into `vite.config.ts` alongside Vite-
 
   </Step>
   <Step title="Update vite.config.ts">
-    Import your config and pass it to `createViteConfig()` from `@aero-js/config/vite`:
+    Import your config and pass it to `createViteConfig()` from `@aero-js/core/vite-config`:
 
     ```ts
     // vite.config.ts
-    import { createViteConfig } from '@aero-js/config/vite'
+    import { createViteConfig } from '@aero-js/core/vite-config'
     import aeroConfig from './aero.config.ts'
 
     export default createViteConfig(aeroConfig)
@@ -58,7 +58,7 @@ If you call `createViteConfig()` with no arguments, it automatically loads `aero
 
 ```ts
 // vite.config.ts
-import { createViteConfig } from '@aero-js/config/vite'
+import { createViteConfig } from '@aero-js/core/vite-config'
 
 export default createViteConfig()
 ```
@@ -74,7 +74,7 @@ Pass a function instead of an object to `defineConfig()` to vary options between
 
 ```ts
 // aero.config.ts
-import { defineConfig } from '@aero-js/config'
+import { defineConfig } from '@aero-js/core/config'
 
 export default defineConfig(env => ({
 	site: env.mode === 'production' ? 'https://example.com' : 'http://localhost:5173',

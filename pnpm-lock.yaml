@@ -62,9 +62,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
     devDependencies:
       '@aero-js/prettier-plugin-aero':
         specifier: workspace:*
@@ -84,9 +81,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
     devDependencies:
       '@aero-js/prettier-plugin-aero':
         specifier: workspace:*
@@ -106,9 +100,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.12
         version: 3.15.12
@@ -134,9 +125,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.12
         version: 3.15.12
@@ -162,9 +150,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
       alpinejs:
         specifier: ^3.15.12
         version: 3.15.12
@@ -190,9 +175,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../../packages/vite
       lume-js:
         specifier: ^2.2.1
         version: 2.2.1
@@ -212,9 +194,6 @@ importers:
       '@aero-js/cli':
         specifier: workspace:*
         version: link:../../packages/cli
-      '@aero-js/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@aero-js/content':
         specifier: workspace:*
         version: link:../../packages/content
@@ -273,9 +252,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@aero-js/config':
-        specifier: workspace:*
-        version: link:../config
       '@aero-js/content':
         specifier: workspace:*
         version: link:../content
@@ -326,40 +302,6 @@ importers:
       '@aero-js/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.0.1
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@26.0.1)(@vitest/ui@4.1.9)(happy-dom@20.10.6)(vite@8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0))
-
-  packages/config:
-    dependencies:
-      '@aero-js/content':
-        specifier: workspace:*
-        version: link:../content
-      '@aero-js/core':
-        specifier: workspace:*
-        version: link:../core
-      '@aero-js/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../vite
-      jiti:
-        specifier: ^2.7.0
-        version: 2.7.0
-      vite:
-        specifier: ^8.1.0
-        version: 8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0)
-    devDependencies:
       '@types/node':
         specifier: 'catalog:'
         version: 26.0.1
@@ -439,6 +381,9 @@ importers:
       '@aero-js/compiler':
         specifier: workspace:*
         version: link:../compiler
+      '@aero-js/content':
+        specifier: workspace:*
+        version: link:../content
       '@aero-js/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
@@ -720,9 +665,6 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../vite
     devDependencies:
       nitro:
         specifier: 'catalog:'
@@ -736,38 +678,16 @@ importers:
       '@aero-js/core':
         specifier: workspace:*
         version: link:../../core
-      '@aero-js/vite':
-        specifier: workspace:*
-        version: link:../../vite
     devDependencies:
       vite:
         specifier: 'catalog:'
         version: 8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0)
-
-  packages/vite:
-    dependencies:
-      '@aero-js/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@26.0.1)(@vitest/ui@4.1.9)(happy-dom@20.10.6)(vite@8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0))
 
   packages/vscode:
     dependencies:
       '@aero-js/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@aero-js/config':
-        specifier: workspace:*
-        version: link:../config
       '@aero-js/core':
         specifier: workspace:*
         version: link:../core
@@ -802,9 +722,6 @@ importers:
 
   website:
     dependencies:
-      '@aero-js/config':
-        specifier: workspace:*
-        version: link:../packages/config
       '@aero-js/content':
         specifier: workspace:*
         version: link:../packages/content

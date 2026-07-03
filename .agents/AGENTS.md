@@ -7,7 +7,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 ### Monorepo
 
 - **packages/diagnostics** - `AeroDiagnostic` contract, formatters, Effect cause mapping, dev SSR transport. Published as `@aero-js/diagnostics`; re-exported from `@aero-js/core/diagnostics`.
-- **packages/core** - Compiler, runtime, Vite plugin. Built with tsdown; used as `@aero-js/core` and `@aero-js/vite`. Run tests from root with `pnpm test` (Vitest includes `packages/core` and `packages/diagnostics`).
+- **packages/core** - Compiler, runtime, Vite plugin. Built with tsdown; used as `@aero-js/core` and `@aero-js/core/vite`. Run tests from root with `pnpm test` (Vitest includes `packages/core` and `packages/diagnostics`).
 - **packages/cli** - `@aero-js/cli`: `aero check` (no server — config, content, template compile; bucketed exit codes), `aero doctor` (env checklist). Depends on core, config, and content; avoids a core↔config dependency cycle.
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create** - Project initializer (@aero-js/create). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
@@ -128,7 +128,7 @@ Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be se
 
 - **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
 - **packages/create/** - @aero-js/create initializer (no app source; scaffolds from templates)
-- **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aero-js/core and @aero-js/vite)
+- **packages/core/** - Framework (compiler, runtime, Vite plugin; consumed as @aero-js/core and @aero-js/core/vite)
 - **packages/vscode/** - VS Code extension
 
 For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md](_reference/guides/monorepo.md).

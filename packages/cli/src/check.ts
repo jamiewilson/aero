@@ -1,8 +1,8 @@
 /**
  * `aero check` — validate aero config, content collections, and template compilation without starting a server.
  */
-import type { AeroConfig, AeroConfigFunction } from '@aero-js/config'
-import { loadAeroConfig } from '@aero-js/config'
+import type { AeroConfig, AeroConfigFunction } from '@aero-js/core/config'
+import { loadAeroConfig } from '@aero-js/core/config'
 import {
 	contentSchemaIssuesToAeroDiagnostics,
 	loadAllCollections,

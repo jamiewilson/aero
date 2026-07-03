@@ -11,8 +11,7 @@
 		"fmt:check": "prettier --check ."
 	},
 	"dependencies": {
-		"@aero-js/core": "workspace:*",
-		"@aero-js/vite": "workspace:*"
+		"@aero-js/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",

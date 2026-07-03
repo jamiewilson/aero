@@ -10,7 +10,7 @@ aero/
 ├── pnpm-workspace.yaml
 ├── packages/
 │   ├── compiler/          # Standalone template compiler (@aero-js/compiler)
-│   ├── core/             # Framework: codegen, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/vite)
+│   ├── core/             # Framework: codegen, runtime, Vite plugin (@aero-js/core; Vite plugin via @aero-js/core/vite)
 │   ├── vscode/           # VS Code extension
 │   ├── create/            # Project initializer (@aero-js/create)
 │   ├── starters/
@@ -49,10 +49,10 @@ aero/
 
 - **Purpose:** Template parser, codegen, runtime, and Vite plugin used by the app.
 - **Build:** `tsup` builds from source into `packages/core/dist/`. Root scripts run `pnpm --dir packages/core build` so the app always uses the built package.
-- **Consumption:** `examples/kitchen-sink/vite.config.ts` imports `createViteConfig` from `@aero-js/config/vite` and depends on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
+- **Consumption:** `examples/kitchen-sink/vite.config.ts` imports `createViteConfig` from `@aero-js/core/vite-config` and depends on `@aero-js/core`. The `package.json` has `"@aero-js/core": "workspace:*"` (and config, content).
 - **Exports (package.json):**
   - `@aero-js/core` → main entry and types
-  - `@aero-js/vite` → Vite plugin (re-exports from core)
+  - `@aero-js/core/vite` → Vite plugin (re-exports from core)
   - `@aero-js/core/runtime`, `@aero-js/core/runtime/standalone`, `@aero-js/core/runtime/instance` → runtime
   - `@aero-js/core/types` → TypeScript types
 - **Key directories:**
@@ -137,7 +137,7 @@ Links in built HTML are rewritten to be relative so the site works from any base
 
 ## Summary
 
-- **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). `packages/vite` re-exports the plugin as `@aero-js/vite`; core also exports it as `@aero-js/core/vite`.
+- **Framework code** lives in `packages/core` (compiler, runtime, Vite plugin). `packages/vite` re-exports the plugin as `@aero-js/core/vite`; core also exports it as `@aero-js/core/vite`.
 - **Demo app** is `examples/kitchen-sink`; run dev/build/preview from that directory. Root has no app dev script.
 - **@aero-js/create** lives in `packages/create`; scaffolds from `packages/starters/minimal`.
 - **Path conventions** use `client/` and `content/` by default (or custom dirs via aero.config, e.g. frontend/, backend/).

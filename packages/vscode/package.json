@@ -39,7 +39,6 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
-		"@aero-js/config": "workspace:*",
 		"@aero-js/core": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
@@ -98,7 +97,7 @@
 				"aero.debug": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML\u2192Aero language switching decisions."
 				}
 			}
 		},

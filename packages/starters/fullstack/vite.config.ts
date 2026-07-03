@@ -1,4 +1,4 @@
-import { aero } from '@aero-js/vite'
+import { aero } from '@aero-js/core/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({

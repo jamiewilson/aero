@@ -29,6 +29,14 @@
 			"types": "./dist/vite/index.d.mts",
 			"default": "./dist/vite/index.mjs"
 		},
+		"./config": {
+			"types": "./dist/config-api.d.mts",
+			"default": "./dist/config-api.mjs"
+		},
+		"./vite-config": {
+			"types": "./dist/vite-config-api.d.mts",
+			"default": "./dist/vite-config-api.mjs"
+		},
 		"./runtime": {
 			"types": "./dist/runtime/index.d.mts",
 			"default": "./dist/runtime/index.mjs"
@@ -92,6 +100,7 @@
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
+		"@aero-js/content": "workspace:*",
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/hypermedia": "workspace:*",

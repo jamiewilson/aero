@@ -17,6 +17,8 @@ const entry = [
 	'src/runtime/fragment.ts',
 	'src/runtime/instance.ts',
 	'src/utils/aero-config.ts',
+	'src/config-api.ts',
+	'src/vite-config-api.ts',
 	'src/utils/load-project-module.ts',
 ]
 

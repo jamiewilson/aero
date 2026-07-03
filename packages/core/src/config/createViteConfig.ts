@@ -10,7 +10,7 @@ import type { UserConfig } from 'vite'
 import type { AeroConfig, AeroConfigFunction } from './types'
 
 import { mergeConfig } from 'vite'
-import { aero } from '@aero-js/vite'
+import { aero } from '../vite/index'
 import { aeroContent } from '@aero-js/content/vite'
 import { defaultViteConfig } from './defaults'
 import { loadAeroConfig } from './loadAeroConfig'

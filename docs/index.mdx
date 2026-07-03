@@ -93,15 +93,15 @@ Aero is published as a set of focused packages:
 | ------------------ | ---------------------------------------------------------------------- |
 | `@aero-js/core`    | Runtime, Vite integration, and Aero orchestration                      |
 | `@aero-js/create`  | Scaffold new projects from the minimal or fullstack template           |
-| `@aero-js/vite`    | The Aero Vite plugin                                                   |
-| `@aero-js/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
+| `@aero-js/core/vite`    | The Aero Vite plugin                                                   |
+| `@aero-js/core/config`  | `defineConfig` and `createViteConfig` for typed `aero.config.ts`       |
 | `@aero-js/content` | Content collections — `getCollection()`, `render()`, schema validation |
 | `@aero-js/cli`     | `aero check` and `aero doctor` for type-checking and diagnostics       |
 | `@aero-js/reactivity` | Signal store, bindings, and process API (used via core when enabled)  |
 | `@aero-js/hypermedia` | Action functions, swap engine, and lifecycle events                 |
 
 <Note>
-	Most projects only need `@aero-js/core` and `@aero-js/vite` (or `@aero-js/create` to scaffold).
+	Most projects only need `@aero-js/core` and `@aero-js/core/vite` (or `@aero-js/create` to scaffold).
 	The other packages are opt-in.
 </Note>
 
