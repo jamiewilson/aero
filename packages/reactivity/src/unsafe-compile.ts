@@ -2,10 +2,8 @@ import type { StateScope } from './state-scope'
 import type { StateBindingSpec } from './state-scope'
 import type { SignalStore } from './store'
 import type { HypermediaRuntimeLike } from './mount'
-import {
-	createEventHandlerActionScope,
-	rewriteHypermediaActionStateRefs,
-} from '@aero-js/compiler'
+import { createEventHandlerActionScope } from '@aero-js/compiler/create-event-handler-action-scope'
+import { rewriteHypermediaActionStateRefs } from '@aero-js/compiler/hypermedia-action-state-refs'
 
 export type ScopeReader = (
 	scope: StateScope,

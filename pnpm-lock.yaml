@@ -203,6 +203,9 @@ importers:
       '@aero-js/highlight':
         specifier: workspace:*
         version: link:../../packages/highlight
+      '@aero-js/hypermedia':
+        specifier: workspace:*
+        version: link:../../packages/hypermedia
       '@aero-js/reactivity':
         specifier: workspace:*
         version: link:../../packages/reactivity

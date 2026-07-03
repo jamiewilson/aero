@@ -48,13 +48,13 @@ export {
 	HYPERMEDIA_EVENT_HANDLER_ACTION_SET,
 	HYPERMEDIA_COMPILED_SIGNAL_CALLEE,
 	buildHypermediaActionScopeDecl,
-} from '@aero-js/compiler'
+} from '@aero-js/compiler/event-handler-action-scope'
 export {
 	rewriteHypermediaActionStateRefs,
 	COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
 	type RewriteHypermediaActionStateRefsOptions,
-} from '@aero-js/compiler'
+} from '@aero-js/compiler/hypermedia-action-state-refs'
 export {
 	createEventHandlerActionScope,
 	type EventHandlerActionExecutor,
-} from '@aero-js/compiler'
+} from '@aero-js/compiler/create-event-handler-action-scope'

@@ -18,7 +18,7 @@ import {
 	unsafeCompileHandler,
 	unsafeCompileRead,
 } from './unsafe-compile'
-import { createEventHandlerActionScope } from '@aero-js/compiler'
+import { createEventHandlerActionScope } from '@aero-js/compiler/create-event-handler-action-scope'
 
 export type Cleanup = () => void
 
