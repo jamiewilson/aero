@@ -1,4 +1,4 @@
-import { PARITY_SCENARIOS } from '@aero-js/diagnostics/parity'
+import { PARITY_SCENARIOS } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { compile, parse } from '@aero-js/compiler'
 import { describe, expect, it } from 'vitest'
 

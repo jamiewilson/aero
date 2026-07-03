@@ -79,7 +79,7 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## packages/vscode
 
-- **Purpose:** [VS Code / Cursor extension](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode) for Aero templates: TextMate grammars, **Volar** language service (completions, diagnostics, go-to-definition), stable **`AeroDiagnosticCode`** values with doc links, palette command **Aero: Run check**, and settings such as **`aero.scopeMode`** and **`aero.diagnostics.regexUndefinedVariables`**.
+- **Purpose:** [VS Code / Cursor extension](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode) for Aero templates: TextMate grammars, **Volar** language service (completions, diagnostics, go-to-definition), stable **`AeroDiagnosticCode`** values with doc links, palette command **Aero: Run check**, and settings such as **`aero.scopeMode`**.
 - **Contents:** `package.json`, `syntaxes/`, `src/`, README. Separate from the core framework; not required for build or dev. User-facing details: [packages/vscode/README.md](../packages/vscode/README.md).
 
 ## packages/create (@aero-js/create)

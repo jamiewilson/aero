@@ -44,8 +44,7 @@
 		"@aero-js/diagnostics": "workspace:*",
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
-		"@volar/vscode": "~2.4.28",
-		"jiti": "^2.7.0"
+		"@volar/vscode": "~2.4.28"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",

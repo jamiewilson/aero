@@ -1,7 +1,7 @@
 import {
 	DIRECTIVE_PARITY_BUILD_PREAMBLE,
 	DIRECTIVE_PARITY_SCENARIOS,
-} from '@aero-js/diagnostics/parity'
+} from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { compile, parse } from '@aero-js/compiler'
 import { describe, expect, it } from 'vitest'
 
