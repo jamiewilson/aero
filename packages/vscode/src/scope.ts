@@ -20,8 +20,17 @@ const VITE_CONFIG_FILES = ['vite.config.ts', 'vite.config.js', 'vite.config.mts'
 
 const ROOT_CANDIDATE_FILES = ['package.json', ...AERO_CONFIG_FILES, ...VITE_CONFIG_FILES]
 
-const AERO_CONFIG_PATTERNS: RegExp[] = [/@aero-js\/config/, /\bdefineConfig\s*\(/]
-const VITE_CONFIG_PATTERNS: RegExp[] = [/@aero-js\/vite/, /aero\.config\.(?:ts|js|mts|mjs)/]
+const AERO_CONFIG_PATTERNS: RegExp[] = [
+	/@aero-js\/core\/config/,
+	/@aero-js\/config/,
+	/\bdefineConfig\s*\(/,
+]
+const VITE_CONFIG_PATTERNS: RegExp[] = [
+	/@aero-js\/core\/vite-config/,
+	/@aero-js\/core\/vite/,
+	/@aero-js\/vite/,
+	/aero\.config\.(?:ts|js|mts|mjs)/,
+]
 const PACKAGE_PATTERNS: RegExp[] = [/@aero-js\//]
 
 export function setScopeDebugLogger(logger: ScopeLogFn | undefined): void {
