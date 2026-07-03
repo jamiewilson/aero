@@ -32,7 +32,7 @@ The core client entry bootstraps the runtime and exposes `aero.getReactivityRunt
 Re-exported from `@aero-js/core`:
 
 ```ts
-import { createReactivityRuntime } from '@aero-js/core/reactivity'
+import { createReactivityRuntime } from '@aero-js/reactivity'
 ```
 
 ## Documentation

@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AERO_EXIT_ROUTE } from '@aero-js/core/diagnostics'
+import { AERO_EXIT_ROUTE } from '@aero-js/diagnostics'
 
 afterEach(() => {
 	vi.resetModules()

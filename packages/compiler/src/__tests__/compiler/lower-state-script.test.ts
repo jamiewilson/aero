@@ -91,7 +91,7 @@ const setItems = next => document.startViewTransition({ update: () => (items = n
 	})
 
 	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {
-		const script = `import { GET } from '@aero-js/core/hypermedia'
+		const script = `import { GET } from '@aero-js/hypermedia'
 let isSaving = false
 let itemCount = 0
 const appendItem = async () => {
@@ -104,7 +104,7 @@ const appendItem = async () => {
 		const analysis = analyzeStateScript(script)
 		const { scopeFunctions } = lowerStateScript(script, analysis, [
 			{
-				specifier: '@aero-js/core/hypermedia',
+				specifier: '@aero-js/hypermedia',
 				namedBindings: [{ imported: 'GET', local: 'GET' }],
 			},
 		])

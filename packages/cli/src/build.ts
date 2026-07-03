@@ -3,7 +3,7 @@
  */
 import { build } from 'vite'
 import { createViteConfig, getDefaultOptions } from '@aero-js/config/vite'
-import { exitCodeForThrown } from '@aero-js/core/diagnostics'
+import { exitCodeForThrown } from '@aero-js/diagnostics'
 
 type AeroBuildOptions = {
 	/** Set `AERO_INCREMENTAL=1` when unset (matches `incremental: true` in aero.config). */

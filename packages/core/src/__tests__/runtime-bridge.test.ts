@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createReactivityRuntime } from '../reactivity'
-import { DELETE, GET, PATCH, POST, PUT, createHypermediaRuntime } from '../hypermedia'
+import { createReactivityRuntime } from '@aero-js/reactivity'
+import { DELETE, GET, PATCH, POST, PUT, createHypermediaRuntime } from '@aero-js/hypermedia'
 
 describe('@aero-js/core runtime bridges', () => {
 	it('re-exports reactivity placeholder runtime', () => {

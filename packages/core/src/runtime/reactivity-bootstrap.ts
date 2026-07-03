@@ -1,4 +1,4 @@
-import { createReactivityRuntime, type ReactivityRuntime } from '../reactivity'
+import { createReactivityRuntime, type ReactivityRuntime } from '@aero-js/reactivity'
 
 export const REACTIVITY_RUNTIME_GLOBAL_KEY = '__AERO_REACTIVITY_RUNTIME__'
 

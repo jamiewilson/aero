@@ -45,14 +45,6 @@
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"
 		},
-		"./reactivity": {
-			"types": "./dist/reactivity.d.mts",
-			"default": "./dist/reactivity.mjs"
-		},
-		"./hypermedia": {
-			"types": "./dist/hypermedia.d.mts",
-			"default": "./dist/hypermedia.mjs"
-		},
 		"./types": "./dist/types.d.mts",
 		"./utils/aliases": {
 			"types": "./dist/utils/aliases.d.mts",
@@ -73,10 +65,6 @@
 		"./editor": {
 			"types": "./dist/entry-editor.d.mts",
 			"default": "./dist/entry-editor.mjs"
-		},
-		"./diagnostics": {
-			"types": "./dist/diagnostics.d.mts",
-			"default": "./dist/diagnostics.mjs"
 		},
 		"./template-diagnostics": {
 			"types": "./dist/template-diagnostics-api.d.mts",

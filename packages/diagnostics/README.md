@@ -5,4 +5,4 @@ Structured `AeroDiagnostic` types, terminal/browser formatters, PostCSS/CSS erro
 - **Main export** — full API (includes `effect` and Node `fs` for source frames).
 - **`@aero-js/diagnostics/browser`** — browser-only surface (no Effect) for the core client runtime.
 
-`@aero-js/core` depends on this package and re-exports it as `@aero-js/core/diagnostics` for backward compatibility.
+Import from `@aero-js/diagnostics` in application and CLI code.

@@ -17,12 +17,12 @@ import {
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
 } from '@aero-js/core/compile-check'
-import type { AeroDiagnostic } from '@aero-js/core/diagnostics'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import {
 	exitCodeForDiagnostics,
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
-} from '@aero-js/core/diagnostics'
+} from '@aero-js/diagnostics'
 import {
 	buildRouteManifestWithDiagnostics,
 	writeRouteManifestGenerated,

@@ -6,7 +6,6 @@ const entry = [
 	'src/entry-editor.ts',
 	'src/types.ts',
 	'src/vite/index.ts',
-	'src/diagnostics.ts',
 	'src/template-diagnostics-api.ts',
 	'src/compile-check-api.ts',
 	'src/routing/route-manifest.ts',
@@ -19,8 +18,6 @@ const entry = [
 	'src/runtime/instance.ts',
 	'src/utils/aero-config.ts',
 	'src/utils/load-project-module.ts',
-	'src/reactivity.ts',
-	'src/hypermedia.ts',
 ]
 
 export default defineConfig({

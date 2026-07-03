@@ -2,8 +2,8 @@
  * Config load errors and diagnostic mapping.
  */
 
-import type { AeroDiagnostic } from '@aero-js/core/diagnostics'
-import { unknownToAeroDiagnostics } from '@aero-js/core/diagnostics'
+import type { AeroDiagnostic } from '@aero-js/diagnostics'
+import { unknownToAeroDiagnostics } from '@aero-js/diagnostics'
 
 export class AeroConfigLoadError extends Error {
 	readonly filePath: string

@@ -27,6 +27,7 @@
 		"@aero-js/config": "workspace:*",
 		"@aero-js/content": "workspace:*",
 		"@aero-js/core": "workspace:*",
+		"@aero-js/diagnostics": "workspace:*",
 		"vite": "catalog:"
 	},
 	"devDependencies": {

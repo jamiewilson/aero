@@ -1,4 +1,4 @@
-import { createHypermediaRuntime, type HypermediaRuntime } from '../hypermedia'
+import { createHypermediaRuntime, type HypermediaRuntime } from '@aero-js/hypermedia'
 import { readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
 
 export const HYPERMEDIA_RUNTIME_GLOBAL_KEY = '__AERO_HYPERMEDIA_RUNTIME__'

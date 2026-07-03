@@ -1,5 +1,5 @@
 import { runAeroCheck } from '../check'
-import { AERO_EXIT_COMPILE, AERO_EXIT_CONFIG, AERO_EXIT_ROUTE } from '@aero-js/core/diagnostics'
+import { AERO_EXIT_COMPILE, AERO_EXIT_CONFIG, AERO_EXIT_ROUTE } from '@aero-js/diagnostics'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
