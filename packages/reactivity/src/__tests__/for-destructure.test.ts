@@ -54,4 +54,62 @@ describe('bindKeyedFor destructuring', () => {
 		expect(rowCount).toBe(2)
 		cleanup()
 	})
+
+	it('exposes array-destructured Map entry bindings for keyExpr', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [
+				{
+					name: 'numbersMap',
+					derived: false,
+					init: () => new Map([[1, 'one'], [2, 'two']]),
+					dependencies: [],
+				},
+			],
+			functionSources: [],
+		})
+		const template = {
+			innerHTML: '',
+			content: { firstElementChild: { remove() {} } as Element },
+		} as unknown as HTMLTemplateElement
+		const fragmentNodes: Element[] = []
+		const doc = {
+			createElement: () => template,
+			createDocumentFragment: () =>
+				({
+					appendChild(node: Element) {
+						fragmentNodes.push(node)
+					},
+				}) as unknown as DocumentFragment,
+		}
+		let rowCount = 0
+		const container = {
+			ownerDocument: doc,
+			replaceChildren() {
+				rowCount = fragmentNodes.length
+				fragmentNodes.length = 0
+			},
+		} as unknown as Element
+		const destructureRow = (item: unknown) => {
+			const [key, value] = item as [number, string]
+			return { key, value }
+		}
+		const cleanup = bindKeyedFor({
+			container,
+			scope,
+			itemsExpr: 'numbersMap',
+			keyExpr: 'key',
+			binding: '[ key, value ]',
+			bindingNames: ['key', 'value'],
+			destructureRow,
+			renderRow: () => ({
+				key: 'unused',
+				renderHtml: () => '<li></li>',
+				mountRow: () => () => {},
+			}),
+		})
+		expect(rowCount).toBe(2)
+		cleanup()
+	})
 })

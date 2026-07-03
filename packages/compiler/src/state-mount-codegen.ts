@@ -354,7 +354,7 @@ function emitCompiledMountFunctions(
 		lines.push(`function __aeroForItems_${bind.bindId}(scope) { return (${scopeExpr(bind.itemsExpr)}); }`)
 		lines.push(`function __aeroForKey_${bind.bindId}(scope) { return (${scopeExpr(bind.keyExpr)}); }`)
 		if (needsForDestructureCodegen(bind.binding, bind.bindingNames)) {
-			const pairs = bind.bindingNames.map(name => `${name}: item.${name}`).join(', ')
+			const pairs = bind.bindingNames.join(', ')
 			lines.push(
 				`function __aeroForDestructure_${bind.bindId}(item) { const ${bind.binding} = item; return ({ ${pairs} }); }`
 			)
