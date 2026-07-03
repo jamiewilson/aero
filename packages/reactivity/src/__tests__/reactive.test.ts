@@ -31,7 +31,7 @@ describe('Signal.notify', () => {
 describe('makeReactive', () => {
 	it('notifies on nested object set and delete', () => {
 		const notify = vi.fn()
-		const obj = makeReactive({ email: '' }, notify)
+		const obj = makeReactive({ email: '' } as Record<string, string>, notify)
 		obj.email = 'a@b.c'
 		expect(notify).toHaveBeenCalledTimes(1)
 		delete obj.email

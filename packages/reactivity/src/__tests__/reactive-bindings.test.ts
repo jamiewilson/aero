@@ -158,14 +158,14 @@ describe('binding handlers', () => {
 
 	it('bindFormModel skips write when control already matches state', () => {
 		let valueSets = 0
+		let stored = 'same'
 		const target = {
-			_value: 'same',
 			get value() {
-				return this._value
+				return stored
 			},
 			set value(next: string) {
 				valueSets++
-				this._value = next
+				stored = next
 			},
 			addEventListener: () => {},
 			removeEventListener: () => {},
