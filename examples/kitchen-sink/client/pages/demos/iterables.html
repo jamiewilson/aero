@@ -14,7 +14,7 @@
 	<div class="h-stack">
 		<section>
 			<h2>Array</h2>
-			<button on:click="{ numbersArray.push(11) }">Add</button>
+			<button on:click="{ numbersArray.push(Math.max(0, ...numbersArray) + 1) }">Add</button>
 			<button on:click="{ numbersArray.splice(1, 1) }">Delete</button>
 			<button on:click="{ numbersArray = [] }">Clear array</button>
 			<div for="{ const number of numbersArray }" key="{ number }">{ number }</div>
