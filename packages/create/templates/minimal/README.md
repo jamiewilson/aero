@@ -1,4 +1,4 @@
-# @aero-js/starter-minimal
+# Aero minimal starter template
 
 Minimal Aero template: one layout, index + about, `site.ts` only. No server, no content collections, no Alpine/HTMX. Use with `pnpm create @aero-js my-app` (default) or `pnpm create @aero-js my-app --template minimal`.
 

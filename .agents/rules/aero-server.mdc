@@ -10,7 +10,7 @@ Document discoveries from code exploration in [_reference/DISCOVERY.md](../../_r
 
 ## Layout
 
-API handlers and Nitro routes live in the **app’s** server directory—commonly `server/` (e.g. `packages/starters/fullstack/server/`) or `backend/` when configured (e.g. `examples/kitchen-sink/backend/`). Nitro is configured at the **app root** (`nitro.config.ts`) alongside `aero.config.ts` / Vite config.
+API handlers and Nitro routes live in the **app’s** server directory—commonly `server/` (e.g. `packages/create/templates/fullstack/server/`) or `backend/` when configured (e.g. `examples/kitchen-sink/backend/`). Nitro is configured at the **app root** (`nitro.config.ts`) alongside `aero.config.ts` / Vite config.
 
 ## API handlers
 

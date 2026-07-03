@@ -1,4 +1,4 @@
-# @aero-js/starter-fullstack
+# Aero fullstack starter template
 
 Full-stack Aero template with Nitro enabled from day one. Includes `nitro.config.ts`, API routes, Nitro cache/storage/database examples, a task, a plugin, and a `preview:api` command.
 
