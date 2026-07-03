@@ -66,8 +66,6 @@ In VS Code settings, search for **Aero**:
 
 - **aero.debug** — Default **`false`**. When enabled, writes project-detection and language-switch decisions to the **Aero** Output channel.
 
-- **aero.diagnostics.regexUndefinedVariables** — Default **`false`**. When **`false`**, the extension does **not** run regex-based “undefined variable inside `{ }`” diagnostics; use the Volar language server and, for CI, **`aero check --types`** for expression typing. Set to **`true`** only if you need that legacy heuristic without relying on the language server.
-
 ## Development
 
 - Entry: `src/extension.ts`

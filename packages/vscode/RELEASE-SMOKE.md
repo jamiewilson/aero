@@ -43,7 +43,6 @@ For each diagnostic above:
 - [ ] `.html`/`.htm` files switch to `aero` only inside detected Aero projects
 - [ ] plain HTML files outside Aero projects remain `html` (no Aero diagnostics/providers)
 - [ ] toggling `aero.debug` writes scope logs to the Aero Output channel
-- [ ] toggling `aero.diagnostics.regexUndefinedVariables` updates diagnostics as expected
 
 ## 6) Command behavior
 

@@ -23,10 +23,9 @@ import { checkFeatureGates, type FeatureGateFlags } from './checks/check-feature
 import { checkReadonlyReactivePropWrites } from './checks/check-readonly-reactive-prop-writes'
 import { checkReactiveBindingScope } from './checks/check-reactive-binding-scope'
 import type { SourceDocument } from './source-document'
+import { AERO_CONFIG_NAMES } from '../utils/aero-config'
 
 const require = createRequire(import.meta.url)
-
-const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 
 function loadFeatureFlags(root: string): FeatureGateFlags {
 	for (const name of AERO_CONFIG_NAMES) {

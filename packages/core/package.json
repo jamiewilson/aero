@@ -58,6 +58,10 @@
 			"types": "./dist/utils/aliases.d.mts",
 			"default": "./dist/utils/aliases.mjs"
 		},
+		"./utils/aero-config": {
+			"types": "./dist/utils/aero-config.d.mts",
+			"default": "./dist/utils/aero-config.mjs"
+		},
 		"./utils/redirects": {
 			"types": "./dist/utils/redirects.d.mts",
 			"default": "./dist/utils/redirects.mjs"

@@ -2,6 +2,7 @@
  * Load aero.config.ts or aero.config.js from a project root (sync via jiti).
  * Used when createViteConfig() is called with no config so the app can use a single vite.config.
  */
+import { AERO_CONFIG_NAMES } from '@aero-js/core/utils/aero-config'
 import { jitiAliasRecordFromProject } from '@aero-js/core/utils/aliases'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
@@ -10,7 +11,7 @@ import type { AeroConfig, AeroConfigFunction } from './types'
 
 const require = createRequire(import.meta.url)
 
-export const CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
+export const CONFIG_NAMES = AERO_CONFIG_NAMES
 
 export type LoadAeroConfigDetailedResult =
 	| { ok: true; filePath: string; config: AeroConfig | AeroConfigFunction }

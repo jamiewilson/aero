@@ -10,6 +10,7 @@ import {
 	resolveDirs,
 	type ResolvedAeroDirs,
 } from '../utils/aliases'
+import { AERO_CONFIG_NAMES } from '../utils/aero-config'
 import { resolveImportToFile } from './importResolution'
 
 const require = createRequire(import.meta.url)
@@ -20,8 +21,6 @@ const DEFAULT_DIRS: ResolvedAeroDirs = {
 	server: 'server',
 	dist: 'dist',
 }
-
-const AERO_CONFIG_NAMES = ['aero.config.ts', 'aero.config.js', 'aero.config.mjs'] as const
 
 function loadAeroConfigDirs(root: string): ResolvedAeroDirs | undefined {
 	for (const name of AERO_CONFIG_NAMES) {

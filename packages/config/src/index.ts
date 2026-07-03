@@ -6,7 +6,6 @@
  * in `vite.config.ts` so `aero.config.ts` can stay limited to this entry (jiti-safe, no Vite load).
  */
 export { defineConfig } from './defineConfig'
-export { loadAeroConfig } from './loadAeroConfig'
+export { loadAeroConfig, CONFIG_NAMES } from './loadAeroConfig'
 export { AeroConfigLoadError, configLoadErrorToDiagnostics } from './config-load-errors'
-export { redirectsToRouteRules } from './redirects'
 export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'

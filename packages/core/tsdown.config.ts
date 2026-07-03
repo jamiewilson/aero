@@ -17,7 +17,7 @@ const entry = [
 	'src/runtime/standalone.ts',
 	'src/runtime/fragment.ts',
 	'src/runtime/instance.ts',
-	'src/runtime/lifecycle-contract.ts',
+	'src/utils/aero-config.ts',
 	'src/reactivity.ts',
 	'src/hypermedia.ts',
 ]
