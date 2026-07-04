@@ -1,0 +1,22 @@
+<script is:build>
+	import base from '@layouts/base.html'
+	import numericText from '@components/numeric-text.html'
+</script>
+
+<script is:state>
+	let count = 1234
+</script>
+
+<base-layout title="Numeric text">
+	<section class="v-stack items-center gap-4">
+		<numeric-text-component bind:value="{ count }" />
+		<button on:click="{ count++ }">Increment</button>
+	</section>
+</base-layout>
+
+<style>
+	numeric-text {
+		font-size: 3rem;
+		font-weight: bold;
+	}
+</style>
