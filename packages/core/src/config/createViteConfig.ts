@@ -1,8 +1,8 @@
 /**
- * Build the final Vite config from Aero config: resolve config function, merge Aero + content plugins and user vite overrides.
+ * Build the final Vite config from Aero config: resolve config function, merge Aero plugins and user vite overrides.
  *
  * @remarks
- * Invokes `aeroConfig` with env if it's a function, then builds base config (defaultViteConfig + aero plugin + optional aeroContent).
+ * Invokes `aeroConfig` with env if it's a function, then builds base config (defaultViteConfig + aero plugins).
  * User `vite` is merged via Vite's mergeConfig; explicit `minify`/`cssMinify` from base are preserved when user sets them to true/null.
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
@@ -11,7 +11,6 @@ import type { AeroConfig, AeroConfigFunction } from './types'
 
 import { mergeConfig } from 'vite'
 import { aero } from '../vite/index'
-import { aeroContent } from '@aero-js/content/vite'
 import { defaultViteConfig } from './defaults'
 import { loadAeroConfig } from './loadAeroConfig'
 
@@ -76,18 +75,7 @@ function createViteConfigFromAero(
 			? aeroConfig({ command: options.command, mode: options.mode })
 			: aeroConfig
 
-	const {
-		content,
-		server,
-		reactivity,
-		hypermedia,
-		site,
-		dirs,
-		redirects,
-		middleware,
-		vite: userViteConfig,
-		incremental,
-	} = resolvedConfig
+	const { vite: userViteConfig, incremental, ...aeroOptions } = resolvedConfig
 
 	if (options.command === 'build' && incremental === true) {
 		const v = process.env.AERO_INCREMENTAL?.trim()
@@ -96,26 +84,9 @@ function createViteConfigFromAero(
 		}
 	}
 
-	const contentOptions = content === true ? {} : typeof content === 'object' ? content : undefined
-	const basePlugins: UserConfig['plugins'] = [
-		aero({
-			server: server ?? false,
-			reactivity: reactivity ?? false,
-			hypermedia: hypermedia ?? false,
-			site,
-			dirs,
-			redirects,
-			middleware,
-			staticServerPlugins: contentOptions !== undefined ? [aeroContent(contentOptions)] : undefined,
-		}),
-	]
-	if (contentOptions !== undefined) {
-		basePlugins.push(aeroContent(contentOptions))
-	}
-
 	const baseConfig: UserConfig = {
 		...defaultViteConfig,
-		plugins: basePlugins,
+		plugins: aero(aeroOptions),
 	}
 
 	if (!userViteConfig) {

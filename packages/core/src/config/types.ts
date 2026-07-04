@@ -3,47 +3,13 @@
  *
  * @remarks
  * Used by `aero.config.ts` and by `createViteConfig` to build the final Vite config.
- * dirs shape matches the Vite plugin (aero()) so the same options work in aero.config and vite.config.
+ * `AeroConfig` extends `AeroOptions` with orchestration-only fields (`vite`, `incremental`).
  */
 import type { UserConfig } from 'vite'
-import type { AeroContentOptions } from '@aero-js/content/vite'
-import type { AeroDirs, AeroOptions, RedirectRule } from '@aero-js/core/types'
+import type { AeroOptions } from '../types'
 
-/** User-facing Aero configuration (content, server, dirs, redirects, middleware, optional Vite overrides). */
-export interface AeroConfig {
-	/** Enable content collections (default: `false`). Pass `true` or `AeroContentOptions`. */
-	content?: boolean | AeroContentOptions
-
-	/** Enable Nitro server integration (default: `false`). */
-	server?: boolean
-
-	/** Enable Aero reactivity pipeline (default: `false`). */
-	reactivity?: boolean
-
-	/** Enable Aero hypermedia pipeline (default: `false`). */
-	hypermedia?: boolean
-
-	/**
-	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
-	 * `Aero.site.url` in templates; used for sitemap, RSS, and canonical links.
-	 */
-	site?: { url: string }
-
-	/** Directory overrides. Same shape as aero() plugin options. */
-	dirs?: Partial<AeroDirs>
-
-	/**
-	 * Redirect rules applied in dev and when using the Nitro server (preview:api / production).
-	 * For static-only deploys use host redirect config (_redirects, vercel.json, etc.).
-	 */
-	redirects?: RedirectRule[]
-
-	/**
-	 * Request-time middleware (rewrites, custom responses). Runs in dev only.
-	 * For redirects use `redirects` so they apply in dev and server.
-	 */
-	middleware?: NonNullable<AeroOptions['middleware']>
-
+/** User-facing Aero configuration: plugin options plus optional Vite merge and incremental build flag. */
+export interface AeroConfig extends AeroOptions {
 	/** Vite configuration merged with Aero defaults (plugins, build, etc.). */
 	vite?: UserConfig
 

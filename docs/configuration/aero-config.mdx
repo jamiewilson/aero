@@ -95,3 +95,21 @@ export default defineConfig(env => ({
 	`command`, and `isSsrBuild`. See the [Vite docs](https://vitejs.dev/config/#conditional-config)
 	for details.
 </Note>
+
+## Options
+
+`AeroConfig` extends the same plugin options as `aero()` (`AeroOptions`). Use the same fields in `aero.config.ts` that you would pass to `aero()` in `vite.config.ts`.
+
+| Option         | Type                           | Description                                                                                                                  |
+| -------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `content`      | `boolean \| object`            | Enable content collections. Default `false`. Pass `true` or an options object for `@aero-js/content`.                        |
+| `server`       | `boolean`                      | Enable Nitro for API routes and an optional server. Default `false`.                                                         |
+| `reactivity`   | `boolean`                      | Enable the Aero reactivity pipeline. Default `false`.                                                                       |
+| `hypermedia`   | `boolean`                      | Enable the Aero hypermedia pipeline. Default `false`.                                                                        |
+| `site`         | `{ url: string }`              | Canonical site URL for `import.meta.env.SITE` and `Aero.site.url`.                                                           |
+| `redirects`    | `Array<{ from, to, status? }>` | Path redirects in dev and Nitro-backed production.                                                                           |
+| `middleware`   | `Array`                        | Dev-only request handlers for rewrites and custom responses.                                                                 |
+| `dirs`         | `object`                       | Override `client`, `server`, and `dist` directory names.                                                                     |
+| `apiPrefix`    | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                   |
+| `vite`         | `UserConfig`                   | **Config file only.** Vite settings merged with Aero defaults.                                                               |
+| `incremental`  | `boolean`                      | **Config file only.** When `true` during `vite build`, sets `AERO_INCREMENTAL=1` if unset. See [Incremental builds](/tooling/incremental-builds). |

@@ -71,6 +71,8 @@ import {
 } from './aero-vite-logger'
 import { createStaticBuildReportingService } from './static-build-reporting'
 import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
+import { normalizeAeroOptions, resolveContentOptions } from './resolve-aero-options'
+import { aeroContent } from '@aero-js/content/vite'
 
 const require = createRequire(import.meta.url)
 
@@ -648,13 +650,23 @@ function createAeroSsrPlugin(state: AeroPluginState): Plugin {
  * HMR for templates and content is handled by Vite's dependency graph when the app uses a single
  * client entry that imports @aero-js/core and calls aero.mount().
  *
- * @param options - AeroOptions (server, apiPrefix, dirs). Server can be disabled at runtime via AERO_SERVER=false.
+ * @param options - AeroOptions (content, server, apiPrefix, dirs). Server can be disabled at runtime via AERO_SERVER=false.
  * @returns PluginOption[] to pass to Vite's plugins array.
  */
-export function aero(options: AeroOptions = {}): PluginOption[] {
-	const dirs = resolveDirs(options.dirs)
-	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	const enableNitro = options.server === true && process.env.AERO_SERVER !== 'false'
+export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
+	const contentOptions = resolveContentOptions(rawOptions.content)
+	const options = normalizeAeroOptions(rawOptions)
+	const staticServerPlugins = [
+		...(options.staticServerPlugins ?? []),
+		...(contentOptions !== undefined ? [aeroContent(contentOptions)] : []),
+	]
+	const pluginOptions: Omit<AeroOptions, 'content'> = {
+		...options,
+		staticServerPlugins: staticServerPlugins.length > 0 ? staticServerPlugins : undefined,
+	}
+	const dirs = resolveDirs(pluginOptions.dirs)
+	const apiPrefix = pluginOptions.apiPrefix || DEFAULT_API_PREFIX
+	const enableNitro = pluginOptions.server === true && process.env.AERO_SERVER !== 'false'
 
 	const runtimeInstanceMjsPath = fileURLToPath(new URL('../runtime/instance.mjs', import.meta.url))
 	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
@@ -675,7 +687,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 		generatedStateBindingsRegistryPath: null,
 		dirs,
 		apiPrefix,
-		options,
+		options: pluginOptions,
 		compileWarningHashes: new Map<string, string>(),
 	}
 
@@ -700,8 +712,8 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				resolvedConfig.build.minify !== false &&
 				typeof import.meta !== 'undefined' &&
 				import.meta.env?.PROD
-			const staticPlugins = options.staticServerPlugins?.length
-				? [...aeroCorePlugins, ...options.staticServerPlugins]
+			const staticPlugins = pluginOptions.staticServerPlugins?.length
+				? [...aeroCorePlugins, ...pluginOptions.staticServerPlugins]
 				: aeroCorePlugins
 			const reporting = createStaticBuildReportingService()
 			try {
@@ -709,12 +721,12 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 					{
 						root,
 						resolvePath: aliasResult.resolve,
-						dirs: options.dirs,
+						dirs: pluginOptions.dirs,
 						apiPrefix,
 						vitePlugins: staticPlugins,
 						minify: shouldMinifyHtml,
-						site: options.site?.url,
-						redirects: options.redirects,
+						site: pluginOptions.site?.url,
+						redirects: pluginOptions.redirects,
 						resolvedConfig,
 					},
 					outDir
@@ -726,7 +738,7 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				const { aeroDir } = writeGeneratedNitroConfig({
 					root,
 					serverDir: dirs.server,
-					redirects: options.redirects,
+					redirects: pluginOptions.redirects,
 					distDir: dirs.dist,
 					apiPrefix,
 					warn: message => resolvedConfig.logger.warn(message),
@@ -799,6 +811,10 @@ export function aero(options: AeroOptions = {}): PluginOption[] {
 				},
 			})
 		}
+	}
+
+	if (contentOptions !== undefined) {
+		plugins.push(aeroContent(contentOptions))
 	}
 
 	return plugins

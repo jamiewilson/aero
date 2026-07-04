@@ -1,14 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-const aeroSpy = vi.fn((_options?: unknown) => ({ name: 'aero-plugin' }))
-const aeroContentSpy = vi.fn((_options?: unknown) => ({ name: 'aero-content-plugin' }))
+const aeroSpy = vi.fn((_options?: unknown) => [{ name: 'aero-plugin' }])
 
 vi.mock('../../vite/index', () => ({
 	aero: (options: unknown) => aeroSpy(options),
-}))
-
-vi.mock('@aero-js/content/vite', () => ({
-	aeroContent: (options: unknown) => aeroContentSpy(options),
 }))
 
 import { createViteConfig } from '../createViteConfig'
@@ -16,7 +11,6 @@ import { createViteConfig } from '../createViteConfig'
 describe('createViteConfig feature flags', () => {
 	beforeEach(() => {
 		aeroSpy.mockClear()
-		aeroContentSpy.mockClear()
 	})
 
 	it('passes reactivity/hypermedia flags to aero plugin', () => {
@@ -35,13 +29,33 @@ describe('createViteConfig feature flags', () => {
 		})
 	})
 
-	it('defaults reactivity/hypermedia to false when omitted', () => {
-		createViteConfig({}, { command: 'dev', mode: 'development' })
+	it('passes content and apiPrefix through to aero()', () => {
+		createViteConfig(
+			{
+				content: true,
+				apiPrefix: '/internal-api',
+			},
+			{ command: 'dev', mode: 'development' }
+		)
 
 		expect(aeroSpy).toHaveBeenCalledTimes(1)
 		expect(aeroSpy.mock.calls[0]?.[0]).toMatchObject({
-			reactivity: false,
-			hypermedia: false,
+			content: true,
+			apiPrefix: '/internal-api',
 		})
+	})
+
+	it('does not pass vite or incremental to aero()', () => {
+		createViteConfig(
+			{
+				content: true,
+				incremental: true,
+				vite: { build: { minify: false } },
+			},
+			{ command: 'build', mode: 'production' }
+		)
+
+		expect(aeroSpy.mock.calls[0]?.[0]).not.toHaveProperty('vite')
+		expect(aeroSpy.mock.calls[0]?.[0]).not.toHaveProperty('incremental')
 	})
 })
