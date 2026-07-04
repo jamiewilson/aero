@@ -5,18 +5,18 @@
 
 <script is:state>
 	let count = 1234
+	let animated = true
+	let trend = 0
+	let count2 = 4321
 </script>
 
 <base-layout title="Numeric text">
-	<section class="v-stack items-center gap-4">
-		<numeric-text-component bind:value="{ count }" />
+	<section class="v-stack">
+		<numeric-text-component bind:value="{ count }" animated="{ animated }" trend="{ trend }" />
+		<numeric-text-component bind:value="{ count2 }" />
 		<button on:click="{ count++ }">Increment</button>
+		<button on:click="{ count-- }">Decrement</button>
+		<button on:click="{ count2 = Math.floor(Math.random() * 10000) }">Random number</button>
+		<button on:click="{ ((count = 0), (count2 = 0)) }">Reset</button>
 	</section>
 </base-layout>
-
-<style>
-	numeric-text {
-		font-size: 3rem;
-		font-weight: bold;
-	}
-</style>

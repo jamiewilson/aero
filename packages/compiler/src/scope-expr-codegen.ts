@@ -24,6 +24,9 @@ export const EVENT_HANDLER_SHADOWS = new Set(['event', 'self'])
 /** Params injected into generated model write handler signatures. */
 export const MODEL_WRITE_SHADOWS = new Set(['$value'])
 
+/** Mount-injected scope names rewritten to `scope.<name>` in compiled handlers/effects. */
+export const MOUNT_SCOPE_BUILTINS = new Set(['$root'])
+
 /** Shared rewrite environment for one page's is:state script. */
 export interface ScopeRewriteContext {
 	readonly scopeNames: ReadonlySet<string>
@@ -418,7 +421,7 @@ export function collectMountScopeNames(
 	analysis: StateScriptAnalysisResult,
 	imports: readonly BuildScriptImport[] = []
 ): Set<string> {
-	const names = new Set<string>()
+	const names = new Set<string>(MOUNT_SCOPE_BUILTINS)
 	for (const binding of analysis.bindings) names.add(binding.name)
 	for (const imp of imports) {
 		if (imp.defaultBinding) names.add(imp.defaultBinding)

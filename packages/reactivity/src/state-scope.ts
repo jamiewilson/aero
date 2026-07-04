@@ -29,6 +29,8 @@ export interface StateScopeOptions {
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
 	/** Runtime-backed hypermedia actions; override imported fetch-only helpers in scope. */
 	readonly hypermediaScopeActions?: Record<string, unknown>
+	/** Mount root element; exposed in scope as `$root` for scoped DOM queries. */
+	readonly mountRoot?: ParentNode
 }
 
 export type StateScope = Record<string, unknown>
@@ -108,6 +110,13 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 	} = options
 	const reactiveProps = options.reactiveProps ?? {}
 	const scope: StateScope = { ...actionFunctions, ...scopeConstants, ...hypermediaScopeActions }
+	if (options.mountRoot) {
+		Object.defineProperty(scope, '$root', {
+			configurable: true,
+			enumerable: true,
+			value: options.mountRoot,
+		})
+	}
 
 	for (const binding of bindings.filter(b => !b.derived)) {
 		const reactivePropKey = binding.propName ?? binding.name
@@ -117,8 +126,8 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		} else if (binding.reactiveProp && binding.required) {
 			throw new Error(`[aero] Required reactive prop was not provided: ${binding.name}`)
 		} else if (!store.has(binding.name)) {
-			const signal = store.signal(binding.name)
 			const initial = evalInit(binding, scope, allowLegacyRuntimeCompile)
+			const signal = store.signal(binding.name)
 			signal.value = makeReactive(initial, () => (store.get(binding.name) as Signal<unknown>).notify())
 		} else {
 			const signal = store.get(binding.name) as Signal<unknown>

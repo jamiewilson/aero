@@ -102,4 +102,15 @@ describe('$effect mount integration', () => {
 		expect(cleanups).toEqual([1])
 		cleanup()
 	})
+
+	it('exposes $root on scope when mountRoot is provided', () => {
+		const root = document.createElement('div')
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [],
+			mountRoot: root,
+		})
+		expect(scope.$root).toBe(root)
+	})
 })

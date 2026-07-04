@@ -2319,6 +2319,74 @@ const { count } = Aero.props
 		expect(readonly.code.value).toBe('AERO_COMPILE')
 	})
 
+	it('should not report readonly bind for reactive props with destructuring defaults only', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-reactive-props-defaults-'))
+		try {
+			const compPath = path.join(dir, 'numeric-text.html')
+			const pagePath = path.join(dir, 'page.html')
+			fs.writeFileSync(
+				compPath,
+				`<script is:state>
+const {
+	value = Aero.bindable(0),
+	animated = true,
+	trend = 0,
+	respectMotionPreference = true,
+} = Aero.props
+</script>
+<numeric-text />
+`,
+				'utf-8'
+			)
+			const pageText = `<script is:build>
+import numericText from './numeric-text.html'
+</script>
+<script is:state>
+let count = 0
+let animated = false
+let trend = 1
+let respectMotionPreference = true
+</script>
+<numeric-text-component
+	bind:value="{ count }"
+	animated="{ animated }"
+	trend="{ trend }"
+	respectMotionPreference="{ respectMotionPreference }" />
+`
+			fs.writeFileSync(pagePath, pageText, 'utf-8')
+			const doc = {
+				uri: {
+					toString: () => `file://${pagePath}`,
+					fsPath: pagePath,
+					scheme: 'file',
+				},
+				getText: () => pageText,
+				positionAt: (offset: number) => {
+					const lines = pageText.slice(0, offset).split('\n')
+					return {
+						line: lines.length - 1,
+						character: lines[lines.length - 1]?.length ?? 0,
+					}
+				},
+				languageId: 'html',
+				fileName: pagePath,
+				lineAt: (line: number) => ({
+					text: pageText.split('\n')[line] ?? '',
+				}),
+			} as any
+
+			runDiagnostics(doc)
+
+			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+			const readonly = reportedDiagnostics.find((d: any) =>
+				d.message.includes('is readonly; use `bind:')
+			)
+			expect(readonly).toBeUndefined()
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
 	it('should report missing required prop when bare props omits it', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vscode-props-bare-'))
 		try {

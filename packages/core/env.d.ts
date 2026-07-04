@@ -38,6 +38,12 @@ declare const Aero: {
 declare function $effect(fn: () => void | (() => void)): void
 
 /**
+ * Mount root for the current page or component instance.
+ * Use to scope DOM queries in `$effect` (e.g. `$root.querySelector('my-el')`).
+ */
+declare const $root: ParentNode
+
+/**
  * Augment with tag names mapped to `{ props: YourProps }` for typed `renderComponent` (see Phase C / component registry).
  * Generated files may place declarations under `.aero/cache/types/`.
  */

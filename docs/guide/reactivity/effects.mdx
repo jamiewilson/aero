@@ -91,7 +91,7 @@ Web components that animate via `.update(value, animated)` need a side effect â€
 	let isMounted = false
 
 	$effect(() => {
-		if (!el) el = document.querySelector('numeric-text')
+		if (!el) el = $root.querySelector('numeric-text')
 		wireNumericText(el, { value, animated, isMounted: () => isMounted })
 		if (!isMounted) isMounted = true
 	})
@@ -102,7 +102,7 @@ Web components that animate via `.update(value, animated)` need a side effect â€
 
 See the [kitchen-sink numeric-text demo](/demos/numeric-text) for a full page.
 
-<Note>`bind:this` or mount-scoped element refs are planned follow-ups. Until then, scope `querySelector` to a unique wrapper or single-instance templates.</Note>
+<Note>Use `$root.querySelector(...)` to scope DOM lookups to the current page or component instance. `bind:this` for direct element refs is a planned follow-up.</Note>
 
 ## Related
 

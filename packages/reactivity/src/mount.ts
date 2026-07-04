@@ -634,6 +634,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			actionFunctions: options.hypermediaRuntime ? undefined : options.actionFunctions,
 			scopeConstants: options.scopeConstants,
 			hypermediaScopeActions,
+			mountRoot: options.root,
 		})
 	const cleanups: Cleanup[] = []
 	const handlerOptions = {

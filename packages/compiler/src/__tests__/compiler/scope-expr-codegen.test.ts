@@ -44,8 +44,15 @@ describe('rewriteStmtForScope', () => {
 		expect(rewriteStmtForScope('count--', ctx)).toBe('scope.count--')
 	})
 
-	it('rewrites bare identifier statements', () => {
+	it('does not rewrite bare identifier statements', () => {
 		expect(rewriteStmtForScope('count', ctx)).toBe('scope.count')
+	})
+
+	it('rewrites mount builtins to scope', () => {
+		const rootCtx = createScopeRewriteContext(analyzeStateScript('let count = 0'))
+		expect(rewriteStmtForScope('$root.querySelector("x")', rootCtx)).toBe(
+			'scope.$root.querySelector("x")'
+		)
 	})
 
 	it('does not rewrite object literal property keys', () => {
