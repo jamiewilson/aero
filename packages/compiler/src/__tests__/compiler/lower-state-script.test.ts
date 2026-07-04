@@ -97,6 +97,16 @@ const setItems = next => document.startViewTransition({ update: () => (items = n
 		)
 	})
 
+	it('strips TS type annotations from module constant arrow helpers', () => {
+		const script = `let numbersArray = [1, 2, 3]
+const nextNumber = (values: number[]) => Math.max(0, ...values) + 1`
+		const { moduleConstants } = lower(script)
+
+		expect(moduleConstants).toEqual([
+			'const nextNumber = (values) => Math.max(0, ...values) + 1',
+		])
+	})
+
 	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {
 		const script = `import { GET } from '@aero-js/hypermedia'
 let isSaving = false

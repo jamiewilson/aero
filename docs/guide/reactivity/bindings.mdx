@@ -134,6 +134,27 @@ Two-way bindings for common form controls:
 </select>
 ```
 
+### Nested object fields
+
+Group related form fields in one object binding. Member access in bindings and handlers mutates in place:
+
+```html
+<script is:state>
+	let formModel = { email: '', agree: false, plan: '' }
+
+	const isComplete = () =>
+		formModel.email.length > 0 && formModel.agree && formModel.plan.length > 0
+</script>
+
+<form class:is-valid="{ isComplete() }">
+	<input type="email" value="{ formModel.email }" />
+	<input type="checkbox" checked="{ formModel.agree }" />
+	<select value="{ formModel.plan }">…</select>
+</form>
+```
+
+`value="{ formModel.email }"` and `checked="{ formModel.agree }"` stay in sync when the user types or when code assigns `formModel.email = '…'`. The runtime skips DOM writes when the control already matches state so the caret stays put during typing.
+
 ## Loading state (`busy`)
 
 When **both** `reactivity: true` and `hypermedia: true` are enabled, `busy` ties a boolean state binding to hypermedia request lifecycle on an element:

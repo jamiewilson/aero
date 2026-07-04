@@ -37,10 +37,14 @@ function writeControlValue(
 	value: unknown
 ): void {
 	if (kind === 'checked' && target instanceof HTMLInputElement) {
-		target.checked = Boolean(value)
+		const next = Boolean(value)
+		if (target.checked === next) return
+		target.checked = next
 		return
 	}
-	target.value = value == null ? '' : String(value)
+	const next = value == null ? '' : String(value)
+	if (target.value === next) return
+	target.value = next
 }
 
 export function bindFormModel(options: FormModelBindingOptions): Cleanup {

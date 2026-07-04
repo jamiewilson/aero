@@ -69,12 +69,19 @@ type X = { a: string }
 		expect(output).not.toContain('lang="ts"')
 	})
 
-	it('does not add lang="ts" when formatting default build scripts', async () => {
-		const input = `<script is:build>
-const x=1
+	it('formats script is:state blocks with embedded typescript formatting', async () => {
+		const input = `<script is:state>
+\t\tconst  foo={bar:1}
+const y=2
+const nextNumber = (values: Array<number>) => Math.max(0, ...values) + 1
 </script>`
-		const output = await prettier.format(input, baseOptions)
-		expect(output).toContain('<script is:build>')
-		expect(output).not.toContain('lang="ts"')
+		const output = await prettier.format(input, {
+			...baseOptions,
+			semi: false,
+			singleQuote: true,
+		})
+		expect(output).toMatch(/const foo = \{ bar: 1 \}/)
+		expect(output).toMatch(/const y = 2/)
+		expect(output).not.toContain('\t\tconst')
 	})
 })

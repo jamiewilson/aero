@@ -15,6 +15,14 @@ describe('SignalStore', () => {
 		expect(store.get<number>('user.age').value).toBe(37)
 	})
 
+	it('mergeBindings keeps one signal per top-level key', () => {
+		const store = new SignalStore()
+		store.mergeBindings({ formModel: { email: 'a@b.c' }, count: 1 })
+		expect(store.get<{ email: string }>('formModel').value).toEqual({ email: 'a@b.c' })
+		expect(store.get<number>('count').value).toBe(1)
+		expect(() => store.get('formModel.email')).toThrow(/Missing signal path/)
+	})
+
 	it('evaluates expressions with $ refs', () => {
 		const store = new SignalStore()
 		store.merge({ count: 2, user: { age: 3 } })

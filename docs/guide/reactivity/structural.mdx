@@ -77,6 +77,28 @@ Reactive lists need a stable `key` so Aero can move or reuse DOM nodes instead o
 <button on:click="{ addItem() }">Add</button>
 ```
 
+### In-place list mutation
+
+Keyed `for` also reconciles when you mutate the same array, `Set`, or `Map` in place:
+
+```html
+<script is:state>
+	let numbersArray = [1, 2, 3]
+	let numbersSet = new Set([1, 2, 3])
+	let numbersMap = new Map([[1, 'one'], [2, 'two']])
+</script>
+
+<button on:click="{ numbersArray.push(11) }">Add to array</button>
+<button on:click="{ numbersSet.add(11) }">Add to set</button>
+<button on:click="{ numbersMap.set(11, 'eleven') }">Add to map</button>
+
+<div for="{ const n of numbersArray }" key="{ n }">{ n }</div>
+<div for="{ const n of numbersSet }" key="{ n }">{ n }</div>
+<div for="{ const [key, value] of numbersMap }" key="{ key }">{ key }: { value }</div>
+```
+
+Immutable replacement (`items = [...items, next]`) and in-place mutation (`items.push(next)`) both notify the binding. Prefer immutable updates when you use view transitions or need a new reference for derived state.
+
 ### Destructuring in `for`
 
 The loop binding supports destructuring patterns:
@@ -89,7 +111,8 @@ The loop binding supports destructuring patterns:
 
 - `key` must evaluate to a string or number per row.
 - Duplicate keys in one reconciliation pass throw at runtime.
-- The iterable must be an array (or `null` / `undefined`, treated as empty).
+- The iterable may be an array, `Set`, `Map`, any object with `[Symbol.iterator]`, or `null` / `undefined` (treated as empty).
+- `Map` rows iterate as `[key, value]` entry pairs — use destructuring in the loop binding.
 
 <Note>
 	Keyed reconciliation preserves focus and element state inside rows when items reorder. Pair with [view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in client scripts for animated list updates.

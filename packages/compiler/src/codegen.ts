@@ -126,7 +126,7 @@ function createStateSnapshotExpression(names: string[]): string {
 
 function createStateHydrationScriptLine(stateBindingNames: string[]): string {
 	const snapshotExpr = createStateSnapshotExpression(stateBindingNames)
-	return `scripts?.add(\`<script type="aero/state">\${escapeScriptJson(${snapshotExpr})}</script>\`)`
+	return `scripts?.add(\`<script type="aero/state">\${escapeScriptJson(${snapshotExpr})}</script>\`);`
 }
 
 /**

@@ -111,6 +111,19 @@ describe('reactive structural codegen', () => {
 		expect(code).toContain('escapeHtml( scope.id )')
 	})
 
+	it('emits destructureRow using destructured bindings for array patterns', () => {
+		const html = `<script is:state>
+			let entries = new Map([[1, 'one']])
+		</script>
+		<div for="{ const [key, value] of entries }" key="{ key }">{ key }: { value }</div>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toMatch(
+			/function __aeroForDestructure_0\(item\) \{ const \[key, value\] = item; return \(\{ key, value \}\); \}/
+		)
+		expect(code).not.toContain('item.key')
+	})
+
 	it('qualifies for-row id from loop scope via emitForRowRenderer', () => {
 		const html = `<script is:state>
 			let items = [{ id: 'row-a' }]

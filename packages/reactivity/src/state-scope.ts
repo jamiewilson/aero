@@ -1,4 +1,6 @@
 import { Computed } from './computed'
+import { makeReactive } from './reactive'
+import { Signal } from './signal'
 import { SignalStore } from './store'
 
 export interface StateBindingSpec {
@@ -115,14 +117,28 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		} else if (binding.reactiveProp && binding.required) {
 			throw new Error(`[aero] Required reactive prop was not provided: ${binding.name}`)
 		} else if (!store.has(binding.name)) {
-			store.signal(binding.name, evalInit(binding, scope, allowLegacyRuntimeCompile))
+			const signal = store.signal(binding.name)
+			const initial = evalInit(binding, scope, allowLegacyRuntimeCompile)
+			signal.value = makeReactive(initial, () => (store.get(binding.name) as Signal<unknown>).notify())
+		} else {
+			const signal = store.get(binding.name) as Signal<unknown>
+			if (!(signal instanceof Computed)) {
+				const current = signal.value
+				const wrapped = makeReactive(current, () => signal.notify())
+				if (!Object.is(current, wrapped)) {
+					signal.value = wrapped
+				}
+			}
+		}
+		const notifyBinding = (): void => {
+			;(store.get(binding.name) as Signal<unknown>).notify()
 		}
 		const write = binding.reactiveProp && !binding.bindable
 			? () => {
 					throw new Error(`[aero] Readonly reactive prop cannot be assigned: ${binding.name}`)
 				}
 			: (value: unknown) => {
-					;(store.get(binding.name) as { value: unknown }).value = value
+					;(store.get(binding.name) as Signal<unknown>).value = makeReactive(value, notifyBinding)
 				}
 		defineScopeAccessor(
 			scope,

@@ -36,8 +36,19 @@ export function escapeHtml(s: unknown): string {
 }
 
 /** Escape JSON for safe embedding inside inline `<script>` tags. */
-export function escapeScriptJson(value: unknown): string {
-	return JSON.stringify(value)
+export function escapeScriptJson(value: unknown, replacer?: (key: string, value: unknown) => unknown): string {
+	const jsonReplacer =
+		replacer ??
+		((_key: string, val: unknown) => {
+			if (val instanceof Map) {
+				return { __aero: 'Map', entries: [...val.entries()] }
+			}
+			if (val instanceof Set) {
+				return { __aero: 'Set', values: [...val] }
+			}
+			return val
+		})
+	return JSON.stringify(value, jsonReplacer as (key: string, value: unknown) => unknown)
 		.replace(/</g, '\\u003C')
 		.replace(/>/g, '\\u003E')
 		.replace(/&/g, '\\u0026')

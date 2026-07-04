@@ -3,13 +3,20 @@
 </script>
 
 <script is:state>
-	let email = ''
-	let agree = false
-	let plan = ''
-	let bio = ''
+	let formModel = {
+		email: '',
+		agree: false,
+		plan: '',
+		bio: '',
+	}
 
 	const isComplete = () => {
-		return email.length > 0 && agree && plan.length > 0 && bio.length > 0
+		return (
+			formModel.email.length > 0 &&
+			formModel.agree &&
+			formModel.plan.length > 0 &&
+			formModel.bio.length > 0
+		)
 	}
 </script>
 
@@ -17,12 +24,17 @@
 	<form class="v-stack" class:is-valid="{ isComplete() }">
 		<div class="v-stack">
 			<label for="email">Email</label>
-			<input id="email" type="email" placeholder="Enter your email..." value="{ email }" required />
+			<input
+				id="email"
+				type="email"
+				placeholder="Enter your email..."
+				value="{ formModel.email }"
+				required />
 		</div>
 
 		<div class="v-stack">
 			<label for="plan-select">Plan (select)</label>
-			<select id="plan-select" value="{ plan }">
+			<select id="plan-select" value="{ formModel.plan }">
 				<option value="" disabled selected>Select a plan...</option>
 				<option value="free">Free</option>
 				<option value="pro">Pro</option>
@@ -32,31 +44,31 @@
 		<fieldset class="v-stack">
 			<label>Plan (radio group)</label>
 			<label class="h-stack items-center">
-				<input type="radio" name="plan-radio" value="free" checked="{ plan }" />
+				<input type="radio" name="plan-radio" value="free" checked="{ formModel.plan }" />
 				<span>Free</span>
 			</label>
 			<label class="h-stack items-center">
-				<input type="radio" name="plan-radio" value="pro" checked="{ plan }" />
+				<input type="radio" name="plan-radio" value="pro" checked="{ formModel.plan }" />
 				<span>Pro</span>
 			</label>
 		</fieldset>
 
 		<label class="v-stack">
 			<span>Bio</span>
-			<textarea placeholder="Add a bio..." value="{ bio }" rows="3"></textarea>
+			<textarea placeholder="Add a bio..." value="{ formModel.bio }" rows="3"></textarea>
 		</label>
 
 		<label class="h-stack items-center">
-			<input type="checkbox" checked="{ agree }" />
+			<input type="checkbox" checked="{ formModel.agree }" />
 			<span>Agree to terms</span>
 		</label>
 	</form>
 
 	<div class="info">
-		<div>Email: <code>{ email || 'empty' }</code></div>
-		<div>Agreed: <code>{ agree || 'false' }</code></div>
-		<div>Plan: <code>{ plan || 'empty' }</code></div>
-		<div>Bio: <code>{ bio || 'empty' }</code></div>
+		<div>Email: <code>{ formModel.email || 'empty' }</code></div>
+		<div>Agreed: <code>{ formModel.agree || 'false' }</code></div>
+		<div>Plan: <code>{ formModel.plan || 'empty' }</code></div>
+		<div>Bio: <code>{ formModel.bio || 'empty' }</code></div>
 		<div>Is valid: <code>{ isComplete() }</code></div>
 	</div>
 </base-layout>

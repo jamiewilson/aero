@@ -78,6 +78,35 @@ Common sources for seed data:
 
 Build-time `{ expression }` in markup still renders static HTML. Use `is:state` when that data should stay reactive after load.
 
+### Collection state (objects, arrays, Map, Set)
+
+Top-level `let` bindings can hold collection values. Aero wraps them in a coarse-grained reactive proxy: any nested mutation re-notifies effects that read that binding.
+
+```html
+<script is:state>
+	let formModel = { email: '', agree: false }
+	let tags = new Set(['a', 'b'])
+	let scores = new Map([[1, 'one']])
+	let items = [1, 2, 3]
+</script>
+```
+
+| Pattern | Updates UI? |
+| --- | --- |
+| `formModel.email = 'x'` | Yes — in-place object field |
+| `items.push(4)` | Yes — array mutation |
+| `tags.add('c')` | Yes — Set method |
+| `scores.set(2, 'two')` | Yes — Map method |
+| `items = [...items, 4]` | Yes — whole binding replacement |
+
+Replacing the whole binding (`items = next`) still works and is a good fit when you want immutable list updates (for example with view transitions). In-place mutation is supported for ergonomics; both paths notify the same top-level signal.
+
+**Granularity:** v1 is binding-level, not per-property. Reading `items.length` in a derived binding (`let hasItems = items.length > 0`) re-runs when `items` notifies — including after `push`, not only after `items = …`.
+
+**Hydration:** Owned collection values serialize into `<script type="aero/state">`. Plain objects and arrays round-trip as JSON; `Map` and `Set` use `__aero` markers in the payload.
+
+**Non-reactive values:** Primitives, functions, `Date`, class instances, DOM nodes, and typed arrays are stored as-is — mutating a `Date` in place does not notify.
+
 ### Helpers and handlers
 
 Declare helpers at the top level of `<script is:state>` with normal JavaScript — block or expression bodies, TypeScript parameter types, and mixed styles in one script:

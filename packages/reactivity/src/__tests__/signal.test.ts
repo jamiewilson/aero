@@ -19,4 +19,12 @@ describe('Signal', () => {
 		s.value = 3
 		expect(seen).toEqual([1, 2])
 	})
+
+	it('notify() re-runs subscribers without assigning', () => {
+		const s = new Signal('same')
+		const seen: string[] = []
+		s.subscribe(v => seen.push(v))
+		s.notify()
+		expect(seen).toEqual(['same'])
+	})
 })

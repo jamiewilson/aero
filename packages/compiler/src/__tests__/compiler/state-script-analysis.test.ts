@@ -151,7 +151,7 @@ describe('analyzeStateScript', () => {
 
 		const lowered = lowerStateScript(script, result)
 		expect(lowered.moduleConstants).toEqual([
-			"const createID = () => crypto.randomUUID().split('-').pop()",
+			'const createID = () => crypto.randomUUID().split("-").pop()',
 		])
 	})
 

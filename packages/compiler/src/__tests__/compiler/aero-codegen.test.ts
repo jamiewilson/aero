@@ -158,6 +158,33 @@ describe('Aero Codegen - Client Scripts', () => {
 		expect(out).not.toContain('"doubled"')
 	})
 
+	it('terminates state hydration scripts?.add before client script pass-data IIFE', async () => {
+		const html = `<script is:build>
+			const initialValue = 0
+		</script>
+		<script is:state>
+			let count = initialValue
+		</script>
+		<div>{ count }</div>
+		<script props="{ initialValue }">
+			console.log(initialValue)
+		</script>`
+
+		const parsed = parse(html)
+		const code = compile(parsed, {
+			...mockOptions,
+			reactivity: true,
+			clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ initialValue }' }],
+		})
+
+		expect(code).toMatch(/type="aero\/state"[^`]*`\);/)
+		const scripts = new Set<string>()
+		await execute(code, { scripts })
+		const out = Array.from(scripts).join('\n')
+		expect(out).toContain('type="aero/state"')
+		expect(out).toContain('__aero_data')
+	})
+
 	it('renders template interpolations from is:state bindings', async () => {
 		const html = `<script is:state>
 			let count = 1

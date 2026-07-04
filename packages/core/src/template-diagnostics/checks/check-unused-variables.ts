@@ -70,7 +70,13 @@ function countIdentifierUsages(content: string, name: string): number {
 	let match: RegExpExecArray | null
 	while ((match = usageRegex.exec(content)) !== null) {
 		const charBefore = match.index > 0 ? content[match.index - 1] : ''
-		if (charBefore === '.') continue
+		if (charBefore === '.') {
+			const isSpread =
+				match.index >= 3 &&
+				content[match.index - 2] === '.' &&
+				content[match.index - 3] === '.'
+			if (!isSpread) continue
+		}
 		count++
 	}
 	return count

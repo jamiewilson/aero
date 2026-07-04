@@ -63,8 +63,8 @@
 	input[type='radio'] {
 		appearance: auto;
 		accent-color: var(--color-accent);
-		inline-size: 1.125rem;
-		block-size: 1.125rem;
+		inline-size: 1rem;
+		block-size: 1rem;
 		cursor: pointer;
 		flex-shrink: 0;
 	}
@@ -92,6 +92,10 @@
 			opacity: 0.5;
 			cursor: not-allowed;
 		}
+	}
+
+	button.small {
+		padding: calc(var(--element-base-padding) / 4);
 	}
 
 	form button {

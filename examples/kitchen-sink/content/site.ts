@@ -27,6 +27,7 @@ export default {
 		{ label: 'Image imports', href: '/demos/images' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
 		{ label: 'Keyed list', href: '/demos/keyed-list' },
+		{ label: 'Iterables', href: '/demos/iterables' },
 		{ label: 'Form model', href: '/demos/form-model' },
 		{ label: 'Bindings', href: '/demos/bindings' },
 		{ label: 'Reactivity', href: '/demos/reactivity' },
