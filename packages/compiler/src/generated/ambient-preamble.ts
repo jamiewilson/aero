@@ -19,6 +19,8 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 
 declare function \$effect(fn: () => void | (() => void)): void
 
+declare const \$root: ParentNode
+
 declare namespace Aero {
 	interface ComponentRegistry {}
 }

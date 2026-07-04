@@ -34,6 +34,7 @@ export default {
 		{ label: 'Hypermedia', href: '/demos/hypermedia' },
 		{ label: 'Process runtime', href: '/demos/process' },
 		{ label: 'HTMX form', href: '/demos/htmx-form' },
+		{ label: 'Numeric text', href: '/demos/numeric-text' },
 	],
 	footer: {
 		links: [

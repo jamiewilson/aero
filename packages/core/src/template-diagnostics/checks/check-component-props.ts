@@ -12,7 +12,7 @@ import type { VariableDefinition } from '../analyzer'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
 import { isValidTemplateImportSpecifier } from '../importResolution'
 import { getRequiredPropsFromType, getPropsTypeFromComponent } from '../propsValidation'
-import { collectComponentReactivePropMetadata } from '@aero-js/compiler'
+import { analyzeStateScript, collectComponentReactivePropMetadata } from '@aero-js/compiler'
 import { isBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
 import { getIgnoredRanges, isInRanges, attributeSectionBase, findAttributeRange, findTagNameRange, sliceRawAttrs, type ByteRange } from './helpers'
 
@@ -212,10 +212,6 @@ function getPassedReactivePropNames(
 	return passed
 }
 
-function escapeRegExp(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 function collectStateScriptContent(componentContent: string): string {
 	const scripts: string[] = []
 	const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
@@ -226,33 +222,12 @@ function collectStateScriptContent(componentContent: string): string {
 	return scripts.join('\n')
 }
 
-function collectReactivePropLocalNames(stateScript: string): Set<string> {
-	const names = new Set<string>()
-	const destructureRegex = /\bconst\s*\{([\s\S]*?)\}\s*=\s*Aero\.props\b/g
-	let match: RegExpExecArray | null
-	while ((match = destructureRegex.exec(stateScript)) !== null) {
-		for (const rawPart of match[1].split(',')) {
-			const part = rawPart.trim()
-			if (!part) continue
-			const local = (part.includes(':') ? part.split(':').pop() : part)
-				?.split('=')[0]
-				?.trim()
-			if (local && /^[A-Za-z_$][\w$]*$/.test(local)) names.add(local)
-		}
-	}
-	return names
-}
-
 function collectWrittenReactivePropNames(componentContent: string): Set<string> {
 	const stateScript = collectStateScriptContent(componentContent)
-	const reactiveProps = collectReactivePropLocalNames(stateScript)
+	if (!stateScript.trim()) return new Set()
 	const written = new Set<string>()
-	for (const name of reactiveProps) {
-		const escaped = escapeRegExp(name)
-		const writePattern = new RegExp(
-			`(?:\\b${escaped}\\s*(?:[+\\-*/%]?=)|(?:\\+\\+|--)\\s*${escaped}\\b|\\b${escaped}\\s*(?:\\+\\+|--))`
-		)
-		if (writePattern.test(stateScript)) written.add(name)
+	for (const binding of analyzeStateScript(stateScript).bindings) {
+		if (binding.reactiveProp && binding.writes) written.add(binding.name)
 	}
 	return written
 }
