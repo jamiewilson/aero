@@ -1,15 +1,23 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site'
-
-	const headerProps = {
-		title: site.home.title,
-		subtitle: site.home.subtitle,
-		requiredProp: true,
-	}
+	import footer from '@components/footer.html'
 </script>
 
 <base-layout>
-	<header-component props="{ ...headerProps }" />
+	<article class="grid gap-4 p-[5vw] h-full">
+		<header class="max-w-sm">
+			<h1 class="text-[4rem] font-semibold tracking-tight">{ site.home.title }</h1>
+			<p>{ site.home.subtitle }</p>
+		</header>
+		<section>
+			<h2 class="text-xs font-semibold uppercase tracking-widest mb-5">Demos</h2>
+			<ul class="list-none columns-4">
+				<li for="{ const demo of site.demos }">
+					<a href="{ demo.href }">{ demo.label }</a>
+				</li>
+			</ul>
+		</section>
+		<footer-component />
+	</article>
 </base-layout>

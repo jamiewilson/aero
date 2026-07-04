@@ -18,9 +18,9 @@ export default {
 		attribute: 'data-theme',
 	},
 	home: {
-		title: 'Welcome to Aero',
+		title: 'aero',
 		subtitle:
-			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
+			'A static-first, hypermedia-based, full-stack framework for people who love the web platform.',
 	},
 	demos: [
 		{ label: 'Scripts', href: '/demos/scripts' },
@@ -38,9 +38,9 @@ export default {
 	],
 	footer: {
 		links: [
-			{ label: 'Home', path: '/' },
-			{ label: 'Demos', path: '/demos' },
-			{ label: 'Docs', path: '/docs' },
+			{ label: 'Docs', href: 'https://aerojs.mintlify.app' },
+			{ label: 'GitHub', href: 'https://github.com/jamiewilson/aero' },
+			{ label: 'npm', href: 'https://www.npmjs.com/package/@aero-js/core' },
 		],
 	},
 }

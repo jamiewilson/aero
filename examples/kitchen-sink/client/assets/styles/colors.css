@@ -1,8 +1,8 @@
 @layer root {
 	:root {
-		--color-light: #fafafa;
-		--color-dark: #0d101c;
-		--color-accent: salmon;
+		--color-light: var(--color-white);
+		--color-dark: var(--color-gray-950);
+		--color-accent: light-dark(var(--color-teal-500), var(--color-teal-300));
 		--color-fg: light-dark(var(--color-dark), var(--color-light));
 		--color-bg: light-dark(var(--color-light), var(--color-dark));
 	}

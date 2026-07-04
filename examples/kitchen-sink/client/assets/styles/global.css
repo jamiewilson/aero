@@ -1,70 +1,44 @@
 @layer reset, root, theme, base, layout, components, utils;
 
-@import 'reset.css';
+@import 'tailwindcss';
 @import 'colors.css';
 @import 'fonts.css';
 @import 'animation.css';
 @import 'theme.css';
-@import 'forms.css';
 @import 'code.css';
 @import 'prose.css';
-@import 'card.css';
-@import 'toast.css';
 @import 'utils.css';
 /*@import 'debug.css';*/
+
+@utility trim-cap {
+	text-box: trim-both cap alphabetic;
+}
 
 @layer base {
 	:root {
 		--font-sans: system-ui, sans-serif;
 		--font-mono: 'MonaspaceNeadon', monospace;
-		--page-padding: 1rem;
-		--vertical-spacing: 2rem;
-		--element-base-padding: 1rem;
-		--radius-sm: 0.25rem;
-		--radius-md: 0.5rem;
-		--radius-lg: 1rem;
-		--radius-xl: 2rem;
-		--round: calc(infinity * 1px);
 	}
 
 	html,
 	body {
 		height: 100%;
 		font-size: 18px;
+		line-height: 1.5;
 	}
 
 	body {
-		display: grid;
-		place-content: safe center;
-		padding: var(--page-padding);
 		color: var(--color-fg);
 		background: var(--color-bg);
 		font-family: var(--font-sans);
-		line-height: 1.5;
-		text-align: center;
-	}
-
-	header,
-	section {
-		margin-bottom: var(--vertical-spacing);
-	}
-
-	section {
-		display: grid;
-		gap: calc(var(--vertical-spacing) / 4);
-	}
-
-	ul {
-		text-align: left;
 	}
 
 	a {
-		text-decoration: none;
-		color: var(--color-accent);
+		text-decoration: underline;
 		transition: color var(--duration-fast);
 
 		&:hover {
-			color: var(--color-fg);
+			color: var(--color-accent);
 		}
 	}
 

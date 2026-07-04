@@ -38,9 +38,11 @@
 
 		@scope (.theme-toggle) {
 			:scope {
-				display: grid;
-				gap: 0;
 				padding: 1.5rem;
+				border: 1px solid --opacity(currentColor, 0.1);
+				border-radius: var(--radius-3xl);
+				corner-shape: squircle;
+				cursor: pointer;
 			}
 
 			svg {
