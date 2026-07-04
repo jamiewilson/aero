@@ -67,6 +67,7 @@ const ALLOWED_GLOBALS: ReadonlySet<string> = new Set([
 	'$dispatch',
 	'$refs',
 	'$watch',
+	'$effect',
 	'$root',
 	'$nextTick',
 	'$tick',

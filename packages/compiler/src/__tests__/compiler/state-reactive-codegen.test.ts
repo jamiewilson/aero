@@ -351,4 +351,30 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('hypermediaRuntime: Aero.getHypermediaRuntime?.() ?? undefined')
 		expect(code).not.toContain('import { POST, GET, PUT, PATCH, DELETE }')
 	})
+
+	it('emits mountStateBindings for top-level $effect', () => {
+		const html = `<script is:state>
+			let count = 0
+			$effect(() => { count })
+		</script>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain("Effect as __aeroEffect } from '@aero-js/reactivity'")
+		expect(code).toContain('function __aeroEffect_0(scope)')
+		expect(code).toContain('effectRuns: [__aeroEffect_0]')
+		expect(code).toContain('export function mountStateBindings(root, Aero, opts = {})')
+	})
+
+	it('emits $effect-only pages without markup binds', () => {
+		const html = `<script is:state>
+			let value = 1
+			$effect(() => { value })
+		</script>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain('effectRuns: [__aeroEffect_0]')
+		expect(code).not.toContain('data-aero-text=')
+	})
 })

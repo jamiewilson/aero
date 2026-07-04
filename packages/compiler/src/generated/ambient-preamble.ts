@@ -17,6 +17,8 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 	bindable<T>(fallback: T): T
 }
 
+declare function \$effect(fn: () => void | (() => void)): void
+
 declare namespace Aero {
 	interface ComponentRegistry {}
 }

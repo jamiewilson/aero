@@ -1,0 +1,111 @@
+---
+title: 'Reactive effects'
+description: 'Run imperative side effects when signals change with $effect in <script is:state>.'
+---
+
+## The problem
+
+Declarative bindings cover text, attributes, events, and form controls. Some libraries — especially web components — expose **property APIs** that do not round-trip through HTML attributes. [numeric-text](https://github.com/shizukushq/numeric-text) updates its display only via `.update()`, not `setAttribute('value', …)`.
+
+You need a reactive primitive that runs **imperative sync logic** when tracked signals change, with optional cleanup on re-run and teardown.
+
+## How Aero helps
+
+Top-level `$effect(() => { … })` in `<script is:state>` registers a side effect compiled to the runtime `Effect` class (the same scheduler used internally for DOM binds).
+
+```html
+<script is:state>
+	let count = 0
+	let el = document.querySelector('my-widget')
+
+	$effect(() => {
+		el?.sync(count)
+	})
+</script>
+```
+
+Reads of top-level `let` bindings and reactive props inside the callback subscribe the effect. When those signals change, Aero runs any cleanup returned from the previous run, then runs the callback again.
+
+## Syntax
+
+```ts
+declare function $effect(fn: () => void | (() => void)): void
+```
+
+| Rule | Detail |
+| --- | --- |
+| Placement | Top-level only in `<script is:state>` — not inside handlers or nested functions |
+| Tracking | Reads of `let` bindings and reactive props inside `fn` subscribe the effect |
+| Re-run | On tracked change: previous cleanup, then `fn` again |
+| Cleanup | Return `() => void` from `fn` — runs before re-run and on mount teardown |
+| Plain vars | `let isMounted = false` mutated inside the effect is **not** tracked (same as Svelte plain `let`) |
+| Config | Requires `reactivity: true`; `$effect` outside `is:state` is a compile error |
+| Alias | `Aero.effect(() => …)` is accepted with the same semantics |
+
+### Invalid usage
+
+```html
+<script is:state>
+	const stop = $effect(() => {}) // error: cannot assign
+	function run() {
+		$effect(() => {}) // error: not top-level
+	}
+</script>
+```
+
+## When to use `$effect` vs bindings
+
+| Use | When |
+| --- | --- |
+| `{ count }`, `on:click`, `bind:value` | DOM maps cleanly to declarative binds |
+| `$effect` | Third-party APIs, web component `.update()` / `.setOptions()`, imperative DOM, subscriptions |
+
+Keep markup declarative; keep imperative sync in state scripts alongside handlers.
+
+## Cleanup pattern
+
+```html
+<script is:state>
+	let topic = 'weather'
+
+	$effect(() => {
+		const source = new EventSource(`/api/${topic}`)
+		source.onmessage = e => { /* … */ }
+		return () => source.close()
+	})
+</script>
+```
+
+## Example: numeric-text wrapper
+
+Web components that animate via `.update(value, animated)` need a side effect — attribute bindings alone set properties but skip animation semantics.
+
+```html
+<script is:state>
+	import { wireNumericText } from '@scripts/numeric-text.ts'
+	import type { NumericText } from '@numeric-text/core'
+
+	const { value = Aero.bindable(0), animated = true } = Aero.props
+
+	let el: NumericText | null = null
+	let isMounted = false
+
+	$effect(() => {
+		if (!el) el = document.querySelector('numeric-text')
+		wireNumericText(el, { value, animated, isMounted: () => isMounted })
+		if (!isMounted) isMounted = true
+	})
+</script>
+
+<numeric-text></numeric-text>
+```
+
+See the [kitchen-sink numeric-text demo](/demos/numeric-text) for a full page.
+
+<Note>`bind:this` or mount-scoped element refs are planned follow-ups. Until then, scope `querySelector` to a unique wrapper or single-instance templates.</Note>
+
+## Related
+
+- [Bindings reference](/guide/reactivity/bindings) — declarative DOM wiring
+- [Reactive props](/guide/reactivity/reactive-props) — `Aero.bindable()` for child-mutable props
+- [CSP and compiled mounts](/guide/reactivity/csp) — `$effect` emits real functions in the mount preamble

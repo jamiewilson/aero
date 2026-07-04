@@ -41,6 +41,7 @@ State scripts run in the browser after mount. Top-level `let` declarations becom
 | One per file | Only one `<script is:state>` per template |
 | Signals | Top-level `let` bindings are reactive |
 | Helpers | Top-level `function` declarations and `const` arrows are equivalent — use either style for handlers and shared logic that reads or updates state |
+| Effects | Top-level `$effect(() => { … })` runs imperative side effects when tracked signals change; return a function for cleanup |
 | Imports | Hoisted into mount scope, same as client scripts |
 | With `is:build` | Separate script blocks — state can **read** build-scope values to seed initial data (see below) |
 
@@ -179,6 +180,9 @@ Reactivity alone covers client-only UI. Pair it with [Hypermedia](/getting-start
 	</Card>
 	<Card title="Bindings reference" icon="link" href="/guide/reactivity/bindings">
 		Full syntax for events, show, html, class, property, and model bindings.
+	</Card>
+	<Card title="Reactive effects" icon="bolt" href="/guide/reactivity/effects">
+		Imperative side effects with `$effect` — web components, subscriptions, cleanup.
 	</Card>
 	<Card title="Structural updates" icon="git-branch" href="/guide/reactivity/structural">
 		Reactive `if`, keyed `for`, and `switch`.

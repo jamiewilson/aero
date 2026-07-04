@@ -373,6 +373,14 @@ function emitCompiledMountFunctions(
 			}
 		}
 	}
+	for (const effect of analysis.effects) {
+		const body = effect.isBlockBody
+			? scopeStmt(effect.bodySource)
+			: `return (${scopeExpr(effect.bodySource)});`
+		lines.push(
+			`function __aeroEffect_${effect.id}(scope) {\n\tconst effect = new __aeroEffect(() => {\n\t\t${body.trim()}\n\t});\n\treturn () => effect.destroy();\n}`
+		)
+	}
 	return lines.join('\n\n')
 }
 
@@ -418,8 +426,9 @@ function serializeEventBinds(binds: IRReactiveEventBind[]): string {
 		.join('\n')}\n\t]`
 }
 
-export function createStateMountImportLine(): string {
-	return `import { mountStateBindings as __aeroMountStateBindings } from '@aero-js/reactivity'`
+export function createStateMountImportLine(needsEffect = false): string {
+	const effectImport = needsEffect ? ', Effect as __aeroEffect' : ''
+	return `import { mountStateBindings as __aeroMountStateBindings${effectImport} } from '@aero-js/reactivity'`
 }
 
 function serializeBusyBinds(binds: IRReactiveBusyBind[]): string {
@@ -698,8 +707,9 @@ function emitStructuralBranchFunctions(binds: CollectedReactiveBinds): string {
 	return lines.join('\n\n')
 }
 
-function hasAnyBinds(binds: CollectedReactiveBinds): boolean {
+function hasAnyBinds(binds: CollectedReactiveBinds, effectCount = 0): boolean {
 	return (
+		effectCount > 0 ||
 		binds.textBinds.length > 0 ||
 		binds.eventBinds.length > 0 ||
 		binds.busyBinds.length > 0 ||
@@ -716,6 +726,11 @@ function hasAnyBinds(binds: CollectedReactiveBinds): boolean {
 	)
 }
 
+function serializeEffectRuns(analysis: StateScriptAnalysisResult): string {
+	if (analysis.effects.length === 0) return '[]'
+	return `[${analysis.effects.map(effect => `__aeroEffect_${effect.id}`).join(', ')}]`
+}
+
 export function emitMountStateBindingsFunction(
 	analysis: StateScriptAnalysisResult,
 	binds: CollectedReactiveBinds,
@@ -723,8 +738,8 @@ export function emitMountStateBindingsFunction(
 	actionFunctions?: string,
 	defaultImportBindings: ReadonlySet<string> = new Set(),
 	stateScriptSource = ''
-): { preamble: string; mountExport: string } | '' {
-	if (!hasAnyBinds(binds)) return ''
+): { preamble: string; mountExport: string; needsEffect: boolean } | '' {
+	if (!hasAnyBinds(binds, analysis.effects.length)) return ''
 
 	const scopeConstants = serializeScopeConstants(stateImports)
 	const scopeConstantsLine = scopeConstants ? `\n\t\tscopeConstants: ${scopeConstants},` : ''
@@ -741,6 +756,9 @@ export function emitMountStateBindingsFunction(
 	const preamble = [branchFunctions, compiledFunctions].filter(Boolean).join('\n\n')
 	const installScopeLine =
 		lowered.scopeFunctions.length > 0 ? '\n\t\tinstallScopeFunctions: __aeroInstallScopeFunctions,' : ''
+
+	const effectRunsLine =
+		analysis.effects.length > 0 ? `\n\t\teffectRuns: ${serializeEffectRuns(analysis)},` : ''
 
 	const mountExport = `export function mountStateBindings(root, Aero, opts = {}) {
 	const runtime = Aero.getReactivityRuntime?.()
@@ -761,14 +779,14 @@ export function emitMountStateBindingsFunction(
 		modelBinds: ${serializeModelBinds(binds.modelBinds)},
 		ifBinds: ${serializeIfBinds(binds.ifBinds)},
 		forBinds: ${serializeForBinds(binds.forBinds)},
-		switchBinds: ${serializeSwitchBinds(binds.switchBinds)},${scopeConstantsLine}
+		switchBinds: ${serializeSwitchBinds(binds.switchBinds)},${effectRunsLine}${scopeConstantsLine}
 		componentBinds: ${serializeComponentBinds(binds.componentBinds, defaultImportBindings)},
 		escapeHtml: Aero.escapeHtml,${actionFnsLine}
 		Aero,
 	})
 }`.trim()
 
-	return { preamble, mountExport }
+	return { preamble, mountExport, needsEffect: analysis.effects.length > 0 }
 }
 
 export function createHypermediaImportLine(): string {

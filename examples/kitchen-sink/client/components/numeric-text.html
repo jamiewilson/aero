@@ -1,0 +1,28 @@
+<script is:state>
+	import { wireNumericText } from '@scripts/numeric-text.ts'
+	import type { NumericText } from '@numeric-text/core'
+
+	const {
+		value = Aero.bindable(0),
+		animated = true,
+		trend = 0,
+		respectMotionPreference = true,
+	} = Aero.props
+
+	let el: NumericText | null = null
+	let isMounted = false
+
+	$effect(() => {
+		if (!el) el = document.querySelector('numeric-text')
+		wireNumericText(el, {
+			value,
+			animated,
+			trend,
+			respectMotionPreference,
+			isMounted: () => isMounted,
+		})
+		if (!isMounted) isMounted = true
+	})
+</script>
+
+<numeric-text></numeric-text>

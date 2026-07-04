@@ -1,4 +1,5 @@
 import aero from '@aero-js/core'
+import '@numeric-text/core'
 
 const htmx = (await import('htmx.org')).default
 const Alpine = (await import('./alpine')).default
