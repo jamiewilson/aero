@@ -23,7 +23,7 @@ import {
 } from '@aero-js/interpolation'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
-import { analyzeStateScript, type StateScriptAnalysisResult } from './state-script-analysis'
+import { analyzeStateScript, stripStateEffectStatements, type StateScriptAnalysisResult } from './state-script-analysis'
 import { collectStateReferenceNames } from './lower-state-script'
 
 function buildImportsCode(
@@ -160,7 +160,9 @@ export function buildTemplateAnalysis(
 	})
 	script = stripBuildScriptTypes(analysis.scriptWithoutImportsAndGetStaticPaths)
 	const stateScriptBody = stateImportAnalysis
-		? stripBuildScriptTypes(stateImportAnalysis.scriptWithoutImportsAndGetStaticPaths, 'state.ts')
+		? stripStateEffectStatements(
+				stripBuildScriptTypes(stateImportAnalysis.scriptWithoutImportsAndGetStaticPaths, 'state.ts')
+			)
 		: ''
 	const getStaticPathsFn = analysis.getStaticPathsFn
 	const importsCode = buildImportsCode(

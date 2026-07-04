@@ -16,6 +16,13 @@ describe('feature gates', () => {
 		)
 	})
 
+	it('errors on $effect without is:state', () => {
+		const html = `<script is:build>$effect(() => {})</script>`
+		expect(() => compile(parse(html), { ...mockOptions, reactivity: true })).toThrow(
+			'`$effect` requires `<script is:state>`'
+		)
+	})
+
 	it('errors on action calls when hypermedia is disabled', () => {
 		const html = `<script is:state>
 			function save() { POST('/api/save') }

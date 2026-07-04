@@ -49,6 +49,7 @@
 						"pages": [
 							"guide/reactivity-recipes",
 							"guide/reactivity/bindings",
+							"guide/reactivity/effects",
 							"guide/reactivity/structural",
 							"guide/reactivity/reactive-props",
 							"guide/reactivity/process",

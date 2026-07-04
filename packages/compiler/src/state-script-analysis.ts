@@ -16,6 +16,13 @@ export interface StateBinding {
 	writes?: boolean
 }
 
+export interface StateEffectBinding {
+	id: number
+	/** Inner body of the callback passed to `$effect` / `Aero.effect`. */
+	bodySource: string
+	isBlockBody: boolean
+}
+
 export interface StateScriptDiagnostic {
 	message: string
 	name: string
@@ -24,6 +31,7 @@ export interface StateScriptDiagnostic {
 
 export interface StateScriptAnalysisResult {
 	bindings: StateBinding[]
+	effects: StateEffectBinding[]
 	diagnostics: StateScriptDiagnostic[]
 }
 
@@ -186,9 +194,171 @@ function reactivePropBindingsFromDeclarator(script: string, declarator: { id: an
 	return out
 }
 
+function isEffectCallee(node: unknown): boolean {
+	const expr = unwrapExpression(node as any)
+	if (expr?.type === 'Identifier' && expr.name === '$effect') return true
+	return (
+		expr?.type === 'MemberExpression' &&
+		expr.object?.type === 'Identifier' &&
+		expr.object.name === 'Aero' &&
+		expr.property?.type === 'Identifier' &&
+		expr.property.name === 'effect' &&
+		expr.computed === false
+	)
+}
+
+function isTopLevelEffectStatement(program: any, callNode: any): boolean {
+	for (const stmt of program?.body ?? []) {
+		if (stmt?.type !== 'ExpressionStatement') continue
+		const call = unwrapExpression(stmt.expression)
+		if (call === callNode) return true
+	}
+	return false
+}
+
+function effectBindingFromCall(
+	script: string,
+	call: any,
+	id: number
+): { binding: StateEffectBinding | null; diagnostic?: StateScriptDiagnostic } {
+	const args = call.arguments ?? []
+	if (args.length !== 1) {
+		return {
+			binding: null,
+			diagnostic: {
+				name: '$effect',
+				message: '`$effect` requires exactly one function argument.',
+				range: call.range,
+			},
+		}
+	}
+	const callback = unwrapExpression(args[0])
+	if (
+		callback?.type !== 'ArrowFunctionExpression' &&
+		callback?.type !== 'FunctionExpression'
+	) {
+		return {
+			binding: null,
+			diagnostic: {
+				name: '$effect',
+				message: '`$effect` requires a function argument.',
+				range: call.range,
+			},
+		}
+	}
+	const body = callback.body
+	if (!body || typeof body.start !== 'number' || typeof body.end !== 'number') {
+		return {
+			binding: null,
+			diagnostic: {
+				name: '$effect',
+				message: '`$effect` callback must have a body.',
+				range: call.range,
+			},
+		}
+	}
+	if (body.type === 'BlockStatement') {
+		return {
+			binding: {
+				id,
+				bodySource: script.slice(body.start + 1, body.end - 1),
+				isBlockBody: true,
+			},
+		}
+	}
+	return {
+		binding: {
+			id,
+			bodySource: script.slice(body.start, body.end),
+			isBlockBody: false,
+		},
+	}
+}
+
+function collectStateEffects(
+	script: string,
+	program: any,
+	diagnostics: StateScriptDiagnostic[]
+): StateEffectBinding[] {
+	const effects: StateEffectBinding[] = []
+	let nextId = 0
+
+	for (const stmt of program?.body ?? []) {
+		let declaration = stmt
+		if (stmt?.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration
+		if (declaration?.type === 'VariableDeclaration') {
+			for (const declarator of declaration.declarations ?? []) {
+				const init = unwrapExpression(declarator.init)
+				if (init?.type === 'CallExpression' && isEffectCallee(init.callee)) {
+					diagnostics.push({
+						name: '$effect',
+						message: '`$effect` cannot be assigned; call it as a top-level statement.',
+						range: declarator.range ?? init.range,
+					})
+				}
+			}
+		}
+	}
+
+	for (const stmt of program?.body ?? []) {
+		if (stmt?.type !== 'ExpressionStatement') continue
+		const call = unwrapExpression(stmt.expression)
+		if (call?.type !== 'CallExpression' || !isEffectCallee(call.callee)) continue
+		const result = effectBindingFromCall(script, call, nextId)
+		if (result.diagnostic) diagnostics.push(result.diagnostic)
+		if (result.binding) {
+			effects.push(result.binding)
+			nextId++
+		}
+	}
+
+	walkStateScriptAst(program, node => {
+		if (node?.type !== 'CallExpression' || !isEffectCallee(node.callee)) return
+		if (isTopLevelEffectStatement(program, node)) return
+		diagnostics.push({
+			name: '$effect',
+			message: '`$effect` must be called at the top level of `<script is:state>`.',
+			range: node.range,
+		})
+	})
+
+	return effects
+}
+
+/** Remove top-level `$effect` / `Aero.effect` calls from state script source (mount-only; not SSR). */
+export function stripStateEffectStatements(script: string): string {
+	if (!script.trim()) return script
+
+	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
+	if (parsed.errors.length > 0) return script
+
+	const ranges: Array<[number, number]> = []
+	for (const stmt of (parsed.program as { body?: unknown[] }).body ?? []) {
+		const node = stmt as {
+			type?: string
+			start?: number
+			end?: number
+			expression?: unknown
+		}
+		if (node.type !== 'ExpressionStatement') continue
+		const call = unwrapExpression(node.expression)
+		if (call?.type !== 'CallExpression' || !isEffectCallee(call.callee)) continue
+		if (typeof node.start !== 'number' || typeof node.end !== 'number') continue
+		ranges.push([node.start, node.end])
+	}
+
+	if (ranges.length === 0) return script
+
+	let out = script
+	for (const [start, end] of ranges.sort((a, b) => b[0] - a[0])) {
+		out = out.slice(0, start) + out.slice(end)
+	}
+	return out.replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	if (!script.trim()) {
-		return { bindings: [], diagnostics: [] }
+		return { bindings: [], effects: [], diagnostics: [] }
 	}
 
 	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
@@ -223,6 +393,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 
 	const derived = new Set(bindings.filter(b => b.derived).map(b => b.name))
 	const diagnostics: StateScriptDiagnostic[] = []
+	const effects = collectStateEffects(script, parsed.program, diagnostics)
 	const reactivePropNames = new Set(reactivePropBindings.map(binding => binding.name))
 	const reactivePropNameToPropName = new Map(
 		reactivePropBindings.map(binding => [binding.name, binding.propName ?? binding.name])
@@ -282,6 +453,7 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 
 	return {
 		bindings,
+		effects,
 		diagnostics,
 	}
 }

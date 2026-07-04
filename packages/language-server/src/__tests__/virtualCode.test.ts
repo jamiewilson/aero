@@ -211,6 +211,36 @@ function inc() { value++ }
 		expect(codes).not.toContain(2588)
 	})
 
+	it('includes $effect in state virtual TS preamble', () => {
+		const html = `<script is:state>
+let count = 0
+$effect(() => { count })
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'state_0')!
+		expect(text).toContain('declare function $effect(fn: () => void | (() => void)): void')
+		expect(text).toContain('$effect(() => { count })')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('state.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['state.ts'], opts, host)
+		const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+		expect(codes).not.toContain(2304)
+	})
+
 	it('does not emit TS2588 for readonly reactive prop writes in event handler virtual TS', () => {
 		const html = `<script is:state>
 const { count } = Aero.props

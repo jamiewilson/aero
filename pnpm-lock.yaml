@@ -212,6 +212,9 @@ importers:
       '@alpinejs/persist':
         specifier: ^3.15.12
         version: 3.15.12
+      '@numeric-text/core':
+        specifier: ^0.1.4
+        version: 0.1.4
       '@shikijs/rehype':
         specifier: ^4.3.0
         version: 4.3.0
@@ -1128,6 +1131,9 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
+
+  '@numeric-text/core@0.1.4':
+    resolution: {integrity: sha512-tMaH5u/kdpw3AP+XJMnDWyq39zVHoP80NCLTFwzVept64dIAMKBNLlYtUK0+EULiyFg6IiSwswmc9tMukV1tLw==}
 
   '@oxc-parser/binding-android-arm-eabi@0.138.0':
     resolution: {integrity: sha512-hSYAD+F9W2Qh8SETMqBsQRx6YHvB4z+i/i36shlC7tfdZQauMs4vf3G/EQwKOkNlN7rkTiKINvsNmQb9q2MWcQ==}
@@ -3582,6 +3588,8 @@ snapshots:
       '@emnapi/runtime': 1.11.1
       '@tybys/wasm-util': 0.10.3
     optional: true
+
+  '@numeric-text/core@0.1.4': {}
 
   '@oxc-parser/binding-android-arm-eabi@0.138.0':
     optional: true

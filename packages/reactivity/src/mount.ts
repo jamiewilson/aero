@@ -154,6 +154,7 @@ export interface MountStateBindingsOptions {
 		component: unknown
 		reactivePropExprs: Record<string, ReactivePropExpression>
 	}[]
+	readonly effectRuns?: readonly ((scope: StateScope) => Cleanup)[]
 	readonly scopeConstants?: Record<string, unknown>
 	readonly escapeHtml?: (value: unknown) => string
 	readonly actionFunctions?: Record<string, (...args: unknown[]) => unknown>
@@ -641,6 +642,10 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 		store: options.store,
 		bindings: options.bindings,
 		allowLegacyRuntimeCompile,
+	}
+
+	for (const run of options.effectRuns ?? []) {
+		cleanups.push(run(scope))
 	}
 
 	for (const bind of options.textBinds) {

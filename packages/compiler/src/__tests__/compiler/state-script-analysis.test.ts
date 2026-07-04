@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeStateScript } from '../../state-script-analysis'
+import { analyzeStateScript, stripStateEffectStatements } from '../../state-script-analysis'
 import { collectStateReferenceNames, lowerStateScript } from '../../lower-state-script'
 
 describe('analyzeStateScript', () => {
@@ -151,7 +151,7 @@ describe('analyzeStateScript', () => {
 
 		const lowered = lowerStateScript(script, result)
 		expect(lowered.moduleConstants).toEqual([
-			'const createID = () => crypto.randomUUID().split("-").pop()',
+			"const createID = () => crypto.randomUUID().split('-').pop()",
 		])
 	})
 
@@ -163,5 +163,48 @@ describe('analyzeStateScript', () => {
 		`
 		const result = analyzeStateScript(script)
 		expect([...collectStateReferenceNames(script, result)].sort()).toEqual(['add', 'createID', 'items'])
+	})
+
+	it('collects top-level $effect bindings', () => {
+		const result = analyzeStateScript(`
+			let count = 0
+			$effect(() => { count })
+		`)
+		expect(result.effects).toHaveLength(1)
+		expect(result.effects[0]).toMatchObject({ id: 0, isBlockBody: true })
+	})
+
+	it('collects Aero.effect as an alias', () => {
+		const result = analyzeStateScript(`
+			let count = 0
+			Aero.effect(() => count)
+		`)
+		expect(result.effects).toHaveLength(1)
+		expect(result.effects[0]?.isBlockBody).toBe(false)
+	})
+
+	it('reports diagnostics for invalid $effect usage', () => {
+		const result = analyzeStateScript(`
+			let count = 0
+			const stop = $effect(() => { count })
+			function run() { $effect(() => { count }) }
+			$effect()
+		`)
+		expect(result.diagnostics.map(d => d.message)).toEqual(
+			expect.arrayContaining([
+				'`$effect` cannot be assigned; call it as a top-level statement.',
+				'`$effect` must be called at the top level of `<script is:state>`.',
+				'`$effect` requires exactly one function argument.',
+			])
+		)
+	})
+
+	it('stripStateEffectStatements removes top-level effect calls', () => {
+		const script = `let count = 0
+$effect(() => { count })
+const x = 1`
+		expect(stripStateEffectStatements(script)).toBe(`let count = 0
+
+const x = 1`)
 	})
 })

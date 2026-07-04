@@ -20,6 +20,7 @@ export interface FeatureGateIssue {
 
 const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/script>/i
+const EFFECT_CALL_RE = /(?:\$effect|Aero\.effect)\s*\(/
 const RUNTIME_BRACED_ATTR_RE =
 	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
 
@@ -54,6 +55,19 @@ function collectStateBindings(source: string): Map<string, string> {
 		bindings.set(declaration[1], declaration[2])
 	}
 	return bindings
+}
+
+function sourceUsesEffectCall(parsed: ParseResult): boolean {
+	if (EFFECT_CALL_RE.test(parsed.template)) return true
+	if (parsed.buildScript && EFFECT_CALL_RE.test(parsed.buildScript.content)) return true
+	for (const script of [
+		...parsed.clientScripts,
+		...parsed.inlineScripts,
+		...parsed.blockingScripts,
+	]) {
+		if (EFFECT_CALL_RE.test(script.content)) return true
+	}
+	return false
 }
 
 function pushSourceIssue(
@@ -111,6 +125,15 @@ export function collectFeatureGateIssuesFromSource(
 			source,
 			RUNTIME_BRACED_ATTR_RE,
 			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript.'
+		)
+	}
+
+	if (!IS_STATE_SCRIPT_RE.test(source) && EFFECT_CALL_RE.test(source)) {
+		pushSourceIssue(
+			out,
+			source,
+			EFFECT_CALL_RE,
+			'`$effect` requires `<script is:state>` and `reactivity: true` in aero.config.'
 		)
 	}
 
@@ -293,6 +316,14 @@ export function collectFeatureGateIssues(
 			code: 'AERO_CONFIG',
 			message:
 				'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.',
+		})
+	}
+
+	if (!parsed.stateScript && sourceUsesEffectCall(parsed)) {
+		out.push({
+			code: 'AERO_CONFIG',
+			message:
+				'`$effect` requires `<script is:state>` and `reactivity: true` in aero.config.',
 		})
 	}
 

@@ -32,6 +32,12 @@ declare const Aero: {
 }
 
 /**
+ * Register a reactive side effect in `<script is:state>`.
+ * Re-runs when tracked signal reads inside `fn` change. Return a cleanup function to run before re-run and on teardown.
+ */
+declare function $effect(fn: () => void | (() => void)): void
+
+/**
  * Augment with tag names mapped to `{ props: YourProps }` for typed `renderComponent` (see Phase C / component registry).
  * Generated files may place declarations under `.aero/cache/types/`.
  */
