@@ -313,8 +313,9 @@ function getScriptOpenTag(source: string, node: Node): string | null {
 	return source.substring(tagStart, node.startTagEnd)
 }
 
-function isBuildScript(node: Node): boolean {
-	return node.tag === 'script' && node.attributes != null && 'is:build' in node.attributes
+function isFormattableEmbeddedScript(node: Node): boolean {
+	if (node.tag !== 'script' || node.attributes == null) return false
+	return 'is:build' in node.attributes || 'is:state' in node.attributes
 }
 
 /** True if script has lang="ts" or lang="typescript". */
@@ -352,7 +353,7 @@ async function formatEmbeddedScriptBody(
 	}
 }
 
-async function collectBuildScriptEdits(
+async function collectEmbeddedScriptEdits(
 	source: string,
 	nodes: Node[],
 	options: prettier.Options
@@ -360,7 +361,7 @@ async function collectBuildScriptEdits(
 	const edits: TextEdit[] = []
 
 	for (const node of walkHtmlNodes(nodes)) {
-		if (!isBuildScript(node)) continue
+		if (!isFormattableEmbeddedScript(node)) continue
 		if (node.startTagEnd == null || node.endTagStart == null) continue
 		if (hasLangTs(node, source)) continue
 
@@ -407,8 +408,8 @@ export async function applyAeroTransforms(
 	result = applyEdits(result, selfClosingEdits)
 	currentNodes = parseRoots(result)
 
-	const buildScriptEdits = await collectBuildScriptEdits(result, currentNodes, prettierOptions)
-	result = applyEdits(result, buildScriptEdits)
+	const embeddedScriptEdits = await collectEmbeddedScriptEdits(result, currentNodes, prettierOptions)
+	result = applyEdits(result, embeddedScriptEdits)
 
 	return result
 }

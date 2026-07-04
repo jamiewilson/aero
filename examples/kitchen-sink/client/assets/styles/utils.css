@@ -11,7 +11,8 @@
 	.h-stack {
 		display: flex;
 		flex-direction: row;
-		gap: var(--stack-gap, 1rem);
+		gap: var(--stack-gap, 0.5rem);
+		align-items: start;
 	}
 
 	.v-stack {
