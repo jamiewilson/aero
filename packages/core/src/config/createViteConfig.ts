@@ -1,15 +1,14 @@
 /**
- * Build the final Vite config from Aero config: resolve config function, merge Aero plugins and user vite overrides.
+ * Build the final Vite config from Aero config: resolve config function and apply Aero plugins.
  *
  * @remarks
  * Invokes `aeroConfig` with env if it's a function, then builds base config (defaultViteConfig + aero plugins).
- * User `vite` is merged via Vite's mergeConfig; explicit `minify`/`cssMinify` from base are preserved when user sets them to true/null.
+ * Vite-specific settings (plugins, build, aliases) belong in `vite.config.ts`, not `aero.config.ts`.
  * When called with no args, loads aero.config.ts from process.cwd() if present.
  */
 import type { UserConfig } from 'vite'
-import type { AeroConfig, AeroConfigFunction } from './types'
+import type { AeroOptions, AeroOptionsFn } from '../types'
 
-import { mergeConfig } from 'vite'
 import { aero } from '../vite/index'
 import { defaultViteConfig } from './defaults'
 import { loadAeroConfig } from './loadAeroConfig'
@@ -36,13 +35,13 @@ export function getDefaultOptions(): CreateViteConfigOptions {
  *
  * @param aeroConfigOrOptions - Optional: static config, config function, or options. Omit to auto-load aero.config.
  * @param options - Optional when first arg is config. Command and mode (defaults from argv/NODE_ENV when using no-arg form).
- * @returns Merged Vite config (defaults + Aero plugins + user vite; minify/cssMinify preserved when user overrides).
+ * @returns Vite config (defaults + Aero plugins). Merge further in `vite.config.ts` for project-specific Vite settings.
  */
 export function createViteConfig(
-	aeroConfigOrOptions?: AeroConfig | AeroConfigFunction | CreateViteConfigOptions,
+	aeroConfigOrOptions?: AeroOptions | AeroOptionsFn | CreateViteConfigOptions,
 	options?: CreateViteConfigOptions
 ): UserConfig {
-	let aeroConfig: AeroConfig | AeroConfigFunction
+	let aeroConfig: AeroOptions | AeroOptionsFn
 	let opts: CreateViteConfigOptions
 
 	const isOptionsObject = (x: unknown): x is CreateViteConfigOptions =>
@@ -54,7 +53,7 @@ export function createViteConfig(
 			(typeof aeroConfigOrOptions === 'object' && !isOptionsObject(aeroConfigOrOptions)))
 
 	if (hasExplicitConfig) {
-		aeroConfig = aeroConfigOrOptions as AeroConfig | AeroConfigFunction
+		aeroConfig = aeroConfigOrOptions as AeroOptions | AeroOptionsFn
 		opts = options ?? getDefaultOptions()
 	} else {
 		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
@@ -67,7 +66,7 @@ export function createViteConfig(
 }
 
 function createViteConfigFromAero(
-	aeroConfig: AeroConfig | AeroConfigFunction,
+	aeroConfig: AeroOptions | AeroOptionsFn,
 	options: CreateViteConfigOptions
 ): UserConfig {
 	const resolvedConfig =
@@ -75,38 +74,8 @@ function createViteConfigFromAero(
 			? aeroConfig({ command: options.command, mode: options.mode })
 			: aeroConfig
 
-	const { vite: userViteConfig, incremental, ...aeroOptions } = resolvedConfig
-
-	if (options.command === 'build' && incremental === true) {
-		const v = process.env.AERO_INCREMENTAL?.trim()
-		if (v === undefined || v === '') {
-			process.env.AERO_INCREMENTAL = '1'
-		}
-	}
-
-	const baseConfig: UserConfig = {
+	return {
 		...defaultViteConfig,
-		plugins: aero(aeroOptions),
+		plugins: aero(resolvedConfig),
 	}
-
-	if (!userViteConfig) {
-		return baseConfig
-	}
-
-	const merged = mergeConfig(baseConfig, userViteConfig)
-
-	if (merged.build) {
-		if (merged.build.minify === true || merged.build.minify === null) {
-			if (baseConfig.build?.minify !== undefined) {
-				merged.build.minify = baseConfig.build.minify
-			}
-		}
-		if (merged.build.cssMinify === true || merged.build.cssMinify === null) {
-			if (baseConfig.build?.cssMinify !== undefined) {
-				merged.build.cssMinify = baseConfig.build.cssMinify
-			}
-		}
-	}
-
-	return merged
 }

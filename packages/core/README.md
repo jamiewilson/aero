@@ -72,7 +72,7 @@ const html = await aero.render('index', { props: { title: 'Home' } })
 
 ### Vite plugin
 
-- **Plugin** from `@aero-js/core/vite`: `aero(options?)`. Options: `content`, `server`, `reactivity`, `hypermedia`, `apiPrefix`, `dirs`, `site`, `redirects`, `middleware` (same shape as `AeroConfig` minus `vite` and `incremental`).
+- **Plugin** from `@aero-js/core/vite`: `aero(options?)`. Options: `content`, `server`, `reactivity`, `hypermedia`, `apiPrefix`, `dirs`, `site`, `redirects`, `middleware` (`AeroOptions`).
 - Sub-plugins: config resolution, virtual client modules (`\0`-prefixed), HTML transform, SSR middleware, HMR.
 - Build: page discovery, static render, optional Nitro build, optional image optimizer (sharp/svgo).
 

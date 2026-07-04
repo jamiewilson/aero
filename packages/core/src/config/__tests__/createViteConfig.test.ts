@@ -44,18 +44,4 @@ describe('createViteConfig feature flags', () => {
 			apiPrefix: '/internal-api',
 		})
 	})
-
-	it('does not pass vite or incremental to aero()', () => {
-		createViteConfig(
-			{
-				content: true,
-				incremental: true,
-				vite: { build: { minify: false } },
-			},
-			{ command: 'build', mode: 'production' }
-		)
-
-		expect(aeroSpy.mock.calls[0]?.[0]).not.toHaveProperty('vite')
-		expect(aeroSpy.mock.calls[0]?.[0]).not.toHaveProperty('incremental')
-	})
 })

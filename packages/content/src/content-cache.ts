@@ -1,6 +1,5 @@
 /**
- * On-disk cache for parsed content collection documents when incremental builds are enabled
- * (`AERO_INCREMENTAL` or `aero.config` `incremental: true`).
+ * On-disk cache for parsed content collection documents when incremental builds are enabled (`AERO_INCREMENTAL`).
  *
  * @remarks
  * Per-file sha256 of raw bytes → cached post-transform document. Invalidated when

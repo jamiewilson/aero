@@ -6,7 +6,7 @@ import { createViteConfig, getDefaultOptions } from '@aero-js/core/vite-config'
 import { exitCodeForThrown } from '@aero-js/diagnostics'
 
 type AeroBuildOptions = {
-	/** Set `AERO_INCREMENTAL=1` when unset (matches `incremental: true` in aero.config). */
+	/** Set `AERO_INCREMENTAL=1` when unset. */
 	incremental?: boolean
 }
 

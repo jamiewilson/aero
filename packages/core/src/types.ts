@@ -57,6 +57,18 @@ export interface AeroOptions {
 	staticServerPlugins?: import('vite').Plugin[]
 }
 
+/** Command and mode passed to an env-aware `defineConfig()` callback. */
+export interface AeroConfigEnv {
+	command: 'dev' | 'build'
+	mode: 'development' | 'production'
+}
+
+/** Env-aware `aero.config.ts` export: returns options for the given command/mode. */
+export type AeroOptionsFn = (env: AeroConfigEnv) => AeroOptions
+
+/** Static options or env-aware function accepted by `defineConfig()`. */
+export type AeroOptionsInput = AeroOptions | AeroOptionsFn
+
 /** Request context passed to middleware (url, request, route path, resolved page name, site). */
 export interface AeroRequestContext {
 	url: URL

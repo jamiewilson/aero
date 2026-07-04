@@ -19,7 +19,7 @@ Import `defineConfig` from `@aero-js/core/config` and `createViteConfig` from `@
 
 <Steps>
   <Step title="Create aero.config.ts">
-    Define your Aero options using `defineConfig()` from `@aero-js/core/config`. You can also override Vite settings via the `vite` key:
+    Define your Aero options using `defineConfig()` from `@aero-js/core/config`:
 
     ```ts
     // aero.config.ts
@@ -30,25 +30,23 @@ Import `defineConfig` from `@aero-js/core/config` and `createViteConfig` from `@
       redirects: [{ from: '/home', to: '/', status: 301 }],
       content: true,
       server: true,
-      // Override Vite defaults
-      vite: {
-        build: {
-          minify: false,
-        },
-      },
     })
     ```
 
   </Step>
   <Step title="Update vite.config.ts">
-    Import your config and pass it to `createViteConfig()` from `@aero-js/core/vite-config`:
+    Import your config and pass it to `createViteConfig()` from `@aero-js/core/vite-config`. Put Vite-specific settings (plugins, `build`, aliases) here — not in `aero.config.ts`:
 
     ```ts
     // vite.config.ts
     import { createViteConfig } from '@aero-js/core/vite-config'
     import aeroConfig from './aero.config.ts'
+    import tailwindcss from '@tailwindcss/vite'
+    import { mergeConfig } from 'vite'
 
-    export default createViteConfig(aeroConfig)
+    export default mergeConfig(createViteConfig(aeroConfig), {
+      plugins: [tailwindcss()],
+    })
     ```
 
   </Step>
@@ -82,11 +80,6 @@ export default defineConfig(env => ({
 	site: env.mode === 'production' ? 'https://example.com' : 'http://localhost:5173',
 	content: true,
 	server: true,
-	vite: {
-		build: {
-			minify: env.mode === 'production',
-		},
-	},
 }))
 ```
 
@@ -98,7 +91,7 @@ export default defineConfig(env => ({
 
 ## Options
 
-`AeroConfig` extends the same plugin options as `aero()` (`AeroOptions`). Use the same fields in `aero.config.ts` that you would pass to `aero()` in `vite.config.ts`.
+`aero.config.ts` exports `AeroOptions` — the same fields you pass to `aero()` in `vite.config.ts`. Use `defineConfig()` for typing; pass a function for env-aware config (`AeroOptionsFn`).
 
 | Option         | Type                           | Description                                                                                                                  |
 | -------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -111,5 +104,3 @@ export default defineConfig(env => ({
 | `middleware`   | `Array`                        | Dev-only request handlers for rewrites and custom responses.                                                                 |
 | `dirs`         | `object`                       | Override `client`, `server`, and `dist` directory names.                                                                     |
 | `apiPrefix`    | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                   |
-| `vite`         | `UserConfig`                   | **Config file only.** Vite settings merged with Aero defaults.                                                               |
-| `incremental`  | `boolean`                      | **Config file only.** When `true` during `vite build`, sets `AERO_INCREMENTAL=1` if unset. See [Incremental builds](/tooling/incremental-builds). |

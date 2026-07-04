@@ -396,7 +396,7 @@ export default defineConfig({
 
 Projects that use `createViteConfig()` from `@aero-js/core/config` (e.g. @aero-js/create and the kitchen-sink example) can put Aero options in a separate **`aero.config.ts`**. The config package loads it, applies framework defaults, and passes the options into the plugin—so you keep `vite.config.ts` minimal and get typed, env-aware config in one place.
 
-**Why use it:** Aero options live in a dedicated file with `defineConfig` for types and autocomplete; you can still override Vite settings via the `vite` key. Config can be a function `(env) => ({ ... })` for different behaviour in dev vs build. If you omit the config argument, `createViteConfig()` auto-loads `aero.config.ts` from the project root.
+**Why use it:** Aero options live in a dedicated file with `defineConfig` for types and autocomplete. Config can be a function `(env) => ({ ... })` for different behaviour in dev vs build. Vite-specific settings belong in `vite.config.ts`. If you omit the config argument, `createViteConfig()` auto-loads `aero.config.ts` from the project root.
 
 **How to use it:** Define your Aero config, then pass it into `createViteConfig` (or call `createViteConfig()` with no args to auto-load).
 
@@ -409,12 +409,6 @@ export default defineConfig({
 	redirects: [{ from: '/home', to: '/', status: 301 }],
 	content: true,
 	server: true,
-	// Override default vite configs
-	vite: {
-		build: {
-			minify: false,
-		},
-	},
 })
 ```
 
@@ -422,8 +416,11 @@ export default defineConfig({
 // vite.config.ts
 import { createViteConfig } from '@aero-js/core/vite-config'
 import aeroConfig from './aero.config.ts'
+import { mergeConfig } from 'vite'
 
-export default createViteConfig(aeroConfig)
+export default mergeConfig(createViteConfig(aeroConfig), {
+	build: { minify: false },
+})
 ```
 
 To auto-load `aero.config.ts` without importing it, use `createViteConfig()` with no arguments.

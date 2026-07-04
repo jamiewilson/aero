@@ -8,4 +8,4 @@
 export { defineConfig } from './defineConfig'
 export { loadAeroConfig, CONFIG_NAMES } from './loadAeroConfig'
 export { AeroConfigLoadError, configLoadErrorToDiagnostics } from './config-load-errors'
-export type { AeroConfig, AeroConfigFunction, AeroUserConfig } from './types'
+export type { AeroOptions, AeroOptionsFn, AeroOptionsInput, AeroConfigEnv } from '../types'

@@ -103,18 +103,17 @@ If you use Alpine plugins or stores, add their script tags before your entry and
 
 Many libraries ship an **ESM build** on a CDN. Using that instead of the UMD or IIFE build gives CDN caching, no bundling of that lib, and native ESM in the browser.
 
-**Import map (recommended):** Mark `htmx.org` and `alpinejs` as **external** in Vite so the built entry keeps those imports. Use `aero.config.ts` with `createViteConfig(aeroConfig)` in `vite.config.ts`:
+**Import map (recommended):** Mark `htmx.org` and `alpinejs` as **external** in Vite so the built entry keeps those imports. Set `rolldownOptions.external` in `vite.config.ts`:
 
 ```typescript
-// aero.config.ts
-import { defineConfig } from '@aero-js/core/config'
+// vite.config.ts
+import { createViteConfig } from '@aero-js/core/vite-config'
+import { mergeConfig } from 'vite'
 
-export default defineConfig({
-	vite: {
-		build: {
-			rolldownOptions: {
-				external: ['htmx.org', 'alpinejs'],
-			},
+export default mergeConfig(createViteConfig(), {
+	build: {
+		rolldownOptions: {
+			external: ['htmx.org', 'alpinejs'],
 		},
 	},
 })
