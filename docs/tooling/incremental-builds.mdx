@@ -7,22 +7,9 @@ Incremental builds let Aero reuse the output from a previous build instead of re
 
 ## Enabling incremental builds
 
-There are three ways to opt in — pick whichever fits your workflow:
+There are two ways to opt in — pick whichever fits your workflow:
 
 <Tabs>
-  <Tab title="aero.config.ts">
-    Set `incremental: true` in your Aero config. During `vite build`, Aero will set `AERO_INCREMENTAL` automatically — but an explicit environment variable always takes precedence.
-
-    ```ts
-    // aero.config.ts
-    import { defineConfig } from '@aero-js/core/config'
-
-    export default defineConfig({
-      incremental: true,
-    })
-    ```
-
-  </Tab>
   <Tab title="aero build --incremental">
     Pass the `--incremental` flag to the Aero CLI build command:
 

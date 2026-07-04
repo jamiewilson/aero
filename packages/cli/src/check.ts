@@ -1,7 +1,7 @@
 /**
  * `aero check` — validate aero config, content collections, and template compilation without starting a server.
  */
-import type { AeroConfig, AeroConfigFunction } from '@aero-js/core/config'
+import type { AeroOptions, AeroOptionsFn } from '@aero-js/core/config'
 import { loadAeroConfig } from '@aero-js/core/config'
 import {
 	contentSchemaIssuesToAeroDiagnostics,
@@ -196,7 +196,7 @@ function recordCliDiagnosticsMetrics(diagnostics: readonly AeroDiagnostic[]): vo
 	)
 }
 
-function resolveAeroConfigObject(loaded: AeroConfig | AeroConfigFunction | null): AeroConfig {
+function resolveAeroOptions(loaded: AeroOptions | AeroOptionsFn | null): AeroOptions {
 	if (!loaded) return {}
 	if (typeof loaded === 'function') {
 		return loaded({ command: 'build', mode: 'production' })
@@ -204,7 +204,7 @@ function resolveAeroConfigObject(loaded: AeroConfig | AeroConfigFunction | null)
 	return loaded
 }
 
-function resolveFeatureFlags(aero: AeroConfig): { reactivity: boolean; hypermedia: boolean } {
+function resolveFeatureFlags(aero: AeroOptions): { reactivity: boolean; hypermedia: boolean } {
 	return {
 		reactivity: aero.reactivity === true,
 		hypermedia: aero.hypermedia === true,
@@ -238,7 +238,7 @@ function collectTemplateFeatureGateDiagnostics(
 	}))
 }
 
-function contentConfigPathFromAero(root: string, aero: AeroConfig): string {
+function contentConfigPathFromAero(root: string, aero: AeroOptions): string {
 	const c = aero.content
 	if (c === true || c === undefined || c === false) {
 		return 'content.config.ts'
@@ -246,7 +246,7 @@ function contentConfigPathFromAero(root: string, aero: AeroConfig): string {
 	return c.config ?? 'content.config.ts'
 }
 
-function shouldRunContentCheck(aero: AeroConfig, root: string, relPath: string): boolean {
+function shouldRunContentCheck(aero: AeroOptions, root: string, relPath: string): boolean {
 	if (aero.content === true) return true
 	if (typeof aero.content === 'object' && aero.content) return true
 	const abs = path.resolve(root, relPath)
@@ -298,7 +298,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		diagnostics.push(...unknownToAeroDiagnostics(err))
 	}
 
-	const aero = resolveAeroConfigObject(loadedRaw)
+	const aero = resolveAeroOptions(loadedRaw)
 	const featureFlags = resolveFeatureFlags(aero)
 
 	const dirs = resolveDirs(aero.dirs)

@@ -31,15 +31,17 @@ export default defineConfig({
 
 Pass an options object to `aero()` to configure the framework:
 
-| Option       | Type                           | Description                                                                                                                  |
-| ------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `content`    | `boolean \| object`            | Enable content collections. Default `false`. Pass `true` or an options object for `@aero-js/content`.                        |
-| `server`     | `boolean`                      | Enable Nitro for API routes and an optional server. Default `false`.                                                         |
-| `site`       | `string`                       | Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and `Aero.site` in templates.           |
-| `redirects`  | `Array<{ from, to, status? }>` | Path redirects applied in dev and passed to Nitro for production. For static-only deploys, use host redirect config instead. |
-| `middleware` | `Array`                        | Dev-only request handlers for redirects, rewrites, and custom responses.                                                     |
-| `dirs`       | `object`                       | Override `client`, `server`, and `dist` directory names. Default `{ client, server, dist }`.                                 |
-| `apiPrefix`  | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                 |
+| Option         | Type                           | Description                                                                                                                  |
+| -------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `content`      | `boolean \| object`            | Enable content collections. Default `false`. Pass `true` or an options object for `@aero-js/content`.                        |
+| `server`       | `boolean`                      | Enable Nitro for API routes and an optional server. Default `false`.                                                         |
+| `reactivity`   | `boolean`                      | Enable the Aero reactivity pipeline (`<script is:state>`, bindable props). Default `false`.                                  |
+| `hypermedia`   | `boolean`                      | Enable the Aero hypermedia pipeline (action calls, `busy`, etc.). Default `false`.                                           |
+| `site`         | `{ url: string }`              | Canonical site URL. Exposed as `import.meta.env.SITE` and `Aero.site.url` in templates.                                      |
+| `redirects`    | `Array<{ from, to, status? }>` | Path redirects applied in dev and passed to Nitro for production. For static-only deploys, use host redirect config instead. |
+| `middleware`   | `Array`                        | Dev-only request handlers for redirects, rewrites, and custom responses.                                                     |
+| `dirs`         | `object`                       | Override `client`, `server`, and `dist` directory names. Default `{ client, server, dist }`.                                 |
+| `apiPrefix`    | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                 |
 
 ## Full example
 
@@ -53,9 +55,11 @@ import { aero } from '@aero-js/core/vite'
 export default defineConfig({
 	plugins: [
 		aero({
-			site: 'https://example.com',
+			site: { url: 'https://example.com' },
 			content: true,
 			server: true,
+			reactivity: true,
+			hypermedia: true,
 			redirects: [{ from: '/home', to: '/', status: 301 }],
 			dirs: {
 				client: 'client',

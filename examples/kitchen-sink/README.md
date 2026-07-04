@@ -14,7 +14,7 @@ Full demo template for the Aero static site generator. Used for development and 
 | `content/`             | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals.            |
 | `backend/`             | Nitro: `api/`, `routes/`, `backend/plugins/`, `backend/tasks/`, and `backend/entry.ts` (wired via `nitro.config.ts`).       |
 | `public/`              | Static assets copied as-is.                                                                                                 |
-| `aero.config.ts`       | Aero config (content, server, dirs, vite).                                                                                  |
+| `aero.config.ts`       | Aero config (content, server, dirs).                                                                                        |
 | `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                                       |
 | `content.config.ts`    | Content collections (used when `content: true`).                                                                            |
 | `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                             |

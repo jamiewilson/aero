@@ -4,6 +4,7 @@
  * @remarks
  * Grouped roughly by: config/dirs, compile/parse, resolver/aliases, routing, render context.
  */
+import type { AeroContentOptions } from '@aero-js/content/vite'
 
 export interface AeroDirs {
 	/** Site source directory; pages live at `client/pages` (default: `'client'`). */
@@ -22,6 +23,8 @@ export interface RedirectRule {
 }
 
 export interface AeroOptions {
+	/** Enable content collections (default: `false`). Pass `true` or `AeroContentOptions`. */
+	content?: boolean | AeroContentOptions
 	/** Enable Nitro server integration (default: `false`). */
 	server?: boolean
 	/** Enable Aero reactivity pipeline (default: `false`). */
@@ -31,7 +34,7 @@ export interface AeroOptions {
 	/** API route prefix (default: `'/api'`). */
 	apiPrefix?: string
 	/** Directory overrides. */
-	dirs?: AeroDirs
+	dirs?: Partial<AeroDirs>
 	/**
 	 * Canonical site URL (e.g. `'https://example.com'`). Exposed as `import.meta.env.SITE` and
 	 * as `Aero.site.url` in templates. Used for sitemap, RSS, and canonical links.
@@ -48,11 +51,23 @@ export interface AeroOptions {
 	 */
 	middleware?: AeroMiddleware[]
 	/**
-	 * Optional plugins to add to the static render server (e.g. content plugin when using aero:content).
+	 * @internal Optional plugins for the static prerender mini-server. Prefer `content` for collections.
 	 * Merged after the core Aero plugins so pages that import aero:content resolve during static build.
 	 */
 	staticServerPlugins?: import('vite').Plugin[]
 }
+
+/** Command and mode passed to an env-aware `defineConfig()` callback. */
+export interface AeroConfigEnv {
+	command: 'dev' | 'build'
+	mode: 'development' | 'production'
+}
+
+/** Env-aware `aero.config.ts` export: returns options for the given command/mode. */
+export type AeroOptionsFn = (env: AeroConfigEnv) => AeroOptions
+
+/** Static options or env-aware function accepted by `defineConfig()`. */
+export type AeroOptionsInput = AeroOptions | AeroOptionsFn
 
 /** Request context passed to middleware (url, request, route path, resolved page name, site). */
 export interface AeroRequestContext {

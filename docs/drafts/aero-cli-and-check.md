@@ -150,7 +150,7 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 
 | Export                                                  | Description                                                                                           |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| `loadAeroConfig(root)`                                  | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroConfig | AeroConfigFunction | null`. |
+| `loadAeroConfig(root)`                                  | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroOptions | AeroOptionsFn | null`. |
 | `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling.        |
 
 ### `@aero-js/content`

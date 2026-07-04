@@ -4,9 +4,9 @@
  */
 import path from 'node:path'
 import { discoverRuntimeTemplatePaths, resolveDirs } from '@aero-js/core/vite'
-import { loadAeroConfig, type AeroConfig } from '@aero-js/core/config'
+import { loadAeroConfig, type AeroOptions } from '@aero-js/core/config'
 
-function resolveLoadedConfig(root: string): AeroConfig {
+function resolveLoadedConfig(root: string): AeroOptions {
 	const loaded = loadAeroConfig(root)
 	if (loaded === null) return {}
 	if (typeof loaded === 'function') {
@@ -27,7 +27,7 @@ function toGlobDirSegment(dir: string): string {
  * @param root - Project root (directory containing `aero.config.*` when present).
  * @param config - Optional resolved config; when omitted, loads `aero.config` from `root`.
  */
-export function getAeroAnalyzerEntryGlobs(root: string, config?: AeroConfig): string[] {
+export function getAeroAnalyzerEntryGlobs(root: string, config?: AeroOptions): string[] {
 	const c = config ?? resolveLoadedConfig(root)
 	const dirs = resolveDirs(c.dirs)
 	const client = toGlobDirSegment(dirs.client)
@@ -68,7 +68,7 @@ export function getAeroAnalyzerEntryGlobs(root: string, config?: AeroConfig): st
  */
 export function listAeroTemplatePaths(
 	root: string,
-	config?: AeroConfig
+	config?: AeroOptions
 ): { components: string[]; layouts: string[]; pages: string[] } {
 	const c = config ?? resolveLoadedConfig(root)
 	const dirs = resolveDirs(c.dirs)
