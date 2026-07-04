@@ -11,7 +11,13 @@ import {
 } from './scope-expr-codegen'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 
+function containsTypeScriptSyntax(source: string): boolean {
+	return /:\s*[\w$[<({]|as\s+(?:const|[\w$[<({])|satisfies\s+[\w$[<({]|<[A-Za-z_$]/.test(source)
+}
+
 function stripModuleConstantSource(source: string): string {
+	const trimmed = source.trim().replace(/;$/, '')
+	if (!containsTypeScriptSyntax(trimmed)) return trimmed
 	return stripBuildScriptTypes(source, STATE_SCRIPT_FILENAME).trim().replace(/;$/, '')
 }
 

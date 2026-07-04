@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeStateScript } from '../../state-script-analysis'
+import { analyzeStateScript, stripStateEffectStatements } from '../../state-script-analysis'
 import { collectStateReferenceNames, lowerStateScript } from '../../lower-state-script'
 
 describe('analyzeStateScript', () => {
@@ -151,7 +151,7 @@ describe('analyzeStateScript', () => {
 
 		const lowered = lowerStateScript(script, result)
 		expect(lowered.moduleConstants).toEqual([
-			'const createID = () => crypto.randomUUID().split("-").pop()',
+			"const createID = () => crypto.randomUUID().split('-').pop()",
 		])
 	})
 
@@ -197,5 +197,14 @@ describe('analyzeStateScript', () => {
 				'`$effect` requires exactly one function argument.',
 			])
 		)
+	})
+
+	it('stripStateEffectStatements removes top-level effect calls', () => {
+		const script = `let count = 0
+$effect(() => { count })
+const x = 1`
+		expect(stripStateEffectStatements(script)).toBe(`let count = 0
+
+const x = 1`)
 	})
 })

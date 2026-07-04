@@ -325,6 +325,37 @@ function collectStateEffects(
 	return effects
 }
 
+/** Remove top-level `$effect` / `Aero.effect` calls from state script source (mount-only; not SSR). */
+export function stripStateEffectStatements(script: string): string {
+	if (!script.trim()) return script
+
+	const parsed = parseSync(STATE_SCRIPT_FILENAME, script, STATE_SCRIPT_PARSE_OPTIONS)
+	if (parsed.errors.length > 0) return script
+
+	const ranges: Array<[number, number]> = []
+	for (const stmt of (parsed.program as { body?: unknown[] }).body ?? []) {
+		const node = stmt as {
+			type?: string
+			start?: number
+			end?: number
+			expression?: unknown
+		}
+		if (node.type !== 'ExpressionStatement') continue
+		const call = unwrapExpression(node.expression)
+		if (call?.type !== 'CallExpression' || !isEffectCallee(call.callee)) continue
+		if (typeof node.start !== 'number' || typeof node.end !== 'number') continue
+		ranges.push([node.start, node.end])
+	}
+
+	if (ranges.length === 0) return script
+
+	let out = script
+	for (const [start, end] of ranges.sort((a, b) => b[0] - a[0])) {
+		out = out.slice(0, start) + out.slice(end)
+	}
+	return out.replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	if (!script.trim()) {
 		return { bindings: [], effects: [], diagnostics: [] }

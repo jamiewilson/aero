@@ -377,4 +377,16 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('effectRuns: [__aeroEffect_0]')
 		expect(code).not.toContain('data-aero-text=')
 	})
+
+	it('strips $effect from SSR state script body', () => {
+		const html = `<script is:state>
+			let count = 0
+			$effect(() => { count })
+		</script>`
+
+		const code = compile(parse(html), { ...mockOptions, reactivity: true })
+
+		expect(code).toContain('let count = 0')
+		expect(code).not.toContain('$effect(()')
+	})
 })
