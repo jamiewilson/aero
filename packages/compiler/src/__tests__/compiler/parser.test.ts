@@ -530,6 +530,24 @@ const x = 1;
 		expect(result.template).toContain('<p>Body</p>')
 	})
 
+	it('should preserve top-level style tags after </html> in full-document templates', () => {
+		const input = `<script is:build>
+	const props = Aero.props;
+</script>
+<html lang="en">
+	<head><title>Test</title></head>
+	<body><slot></slot></body>
+</html>
+<style>
+	body { border: 1rem solid lime; }
+</style>`
+		const result = parse(input)
+
+		expect(result.template).toContain('</html>')
+		expect(result.template).toContain('<style>')
+		expect(result.template).toContain('border: 1rem solid lime')
+	})
+
 	it('should extract head script with props when it uses ESM imports', () => {
 		const input = `<html lang="en"><head>
 		<script props="{ storageKey, attribute, defaultTheme }">

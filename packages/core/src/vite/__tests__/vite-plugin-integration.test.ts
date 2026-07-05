@@ -297,6 +297,36 @@ describe('Vite Plugin Integration', () => {
 		expect(sends).toContainEqual({ type: 'full-reload' })
 	})
 
+	it('does not full-reload on style-only template edits without client scripts', async () => {
+		const id = path.join(process.cwd(), 'client/layouts/style-only.html')
+		const v1 = `<div>v1</div>
+<style>
+	body { color: red; }
+</style>`
+		const v2 = `<div>v2</div>
+<style>
+	body { color: blue; }
+</style>`
+		transformPlugin.transform.call(pluginCtx, v1, id)
+
+		const sends: any[] = []
+		const result = await virtualsPlugin.handleHotUpdate({
+			file: id,
+			read: async () => v2,
+			server: {
+				ws: { send: (payload: any) => sends.push(payload) },
+				moduleGraph: {
+					getModuleById: () => null,
+					invalidateModule: () => {},
+				},
+			},
+			modules: [],
+		})
+
+		expect(result).toBeUndefined()
+		expect(sends).toEqual([])
+	})
+
 	it('regenerates route artifacts on route file add/unlink (rename flow)', () => {
 		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-vite-routes-watch-'))
 		const pagesDir = path.join(tmpDir, 'client', 'pages')

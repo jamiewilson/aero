@@ -204,7 +204,15 @@ function parseDocument(html: string, isFullDocument: boolean): Document {
 
 function serializeTemplate(doc: Document, isFullDocument: boolean): string {
 	if (isFullDocument) {
-		return doc.documentElement?.outerHTML ?? String(doc)
+		let out = ''
+		for (const node of doc.childNodes) {
+			if (node.nodeType === 1) {
+				out += (node as Element).outerHTML
+			} else if (node.nodeType === 3) {
+				out += node.textContent ?? ''
+			}
+		}
+		return out || doc.documentElement?.outerHTML || String(doc)
 	}
 	return doc.body?.innerHTML ?? ''
 }
