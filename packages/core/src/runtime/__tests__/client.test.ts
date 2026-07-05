@@ -59,4 +59,30 @@ describe('renderPage', () => {
 
 		expect(document.body.className).toBe('')
 	})
+
+	it('preserves client-set html attributes such as data-theme during shell sync', async () => {
+		document.documentElement.setAttribute('data-theme', 'dark')
+		document.body.id = 'custom-target'
+		document.body.innerHTML = '<div>old</div>'
+
+		const html =
+			'<!DOCTYPE html><html lang="en"><head></head><body id="custom-target"><div>new</div></body></html>'
+
+		if (import.meta.hot) {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => ({
+					ok: true,
+					status: 200,
+					text: async () => html,
+					headers: { get: () => null },
+				}))
+			)
+		}
+
+		await renderPage(document.body, async () => html)
+
+		expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+		expect(document.documentElement.getAttribute('lang')).toBe('en')
+	})
 })
