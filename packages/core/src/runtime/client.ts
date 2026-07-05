@@ -35,13 +35,14 @@ function parseDocumentHtml(html: string): PageFragments & { doc: Document } {
 	return { head, body, doc }
 }
 
-/** Copy attributes from one element onto another; removes target attrs absent on the source. */
-function copyElementAttributes(from: Element, to: Element): void {
+/** Copy attributes from one element onto another; removes target attrs absent on the source unless mergeOnly. */
+function copyElementAttributes(from: Element, to: Element, options?: { mergeOnly?: boolean }): void {
 	const fromNames = new Set<string>()
 	for (const attr of from.attributes) {
 		fromNames.add(attr.name)
 		to.setAttribute(attr.name, attr.value)
 	}
+	if (options?.mergeOnly) return
 	for (const attr of Array.from(to.attributes)) {
 		if (!fromNames.has(attr.name)) {
 			to.removeAttribute(attr.name)
@@ -53,7 +54,7 @@ function copyElementAttributes(from: Element, to: Element): void {
 function syncDocumentShellAttributes(parsedDoc: Document, mountEl: HTMLElement): void {
 	const parsedHtml = parsedDoc.documentElement
 	if (parsedHtml) {
-		copyElementAttributes(parsedHtml, document.documentElement)
+		copyElementAttributes(parsedHtml, document.documentElement, { mergeOnly: true })
 	}
 	const parsedBody = parsedDoc.body
 	if (!parsedBody) return
