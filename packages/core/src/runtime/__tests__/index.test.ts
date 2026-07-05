@@ -247,6 +247,77 @@ describe('Aero class', () => {
 			expect(capturedCtx.page.params).toEqual({ path: '/missing' })
 			expect(html).toContain('Not found: /missing')
 		})
+
+		it('should inject styles when 404 fallback reuses renderInput after unresolved route', async () => {
+			aero.registerPages({
+				'pages/404.html': {
+					default: (ctx: any) => {
+						ctx.styles?.add('<style>body { border: 1rem solid red; }</style>')
+						return '<html lang="en"><head></head><body>404</body></html>'
+					},
+				},
+			})
+
+			const renderInput = { url: 'http://localhost/missing-page' }
+			expect(await aero.render('missing-page', renderInput)).toBeNull()
+
+			const html = await aero.render('404', renderInput)
+			expect(html).toContain('border: 1rem solid red')
+		})
+
+		it('should inject nested layout styles via renderComponent', async () => {
+			const baseMod = {
+				default: (ctx: any) => {
+					ctx.styles?.add('<style>body { border: 1rem solid lime; }</style>')
+					return '<html><head></head><body>layout</body></html>'
+				},
+			}
+			aero.registerPages({
+				'pages/nested-layout.html': {
+					default: async (ctx: any) =>
+						ctx.renderComponent(baseMod, {}, {}, {
+							page: ctx.page,
+							site: ctx.site,
+							styles: ctx.styles,
+							scripts: ctx.scripts,
+							headScripts: ctx.headScripts,
+						}),
+				},
+			})
+
+			const html = await aero.render('nested-layout')
+			expect(html).toContain('border: 1rem solid lime')
+		})
+
+		it('should inject layout and page styles on 404 fallback with shared renderInput', async () => {
+			const baseMod = {
+				default: (ctx: any) => {
+					ctx.styles?.add('<style>body { border: 1rem solid lime; }</style>')
+					return '<html lang="en"><head></head><body>404</body></html>'
+				},
+			}
+			aero.registerPages({
+				'pages/404.html': {
+					default: async (ctx: any) => {
+						ctx.styles?.add('<style>header { background: yellow; }</style>')
+						return ctx.renderComponent(baseMod, {}, {}, {
+							page: ctx.page,
+							site: ctx.site,
+							styles: ctx.styles,
+							scripts: ctx.scripts,
+							headScripts: ctx.headScripts,
+						})
+					},
+				},
+			})
+
+			const renderInput = { url: 'http://localhost/missing-page' }
+			expect(await aero.render('missing-page', renderInput)).toBeNull()
+
+			const html = await aero.render('404', renderInput)
+			expect(html).toContain('border: 1rem solid lime')
+			expect(html).toContain('background: yellow')
+		})
 	})
 
 	/** Used by compiled templates; accepts function or module with default export. */

@@ -204,12 +204,7 @@ export class Aero {
 		input: AeroRenderInput | Record<string, unknown> = {}
 	) {
 		const renderInput = this.normalizeRenderInput(input)
-		const isRootRender = !renderInput.styles
-		if (isRootRender) {
-			renderInput.styles = new Set<string>()
-			renderInput.scripts = new Set<string>()
-			renderInput.headScripts = new Set<string>()
-		}
+		const isRootRender = renderInput.styles === undefined
 
 		const resolved = resolvePageTarget(component, this.pagesMap)
 		if (!resolved) return null
@@ -248,6 +243,12 @@ export class Aero {
 			if (match.props) {
 				renderInput.props = match.props
 			}
+		}
+
+		if (isRootRender) {
+			renderInput.styles = new Set<string>()
+			renderInput.scripts = new Set<string>()
+			renderInput.headScripts = new Set<string>()
 		}
 
 		const routePath = this.toRoutePath(matchedPageName)

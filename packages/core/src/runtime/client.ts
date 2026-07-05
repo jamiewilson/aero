@@ -20,20 +20,47 @@ import { resolvePageName } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 
 /**
- * Parse a full HTML string into head and body fragments.
- * If the document has no head/body, body falls back to the raw HTML.
+ * Parse a full HTML string into head/body fragments and the parsed document (for shell attribute sync).
  *
  * @param html - Full document HTML (e.g. from the compiled render function).
- * @returns Head inner HTML and body inner HTML.
+ * @returns Head inner HTML, body inner HTML, and parsed document.
  */
-function extractDocumentParts(html: string): PageFragments {
+function parseDocumentHtml(html: string): PageFragments & { doc: Document } {
 	const parser = new DOMParser()
 	const doc = parser.parseFromString(html, 'text/html')
 
 	const head = doc.head?.innerHTML?.trim() || ''
 	const body = doc.body?.innerHTML ?? html
 
-	return { head, body }
+	return { head, body, doc }
+}
+
+/** Copy attributes from one element onto another; removes target attrs absent on the source. */
+function copyElementAttributes(from: Element, to: Element): void {
+	const fromNames = new Set<string>()
+	for (const attr of from.attributes) {
+		fromNames.add(attr.name)
+		to.setAttribute(attr.name, attr.value)
+	}
+	for (const attr of Array.from(to.attributes)) {
+		if (!fromNames.has(attr.name)) {
+			to.removeAttribute(attr.name)
+		}
+	}
+}
+
+/** Sync `<html>` and `<body>` attributes from a freshly rendered document onto the live document. */
+function syncDocumentShellAttributes(parsedDoc: Document, mountEl: HTMLElement): void {
+	const parsedHtml = parsedDoc.documentElement
+	if (parsedHtml) {
+		copyElementAttributes(parsedHtml, document.documentElement)
+	}
+	const parsedBody = parsedDoc.body
+	if (!parsedBody) return
+	const bodyEl = mountEl.tagName === 'BODY' ? mountEl : document.body
+	if (bodyEl) {
+		copyElementAttributes(parsedBody, bodyEl)
+	}
 }
 
 /** Guard: skip starting a new render while one is in progress (avoids overlapping HMR runs). */
@@ -147,8 +174,9 @@ export async function renderPage(
 			}
 			html = rendered
 		}
-		const { head, body } = extractDocumentParts(html)
+		const { head, body, doc } = parseDocumentHtml(html)
 		if (head) updateHead(head)
+		syncDocumentShellAttributes(doc, appEl)
 		appEl.innerHTML = body
 	} catch (err) {
 		const safe = escapeForBrowserPre(err instanceof Error ? err.message : String(err))
