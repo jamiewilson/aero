@@ -71,6 +71,15 @@ export {
 	type ComponentRegistryEntry,
 } from './component-registry-codegen'
 export { emitClientScriptTag, VIRTUAL_PREFIX } from './emit-client-script-tag'
+export {
+	AERO_JSON_SCRIPT_TYPE,
+	AERO_JSON_ROLE_PROPS,
+	AERO_JSON_ROLE_STATE,
+	aeroJsonScriptOpenTag,
+	aeroJsonScriptRoleSelector,
+	emitAeroJsonScriptTagTemplate,
+	type AeroJsonScriptRole,
+} from './json-script-payload'
 export { parse } from './parser'
 
 // Types

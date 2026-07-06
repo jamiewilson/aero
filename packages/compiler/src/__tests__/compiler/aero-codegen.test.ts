@@ -32,7 +32,6 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 	const renderFn = new AsyncFunction('Aero', body)
 
-	let _passDataId = 0
 	const createScriptTag = (attrs: string, src: string) => {
 		const normalizedAttrs = attrs.trim()
 		const escapedSrc = src
@@ -47,7 +46,6 @@ async function execute(code: string, context: Record<string, any> = {}) {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
 		styles: new Set<string>(),
-		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
 		createScriptTag,
 		page: {
@@ -153,7 +151,8 @@ describe('Aero Codegen - Client Scripts', () => {
 		await execute(code, { scripts })
 		const out = Array.from(scripts).join('\n')
 
-		expect(out).toContain('type="aero/state"')
+		expect(out).toContain('type="application/json"')
+		expect(out).toContain('data-aero="state"')
 		expect(out).toContain('"count":1')
 		expect(out).not.toContain('"doubled"')
 	})
@@ -177,12 +176,16 @@ describe('Aero Codegen - Client Scripts', () => {
 			clientScripts: [{ attrs: '', content: '/virtual.js', passDataExpr: '{ initialValue }' }],
 		})
 
-		expect(code).toMatch(/type="aero\/state"[^`]*`\);/)
+		expect(code).toMatch(/data-aero="state"[^`]*`\);/)
 		const scripts = new Set<string>()
 		await execute(code, { scripts })
 		const out = Array.from(scripts).join('\n')
-		expect(out).toContain('type="aero/state"')
-		expect(out).toContain('__aero_data')
+		const stateIdx = out.indexOf('data-aero="state"')
+		const propsIdx = out.indexOf('data-aero="props"')
+		expect(stateIdx).toBeGreaterThan(-1)
+		expect(propsIdx).toBeGreaterThan(-1)
+		expect(stateIdx).toBeLessThan(propsIdx)
+		expect(out).toContain('window.__aero_data_next=')
 	})
 
 	it('renders template interpolations from is:state bindings', async () => {
@@ -239,12 +242,13 @@ describe('Aero Codegen - Props (script/style)', () => {
 		const out = Array.from(scripts).join('\n')
 
 		expect(out).toContain('type="application/json"')
-		expect(out).toContain('class="__aero_data"')
+		expect(out).toContain('data-aero="props"')
 		expect(out).toContain('{"config":{"theme":"dark","id":42}}')
 		expect(out).toContain('window.__aero_data_next=')
 		expect(out).toContain('document.currentScript')
+		expect(out).toContain('getAttribute("data-aero")==="props"')
 		expect(out).not.toContain('document.getElementById')
-		expect(out).not.toContain('nextPassDataId')
+		expect(out).not.toContain('class="__aero_data"')
 		expect(out).toContain('<script type="module" src="/auto.js"></script>')
 	})
 

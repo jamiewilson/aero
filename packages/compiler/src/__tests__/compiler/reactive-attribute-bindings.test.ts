@@ -28,7 +28,6 @@ async function executeRender(code: string, state: Record<string, unknown> = {}) 
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
 		styles: new Set<string>(),
-		nextPassDataId: () => '__aero_0',
 		renderComponent: async () => '',
 		escapeHtml,
 		escapeScriptJson,

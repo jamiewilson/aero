@@ -29,6 +29,10 @@ import {
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
+import {
+	AERO_JSON_ROLE_STATE,
+	emitAeroJsonScriptTagTemplate,
+} from './json-script-payload'
 
 function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {
 	const hasVirtualClientScripts =
@@ -126,7 +130,7 @@ function createStateSnapshotExpression(names: string[]): string {
 
 function createStateHydrationScriptLine(stateBindingNames: string[]): string {
 	const snapshotExpr = createStateSnapshotExpression(stateBindingNames)
-	return `scripts?.add(\`<script type="aero/state">\${escapeScriptJson(${snapshotExpr})}</script>\`);`
+	return `scripts?.add(${emitAeroJsonScriptTagTemplate(AERO_JSON_ROLE_STATE, `escapeScriptJson(${snapshotExpr})`)});`
 }
 
 /**

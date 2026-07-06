@@ -13,7 +13,7 @@ describe('entry-prod reactivity bootstrap', () => {
 		delete globalObj[REACTIVITY_RUNTIME_GLOBAL_KEY]
 		globalObj.document = {
 			querySelector: (selector: string) =>
-				selector === 'script[type="aero/state"]' ? { textContent: '{"count":5}' } : null,
+				selector === 'script[type="application/json"][data-aero="state"]' ? { textContent: '{"count":5}' } : null,
 		}
 		const target = {} as HTMLElement
 		try {

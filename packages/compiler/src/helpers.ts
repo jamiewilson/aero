@@ -323,7 +323,7 @@ export function getRenderComponentContextArg(): string {
 
 /** Build destructuring pattern for the render function. */
 export function getRenderContextDestructurePattern(): string {
-	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, nextPassDataId, escapeHtml, escapeScriptJson, formatAttributeBind, raw, trim, trimStart, trimEnd`
+	return `slots = {}, renderComponent, ${RENDER_INTERNAL_CONTEXT_KEYS.join(', ')}, escapeHtml, escapeScriptJson, formatAttributeBind, raw, trim, trimStart, trimEnd`
 }
 
 // ============================================================================

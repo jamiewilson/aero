@@ -53,15 +53,14 @@ export function reviveStateValue(value: unknown): unknown {
 	return value
 }
 
-export function readHydrationState(root?: HydrationRoot): Record<string, unknown> {
-	const fallbackRoot =
-		root ??
-		((globalThis as unknown as { document?: HydrationRoot }).document &&
-			(globalThis as unknown as { document?: HydrationRoot }).document)
-	if (!fallbackRoot) return {}
-	const el = fallbackRoot.querySelector('script[type="aero/state"]')
-	if (!el) return {}
-	const text = el.textContent?.trim() || '{}'
+const AERO_JSON_SCRIPT_TYPE = 'application/json'
+const AERO_JSON_ROLE_STATE = 'state'
+
+function aeroJsonScriptRoleSelector(role: string): string {
+	return `script[type="${AERO_JSON_SCRIPT_TYPE}"][data-aero="${role}"]`
+}
+
+function parseAeroJsonPayload(text: string): Record<string, unknown> {
 	if (!text) return {}
 	try {
 		const parsed = JSON.parse(text)
@@ -74,4 +73,23 @@ export function readHydrationState(root?: HydrationRoot): Record<string, unknown
 	} catch {
 		return {}
 	}
+}
+
+/** Read and revive a role-specific Aero JSON script payload from the document or a root node. */
+export function readAeroJsonPayload(
+	role: typeof AERO_JSON_ROLE_STATE,
+	root?: HydrationRoot
+): Record<string, unknown> {
+	const fallbackRoot =
+		root ??
+		((globalThis as unknown as { document?: HydrationRoot }).document &&
+			(globalThis as unknown as { document?: HydrationRoot }).document)
+	if (!fallbackRoot) return {}
+	const el = fallbackRoot.querySelector(aeroJsonScriptRoleSelector(role))
+	if (!el) return {}
+	return parseAeroJsonPayload(el.textContent?.trim() || '{}')
+}
+
+export function readHydrationState(root?: HydrationRoot): Record<string, unknown> {
+	return readAeroJsonPayload(AERO_JSON_ROLE_STATE, root)
 }

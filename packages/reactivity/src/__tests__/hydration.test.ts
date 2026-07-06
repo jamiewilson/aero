@@ -1,12 +1,27 @@
 import { describe, expect, it } from 'vitest'
-import { readHydrationState, reviveStateValue } from '../hydration'
+import { readAeroJsonPayload, readHydrationState, reviveStateValue } from '../hydration'
 
 describe('readHydrationState', () => {
-	it('reads and parses aero/state payload', () => {
+	it('reads and parses application/json state payload', () => {
 		const root = {
-			querySelector: () => ({ textContent: '{"count":1,"user":{"name":"Ada"}}' }),
+			querySelector: (selector: string) =>
+				selector === 'script[type="application/json"][data-aero="state"]'
+					? { textContent: '{"count":1,"user":{"name":"Ada"}}' }
+					: null,
 		}
 		expect(readHydrationState(root)).toEqual({ count: 1, user: { name: 'Ada' } })
+	})
+
+	it('readAeroJsonPayload ignores non-state application/json blocks', () => {
+		const root = {
+			querySelector: (selector: string) =>
+				selector === 'script[type="application/json"][data-aero="state"]'
+					? null
+					: selector === 'script[type="application/json"][data-aero="props"]'
+						? { textContent: '{"ignored":true}' }
+						: null,
+		}
+		expect(readAeroJsonPayload('state', root)).toEqual({})
 	})
 
 	it('returns empty object when payload missing or invalid', () => {
@@ -20,12 +35,15 @@ describe('readHydrationState', () => {
 
 	it('revives Map and Set markers from hydration payload', () => {
 		const root = {
-			querySelector: () => ({
-				textContent: JSON.stringify({
-					numbersMap: { __aero: 'Map', entries: [[1, 'one']] },
-					numbersSet: { __aero: 'Set', values: [1, 2] },
-				}),
-			}),
+			querySelector: (selector: string) =>
+				selector === 'script[type="application/json"][data-aero="state"]'
+					? {
+							textContent: JSON.stringify({
+								numbersMap: { __aero: 'Map', entries: [[1, 'one']] },
+								numbersSet: { __aero: 'Set', values: [1, 2] },
+							}),
+						}
+					: null,
 		}
 		const state = readHydrationState(root)
 		expect(state.numbersMap).toBeInstanceOf(Map)

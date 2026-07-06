@@ -36,8 +36,11 @@ describe('emitClientScriptTag', () => {
 		}
 		const { root } = emitClientScriptTag(script, vp)
 		expect(root[0]).toContain('document.currentScript')
+		expect(root[0]).toContain('data-aero="props"')
+		expect(root[0]).toContain('getAttribute(\\"data-aero\\")===\\"props\\"')
 		expect(root[0]).toContain('escapeScriptJson')
 		expect(root[0]).not.toContain('getElementById')
+		expect(root[0]).not.toContain('class="__aero_data"')
 	})
 
 	it('emits pass-data head as one expression that returns concatenated HTML strings', () => {
@@ -50,8 +53,9 @@ describe('emitClientScriptTag', () => {
 		expect(root).toEqual([])
 		expect(head.length).toBe(1)
 		const line = head[0] ?? ''
-		expect(line).toContain('return \'<script type="application/json"')
+		expect(line).toContain('return \'<script type="application/json" data-aero="props"')
 		expect(line).toContain('document.currentScript')
+		expect(line).toContain('getAttribute(\\"data-aero\\")===\\"props\\"')
 		expect(line).toContain('__aeroScriptUrl')
 		expect(line).toContain('Aero.createScriptTag(')
 		expect(line).not.toContain('nextPassDataId')

@@ -93,7 +93,7 @@ export class Aero {
 		return new URL(routePath, 'http://localhost')
 	}
 
-	/** Build template context: globals, props, slots, page, site, and `renderComponent` / `nextPassDataId`. */
+	/** Build template context: globals, props, slots, page, site, and `renderComponent`. */
 	private createContext(input: {
 		props?: Record<string, unknown>
 		slots?: Record<string, string>
@@ -115,7 +115,6 @@ export class Aero {
 			pageInput?.request ?? input.request ?? new Request(urlResolved.toString(), { method: 'GET' })
 		const params = pageInput?.params ?? input.params ?? {}
 		const siteUrl = typeof input.site === 'string' ? input.site : (input.site?.url ?? '')
-		let _passDataId = 0
 
 		const raw = (s: unknown): string => {
 			if (s == null) return ''
@@ -158,7 +157,6 @@ export class Aero {
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
-			nextPassDataId: () => `__aero_${_passDataId++}`,
 			renderComponent: this.renderComponent.bind(this),
 			createScriptTag,
 			escapeHtml: this.escapeHtml.bind(this),
