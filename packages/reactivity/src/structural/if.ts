@@ -2,6 +2,11 @@ import { Effect } from '../effect'
 import type { Cleanup } from '../mount'
 import { evalScopeCondition } from '../scope-eval'
 import type { StateScope } from '../state-scope'
+import {
+	type MountTarget,
+	setMountTargetHtml,
+	clearMountTarget,
+} from './anchor'
 
 export interface ReactiveIfBranchSpec {
 	readonly conditionExpr?: string | null
@@ -11,7 +16,7 @@ export interface ReactiveIfBranchSpec {
 }
 
 export interface BindReactiveIfOptions {
-	readonly anchor: Element
+	readonly mountTarget: MountTarget
 	readonly scope: StateScope
 	readonly branches: readonly ReactiveIfBranchSpec[]
 }
@@ -33,7 +38,7 @@ function findActiveBranchIndex(
 }
 
 export function bindReactiveIf(options: BindReactiveIfOptions): Cleanup {
-	const { anchor, scope, branches } = options
+	const { mountTarget, scope, branches } = options
 	let activeIndex = -1
 	let branchCleanup: Cleanup | null = null
 
@@ -44,12 +49,20 @@ export function bindReactiveIf(options: BindReactiveIfOptions): Cleanup {
 		activeIndex = index
 		const branch = branches[index]
 		if (!branch) return
-		anchor.innerHTML = branch.renderHtml()
-		branchCleanup = branch.mountBranch(anchor)
+		const branchRoot = setMountTargetHtml(mountTarget, branch.renderHtml())
+		branchCleanup = branch.mountBranch(branchRoot)
 	}
 
 	const effect = new Effect(() => {
-		activateBranch(findActiveBranchIndex(branches, scope))
+		const idx = findActiveBranchIndex(branches, scope)
+		if (idx < 0 || !branches[idx]) {
+			branchCleanup?.()
+			branchCleanup = null
+			activeIndex = -1
+			clearMountTarget(mountTarget)
+			return
+		}
+		activateBranch(idx)
 	})
 
 	return () => {

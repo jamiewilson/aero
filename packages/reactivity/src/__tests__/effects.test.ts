@@ -111,6 +111,7 @@ describe('$effect mount integration', () => {
 			bindings: [],
 			mountRoot: root,
 		})
-		expect(scope.$root).toBe(root)
+		expect(scope.$root).not.toBe(root)
+		expect((scope.$root as ParentNode).querySelector('div')).toBe(root)
 	})
 })

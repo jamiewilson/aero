@@ -19,7 +19,8 @@ describe('reactive structural codegen', () => {
 		<div else>Zero</div>`
 
 		const code = compile(parse(html), mockOptions)
-		expect(code).toContain('data-aero-if="0"')
+		expect(code).toContain("anchor: { kind: 'comment-range', bindId: 0, directive: 'if' }")
+		expect(code).toContain('<!-- aero:if:0 -->')
 		expect(code).toContain('ifBinds:')
 		expect(code).toContain('__aeroIfBranch_0_0')
 	})
@@ -93,7 +94,7 @@ describe('reactive structural codegen', () => {
 		expect(topLevelTextBinds).toBe('[]')
 		expect(code).toContain('rowMounts:')
 		expect(code).toContain('scope.item.name')
-		expect(code).toMatch(/function __aeroForRow_0[\s\S]*data-aero-text=\\"0\\"/)
+		expect(code).toMatch(/function __aeroForRow_0[\s\S]*data-aero-text=\\"1\\"/)
 	})
 
 	it('destructures escapeHtml in keyed for row renderers', () => {
@@ -205,6 +206,35 @@ describe('reactive structural codegen', () => {
 		expect(code).toMatch(/scope\.addRandom = function\(\) \{[\s\S]*const id = createID\(\)/)
 		expect(code).not.toContain('scope.crypto')
 		expect(code).not.toContain('scope.createID')
+	})
+
+	it('hoists reactive for marker onto parent list without span wrapper', () => {
+		const html = `<script is:state>
+			let items = [{ id: 'a' }]
+		</script>
+		<ul>
+			<li for="{ const item of items }" key="{ item.id }">{ item.id }</li>
+		</ul>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('<ul data-aero-for="0"')
+		expect(code).not.toContain('display:contents')
+		expect(code).not.toContain('<span data-aero-for')
+	})
+
+	it('hoists reactive if marker onto parent container', () => {
+		const html = `<script is:state>
+			let n = 0
+		</script>
+		<div class="card">
+			<p if="{ n > 0 }">Positive</p>
+			<p else-if="{ n < 0 }">Negative</p>
+			<p else>Zero</p>
+		</div>`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('class="card" data-aero-if="0"')
+		expect(code).not.toContain('display:contents')
 	})
 
 	it('emits reactive switch anchor when discriminant references state', () => {

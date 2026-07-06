@@ -406,12 +406,23 @@ function serializeCompiledBindings(analysis: StateScriptAnalysisResult): string 
 	return `[\n${rows.join(',\n')}\n\t]`
 }
 
+function serializeStructuralAnchor(
+	directive: 'if' | 'for' | 'switch' | 'text',
+	bindId: number,
+	anchorMode?: import('./ir').IRAnchorMode
+): string {
+	if (anchorMode === 'comment-range') {
+		return `{ kind: 'comment-range', bindId: ${bindId}, directive: '${directive}' }`
+	}
+	return `{ kind: 'element', selector: ${JSON.stringify(`[data-aero-${directive}="${bindId}"]`)} }`
+}
+
 function serializeTextBinds(binds: IRReactiveTextBind[]): string {
 	if (binds.length === 0) return '[]'
 	return `[\n${binds
 		.map(
 			bind =>
-				`\t\t{ selector: ${JSON.stringify(`[data-aero-text="${bind.bindId}"]`)}, read: __aeroTextRead_${bind.bindId} },`
+				`\t\t{ anchor: ${serializeStructuralAnchor('text', bind.bindId, bind.anchorMode)}, read: __aeroTextRead_${bind.bindId} },`
 		)
 		.join('\n')}\n\t]`
 }
@@ -576,7 +587,7 @@ function serializeIfBinds(ifBinds: IRReactiveIfBind[]): string {
 				})
 				.join(',\n')
 			return `\t\t{
-			selector: ${JSON.stringify(`[data-aero-if="${ifBind.bindId}"]`)},
+			anchor: ${serializeStructuralAnchor('if', ifBind.bindId, ifBind.anchorMode)},
 			branches: [
 ${branches}
 			]
@@ -591,7 +602,7 @@ function serializeForBinds(forBinds: IRReactiveForBind[]): string {
 		.map(forBind => {
 			const rowMounts = collectBranchBinds(forBind.body)
 			return `\t\t{
-			selector: ${JSON.stringify(`[data-aero-for="${forBind.bindId}"]`)},
+			anchor: ${serializeStructuralAnchor('for', forBind.bindId, forBind.anchorMode)},
 			binding: ${JSON.stringify(forBind.binding)},
 			bindingNames: ${JSON.stringify(forBind.bindingNames)},
 			items: __aeroForItems_${forBind.bindId},
@@ -632,7 +643,7 @@ function serializeSwitchBinds(switchBinds: IRReactiveSwitchBind[]): string {
 						})()
 					: ''
 			return `\t\t{
-			selector: ${JSON.stringify(`[data-aero-switch="${switchBind.bindId}"]`)},
+			anchor: ${serializeStructuralAnchor('switch', switchBind.bindId, switchBind.anchorMode)},
 			discriminant: __aeroSwitchExpr_${switchBind.bindId},
 			cases: [
 ${cases}

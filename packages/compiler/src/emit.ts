@@ -9,6 +9,7 @@
 import type { IRNode, BodyAndStyleIR } from './ir'
 import { CodeBuilder } from './code-builder'
 import * as Helper from './helpers'
+import { emitCommentEnd, emitCommentStart } from './anchor-markers'
 
 const DEFAULT_OUT = '__out'
 let emittedInternalId = 0
@@ -89,12 +90,12 @@ function emitAppendNode(
 }
 
 function emitForNode(b: CodeBuilder, node: Extract<IRNode, { kind: 'For' }>, outVar: string): void {
-	if (node.reactive && node.bindId !== undefined) {
-		b.stmtAppendOut(`<span data-aero-for="${node.bindId}" style="display:contents">`, outVar)
+	if (node.reactive && node.bindId !== undefined && node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentStart('for', node.bindId), outVar)
 	}
 	emitForLoopInto(b, node.binding, node.items, node.body, outVar)
-	if (node.reactive && node.bindId !== undefined) {
-		b.stmtAppendOut('</span>', outVar)
+	if (node.reactive && node.bindId !== undefined && node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentEnd('for', node.bindId), outVar)
 	}
 }
 
@@ -127,14 +128,18 @@ function emitReactiveIfNode(
 	if (node.else) {
 		b.raw(`else __aeroIfActive_${bindId} = ${branchBodies.length - 1};\n`)
 	}
-	b.stmtAppendOut(`<span data-aero-if="${bindId}" style="display:contents">`, outVar)
+	if (node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentStart('if', bindId), outVar)
+	}
 	for (let i = 0; i < branchBodies.length; i++) {
 		if (i === 0) b.raw(`if (__aeroIfActive_${bindId} === ${i}) {\n`)
 		else b.raw(`else if (__aeroIfActive_${bindId} === ${i}) {\n`)
 		emitToJSInto(b, branchBodies[i]!, outVar)
 		b.raw('}\n')
 	}
-	b.stmtAppendOut('</span>', outVar)
+	if (node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentEnd('if', bindId), outVar)
+	}
 	b.raw('}\n')
 }
 
@@ -188,14 +193,18 @@ function emitReactiveSwitchNode(
 	if (defaultBody !== undefined) {
 		b.raw(`else __aeroSwitchActive_${bindId} = ${node.cases.length};\n`)
 	}
-	b.stmtAppendOut(`<span data-aero-switch="${bindId}" style="display:contents">`, outVar)
+	if (node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentStart('switch', bindId), outVar)
+	}
 	for (let i = 0; i < branchBodies.length; i++) {
 		if (i === 0) b.raw(`if (__aeroSwitchActive_${bindId} === ${i}) {\n`)
 		else b.raw(`else if (__aeroSwitchActive_${bindId} === ${i}) {\n`)
 		emitToJSInto(b, branchBodies[i]!, outVar)
 		b.raw('}\n')
 	}
-	b.stmtAppendOut('</span>', outVar)
+	if (node.anchorMode === 'comment-range') {
+		b.stmtAppendOut(emitCommentEnd('switch', bindId), outVar)
+	}
 	b.raw('}\n')
 }
 
@@ -232,12 +241,16 @@ function emitComponentNode(
 		return
 	}
 	if (node.componentBindId !== undefined) {
-		b.stmtAppendOut(`<span data-aero-component="${node.componentBindId}">`, targetVar)
+		const tmpVar = `__aero_component_${node.componentBindId}`
+		b.raw(
+			`let ${tmpVar} = await Aero.renderComponent(${node.baseName}, ${node.propsString}, ${slotsString}, ${contextArg});\n`
+		)
+		b.raw(
+			`${targetVar} += ${tmpVar}.replace(/^\\s*<([a-z][\\w:-]*)/i, '<$1 data-aero-component="${node.componentBindId}"');\n`
+		)
+		return
 	}
 	b.stmtRenderComponent(targetVar, node.baseName, node.propsString, slotsString, contextArg)
-	if (node.componentBindId !== undefined) {
-		b.stmtAppendOut('</span>', targetVar)
-	}
 }
 
 function emitScriptPassDataNode(

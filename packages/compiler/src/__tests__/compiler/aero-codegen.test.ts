@@ -196,7 +196,8 @@ describe('Aero Codegen - Client Scripts', () => {
 		const code = compile(parsed, mockOptions)
 		const output = await execute(code)
 
-		expect(output).toContain('display:contents">1-2</span></div>')
+		expect(output).toContain('data-aero-text="0">1-2</div>')
+		expect(output).not.toContain('display:contents')
 	})
 
 	it('hoists is:state imports to module scope like is:build', () => {

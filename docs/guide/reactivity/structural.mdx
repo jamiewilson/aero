@@ -117,3 +117,14 @@ The loop binding supports destructuring patterns:
 <Note>
 	Keyed reconciliation preserves focus and element state inside rows when items reorder. Pair with [view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in client scripts for animated list updates.
 </Note>
+
+## Output fidelity
+
+Reactive bindings anchor to **authored markup** instead of injecting wrapper elements:
+
+- **Switch** — `data-aero-switch` on the element with `switch="{ … }"`.
+- **Keyed `for`** — `data-aero-for` on the parent container when the loop row is the only element child (e.g. `<ul data-aero-for>` with `<li for>` rows).
+- **`if` chains** — `data-aero-if` on a parent wrapper when the chain is its only content; otherwise HTML comment boundaries (`<!-- aero:if:N -->` … `<!-- /aero:if:N -->`).
+- **Text interpolation** — `data-aero-text` on an element whose sole child is reactive text; mixed content uses comment boundaries. Prefer the explicit `text="{ expr }"` attribute when you need a marker on a specific element.
+
+This keeps selectors like `ul > li` and `:nth-child` predictable in the live DOM.

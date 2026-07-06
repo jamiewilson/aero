@@ -2,6 +2,11 @@ import { Effect } from '../effect'
 import type { Cleanup } from '../mount'
 import { compileScopeRead } from '../scope-eval'
 import type { StateScope } from '../state-scope'
+import {
+	type MountTarget,
+	setMountTargetHtml,
+	clearMountTarget,
+} from './anchor'
 
 export interface ReactiveSwitchCaseSpec {
 	readonly comparandExprs?: readonly string[]
@@ -16,7 +21,7 @@ export interface ReactiveSwitchDefaultSpec {
 }
 
 export interface BindReactiveSwitchOptions {
-	readonly anchor: Element
+	readonly mountTarget: MountTarget
 	readonly scope: StateScope
 	readonly expression?: string
 	readonly discriminant?: (scope: StateScope) => unknown
@@ -59,7 +64,7 @@ function findActiveSwitchBranchIndex(
 }
 
 export function bindReactiveSwitch(options: BindReactiveSwitchOptions): Cleanup {
-	const { anchor, scope, cases, defaultBranch } = options
+	const { mountTarget, scope, cases, defaultBranch } = options
 	let activeIndex = -1
 	let branchCleanup: Cleanup | null = null
 
@@ -69,18 +74,18 @@ export function bindReactiveSwitch(options: BindReactiveSwitchOptions): Cleanup 
 		branchCleanup = null
 		activeIndex = index
 		if (index < 0) {
-			anchor.innerHTML = ''
+			clearMountTarget(mountTarget)
 			return
 		}
 		if (index < cases.length) {
 			const branch = cases[index]!
-			anchor.innerHTML = branch.renderHtml()
-			branchCleanup = branch.mountBranch(anchor)
+			const branchRoot = setMountTargetHtml(mountTarget, branch.renderHtml())
+			branchCleanup = branch.mountBranch(branchRoot)
 			return
 		}
 		if (!defaultBranch) return
-		anchor.innerHTML = defaultBranch.renderHtml()
-		branchCleanup = defaultBranch.mountBranch(anchor)
+		const branchRoot = setMountTargetHtml(mountTarget, defaultBranch.renderHtml())
+		branchCleanup = defaultBranch.mountBranch(branchRoot)
 	}
 
 	const effect = new Effect(() => {

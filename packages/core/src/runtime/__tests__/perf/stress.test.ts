@@ -48,7 +48,7 @@ describe('runtime perf stress', () => {
 				bindings: [{ name: 'count', derived: false, init: () => 1, dependencies: [] }],
 				textBinds: [
 					{
-						selector: '[data-aero-text="0"]',
+						anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
 						read: (scope, escapeHtml) => escapeHtml?.(String(scope.count)),
 					},
 				],

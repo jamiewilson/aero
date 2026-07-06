@@ -159,6 +159,23 @@ describe('emitToJS', () => {
 		expect(out).not.toContain('<span data-aero-component="0">')
 	})
 
+	it('patches data-aero-component onto first element for bound components', () => {
+		const ir: IRNode[] = [
+			{
+				kind: 'Component',
+				baseName: 'counter',
+				propsString: '{}',
+				slots: { default: [{ kind: 'Append', content: 'page' }] },
+				slotVarMap: { default: '__slot_0' },
+				componentBindId: 0,
+			},
+		]
+		const out = emitToJS(ir)
+		expect(out).toContain('let __aero_component_0 = await Aero.renderComponent(counter')
+		expect(out).toContain('data-aero-component="0"')
+		expect(out).not.toContain('<span data-aero-component="0">')
+	})
+
 	it('emits with custom outVar', () => {
 		const ir: IRNode[] = [{ kind: 'Append', content: 'x', outVar: '__html' }]
 		const out = emitToJS(ir, '__html')

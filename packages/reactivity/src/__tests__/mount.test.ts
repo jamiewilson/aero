@@ -84,7 +84,7 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: '"Alpha"' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"Alpha"' }],
 			eventBinds: [],
 			Aero: {},
 		})
@@ -129,7 +129,7 @@ describe('mountStateBindings', () => {
 			scope: rowScope,
 			bindings: [{ name: 'items', derived: false, initExpr: '[]', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String( item.label )' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String( item.label )' }],
 			eventBinds: [],
 			Aero: {},
 		})
@@ -168,7 +168,7 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
 			eventBinds: [],
 		})
 
@@ -491,7 +491,7 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
 			eventBinds: [],
 			componentBinds: [
 				{
@@ -557,7 +557,7 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
 			eventBinds: [],
 			componentBinds: [
 				{
@@ -685,7 +685,7 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
 			eventBinds: [],
 		})
 
@@ -725,7 +725,7 @@ describe('mountStateBindings', () => {
 				store: new SignalStore(),
 				bindings: [],
 				functionSources: [],
-				textBinds: [{ selector: '[data-aero-text="0"]', readExpr: '"missing"' }],
+				textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"missing"' }],
 				eventBinds: [],
 			}),
 		).not.toThrow()
@@ -801,7 +801,7 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'label' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'label' }],
 			eventBinds: [],
 		})
 
@@ -909,7 +909,7 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
 			functionSources: ['function inc() { count++ }'],
-			textBinds: [{ selector: '[data-aero-text="1"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="1"]' }, readExpr: 'String(count)' }],
 			eventBinds: [{ selector: '[data-aero-event="0"]', event: 'click', handlerExpr: 'inc()' }],
 		})
 
@@ -958,7 +958,7 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="1"]', readExpr: 'String(count)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="1"]' }, readExpr: 'String(count)' }],
 			eventBinds: [
 				{ selector: '[data-aero-event="0"]', event: 'click', handlerExpr: 'count--' },
 				{ selector: '[data-aero-event="2"]', event: 'click', handlerExpr: 'count++' },
@@ -994,7 +994,7 @@ describe('mountStateBindings', () => {
 				{ name: 'doubled', derived: true, initExpr: 'count * 2', dependencies: ['count'] },
 			],
 			functionSources: [],
-			textBinds: [{ selector: '[data-aero-text="0"]', readExpr: 'String(doubled)' }],
+			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(doubled)' }],
 			eventBinds: [],
 		})
 
@@ -1027,7 +1027,7 @@ describe('mountStateBindings', () => {
 				functionSources: [],
 				textBinds: [
 					{
-						selector: '[data-aero-text="0"]',
+						anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
 						readExpr: 'authState === AuthState.SignedIn ? "Log Out" : "Log In"',
 					},
 				],
@@ -1265,7 +1265,7 @@ describe('mountStateBindings switch', () => {
 			eventBinds: [],
 			switchBinds: [
 				{
-					selector: '[data-aero-switch="0"]',
+					anchor: { kind: 'element', selector: '[data-aero-switch="0"]' },
 					discriminant,
 					cases: [
 						{

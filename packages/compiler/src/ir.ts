@@ -39,6 +39,9 @@ export interface IRAppend {
 	outVar?: string
 }
 
+/** How the runtime locates a reactive structural binding in the output DOM. */
+export type IRAnchorMode = 'element' | 'comment-range'
+
 /** Loop: `for (const binding of iterable)` with injected index/first/last/length in body. */
 export interface IRFor {
 	kind: 'For'
@@ -53,6 +56,8 @@ export interface IRFor {
 	reactive?: boolean
 	/** Anchor id for keyed reconciliation. */
 	bindId?: number
+	/** Where the runtime bind marker lives (default: element span wrapper). */
+	anchorMode?: IRAnchorMode
 }
 
 /** Conditional with optional else-if/else chain. */
@@ -66,6 +71,7 @@ export interface IRIf {
 	reactive?: boolean
 	/** Anchor id for reactive branch toggling. */
 	bindId?: number
+	anchorMode?: IRAnchorMode
 }
 
 /** Else-if branch in an if-chain. */
@@ -91,6 +97,7 @@ export interface IRSwitch {
 	reactive?: boolean
 	/** Anchor id for reactive branch toggling. */
 	bindId?: number
+	anchorMode?: IRAnchorMode
 }
 
 /** Output slot with default content (slots['name'] ?? defaultContent). */
@@ -142,6 +149,7 @@ export interface IRReactiveTextBind {
 	kind: 'ReactiveTextBind'
 	bindId: number
 	readExpr: string
+	anchorMode?: IRAnchorMode
 }
 
 /** Register a reactive event binding against a `data-aero-event` marker. */
@@ -226,6 +234,7 @@ export interface IRReactiveIfBind {
 	kind: 'ReactiveIfBind'
 	bindId: number
 	branches: IRReactiveIfBranch[]
+	anchorMode?: IRAnchorMode
 }
 
 export interface IRReactiveForBind {
@@ -237,6 +246,7 @@ export interface IRReactiveForBind {
 	itemsExpr: string
 	keyExpr: string
 	body: IRNode[]
+	anchorMode?: IRAnchorMode
 }
 
 export interface IRReactiveSwitchBranch {
@@ -250,6 +260,7 @@ export interface IRReactiveSwitchBind {
 	expression: string
 	cases: IRReactiveSwitchBranch[]
 	defaultBody?: IRNode[]
+	anchorMode?: IRAnchorMode
 }
 
 /** Top-level result of lowering: body and style as separate IR streams. */
