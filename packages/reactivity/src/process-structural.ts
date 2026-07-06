@@ -144,7 +144,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 
 		cleanups.push(
 			bindReactiveSwitch({
-				anchor,
+				mountTarget: { kind: 'element', element: anchor },
 				scope,
 				expression: '__aeroSwitchDisc',
 				cases,
@@ -194,7 +194,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 
 		cleanups.push(
 			bindReactiveIf({
-				anchor,
+				mountTarget: { kind: 'element', element: anchor },
 				scope,
 				branches,
 			})
@@ -222,7 +222,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 
 		cleanups.push(
 			bindKeyedFor({
-				container: containerEl,
+				mountTarget: { kind: 'element', element: containerEl },
 				scope,
 				itemsExpr: '__aeroItems',
 				keyExpr: keyExprRaw.trim().startsWith('$')

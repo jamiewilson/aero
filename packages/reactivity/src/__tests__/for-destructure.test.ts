@@ -32,13 +32,15 @@ describe('bindKeyedFor destructuring', () => {
 		let rowCount = 0
 		const container = {
 			ownerDocument: doc,
+			matches: (selector: string) => selector === '[data-aero-for="0"]',
+			querySelector: () => null,
 			replaceChildren(fragment: DocumentFragment) {
 				rowCount = fragmentNodes.length
 			},
 		} as unknown as Element
 
 		const cleanup = bindKeyedFor({
-			container,
+			mountTarget: { kind: 'element', element: container },
 			scope,
 			itemsExpr: 'items',
 			keyExpr: 'id',
@@ -86,6 +88,8 @@ describe('bindKeyedFor destructuring', () => {
 		let rowCount = 0
 		const container = {
 			ownerDocument: doc,
+			matches: (selector: string) => selector === '[data-aero-for="0"]',
+			querySelector: () => null,
 			replaceChildren() {
 				rowCount = fragmentNodes.length
 				fragmentNodes.length = 0
@@ -96,7 +100,7 @@ describe('bindKeyedFor destructuring', () => {
 			return { key, value }
 		}
 		const cleanup = bindKeyedFor({
-			container,
+			mountTarget: { kind: 'element', element: container },
 			scope,
 			itemsExpr: 'numbersMap',
 			keyExpr: 'key',

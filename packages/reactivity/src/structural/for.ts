@@ -2,6 +2,10 @@ import { Effect } from '../effect'
 import type { Cleanup } from '../mount'
 import { compileScopeRead } from '../scope-eval'
 import type { StateScope } from '../state-scope'
+import {
+	type MountTarget,
+	replaceMountTargetChildren,
+} from './anchor'
 
 export interface KeyedForRowSpec {
 	readonly key: string | number
@@ -10,7 +14,7 @@ export interface KeyedForRowSpec {
 }
 
 export interface BindKeyedForOptions {
-	readonly container: Element
+	readonly mountTarget: MountTarget
 	readonly scope: StateScope
 	readonly itemsExpr?: string
 	readonly keyExpr?: string
@@ -87,13 +91,16 @@ function createRowScope(
 }
 
 export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
-	const { container, scope, binding, bindingNames, renderRow } = options
+	const { mountTarget, scope, binding, bindingNames, renderRow } = options
 	const rows = new Map<string | number, { element: Element; cleanup: Cleanup }>()
 	const seenKeys = new Set<string | number>()
 
 	const reconcile = (): void => {
 		const items = evalItems(options, scope)
-		const doc = container.ownerDocument ?? globalThis.document
+		const doc =
+			(mountTarget.kind === 'element'
+				? mountTarget.element.ownerDocument
+				: (mountTarget.range.parent as Node).ownerDocument) ?? globalThis.document
 		seenKeys.clear()
 		const nextKeys: Array<string | number> = []
 
@@ -133,7 +140,7 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 			const row = rows.get(key)
 			if (row) fragment.appendChild(row.element)
 		}
-		container.replaceChildren(fragment)
+		replaceMountTargetChildren(mountTarget, fragment)
 	}
 
 	const effect = new Effect(reconcile)

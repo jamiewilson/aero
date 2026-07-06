@@ -10,6 +10,13 @@ import { bindFormModel } from './bindings/model'
 import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
 import { bindReactiveSwitch } from './structural/switch'
+import type { StructuralAnchor } from './structural/anchor'
+import {
+	type MountTarget,
+	resolveMountTarget,
+	setMountTargetText,
+	findCommentRange,
+} from './structural/anchor'
 import { compileScopeRead } from './scope-eval'
 import {
 	type CompiledEventHandler,
@@ -73,7 +80,7 @@ export interface MountStateBindingsOptions {
 	readonly allowLegacyRuntimeCompile?: boolean
 	/** When set, used instead of creating scope from store/bindings (e.g. keyed-for row scope). */
 	readonly scope?: StateScope
-	readonly textBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly textBinds: readonly { anchor: StructuralAnchor; read?: ScopeReader; readExpr?: string }[]
 	readonly eventBinds: readonly {
 		selector: string
 		event: string
@@ -114,7 +121,7 @@ export interface MountStateBindingsOptions {
 		readonly?: boolean
 	}[]
 	readonly ifBinds?: readonly {
-		selector: string
+		anchor: StructuralAnchor
 		branches: readonly {
 			condition?: ((scope: StateScope) => boolean) | null
 			conditionExpr?: string | null
@@ -123,7 +130,7 @@ export interface MountStateBindingsOptions {
 		}[]
 	}[]
 	readonly forBinds?: readonly {
-		selector: string
+		anchor: StructuralAnchor
 		binding: string
 		bindingNames: readonly string[]
 		items?: (scope: StateScope) => unknown[]
@@ -135,7 +142,7 @@ export interface MountStateBindingsOptions {
 		rowMounts: MountBindingSubset
 	}[]
 	readonly switchBinds?: readonly {
-		selector: string
+		anchor: StructuralAnchor
 		discriminant?: (scope: StateScope) => unknown
 		expression?: string
 		cases: readonly {
@@ -164,7 +171,7 @@ export interface MountStateBindingsOptions {
 }
 
 export interface MountBindingSubset {
-	readonly textBinds: readonly { selector: string; read?: ScopeReader; readExpr?: string }[]
+	readonly textBinds: readonly { anchor: StructuralAnchor; read?: ScopeReader; readExpr?: string }[]
 	readonly eventBinds: readonly {
 		selector: string
 		event: string
@@ -371,6 +378,25 @@ function isOwnedByChildComponentMount(element: Element, childComponentRoots: rea
 		if (isStrictDomDescendantOf(element, componentRoot)) return true
 	}
 	return false
+}
+
+function resolveCompiledStructuralAnchor(
+	root: ParentNode,
+	anchor: StructuralAnchor,
+	componentBinds?: readonly { selector: string; component: unknown }[]
+): MountTarget | null {
+	if (anchor.kind === 'element') {
+		const element = queryBindTarget(root, anchor.selector, componentBinds)
+		return element ? { kind: 'element', element } : null
+	}
+	const range = findCommentRange(root, anchor.directive, anchor.bindId)
+	return range ? { kind: 'comment-range', range } : null
+}
+
+function structuralAnchorLabel(anchor: StructuralAnchor): string {
+	return anchor.kind === 'element'
+		? anchor.selector
+		: `comment-range ${anchor.directive}:${anchor.bindId}`
 }
 
 /**
@@ -650,14 +676,21 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	}
 
 	for (const bind of options.textBinds) {
-		const target = queryBindTarget(options.root, bind.selector, options.componentBinds)
-		if (!target) {
-			if (ownsComponentMountRoot(options.root)) continue
-			throw new Error(`[aero] Missing reactive text target: ${bind.selector}`)
-		}
-		cleanups.push(
-			bindText(target, wireScopeReader(bind, scope, options.escapeHtml, allowLegacyRuntimeCompile))
+		const mountTarget = resolveCompiledStructuralAnchor(
+			options.root,
+			bind.anchor,
+			options.componentBinds
 		)
+		if (!mountTarget) {
+			if (ownsComponentMountRoot(options.root)) continue
+			throw new Error(`[aero] Missing reactive text target: ${structuralAnchorLabel(bind.anchor)}`)
+		}
+		const read = wireScopeReader(bind, scope, options.escapeHtml, allowLegacyRuntimeCompile)
+		const effect = new Effect(() => {
+			const value = read()
+			setMountTargetText(mountTarget, value == null ? '' : String(value))
+		})
+		cleanups.push(() => effect.destroy())
 	}
 
 	for (const bind of options.eventBinds) {
@@ -692,13 +725,17 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	mountShowHtmlClassPropertyModel(options, scope, cleanups)
 
 	for (const bind of options.ifBinds ?? []) {
-		const anchor = queryBindTarget(options.root, bind.selector, options.componentBinds)
-		if (!anchor) {
-			throw new Error(`[aero] Missing reactive if anchor: ${bind.selector}`)
+		const mountTarget = resolveCompiledStructuralAnchor(
+			options.root,
+			bind.anchor,
+			options.componentBinds
+		)
+		if (!mountTarget) {
+			throw new Error(`[aero] Missing reactive if anchor: ${structuralAnchorLabel(bind.anchor)}`)
 		}
 		cleanups.push(
 			bindReactiveIf({
-				anchor,
+				mountTarget,
 				scope,
 				branches: bind.branches.map(branch => ({
 					condition: branch.condition ?? undefined,
@@ -719,13 +756,17 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	}
 
 	for (const bind of options.forBinds ?? []) {
-		const container = queryBindTarget(options.root, bind.selector, options.componentBinds)
-		if (!container) {
-			throw new Error(`[aero] Missing reactive for container: ${bind.selector}`)
+		const mountTarget = resolveCompiledStructuralAnchor(
+			options.root,
+			bind.anchor,
+			options.componentBinds
+		)
+		if (!mountTarget) {
+			throw new Error(`[aero] Missing reactive for container: ${structuralAnchorLabel(bind.anchor)}`)
 		}
 		cleanups.push(
 			bindKeyedFor({
-				container,
+				mountTarget,
 				scope,
 				items: bind.items,
 				key: bind.key,
@@ -761,14 +802,18 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 	}
 
 	for (const bind of options.switchBinds ?? []) {
-		const anchor = queryBindTarget(options.root, bind.selector, options.componentBinds)
-		if (!anchor) {
-			throw new Error(`[aero] Missing reactive switch anchor: ${bind.selector}`)
+		const mountTarget = resolveCompiledStructuralAnchor(
+			options.root,
+			bind.anchor,
+			options.componentBinds
+		)
+		if (!mountTarget) {
+			throw new Error(`[aero] Missing reactive switch anchor: ${structuralAnchorLabel(bind.anchor)}`)
 		}
 		const defaultBranch = bind.default
 		cleanups.push(
 			bindReactiveSwitch({
-				anchor,
+				mountTarget,
 				scope,
 				discriminant: bind.discriminant,
 				expression: bind.expression,

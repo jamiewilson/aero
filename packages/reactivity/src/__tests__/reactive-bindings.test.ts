@@ -239,13 +239,15 @@ describe('reactive collections', () => {
 		let rowCount = 0
 		const container = {
 			ownerDocument: doc,
+			matches: (selector: string) => selector === '[data-aero-for="0"]',
+			querySelector: () => null,
 			replaceChildren() {
 				rowCount = fragmentNodes.length
 				fragmentNodes.length = 0
 			},
 		} as unknown as Element
 		const cleanup = bindKeyedFor({
-			container,
+			mountTarget: { kind: 'element', element: container },
 			scope,
 			itemsExpr,
 			keyExpr,
@@ -343,8 +345,13 @@ describe('reactive if', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				return selector === '[data-aero-if="0"]' ? anchor : null
+			},
+		} as unknown as ParentNode
 		const cleanup = bindReactiveIf({
-			anchor,
+			mountTarget: { kind: 'element', element: anchor },
 			scope,
 			branches: [
 				{
@@ -369,7 +376,7 @@ describe('reactive if', () => {
 		;(store.get('showNegative') as { value: boolean }).value = false
 		cleanup()
 		bindReactiveIf({
-			anchor,
+			mountTarget: { kind: 'element', element: anchor },
 			scope,
 			branches: [
 				{ conditionExpr: 'showPositive', renderHtml: () => 'pos', mountBranch: () => () => {} },
@@ -391,8 +398,13 @@ describe('reactive switch', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
+		const root = {
+			querySelector(selector: string) {
+				return selector === '[data-aero-switch="0"]' ? anchor : null
+			},
+		} as unknown as ParentNode
 		const cleanup = bindReactiveSwitch({
-			anchor,
+			mountTarget: { kind: 'element', element: anchor },
 			scope,
 			expression: 'status',
 			cases: [
@@ -416,7 +428,7 @@ describe('reactive switch', () => {
 		;(store.get('status') as { value: string }).value = 'ready'
 		cleanup()
 		bindReactiveSwitch({
-			anchor,
+			mountTarget: { kind: 'element', element: anchor },
 			scope,
 			expression: 'status',
 			cases: [

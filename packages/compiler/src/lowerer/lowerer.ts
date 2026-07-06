@@ -34,6 +34,20 @@ import {
 } from './slots'
 import { compileSwitchContainer, hasCaseAttr, parentIsSwitchContainer, isReactiveSwitch } from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
+import {
+	findOnlyElementSibling,
+	firstIfChainIndex,
+	injectReactiveMarkerOnOpenTag,
+	isIgnorableSibling,
+	isOnlySiblingContent,
+} from './anchor-hoist'
+import { emitCommentEnd, emitCommentStart } from '../anchor-markers'
+
+interface ChildHoistContext {
+	forHoistBindId?: number
+	ifHoistBindId?: number
+	textHoistBindId?: number
+}
 
 /** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
 export class Lowerer {
@@ -97,12 +111,12 @@ export class Lowerer {
 		)
 	}
 
-	compileNode(node: any, skipInterpolation = false, outVar = '__out'): IRNode[] {
+	compileNode(node: any, skipInterpolation = false, outVar = '__out', parentHoist?: ChildHoistContext): IRNode[] {
 		switch (node.nodeType) {
 			case 3:
-				return this.compileText(node, skipInterpolation, outVar)
+				return this.compileText(node, skipInterpolation, outVar, parentHoist)
 			case 1:
-				return this.compileElement(node, skipInterpolation, outVar)
+				return this.compileElement(node, skipInterpolation, outVar, parentHoist)
 			default:
 				return []
 		}
@@ -138,7 +152,8 @@ export class Lowerer {
 	private compileChildNodes(
 		nodes: NodeList | undefined,
 		skipInterpolation: boolean,
-		outVar: string
+		outVar: string,
+		childHoist?: ChildHoistContext
 	): IRNode[] {
 		if (!nodes) return []
 		const out: IRNode[] = []
@@ -160,7 +175,8 @@ export class Lowerer {
 				)
 				const ifNode = chainNodes[0]
 				if (ifNode?.kind === 'If' && ifNode.reactive && this.reactiveState) {
-					const bindId = this.reactiveState.nextIfBindId()
+					const bindId = childHoist?.ifHoistBindId ?? this.reactiveState.nextIfBindId()
+					const anchorMode = childHoist?.ifHoistBindId != null ? 'element' : 'comment-range'
 					const branches = [
 						{ conditionExpr: ifNode.condition, body: ifNode.body },
 						...(ifNode.elseIf ?? []).map(branch => ({
@@ -169,8 +185,8 @@ export class Lowerer {
 						})),
 						...(ifNode.else ? [{ conditionExpr: null as string | null, body: ifNode.else }] : []),
 					]
-					out.push({ kind: 'ReactiveIfBind', bindId, branches })
-					out.push({ ...ifNode, bindId })
+					out.push({ kind: 'ReactiveIfBind', bindId, branches, anchorMode })
+					out.push({ ...ifNode, bindId, anchorMode })
 				} else {
 					out.push(...chainNodes)
 				}
@@ -178,13 +194,18 @@ export class Lowerer {
 				continue
 			}
 
-			out.push(...this.compileNode(node, skipInterpolation, outVar))
+			out.push(...this.compileNode(node, skipInterpolation, outVar, childHoist))
 			i++
 		}
 		return out
 	}
 
-	private compileText(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+	private compileText(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string,
+		parentHoist?: ChildHoistContext
+	): IRNode[] {
 		const text = node.textContent || ''
 		if (!text) return []
 		if (
@@ -194,15 +215,19 @@ export class Lowerer {
 				tokenizeCurlyInterpolation(value, { attributeMode: false })
 			)
 		) {
-			const bindId = this.reactiveState.nextTextBindId()
-			const content = `<span data-aero-text="${bindId}" style="display:contents">${Helper.compileInterpolation(text)}</span>`
+			const bindId = parentHoist?.textHoistBindId ?? this.reactiveState.nextTextBindId()
+			const readExpr = Helper.compileReactiveTextReadExpr(text)
+			const interpolated = Helper.compileInterpolation(text)
+			if (parentHoist?.textHoistBindId != null) {
+				return [
+					{ kind: 'Append', content: interpolated, outVar },
+					{ kind: 'ReactiveTextBind', bindId, readExpr, anchorMode: 'element' },
+				]
+			}
+			const content = `${emitCommentStart('text', bindId)}${interpolated}${emitCommentEnd('text', bindId)}`
 			return [
 				{ kind: 'Append', content, outVar },
-				{
-					kind: 'ReactiveTextBind',
-					bindId,
-					readExpr: Helper.compileReactiveTextReadExpr(text),
-				},
+				{ kind: 'ReactiveTextBind', bindId, readExpr, anchorMode: 'comment-range' },
 			]
 		}
 		const content = skipInterpolation
@@ -216,7 +241,12 @@ export class Lowerer {
 	 * for `<template>`, wrapperless APIs in `template.ts` should be used when the tag must not
 	 * appear in output.
 	 */
-	private compileElement(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+	private compileElement(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string,
+		parentHoist?: ChildHoistContext
+	): IRNode[] {
 		const tagName = node.tagName.toLowerCase()
 		warnWrapperlessTemplateAttributes(this.diag, node)
 
@@ -297,7 +327,7 @@ export class Lowerer {
 				...attributeBinds,
 				...propertyBinds,
 				...modelBinds,
-			])
+			], undefined, 'comment-range')
 		}
 
 		if (switchExpr && isTemplateElement(node)) {
@@ -317,11 +347,12 @@ export class Lowerer {
 			if (reactive && this.reactiveState) {
 				const bindId = this.reactiveState.nextSwitchBindId()
 				return [
-					{ ...switchIR, bindId, reactive: true },
+					{ ...switchIR, bindId, reactive: true, anchorMode: 'comment-range' },
 					{
 						kind: 'ReactiveSwitchBind',
 						bindId,
 						expression: switchIR.expression,
+						anchorMode: 'comment-range',
 						cases: switchIR.cases.map(branch => ({
 							comparandExprs: branch.comparandExprs,
 							body: branch.body,
@@ -343,6 +374,95 @@ export class Lowerer {
 
 		const inner: IRNode[] = []
 		let switchBind: import('../ir').IRReactiveSwitchBind | null = null
+		const childHoist: ChildHoistContext = {}
+		let reactiveSwitchBindId: number | undefined
+
+		if (switchExpr && this.reactiveState) {
+			const previewSwitch = compileSwitchContainer(
+				{
+					compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+				},
+				this.diag,
+				node,
+				switchExpr,
+				childSkip,
+				outVar
+			)
+			if (
+				isReactiveSwitch(previewSwitch.expression, previewSwitch.cases, this.reactiveState.bindingNames)
+			) {
+				reactiveSwitchBindId = this.reactiveState.nextSwitchBindId()
+			}
+		}
+
+		if (this.reactiveState && !loopData && !switchExpr) {
+			const children = node.childNodes as NodeList
+			const onlyEl = findOnlyElementSibling(children)
+			if (onlyEl) {
+				const childParsed = parseElementAttributes(
+					this.resolver,
+					this.diag,
+					onlyEl,
+					this.reactiveState,
+					this.hypermedia
+				)
+				if (
+					childParsed.loopData?.keyExpr &&
+					referencesStateBindingExpression(
+						childParsed.loopData.items,
+						this.reactiveState.bindingNames
+					)
+				) {
+					childHoist.forHoistBindId = this.reactiveState.nextForBindId()
+				}
+			}
+			const ifStart = firstIfChainIndex(children)
+			if (ifStart >= 0) {
+				const { consumed, nodes: chainNodes } = compileConditionalChain(
+					{
+						compileBranchBody: (n, skip, o) => this.compileWrapperAwareBranch(n, skip, o),
+						bindingNames: this.reactiveState.bindingNames,
+					},
+					this.diag,
+					children,
+					ifStart,
+					skipInterpolation,
+					outVar
+				)
+				const ifNode = chainNodes[0]
+				if (
+					ifNode?.kind === 'If' &&
+					ifNode.reactive &&
+					isOnlySiblingContent(children, ifStart, consumed)
+				) {
+					childHoist.ifHoistBindId = this.reactiveState.nextIfBindId()
+				}
+			}
+			if (!childSkip) {
+				let soleText: Node | null = null
+				for (let ci = 0; ci < children.length; ci++) {
+					const child = children[ci]!
+					if (isIgnorableSibling(child)) continue
+					if (child.nodeType !== 3) {
+						soleText = null
+						break
+					}
+					if (soleText) {
+						soleText = null
+						break
+					}
+					soleText = child
+				}
+				if (
+					soleText?.textContent &&
+					textReferencesStateBindings(soleText.textContent, this.reactiveState.bindingNames, value =>
+						tokenizeCurlyInterpolation(value, { attributeMode: false })
+					)
+				) {
+					childHoist.textHoistBindId = this.reactiveState.nextTextBindId()
+				}
+			}
+		}
 
 		if (CONST.VOID_TAGS.has(tagName)) {
 			inner.push({
@@ -351,9 +471,22 @@ export class Lowerer {
 				outVar,
 			})
 		} else {
+			let openTag = `<${tagName}${attrString}>`
+			if (childHoist.forHoistBindId != null) {
+				openTag = injectReactiveMarkerOnOpenTag(openTag, 'for', childHoist.forHoistBindId)
+			}
+			if (childHoist.ifHoistBindId != null) {
+				openTag = injectReactiveMarkerOnOpenTag(openTag, 'if', childHoist.ifHoistBindId)
+			}
+			if (childHoist.textHoistBindId != null) {
+				openTag = injectReactiveMarkerOnOpenTag(openTag, 'text', childHoist.textHoistBindId)
+			}
+			if (reactiveSwitchBindId != null) {
+				openTag = injectReactiveMarkerOnOpenTag(openTag, 'switch', reactiveSwitchBindId)
+			}
 			inner.push({
 				kind: 'Append',
-				content: `<${tagName}${attrString}>`,
+				content: openTag,
 				outVar,
 			})
 			if (prefixContent) {
@@ -386,12 +519,12 @@ export class Lowerer {
 				const reactive =
 					this.reactiveState != null &&
 					isReactiveSwitch(switchIR.expression, switchIR.cases, this.reactiveState.bindingNames)
-				if (reactive && this.reactiveState) {
-					const bindId = this.reactiveState.nextSwitchBindId()
-					inner.push({ ...switchIR, bindId, reactive: true })
+				if (reactive && this.reactiveState && reactiveSwitchBindId != null) {
+					inner.push({ ...switchIR, bindId: reactiveSwitchBindId, reactive: true, anchorMode: 'element' })
 					switchBind = {
 						kind: 'ReactiveSwitchBind',
-						bindId,
+						bindId: reactiveSwitchBindId,
+						anchorMode: 'element',
 						expression: switchIR.expression,
 						cases: switchIR.cases.map(branch => ({
 							comparandExprs: branch.comparandExprs,
@@ -403,7 +536,7 @@ export class Lowerer {
 					inner.push(switchIR)
 				}
 			} else {
-				inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar))
+				inner.push(...this.compileChildNodes(node.childNodes, childSkip, outVar, childHoist))
 			}
 
 			if (closeBlock) {
@@ -414,18 +547,25 @@ export class Lowerer {
 		}
 
 		if (loopData) {
-			return this.wrapForLoop(loopData, inner, [
-				...eventBinds,
-				...textBinds,
-				...busyBinds,
-				...showBinds,
-				...htmlBinds,
-				...classBinds,
-				...attributeBinds,
-				...propertyBinds,
-				...modelBinds,
-				...(switchBind ? [switchBind] : []),
-			])
+			const forHoist =
+				parentHoist?.forHoistBindId != null ? { bindId: parentHoist.forHoistBindId } : undefined
+			return this.wrapForLoop(
+				loopData,
+				inner,
+				[
+					...eventBinds,
+					...textBinds,
+					...busyBinds,
+					...showBinds,
+					...htmlBinds,
+					...classBinds,
+					...attributeBinds,
+					...propertyBinds,
+					...modelBinds,
+					...(switchBind ? [switchBind] : []),
+				],
+				forHoist
+			)
 		}
 	return [
 		...inner,
@@ -698,7 +838,9 @@ export class Lowerer {
 	private wrapForLoop(
 		loopData: { binding: string; items: string; keyExpr?: string },
 		body: IRNode[],
-		trailing: IRNode[]
+		trailing: IRNode[],
+		forHoist?: { bindId: number },
+		defaultAnchorMode: import('../ir').IRAnchorMode = 'comment-range'
 	): IRNode[] {
 		const reactive =
 			this.reactiveState != null &&
@@ -710,6 +852,7 @@ export class Lowerer {
 			})
 		}
 		const loopBody = [...body, ...trailing]
+		const anchorMode = forHoist ? 'element' : defaultAnchorMode
 		let forNode: IRNode = {
 			kind: 'For',
 			binding: loopData.binding,
@@ -720,12 +863,13 @@ export class Lowerer {
 		}
 		const nodes: IRNode[] = [forNode]
 		if (reactive && this.reactiveState && loopData.keyExpr) {
-			const bindId = this.reactiveState.nextForBindId()
-			forNode = { ...(forNode as import('../ir').IRFor), bindId }
+			const bindId = forHoist?.bindId ?? this.reactiveState.nextForBindId()
+			forNode = { ...(forNode as import('../ir').IRFor), bindId, anchorMode }
 			nodes[0] = forNode
 			nodes.push({
 				kind: 'ReactiveForBind',
 				bindId,
+				anchorMode,
 				binding: loopData.binding,
 				bindingNames: collectForDirectiveBindingNames(
 					`const ${loopData.binding} of __aeroItems`

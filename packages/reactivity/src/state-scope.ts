@@ -35,6 +35,32 @@ export interface StateScopeOptions {
 
 export type StateScope = Record<string, unknown>
 
+/**
+ * Wrap a mount root so `$root.querySelector(...)` / `querySelectorAll(...)` are
+ * self-inclusive: they match the root element itself as well as its descendants.
+ *
+ * Reactive components no longer render a wrapper element around their content;
+ * `$root` is the component's own root element. Author code that scopes lookups
+ * with `$root.querySelector('my-tag')` must therefore be able to find the root
+ * itself, not only descendants (native `querySelector` searches descendants only).
+ */
+function createScopeRoot(root: ParentNode): ParentNode {
+	const el = root as Element
+	if (typeof el.matches !== 'function') return root
+	return Object.assign(Object.create(root), {
+		querySelector(selectors: string): Element | null {
+			if (el.matches(selectors)) return el
+			return el.querySelector(selectors)
+		},
+		querySelectorAll(selectors: string): NodeListOf<Element> {
+			const matches = el.querySelectorAll(selectors)
+			if (!el.matches(selectors)) return matches
+			const nodes = [el, ...Array.from(matches)]
+			return nodes as unknown as NodeListOf<Element>
+		},
+	}) as ParentNode
+}
+
 function topoSortDerived(bindings: readonly StateBindingSpec[]): StateBindingSpec[] {
 	const derived = bindings.filter(b => b.derived)
 	const sorted: StateBindingSpec[] = []
@@ -111,10 +137,11 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 	const reactiveProps = options.reactiveProps ?? {}
 	const scope: StateScope = { ...actionFunctions, ...scopeConstants, ...hypermediaScopeActions }
 	if (options.mountRoot) {
+		const mountRoot = createScopeRoot(options.mountRoot)
 		Object.defineProperty(scope, '$root', {
 			configurable: true,
 			enumerable: true,
-			value: options.mountRoot,
+			value: mountRoot,
 		})
 	}
 
