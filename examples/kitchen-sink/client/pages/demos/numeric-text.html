@@ -7,16 +7,24 @@
 	let count = 1234
 	let animated = true
 	let trend = 0
-	let count2 = 4321
 </script>
 
 <base-layout title="Numeric text">
-	<section class="v-stack">
-		<numeric-text-component bind:value="{ count }" animated="{ animated }" trend="{ trend }" />
-		<numeric-text-component bind:value="{ count2 }" />
-		<button on:click="{ count++ }">Increment</button>
-		<button on:click="{ count-- }">Decrement</button>
-		<button on:click="{ count2 = Math.floor(Math.random() * 10000) }">Random number</button>
-		<button on:click="{ ((count = 0), (count2 = 0)) }">Reset</button>
-	</section>
+	<main class="grid place-items-center h-full">
+		<div class="h-24">
+			<!-- FIXME: class bindings don't work here when using a component -->
+			<numeric-text-component
+				bind:value="{ count }"
+				animated="{ animated }"
+				trend="{ trend }"
+				class:is-animated="{ animated }"
+				classes="font-bold text-[4rem]" />
+		</div>
+		<section class="grid gap-2 place-items-center">
+			<button on:click="{ count++ }">Increment</button>
+			<button on:click="{ count-- }">Decrement</button>
+			<button on:click="{ count = Math.floor(Math.random() * 10000) }">Random number</button>
+			<button on:click="{ count = 0 }">Reset</button>
+		</section>
+	</main>
 </base-layout>

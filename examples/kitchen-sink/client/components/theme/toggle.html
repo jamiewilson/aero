@@ -27,6 +27,8 @@
 </button>
 
 <style>
+	@reference '@styles/global.css';
+
 	@layer components {
 		[data-theme='system'] .theme-icon.system,
 		[data-theme='light'] .theme-icon.light,
@@ -39,10 +41,6 @@
 		@scope (.theme-toggle) {
 			:scope {
 				padding: 1.5rem;
-				border: 1px solid --opacity(currentColor, 0.1);
-				border-radius: var(--radius-3xl);
-				corner-shape: squircle;
-				cursor: pointer;
 			}
 
 			svg {
@@ -61,8 +59,8 @@
 				translate: 0 1em;
 
 				transition-property: opacity, scale, translate;
-				transition-timing-function: var(--ease-in-out-quadratic);
-				transition-duration: var(--duration-medium);
+				transition-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
+				transition-duration: 200ms;
 			}
 		}
 	}

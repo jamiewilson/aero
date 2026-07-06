@@ -3,8 +3,8 @@
 	const links = site.footer.links
 </script>
 
-<footer class="flex gap-4 text-sm mt-auto">
+<footer class="flex gap-6 text-sm mt-auto">
 	<span for="{ const link of links }">
-		<a href="{ link.href }" target="_blank">{ link.label }</a> ↗
+		<a href="{ link.href }" target="_blank" class="outbound">{ link.label }</a>
 	</span>
 </footer>

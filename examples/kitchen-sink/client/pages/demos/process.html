@@ -9,20 +9,20 @@
 </script>
 
 <base-layout title="Process runtime">
-	<section class="v-stack">
+	<section>
 		<p class="secondary"><code>runtime.process()</code> for inserted HTML</p>
 
-		<label class="h-stack items-center">
+		<label>
 			<input type="checkbox" checked="{ showNote }" />
 			<span>Show inserted fragment</span>
 		</label>
 
-		<label class="v-stack">
+		<label>
 			<span>Page signal (<code>note</code>)</span>
 			<input value="{ note }" />
 		</label>
 
-		<label class="v-stack">
+		<label>
 			<span>Page signal (<code>status</code>)</span>
 			<select value="{ status }">
 				<option value="loading">loading</option>
@@ -33,7 +33,7 @@
 
 		<button type="button" id="process-insert">Insert fragment</button>
 		<button type="button" id="process-insert-switch">Insert switch fragment</button>
-		<div id="process-host" class="card secondary">Fragment mounts here…</div>
+		<div id="process-host">Fragment mounts here…</div>
 	</section>
 </base-layout>
 

@@ -7,9 +7,9 @@
 	let status = 'loading'
 
 	const nextStatus: Record<string, string> = {
-		'loading': 'error',
-		'error': 'ready',
-		'ready': 'loading',
+		loading: 'error',
+		error: 'ready',
+		ready: 'loading',
 	}
 
 	function cycleStatus() {
@@ -18,29 +18,29 @@
 </script>
 
 <base-layout title="Reactive conditionals">
-	<section class="v-stack items-center">
-		<p class="secondary">Reactive <code>if</code> / <code>else-if</code> / <code>else</code></p>
+	<section>
+		<p>Reactive <code>if</code> / <code>else-if</code> / <code>else</code></p>
 
-		<div class="h-stack items-center">
+		<div>
 			<button on:click="{ count-- }">−</button>
 			<code>count = { count }</code>
 			<button on:click="{ count++ }">+</button>
 		</div>
 
-		<div class="card v-stack">
+		<div>
 			<p if="{ count > 0 }">Positive branch</p>
 			<p else-if="{ count < 0 }">Negative branch</p>
 			<p else>Zero branch</p>
 		</div>
 
-		<p class="secondary">Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
+		<p>Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
 
-		<div class="h-stack items-center">
+		<div>
 			<button on:click="{ cycleStatus() }">Cycle status</button>
 			<code>status = { status }</code>
 		</div>
 
-		<div class="card v-stack" switch="{ status }">
+		<div switch="{ status }">
 			<p case="loading">Loading branch</p>
 			<p case="error">Error branch</p>
 			<p default>Ready branch</p>

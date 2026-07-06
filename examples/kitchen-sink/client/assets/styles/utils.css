@@ -1,6 +1,0 @@
-@layer utils {
-	.debug,
-	.debug * {
-		outline: 1px solid red;
-	}
-}

@@ -2,22 +2,16 @@
 	import base from '@layouts/base.html'
 	import site from '@content/site'
 	import footer from '@components/footer.html'
+	import demoList from '@components/demo-list.html'
 </script>
 
 <base-layout>
-	<article class="grid gap-4 p-[5vw] h-full">
-		<header class="max-w-sm">
+	<article class="grid gap-4 h-full">
+		<header>
 			<h1 class="text-[4rem] font-semibold tracking-tight">{ site.home.title }</h1>
-			<p>{ site.home.subtitle }</p>
+			<p class="text-sm max-w-prose">{ site.home.subtitle } <a href="/docs">Get started</a>.</p>
 		</header>
-		<section>
-			<h2 class="text-xs font-semibold uppercase tracking-widest mb-5">Demos</h2>
-			<ul class="list-none columns-4">
-				<li for="{ const demo of site.demos }">
-					<a href="{ demo.href }">{ demo.label }</a>
-				</li>
-			</ul>
-		</section>
+		<demo-list-component />
 		<footer-component />
 	</article>
 </base-layout>

@@ -22,6 +22,7 @@ All props are read from **Aero.props** in `<script is:build>{:html}`. Destructur
 
 ```html
 <my-component title="Hello" count="42" />
+<!-- The value is a string literal. -->
 ```
 
 **2. Expressions**

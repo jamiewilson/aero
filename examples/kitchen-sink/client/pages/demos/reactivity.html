@@ -9,11 +9,11 @@
 
 <base-layout title="Reactivity Demo" count="{ count }">
 	<header-component bind:count="{ count }" />
-	<section class="h-stack justify-center items-center">
+	<div class="flex gap-2 items-center">
 		<button on:click="{ count-- }">−</button>
-		<h2 data-is-even="{ count % 2 === 0 }">{ count }</h2>
+		<h2 data-is-even="{ count % 2 === 0 }"><code>{ count }</code></h2>
 		<button on:click="{ count++ }">+</button>
-	</section>
+	</div>
 </base-layout>
 
 <style>

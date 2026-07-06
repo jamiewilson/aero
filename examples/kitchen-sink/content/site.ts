@@ -20,7 +20,7 @@ export default {
 	home: {
 		title: 'aero',
 		subtitle:
-			'A static-first, hypermedia-based, full-stack framework for people who love the web platform.',
+			'A static site generator with optional reactivity and full-stack hypermedia-based framework, powered by Vite and Nitro, deployable anywhere.',
 	},
 	demos: [
 		{ label: 'Scripts', href: '/demos/scripts' },
@@ -38,8 +38,8 @@ export default {
 	],
 	footer: {
 		links: [
-			{ label: 'Docs', href: 'https://aerojs.mintlify.app' },
-			{ label: 'GitHub', href: 'https://github.com/jamiewilson/aero' },
+			{ label: 'docs', href: 'https://aerojs.mintlify.app' },
+			{ label: 'github', href: 'https://github.com/jamiewilson/aero' },
 			{ label: 'npm', href: 'https://www.npmjs.com/package/@aero-js/core' },
 		],
 	},

@@ -17,6 +17,11 @@ export function customTheme() {
 				light: applyOverrides(lightTheme, withItalics, withCommentColor),
 				dark: applyOverrides(darkTheme, withItalics, withCommentColor),
 			},
+			colorReplacements: {
+				'github-light': {
+					'#fff': 'var(--aero-code-light-bg)',
+				},
+			},
 			defaultColor: 'light-dark()',
 			inline: 'tailing-curly-colon',
 			langs: ['js', 'ts', 'html', 'css', 'json', 'bash', aeroHtml],

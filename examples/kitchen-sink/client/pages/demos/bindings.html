@@ -10,17 +10,15 @@
 </script>
 
 <base-layout title="Binding handlers">
-	<section class="v-stack">
-		<p class="secondary">
-			<code>show</code>, <code>html</code>, <code>class:*</code>, property bindings
-		</p>
+	<section>
+		<p><code>show</code>, <code>html</code>, <code>class:*</code>, property bindings</p>
 
-		<div class="v-stack">
+		<div>
 			<button on:click="{ open = !open }">Toggle show</button>
 			<div show="{ open }">Shown when <code>open</code> is true</div>
 		</div>
 
-		<div class="card" html="{ body }"></div>
+		<div html="{ body }"></div>
 
 		<button on:click="{ active = !active }" class:is-active="{ active }">
 			Toggle <code>class:is-active</code>

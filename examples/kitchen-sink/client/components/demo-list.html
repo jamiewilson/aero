@@ -1,0 +1,12 @@
+<script is:build>
+	import site from '@content/site'
+</script>
+
+<section>
+	<h2 class="text-xs font-semibold uppercase tracking-widest mb-5">Demos</h2>
+	<ul class="list-none columns-4">
+		<li for="{ const demo of site.demos }">
+			<a href="{ demo.href }">{ demo.label }</a>
+		</li>
+	</ul>
+</section>

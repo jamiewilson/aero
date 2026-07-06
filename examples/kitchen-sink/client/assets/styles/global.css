@@ -1,25 +1,71 @@
 @layer reset, root, theme, base, layout, components, utils;
 
 @import 'tailwindcss';
-@import 'colors.css';
-@import 'fonts.css';
-@import 'animation.css';
-@import 'theme.css';
-@import 'code.css';
+@plugin "@tailwindcss/typography";
 @import 'prose.css';
-@import 'utils.css';
-/*@import 'debug.css';*/
+@import 'code.css';
 
-@utility trim-cap {
-	text-box: trim-both cap alphabetic;
+@theme {
+	--font-sans: system-ui, sans-serif;
+	--font-mono: 'MonaspaceNeadon', monospace;
+	--color-light: var(--color-white);
+	--color-dark: var(--color-gray-950);
+	--color-accent: light-dark(var(--color-sky-500), var(--color-sky-400));
+	--color-text: light-dark(var(--color-dark), var(--color-light));
+	--color-bg: light-dark(var(--color-light), var(--color-dark));
+	--color-border: --opacity(currentColor, 0.3);
+
+	--page-padding: 5vw;
+	--nav-height: 5rem;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition {
+	pointer-events: none;
+}
+
+@keyframes slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(2em);
+	}
+}
+
+@keyframes slide-out {
+	to {
+		opacity: 0;
+		transform: translateX(-2em);
+	}
+}
+
+@font-face {
+	font-family: 'MonaspaceNeadon';
+	src: url('/fonts/MonaspaceNeadon-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'MonaspaceNeadon';
+	src: url('/fonts/MonaspaceNeadon-Italic.woff2') format('woff2');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@function --opacity(--color, --alpha) {
+	result: oklch(from var(--color) l c h / var(--alpha));
+}
+
+:root {
+	interpolate-size: allow-keywords;
 }
 
 @layer base {
-	:root {
-		--font-sans: system-ui, sans-serif;
-		--font-mono: 'MonaspaceNeadon', monospace;
-	}
-
 	html,
 	body {
 		height: 100%;
@@ -28,28 +74,110 @@
 	}
 
 	body {
-		color: var(--color-fg);
+		color: var(--color-text);
 		background: var(--color-bg);
 		font-family: var(--font-sans);
+		padding: var(--page-padding);
+		padding-top: calc(var(--nav-height) + var(--page-padding));
+	}
+
+	[data-theme='system'] {
+		color-scheme: light dark;
+	}
+
+	[data-theme='light'] {
+		color-scheme: light only;
+	}
+
+	[data-theme='dark'] {
+		color-scheme: dark only;
 	}
 
 	a {
 		text-decoration: underline;
-		transition: color var(--duration-fast);
+		transition: color 200ms;
 
 		&:hover {
 			color: var(--color-accent);
 		}
+
+		&.back::before {
+			content: '←';
+			display: inline-block;
+			vertical-align: middle;
+			margin-inline-end: 0.5ch;
+		}
+
+		&[target='_blank']::after {
+			content: '↗';
+			display: inline-block;
+			vertical-align: middle;
+			margin-inline-start: 0.5ch;
+		}
 	}
 
-	hr {
-		border: none;
-		border-top: 1px solid --opacity(currentColor, 0.3);
-		margin: var(--vertical-spacing) 0;
+	input[type='text'],
+	input[type='email'],
+	input[type='password'],
+	input[type='number'],
+	input[type='tel'],
+	input[type='url'],
+	input[type='search'],
+	input[type='submit'],
+	input[type='button'],
+	input[type='reset'],
+	select,
+	textarea,
+	button {
+		@apply inline-block text-sm px-4 py-3;
+		box-shadow: inset 0 0 0 1px --opacity(var(--color-text), 0.1);
+		border-radius: var(--radius-3xl);
+		corner-shape: squircle;
+	}
+
+	button,
+	input[type='submit'],
+	input[type='button'],
+	input[type='reset'] {
+		background: --opacity(var(--color-text), 0.05);
+		transition-property: opacity, background, color;
+		transition-duration: 200ms;
+		cursor: pointer;
+
+		&:hover {
+			background-color: --opacity(var(--color-text), 0.1);
+		}
+
+		&:active {
+			background: --opacity(var(--color-text), 0.3);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
 	}
 
 	:focus-visible {
-		outline-offset: 2px;
 		outline: 2px solid var(--color-accent);
+	}
+}
+
+@layer components {
+	.card {
+		width: fit-content;
+		padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+		border-radius: var(--radius-3xl);
+		corner-shape: squircle;
+		background: --opacity(currentColor, 0.03);
+		box-shadow: inset 0 0 0 1px --opacity(currentColor, 0.1);
+		transition: width 0.4s ease-in-out;
+	}
+}
+
+@utility debug {
+	* &,
+	* {
+		box-shadow: 0 0 0 1px --opacity(red, 0.5) inset;
 	}
 }
