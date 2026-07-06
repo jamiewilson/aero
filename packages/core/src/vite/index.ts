@@ -581,7 +581,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				if (entry.passDataExpr) {
 					const keys = extractObjectKeys(entry.passDataExpr)
 					if (keys.length > 0) {
-						const preamble = `var __aero_data=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;const { ${keys.join(', ')} } = __aero_data;\n`
+						const preamble = `import { reviveStateValue } from '@aero-js/reactivity';\nvar __aero_raw=(typeof window!=='undefined'&&window.__aero_data_next!==undefined)?window.__aero_data_next:{};if(typeof window!=='undefined')delete window.__aero_data_next;var __aero_data={};for(const [__aero_k,__aero_v] of Object.entries(__aero_raw))__aero_data[__aero_k]=reviveStateValue(__aero_v);const { ${keys.join(', ')} } = __aero_data;\n`
 						return preamble + entry.content
 					}
 				}

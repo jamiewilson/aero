@@ -107,7 +107,7 @@ describe('reactive structural codegen', () => {
 
 		const code = compile(parse(html), mockOptions)
 		expect(code).toMatch(
-			/function __aeroForRow_0\(scope, Aero\) \{\nconst \{ styles, scripts, headScripts, nextPassDataId, escapeHtml/
+			/function __aeroForRow_0\(scope, Aero\) \{\nconst \{ styles, scripts, headScripts, escapeHtml/
 		)
 		expect(code).toContain('escapeHtml( scope.id )')
 	})

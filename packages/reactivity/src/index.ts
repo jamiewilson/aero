@@ -19,6 +19,7 @@ import { bindReactiveSwitch } from './structural/switch'
 
 export { Computed, Effect, Signal, SignalStore }
 export {
+	readAeroJsonPayload,
 	readHydrationState,
 	reviveStateValue,
 	mountStateBindings,

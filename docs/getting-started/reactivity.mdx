@@ -67,7 +67,7 @@ At render time, Aero runs `<script is:build>` then `<script is:state>` in the sa
 </ul>
 ```
 
-Build script runs once at compile (or request) time. Owned `let` values are serialized into a `<script type="aero/state">` hydration payload so the client store matches the HTML on first paint. Derived bindings (for example `let total = items.length`) are recomputed at mount — they are not included in the payload.
+Build script runs once at compile (or request) time. Owned `let` values are serialized into a `<script type="application/json" data-aero="state">` hydration payload so the client store matches the HTML on first paint. Derived bindings (for example `let total = items.length`) are recomputed at mount — they are not included in the payload.
 
 Common sources for seed data:
 
@@ -104,7 +104,7 @@ Replacing the whole binding (`items = next`) still works and is a good fit when 
 
 **Granularity:** v1 is binding-level, not per-property. Reading `items.length` in a derived binding (`let hasItems = items.length > 0`) re-runs when `items` notifies — including after `push`, not only after `items = …`.
 
-**Hydration:** Owned collection values serialize into `<script type="aero/state">`. Plain objects and arrays round-trip as JSON; `Map` and `Set` use `__aero` markers in the payload.
+**Hydration:** Owned collection values serialize into `<script type="application/json" data-aero="state">`. Plain objects and arrays round-trip as JSON; `Map` and `Set` use `__aero` markers in the payload.
 
 **Non-reactive values:** Primitives, functions, `Date`, class instances, DOM nodes, and typed arrays are stored as-is — mutating a `Date` in place does not notify.
 
@@ -154,7 +154,7 @@ Attribute names also accept `aero-*` and `data-aero-*` prefixes.
 
 ## Hydration
 
-Server-rendered HTML is the first paint. Aero emits a `<script type="aero/state">` JSON payload with owned `let` binding values from render time (including values seeded from `is:build`). At mount, the client store reads that payload and attaches bindings — no manual hydration API.
+Server-rendered HTML is the first paint. Aero emits a `<script type="application/json" data-aero="state">` JSON payload with owned `let` binding values from render time (including values seeded from `is:build`). At mount, the client store reads that payload and attaches bindings — no manual hydration API.
 
 ## Runtime access
 

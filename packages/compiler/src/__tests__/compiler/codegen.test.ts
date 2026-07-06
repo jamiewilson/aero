@@ -32,12 +32,10 @@ async function execute(code: string, context: Record<string, any> = {}) {
 	const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 	const renderFn = new AsyncFunction('Aero', body)
 
-	let _passDataId = 0
 	const aeroContext = {
 		scripts: new Set<string>(),
 		headScripts: new Set<string>(),
 		styles: new Set<string>(),
-		nextPassDataId: () => `__aero_${_passDataId++}`,
 		renderComponent: async () => '',
 		page: {
 			url: new URL('http://localhost'),

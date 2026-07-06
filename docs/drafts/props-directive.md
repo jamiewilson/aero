@@ -33,10 +33,11 @@ Inline client scripts are directly embedded into the HTML. When interacting with
 
 ### Passing Data to Client (Plain) Script Modules
 
-To prevent data serialization strings from congesting chunk sizes, plain `<script>` (client) elements use a **DOM JSON + Auto-Inject** architecture for data passing:
+To prevent data serialization strings from congesting chunk sizes, plain `<script>` (client) elements use a **DOM JSON + bridge + Vite preamble** architecture for data passing:
 
-1. **JSON Tag rendering**: Aero serializes the props data locally into the HTML alongside the bundled request. E.g `<script type="application/json" id="__aero_data_xyz">{"systemConfig":{"timeout":5000}}</script>`
-2. **Vite auto-injection**: Aero hooks into Vite to prepend a destructuring `JSON.parse` to the virtual module.
+1. **JSON tag rendering**: Aero serializes props into HTML as `<script type="application/json" data-aero="props">{"systemConfig":{"timeout":5000}}</script>`
+2. **Bridge script**: A synchronous inline script reads the immediately preceding JSON sibling and stashes it on `window.__aero_data_next` before the async module loads.
+3. **Vite auto-injection**: Aero hooks into Vite to prepend destructuring (with Map/Set revival) to the virtual module.
 
 ```html
 <script is:build>
@@ -45,8 +46,8 @@ To prevent data serialization strings from congesting chunk sizes, plain `<scrip
 
 <script props="{ { envStatus } }">
 	// "envStatus" feels like magic here.
-	// Under the hood, Aero automatically prefixes the module with:
-	// const { envStatus } = JSON.parse(document.getElementById('__aero_data')?.textContent || '{}');
+	// Under the hood, Aero emits JSON + bridge, then prefixes the module with:
+	// const { envStatus } = __aero_data;
 
 	import { Application } from './client/app'
 	Application.boot(envStatus)

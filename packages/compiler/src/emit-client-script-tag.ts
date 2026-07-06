@@ -2,11 +2,20 @@
  * Build codegen fragments for bundled client `<script>` tags (virtual URL vs literal, pass-data, head vs body).
  */
 
+import {
+	AERO_JSON_ROLE_PROPS,
+	AERO_JSON_SCRIPT_TYPE,
+	aeroJsonScriptOpenTag,
+} from './json-script-payload'
 import type { ScriptEntry } from './types'
 
 export const VIRTUAL_PREFIX = '/@aero/client/'
 const PASS_DATA_BRIDGE_SCRIPT =
-	'<script>(function(){var __aero_prev=document.currentScript&&document.currentScript.previousElementSibling;window.__aero_data_next=__aero_prev&&__aero_prev.tagName==="SCRIPT"&&__aero_prev.getAttribute("type")==="application/json"?JSON.parse(__aero_prev.textContent):{};})();</' +
+	'<script>(function(){var __aero_prev=document.currentScript&&document.currentScript.previousElementSibling;window.__aero_data_next=__aero_prev&&__aero_prev.tagName==="SCRIPT"&&__aero_prev.getAttribute("type")==="' +
+	AERO_JSON_SCRIPT_TYPE +
+	'"&&__aero_prev.getAttribute("data-aero")==="' +
+	AERO_JSON_ROLE_PROPS +
+	'"?JSON.parse(__aero_prev.textContent):{};})();</' +
 	'script>'
 
 function escapeScriptUnsafeChars(str: string): string {
@@ -64,16 +73,17 @@ export function emitClientScriptTag(
 	const attrs = clientScript.attrs ?? ''
 	const tagExpr = buildTagExpr(attrs, clientScript.content, virtualPrefix)
 	const isHead = clientScript.injectInHead
+	const jsonOpenTag = aeroJsonScriptOpenTag(AERO_JSON_ROLE_PROPS)
 
 	if (clientScript.passDataExpr) {
 		const jsonExpr = `escapeScriptJson(${clientScript.passDataExpr})`
 		if (isHead) {
 			head.push(
-				`(function(){return '<script type="application/json" class="__aero_data">'+${jsonExpr}+'</'+'script>'+${stringifyForInlineScript(PASS_DATA_BRIDGE_SCRIPT)}+(${tagExpr});})()`
+				`(function(){return '${jsonOpenTag}'+${jsonExpr}+'</'+'script>'+${stringifyForInlineScript(PASS_DATA_BRIDGE_SCRIPT)}+(${tagExpr});})()`
 			)
 		} else {
 			root.push(
-				`(function(){scripts?.add(\`<script type="application/json" class="__aero_data">\${${jsonExpr}}</script>\`);scripts?.add(${stringifyForInlineScript(PASS_DATA_BRIDGE_SCRIPT)});scripts?.add(${tagExpr});})();`
+				`(function(){scripts?.add(\`${jsonOpenTag}\${${jsonExpr}}</script>\`);scripts?.add(${stringifyForInlineScript(PASS_DATA_BRIDGE_SCRIPT)});scripts?.add(${tagExpr});})();`
 			)
 		}
 	} else {

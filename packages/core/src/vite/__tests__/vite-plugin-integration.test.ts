@@ -154,8 +154,27 @@ describe('Vite Plugin Integration', () => {
 		const loadedContent = virtualsPlugin.load(virtualId)
 		expect(loadedContent).toContain('window.__aero_data_next')
 		expect(loadedContent).toContain('delete window.__aero_data_next')
+		expect(loadedContent).toContain('reviveStateValue')
 		expect(loadedContent).toContain('const { isHomepage } = __aero_data')
 		expect(loadedContent).toContain('console.log(isHomepage)')
+	})
+
+	it('revives Map and Set values injected through script props preamble', async () => {
+		const html = `
+            <script is:build>
+                const lookup = new Map([[1, 'one']]);
+            </script>
+            <script props="{ { lookup } }">
+                console.log(lookup.get(1));
+            </script>
+        `
+		const id = path.join(process.cwd(), 'client/pages/map-props.html')
+		transformPlugin.transform.call(pluginCtx, html, id)
+
+		const virtualId = '\0/@aero/client/client/pages/map-props.ts'
+		const loadedContent = virtualsPlugin.load(virtualId)
+		expect(loadedContent).toContain('reviveStateValue')
+		expect(loadedContent).toContain('const { lookup } = __aero_data')
 	})
 
 	it('should render a transformed module using the runtime', async () => {
