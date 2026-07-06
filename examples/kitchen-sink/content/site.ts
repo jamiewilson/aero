@@ -13,7 +13,7 @@ export default {
 	},
 	theme: {
 		options: Object.values(ThemeMode),
-		default: ThemeMode.System,
+		default: ThemeMode.Light,
 		storageKey: 'theme',
 		attribute: 'data-theme',
 	},

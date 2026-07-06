@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -11,7 +12,9 @@
 
 <base-layout title="Binding handlers">
 	<section>
-		<p><code>show</code>, <code>html</code>, <code>class:*</code>, property bindings</p>
+		<header-component
+			title="Binding handlers"
+			subtitle="<code>show</code>, <code>html</code>, <code>class:*</code>, property bindings" />
 
 		<div>
 			<button on:click="{ open = !open }">Toggle show</button>

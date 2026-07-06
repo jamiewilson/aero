@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -10,29 +11,35 @@
 		bio: '',
 	}
 
+	const emailIsValid = email => {
+		return email.length > 0 && email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+	}
+
+	const planIsValid = plan => {
+		return plan.length > 0 && ['free', 'pro'].includes(plan)
+	}
+
 	const isComplete = () => {
 		return (
-			formModel.email.length > 0 &&
-			formModel.agree &&
-			formModel.plan.length > 0 &&
-			formModel.bio.length > 0
+			emailIsValid(formModel.email) &&
+			planIsValid(formModel.plan) &&
+			formModel.bio.length > 0 &&
+			formModel.agree
 		)
 	}
 </script>
 
 <base-layout title="Form model">
-	<aside class="info-panel">
-		<div>Email: <code>{ formModel.email || 'empty' }</code></div>
-		<div>Agreed: <code>{ formModel.agree || 'false' }</code></div>
-		<div>Plan: <code>{ formModel.plan || 'empty' }</code></div>
-		<div>Bio: <code>{ formModel.bio || 'empty' }</code></div>
-		<div>Is valid: <code>{ isComplete() }</code></div>
-	</aside>
-
-	<section class="grid h-full place-items-center">
-		<form class="grid gap-4 w-full max-w-sm">
+	<section class="grid">
+		<header-component
+			title="Form model"
+			subtitle="A reactive form model with validation and submission." />
+		<form class="grid gap-4 w-full max-w-sm mb-[20vh]">
 			<div class="grid gap-2">
-				<label for="email">Email</label>
+				<label for="email" class="flex justify-between"
+					>Email
+					<span class="text-xs font-mono text-gray-400">{ formModel.email || 'empty' }</span></label
+				>
 				<input
 					id="email"
 					type="email"
@@ -42,8 +49,11 @@
 			</div>
 
 			<div class="grid gap-2">
-				<label for="plan-select">Plan (select)</label>
-				<select id="plan-select" value="{ formModel.plan }">
+				<label for="plan-select" class="flex justify-between"
+					>Plan
+					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span></label
+				>
+				<select id="plan-select" value="{ formModel.plan }" required>
 					<option value="" disabled selected>Select a plan...</option>
 					<option value="free">Free</option>
 					<option value="pro">Pro</option>
@@ -51,24 +61,40 @@
 			</div>
 
 			<fieldset class="grid gap-1">
-				<label>Plan (radio group)</label>
+				<label class="flex justify-between"
+					>Radio group
+					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span></label
+				>
 				<label>
-					<input type="radio" name="plan-radio" value="free" checked="{ formModel.plan }" />
+					<input
+						type="radio"
+						name="plan-radio"
+						value="free"
+						checked="{ formModel.plan }"
+						required />
 					<span>Free</span>
 				</label>
 				<label>
-					<input type="radio" name="plan-radio" value="pro" checked="{ formModel.plan }" />
+					<input type="radio" name="plan-radio" value="pro" checked="{ formModel.plan }" required />
 					<span>Pro</span>
 				</label>
 			</fieldset>
 
-			<label class="grid gap-2">
-				<span>Bio</span>
-				<textarea placeholder="Add a bio..." value="{ formModel.bio }" rows="3"></textarea>
-			</label>
+			<div class="grid gap-2">
+				<label for="bio" class="flex justify-between"
+					>Bio
+					<span class="text-xs font-mono text-gray-400">{ formModel.bio || 'empty' }</span></label
+				>
+				<textarea
+					id="bio"
+					placeholder="Add a bio..."
+					value="{ formModel.bio }"
+					rows="3"
+					required></textarea>
+			</div>
 
 			<label>
-				<input type="checkbox" checked="{ formModel.agree }" />
+				<input type="checkbox" checked="{ formModel.agree }" required />
 				<span>Agree to terms</span>
 			</label>
 
@@ -80,15 +106,7 @@
 </base-layout>
 
 <style>
-	.info-panel {
-		position: absolute;
-		inset: 0;
-		font-size: smaller;
-		padding: 2rem;
-		pointer-events: none;
-	}
-
 	.is-valid {
-		outline: 2px solid lightgreen;
+		outline: 2px solid var(--color-lime-500);
 	}
 </style>

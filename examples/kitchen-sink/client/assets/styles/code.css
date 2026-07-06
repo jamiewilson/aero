@@ -1,8 +1,4 @@
 @layer components {
-	@theme {
-		--aero-code-light-bg: --opacity(currentColor, 0.05);
-	}
-
 	pre.shiki {
 		--shiki-comment: #636e7b;
 	}
@@ -21,7 +17,7 @@
 		font-size: smaller;
 
 		&:not(.shiki &) {
-			background-color: var(--aero-code-light-bg);
+			background-color: var(--code-light-bg);
 		}
 	}
 

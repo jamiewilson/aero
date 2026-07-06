@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -18,8 +19,10 @@
 </script>
 
 <base-layout title="Reactive conditionals">
-	<section>
-		<p>Reactive <code>if</code> / <code>else-if</code> / <code>else</code></p>
+	<section class="grid gap-4">
+		<header-component
+			title="Reactive conditionals"
+			subtitle="Reactive <code>if</code> / <code>else-if</code> / <code>else</code>" />
 
 		<div>
 			<button on:click="{ count-- }">−</button>

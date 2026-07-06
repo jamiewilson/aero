@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -20,11 +21,9 @@
 <base-layout title="Hypermedia demo">
 	<section class="v-stack page">
 		<header class="v-stack">
-			<h1>Hypermedia</h1>
-			<p class="secondary">
-				Server-driven HTML fragments — <code>GET</code>, <code>POST</code>, swap modes, loading
-				state, and process after swap.
-			</p>
+			<header-component
+				title="Hypermedia"
+				subtitle="Server-driven HTML fragments — <code>GET</code>, <code>POST</code>, swap modes, loading state, and process after swap." />
 		</header>
 
 		<section class="demo card v-stack">

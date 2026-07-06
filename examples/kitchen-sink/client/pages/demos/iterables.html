@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -25,14 +26,9 @@
 </script>
 
 <base-layout title="Iterables">
-	<header>
-		<h2>Reactive collection state</h2>
-		<p>
-			In-place mutations on arrays, <code>Set</code>, and <code>Map</code> notify the owning
-			<code>let</code> binding. Keyed <code>for</code> loops and derived counts update without
-			replacing the whole collection.
-		</p>
-	</header>
+	<header-component
+		title="Reactive collection state"
+		subtitle="In-place mutations on arrays, <code>Set</code>, and <code>Map</code> notify the owning <code>let</code> binding. Keyed <code>for</code> loops and derived counts update without replacing the whole collection." />
 
 	<div>
 		<section>
