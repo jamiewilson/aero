@@ -1,135 +1,110 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { resolveBuildDirectiveName } from '@aero-js/compiler/build-directive-attributes'
+import { ATTR_ELSE, ATTR_ELSE_IF, ATTR_IF } from '@aero-js/compiler/constants'
+import { parseAeroHtmlDocument, type Node } from '@aero-js/html-parser'
+import { pushOffsetDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument } from '../source-document'
 /**
  * Diagnostic check: orphaned else-if / else without preceding if.
  */
-import { getIgnoredRanges, isInRanges } from './helpers'
+import {
+	attributeSectionBase,
+	findAttributeRange,
+	getIgnoredRanges,
+	isInRanges,
+	sliceRawAttrs,
+} from './helpers'
 
-/** Matches control flow attributes */
-const IF_ATTR_REGEX = /\b(?:data-)?if(?:\s*=)/
-const ELSE_IF_ATTR_REGEX = /\b(?:data-)?else-if(?:\s*=)/
-const ELSE_ATTR_REGEX = /\b(?:data-)?else\b/
+type ConditionalDirective = typeof ATTR_IF | typeof ATTR_ELSE_IF | typeof ATTR_ELSE
 
-/** Matches opening and closing tags and captures attributes for opening tags */
-const ANY_TAG_REGEX = /<\/?([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\b([^>]*?)\/?>/gi
+function getConditionalDirective(node: Node): ConditionalDirective | null {
+	const attrs = node.attributes
+	if (!attrs) return null
+	for (const attrName of Object.keys(attrs)) {
+		const directive = resolveBuildDirectiveName(attrName)
+		if (directive === ATTR_IF || directive === ATTR_ELSE_IF || directive === ATTR_ELSE) {
+			return directive
+		}
+	}
+	return null
+}
 
-/** HTML void elements that do not create a new nesting level */
-const VOID_ELEMENTS = new Set([
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'link',
-	'meta',
-	'param',
-	'slot',
-	'source',
-	'track',
-	'wbr',
-])
+function pushOrphanedConditionalDiagnostic(
+	document: SourceDocument,
+	text: string,
+	node: Node,
+	directive: typeof ATTR_ELSE_IF | typeof ATTR_ELSE,
+	diagnostics: AeroDiagnostic[]
+): void {
+	if (node.start == null || node.startTagEnd == null || !node.tag) return
+
+	const fullTag = text.slice(node.start, node.startTagEnd)
+	const nameMatch = fullTag.match(/^<\s*\/?\s*([a-zA-Z][\w-]*)/)
+	if (!nameMatch) return
+
+	const rawAttrs = sliceRawAttrs(nameMatch[1], fullTag)
+	const attrBase = attributeSectionBase(node.start, nameMatch[1])
+
+	for (const attrName of Object.keys(node.attributes ?? {})) {
+		if (resolveBuildDirectiveName(attrName) !== directive) continue
+		const attrRange = findAttributeRange(rawAttrs, attrBase, attrName)
+		if (!attrRange) continue
+		pushOffsetDiagnostic(
+			diagnostics,
+			document,
+			attrRange.start,
+			attrRange.end,
+			directive === ATTR_ELSE_IF
+				? 'else-if must follow an element with if or else-if'
+				: 'else must follow an element with if or else-if',
+			'AERO_COMPILE',
+			'error'
+		)
+		return
+	}
+}
+
+function checkSiblingConditionalChains(
+	document: SourceDocument,
+	text: string,
+	nodes: Node[],
+	diagnostics: AeroDiagnostic[],
+	ignoredRanges: { start: number; end: number }[]
+): void {
+	let lastConditional: typeof ATTR_IF | typeof ATTR_ELSE_IF | null = null
+
+	for (const node of nodes) {
+		if (node.start != null && isInRanges(node.start, ignoredRanges)) continue
+
+		const directive = node.tag ? getConditionalDirective(node) : null
+		if (directive === ATTR_IF) {
+			lastConditional = ATTR_IF
+		} else if (directive === ATTR_ELSE_IF) {
+			if (lastConditional !== ATTR_IF && lastConditional !== ATTR_ELSE_IF) {
+				pushOrphanedConditionalDiagnostic(document, text, node, ATTR_ELSE_IF, diagnostics)
+			}
+			lastConditional = ATTR_ELSE_IF
+		} else if (directive === ATTR_ELSE) {
+			if (lastConditional !== ATTR_IF && lastConditional !== ATTR_ELSE_IF) {
+				pushOrphanedConditionalDiagnostic(document, text, node, ATTR_ELSE, diagnostics)
+			}
+			lastConditional = null
+		} else if (node.tag) {
+			lastConditional = null
+		}
+
+		if (node.children?.length) {
+			checkSiblingConditionalChains(document, text, node.children, diagnostics, ignoredRanges)
+		}
+	}
+}
 
 export function checkConditionalChains(
 	document: SourceDocument,
 	text: string,
 	diagnostics: AeroDiagnostic[]
 ): void {
-	const lastConditionalTypeByDepth = new Map<number, 'if' | 'else-if' | null>()
-	let depth = 0
 	const ignoredRanges = getIgnoredRanges(text)
-
-	ANY_TAG_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-
-	const getLastConditionalType = (currentDepth: number): 'if' | 'else-if' | null => {
-		return lastConditionalTypeByDepth.get(currentDepth) ?? null
-	}
-
-	const setLastConditionalType = (currentDepth: number, type: 'if' | 'else-if' | null): void => {
-		lastConditionalTypeByDepth.set(currentDepth, type)
-	}
-
-	while ((match = ANY_TAG_REGEX.exec(text)) !== null) {
-		const tagStart = match.index
-		if (isInRanges(tagStart, ignoredRanges)) continue
-
-		const fullTag = match[0]
-		const tagName = (match[1] || '').toLowerCase()
-		const isClosingTag = fullTag.startsWith('</')
-		const isSelfClosingTag = /\/\s*>$/.test(fullTag) || VOID_ELEMENTS.has(tagName)
-
-		if (isClosingTag) {
-			depth = Math.max(0, depth - 1)
-			continue
-		}
-
-		const currentDepth = depth
-		const lastConditionalType = getLastConditionalType(currentDepth)
-
-		const attrs = match[2] || ''
-		if (!attrs) {
-			setLastConditionalType(currentDepth, null)
-			if (!isSelfClosingTag) depth += 1
-			continue
-		}
-
-		if (IF_ATTR_REGEX.test(attrs) && !ELSE_IF_ATTR_REGEX.test(attrs)) {
-			setLastConditionalType(currentDepth, 'if')
-			if (!isSelfClosingTag) depth += 1
-			continue
-		}
-
-		if (ELSE_IF_ATTR_REGEX.test(attrs)) {
-			if (lastConditionalType !== 'if' && lastConditionalType !== 'else-if') {
-				const attrMatch = attrs.match(/(?:data-)?else-if\b/)
-				if (attrMatch && attrMatch.index !== undefined) {
-					const attrBase = tagStart + match[0].indexOf(attrs)
-					const start = attrBase + attrMatch.index
-					const end = start + attrMatch[0].length
-					pushOffsetDiagnostic(
-						diagnostics,
-						document,
-						start,
-						end,
-						'else-if must follow an element with if or else-if',
-						'AERO_COMPILE',
-						'error'
-					)
-				}
-			}
-			setLastConditionalType(currentDepth, 'else-if')
-			if (!isSelfClosingTag) depth += 1
-			continue
-		}
-
-		if (ELSE_ATTR_REGEX.test(attrs) && !ELSE_IF_ATTR_REGEX.test(attrs)) {
-			if (lastConditionalType !== 'if' && lastConditionalType !== 'else-if') {
-				const attrMatch = attrs.match(/(?:data-)?else\b/)
-				if (attrMatch && attrMatch.index !== undefined) {
-					const attrBase = tagStart + match[0].indexOf(attrs)
-					const start = attrBase + attrMatch.index
-					const end = start + attrMatch[0].length
-					pushOffsetDiagnostic(
-						diagnostics,
-						document,
-						start,
-						end,
-						'else must follow an element with if or else-if',
-						'AERO_COMPILE',
-						'error'
-					)
-				}
-			}
-			setLastConditionalType(currentDepth, null)
-			if (!isSelfClosingTag) depth += 1
-			continue
-		}
-
-		setLastConditionalType(currentDepth, null)
-		if (!isSelfClosingTag) depth += 1
-	}
+	const htmlDoc = parseAeroHtmlDocument(text, document.uri.toString())
+	checkSiblingConditionalChains(document, text, htmlDoc.roots, diagnostics, ignoredRanges)
 }

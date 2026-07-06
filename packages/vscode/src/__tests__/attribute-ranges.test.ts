@@ -69,6 +69,18 @@ describe('attribute range helpers', () => {
 		})
 	})
 
+	it('finds a bare boolean attribute', () => {
+		const fullTag = '<div aero-else>Else</div>'
+		const tagName = 'div'
+		const attrs = sliceRawAttrs(tagName, fullTag)
+		const attrBase = attributeSectionBase(0, tagName)
+		const range = findAttributeRange(attrs, attrBase, 'aero-else')
+		expect(range).toEqual({
+			start: fullTag.indexOf('aero-else'),
+			end: fullTag.indexOf('aero-else') + 'aero-else'.length,
+		})
+	})
+
 	it('covers only the tag name for import diagnostics', () => {
 		const tagStart = 12
 		const tagName = 'header-component'

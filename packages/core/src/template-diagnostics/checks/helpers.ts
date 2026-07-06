@@ -28,22 +28,33 @@ function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-/** Locate a full attribute assignment (`name="..."` or `name='...'`) within a tag's attribute slice. */
+/** Locate an attribute (`name`, `name="..."`, or `name='...'`) within a tag's attribute slice. */
 export function findAttributeRange(
 	attrs: string,
 	attrBase: number,
 	attrName: string
 ): ByteRange | null {
-	const re = new RegExp(
+	const valuedRe = new RegExp(
 		`(?:^|\\s)(${escapeRegExp(attrName)})\\s*=\\s*(["'])([\\s\\S]*?)\\2`
 	)
-	const match = re.exec(attrs)
-	if (!match || match.index === undefined) return null
-	const leading = match[0].length - match[0].trimStart().length
-	return {
-		start: attrBase + match.index + leading,
-		end: attrBase + match.index + match[0].length,
+	const valuedMatch = valuedRe.exec(attrs)
+	if (valuedMatch && valuedMatch.index !== undefined) {
+		const leading = valuedMatch[0].length - valuedMatch[0].trimStart().length
+		return {
+			start: attrBase + valuedMatch.index + leading,
+			end: attrBase + valuedMatch.index + valuedMatch[0].length,
+		}
 	}
+
+	const bareRe = new RegExp(`(?:^|\\s)(${escapeRegExp(attrName)})(?=\\s|/?>|$)`)
+	const bareMatch = bareRe.exec(attrs)
+	if (bareMatch && bareMatch.index !== undefined) {
+		const leading = bareMatch[0].length - bareMatch[0].trimStart().length
+		const start = attrBase + bareMatch.index + leading
+		return { start, end: start + attrName.length }
+	}
+
+	return null
 }
 
 /** Range covering only the opening tag name (`<header-component`). */
