@@ -87,6 +87,60 @@ const title = 'Hello'
 	})
 })
 
+describe('collectTemplateDiagnostics component props', () => {
+	const kitchenSinkRoot = path.join(repoRoot, 'examples/kitchen-sink')
+
+	it('reports missing required props for individual component attributes', () => {
+		const text = `<script is:build>
+import header from '@components/demos/header.html'
+</script>
+<header-component subtitle="Missing title" />`
+		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/templating.html')
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(text, pagePath),
+			root: kitchenSinkRoot,
+			workspaceRoot: repoRoot,
+		})
+
+		const missing = diagnostics.find(
+			d =>
+				d.message.includes("Missing required prop 'title'") &&
+				d.message.includes('header-component')
+		)
+		expect(missing).toBeDefined()
+		expect(missing!.code).toBe('AERO_COMPILE')
+		const tagStart = text.indexOf('<header-component')
+		expect(missing!.span).toEqual({
+			file: pagePath,
+			line: 3,
+			column: 0,
+			lineEnd: 3,
+			columnEnd: '<header-component'.length,
+		})
+		expect(tagStart).toBeGreaterThanOrEqual(0)
+	})
+
+	it('reports missing required props when component has no attributes', () => {
+		const text = `<script is:build>
+import card from '@components/demos/card.html'
+</script>
+<card-component />`
+		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/props.html')
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(text, pagePath),
+			root: kitchenSinkRoot,
+			workspaceRoot: repoRoot,
+		})
+
+		const missing = diagnostics.find(
+			d =>
+				d.message.includes("Missing required prop 'title'") &&
+				d.message.includes('card-component')
+		)
+		expect(missing).toBeDefined()
+	})
+})
+
 describe('collectTemplateDiagnostics unused variables', () => {
 	it('does not flag spread parameter as unused in is:state', () => {
 		const html = `<script is:state>
