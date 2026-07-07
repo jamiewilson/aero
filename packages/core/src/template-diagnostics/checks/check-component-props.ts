@@ -51,7 +51,7 @@ function validateSpreadProps(
 	document: SourceDocument,
 	diagnostics: AeroDiagnostic[],
 	tagStart: number,
-	tagLength: number,
+	tagName: string,
 	spreadVar: string,
 	requiredProps: string[],
 	definedVars: Map<string, VariableDefinition>,
@@ -62,7 +62,24 @@ function validateSpreadProps(
 	const passedKeys = def?.properties ? Array.from(def.properties) : []
 	const missing = requiredProps.filter(req => !passedKeys.includes(req))
 	if (missing.length > 0) {
-		pushPropDiagnostic(document, diagnostics, tagStart, tagLength, missing, baseName, suffix)
+		pushPropDiagnostic(document, diagnostics, tagStart, tagName, missing, baseName, suffix)
+	}
+}
+
+function validateIndividualAttrs(
+	document: SourceDocument,
+	diagnostics: AeroDiagnostic[],
+	tagStart: number,
+	tagName: string,
+	attrs: string,
+	requiredProps: string[],
+	baseName: string,
+	suffix: string
+): void {
+	const attrKeys = getAttributeKeysFromTag(attrs)
+	const missing = requiredProps.filter(req => !attrKeys.includes(req.toLowerCase()))
+	if (missing.length > 0) {
+		pushPropDiagnostic(document, diagnostics, tagStart, tagName, missing, baseName, suffix)
 	}
 }
 
@@ -125,7 +142,7 @@ export function checkComponentProps(
 						document,
 						diagnostics,
 						tagStart,
-						match[0].length,
+						tagName,
 						spreadVar,
 						sink.requiredProps,
 						definedVars,
@@ -133,21 +150,16 @@ export function checkComponentProps(
 						suffix
 					)
 				} else {
-					const attrKeys = getAttributeKeysFromTag(attrs)
-					if (attrKeys.length > 0) {
-						const missing = sink.requiredProps.filter(req => !attrKeys.includes(req))
-						if (missing.length > 0) {
-							pushPropDiagnostic(
-								document,
-								diagnostics,
-								tagStart,
-								match[0].length,
-								missing,
-								baseName,
-								suffix
-							)
-						}
-					}
+					validateIndividualAttrs(
+						document,
+						diagnostics,
+						tagStart,
+						tagName,
+						attrs,
+						sink.requiredProps,
+						baseName,
+						suffix
+					)
 				}
 			}
 			continue
@@ -172,10 +184,21 @@ export function checkComponentProps(
 				document,
 				diagnostics,
 				tagStart,
-				match[0].length,
+				tagName,
 				spreadVar,
 				requiredProps,
 				definedVars,
+				baseName,
+				suffix
+			)
+		} else {
+			validateIndividualAttrs(
+				document,
+				diagnostics,
+				tagStart,
+				tagName,
+				attrs,
+				requiredProps,
 				baseName,
 				suffix
 			)
@@ -368,7 +391,7 @@ function pushPropDiagnostic(
 	document: SourceDocument,
 	diagnostics: AeroDiagnostic[],
 	tagStart: number,
-	tagLength: number,
+	tagName: string,
 	missing: string[],
 	baseName: string,
 	suffix: string
@@ -377,15 +400,8 @@ function pushPropDiagnostic(
 		missing.length === 1
 			? `Missing required prop '${missing[0]}' for ${baseName}-${suffix}`
 			: `Missing required props: ${missing.map(m => `'${m}'`).join(', ')} for ${baseName}-${suffix}`
-	pushOffsetDiagnostic(
-		diagnostics,
-		document,
-		tagStart,
-		tagStart + tagLength,
-		msg,
-		'AERO_COMPILE',
-		'error'
-	)
+	const { start, end } = findTagNameRange(tagStart, tagName)
+	pushOffsetDiagnostic(diagnostics, document, start, end, msg, 'AERO_COMPILE', 'error')
 }
 
 /** Extract attribute names from a tag's attribute string, excluding Aero directives. */

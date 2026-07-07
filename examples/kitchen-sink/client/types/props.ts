@@ -8,5 +8,4 @@ export interface MetaProps {
 export interface HeaderProps {
 	title: string
 	subtitle?: string
-	requiredProp: boolean
 }
