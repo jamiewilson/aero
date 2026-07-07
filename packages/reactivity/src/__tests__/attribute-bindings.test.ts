@@ -117,6 +117,9 @@ describe('bindAttribute', () => {
 		const attrs = new Map<string, string>()
 		const target = {
 			disabled: false,
+			hasAttribute(name: string) {
+				return attrs.has(name)
+			},
 			setAttribute(name: string, value: string) {
 				attrs.set(name, value)
 			},
@@ -130,6 +133,7 @@ describe('bindAttribute', () => {
 		const cleanupBusy = bindAttribute(target, 'data-saving', () => saving)
 		const cleanupLabel = bindAttribute(target, 'data-label', () => label)
 		expect(target.disabled).toBe(false)
+		expect(attrs.has('disabled')).toBe(false)
 		expect(attrs.get('data-label')).toBe('Save')
 		saving = true
 		cleanupBusy()
@@ -138,6 +142,7 @@ describe('bindAttribute', () => {
 		bindAttribute(target, 'data-saving', () => saving)
 		bindAttribute(target, 'data-label', () => label)
 		expect(target.disabled).toBe(true)
+		expect(attrs.get('disabled')).toBe('')
 		expect(attrs.get('data-saving')).toBe('')
 	})
 })

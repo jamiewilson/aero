@@ -13,6 +13,12 @@ import { bindAttribute } from './bindings/attribute'
 import { bindProperty } from './bindings/property'
 import { coerceAttributeValue, applyAttributeCoercion, formatAttributeBind } from './bindings/coerce-attribute-value'
 import { bindFormModel } from './bindings/model'
+import {
+	isBooleanIdlPropertyForMirror,
+	mirrorBooleanPresenceAttr,
+	mirrorStringAttr,
+	shouldMirrorContentAttribute,
+} from './bindings/mirror-content-attribute'
 import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
 import { bindReactiveSwitch } from './structural/switch'
@@ -35,6 +41,10 @@ export {
 	formatAttributeBind,
 	bindProperty,
 	bindFormModel,
+	isBooleanIdlPropertyForMirror,
+	mirrorBooleanPresenceAttr,
+	mirrorStringAttr,
+	shouldMirrorContentAttribute,
 	bindReactiveIf,
 	bindKeyedFor,
 	bindReactiveSwitch,

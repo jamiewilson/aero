@@ -1,5 +1,6 @@
 import { Effect } from '../effect'
 import type { Cleanup } from '../mount'
+import { mirrorBooleanPresenceAttr, mirrorStringAttr } from './mirror-content-attribute'
 
 export type FormModelKind = 'value' | 'checked'
 
@@ -31,20 +32,29 @@ function readControlValue(
 	return target.value
 }
 
+function syncCheckedState(target: HTMLInputElement, shouldBeChecked: boolean): void {
+	const attrPresent = target.hasAttribute('checked')
+	const needsAttrMirror = shouldBeChecked ? !attrPresent : attrPresent
+	if (target.checked === shouldBeChecked && !needsAttrMirror) return
+	target.checked = shouldBeChecked
+	mirrorBooleanPresenceAttr(target, 'checked', shouldBeChecked)
+}
+
 function writeControlValue(
 	target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
 	kind: FormModelKind,
 	value: unknown
 ): void {
 	if (kind === 'checked' && target instanceof HTMLInputElement) {
-		const next = Boolean(value)
-		if (target.checked === next) return
-		target.checked = next
+		syncCheckedState(target, Boolean(value))
 		return
 	}
 	const next = value == null ? '' : String(value)
-	if (target.value === next) return
-	target.value = next
+	const needsValueChange = target.value !== next
+	const needsAttrMirror = target.getAttribute('value') !== next
+	if (!needsValueChange && !needsAttrMirror) return
+	if (needsValueChange) target.value = next
+	mirrorStringAttr(target, 'value', next)
 }
 
 export function bindFormModel(options: FormModelBindingOptions): Cleanup {
@@ -55,7 +65,7 @@ export function bindFormModel(options: FormModelBindingOptions): Cleanup {
 
 	const syncEffect = new Effect(() => {
 		if (radio && kind === 'checked') {
-			target.checked = read() === target.value
+			syncCheckedState(target, read() === target.value)
 			return
 		}
 		writeControlValue(target, kind, read())

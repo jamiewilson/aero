@@ -53,15 +53,88 @@ describe('binding handlers', () => {
 		expect(classes.has('is-active')).toBe(true)
 	})
 
-	it('bindProperty writes DOM property', () => {
-		const target = { disabled: false } as unknown as HTMLButtonElement
+	it('bindProperty writes DOM property and mirrors disabled attribute', () => {
+		const target = document.createElement('button')
 		let loading = false
 		const cleanup = bindProperty(target, 'disabled', () => loading)
 		expect(target.disabled).toBe(false)
+		expect(target.hasAttribute('disabled')).toBe(false)
 		loading = true
 		cleanup()
 		bindProperty(target, 'disabled', () => loading)
 		expect(target.disabled).toBe(true)
+		expect(target.hasAttribute('disabled')).toBe(true)
+	})
+
+	it('bindFormModel mirrors checked content attribute on checkbox', () => {
+		const store = new SignalStore()
+		store.signal('agree', false)
+		const read = () => store.get<boolean>('agree').value
+		const write = (value: unknown) => {
+			;(store.get('agree') as { value: boolean }).value = Boolean(value)
+		}
+
+		const target = document.createElement('input')
+		target.type = 'checkbox'
+		const cleanup = bindFormModel({ target, kind: 'checked', read, write })
+		expect(target.checked).toBe(false)
+		expect(target.hasAttribute('checked')).toBe(false)
+
+		;(store.get('agree') as { value: boolean }).value = true
+		expect(target.checked).toBe(true)
+		expect(target.hasAttribute('checked')).toBe(true)
+
+		target.checked = false
+		target.dispatchEvent(new Event('change'))
+		expect(store.get<boolean>('agree').value).toBe(false)
+		expect(target.hasAttribute('checked')).toBe(false)
+		cleanup()
+	})
+
+	it('bindFormModel mirrors value content attribute', () => {
+		const store = new SignalStore()
+		store.signal('email', 'a@b.c')
+		const read = () => store.get<string>('email').value
+		const write = (value: unknown) => {
+			;(store.get('email') as { value: string }).value = String(value)
+		}
+
+		const target = document.createElement('input')
+		bindFormModel({ target, kind: 'value', read, write })
+		expect(target.value).toBe('a@b.c')
+		expect(target.getAttribute('value')).toBe('a@b.c')
+
+		;(store.get('email') as { value: string }).value = 'new@x.y'
+		expect(target.getAttribute('value')).toBe('new@x.y')
+	})
+
+	it('bindFormModel mirrors checked attribute across radio group', () => {
+		const store = new SignalStore()
+		store.signal('plan', 'free')
+		const read = () => store.get<string>('plan').value
+		const write = (value: unknown) => {
+			;(store.get('plan') as { value: unknown }).value = value
+		}
+
+		const free = document.createElement('input')
+		free.type = 'radio'
+		free.value = 'free'
+		free.name = 'plan'
+		const pro = document.createElement('input')
+		pro.type = 'radio'
+		pro.value = 'pro'
+		pro.name = 'plan'
+
+		const cleanupFree = bindFormModel({ target: free, kind: 'checked', read, write })
+		const cleanupPro = bindFormModel({ target: pro, kind: 'checked', read, write })
+		expect(free.hasAttribute('checked')).toBe(true)
+		expect(pro.hasAttribute('checked')).toBe(false)
+
+		;(store.get('plan') as { value: string }).value = 'pro'
+		expect(free.hasAttribute('checked')).toBe(false)
+		expect(pro.hasAttribute('checked')).toBe(true)
+		cleanupFree()
+		cleanupPro()
 	})
 
 	it('bindFormModel syncs input value two-way', () => {
@@ -73,6 +146,7 @@ describe('binding handlers', () => {
 			functionSources: [],
 		})
 		const listeners = new Map<string, Set<() => void>>()
+		const attrs = new Map<string, string>()
 		const target = {
 			value: 'a@b.c',
 			addEventListener(type: string, handler: () => void) {
@@ -83,7 +157,18 @@ describe('binding handlers', () => {
 			removeEventListener(type: string, handler: () => void) {
 				listeners.get(type)?.delete(handler)
 			},
-			hasAttribute: () => false,
+			hasAttribute(name: string) {
+				return attrs.has(name)
+			},
+			getAttribute(name: string) {
+				return attrs.get(name) ?? null
+			},
+			setAttribute(name: string, value: string) {
+				attrs.set(name, value)
+			},
+			removeAttribute(name: string) {
+				attrs.delete(name)
+			},
 		} as unknown as HTMLInputElement
 
 		const cleanup = bindFormModel({
@@ -114,6 +199,9 @@ describe('binding handlers', () => {
 			hasAttribute(name: string) {
 				return name === 'readonly'
 			},
+			getAttribute: () => null,
+			setAttribute: () => {},
+			removeAttribute: () => {},
 		} as unknown as HTMLInputElement
 		let writes = 0
 		bindFormModel({
@@ -170,6 +258,9 @@ describe('binding handlers', () => {
 			addEventListener: () => {},
 			removeEventListener: () => {},
 			hasAttribute: () => false,
+			getAttribute: () => null,
+			setAttribute: () => {},
+			removeAttribute: () => {},
 		} as unknown as HTMLInputElement
 		bindFormModel({
 			target,

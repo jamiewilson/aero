@@ -106,15 +106,38 @@ describe('reactive attribute bindings', () => {
 		expect(code).toContain('propertyBinds:')
 	})
 
-	it('keeps input value on model bind path', () => {
+	it('keeps input value on model bind path with native value SSR', () => {
 		const html = `<script is:state>
 			let email = ''
 		</script>
 		<input value="{ email }" />`
 
 		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('value="${ email }"')
 		expect(code).toContain('data-aero-model-value="0"')
 		expect(code).not.toContain('data-aero-bind')
+	})
+
+	it('emits native checked SSR for checkbox model bind', () => {
+		const html = `<script is:state>
+			let agree = false
+		</script>
+		<input type="checkbox" checked="{ agree }" />`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('agree ? \' checked=""\' : \'\'')
+		expect(code).toContain('data-aero-model-checked="0"')
+	})
+
+	it('emits conditional native checked SSR for radio model bind', () => {
+		const html = `<script is:state>
+			let plan = 'free'
+		</script>
+		<input type="radio" value="free" checked="{ plan }" />`
+
+		const code = compile(parse(html), mockOptions)
+		expect(code).toContain('plan === "free" ? \' checked=""\' : \'\'')
+		expect(code).toContain('data-aero-model-checked="0"')
 	})
 
 	it('does not emit bind markers without is:state', () => {
@@ -175,5 +198,40 @@ describe('reactive attribute bindings SSR', () => {
 		const code = compile(parse(html), mockOptions)
 		const out = await executeRender(code)
 		expect(out).toContain('data-theme="dark"')
+	})
+
+	it('SSR checkbox checked emits checked="" when true', async () => {
+		const html = `<script is:state>
+			let agree = true
+		</script>
+		<input type="checkbox" checked="{ agree }" />`
+
+		const code = compile(parse(html), mockOptions)
+		const out = await executeRender(code, { agree: true })
+		expect(out).toMatch(/\bchecked=""/)
+		expect(out).toContain('data-aero-model-checked="0"')
+	})
+
+	it('SSR checkbox checked omits attribute when false', async () => {
+		const html = `<script is:state>
+			let agree = false
+		</script>
+		<input type="checkbox" checked="{ agree }" />`
+
+		const code = compile(parse(html), mockOptions)
+		const out = await executeRender(code, { agree: false })
+		expect(out).not.toMatch(/\schecked=""/)
+	})
+
+	it('SSR input value model bind emits value attribute', async () => {
+		const html = `<script is:state>
+			let email = 'a@b.c'
+		</script>
+		<input value="{ email }" />`
+
+		const code = compile(parse(html), mockOptions)
+		const out = await executeRender(code, { email: 'a@b.c' })
+		expect(out).toContain('value="a@b.c"')
+		expect(out).toContain('data-aero-model-value="0"')
 	})
 })
