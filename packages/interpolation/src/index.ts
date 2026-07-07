@@ -183,6 +183,26 @@ export function tokenizeCurlyInterpolation(text: string, options: TokenizeOption
 	return segments
 }
 
+/** Preserves `{` / `}` from numeric character references through HTML parse. */
+export const BRACE_ENTITY_OPEN = '\uE003'
+/** Preserves `}` from numeric character references through HTML parse. */
+export const BRACE_ENTITY_CLOSE = '\uE004'
+
+const BRACE_CHAR_REF_RE = /&#(?:x7[Bb]|x7[Dd]|123|125);/g
+
+/** Replace `&#123;`-style references with placeholders so DOM parse does not start interpolation. */
+export function encodeBraceCharacterReferences(text: string): string {
+	return text.replace(BRACE_CHAR_REF_RE, ref => {
+		const lower = ref.toLowerCase()
+		return lower === '&#123;' || lower === '&#x7b;' ? BRACE_ENTITY_OPEN : BRACE_ENTITY_CLOSE
+	})
+}
+
+/** Restore placeholder braces to literal `{` / `}` in compiled literal output. */
+export function restoreLiteralBraces(value: string): string {
+	return value.replaceAll(BRACE_ENTITY_OPEN, '{').replaceAll(BRACE_ENTITY_CLOSE, '}')
+}
+
 export type ByteRange = { readonly start: number; readonly end: number }
 
 /** Ranges of Aero `{ ... }` expression interiors (exclusive of the brace characters). */

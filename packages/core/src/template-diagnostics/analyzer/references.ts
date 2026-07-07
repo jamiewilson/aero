@@ -133,7 +133,7 @@ export function collectTemplateReferences(
 	}
 
 	const contentSegments = tokenizeCurlyInterpolation(maskedText, {
-		attributeMode: false,
+		attributeMode: true,
 	})
 	for (const seg of contentSegments) {
 		if (seg.kind === 'interpolation') {

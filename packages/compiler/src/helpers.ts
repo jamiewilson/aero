@@ -2,7 +2,10 @@
  * Helpers for the template codegen: interpolation, attributes, slots, and render-function emission.
  */
 
-import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
+import {
+	restoreLiteralBraces,
+	tokenizeCurlyInterpolation,
+} from '@aero-js/interpolation'
 import { CompileError } from './types'
 import { CodeBuilder } from './code-builder'
 import { escapeHtml, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
@@ -89,11 +92,11 @@ const INTERPOLATION_PASSTHROUGH_CALL = /^(raw|trim|trimStart|trimEnd)\s*\(/
  */
 export function compileInterpolation(text: string): string {
 	if (!text) return ''
-	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return escapeTemplateLiteralContent(escapeHtml(seg.value))
+				return escapeTemplateLiteralContent(escapeHtml(restoreLiteralBraces(seg.value)))
 			}
 			const expr = seg.expression.trim()
 			if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {
@@ -109,10 +112,10 @@ export function compileInterpolation(text: string): string {
  */
 export function compileReactiveTextReadExpr(text: string): string {
 	if (!text) return "''"
-	const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
+	const segments = tokenizeCurlyInterpolation(text, { attributeMode: true })
 	const parts = segments.map(seg => {
 		if (seg.kind === 'literal') {
-			return JSON.stringify(seg.value)
+			return JSON.stringify(restoreLiteralBraces(seg.value))
 		}
 		const expr = seg.expression.trim()
 		if (INTERPOLATION_PASSTHROUGH_CALL.test(expr)) {
@@ -134,7 +137,7 @@ export function compileAttributeInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return escapeTemplateLiteralContent(escapeHtmlAttributeLiteral(seg.value))
+				return escapeTemplateLiteralContent(escapeHtmlAttributeLiteral(restoreLiteralBraces(seg.value)))
 			}
 			return `\${${seg.expression}}`
 		})

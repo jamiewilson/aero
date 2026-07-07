@@ -96,6 +96,21 @@ function syncAuthLink(event) { event.preventDefault() }
 		expect(virtualText).toMatch(/declare const event: Event;\s*syncAuthLink\(event\)/)
 	})
 
+	it('does not typecheck double-brace literal syntax in text content', () => {
+		const html = `<script is:build>
+const count = 1
+const trustedHTML = '<em>Trusted HTML</em>'
+</script>
+<dt>{{ raw(trustedHTML) }}</dt>
+<p><code>if="{{ count > 0 }}"</code> at build</p>
+<p>{ count }</p>`
+		const sites = collectTemplateInterpolationSites(html)
+		const expressions = sites.map(s => s.expression.trim())
+		expect(expressions).not.toContain('{ raw(trustedHTML) }')
+		expect(expressions).not.toContain('{ count > 0 }')
+		expect(expressions).toContain('count')
+	})
+
 	it('does not extract interpolations from Alpine directive attribute values', () => {
 		const html = `<div x-bind:class="{ foo }">{ bar }</div>`
 		const sites = collectTemplateInterpolationSites(html)

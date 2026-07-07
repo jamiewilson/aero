@@ -433,7 +433,7 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 	}
 
 	const masked = applyMasks(maskForDirectiveValues(maskScriptAndStyleInner(sourceText)), masks)
-	for (const seg of tokenizeCurlyInterpolation(masked)) {
+	for (const seg of tokenizeCurlyInterpolation(masked, { attributeMode: true })) {
 		if (seg.kind !== 'interpolation') continue
 		const expr = seg.expression
 		if (!expr.trim()) continue

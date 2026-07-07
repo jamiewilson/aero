@@ -3,6 +3,7 @@ import type { ParseResult, ScriptEntry } from './types'
 import {
 	isOffsetInRanges,
 	collectInterpolationBodyRanges,
+	encodeBraceCharacterReferences,
 	escapeEntityEncodedElementMarkup,
 	escapeInterpolationBodyMarkup,
 } from '@aero-js/interpolation'
@@ -306,7 +307,7 @@ function isLocalScriptSource(src: string): boolean {
  * @returns ParseResult with buildScript, clientScripts, inlineScripts, blockingScripts, and template (script blocks removed/replaced).
  */
 export function parse(html: string): ParseResult {
-	html = html.replace(BOM_PREFIX, '')
+	html = encodeBraceCharacterReferences(html.replace(BOM_PREFIX, ''))
 
 	const { text: escapedHtml, restore } = escapeInterpolationBodyMarkup(
 		escapeEntityEncodedElementMarkup(html)
