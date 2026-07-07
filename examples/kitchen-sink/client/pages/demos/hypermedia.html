@@ -19,211 +19,247 @@
 </script>
 
 <base-layout title="Hypermedia demo">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
+	<article class="max-w-screen-sm justify-self-center pb-[20vh]">
 		<header-component
 			title="Hypermedia"
 			subtitle="Server-driven HTML fragments — <code>GET</code>, <code>POST</code>, swap modes, loading state, and process after swap." />
 
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Append to list</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>swap: 'beforeend'</code> appends server-rendered rows.
-			</p>
-			<button on:click="{ appendItem() }">Append item</button>
-			<ul id="item-list" class="grid gap-2 list-none p-0 m-0"></ul>
-		</section>
+		<main class="grid gap-8">
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Append to list</h2>
+					<p class="text-sm"><code>swap: 'beforeend'</code> appends server-rendered rows.</p>
+				</header>
+				<button on:click="{ appendItem() }">Append item</button>
+				<ul id="item-list" class="grid gap-2 list-none p-0 m-0"></ul>
+			</section>
 
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Server fragment</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>GET</code> with default <code>innerHTML</code> swap.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/fragment', { target: '#fragment-result', autoDisable: true }) }">
-				Load fragment
-			</button>
-			<div id="fragment-result" class="card">
-				<span class="text-sm opacity-60">Waiting…</span>
-			</div>
-		</section>
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Server fragment</h2>
+					<p class="text-sm"><code>GET</code> with default <code>innerHTML</code> swap.</p>
+				</header>
+				<button
+					on:click="{ GET('/api/hypermedia/fragment', { target: '#fragment-result', autoDisable: true }) }">
+					Load fragment
+				</button>
+				<div id="fragment-result" class="card">
+					<span class="text-sm opacity-60">Waiting…</span>
+				</div>
+			</section>
 
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Render fragment</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/render-fragment', {
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Render fragment</h2>
+					<p class="text-sm">
+						<code>renderAeroFragment</code> renders a real <code>.html</code> component on the
+						server.
+					</p>
+				</header>
+				<button
+					on:click="{ GET('/api/hypermedia/render-fragment', {
 	target: '#render-fragment',
 	swap: 'outerHTML',
 	autoDisable: true,
 }) }">
-				Load rendered fragment
-			</button>
-			<div id="render-fragment" class="card text-sm opacity-60">Fragment not loaded yet.</div>
-		</section>
-
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Loading state</h2>
-			<p class="text-sm opacity-60 m-0">
-				Three independent knobs — easy to mix up because they all relate to “busy” UX.
-			</p>
-
-			<div class="grid gap-2 p-3 rounded-xl border border-current/10">
-				<p class="m-0">
-					<strong class="font-semibold">1. <code>autoDisable</code></strong> — hypermedia sets
-					<code>disabled</code> on the trigger during mutating requests (<code>POST</code> by
-					default). No signal, no <code>busy</code>.
-				</p>
-				<button on:click="{ POST('/api/hypermedia/save', { target: '#save-status' }) }">
-					Save (auto-disabled while in flight)
+					Load rendered fragment
 				</button>
-				<div id="save-status" class="card">
-					<span class="text-sm opacity-60">Not saved yet.</span>
-				</div>
-			</div>
+				<div id="render-fragment" class="card text-sm opacity-60">Fragment not loaded yet.</div>
+			</section>
 
-			<div class="grid gap-2 p-3 rounded-xl border border-current/10">
-				<p class="m-0">
-					<strong class="font-semibold">2. <code>busy</code> vs <code>disabled</code></strong> —
-					<code>busy</code> wires hypermedia to a signal; it does <em>not</em> change how the button
-					looks. A reactive <code>disabled</code> binding mirrors the signal to the native
-					attribute. Click each — same GET, same <code>state</code>, different attribute.
-				</p>
-				<div class="flex gap-2 items-center flex-wrap">
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Loading state</h2>
+					<p class="text-sm">
+						Three independent knobs — easy to mix up because they all relate to “busy” UX.
+					</p>
+				</header>
+
+				<div class="card grid gap-4">
+					<p>
+						<strong class="font-bold">1. <code>autoDisable</code></strong> — hypermedia sets
+						<code>disabled</code> on the trigger during mutating requests (<code>POST</code> by
+						default). No signal, no <code>busy</code>.
+					</p>
+					<button on:click="{ POST('/api/hypermedia/save', { target: '#save-status' }) }">
+						Save (auto-disabled while in flight)
+					</button>
+					<div id="save-status" class="card">
+						<span class="text-sm opacity-60">Not saved yet.</span>
+					</div>
+				</div>
+
+				<div class="card grid gap-4">
+					<p>
+						<strong class="font-bold">2. <code>busy</code> vs <code>disabled</code></strong> —
+						<code>busy</code> wires hypermedia to a signal; it does <em>not</em> change how the
+						button looks. A reactive <code>disabled</code> binding mirrors the signal to the native
+						attribute. Click each — same GET, same <code>state</code>, different attribute.
+					</p>
+					<div class="flex gap-4">
+						<button
+							class="flex-1"
+							busy="{ isSaving }"
+							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
+							<code>busy</code> only
+						</button>
+						<button
+							class="flex-1"
+							disabled="{ isSaving }"
+							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
+							<code>disabled</code> only
+						</button>
+					</div>
+					<p class="text-sm opacity-60 m-0">
+						<code>isSaving</code>: { isSaving ? 'true (in flight)' : 'false (idle)' } — updates for
+						both; only the right button grays out.
+					</p>
+					<div id="load-status" class="card">
+						<span class="text-sm opacity-60">Nothing loaded yet.</span>
+					</div>
+				</div>
+
+				<div class="card grid gap-4">
+					<p>
+						<strong class="font-bold"> 3. <code>state</code> shares the signal elsewhere. </strong>
+						<code>state: isSaving</code> in the action toggles the binding while the request runs.
+						Other elements can react — status text, sibling buttons — without touching the trigger.
+					</p>
+					<div class="flex gap-4">
+						<button
+							class="flex-1"
+							on:click="{ POST('/api/hypermedia/save', { target: '#save-status-2', state: isSaving }) }">
+							Save
+						</button>
+						<button class="flex-1" disabled="{ isSaving }">Cancel (disabled while saving)</button>
+					</div>
+					<p class="text-sm opacity-60 m-0">Status: { isSaving ? 'Saving…' : 'Idle' }</p>
+					<div id="save-status-2" class="card">
+						<span class="text-sm opacity-60">Not saved yet.</span>
+					</div>
+				</div>
+			</section>
+
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Inline panel</h2>
+					<p class="text-sm">Swap detail into a target without full navigation.</p>
+				</header>
+
+				<div class="flex gap-4 items-center">
 					<button
-						busy="{ isSaving }"
-						on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
-						<code>busy</code> only
+						class="flex-1"
+						on:click="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
+						Panel A
 					</button>
 					<button
-						disabled="{ isSaving }"
-						on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
-						<code>disabled</code> only
+						class="flex-1"
+						on:click="{ GET('/api/hypermedia/panel/b', { target: '#panel-detail' }) }">
+						Panel B
 					</button>
+					<a
+						class="flex-1 text-center"
+						href="/api/hypermedia/panel/a"
+						on:click.prevent="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
+						Panel A (link)
+					</a>
 				</div>
-				<p class="text-sm opacity-60 m-0">
-					<code>isSaving</code>: { isSaving ? 'true (in flight)' : 'false (idle)' } — updates for
-					both; only the right button grays out.
-				</p>
-				<div id="load-status" class="card">
-					<span class="text-sm opacity-60">Nothing loaded yet.</span>
+				<div id="panel-detail" class="card">
+					<span class="text-sm opacity-60">Select a panel…</span>
 				</div>
-			</div>
+			</section>
 
-			<div class="grid gap-2 p-3 rounded-xl border border-current/10">
-				<p class="m-0">
-					<strong class="font-semibold">3. <code>state</code> shares the signal elsewhere.</strong>
-					<code>state: isSaving</code> in the action toggles the binding while the request runs.
-					Other elements can react — status text, sibling buttons — without touching the trigger.
-				</p>
-				<div class="flex gap-2 items-center flex-wrap">
-					<button
-						on:click="{ POST('/api/hypermedia/save', { target: '#save-status-2', state: isSaving }) }">
-						Save
-					</button>
-					<button disabled="{ isSaving }">Cancel (disabled while saving)</button>
-				</div>
-				<p class="text-sm opacity-60 m-0">Status: { isSaving ? 'Saving…' : 'Idle' }</p>
-				<div id="save-status-2" class="card">
-					<span class="text-sm opacity-60">Not saved yet.</span>
-				</div>
-			</div>
-		</section>
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Form POST</h2>
+					<p class="text-sm">
+						<code>on:submit.prevent</code> + <code>POST</code> — form fields serialize
+						automatically.
+					</p>
+				</header>
 
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Inline panel</h2>
-			<p class="text-sm opacity-60 m-0">Swap detail into a target without full navigation.</p>
-			<div class="flex gap-2 items-center flex-wrap">
-				<button on:click="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
-					Panel A
+				<form
+					on:submit.prevent="{ POST('/api/hypermedia/contact', { target: '#contact-status' }) }">
+					<div class="flex gap-4">
+						<input
+							class="flex-1"
+							name="message"
+							type="text"
+							placeholder="Your message"
+							class="flex-1 min-w-48"
+							required />
+						<button type="submit">Send</button>
+					</div>
+				</form>
+				<div id="contact-status" class="card">
+					<span class="text-sm opacity-60">No message yet.</span>
+				</div>
+			</section>
+
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Replace in place</h2>
+					<p class="text-sm"><code>swap: 'outerHTML'</code> replaces the target element itself.</p>
+				</header>
+
+				<button
+					on:click="{ GET('/api/hypermedia/refresh-item', { target: '#item-refresh', swap: 'outerHTML' }) }">
+					Refresh item
 				</button>
-				<button on:click="{ GET('/api/hypermedia/panel/b', { target: '#panel-detail' }) }">
-					Panel B
+				<ul class="grid gap-2 list-none p-0 m-0">
+					<li id="item-refresh" class="card text-sm opacity-60">Stale content</li>
+				</ul>
+			</section>
+
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Remove target</h2>
+					<p class="text-sm">
+						<code>swap: 'remove'</code> drops the target — response HTML is ignored.
+					</p>
+				</header>
+
+				<button
+					on:click="{ POST('/api/hypermedia/dismiss', { target: '#toast', swap: 'remove' }) }">
+					Dismiss toast
 				</button>
-				<a
-					href="/api/hypermedia/panel/a"
-					on:click="{ GET('/api/hypermedia/panel/a', { target: '#panel-detail' }) }">
-					Panel A (link)
-				</a>
-			</div>
-			<div id="panel-detail" class="card">
-				<span class="text-sm opacity-60">Select a panel…</span>
-			</div>
-		</section>
+				<div id="toast" class="card">Dismiss removes this element from the DOM.</div>
+			</section>
 
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Form POST</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>on:submit.prevent</code> + <code>POST</code> — form fields serialize automatically.
-			</p>
-			<form on:submit.prevent="{ POST('/api/hypermedia/contact', { target: '#contact-status' }) }">
-				<div class="flex gap-2 items-center flex-wrap">
-					<input
-						name="message"
-						type="text"
-						placeholder="Your message"
-						class="flex-1 min-w-48"
-						required />
-					<button type="submit">Send</button>
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Out-of-band swap</h2>
+					<p class="text-sm">
+						Primary <code>#oob-primary</code> swaps first; <code>data-aero-oob</code> updates
+						<code>#oob-status</code> separately.
+					</p>
+				</header>
+
+				<button
+					on:click="{ GET('/api/hypermedia/oob', { target: '#oob-primary', swap: 'outerHTML' }) }">
+					Refresh with OOB status
+				</button>
+				<div id="oob-primary" class="card text-sm opacity-60">Primary target waiting…</div>
+				<div id="oob-status" class="card text-sm opacity-60">Status (OOB): idle</div>
+			</section>
+
+			<section class="card grid gap-4">
+				<header>
+					<h2 class="text-xl font-semibold mb-2">Process after swap</h2>
+					<p class="text-sm">
+						Server fragments can include <code>data-aero-on-*</code> — wired automatically after
+						swap.
+					</p>
+				</header>
+
+				<button
+					on:click="{ GET('/api/hypermedia/nested', { target: '#nested-host', swap: 'outerHTML', autoDisable: true }) }">
+					Load nested fragment
+				</button>
+				<div id="nested-host" class="card text-sm opacity-60">
+					Click above to load a fragment with its own hypermedia bindings.
 				</div>
-			</form>
-			<div id="contact-status" class="card">
-				<span class="text-sm opacity-60">No message yet.</span>
-			</div>
-		</section>
-
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Replace in place</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>swap: 'outerHTML'</code> replaces the target element itself.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/refresh-item', { target: '#item-refresh', swap: 'outerHTML' }) }">
-				Refresh item
-			</button>
-			<ul class="grid gap-2 list-none p-0 m-0">
-				<li id="item-refresh" class="card text-sm opacity-60">Stale content</li>
-			</ul>
-		</section>
-
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Remove target</h2>
-			<p class="text-sm opacity-60 m-0">
-				<code>swap: 'remove'</code> drops the target — response HTML is ignored.
-			</p>
-			<button on:click="{ POST('/api/hypermedia/dismiss', { target: '#toast', swap: 'remove' }) }">
-				Dismiss toast
-			</button>
-			<div id="toast" class="card">Dismiss removes this element from the DOM.</div>
-		</section>
-
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Out-of-band swap</h2>
-			<p class="text-sm opacity-60 m-0">
-				Primary <code>#oob-primary</code> swaps first; <code>data-aero-oob</code> updates
-				<code>#oob-status</code> separately.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/oob', { target: '#oob-primary', swap: 'outerHTML' }) }">
-				Refresh with OOB status
-			</button>
-			<div id="oob-primary" class="card text-sm opacity-60">Primary target waiting…</div>
-			<div id="oob-status" class="card text-sm opacity-60">Status (OOB): idle</div>
-		</section>
-
-		<section class="card grid gap-4">
-			<h2 class="text-lg font-semibold m-0">Process after swap</h2>
-			<p class="text-sm opacity-60 m-0">
-				Server fragments can include <code>data-aero-on-*</code> — wired automatically after swap.
-			</p>
-			<button
-				on:click="{ GET('/api/hypermedia/nested', { target: '#nested-host', swap: 'outerHTML', autoDisable: true }) }">
-				Load nested fragment
-			</button>
-			<div id="nested-host" class="card text-sm opacity-60">
-				Click above to load a fragment with its own hypermedia bindings.
-			</div>
-		</section>
+			</section>
+		</main>
 	</article>
 </base-layout>

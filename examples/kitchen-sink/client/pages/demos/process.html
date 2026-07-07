@@ -35,7 +35,7 @@
 				<button type="button" on:click="{ showNote = !showNote }">Toggle via $showNote</button>
 				<button type="button" id="process-status">Insert status fragment</button>
 			</div>
-			<div id="process-host" class="card text-sm bg-green-50">Fragments mounts here…</div>
+			<div id="process-host" class="card text-sm bg-green-500/10">Fragments mounts here…</div>
 		</main>
 	</article>
 </base-layout>
@@ -60,9 +60,9 @@
 		statusButton.addEventListener('click', () => {
 			host.innerHTML = `
 				<div data-aero-switch="$status">
-					<template data-aero-case="loading"><p>Runtime loading… (via $status)</p></template>
-					<template data-aero-case="error"><p>Runtime error (via $status)</p></template>
-					<template data-aero-default><p>Runtime ready (via $status)</p></template>
+					<template data-aero-case="loading"><p>Runtime loading…</p></template>
+					<template data-aero-case="error"><p>Runtime error</p></template>
+					<template data-aero-default><p>Runtime ready</p></template>
 				</div>
 			`
 			aero.getReactivityRuntime?.()?.process(host)
