@@ -60,6 +60,10 @@ describe('compileInterpolation', () => {
 		expect(compileInterpolation('{ trimStart(text) }')).toBe('${ trimStart(text) }')
 		expect(compileInterpolation('{ trimEnd(text) }')).toBe('${ trimEnd(text) }')
 	})
+
+	it('should handle double braces as literal braces in text content', () => {
+		expect(compileInterpolation('{{ literal }}')).toBe('{ literal }')
+	})
 })
 
 describe('compileReactiveTextReadExpr', () => {
