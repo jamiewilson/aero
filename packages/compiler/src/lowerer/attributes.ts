@@ -497,9 +497,11 @@ export function parseElementAttributes(
 
 		const modelBinding = parseFormModelBinding(node, diag, attr, reactiveState)
 		if (modelBinding) {
-			const { emittedAttr, bind } = modelBinding
+			const { emittedAttrs, bind } = modelBinding
 			modelBinds.push(bind)
-			attributes.push(emittedAttr)
+			for (const emittedAttr of emittedAttrs) {
+				attributes.push(emittedAttr)
+			}
 			return
 		}
 
@@ -582,20 +584,42 @@ function classifyAttrForReactiveBind(
 	})
 }
 
+function getInputValue(node: NodeLike): string | null {
+	return (node as { getAttribute?: (n: string) => string | null }).getAttribute?.('value') ?? null
+}
+
 function parseFormModelBinding(
 	node: NodeLike,
 	diag: LowererDiag,
 	attr: AttrLike,
 	reactiveState?: LowererReactiveState
-): { emittedAttr: string; bind: IRReactiveModelBind } | null {
+): { emittedAttrs: string[]; bind: IRReactiveModelBind } | null {
 	if (!reactiveState) return null
 	const classification = classifyAttrForReactiveBind(node, attr, reactiveState)
 	if (classification.kind !== 'form-model') return null
 
-	const expr = Helper.stripBraces(attr.value ?? '')
+	const raw = attr.value ?? ''
+	const expr = Helper.stripBraces(raw)
 	const bindId = reactiveState.nextModelBindId()
+	const emittedAttrs: string[] = []
+	const inputType = (getInputType(node) ?? 'text').toLowerCase()
+
+	if (classification.modelKind === 'checked') {
+		if (inputType === 'radio') {
+			const inputValue = getInputValue(node) ?? ''
+			emittedAttrs.push(
+				Helper.compileBooleanPresenceAttr('checked', `${expr} === ${JSON.stringify(inputValue)}`)
+			)
+		} else {
+			emittedAttrs.push(Helper.compileBooleanPresenceAttr('checked', expr))
+		}
+	} else if (classification.modelKind === 'value') {
+		emittedAttrs.push(`value="${Helper.compileAttributeInterpolation(raw)}"`)
+	}
+
+	emittedAttrs.push(`data-aero-model-${classification.modelKind}="${bindId}"`)
 	return {
-		emittedAttr: `data-aero-model-${classification.modelKind}="${bindId}"`,
+		emittedAttrs,
 		bind: {
 			kind: 'ReactiveModelBind',
 			bindId,

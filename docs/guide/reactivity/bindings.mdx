@@ -155,6 +155,8 @@ Group related form fields in one object binding. Member access in bindings and h
 
 `value="{ formModel.email }"` and `checked="{ formModel.agree }"` stay in sync when the user types or when code assigns `formModel.email = '…'`. The runtime skips DOM writes when the control already matches state so the caret stays put during typing.
 
+Reactive form-model and property binds also **mirror native content attributes** in SSR output and at runtime, so `[checked]`, `[value]`, `[disabled]`, and similar attribute selectors keep working. Mount markers (`data-aero-model-*`, `data-aero-property-*`) remain in the HTML for binding wiring.
+
 ## Loading state (`busy`)
 
 When **both** `reactivity: true` and `hypermedia: true` are enabled, `busy` ties a boolean state binding to hypermedia request lifecycle on an element:
