@@ -4,8 +4,10 @@
 </script>
 
 <script is:state>
+	let isChecked = false
+
 	let formModel = {
-		email: '',
+		email: 'em@il.me',
 		agree: false,
 		plan: '',
 		bio: '',
@@ -35,25 +37,29 @@
 			title="Form model"
 			subtitle="A reactive form model with validation and submission." />
 
-		<form class="grid gap-4 w-full max-w-sm">
+		<form class="grid gap-4 w-full max-w-sm" class:is-valid="{ isComplete() }">
 			<div class="grid gap-2">
-				<label for="email" class="flex justify-between"
-					>Email
-					<span class="text-xs font-mono text-gray-400">{ formModel.email || 'empty' }</span></label
-				>
+				<label for="email" class="flex justify-between">
+					Email
+					<span class="text-xs font-mono text-gray-400">{ formModel.email || 'empty' }</span>
+				</label>
 				<input
 					id="email"
 					type="email"
 					placeholder="Enter your email..."
 					value="{ formModel.email }"
+					autocapitalize="off"
+					autocorrect="off"
+					autofocus
+					autocomplete="email"
 					required />
 			</div>
 
 			<div class="grid gap-2">
-				<label for="plan-select" class="flex justify-between"
-					>Plan
-					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span></label
-				>
+				<label for="plan-select" class="flex justify-between">
+					Plan
+					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span>
+				</label>
 				<select id="plan-select" value="{ formModel.plan }" required>
 					<option value="" disabled selected>Select a plan...</option>
 					<option value="free">Free</option>
@@ -61,31 +67,35 @@
 				</select>
 			</div>
 
-			<fieldset class="grid gap-1">
-				<label class="flex justify-between"
-					>Radio group
-					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span></label
-				>
-				<label>
-					<input
-						type="radio"
-						name="plan-radio"
-						value="free"
-						checked="{ formModel.plan }"
-						required />
-					<span>Free</span>
-				</label>
-				<label>
-					<input type="radio" name="plan-radio" value="pro" checked="{ formModel.plan }" required />
-					<span>Pro</span>
-				</label>
-			</fieldset>
+			<div class="grid gap-2">
+				<fieldset id="plan-options" class="grid gap-2">
+					<legend class="flex justify-between w-full">Radio group</legend>
+					<label>
+						<input
+							type="radio"
+							name="plan-radio"
+							value="free"
+							checked="{ formModel.plan }"
+							required />
+						<span>Free</span>
+					</label>
+					<label>
+						<input
+							type="radio"
+							name="plan-radio"
+							value="pro"
+							checked="{ formModel.plan }"
+							required />
+						<span>Pro</span>
+					</label>
+				</fieldset>
+			</div>
 
 			<div class="grid gap-2">
-				<label for="bio" class="flex justify-between"
-					>Bio
-					<span class="text-xs font-mono text-gray-400">{ formModel.bio || 'empty' }</span></label
-				>
+				<label for="bio" class="flex justify-between">
+					Bio
+					<span class="text-xs font-mono text-gray-400">{ formModel.bio || 'empty' }</span>
+				</label>
 				<textarea
 					id="bio"
 					placeholder="Add a bio..."
@@ -99,15 +109,13 @@
 				<span>Agree to terms</span>
 			</label>
 
-			<button type="submit" disabled="{ !isComplete() }" class:is-valid="{ isComplete() }">
-				Submit
-			</button>
+			<button type="submit" disabled="{ !isComplete() }">Submit</button>
 		</form>
 	</article>
 </base-layout>
 
 <style>
 	.is-valid {
-		outline: 2px solid var(--color-lime-500);
+		box-shadow: 0 0 0 5px --opacity(var(--color-green-500), 0.2);
 	}
 </style>

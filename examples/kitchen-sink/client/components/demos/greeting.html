@@ -1,7 +1,8 @@
 <script is:build>
 	import type { GreetingProps } from '@client/types/props.ts'
-
 	const { name = 'World' } = Aero.props as GreetingProps
 </script>
 
-<p>Hello, <strong>{ name }</strong>!</p>
+<div class="card grid place-content-center flex-1">
+	<p>Hello, <strong>{ name }</strong>!</p>
+</div>

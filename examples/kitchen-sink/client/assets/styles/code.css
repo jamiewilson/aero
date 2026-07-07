@@ -55,7 +55,8 @@
 	pre:has(code) {
 		display: grid;
 		overflow: hidden;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-2xl);
+		corner-shape: squircle;
 	}
 
 	pre:has(code) code {

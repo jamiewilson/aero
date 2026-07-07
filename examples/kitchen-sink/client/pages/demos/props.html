@@ -3,11 +3,19 @@
 	import header from '@components/demos/header.html'
 	import greeting from '@components/demos/greeting.html'
 	import card from '@components/demos/card.html'
-	import propsShorthand from '@components/demos/props-shorthand.html'
 	import site from '@content/site.ts'
 
 	const expressionTitle = site.home.title
-	const spreadDemo = { title: 'Spread title', body: 'Passed via props spread' }
+
+	const props = {
+		title: 'Props title',
+		body: 'Passed via props shorthand',
+	}
+
+	const propsSpread = {
+		title: 'Spread title',
+		body: 'Passed via props spread',
+	}
 </script>
 
 <base-layout title="Props">
@@ -16,57 +24,93 @@
 			title="Component props"
 			subtitle="Pass data into components as attributes, expressions, spreads, or shorthand — read with <code>Aero.props</code> in <code>script is:build</code>." />
 
-		<div class="grid gap-4">
-			<div class="grid gap-2">
-				<h3 class="font-semibold">String prop</h3>
-				<p class="text-sm m-0"><code>name="Aero"</code></p>
+		<main class="grid gap-8">
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">String prop</h3>
+				</header>
+
+				<pre><code>{ '<greeting-component name="Aero" />' }</code></pre>
 				<greeting-component name="Aero" />
-			</div>
+			</section>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Expression prop</h3>
-				<p class="text-sm m-0"><code>name=</code> with a braced expression</p>
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Expression prop</h3>
+				</header>
+				<pre><code>{ '<greeting-component name="{ expressionTitle }" />' }</code></pre>
 				<greeting-component name="{ expressionTitle }" />
-			</div>
+			</section>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Default value</h3>
-				<p class="text-sm m-0">Omit <code>name</code> — component defaults to <code>World</code></p>
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Default value</h3>
+				</header>
+
+				<pre><code>{ '<greeting-component />' }</code></pre>
 				<greeting-component />
-			</div>
+			</section>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Props spread</h3>
-				<p class="text-sm m-0">
-					<code>props</code> attribute with an object spread — keys become individual props.
-				</p>
-				<card-component title="{ spreadDemo.title }" body="{ spreadDemo.body }" />
-			</div>
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Props shorthand</h3>
+					<p class="text-sm m-0">
+						Bare <code>props</code> when a variable is literally named <code>props</code>
+					</p>
+				</header>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Props shorthand</h3>
-				<p class="text-sm m-0">
-					Bare <code>props</code> when a variable is literally named <code>props</code> — see
-					<code>components/demos/props-shorthand.html</code>
-				</p>
-				<props-shorthand-component />
-			</div>
+				<pre><code>const props = { JSON.stringify(props, null, 2) }</code></pre>
+				<pre><code>{ '<card-component props />' } </code></pre>
+				<card-component props />
+			</section>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Slot content</h3>
-				<p class="text-sm m-0">Child markup lands in the component default slot.</p>
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Props spread</h3>
+					<p class="text-sm m-0">
+						<code>props</code> attribute with an object spread — keys become individual props.
+					</p>
+				</header>
+
+				<pre><code>const propsSpread = { JSON.stringify(propsSpread, null, 2) }</code></pre>
+				<pre><code>{ '<card-component props="{ ...propsSpread }" />' }</code></pre>
+				<card-component props="{ ...propsSpread }" />
+			</section>
+
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Slot content</h3>
+					<p class="text-sm m-0">Child markup lands in the component default slot.</p>
+				</header>
+
+				<pre><code>{ `<card-component title="With slot" body="Body from prop.">
+	<p>Extra content from the parent page.</p>
+</card-component>` }</code></pre>
 				<card-component title="With slot" body="Body from prop.">
-					<p class="text-sm m-0">Extra content from the parent page.</p>
+					<p>Extra content from the parent page.</p>
 				</card-component>
-			</div>
+			</section>
 
-			<div class="grid gap-2">
-				<h3 class="font-semibold">Typed props</h3>
-				<p class="text-sm m-0">
-					<code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code>
-				</p>
+			<section class="grid gap-4">
+				<header>
+					<h3 class="font-semibold">Typed props</h3>
+					<p class="text-sm m-0">
+						<code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code>
+					</p>
+				</header>
+				<pre><code>{ `import type { CardProps } from '@client/types/props.ts'
+const { title, body = 'No body provided.' } = Aero.props as CardProps` }</code></pre>
+				<pre><code>{ `<card-component
+	title="Typed"
+	body="Props interface checked with aero check --types." 
+/>` }</code></pre>
 				<card-component title="Typed" body="Props interface checked with aero check --types." />
-			</div>
-		</div>
+
+				<pre><code>{ `<card-component title="Typed" />` }</code></pre>
+				<card-component title="Typed" />
+				<pre><code>{ `<card-component />` }</code></pre>
+				<p class="card bg-red-500/10 text-red-700 p-4 text-sm">{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }</code></pre>
+			</section>
+		</main>
 	</article>
 </base-layout>

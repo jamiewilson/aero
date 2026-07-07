@@ -24,34 +24,36 @@
 			title="Reactive conditionals"
 			subtitle="Runtime <code>if</code> / <code>else-if</code> / <code>else</code> and <code>switch</code> / <code>case</code> / <code>default</code> — requires <code>script is:state</code>. See <a href='/demos/templating'>Templating</a> for build-time equivalents." />
 
-		<p class="text-sm opacity-60">
-			These directives re-evaluate on the client when signals change. Build-time variants render
-			once at compile.
-		</p>
+		<main class="grid gap-4">
+			<p class="text-sm opacity-60">
+				These directives re-evaluate on the client when signals change. Build-time variants render
+				once at compile.
+			</p>
 
-		<div class="flex gap-2 items-center">
-			<button on:click="{ count-- }">−</button>
-			<code>count = { count }</code>
-			<button on:click="{ count++ }">+</button>
-		</div>
+			<div class="flex gap-2 items-center">
+				<button on:click="{ count-- }">−</button>
+				<code>count = { count }</code>
+				<button on:click="{ count++ }">+</button>
+			</div>
 
-		<div>
-			<p if="{ count > 0 }">Positive branch</p>
-			<p else-if="{ count < 0 }">Negative branch</p>
-			<p else>Zero branch</p>
-		</div>
+			<div class="card bg-green-500/10 p-4">
+				<p if="{ count > 0 }">Positive branch</p>
+				<p else-if="{ count < 0 }">Negative branch</p>
+				<p else>Zero branch</p>
+			</div>
 
-		<p>Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
+			<p>Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
 
-		<div class="flex gap-2 items-center">
-			<button on:click="{ cycleStatus() }">Cycle status</button>
-			<code>status = { status }</code>
-		</div>
+			<div class="flex gap-2 items-center">
+				<button on:click="{ cycleStatus() }">Cycle status</button>
+				<code>status = { status }</code>
+			</div>
 
-		<div switch="{ status }">
-			<p case="loading">Loading branch</p>
-			<p case="error">Error branch</p>
-			<p default>Ready branch</p>
-		</div>
+			<div switch="{ status }" class="card bg-green-500/10 p-4">
+				<p case="loading">Loading branch</p>
+				<p case="error">Error branch</p>
+				<p default>Ready branch</p>
+			</div>
+		</main>
 	</article>
 </base-layout>

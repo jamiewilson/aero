@@ -11,24 +11,26 @@
 </script>
 
 <base-layout title="Numeric text">
-	<header-component
-		title="Numeric text"
-		subtitle="<code>numeric-text</code> component with animated and trend props" />
-	<main class="grid grid-cols-2 gap-4">
-		<section class="grid gap-2">
-			<button on:click="{ count++ }">Increment</button>
-			<button on:click="{ count-- }">Decrement</button>
-			<button on:click="{ count = Math.floor(Math.random() * 10000) }">Random number</button>
-			<button on:click="{ count = 0 }">Reset</button>
-		</section>
-		<div class="card grid w-full place-items-center">
-			<!-- FIXME: class bindings don't work here when using a component -->
-			<numeric-text-component
-				bind:value="{ count }"
-				animated="{ animated }"
-				trend="{ trend }"
-				class:is-animated="{ animated }"
-				classes="font-bold text-[4rem]" />
-		</div>
-	</main>
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="Numeric text"
+			subtitle="<code>numeric-text</code> component with animated and trend props" />
+		<main class="grid grid-cols-2 gap-4">
+			<section class="grid gap-2">
+				<button on:click="{ count = Math.floor(Math.random() * 10000) }">Random number</button>
+				<button on:click="{ count++ }">Increment</button>
+				<button on:click="{ count-- }">Decrement</button>
+				<button on:click="{ count = 0 }">Reset</button>
+			</section>
+			<section class="card grid w-full min-w-64 place-items-center">
+				<!-- FIXME: class bindings don't work here when using a component -->
+				<numeric-text-component
+					bind:value="{ count }"
+					animated="{ animated }"
+					trend="{ trend }"
+					class:is-animated="{ animated }"
+					classes="font-bold text-[4rem]" />
+			</section>
+		</main>
+	</article>
 </base-layout>

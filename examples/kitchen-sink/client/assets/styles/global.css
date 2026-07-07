@@ -155,15 +155,23 @@
 		}
 	}
 
-	:focus-visible {
-		outline: 2px solid var(--color-accent);
+	select {
+		appearance: base-select;
+		display: inline-flex;
+	}
+
+	label:has(input[type='radio']:disabled),
+	label:has(input[type='checkbox']:disabled),
+	label:has(input[type='radio']):not(:has(input[type='radio']:checked)),
+	label:has(input[type='checkbox']):not(:has(input[type='checkbox']:checked)) {
+		opacity: 0.5;
 	}
 }
 
 @layer components {
 	.card {
 		box-shadow: inset 0 0 0 1px --opacity(var(--color-text), 0.1);
-		border-radius: var(--radius-3xl);
+		border-radius: var(--radius-2xl);
 		corner-shape: squircle;
 		padding: 2rem;
 	}

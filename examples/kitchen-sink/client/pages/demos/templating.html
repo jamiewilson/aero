@@ -5,9 +5,8 @@
 	const items = ['Item 1', 'Item 2', 'Item 3']
 	const count = 1
 	const status = 'ready'
-	const rawHtml = '<em>trusted HTML</em>'
-	const escapedHtml = '<em>escaped HTML</em>'
-	const literalBraces = '{ not interpolated }'
+	const escapedHTML = '<em>Escaped HTML</em>'
+	const trustedHTML = '<em>Trusted HTML</em>'
 </script>
 
 <base-layout title="Templating">
@@ -21,24 +20,28 @@
 				<header>
 					<h3 class="font-semibold">Interpolation</h3>
 					<p class="text-sm opacity-60 m-0">
-						Single braces for for regular JS expressions, double braces when you want to output
-						literal braces, and raw() for HTML-escaping.
+						Single braces for for regular JS expressions (auto-escaped), raw() for rendering raw
+						HTML, and double braces for literal braces.
 					</p>
 				</header>
 				<dl class="grid grid-cols-3 gap-2">
-					<div class="card grid gap-1">
-						<dt class="font-mono opacity-60 text-sm">&#123; escapedHtml &#125;</dt>
-						<dd><code>{ escapedHtml }</code></dd>
-					</div>
-					<div class="card grid gap-1">
-						<dt class="font-mono opacity-60 text-sm">&#123; raw(rawHtml) &#125;</dt>
-						<dd><code>{ raw(rawHtml) }</code></dd>
-					</div>
-					<div class="card grid gap-1">
-						<dt class="font-mono opacity-60 text-sm">
-							attribute="&#123;&#123; literalBraces &#125;&#125;"
+					<div class="card grid gap-2">
+						<dt class="font-mono text-sm">
+							<code>{{ escapedHTML }}</code>
 						</dt>
-						<dd><code data-value="{{ literalBraces }}">{ literalBraces }</code></dd>
+						<dd>{ escapedHTML }</dd>
+					</div>
+					<div class="card grid gap-1">
+						<dt class="font-mono text-sm">
+							<code>{{ raw(trustedHTML) }}</code>
+						</dt>
+						<dd>{ raw(trustedHTML) }</dd>
+					</div>
+					<div class="card grid gap-1">
+						<dt class="font-mono text-sm">
+							<code>&#123;&#123; literalBraces &#125;&#125;</code>
+						</dt>
+						<dd>{{ literalBraces }}</dd>
 					</div>
 				</dl>
 			</section>
@@ -59,54 +62,56 @@
 						Build-time <code>if</code> / <code>else-if</code> / <code>else</code>
 					</h3>
 					<p class="text-sm opacity-60 m-0">
-						<code>count = { count }</code> at build, so <code>if="{ count > 0 }"</code> will be
-						rendered as <code>if="true}"</code>
+						If <code>count = { count }</code> at build, then <code>if="{{ count > 0 }}"</code> will
+						be rendered as <code>if="{ count > 0 }"</code>
 					</p>
 				</header>
-				<div class="card bg-green-50">
-					<p if="{ count > 0 }">Greater than zero</p>
-					<p else-if="{ count < 0 }">Less than zero</p>
-					<p else>Equal to zero</p>
+				<div class="card bg-green-500/10 p-4 text-sm">
+					<p if="{ count > 0 }">Count > than zero</p>
+					<p else-if="{ count < 0 }">Count < than zero</p>
+					<p else>Count = zero</p>
 				</div>
 			</section>
 
 			<section class="grid gap-4">
-				<h3 class="font-semibold">
-					Build-time <code>switch</code> / <code>case</code> / <code>default</code>
-				</h3>
-				<p class="text-sm opacity-60 m-0"><code>status = { status }</code> (fixed at build)</p>
-				<div switch="{ status }">
+				<header>
+					<h3 class="font-semibold">
+						Build-time <code>switch</code> / <code>case</code> / <code>default</code>
+					</h3>
+					<p class="text-sm opacity-60 m-0"><code>status = { status }</code> (fixed at build)</p>
+				</header>
+				<div switch="{ status }" class="card bg-green-500/10 p-4 text-sm">
 					<p case="loading">Loading branch</p>
 					<p case="error">Error branch</p>
 					<p default>Ready branch</p>
 				</div>
 			</section>
 
-			<section class="card grid gap-2">
-				<h3 class="font-semibold">Build vs reactive</h3>
-				<table class="text-sm w-full">
+			<h3 class="font-semibold">Build vs. reactive</h3>
+			<section class="card">
+				<table class="table-auto w-full">
 					<thead>
-						<tr class="text-left opacity-60">
-							<th class="pb-2">Directive</th>
-							<th class="pb-2">Build-time</th>
-							<th class="pb-2">Reactive</th>
+						<tr class="text-left border-b border-border">
+							<th class="p-2">Directive</th>
+							<th class="p-2">Build-time</th>
+							<th class="p-2">Reactive</th>
 						</tr>
 					</thead>
-					<tbody class="font-mono">
-						<tr>
-							<td class="py-1">Context</td>
-							<td><code>is:build</code></td>
-							<td><code>is:state</code></td>
+					<tbody class="font-mono text-xs">
+						<tr class="text-left border-b border-border">
+							<td class="p-2">Context</td>
+							<td class="p-2"><code>is:build</code></td>
+							<td class="p-2"><code>is:state</code></td>
 						</tr>
-						<tr>
-							<td class="py-1">When it runs</td>
-							<td>Compile / SSR</td>
-							<td>Client runtime</td>
+						<tr class="text-left border-b border-border">
+							<td class="p-2">When it runs</td>
+							<td class="p-2">Compile / SSR</td>
+							<td class="p-2">Client runtime</td>
 						</tr>
-						<tr>
-							<td class="py-1">Updates</td>
-							<td>Never (static HTML)</td>
-							<td>On signal change</td>
+						<tr class="text-left">
+							<td class="p-2">Updates</td>
+							<td class="p-2">Never (static HTML)</td>
+							<td class="p-2">On signal change</td>
 						</tr>
 					</tbody>
 				</table>
