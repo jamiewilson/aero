@@ -19,12 +19,17 @@
 </script>
 
 <base-layout title="Reactive conditionals">
-	<section class="grid gap-4">
+	<article class="max-w-fit justify-self-center pb-[20vh]">
 		<header-component
 			title="Reactive conditionals"
-			subtitle="Reactive <code>if</code> / <code>else-if</code> / <code>else</code>" />
+			subtitle="Runtime <code>if</code> / <code>else-if</code> / <code>else</code> and <code>switch</code> / <code>case</code> / <code>default</code> — requires <code>script is:state</code>. See <a href='/demos/templating'>Templating</a> for build-time equivalents." />
 
-		<div>
+		<p class="text-sm opacity-60">
+			These directives re-evaluate on the client when signals change. Build-time variants render
+			once at compile.
+		</p>
+
+		<div class="flex gap-2 items-center">
 			<button on:click="{ count-- }">−</button>
 			<code>count = { count }</code>
 			<button on:click="{ count++ }">+</button>
@@ -38,7 +43,7 @@
 
 		<p>Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
 
-		<div>
+		<div class="flex gap-2 items-center">
 			<button on:click="{ cycleStatus() }">Cycle status</button>
 			<code>status = { status }</code>
 		</div>
@@ -48,5 +53,5 @@
 			<p case="error">Error branch</p>
 			<p default>Ready branch</p>
 		</div>
-	</section>
+	</article>
 </base-layout>

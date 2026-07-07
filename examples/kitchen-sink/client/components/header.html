@@ -1,14 +1,7 @@
 <script is:build>
 	import type { HeaderProps } from '@client/types/props.ts'
-	import logo from '@components/logo.html'
 
 	const props = Aero.props as HeaderProps
-	const isHomepage = Aero.page.routePath === '/'
-	const isReactivityDemo = Aero.page.routePath === '/demos/reactivity'
-</script>
-
-<script is:state>
-	const { count = Aero.bindable() } = Aero.props
 </script>
 
 <header class="mb-10">
@@ -17,29 +10,4 @@
 	<slot name="subtitle">
 		<p>{ props.subtitle }</p>
 	</slot>
-
-	<div if="{ isReactivityDemo }">
-		<h4>Reactive prop binding</h4>
-		<div>
-			<button on:click="{ count-- }">−</button>
-			<code>bind:count="{ count }"</code>
-			<button on:click="{ count++ }">+</button>
-		</div>
-	</div>
-
-	<!-- Overrides global styles -->
-	<style>
-		@scope {
-			:scope {
-				background: none;
-			}
-		}
-	</style>
 </header>
-
-<!-- Global styles -->
-<style>
-	header {
-		background: red;
-	}
-</style>

@@ -1,0 +1,45 @@
+<script is:build>
+	import sub from '@layouts/sub.html'
+	import header from '@components/demos/header.html'
+</script>
+
+<sub-layout title="Layouts & slots">
+	<span slot="thru-sub"><code>Pass-through slot</code></span>
+
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="Layouts & slots"
+			subtitle="This page uses <code>sub-layout</code> → <code>base-layout</code>. Named slots pass through intermediate layouts to the outer shell." />
+
+		<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div class="card grid gap-2 content-start">
+				<h3 class="font-semibold">Default slot</h3>
+				<p>
+					Page content between <code>sub-layout</code> tags flows into
+					<code>&lt;slot /&gt;</code> in each layout, ending up in <code>base.html</code>'s body.
+				</p>
+			</div>
+
+			<div class="card grid gap-2 content-start">
+				<h3 class="font-semibold">Named slot → nav</h3>
+				<p>
+					<code>slot="thru-sub"</code> on this page maps to
+					<code>&lt;slot name="thru-sub" slot="into-nav" /&gt;</code> in <code>sub.html</code>,
+					which forwards to <code>&lt;slot name="into-nav" /&gt;</code> in <code>base.html</code> →
+					rendered in the nav bar above.
+				</p>
+				<p class="bg-yellow-50 p-4 rounded-lg text-sm">
+					Check the nav — the <code>Pass-through slot</code> came from a named slot.
+				</p>
+			</div>
+
+			<div class="card grid gap-2 content-start">
+				<h3 class="font-semibold">Layout props</h3>
+				<p>
+					<code>title="Layouts & slots"</code> on <code>sub-layout</code> passes through
+					<code>props</code> shorthand to <code>base-layout</code> for head metadata.
+				</p>
+			</div>
+		</section>
+	</article>
+</sub-layout>

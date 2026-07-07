@@ -1,19 +1,31 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/header.html'
+	import header from '@components/demos/header.html'
+	import counter from '@components/demos/counter.html'
 </script>
 
 <script is:state>
 	let count = 0
 </script>
 
-<base-layout title="Reactivity Demo" count="{ count }">
-	<header-component bind:count="{ count }" />
-	<div class="flex gap-2 items-center">
-		<button on:click="{ count-- }">−</button>
-		<h2 data-is-even="{ count % 2 === 0 }"><code>{ count }</code></h2>
-		<button on:click="{ count++ }">+</button>
-	</div>
+<base-layout title="Reactivity Demo">
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="Reactive props"
+			subtitle="<code>bind:</code> shares mutable state between parent and child via <code>Aero.bindable()</code>." />
+		<main class="card grid gap-2 place-items-center text-center">
+			<p class="text-sm">Parent page state:</p>
+			<div class="flex gap-2 items-center">
+				<button on:click="{ count-- }">−</button>
+				<code data-is-even="{ count % 2 === 0 }">{ count }</code>
+				<button on:click="{ count++ }">+</button>
+			</div>
+			<div class="card grid gap-2 mt-4">
+				<p class="text-sm">Child component binding:</p>
+				<counter-component bind:count="{ count }" />
+			</div>
+		</main>
+	</article>
 </base-layout>
 
 <style>

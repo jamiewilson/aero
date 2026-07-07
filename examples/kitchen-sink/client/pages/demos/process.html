@@ -1,62 +1,68 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
-	let note = 'Runtime fragment reads page state via $refs.'
+	let note = 'Runtime fragment reads page state via $refs, e.g. $note'
 	let showNote = true
 	let status = 'loading'
 </script>
 
 <base-layout title="Process runtime">
-	<section>
-		<p class="secondary"><code>runtime.process()</code> for inserted HTML</p>
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="Process runtime"
+			subtitle="<code>runtime.process()</code> wires reactive bindings on HTML inserted after load." />
 
-		<label>
-			<input type="checkbox" checked="{ showNote }" />
-			<span>Show inserted fragment</span>
-		</label>
+		<main class="grid gap-4">
+			<label class="grid gap-4">
+				<span>State: <code>note</code></span>
+				<input type="text" value="{ note }" />
+			</label>
 
-		<label>
-			<span>Page signal (<code>note</code>)</span>
-			<input value="{ note }" />
-		</label>
+			<label class="grid gap-4">
+				<span>State: <code>status</code></span>
+				<select value="{ status }">
+					<option value="loading">loading</option>
+					<option value="error">error</option>
+					<option value="ready">ready</option>
+				</select>
+			</label>
 
-		<label>
-			<span>Page signal (<code>status</code>)</span>
-			<select value="{ status }">
-				<option value="loading">loading</option>
-				<option value="error">error</option>
-				<option value="ready">ready</option>
-			</select>
-		</label>
-
-		<button type="button" id="process-insert">Insert fragment</button>
-		<button type="button" id="process-insert-switch">Insert switch fragment</button>
-		<div id="process-host">Fragment mounts here…</div>
-	</section>
+			<div class="flex gap-2 flex-wrap justify-between">
+				<button type="button" id="process-note">Insert note fragment</button>
+				<button type="button" on:click="{ showNote = !showNote }">Toggle via $showNote</button>
+				<button type="button" id="process-status">Insert status fragment</button>
+			</div>
+			<div id="process-host" class="card text-sm bg-green-50">Fragments mounts here…</div>
+		</main>
+	</article>
 </base-layout>
 
 <script>
 	import aero from '@aero-js/core'
 
-	const insert = document.getElementById('process-insert')
 	const host = document.getElementById('process-host')
-	if (insert && host) {
-		insert.addEventListener('click', () => {
-			host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+	const noteButton = document.getElementById('process-note')
+	const statusButton = document.getElementById('process-status')
+
+	if (noteButton && host) {
+		noteButton.addEventListener('click', () => {
+			host.innerHTML = `
+				<p data-aero-show="$showNote" data-aero-text="$note"></p>
+			`
 			aero.getReactivityRuntime?.()?.process(host)
 		})
 	}
 
-	const insertSwitch = document.getElementById('process-insert-switch')
-	if (insertSwitch && host) {
-		insertSwitch.addEventListener('click', () => {
+	if (statusButton && host) {
+		statusButton.addEventListener('click', () => {
 			host.innerHTML = `
 				<div data-aero-switch="$status">
-					<template data-aero-case="loading"><p>Runtime loading…</p></template>
-					<template data-aero-case="error"><p>Runtime error</p></template>
-					<template data-aero-default><p>Runtime ready</p></template>
+					<template data-aero-case="loading"><p>Runtime loading… (via $status)</p></template>
+					<template data-aero-case="error"><p>Runtime error (via $status)</p></template>
+					<template data-aero-default><p>Runtime ready (via $status)</p></template>
 				</div>
 			`
 			aero.getReactivityRuntime?.()?.process(host)

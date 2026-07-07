@@ -23,6 +23,9 @@ export default {
 			'A static site generator with optional reactivity and full-stack hypermedia-based framework, powered by Vite and Nitro, deployable anywhere.',
 	},
 	demos: [
+		{ label: 'Templating', href: '/demos/templating' },
+		{ label: 'Props', href: '/demos/props' },
+		{ label: 'Layouts & slots', href: '/demos/layouts-slots' },
 		{ label: 'Scripts', href: '/demos/scripts' },
 		{ label: 'Image imports', href: '/demos/images' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },

@@ -1,0 +1,11 @@
+<script is:build>
+	import type { CardProps } from '@client/types/props.ts'
+
+	const { title, body = 'No body provided.' } = Aero.props as CardProps
+</script>
+
+<article class="card grid gap-2">
+	<h3 class="font-semibold">{ title }</h3>
+	<p class="text-sm opacity-60 m-0">{ body }</p>
+	<slot />
+</article>

@@ -6,8 +6,8 @@
 
 <nav>
 	<div class="leading">
-		<slot />
 		<a if="{ !isHomepage && !isDocsPage }" href="/" class="back">Home</a>
+		<slot />
 	</div>
 	<div class="trailing">
 		<toggle-component />

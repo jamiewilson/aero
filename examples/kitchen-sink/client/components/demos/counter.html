@@ -1,0 +1,9 @@
+<script is:state>
+	const { count = Aero.bindable(0) } = Aero.props
+</script>
+
+<div class="flex gap-2 items-center">
+	<button on:click="{ count-- }">−</button>
+	<code>bind:count="{ count }"</code>
+	<button on:click="{ count++ }">+</button>
+</div>
