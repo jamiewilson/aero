@@ -143,11 +143,13 @@ export async function highlight(
 ): Promise<string> {
 	const highlighter = await getHighlighter(config)
 
-	return highlighter.codeToHtml(code, {
+	const highlighted = highlighter.codeToHtml(code, {
 		lang: language,
 		...extractThemeOptions(config),
 		transformers: config.transformers ?? [],
 	} as Parameters<typeof highlighter.codeToHtml>[1])
+
+	return highlighted
 }
 
 /**

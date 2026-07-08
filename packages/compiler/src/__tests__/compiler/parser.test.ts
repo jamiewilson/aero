@@ -104,6 +104,17 @@ describe('Parser (V2 Taxonomy)', () => {
 		expect(expandSelfClosingTags(input)).toBe(input)
 	})
 
+	it('does not expand self-closing tags inside script blocks', () => {
+		const input = `<script is:build>
+const code = \`<greeting-component name="Aero" />\`
+</script>
+<greeting-component name="Aero" />`
+		expect(expandSelfClosingTags(input)).toBe(`<script is:build>
+const code = \`<greeting-component name="Aero" />\`
+</script>
+<greeting-component name="Aero" ></greeting-component>`)
+	})
+
 	it('should not extract scripts inside HTML comments', () => {
 		const input = `
             <!--<script is:build>const commented = true;</script>-->
