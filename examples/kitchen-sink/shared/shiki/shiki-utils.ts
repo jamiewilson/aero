@@ -1,10 +1,4 @@
-/** TextMate theme shape used by Shiki. */
-export interface ShikiTheme {
-	tokenColors?: Array<{ scope: string | string[]; settings?: Record<string, unknown> }>
-	colors?: Record<string, string>
-	name?: string
-	[key: string]: unknown
-}
+import type { ThemeRegistrationAny } from 'shiki'
 
 export function scopeMatches(scope: string | string[] | undefined, targets: string[]): boolean {
 	if (scope == null) return false
@@ -16,7 +10,7 @@ export function scopeMatches(scope: string | string[] | undefined, targets: stri
 
 export function applyOverrides(
 	base: unknown,
-	...overrides: Array<(theme: ShikiTheme) => ShikiTheme>
-): ShikiTheme {
-	return overrides.reduce((acc, fn) => fn(acc), base as ShikiTheme)
+	...overrides: Array<(theme: ThemeRegistrationAny) => ThemeRegistrationAny>
+): ThemeRegistrationAny {
+	return overrides.reduce((acc, fn) => fn(acc), base as ThemeRegistrationAny)
 }
