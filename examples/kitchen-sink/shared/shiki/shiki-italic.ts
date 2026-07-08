@@ -1,4 +1,4 @@
-import type { ShikiTheme } from './shiki-utils.ts'
+import type { ThemeRegistrationAny } from 'shiki'
 import { scopeMatches } from './shiki-utils.ts'
 
 const ITALIC_SCOPES = [
@@ -24,8 +24,8 @@ function scopeMatchesItalic(scope: string | string[] | undefined): boolean {
  * Also adds new rules for scopes in ITALIC_SCOPES that the base theme doesn't define
  * (e.g. entity.other.attribute-name for HTML attributes), so they work in the browser.
  */
-export function withItalics(theme: ShikiTheme): ShikiTheme {
-	const base = JSON.parse(JSON.stringify(theme)) as ShikiTheme
+export function withItalics(theme: ThemeRegistrationAny): ThemeRegistrationAny {
+	const base = JSON.parse(JSON.stringify(theme)) as ThemeRegistrationAny
 	const tokenColors = base.tokenColors ?? []
 
 	const updated = tokenColors.map(entry => {

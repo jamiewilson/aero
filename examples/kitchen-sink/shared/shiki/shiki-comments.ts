@@ -1,4 +1,4 @@
-import type { ShikiTheme } from './shiki-utils.ts'
+import type { ThemeRegistrationAny } from 'shiki'
 import { scopeMatches } from './shiki-utils.ts'
 
 const COMMENT_SCOPES = ['comment', 'punctuation.definition.comment']
@@ -11,8 +11,8 @@ function scopeMatchesComment(scope: string | string[] | undefined): boolean {
  * Clone a Shiki theme and set foreground to `var(--shiki-comment)` for comment
  * token colors. The actual color value is defined in CSS (e.g. code.css).
  */
-export function withCommentColor(theme: ShikiTheme): ShikiTheme {
-	const base = JSON.parse(JSON.stringify(theme)) as ShikiTheme
+export function withCommentColor(theme: ThemeRegistrationAny): ThemeRegistrationAny {
+	const base = JSON.parse(JSON.stringify(theme)) as ThemeRegistrationAny
 	const tokenColors = base.tokenColors ?? []
 
 	const updated = tokenColors.map(entry => {

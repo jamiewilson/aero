@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { highlight, getHighlighter, resetHighlighter, addPreDataLang, aeroHtml } from '../index'
+import { highlight, getHighlighter, resetHighlighter, addPreDataLang, addPreNotProse, aeroHtml } from '../index'
 import type { ShikiConfig } from '../types'
 
 beforeEach(() => {
@@ -180,6 +180,24 @@ describe('highlight', () => {
 		})
 
 		expect(html).not.toContain('data-lang=')
+	})
+
+	it('adds not-prose to pre when addPreNotProse is enabled', async () => {
+		const html = await highlight('const x = 1', 'js', {
+			theme: 'github-light',
+			transformers: [addPreNotProse()],
+		})
+
+		expect(html).toMatch(/<pre class="[^"]*\bnot-prose\b[^"]*"/)
+		expect(html.match(/<pre[^>]*>/)?.[0].match(/class=/g)).toHaveLength(1)
+	})
+
+	it('does not add not-prose by default', async () => {
+		const html = await highlight('const x = 1', 'js', {
+			theme: 'github-light',
+		})
+
+		expect(html).not.toContain('not-prose')
 	})
 
 	it('highlights aero-html with JS expressions in attribute values', async () => {
