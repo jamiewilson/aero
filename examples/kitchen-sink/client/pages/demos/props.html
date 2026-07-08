@@ -4,6 +4,7 @@
 	import greeting from '@components/demos/greeting.html'
 	import card from '@components/demos/card.html'
 	import site from '@content/site.ts'
+	import code from '@components/code.html'
 
 	const expressionTitle = site.home.title
 
@@ -30,7 +31,7 @@
 					<h3 class="font-semibold">String prop</h3>
 				</header>
 
-				<pre><code>{ '<greeting-component name="Aero" />' }</code></pre>
+				<code-component code="{ `<greeting-component name='Aero' />` }" />
 				<greeting-component name="Aero" />
 			</section>
 
@@ -38,7 +39,7 @@
 				<header>
 					<h3 class="font-semibold">Expression prop</h3>
 				</header>
-				<pre><code>{ '<greeting-component name="{ expressionTitle }" />' }</code></pre>
+				<code-component code="{ `<greeting-component name='{ expressionTitle }' />` }" />
 				<greeting-component name="{ expressionTitle }" />
 			</section>
 
@@ -47,7 +48,7 @@
 					<h3 class="font-semibold">Default value</h3>
 				</header>
 
-				<pre><code>{ '<greeting-component />' }</code></pre>
+				<code-component code="{ `<greeting-component />` }" />
 				<greeting-component />
 			</section>
 
@@ -59,8 +60,8 @@
 					</p>
 				</header>
 
-				<pre><code>const props = { JSON.stringify(props, null, 2) }</code></pre>
-				<pre><code>{ '<card-component props />' } </code></pre>
+				<code-component code="const props = { JSON.stringify(props, null, 2) }" language="js" />
+				<code-component code="{ `<card-component props />` }" />
 				<card-component props />
 			</section>
 
@@ -72,8 +73,10 @@
 					</p>
 				</header>
 
-				<pre><code>const propsSpread = { JSON.stringify(propsSpread, null, 2) }</code></pre>
-				<pre><code>{ '<card-component props="{ ...propsSpread }" />' }</code></pre>
+				<code-component
+					code="const propsSpread = { JSON.stringify(propsSpread, null, 2) }"
+					language="js" />
+				<code-component code="{ `<card-component props='{ ...propsSpread }' />` }" />
 				<card-component props="{ ...propsSpread }" />
 			</section>
 
@@ -83,9 +86,10 @@
 					<p class="text-sm m-0">Child markup lands in the component default slot.</p>
 				</header>
 
-				<pre><code>{ `<card-component title="With slot" body="Body from prop.">
-	<p>Extra content from the parent page.</p>
-</card-component>` }</code></pre>
+				<code-component
+					code="{ `<card-component title='With slot' body='Body from prop.'>
+<p>Extra content from the parent page.</p>
+</card-component>` }" />
 				<card-component title="With slot" body="Body from prop.">
 					<p>Extra content from the parent page.</p>
 				</card-component>
@@ -98,18 +102,24 @@
 						<code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code>
 					</p>
 				</header>
-				<pre><code>{ `import type { CardProps } from '@client/types/props.ts'
-const { title, body = 'No body provided.' } = Aero.props as CardProps` }</code></pre>
-				<pre><code>{ `<card-component
-	title="Typed"
-	body="Props interface checked with aero check --types." 
-/>` }</code></pre>
+
+				<code-component
+					code="{ `import type { CardProps } from '@client/types/props.ts'
+const { title, body = 'No body provided.' } = Aero.props as CardProps` }"
+					language="js" />
+				<code-component
+					code="{ `<card-component
+	title='Typed'
+	body='Props interface checked with aero check --types.' 
+/>` }" />
 				<card-component title="Typed" body="Props interface checked with aero check --types." />
 
-				<pre><code>{ `<card-component title="Typed" />` }</code></pre>
+				<code-component code="{ `<card-component title='Typed' />` }" />
 				<card-component title="Typed" />
-				<pre><code>{ `<card-component />` }</code></pre>
-				<p class="card bg-red-500/10 text-red-700 p-4 text-sm">{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }</code></pre>
+				<code-component code="{ `<card-component />` }" />
+				<p class="card bg-red-500/10 text-red-700 p-4 text-sm">
+					{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }
+				</p>
 			</section>
 		</main>
 	</article>

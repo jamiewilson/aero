@@ -5,7 +5,7 @@
 
 <script is:state>
 	let open = false
-	let body = '<code>html="{ body }"</code> binding'
+	let body = '<strong>html="{ body }"</strong> binding'
 	let active = false
 	let saving = false
 </script>
@@ -16,20 +16,24 @@
 			title="Binding handlers"
 			subtitle="<code>show</code>, <code>html</code>, <code>class:*</code>, property bindings" />
 
-		<div>
-			<button on:click="{ open = !open }">Toggle show</button>
-			<div show="{ open }">Shown when <code>open</code> is true</div>
-		</div>
+		<main class="grid gap-4">
+			<div class="grid gap-4">
+				<button on:click="{ open = !open }">Toggle show</button>
+				<div show="{ open }" class="card bg-green-500/10 text-center">
+					Shown when <code>open</code> is true
+				</div>
+			</div>
 
-		<div html="{ body }"></div>
+			<div html="{ body }" class="card text-center"></div>
 
-		<button on:click="{ active = !active }" class:is-active="{ active }">
-			Toggle <code>class:is-active</code>
-		</button>
+			<button on:click="{ active = !active }">Toggle <code>active</code> class binding</button>
+			<div class:is-active="{ active }" class="card text-center">
+				<code>class="{ active ? 'is-active' : '' }"</code>
+			</div>
 
-		<button disabled="{ saving }" on:click="{ saving = !saving }">
-			Toggle disabled (property binding)
-		</button>
+			<button on:click="{ saving = !saving }">Toggle disabled (property binding)</button>
+			<button disabled="{ saving }">disabled="{ saving }"</button>
+		</main>
 	</article>
 </base-layout>
 
