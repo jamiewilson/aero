@@ -1,5 +1,5 @@
 import { Effect } from '../effect'
-import type { Cleanup } from '../mount'
+import type { Cleanup, RowMountResult } from '../mount'
 import { compileScopeRead } from '../scope-eval'
 import type { StateScope } from '../state-scope'
 import {
@@ -10,7 +10,7 @@ import {
 export interface KeyedForRowSpec {
 	readonly key: string | number
 	readonly renderHtml: () => string
-	readonly mountRow: (rowRoot: ParentNode) => Cleanup
+	readonly mountRow: (rowRoot: ParentNode) => RowMountResult
 }
 
 export interface BindKeyedForOptions {
@@ -62,13 +62,12 @@ function evalKey(options: BindKeyedForOptions, rowScope: StateScope): string | n
 	return toKey(value)
 }
 
-function createRowScope(
-	parentScope: StateScope,
+function applyRowBinding(
+	rowScope: StateScope,
 	options: Pick<BindKeyedForOptions, 'binding' | 'bindingNames' | 'destructureRow'>,
 	item: unknown
-): StateScope {
+): void {
 	const { binding, bindingNames, destructureRow } = options
-	const rowScope = Object.create(parentScope) as StateScope
 	const trimmed = binding.trim()
 	if (/^[A-Za-z_$][\w$]*$/.test(trimmed)) {
 		rowScope[trimmed] = item
@@ -87,12 +86,52 @@ function createRowScope(
 			rowScope[name] = values[name]
 		}
 	}
+}
+
+function applyLoopMetadata(rowScope: StateScope, index: number, length: number): void {
+	rowScope.index = index
+	rowScope.first = index === 0
+	rowScope.last = index === length - 1
+	rowScope.length = length
+}
+
+function createRowScope(
+	parentScope: StateScope,
+	options: Pick<BindKeyedForOptions, 'binding' | 'bindingNames' | 'destructureRow'>,
+	item: unknown,
+	index: number,
+	length: number
+): StateScope {
+	const rowScope = Object.create(parentScope) as StateScope
+	applyRowBinding(rowScope, options, item)
+	applyLoopMetadata(rowScope, index, length)
 	return rowScope
+}
+
+function updateRowScope(
+	rowScope: StateScope,
+	options: Pick<BindKeyedForOptions, 'binding' | 'bindingNames' | 'destructureRow'>,
+	item: unknown,
+	index: number,
+	length: number
+): void {
+	applyRowBinding(rowScope, options, item)
+	applyLoopMetadata(rowScope, index, length)
+}
+
+function resolveRowMount(mounted: RowMountResult): { cleanup: Cleanup; refresh: () => void } {
+	if (typeof mounted === 'function') {
+		return { cleanup: mounted, refresh: () => {} }
+	}
+	return { cleanup: mounted.cleanup, refresh: mounted.refresh ?? (() => {}) }
 }
 
 export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 	const { mountTarget, scope, binding, bindingNames, renderRow } = options
-	const rows = new Map<string | number, { element: Element; cleanup: Cleanup }>()
+	const rows = new Map<
+		string | number,
+		{ element: Element; cleanup: Cleanup; rowScope: StateScope; refresh: () => void }
+	>()
 	const seenKeys = new Set<string | number>()
 
 	const reconcile = (): void => {
@@ -104,9 +143,18 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 		seenKeys.clear()
 		const nextKeys: Array<string | number> = []
 
-		for (const item of items) {
-			const rowScope = createRowScope(scope, { binding, bindingNames, destructureRow: options.destructureRow }, item)
-			const key = evalKey(options, rowScope)
+		for (let index = 0; index < items.length; index++) {
+			const item = items[index]!
+			const key = (() => {
+				const probeScope = createRowScope(
+					scope,
+					{ binding, bindingNames, destructureRow: options.destructureRow },
+					item,
+					index,
+					items.length
+				)
+				return evalKey(options, probeScope)
+			})()
 			if (seenKeys.has(key)) {
 				throw new Error(`[aero] Duplicate loop key: ${String(key)}`)
 			}
@@ -114,8 +162,24 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 			nextKeys.push(key)
 
 			const existing = rows.get(key)
-			if (existing) continue
+			if (existing) {
+				updateRowScope(
+					existing.rowScope,
+					{ binding, bindingNames, destructureRow: options.destructureRow },
+					item,
+					index,
+					items.length
+				)
+				continue
+			}
 
+			const rowScope = createRowScope(
+				scope,
+				{ binding, bindingNames, destructureRow: options.destructureRow },
+				item,
+				index,
+				items.length
+			)
 			const spec = renderRow(rowScope)
 			const wrapper = doc.createElement('template')
 			wrapper.innerHTML = spec.renderHtml().trim()
@@ -123,8 +187,8 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 			if (!element) {
 				throw new Error('[aero] Reactive for row render produced no element.')
 			}
-			const cleanup = spec.mountRow(element)
-			rows.set(key, { element, cleanup })
+			const { cleanup, refresh } = resolveRowMount(spec.mountRow(element))
+			rows.set(key, { element, cleanup, rowScope, refresh })
 		}
 
 		for (const [key, row] of rows) {
@@ -141,6 +205,12 @@ export function bindKeyedFor(options: BindKeyedForOptions): Cleanup {
 			if (row) fragment.appendChild(row.element)
 		}
 		replaceMountTargetChildren(mountTarget, fragment)
+
+		for (const key of nextKeys) {
+			const row = rows.get(key)
+			if (!row) continue
+			row.refresh()
+		}
 	}
 
 	const effect = new Effect(reconcile)

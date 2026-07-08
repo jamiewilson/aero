@@ -188,3 +188,14 @@ export function collectForDirectiveBindingNames(inner: string): string[] {
 	collectBindingIds(id, out)
 	return [...out]
 }
+
+/** Scope names available inside a reactive `for` loop body (bindings + loop metadata). */
+export function buildForLoopBodyScopeNames(binding: string): ReadonlySet<string> {
+	const names = collectForDirectiveBindingNames(`const ${binding} of __aeroItems`)
+	const shadows = new Set(findForLoopImplicitNameShadows(binding))
+	const scopeNames = new Set(names)
+	for (const implicit of FOR_LOOP_IMPLICIT_NAMES) {
+		if (!shadows.has(implicit)) scopeNames.add(implicit)
+	}
+	return scopeNames
+}

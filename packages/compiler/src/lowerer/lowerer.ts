@@ -18,7 +18,7 @@ import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
 import { Resolver } from '../resolver'
 import { CompileError, type ComponentReactivePropMetadata } from '../types'
-import { collectForDirectiveBindingNames } from '../for-directive'
+import { buildForLoopBodyScopeNames, collectForDirectiveBindingNames } from '../for-directive'
 import {
 	parseComponentAttributes,
 	parseElementAttributes,
@@ -47,6 +47,7 @@ interface ChildHoistContext {
 	forHoistBindId?: number
 	ifHoistBindId?: number
 	textHoistBindId?: number
+	forBodyScopeNames?: ReadonlySet<string>
 }
 
 /** Internal lowerer: walks DOM nodes and builds IR; used by compile(). */
@@ -131,9 +132,14 @@ export class Lowerer {
 	 * node's outer tags. For `<template>`, inner markup comes from `template.content`, so output
 	 * IR never includes `<template>` / `</template>`.
 	 */
-	compileWrapperlessNode(node: any, skipInterpolation: boolean, outVar: string): IRNode[] {
+	compileWrapperlessNode(
+		node: any,
+		skipInterpolation: boolean,
+		outVar: string,
+		parentHoist?: ChildHoistContext
+	): IRNode[] {
 		const children = getEffectiveChildNodes(node)
-		return this.compileChildNodes(children, skipInterpolation, outVar)
+		return this.compileChildNodes(children, skipInterpolation, outVar, parentHoist)
 	}
 
 	/**
@@ -208,10 +214,15 @@ export class Lowerer {
 	): IRNode[] {
 		const text = node.textContent || ''
 		if (!text) return []
+		const reactiveBindingNames = this.reactiveState
+			? parentHoist?.forBodyScopeNames
+				? new Set([...this.reactiveState.bindingNames, ...parentHoist.forBodyScopeNames])
+				: this.reactiveState.bindingNames
+			: undefined
 		if (
 			!skipInterpolation &&
-			this.reactiveState &&
-			textReferencesStateBindings(text, this.reactiveState.bindingNames, value =>
+			reactiveBindingNames &&
+			textReferencesStateBindings(text, reactiveBindingNames, value =>
 				tokenizeCurlyInterpolation(value, { attributeMode: false })
 			)
 		) {
@@ -316,7 +327,9 @@ export class Lowerer {
 
 		// Wrapperless `<template data-for>` / `<template for>`: body is template contents only.
 		if (loopData && isTemplateElement(node)) {
-			const inner = this.compileWrapperlessNode(node, childSkip, outVar)
+			const inner = this.compileWrapperlessNode(node, childSkip, outVar, {
+				forBodyScopeNames: buildForLoopBodyScopeNames(loopData.binding),
+			})
 			return this.wrapForLoop(loopData, inner, [
 				...eventBinds,
 				...textBinds,
@@ -375,6 +388,9 @@ export class Lowerer {
 		const inner: IRNode[] = []
 		let switchBind: import('../ir').IRReactiveSwitchBind | null = null
 		const childHoist: ChildHoistContext = {}
+		if (loopData) {
+			childHoist.forBodyScopeNames = buildForLoopBodyScopeNames(loopData.binding)
+		}
 		let reactiveSwitchBindId: number | undefined
 
 		if (switchExpr && this.reactiveState) {

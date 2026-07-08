@@ -80,6 +80,21 @@ describe('reactive structural codegen', () => {
 		expect(code).toContain('bindingNames:')
 	})
 
+	it('scopes keyed for curly for text to rowMounts with loop metadata read', () => {
+		const html = `<script is:state>
+			let numbersArray = [1, 2, 3]
+		</script>
+		<span for="{ const number of numbersArray }" key="{ number }">{ number }{ last ? '' : ', ' }</span>`
+
+		const code = compile(parse(html), mockOptions)
+		const mountBlock = code.slice(code.indexOf('mountStateBindings('))
+		const topLevelTextBinds = mountBlock.match(/textBinds:\s*(\[[^\]]*\])/)?.[1]
+		expect(topLevelTextBinds).toBe('[]')
+		expect(code).toContain('rowMounts:')
+		expect(code).toMatch(/rowMounts:[\s\S]*read: __aeroTextRead_/)
+		expect(code).toContain('scope.last')
+	})
+
 	it('scopes keyed for text binds to rowMounts, not page-level textBinds', () => {
 		const html = `<script is:state>
 			let items = [{ id: 1, name: 'a' }]
@@ -158,7 +173,7 @@ describe('reactive structural codegen', () => {
 			`${fnBody}\nreturn __out;`
 		) as (scope: { id: string }, Aero: { escapeHtml: (v: unknown) => string }) => string
 		const htmlOut = renderRow({ id: 'a' }, { escapeHtml: v => String(v) }).trim()
-		expect(htmlOut).toMatch(/^<li class="list-item">a<\/li>$/)
+		expect(htmlOut).toMatch(/^<li class="list-item"><!-- aero:text:0 -->a<!-- \/aero:text:0 --><\/li>$/)
 	})
 
 	it('emits setItems helper with typed params in state scope functions', () => {
