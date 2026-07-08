@@ -14,12 +14,3 @@ export const shikiOptions: ShikiConfig = {
 	langs: ['js', 'ts', 'html', 'css', 'json', 'bash', aeroHtml],
 	transformers: [addPreDataLang(), addPreNotProse()],
 }
-
-export const colorReplacements = {
-	'github-light': {
-		'#fff': 'var(--code-light-bg)',
-	},
-	'github-dark-high-contrast': {
-		'#0a0c10': 'var(--code-dark-bg)',
-	},
-}

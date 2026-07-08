@@ -1,16 +1,15 @@
 <script is:build>
 	import { highlight, type ShikiConfig } from '@aero-js/highlight'
 	import { shikiOptions } from '@shared/shiki/shiki-options.ts'
-	const { code, language = 'html' } = Aero.props
-	const html = await highlight(code, language, shikiOptions as ShikiConfig)
+
+	const { code, lang = 'html' } = Aero.props
+	const highlightedCode = await highlight(code, lang, shikiOptions as ShikiConfig)
 </script>
 
-{ raw(html) }
+{ raw(highlightedCode) }
 
 <style>
-	[data-theme='light'] {
-		.shiki {
-			background-color: var(--code-light-bg) !important;
-		}
+	pre.shiki {
+		background: light-dark(var(--code-light-bg), var(--code-dark-bg)) !important;
 	}
 </style>

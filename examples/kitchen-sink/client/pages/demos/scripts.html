@@ -1,48 +1,56 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 
 	const data = 'Passed into <script props="{ data }">'
 </script>
 
 <base-layout title="Scripts">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Script types & loading behavior"
-			subtitle="Open the browser console to see each case." />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Script types & loading behavior</h1>
+			<p>Open the browser console to see each case.</p>
+			<hr />
+		</header>
 
-		<ul class="list-disc list-inside space-y-4">
-			<li><code>script is:inline</code> nested in page content — stays in place, not bundled</li>
+		<main>
+			<ul>
+				<li><code>script is:inline</code> nested in page content — stays in place, not bundled</li>
 
-			<li><code>script props</code> — Vite-bundled client module with build-time data injection</li>
+				<li>
+					<code>script props</code> — Vite-bundled client module with build-time data injection
+				</li>
 
-			<li><code>script is:inline props</code> — inline script with build-time props</li>
+				<li><code>script is:inline props</code> — inline script with build-time props</li>
 
-			<li>
-				Plain <code>script</code> — Vite-bundled client module, hoisted to end of <code>body</code>
-			</li>
+				<li>
+					Plain <code>script</code> — Vite-bundled client module, hoisted to end of
+					<code>body</code>
+				</li>
 
-			<li>External <code>script src</code> — third-party URL, left unchanged (not bundled)</li>
+				<li>External <code>script src</code> — third-party URL, left unchanged (not bundled)</li>
 
-			<li><code>script is:blocking</code> — moved to <code>head</code> before paint</li>
+				<li><code>script is:blocking</code> — moved to <code>head</code> before paint</li>
 
-			<li>
-				Local <code>script src</code> — aliased path, bundled and rewritten to a hashed asset URL
-			</li>
+				<li>
+					Local <code>script src</code> — aliased path, bundled and rewritten to a hashed asset URL
+				</li>
 
-			<li><code>script async src</code> — local module loaded asynchronously</li>
+				<li><code>script async src</code> — local module loaded asynchronously</li>
 
-			<script is:inline>
-				console.debug('[aero] <script is:inline> nested in page content')
-			</script>
+				<script is:inline>
+					console.debug('[aero] <script is:inline> nested in page content')
+				</script>
 
-			<li>
-				<code>script defer src</code> — local module; <code>defer</code> stripped when Aero adds
-				<code>type="module"</code>
-			</li>
+				<li>
+					<code>script defer src</code> — local module; <code>defer</code> stripped when Aero adds
+					<code>type="module"</code>
+				</li>
 
-			<li>Public static <code>script src</code> — file from <code>./public</code>, served as-is</li>
-		</ul>
+				<li>
+					Public static <code>script src</code> — file from <code>./public</code>, served as-is
+				</li>
+			</ul>
+		</main>
 	</article>
 </base-layout>
 

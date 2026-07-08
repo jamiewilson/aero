@@ -1,6 +1,5 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -26,15 +25,29 @@
 </script>
 
 <base-layout title="Iterables">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Reactive collection state"
-			subtitle="Keyed reactive <code>for</code> loops over <code>Array</code>, <code>Set</code>, and <code>Map</code> with in-place mutation—requires <code>script is:state</code>. See <a href='/demos/templating'>Templating</a> for build-time <code>for</code>. <br> <br> Mutations like <code>push</code>, <code>splice</code>, <code>add</code>, and <code>set</code> notify the owning signal. Derived counts update without replacing the whole collection." />
+	<article class="prose prose-dark:prose-invert min-w-fit place-self-center pb-[20vh]">
+		<header>
+			<h1>Reactive collection state</h1>
+			<p>
+				Keyed reactive <code>for</code> loops over <code>Array</code>, <code>Set</code>, and
+				<code>Map</code> with in-place mutation—requires <code>script is:state</code>. See
+				<a href="/demos/templating">Templating</a> for build-time <code>for</code>.
+			</p>
 
-		<main class="grid gap-6 md:grid-cols-3">
-			<section class="card grid gap-2 content-start">
-				<h3 class="font-semibold">Array</h3>
-				<p class="text-sm">Mutate in place or replace immutably</p>
+			<p>
+				Mutations like <code>push</code>, <code>splice</code>, <code>add</code>, and
+				<code>set</code> notify the owning signal. Derived counts update without replacing the whole
+				collection.
+			</p>
+		</header>
+
+		<main class="grid lg:grid-cols-3 gap-6 not-prose">
+			<section class="card grid gap-4 content-start">
+				<header>
+					<h3 class="font-semibold">Array</h3>
+					<p class="text-sm">Mutate in place or replace immutably</p>
+				</header>
+
 				<div class="flex gap-2 flex-wrap">
 					<button on:click="{ numbersArray.push(nextNumber(numbersArray)) }">Add (push)</button>
 					<button on:click="{ numbersArray.splice(1, 1) }" disabled="{ !hasArrayItems }">
@@ -50,20 +63,25 @@
 					</button>
 					<button on:click="{ numbersArray = [] }" disabled="{ !hasArrayItems }">Clear</button>
 				</div>
-				<div class="text-sm">
-					Array length: <code>{ arrayCount }</code> · has items: <code>{ hasArrayItems }</code>
-				</div>
-				<ul
-					class="list-disc list-inside space-y-1"
-					for="{ const number of numbersArray }"
-					key="{ number }">
-					<li><code>{ number }</code></li>
-				</ul>
+
+				<figure class="card text-sm">
+					<p>array count: <code>{ arrayCount }</code></p>
+					<p>has array items: <code>{ hasArrayItems }</code></p>
+				</figure>
+
+				<figure class="card text-sm bg-green-500/10">
+					<span for="{ const number of numbersArray }" key="{ number }">
+						{ number }{ last ? '' : ', ' }
+					</span>
+				</figure>
 			</section>
 
-			<section class="card grid gap-2 content-start">
-				<h3 class="font-semibold">Set</h3>
-				<p class="text-sm"><code>add</code>, <code>delete</code>, <code>clear</code></p>
+			<section class="card grid gap-4 content-start">
+				<header>
+					<h3 class="font-semibold">Set</h3>
+					<p class="text-sm"><code>add</code>, <code>delete</code>, <code>clear</code></p>
+				</header>
+
 				<div class="flex gap-2 flex-wrap">
 					<button on:click="{ numbersSet.add(nextNumber(numbersSet)) }">Add</button>
 					<button on:click="{ numbersSet.delete(1) }" disabled="{ !hasSetItems }">
@@ -71,20 +89,25 @@
 					</button>
 					<button on:click="{ numbersSet.clear() }" disabled="{ !hasSetItems }">Clear</button>
 				</div>
-				<div class="text-sm">
-					Set size: <code>{ setSize }</code> · has items: <code>{ hasSetItems }</code>
-				</div>
-				<ul
-					class="list-disc list-inside space-y-1"
-					for="{ const number of numbersSet }"
-					key="{ number }">
-					<li><code>{ number }</code></li>
-				</ul>
+
+				<figure class="card text-sm">
+					<p>setSize: <code>{ setSize }</code></p>
+					<p>hasSetItems: <code>{ hasSetItems }</code></p>
+				</figure>
+
+				<figure class="card text-sm bg-green-500/10">
+					<span for="{ const number of numbersSet }" key="{ number }">
+						{ number }{ last ? '' : ', ' }
+					</span>
+				</figure>
 			</section>
 
-			<section class="card grid gap-2 content-start">
-				<h3 class="font-semibold">Map</h3>
-				<p class="text-sm">Destructured <code>for</code> over entries</p>
+			<section class="card grid gap-4 content-start">
+				<header>
+					<h3 class="font-semibold">Map</h3>
+					<p class="text-sm">Destructured <code>for</code> over entries</p>
+				</header>
+
 				<div class="flex gap-2 flex-wrap">
 					<button on:click="{ numbersMap.set(...nextMapEntry(numbersMap)) }">Add entry</button>
 					<button on:click="{ numbersMap.delete(1) }" disabled="{ !hasMapItems }">
@@ -92,15 +115,17 @@
 					</button>
 					<button on:click="{ numbersMap.clear() }" disabled="{ !hasMapItems }">Clear</button>
 				</div>
-				<div class="text-sm">
-					Map size: <code>{ mapSize }</code> · has items: <code>{ hasMapItems }</code>
-				</div>
-				<ul
-					class="list-disc list-inside space-y-1"
-					for="{ const [key, value] of numbersMap }"
-					key="{ key }">
-					<li><code>{ key }: { value }</code></li>
-				</ul>
+
+				<figure class="card text-sm">
+					<p>mapSize: <code>{ mapSize }</code></p>
+					<p>hasMapItems: <code>{ hasMapItems }</code></p>
+				</figure>
+
+				<figure class="card text-sm bg-green-500/10">
+					<span for="{ const [key, value] of numbersMap }" key="{ key }">
+						{ value }{ last ? '' : ', ' }
+					</span>
+				</figure>
 			</section>
 		</main>
 	</article>

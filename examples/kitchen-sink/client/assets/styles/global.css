@@ -14,7 +14,8 @@
 	--color-text: light-dark(var(--color-dark), var(--color-light));
 	--color-bg: light-dark(var(--color-light), var(--color-dark));
 	--color-border: --opacity(currentColor, 0.3);
-	--code-light-bg: --opacity(currentColor, 0.05);
+
+	--code-light-bg: --opacity(var(--color-dark), 0.05);
 	--code-dark-bg: oklch(from var(--color-dark) 0.1 c h);
 
 	--page-padding: 5vw;

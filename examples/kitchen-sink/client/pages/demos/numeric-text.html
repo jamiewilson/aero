@@ -11,18 +11,23 @@
 </script>
 
 <base-layout title="Numeric text">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Numeric text"
-			subtitle="<code>numeric-text</code> component with animated and trend props" />
-		<main class="grid grid-cols-2 gap-4">
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Numeric text</h1>
+			<p>
+				<code>{`<numeric-text />`}</code> wrapper component with bindable <code>value</code> prop.
+			</p>
+		</header>
+
+		<main class="grid grid-cols-2 gap-4 not-prose">
 			<section class="grid gap-2">
 				<button on:click="{ count = Math.floor(Math.random() * 10000) }">Random number</button>
 				<button on:click="{ count++ }">Increment</button>
 				<button on:click="{ count-- }">Decrement</button>
 				<button on:click="{ count = 0 }">Reset</button>
 			</section>
-			<section class="card grid w-full min-w-64 place-items-center">
+
+			<figure class="card grid place-items-center">
 				<!-- FIXME: class bindings don't work here when using a component -->
 				<numeric-text-component
 					bind:value="{ count }"
@@ -30,7 +35,7 @@
 					trend="{ trend }"
 					class:is-animated="{ animated }"
 					classes="font-bold text-[4rem]" />
-			</section>
+			</figure>
 		</main>
 	</article>
 </base-layout>

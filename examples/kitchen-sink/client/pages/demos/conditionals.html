@@ -19,13 +19,13 @@
 </script>
 
 <base-layout title="Reactive conditionals">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
 		<header-component
 			title="Reactive conditionals"
 			subtitle="Runtime <code>if</code> / <code>else-if</code> / <code>else</code> and <code>switch</code> / <code>case</code> / <code>default</code> — requires <code>script is:state</code>. See <a href='/demos/templating'>Templating</a> for build-time equivalents." />
 
 		<main class="grid gap-4">
-			<p class="text-sm opacity-60">
+			<p>
 				These directives re-evaluate on the client when signals change. Build-time variants render
 				once at compile.
 			</p>
@@ -36,7 +36,7 @@
 				<button on:click="{ count++ }">+</button>
 			</div>
 
-			<div class="card bg-green-500/10 p-4">
+			<div class="card bg-green-500/10 p-4 not-prose">
 				<p if="{ count > 0 }">Positive branch</p>
 				<p else-if="{ count < 0 }">Negative branch</p>
 				<p else>Zero branch</p>
@@ -49,7 +49,7 @@
 				<code>status = { status }</code>
 			</div>
 
-			<div switch="{ status }" class="card bg-green-500/10 p-4">
+			<div switch="{ status }" class="card bg-green-500/10 p-4 not-prose">
 				<p case="loading">Loading branch</p>
 				<p case="error">Error branch</p>
 				<p default>Ready branch</p>

@@ -32,29 +32,31 @@
 </script>
 
 <base-layout title="Keyed list">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Keyed reactive list"
-			subtitle="Keyed reactive <code>for</code> loop with <code>key</code> and view transitions" />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Keyed reactive list</h1>
+			<p>Keyed reactive <code>for</code> loop with <code>key</code> and view transitions.</p>
+			<hr />
+		</header>
 
-		<section class="grid grid-cols-2 gap-4 h-full">
-			<div class="flex flex-col gap-2">
+		<main class="grid grid-cols-2 gap-4 h-full not-prose">
+			<section class="flex flex-col gap-2">
 				<button on:click="{ add() }">Add</button>
 				<button on:click="{ addRandom() }">Add random</button>
 				<button on:click="{ remove() }" disabled="{ !hasItems }">Remove first</button>
 				<button on:click="{ removeRandom() }" disabled="{ !hasItems }">Remove random</button>
 				<button on:click="{ reverse() }" disabled="{ !hasItems }">Reverse</button>
 				<button on:click="{ shuffle() }" disabled="{ !hasItems }">Shuffle</button>
-			</div>
+			</section>
 
-			<div class="scroll-wrap">
+			<figure class="scroll-wrap">
 				<ul class="card scroll-content keyed-list">
 					<li class="transition-item" for="{ const { id } of items }" key="{ id }">
 						<code>{ id }</code>
 					</li>
 				</ul>
-			</div>
-		</section>
+			</figure>
+		</main>
 	</article>
 </base-layout>
 

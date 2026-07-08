@@ -10,10 +10,12 @@
 </script>
 
 <base-layout title="Process runtime">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Process runtime"
-			subtitle="<code>runtime.process()</code> wires reactive bindings on HTML inserted after load." />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Process runtime</h1>
+			<p><code>runtime.process()</code> wires reactive bindings on HTML inserted after load.</p>
+			<hr />
+		</header>
 
 		<main class="grid gap-4">
 			<label class="grid gap-4">
@@ -35,7 +37,10 @@
 				<button type="button" on:click="{ showNote = !showNote }">Toggle via $showNote</button>
 				<button type="button" id="process-status">Insert status fragment</button>
 			</div>
-			<div id="process-host" class="card text-sm bg-green-500/10">Fragments mounts here…</div>
+
+			<div id="process-host" class="card text-sm bg-green-500/10 not-prose">
+				Fragments mounts here…
+			</div>
 		</main>
 	</article>
 </base-layout>
