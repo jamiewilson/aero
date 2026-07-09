@@ -1,16 +1,24 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import aboutImage from '@images/about.jpg'
-	import header from '@components/demos/header.html'
+	import imageSrc from '@images/example.jpg'
+	import code from '@components/code.html'
+	import { image, imageImport } from '@content/snippets/images.html'
 </script>
 
 <base-layout title="Image imports">
-	<section class="grid gap-4">
-		<header-component
-			title="Image imports"
-			subtitle="Import an asset from <code>@images/</code> in <code>script is:build</code>, then use the resolved URL in markup." />
-		<img class="fullscreen" src="{ aboutImage }" alt="Sample imported image" width="480" />
-	</section>
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Image imports</h1>
+			<p>Import an asset from <code>@images/</code>, then use the resolved URL in markup.</p>
+		</header>
+
+		<div class="grid gap-4 not-prose">
+			<code-component code="{ imageImport.code }" />
+			<code-component code="{ image.code }" />
+		</div>
+
+		<img class="fullscreen" src="{ imageSrc }" alt="Sample imported image" width="480" />
+	</article>
 </base-layout>
 
 <style>
