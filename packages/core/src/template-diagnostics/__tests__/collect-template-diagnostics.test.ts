@@ -87,6 +87,42 @@ const title = 'Hello'
 	})
 })
 
+describe('collectTemplateDiagnostics @client import paths', () => {
+	const kitchenSinkRoot = path.join(repoRoot, 'examples/kitchen-sink')
+
+	it('does not flag code-component when imported via @client alias', () => {
+		const text = `<script is:build>
+import code from '@client/components/code.html'
+</script>
+<code-component code="test" />`
+		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/templating.html')
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(text, pagePath),
+			root: kitchenSinkRoot,
+			workspaceRoot: repoRoot,
+		})
+
+		const notImported = diagnostics.filter(d => d.message.includes("Component 'code' is not imported"))
+		expect(notImported).toHaveLength(0)
+	})
+
+	it('does not flag components imported via custom tsconfig aliases', () => {
+		const text = `<script is:build>
+import code from '@shared/ui/code.html'
+</script>
+<code-component code="test" />`
+		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/templating.html')
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(text, pagePath),
+			root: kitchenSinkRoot,
+			workspaceRoot: repoRoot,
+		})
+
+		const notImported = diagnostics.filter(d => d.message.includes("Component 'code' is not imported"))
+		expect(notImported).toHaveLength(0)
+	})
+})
+
 describe('collectTemplateDiagnostics component props', () => {
 	const kitchenSinkRoot = path.join(repoRoot, 'examples/kitchen-sink')
 
