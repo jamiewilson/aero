@@ -27,9 +27,13 @@ export function isTemplateAliasSpecifier(specifier: string): boolean {
  * Template alias imports must end in `.html`; relative imports must be explicit `*.html` paths.
  */
 export function isValidTemplateImportSpecifier(specifier: string): boolean {
-	if (isTemplateAliasSpecifier(specifier)) return specifier.endsWith('.html')
-	if (specifier.startsWith('./') || specifier.startsWith('../')) return specifier.endsWith('.html')
-	return false
+	if (!specifier.endsWith('.html')) return false
+	return (
+		isTemplateAliasSpecifier(specifier) ||
+		specifier.startsWith('./') ||
+		specifier.startsWith('../') ||
+		specifier.startsWith('@')
+	)
 }
 
 function resolveModuleCandidate(candidate: string): string | undefined {
