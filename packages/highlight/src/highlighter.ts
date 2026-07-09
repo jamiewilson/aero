@@ -1,8 +1,8 @@
-import type { HighlighterGeneric } from 'shiki'
+import type { BundledLanguage, HighlighterGeneric } from 'shiki'
 import type { ShikiConfig } from './types'
 import { createHighlighter as shikiCreateHighlighter } from 'shiki'
 
-const DEFAULT_LANGUAGES = ['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'json', 'bash']
+export const DEFAULT_LANGS: BundledLanguage[] = ['js', 'ts', 'html', 'css', 'json']
 
 /** Cached highlighter instance (created once per config). */
 let cachedHighlighter: HighlighterGeneric<any, any> | null = null
@@ -34,7 +34,7 @@ function buildCacheKey(config: ShikiConfig): string {
 						.join(',')
 				: 'none'
 
-	const langKey = (config.langs ?? DEFAULT_LANGUAGES)
+	const langKey = (config.langs ?? DEFAULT_LANGS)
 		.map(l => (typeof l === 'string' ? l : 'custom'))
 		.sort()
 		.join(',')
@@ -83,7 +83,7 @@ export async function getHighlighter(config: ShikiConfig): Promise<HighlighterGe
 	disposeCachedHighlighter()
 
 	const themes = extractThemes(config)
-	const langs = config.langs ?? DEFAULT_LANGUAGES
+	const langs = config.langs ?? DEFAULT_LANGS
 
 	cachedHighlighter = await shikiCreateHighlighter({
 		themes,
