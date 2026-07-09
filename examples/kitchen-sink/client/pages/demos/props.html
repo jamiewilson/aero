@@ -1,37 +1,14 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import greeting from '@components/demos/greeting.html'
-	import card from '@components/demos/card.html'
-	import site from '@content/site.ts'
 	import code from '@components/code.html'
-
-	const expressionTitle = site.home.title
+	import card from '@components/card.html'
+	import greeting from '@components/greeting.html'
+	import * as snippets from '@content/snippets/props.html'
 
 	const props = {
 		title: 'Props title',
-		body: 'Passed via props shorthand',
+		body: 'Passed via props',
 	}
-
-	const propsSpread = {
-		title: 'Spread title',
-		body: 'Passed via props spread',
-	}
-
-	const stringPropCode = `<greeting-component name="Aero" />`
-	const expressionPropCode = `<greeting-component name="{ expressionTitle }" />`
-	const defaultPropCode = `<greeting-component />`
-	const propsShorthandCode = `<card-component props />`
-	const propsSpreadCode = `<card-component props="{ ...propsSpread }" />`
-	const slotContentCode = `<card-component title="With slot" body="Body from prop.">
-	<p>Extra content from the parent page.</p>
-</card-component>`
-
-	const typedPropsCode = `<card-component 
-	title="Typed" 
-	body="Props interface checked with aero check --types." />`
-
-	const requiredPropCode = `<card-component title="Typed" />`
-	const missingPropCode = `<card-component />`
 </script>
 
 <base-layout title="Props">

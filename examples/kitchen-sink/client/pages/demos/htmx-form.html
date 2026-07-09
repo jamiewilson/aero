@@ -1,15 +1,15 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 
 <base-layout title="HTMX/Alpine form">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="HTMX/Alpine form"
-			subtitle="Alpine <code>x-model</code> with an HTMX POST and toast fragment." />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>HTMX/Alpine form</h1>
+			<p>Alpine <code>x-model</code> with an HTMX POST and toast fragment.</p>
+		</header>
 
 		<main x-data="{ input: '', dismiss: ${dismiss} }" class="grid gap-4 text-center">
 			<p>Test the server:</p>

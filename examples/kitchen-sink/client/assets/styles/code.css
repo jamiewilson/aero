@@ -8,6 +8,7 @@
 	--tab-size: 2ch;
 	--padding: var(--box-padding);
 	--line-height: 1.6;
+	--code-border: --opacity(currentColor, 0.2);
 }
 
 @layer components {
@@ -27,7 +28,7 @@
 	/* Add a border to both inline and block code */
 	code:not(pre code),
 	pre:has(code) {
-		border: 1px solid var(--color-border);
+		border: 1px solid var(--code-border);
 		/* Only apply background if not inside a shiki block */
 		&:not(.shiki &) {
 			background: var(--code-bg) !important;
@@ -37,7 +38,6 @@
 	/* Inline code */
 	code:not(pre code) {
 		padding: 0.1em 0.4em 0.2em;
-		color: color-mix(in oklch, currentColor 70%, transparent);
 		border-radius: var(--radius-sm);
 	}
 

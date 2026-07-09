@@ -1,6 +1,5 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -20,9 +19,15 @@
 
 <base-layout title="Reactive conditionals">
 	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
-		<header-component
-			title="Reactive conditionals"
-			subtitle="Runtime <code>if</code> / <code>else-if</code> / <code>else</code> and <code>switch</code> / <code>case</code> / <code>default</code> — requires <code>script is:state</code>. See <a href='/demos/templating'>Templating</a> for build-time equivalents." />
+		<header>
+			<h1>Reactive conditionals</h1>
+			<p>
+				Runtime <code>if</code> / <code>else-if</code> / <code>else</code> and <code>switch</code> /
+				<code>case</code> / <code>default</code> — requires <code>script is:state</code>. See
+				<a href="/demos/templating">Templating</a> for build-time equivalents.
+			</p>
+			<hr />
+		</header>
 
 		<main class="grid gap-4">
 			<p>

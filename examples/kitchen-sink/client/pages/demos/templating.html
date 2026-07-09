@@ -1,6 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
+	import code from '@components/code.html'
 
 	const items = ['Item 1', 'Item 2', 'Item 3']
 	const count = 1
@@ -22,33 +22,35 @@
 		</header>
 
 		<main>
-			<section>
-				<header>
-					<h2>Interpolation</h2>
-					<p>
-						Single braces for for regular JS expressions (auto-escaped), raw() for rendering raw
-						HTML, and double braces for literal braces.
-					</p>
-				</header>
+			<header>
+				<h2>Interpolation</h2>
+				<p>
+					Single braces for for regular JS expressions (auto-escaped), raw() for rendering raw HTML,
+					and double braces for literal braces.
+				</p>
+			</header>
 
-				<dl class="grid gap-4 not-prose">
-					<div class="card grid gap-2">
+			<section>
+				<dl class="grid gap-4 text-sm not-prose">
+					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code>{{ escapedHTML }}</code>
+							<code-component code="{{ escapedHTML }}" />
 						</dt>
-						<dd>{ escapedHTML }</dd>
+						<dd class="card">{ escapedHTML }</dd>
 					</div>
-					<div class="card grid gap-1">
+
+					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code>{{ raw(trustedHTML) }}</code>
+							<code-component code="{{ raw(trustedHTML) }}" />
 						</dt>
-						<dd>{ raw(trustedHTML) }</dd>
+						<dd class="card">{ raw(trustedHTML) }</dd>
 					</div>
-					<div class="card grid gap-1">
+
+					<div class="grid md:grid-cols-2 gap-4">
 						<dt>
-							<code>{ `{{ literalBraces }}` }</code>
+							<code-component code="{ `{{ literalBraces }}` }" />
 						</dt>
-						<dd>{{ literalBraces }}</dd>
+						<dd class="card">{{ literalBraces }}</dd>
 					</div>
 				</dl>
 			</section>
@@ -59,7 +61,7 @@
 					<p>Rendered once — no client interactivity.</p>
 				</header>
 
-				<ul>
+				<ul class="card not-prose">
 					<li for="{ const item of items }">{ item }</li>
 				</ul>
 			</section>
@@ -73,7 +75,7 @@
 					</p>
 				</header>
 
-				<div class="card bg-green-500/10 p-4 text-sm not-prose">
+				<div class="card not-prose">
 					<p if="{ count > 0 }">Count > than zero</p>
 					<p else-if="{ count < 0 }">Count < than zero</p>
 					<p else>Count = zero</p>
@@ -86,7 +88,7 @@
 					<p><code>status = { status }</code> (fixed at build)</p>
 				</header>
 
-				<div switch="{ status }" class="card bg-green-500/10 p-4 text-sm not-prose">
+				<div switch="{ status }" class="card not-prose">
 					<p case="loading">Loading branch</p>
 					<p case="error">Error branch</p>
 					<p default>Ready branch</p>
