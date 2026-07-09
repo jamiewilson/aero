@@ -67,6 +67,21 @@ function findSelfClosingSlash(html: string, tagEnd: number): number {
 	return html[i] === '/' ? i : -1
 }
 
+function findRawTagClose(html: string, tagName: string, from: number): number {
+	const lower = html.toLowerCase()
+	const closeNeedle = `</${tagName}`
+	let idx = lower.indexOf(closeNeedle, from)
+	while (idx !== -1) {
+		const next = html[idx + closeNeedle.length]
+		if (!isTagNameChar(next)) {
+			const end = findTagEnd(html, idx + closeNeedle.length)
+			return end === -1 ? html.length - 1 : end
+		}
+		idx = lower.indexOf(closeNeedle, idx + closeNeedle.length)
+	}
+	return -1
+}
+
 export function expandSelfClosingTags(html: string): string {
 	let out = ''
 	let cursor = 0
@@ -99,6 +114,16 @@ export function expandSelfClosingTags(html: string): string {
 		if (tagEnd === -1) {
 			out += html.slice(tagStart)
 			break
+		}
+		if (tagName.toLowerCase() === 'script') {
+			const closeEnd = findRawTagClose(html, 'script', tagEnd + 1)
+			if (closeEnd === -1) {
+				out += html.slice(tagStart)
+				break
+			}
+			out += html.slice(tagStart, closeEnd + 1)
+			cursor = closeEnd + 1
+			continue
 		}
 
 		const selfClosingSlash = findSelfClosingSlash(html, tagEnd)
