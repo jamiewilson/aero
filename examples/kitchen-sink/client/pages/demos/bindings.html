@@ -1,6 +1,5 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -11,28 +10,53 @@
 </script>
 
 <base-layout title="Binding handlers">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Binding handlers"
-			subtitle="<code>show</code>, <code>html</code>, <code>class:*</code>, property bindings" />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Binding handlers</h1>
+			<p><code>show</code>, <code>html</code>, <code>class:*</code>, property bindings</p>
+			<hr />
+		</header>
 
 		<main class="grid gap-4">
-			<div class="grid gap-4">
-				<button on:click="{ open = !open }">Toggle show</button>
-				<div show="{ open }" class="card bg-green-500/10 text-center">
-					Shown when <code>open</code> is true
+			<section>
+				<header>
+					<h2>Show binding</h2>
+				</header>
+				<div class="grid gap-4 not-prose">
+					<button on:click="{ open = !open }">Toggle show</button>
+					<div show="{ open }" class="card bg-green-500/10 text-center">
+						Shown when <code>open</code> is true
+					</div>
 				</div>
-			</div>
+			</section>
 
-			<div html="{ body }" class="card text-center"></div>
+			<section>
+				<header>
+					<h2>HTML binding</h2>
+				</header>
+				<div html="{ body }" class="card text-center"></div>
+			</section>
 
-			<button on:click="{ active = !active }">Toggle <code>active</code> class binding</button>
-			<div class:is-active="{ active }" class="card text-center">
-				<code>class="{ active ? 'is-active' : '' }"</code>
-			</div>
+			<section>
+				<header>
+					<h2>Class binding</h2>
+				</header>
+				<div class="grid gap-4 not-prose">
+					<button on:click="{ active = !active }">Toggle <code>active</code> class binding</button>
+					<div class:is-active="{ active }" class="card text-center">
+						<code>class="{ active ? 'is-active' : '' }"</code>
+					</div>
+				</div>
+			</section>
 
-			<button on:click="{ saving = !saving }">Toggle disabled (property binding)</button>
-			<button disabled="{ saving }">disabled="{ saving }"</button>
+			<section>
+				<header>
+					<h2>Property binding</h2>
+				</header>
+				<div class="grid gap-4 not-prose">
+				<button on:click="{ saving = !saving }">Toggle disabled (property binding)</button>
+				<button disabled="{ saving }">disabled="{ saving }"</button>
+			</section>
 		</main>
 	</article>
 </base-layout>

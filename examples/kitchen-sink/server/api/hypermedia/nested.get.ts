@@ -9,6 +9,6 @@ export default defineHandler(async () => {
 		target: '#nested-result', autoDisable: true })}">
 		Nested load
 	</button>
-	<div id="nested-result" class="card">Nested target…</div>
+	<div id="nested-result">Nested target…</div>
 </div>`
 })

@@ -1,11 +1,8 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
-	let isChecked = false
-
 	let formModel = {
 		email: 'em@il.me',
 		agree: false,
@@ -32,12 +29,13 @@
 </script>
 
 <base-layout title="Form model">
-	<article class="max-w-fit justify-self-center pb-[20vh]">
-		<header-component
-			title="Form model"
-			subtitle="A reactive form model with validation and submission." />
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Form model</h1>
+			<p>A reactive form model with validation and submission.</p>
+		</header>
 
-		<form class="grid gap-4 w-full max-w-sm" class:is-valid="{ isComplete() }">
+		<form class="grid gap-4 w-full max-w-sm not-prose" class:is-valid="{ isComplete() }">
 			<div class="grid gap-2">
 				<label for="email" class="flex justify-between">
 					Email
