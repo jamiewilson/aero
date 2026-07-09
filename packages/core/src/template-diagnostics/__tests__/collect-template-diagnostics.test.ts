@@ -128,9 +128,9 @@ describe('collectTemplateDiagnostics component props', () => {
 
 	it('reports missing required props for individual component attributes', () => {
 		const text = `<script is:build>
-import header from '@components/demos/header.html'
+import card from '@components/card.html'
 </script>
-<header-component subtitle="Missing title" />`
+<card-component body="Missing title" />`
 		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/templating.html')
 		const diagnostics = collectTemplateDiagnostics({
 			document: makeDocument(text, pagePath),
@@ -141,24 +141,24 @@ import header from '@components/demos/header.html'
 		const missing = diagnostics.find(
 			d =>
 				d.message.includes("Missing required prop 'title'") &&
-				d.message.includes('header-component')
+				d.message.includes('card-component')
 		)
 		expect(missing).toBeDefined()
 		expect(missing!.code).toBe('AERO_COMPILE')
-		const tagStart = text.indexOf('<header-component')
+		const tagStart = text.indexOf('<card-component')
 		expect(missing!.span).toEqual({
 			file: pagePath,
 			line: 3,
 			column: 0,
 			lineEnd: 3,
-			columnEnd: '<header-component'.length,
+			columnEnd: '<card-component'.length,
 		})
 		expect(tagStart).toBeGreaterThanOrEqual(0)
 	})
 
 	it('reports missing required props when component has no attributes', () => {
 		const text = `<script is:build>
-import card from '@components/demos/card.html'
+import card from '@components/card.html'
 </script>
 <card-component />`
 		const pagePath = path.join(kitchenSinkRoot, 'client/pages/demos/props.html')
