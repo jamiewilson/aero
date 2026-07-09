@@ -1921,6 +1921,29 @@ describe('AeroDiagnostics Component References', () => {
 		)
 		expect(headerDiags).toHaveLength(0)
 	})
+
+	it('should not run template diagnostics on content/snippets modules', () => {
+		const text = `<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`
+		const doc = {
+			uri: {
+				toString: () => 'file:///app/content/snippets/markup.html',
+				fsPath: '/app/content/snippets/markup.html',
+				scheme: 'file',
+			},
+			getText: () => text,
+			positionAt: (offset: number) => positionAtOffset(text, offset),
+			languageId: 'aero',
+			fileName: '/app/content/snippets/markup.html',
+			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
+		} as any
+
+		runDiagnostics(doc)
+
+		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
+		expect(reportedDiagnostics).toHaveLength(0)
+	})
 })
 
 /** Cross-file prop validation: report when required props are missing. */

@@ -15,6 +15,7 @@
 	--color-bg: light-dark(var(--color-light), var(--color-dark));
 	--color-border: --opacity(currentColor, 0.1);
 	--page-padding: 5vw;
+	--box-padding: 1.5rem;
 	--nav-height: 5rem;
 }
 
@@ -180,7 +181,7 @@
 		box-shadow: inset 0 0 0 1px var(--color-border);
 		border-radius: var(--radius-2xl);
 		corner-shape: squircle;
-		padding: 2rem;
+		padding: var(--box-padding);
 	}
 }
 

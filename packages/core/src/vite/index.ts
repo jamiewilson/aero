@@ -9,6 +9,7 @@
 import type { AeroOptions, AliasResult, ScriptEntry } from '../types'
 import type {
 	DevEnvironment,
+	ModuleNode,
 	Plugin,
 	PluginOption,
 	ResolvedConfig,
@@ -22,6 +23,9 @@ import { nitro } from 'nitro/vite'
 import {
 	AERO_EMPTY_INLINE_CSS_PREFIX,
 	AERO_HTML_VIRTUAL_PREFIX,
+	AERO_SNIPPET_VIRTUAL_PREFIX,
+	fromSnippetVirtualModuleId,
+	toSnippetVirtualModuleId,
 	CLIENT_SCRIPT_PREFIX,
 	DEFAULT_API_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
@@ -56,6 +60,7 @@ import {
 } from './build'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
+import { writeSnippetTypesGenerated } from '../snippet-typegen'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -73,6 +78,7 @@ import { createStaticBuildReportingService } from './static-build-reporting'
 import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
 import { normalizeAeroOptions, resolveContentOptions } from './resolve-aero-options'
 import { aeroContent } from '@aero-js/content/vite'
+import { compileSnippetModule, isSnippetModulePath } from '../snippets'
 
 const require = createRequire(import.meta.url)
 
@@ -293,6 +299,7 @@ function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 			state.config = resolvedConfig
 			const { manifest } = writeRouteManifestGenerated(resolvedConfig.root, state.dirs.client)
 			writeRouteTypesGenerated(resolvedConfig.root, manifest)
+			writeSnippetTypesGenerated(resolvedConfig.root)
 			// Write runtime instance to a real file under .aero so Vite's import-glob allows our patterns (virtual modules require leading '/').
 			const dir = path.join(resolvedConfig.root, AERO_DIR)
 			mkdirSync(dir, { recursive: true })
@@ -343,6 +350,54 @@ function isAeroTemplateHtml(
 	)
 }
 
+interface ModuleGraphLike {
+	getModuleById(id: string): ModuleNode | undefined
+	invalidateModule(mod: ModuleNode, seen?: Set<ModuleNode>): void
+}
+
+/** Invalidate snippet virtual module, its importers, and runtime instance in one module graph. */
+function invalidateSnippetModulesInGraph(
+	moduleGraph: ModuleGraphLike,
+	snippetFile: string,
+	affected: Set<ModuleNode>
+): void {
+	const virtualId = toSnippetVirtualModuleId(path.resolve(snippetFile))
+	const snippetMod = moduleGraph.getModuleById(virtualId)
+	if (!snippetMod) return
+
+	const queue: ModuleNode[] = [snippetMod]
+	const seen = new Set<ModuleNode>()
+	while (queue.length > 0) {
+		const mod = queue.shift()!
+		if (seen.has(mod)) continue
+		seen.add(mod)
+		moduleGraph.invalidateModule(mod)
+		affected.add(mod)
+		for (const importer of mod.importers) {
+			if (!seen.has(importer)) queue.push(importer)
+		}
+	}
+
+	const runtimeMod = moduleGraph.getModuleById(RESOLVED_RUNTIME_INSTANCE_MODULE_ID)
+	if (runtimeMod && !seen.has(runtimeMod)) {
+		moduleGraph.invalidateModule(runtimeMod)
+		affected.add(runtimeMod)
+	}
+}
+
+/**
+ * Propagate snippet file changes through client and SSR module graphs so importing pages
+ * and the runtime instance re-execute (dev HMR + fresh SSR).
+ */
+function collectSnippetHotUpdateModules(file: string, server: ViteDevServer): ModuleNode[] {
+	if (!isSnippetModulePath(file)) return []
+	const affected = new Set<ModuleNode>()
+	invalidateSnippetModulesInGraph(server.moduleGraph, file, affected)
+	const ssrGraph = server.environments.ssr?.moduleGraph
+	if (ssrGraph) invalidateSnippetModulesInGraph(ssrGraph, file, affected)
+	return [...affected]
+}
+
 /** Turn a compile failure into JS source, or call Vite `error` on failure. */
 function compileOrReport(
 	ctx: { error(payload: unknown): never },
@@ -387,6 +442,10 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 		},
 		async handleHotUpdate(ctx) {
 			if (!state.config || state.config.command === 'build') return
+
+			const snippetModules = collectSnippetHotUpdateModules(ctx.file, ctx.server)
+			if (snippetModules.length > 0) return snippetModules
+
 			if (!ctx.file.endsWith('.html')) return
 			if (!isAeroTemplateHtml(ctx.file, state.config.root, state.dirs)) return
 
@@ -428,6 +487,10 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const { manifest } = writeRouteManifestGenerated(state.config.root, state.dirs.client)
 				writeRouteTypesGenerated(state.config.root, manifest)
 			}
+			const regenerateSnippetTypes = (): void => {
+				if (!state.config) return
+				writeSnippetTypesGenerated(state.config.root)
+			}
 			const onClientTemplateFs = (file: string): void => {
 				if (!file.endsWith('.html')) return
 				if (!state.config) return
@@ -439,6 +502,16 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 			}
 			server.watcher.on('add', onClientTemplateFs)
 			server.watcher.on('unlink', onClientTemplateFs)
+			const onSnippetFs = (file: string): void => {
+				if (!state.config) return
+				const snippetsRoot = path.resolve(state.config.root, 'content', 'snippets')
+				const abs = path.resolve(file)
+				if (abs !== snippetsRoot && !abs.startsWith(snippetsRoot + path.sep)) return
+				regenerateSnippetTypes()
+			}
+			server.watcher.on('add', onSnippetFs)
+			server.watcher.on('change', onSnippetFs)
+			server.watcher.on('unlink', onSnippetFs)
 		},
 		async resolveId(id, importer) {
 			// In dev: redirect client's runtime instance import to the virtual module.
@@ -504,7 +577,15 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				return null
 			}
 
+			if (id.startsWith(AERO_SNIPPET_VIRTUAL_PREFIX)) {
+				return id
+			}
+
 			const resolved = await this.resolve(id, importer, { skipSelf: true })
+			if (resolved && isSnippetModulePath(resolved.id)) {
+				return toSnippetVirtualModuleId(resolved.id)
+			}
+
 			if (resolved && resolved.id.endsWith('.html')) {
 				// Only in build: resolve Aero template .html to virtual id so vite:build-html never sees them.
 				// In dev we keep the real path so Vite's file watcher invalidates the module when the file changes (HMR + fresh SSR).
@@ -539,6 +620,20 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 
 			if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {
 				return '/* aero: no inline styles */'
+			}
+
+			if (id.startsWith(AERO_SNIPPET_VIRTUAL_PREFIX)) {
+				const filePath = fromSnippetVirtualModuleId(id)
+				if (!filePath) return null
+				// So Vite invalidates this virtual module when the snippet source changes (HMR).
+				this.addWatchFile(filePath)
+				const source = readFileSync(filePath, 'utf-8')
+				return compileOrReport(
+					this,
+					() => compileSnippetModule(source, filePath),
+					filePath,
+					'vite-plugin-aero-virtuals'
+				)
 			}
 
 			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
@@ -599,6 +694,8 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		transform(code, id) {
 			if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) return null
+			if (id.startsWith(AERO_SNIPPET_VIRTUAL_PREFIX)) return null
+			if (isSnippetModulePath(id)) return null
 			if (!id.endsWith('.html')) return null
 			if (!state.config || !state.aliasResult) return null
 			const resolvedConfig = state.config

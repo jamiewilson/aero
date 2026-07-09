@@ -38,6 +38,7 @@ export default {
 		{ label: 'Process runtime', href: '/demos/process' },
 		{ label: 'HTMX form', href: '/demos/htmx-form' },
 		{ label: 'Numeric text', href: '/demos/numeric-text' },
+		{ label: 'Snippets', href: '/demos/snippets' },
 	],
 	footer: {
 		links: [

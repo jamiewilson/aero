@@ -571,6 +571,16 @@ const x = 1
 		expect(text).toContain('title')
 	})
 
+	it('does not type-check snippet module interpolations as template expressions', () => {
+		const html = `<!-- @snippet:expressionProp -->
+<greeting-component name="{ expressionTitle }" />`
+
+		const code = new AeroVirtualCode(createSnapshot(html), '/app/content/snippets/markup.html')
+
+		expect(getEmbeddedById(code, 'expr_0')).toBeUndefined()
+		expect(code.embeddedCodes?.filter(c => c.id !== 'ambient')).toHaveLength(0)
+	})
+
 	it('does not treat braces inside script bodies as template interpolations', () => {
 		const html = `<script is:build>
 const o = { a: 1 }

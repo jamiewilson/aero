@@ -12,7 +12,7 @@ import path from 'node:path'
 import os from 'node:os'
 import { Aero } from '../../runtime'
 import { aero } from '../../vite'
-import { AERO_HTML_VIRTUAL_PREFIX } from '../../vite/defaults'
+import { AERO_HTML_VIRTUAL_PREFIX, AERO_SNIPPET_VIRTUAL_PREFIX, toSnippetVirtualModuleId } from '../../vite/defaults'
 
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = aero()
@@ -46,6 +46,7 @@ describe('Vite Plugin Integration', () => {
 			throw new Error(msg.message)
 		},
 		resolve: async () => null,
+		addWatchFile: () => {},
 	}
 
 	it('should transform html into a js module', async () => {
@@ -428,5 +429,152 @@ describe('Vite Plugin Integration', () => {
 			line: 5,
 			column: 5,
 		})
+	})
+
+	it('does not transform snippet html files under content/snippets', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-snippet-transform-'))
+		const snippetPath = path.join(tmpDir, 'content', 'snippets', 'markup.html')
+		fs.mkdirSync(path.dirname(snippetPath), { recursive: true })
+		fs.writeFileSync(
+			snippetPath,
+			`<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`,
+			'utf-8'
+		)
+		try {
+			const result = transformPlugin.transform.call(pluginCtx, fs.readFileSync(snippetPath, 'utf-8'), snippetPath)
+			expect(result).toBeNull()
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
+	})
+
+	it('loads snippet modules as virtual ESM exports', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-snippet-load-'))
+		const snippetPath = path.join(tmpDir, 'content', 'snippets', 'markup.html')
+		fs.mkdirSync(path.dirname(snippetPath), { recursive: true })
+		fs.writeFileSync(
+			snippetPath,
+			`<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`,
+			'utf-8'
+		)
+		try {
+			const loaded = virtualsPlugin.load.call(pluginCtx, toSnippetVirtualModuleId(snippetPath))
+			expect(loaded).toContain('export const propsString = { code:')
+			expect(loaded).toContain('lang: "html"')
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
+	})
+
+	it('handleHotUpdate invalidates snippet virtual modules and runtime instance', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-snippet-hot-update-'))
+		const snippetPath = path.join(tmpDir, 'content', 'snippets', 'markup.html')
+		fs.mkdirSync(path.dirname(snippetPath), { recursive: true })
+		fs.writeFileSync(
+			snippetPath,
+			`<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`,
+			'utf-8'
+		)
+		const virtualId = toSnippetVirtualModuleId(snippetPath)
+		const snippetMod = { id: virtualId, importers: new Set<any>() }
+		const pageMod = { id: path.join(tmpDir, 'client/pages/demo.html'), importers: new Set<any>() }
+		snippetMod.importers.add(pageMod)
+		const runtimeMod = { id: '\0virtual:aero/runtime-instance.ts', importers: new Set<any>() }
+		const invalidated: string[] = []
+		const ssrInvalidated: string[] = []
+		const makeGraph = (store: string[]) => ({
+			getModuleById: (id: string) => {
+				if (id === virtualId) return snippetMod
+				if (id === '\0virtual:aero/runtime-instance.ts') return runtimeMod
+				return null
+			},
+			invalidateModule: (mod: { id: string }) => store.push(mod.id),
+		})
+		try {
+			const result = await virtualsPlugin.handleHotUpdate({
+				file: snippetPath,
+				read: async () => fs.readFileSync(snippetPath, 'utf-8'),
+				server: {
+					moduleGraph: makeGraph(invalidated),
+					environments: { ssr: { moduleGraph: makeGraph(ssrInvalidated) } },
+				},
+				modules: [],
+			})
+			expect(result).toContain(snippetMod)
+			expect(result).toContain(runtimeMod)
+			expect(invalidated).toContain(virtualId)
+			expect(invalidated).toContain('\0virtual:aero/runtime-instance.ts')
+			expect(ssrInvalidated).toContain(virtualId)
+			expect(ssrInvalidated).toContain('\0virtual:aero/runtime-instance.ts')
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
+	})
+
+	it('registers snippet source files for HMR watch and reloads on change', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-snippet-hmr-'))
+		const snippetPath = path.join(tmpDir, 'content', 'snippets', 'markup.html')
+		fs.mkdirSync(path.dirname(snippetPath), { recursive: true })
+		fs.writeFileSync(
+			snippetPath,
+			`<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`,
+			'utf-8'
+		)
+		const virtualId = toSnippetVirtualModuleId(snippetPath)
+		const watched: string[] = []
+		const loadCtx = {
+			...pluginCtx,
+			addWatchFile: (file: string) => watched.push(file),
+		}
+		try {
+			const v1 = virtualsPlugin.load.call(loadCtx, virtualId)
+			expect(watched).toContain(snippetPath)
+			expect(v1).toContain('Aero')
+
+			fs.writeFileSync(
+				snippetPath,
+				`<!-- @snippet:propsString -->
+<greeting-component name="Updated" />
+`,
+				'utf-8'
+			)
+			const v2 = virtualsPlugin.load.call(loadCtx, virtualId)
+			expect(v2).toContain('Updated')
+			expect(v2).not.toContain('Aero')
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
+	})
+
+	it('loads css snippet modules with a .mjs virtual id', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-snippet-css-load-'))
+		const snippetPath = path.join(tmpDir, 'content', 'snippets', 'example.css')
+		fs.mkdirSync(path.dirname(snippetPath), { recursive: true })
+		fs.writeFileSync(
+			snippetPath,
+			`/* @snippet:prose */
+.prose {
+	max-width: 65ch;
+}
+`,
+			'utf-8'
+		)
+		try {
+			const virtualId = toSnippetVirtualModuleId(snippetPath)
+			expect(virtualId.endsWith('.mjs')).toBe(true)
+			const loaded = virtualsPlugin.load.call(pluginCtx, virtualId)
+			expect(loaded).toContain('export const prose = { code:')
+			expect(loaded).toContain('lang: "css"')
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true })
+		}
 	})
 })

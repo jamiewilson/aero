@@ -1,6 +1,7 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { isSnippetModulePath } from '../snippets'
 import { parseDocument } from './document-analysis'
 import { getResolver } from './path-resolver'
 import { checkComponentProps } from './checks/check-component-props'
@@ -57,6 +58,9 @@ export interface CollectTemplateDiagnosticsInput {
 
 export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInput): AeroDiagnostic[] {
 	const { document, workspaceRoot } = input
+	if (isSnippetModulePath(document.uri.fsPath)) {
+		return []
+	}
 	const parsed = parseDocument(document)
 	const diagnostics: AeroDiagnostic[] = []
 	const resolver = getResolver(document.uri.fsPath, workspaceRoot ?? input.root)

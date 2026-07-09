@@ -6,6 +6,8 @@ import {
 	aeroHtml,
 } from '@aero-js/highlight'
 
+import { transformerNotationHighlight } from '@shikijs/transformers'
+
 import { applyOverrides } from './utils.ts'
 import withItalics from './with-italics.ts'
 import withCommentColor from './with-comment-color.ts'
@@ -18,8 +20,8 @@ const shikiConfig: ShikiConfig = {
 		dark: applyOverrides(darkTheme, withItalics, withCommentColor),
 	},
 	defaultColor: 'light-dark()' as const,
-	langs: [...DEFAULT_LANGS, 'md', aeroHtml],
-	transformers: [addPreDataLang(), addPreNotProse()],
+	langs: [...DEFAULT_LANGS, 'sh', 'md', aeroHtml],
+	transformers: [addPreDataLang(), addPreNotProse(), transformerNotationHighlight()],
 }
 
 export default shikiConfig
