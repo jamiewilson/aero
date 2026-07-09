@@ -44,7 +44,8 @@ export class Resolver {
 	 * Resolve a string that may be a path (import specifier or attribute value).
 	 * Returns the original input if the resolved value does not look like a path.
 	 */
-	private resolvePathLike(input: string): string {
+	private resolvePathLike(input: string, requirePathLikeInput = false): string {
+		if (requirePathLikeInput && !/^(\.{1,2}\/|\/|@|~)/.test(input)) return input
 		let next = this.resolvePathFn(input, this.importer)
 		const looksPath = /^(\.{1,2}\/|\/|@|~)/.test(next)
 		if (!looksPath) return input
@@ -70,6 +71,6 @@ export class Resolver {
 	 * @returns Resolved path or unchanged value.
 	 */
 	resolveAttrValue(value: string): string {
-		return this.resolvePathLike(value)
+		return this.resolvePathLike(value, true)
 	}
 }
