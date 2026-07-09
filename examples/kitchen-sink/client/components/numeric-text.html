@@ -1,6 +1,10 @@
+<script is:build>
+	const { classes } = Aero.props
+</script>
+
 <script is:state>
 	import type { NumericText } from '@numeric-text/core'
-	import { wireNumericText } from '@scripts/numeric-text.ts'
+	import { wireNumericText } from '@scripts/numeric-text'
 
 	const {
 		value = Aero.bindable(0),
@@ -25,11 +29,4 @@
 	})
 </script>
 
-<numeric-text />
-
-<style>
-	numeric-text {
-		font-size: 3rem;
-		font-weight: bold;
-	}
-</style>
+<numeric-text class="{ classes }" />

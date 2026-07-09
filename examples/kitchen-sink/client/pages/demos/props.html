@@ -1,0 +1,129 @@
+<script is:build>
+	import base from '@layouts/base.html'
+	import greeting from '@components/demos/greeting.html'
+	import card from '@components/demos/card.html'
+	import site from '@content/site.ts'
+	import code from '@components/code.html'
+
+	const expressionTitle = site.home.title
+
+	const props = {
+		title: 'Props title',
+		body: 'Passed via props shorthand',
+	}
+
+	const propsSpread = {
+		title: 'Spread title',
+		body: 'Passed via props spread',
+	}
+
+	const stringPropCode = `<greeting-component name="Aero" />`
+	const expressionPropCode = `<greeting-component name="{ expressionTitle }" />`
+	const defaultPropCode = `<greeting-component />`
+	const propsShorthandCode = `<card-component props />`
+	const propsSpreadCode = `<card-component props="{ ...propsSpread }" />`
+	const slotContentCode = `<card-component title="With slot" body="Body from prop.">
+	<p>Extra content from the parent page.</p>
+</card-component>`
+
+	const typedPropsCode = `<card-component 
+	title="Typed" 
+	body="Props interface checked with aero check --types." />`
+
+	const requiredPropCode = `<card-component title="Typed" />`
+	const missingPropCode = `<card-component />`
+</script>
+
+<base-layout title="Props">
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Component props</h1>
+			<p>
+				Pass data into components as attributes, expressions, spreads, or shorthand — read with
+				<code>Aero.props</code> in <code>script[is:build]</code> blocks.
+			</p>
+			<hr />
+		</header>
+
+		<main>
+			<section>
+				<h3>String prop</h3>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="{ stringPropCode }" />
+					<greeting-component name="Aero" />
+				</figure>
+			</section>
+
+			<section>
+				<h3>Expression prop</h3>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="{ expressionPropCode }" />
+					<greeting-component name="{ expressionTitle }" />
+				</figure>
+			</section>
+
+			<section>
+				<h3>Default value</h3>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="{ defaultPropCode }" />
+					<greeting-component />
+				</figure>
+			</section>
+
+			<section>
+				<h3>Props shorthand</h3>
+				<p>Bare <code>props</code> when a variable is literally named <code>props</code></p>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="const props = { JSON.stringify(props, null, 2) }" lang="ts" />
+					<code-component code="{ propsShorthandCode }" />
+					<card-component props />
+				</figure>
+			</section>
+
+			<section>
+				<h3>Props spread</h3>
+				<p><code>props</code> attribute with an object spread — keys become individual props.</p>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component
+						code="const propsSpread = { JSON.stringify(propsSpread, null, 2) }"
+						lang="ts" />
+					<code-component code="{ propsSpreadCode }" />
+					<card-component props="{ ...propsSpread }" />
+				</figure>
+			</section>
+
+			<section>
+				<h3>Slot content</h3>
+				<p>Child markup lands in the component default slot.</p>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="{ slotContentCode }" />
+					<card-component title="With slot" body="Body from prop.">
+						<p>Extra content from the parent page.</p>
+					</card-component>
+				</figure>
+			</section>
+
+			<section>
+				<h3>Typed props</h3>
+				<p><code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code></p>
+
+				<figure class="grid gap-4 not-prose">
+					<code-component code="{ typedPropsCode }" />
+					<card-component title="Typed" body="Props interface checked with aero check --types." />
+					<code-component code="{ requiredPropCode }" />
+					<card-component title="Typed" />
+					<code-component code="{ missingPropCode }" />
+					<p class="card bg-red-500/10 text-red-700 p-4 text-sm">
+						{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }
+					</p>
+				</figure>
+			</section>
+		</main>
+	</article>
+</base-layout>

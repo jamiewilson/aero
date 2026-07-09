@@ -2,7 +2,7 @@ import { defineHandler } from 'nitro/h3'
 
 export default defineHandler(async () => {
 	await new Promise(resolve => setTimeout(resolve, 300))
-	return `<div id="nested-host" class="v-stack card">
+	return `<div id="nested-host" class="card grid gap-4">
 	<p>Swapped fragment with <code>data-aero-on-click</code> processed after swap.</p>
 	<button
 		data-aero-on-click="{ GET('/api/hypermedia/fragment', {

@@ -1,26 +1,20 @@
-@layer utils {
-	.prose {
-		font-size: 1.2rem;
-		max-width: 65ch;
-		margin-inline: auto;
-		margin-block-start: 10vh;
-		padding-block-end: 25vh;
-		text-align: left;
-		text-wrap: pretty;
+/* Disable Tailwind prose backticks around inline code */
+@utility prose {
+	code:not(pre code)::before,
+	code:not(pre code)::after {
+		content: '';
+	}
+}
 
-		header {
-			margin-block-start: 10vh;
-			font-size: x-large;
-			text-wrap: balance;
-		}
+/* Alternative to `dark:prose-invert` that works with user-defined themes */
+@custom-variant prose-dark {
+	&:where([data-theme='dark'], [data-theme='dark'] *) {
+		@slot;
+	}
 
-		:not(header) * + * {
-			margin-block-start: 1em;
-		}
-
-		ul,
-		ol {
-			margin-inline-start: 1em;
+	@media (prefers-color-scheme: dark) {
+		&:where([data-theme='system'], [data-theme='system'] *) {
+			@slot;
 		}
 	}
 }

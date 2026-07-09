@@ -9,3 +9,12 @@ export interface HeaderProps {
 	title: string
 	subtitle?: string
 }
+
+export interface GreetingProps {
+	name?: string
+}
+
+export interface CardProps {
+	title: string
+	body?: string
+}

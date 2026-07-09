@@ -1,0 +1,54 @@
+<script is:build>
+	import sub from '@layouts/sub.html'
+	import header from '@components/demos/header.html'
+</script>
+
+<sub-layout title="Layouts & slots">
+	<code slot="thru-sub">Forwarded slot</code>
+
+	<article class="prose prose-dark:prose-invert min-w-fit place-self-center pb-[20vh]">
+		<header>
+			<h1>Layouts & slots</h1>
+			<p>
+				This page uses <code>sub-layout</code> → <code>base-layout</code>. Named slots pass through
+				intermediate layouts to the outer shell.
+			</p>
+			<hr />
+		</header>
+
+		<main class="grid lg:grid-cols-3 gap-6 not-prose">
+			<section class="card grid gap-2 content-start">
+				<h3 class="font-semibold">Default slot</h3>
+				<p>
+					Page content between <code>{ `<sub-layout />` }</code> tags flows into
+					<code>{ `<slot />` }</code> in each layout, ending up in <code>base.html</code>'s body.
+				</p>
+
+				<p>
+					You can also use a named slot: <code>{ `<slot name="into-nav" />` }</code>
+				</p>
+			</section>
+
+			<section class="card grid gap-4 content-start">
+				<h3 class="font-semibold">Named slot → forwarded to nav</h3>
+				<p>
+					<code>{ `<code slot="thru-sub"></code>` }</code> on this page maps to
+					<code>{ `<slot name="thru-sub" slot="into-nav" />` }</code> in <code>sub.html</code>,
+					which, in turn, forwards to <code>{ `<slot name="into-nav" />` }</code> in
+					<code>base.html</code> → rendered in the nav bar above.
+				</p>
+				<p class="card bg-green-500/10 p-4 text-sm">
+					Check the nav. The <code>Forwarded slot</code> came from a named slot in the sub layout.
+				</p>
+			</section>
+
+			<section class="card grid gap-2 content-start">
+				<h3 class="font-semibold">Layout props</h3>
+				<p>
+					<code>title="Layouts & slots"</code> on <code>sub-layout</code> is forwarded as
+					<code>props</code> shorthand to <code>base-layout</code> for head metadata.
+				</p>
+			</section>
+		</main>
+	</article>
+</sub-layout>

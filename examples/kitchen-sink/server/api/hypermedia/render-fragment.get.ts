@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 export default defineHandler(async () => {
 	await new Promise(resolve => setTimeout(resolve, 300))
 	const html = await renderAeroFragment(
-		'client/components/hypermedia/status-fragment.html',
+		'client/components/demos/fragment.html',
 		{ message: `Fragment rendered at ${new Date().toISOString()}` },
 		{ root }
 	)

@@ -13,16 +13,19 @@ export default {
 	},
 	theme: {
 		options: Object.values(ThemeMode),
-		default: ThemeMode.System,
+		default: ThemeMode.Light,
 		storageKey: 'theme',
 		attribute: 'data-theme',
 	},
 	home: {
-		title: 'Welcome to Aero',
+		title: 'aero',
 		subtitle:
-			'A small web framework that gives you a better developer experience for mostly-vanilla HTML projects.',
+			'A static site generator with optional reactivity and full-stack hypermedia-based framework, powered by Vite and Nitro, deployable anywhere.',
 	},
 	demos: [
+		{ label: 'Templating', href: '/demos/templating' },
+		{ label: 'Props', href: '/demos/props' },
+		{ label: 'Layouts & slots', href: '/demos/layouts-slots' },
 		{ label: 'Scripts', href: '/demos/scripts' },
 		{ label: 'Image imports', href: '/demos/images' },
 		{ label: 'Conditionals', href: '/demos/conditionals' },
@@ -38,9 +41,9 @@ export default {
 	],
 	footer: {
 		links: [
-			{ label: 'Home', path: '/' },
-			{ label: 'Demos', path: '/demos' },
-			{ label: 'Docs', path: '/docs' },
+			{ label: 'docs', href: 'https://aerojs.mintlify.app' },
+			{ label: 'github', href: 'https://github.com/jamiewilson/aero' },
+			{ label: 'npm', href: 'https://www.npmjs.com/package/@aero-js/core' },
 		],
 	},
 }

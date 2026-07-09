@@ -1,57 +1,13 @@
 <script is:build>
 	import type { HeaderProps } from '@client/types/props.ts'
-	import logo from '@components/logo.html'
 
 	const props = Aero.props as HeaderProps
-	const isHomepage = Aero.page.routePath === '/'
-	const isReactivityDemo = Aero.page.routePath === '/demos/reactivity'
 </script>
 
-<script is:state>
-	const { count = Aero.bindable() } = Aero.props
-</script>
-
-<header>
-	<logo-component if="{ isHomepage }" class="logo" />
-	<h1 else-if="{ props.title }">{ props.title }</h1>
-
-	<div if="{ isReactivityDemo }" class="card v-stack items-center">
-		<h4>Reactive prop binding</h4>
-		<div class="h-stack items-center">
-			<button on:click="{ count-- }">−</button>
-			<code>bind:count="{ count }"</code>
-			<button on:click="{ count++ }">+</button>
-		</div>
-	</div>
+<header class="mb-10">
+	<h1 class="text-2xl font-bold" if="{ props.title }">{ props.title }</h1>
 
 	<slot name="subtitle">
-		<p class="subtitle secondary">{ props.subtitle }</p>
+		<p>{ props.subtitle }</p>
 	</slot>
-
-	<!-- Overrides global styles -->
-	<style>
-		@scope {
-			:scope {
-				background: none;
-			}
-
-			.logo {
-				width: 300px;
-				margin-bottom: 1rem;
-			}
-
-			.subtitle {
-				max-width: 45ch;
-				text-wrap: pretty;
-				justify-self: center;
-			}
-		}
-	</style>
 </header>
-
-<!-- Global styles -->
-<style>
-	header {
-		background: red;
-	}
-</style>

@@ -3,7 +3,27 @@ title: Draft Doc
 subtitle: This is a draft document. You can see it in dev mode, but it will not be included in the build.
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. Praesent et diam eget libero egestas mattis sit amet vitae augue.
+Aero Content will filter out documents without the `published` field set to `true`. Your content collection config schema file (e.g. `content.config.ts`) must include this option:
+
+```ts
+const docs = defineCollection({
+	// collection options...
+	schema: z.object({
+		published: z.boolean().default(false),
+		// other fields...
+	}),
+})
+```
+
+Then in your document frontmatter, set `published: true` to include the document in the build.
+
+```
+---
+published: true
+title: My Document
+subtitle: This is a published document. You can see it in dev mode and in the build.
+---
+```
 
 ## Heading
 

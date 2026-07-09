@@ -16,14 +16,14 @@
 </script>
 
 <base-layout title="{ doc.data.title }" description="{ doc.data.subtitle }">
-	<article class="prose">
-		<a href="/docs">← All docs</a>
+	<span slot="into-nav">← <a href="/docs">All docs</a></span>
+	<article class="prose prose-slate prose-dark:prose-invert place-self-center pb-[20vh]">
 		<header>
-			<badge-component if="{ !doc.data.published }" text="Draft" />
-			<h1>{ doc.data.title }</h1>
-			<p class="secondary">{ doc.data.subtitle }</p>
-			<hr />
+			<badge-component if="{ !doc.data.published }" label="Draft" />
+			<h1 class="mb-0">{ doc.data.title }</h1>
+			<p class="text-lg">{ doc.data.subtitle }</p>
 		</header>
+		<hr />
 		<section>{ raw(html) }</section>
 	</article>
 </base-layout>

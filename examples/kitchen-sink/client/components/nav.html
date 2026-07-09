@@ -1,22 +1,40 @@
 <script is:build>
 	import toggle from '@components/theme/toggle.html'
+	const isHomepage = Aero.page.routePath === '/'
+	const isDocsPage = Aero.page.routePath.startsWith('/docs/')
 </script>
 
 <nav>
-	<slot />
-	<toggle-component />
-
+	<div class="leading">
+		<a if="{ !isHomepage && !isDocsPage }" href="/" class="back">Home</a>
+		<slot />
+	</div>
+	<div class="trailing">
+		<toggle-component />
+	</div>
 	<style>
 		@scope {
 			:scope {
+				z-index: 100;
 				position: fixed;
 				top: 0;
 				right: 0;
-				padding: 1rem;
-				z-index: 100;
+				left: 0;
 
 				display: flex;
-				justify-content: flex-end;
+				justify-content: space-between;
+				align-items: center;
+				backdrop-filter: blur(1rem);
+				padding: var(--page-padding);
+
+				@media (width >= 768px) {
+					padding: 1rem;
+				}
+			}
+
+			.leading,
+			.trailing {
+				display: flex;
 				align-items: center;
 				gap: 1rem;
 			}

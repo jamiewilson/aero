@@ -1,7 +1,6 @@
 <script is:build>
 	import meta from '@components/meta.html'
 	import nav from '@components/nav.html'
-	import footer from '@components/footer.html'
 	import site from '@content/site.ts'
 	const { storageKey, attribute } = site.theme
 	const props = Aero.props
@@ -30,7 +29,5 @@
 		</nav-component>
 
 		<slot />
-
-		<footer-component />
 	</body>
 </html>

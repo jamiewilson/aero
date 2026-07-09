@@ -1,0 +1,128 @@
+<script is:build>
+	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
+
+	const items = ['Item 1', 'Item 2', 'Item 3']
+	const count = 1
+	const status = 'ready'
+	const escapedHTML = `<strong>Escaped</strong> HTML`
+	const trustedHTML = `<strong>Trusted</strong> HTML`
+</script>
+
+<base-layout title="Templating">
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Build-time templating</h1>
+			<p>
+				Directives in <code>script is:build</code> render once at compile. Reactive equivalents need
+				<code>script is:state</code> — see <a href="/demos/conditionals">Conditionals</a> and
+				<a href="/demos/iterables">Iterables</a>.
+			</p>
+			<hr />
+		</header>
+
+		<main>
+			<section>
+				<header>
+					<h2>Interpolation</h2>
+					<p>
+						Single braces for for regular JS expressions (auto-escaped), raw() for rendering raw
+						HTML, and double braces for literal braces.
+					</p>
+				</header>
+
+				<dl class="grid gap-4 not-prose">
+					<div class="card grid gap-2">
+						<dt>
+							<code>{{ escapedHTML }}</code>
+						</dt>
+						<dd>{ escapedHTML }</dd>
+					</div>
+					<div class="card grid gap-1">
+						<dt>
+							<code>{{ raw(trustedHTML) }}</code>
+						</dt>
+						<dd>{ raw(trustedHTML) }</dd>
+					</div>
+					<div class="card grid gap-1">
+						<dt>
+							<code>{ `{{ literalBraces }}` }</code>
+						</dt>
+						<dd>{{ literalBraces }}</dd>
+					</div>
+				</dl>
+			</section>
+
+			<section>
+				<header>
+					<h2>Build-time <code>for</code></h2>
+					<p>Rendered once — no client interactivity.</p>
+				</header>
+
+				<ul>
+					<li for="{ const item of items }">{ item }</li>
+				</ul>
+			</section>
+
+			<section>
+				<header>
+					<h2>Build-time <code>if</code> / <code>else-if</code> / <code>else</code></h2>
+					<p>
+						If <code>count = { count }</code> at build, then <code>if="{{ count > 0 }}"</code> will
+						be rendered as <code>if="{ count > 0 }"</code>
+					</p>
+				</header>
+
+				<div class="card bg-green-500/10 p-4 text-sm not-prose">
+					<p if="{ count > 0 }">Count > than zero</p>
+					<p else-if="{ count < 0 }">Count < than zero</p>
+					<p else>Count = zero</p>
+				</div>
+			</section>
+
+			<section>
+				<header>
+					<h2>Build-time <code>switch</code> / <code>case</code> / <code>default</code></h2>
+					<p><code>status = { status }</code> (fixed at build)</p>
+				</header>
+
+				<div switch="{ status }" class="card bg-green-500/10 p-4 text-sm not-prose">
+					<p case="loading">Loading branch</p>
+					<p case="error">Error branch</p>
+					<p default>Ready branch</p>
+				</div>
+			</section>
+
+			<section>
+				<h2>Build vs. reactive</h2>
+
+				<table>
+					<thead>
+						<tr>
+							<th>Directive</th>
+							<th>Build-time</th>
+							<th>Reactive</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Context</td>
+							<td><code>is:build</code></td>
+							<td><code>is:state</code></td>
+						</tr>
+						<tr>
+							<td>When it runs</td>
+							<td>Compile / SSR</td>
+							<td>Client runtime</td>
+						</tr>
+						<tr>
+							<td>Updates</td>
+							<td>Never (static HTML)</td>
+							<td>On signal change</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+		</main>
+	</article>
+</base-layout>

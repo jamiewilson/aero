@@ -1,53 +1,35 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/header.html'
+	import header from '@components/demos/header.html'
 
 	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
 </script>
 
-<base-layout>
-	<header-component
-		title="HTMX/Alpine form"
-		subtitle="Alpine x-model with an HTMX POST and toast fragment." />
-	<!-- Alpine x-data & @htmx:after-swap example -->
-	<section x-data="{ input: '', dismiss: ${dismiss} }">
-		<p>Test the server:</p>
-		<form
-			data-testid="htmx-form"
-			hx-post="/api/submit"
-			hx-on::after-request="if (event.detail.successful) this.reset()"
-			hx-target="[hx-toast]"
-			hx-swap="innerHTML">
-			<input
-				x-model="input"
-				data-testid="htmx-form-message-input"
-				type="text"
-				name="message"
-				placeholder="Enter a message" />
-			<button type="submit" :disabled="!input.length">Send POST Request</button>
-		</form>
+<base-layout title="HTMX/Alpine form">
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="HTMX/Alpine form"
+			subtitle="Alpine <code>x-model</code> with an HTMX POST and toast fragment." />
 
-		<span
-			class="toast"
-			data-testid="htmx-form-toast"
-			hx-toast
-			@htmx:after-swap="dismiss($el)"></span>
+		<main x-data="{ input: '', dismiss: ${dismiss} }" class="grid gap-4 text-center">
+			<p>Test the server:</p>
+			<form
+				class="grid gap-2 w-full"
+				data-testid="htmx-form"
+				hx-post="/api/submit"
+				hx-on::after-request="if (event.detail.successful) this.reset()"
+				hx-target="[hx-toast]"
+				hx-swap="innerHTML">
+				<input
+					x-model="input"
+					data-testid="htmx-form-message-input"
+					type="text"
+					name="message"
+					placeholder="Enter a message" />
+				<button type="submit" :disabled="!input.length">Send POST Request</button>
+			</form>
 
-		<style>
-			@scope {
-				:scope {
-					margin-block-start: 10vmin;
-				}
-
-				p {
-					font-size: smaller;
-				}
-
-				form {
-					margin-bottom: var(--vertical-spacing);
-					justify-self: center;
-				}
-			}
-		</style>
-	</section>
+			<span data-testid="htmx-form-toast" hx-toast @htmx:after-swap="dismiss($el)"></span>
+		</main>
+	</article>
 </base-layout>

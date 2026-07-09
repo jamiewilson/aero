@@ -1,0 +1,9 @@
+<script is:build>
+	import type { HeaderProps } from '@client/types/props.ts'
+	const props = Aero.props as HeaderProps
+</script>
+
+<header class="mb-0">
+	<h2 class="text-4xl font-bold mb-4">{ props.title }</h2>
+	<p if="{ props.subtitle }" class="max-w-prose">{ raw(props.subtitle) }</p>
+</header>

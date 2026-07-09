@@ -1,5 +1,6 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
@@ -11,7 +12,7 @@
 			types: ['list-update'],
 		})
 
-	let items = Array.from({ length: 10 }, () => ({ id: createID() }))
+	let items = Array.from({ length: 5 }, () => ({ id: createID() }))
 	let hasItems = items.length > 0
 
 	const add = () => setItems([...items, { id: createID() }])
@@ -31,51 +32,56 @@
 </script>
 
 <base-layout title="Keyed list">
-	<header>
-		<h2>Keyed list</h2>
-		<p class="secondary">
-			Keyed reactive <code>for</code> loop with <code>key</code> and view transitions
-		</p>
-	</header>
-	<article class="two-column">
-		<div class="v-stack">
-			<button on:click="{ add() }">Add</button>
-			<button on:click="{ addRandom() }">Add random</button>
-			<button on:click="{ remove() }" disabled="{ !hasItems }">Remove first</button>
-			<button on:click="{ removeRandom() }" disabled="{ !hasItems }">Remove random</button>
-			<button on:click="{ reverse() }" disabled="{ !hasItems }">Reverse</button>
-			<button on:click="{ shuffle() }" disabled="{ !hasItems }">Shuffle</button>
-		</div>
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Keyed reactive list</h1>
+			<p>Keyed reactive <code>for</code> loop with <code>key</code> and view transitions.</p>
+			<hr />
+		</header>
 
-		<div class="list-panel">
-			<ul class="card scrollable">
-				<li for="{ const { id } of items }" key="{ id }"><code>{ id }</code></li>
-			</ul>
-		</div>
+		<main class="grid grid-cols-2 gap-4 h-full not-prose">
+			<section class="flex flex-col gap-2">
+				<button on:click="{ add() }">Add</button>
+				<button on:click="{ addRandom() }">Add random</button>
+				<button on:click="{ remove() }" disabled="{ !hasItems }">Remove first</button>
+				<button on:click="{ removeRandom() }" disabled="{ !hasItems }">Remove random</button>
+				<button on:click="{ reverse() }" disabled="{ !hasItems }">Reverse</button>
+				<button on:click="{ shuffle() }" disabled="{ !hasItems }">Shuffle</button>
+			</section>
+
+			<figure class="scroll-wrap">
+				<ul class="card scroll-content keyed-list">
+					<li class="transition-item" for="{ const { id } of items }" key="{ id }">
+						<code>{ id }</code>
+					</li>
+				</ul>
+			</figure>
+		</main>
 	</article>
 </base-layout>
 
 <style>
+	@import 'tailwindcss/utilities';
+	@reference '@styles/global.css';
+
+	@utility keyed-list {
+		@apply list-inside font-mono text-sm space-y-2;
+		list-style-type: decimal-leading-zero;
+	}
+
 	html:active-view-transition-type(list-update) {
 		view-transition-name: none;
 	}
 
-	.two-column {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
-	}
-
-	.list-panel {
+	.scroll-wrap {
 		height: 0;
 		min-height: 100%;
 	}
 
-	.scrollable {
+	.scroll-content {
 		height: 100%;
 		overflow-y: auto;
 		overflow-x: hidden;
-		scrollbar-width: none;
 		view-transition-name: keyed-list;
 		view-transition-group: contain;
 	}
@@ -84,14 +90,7 @@
 		overflow: clip;
 	}
 
-	ul {
-		list-style-type: decimal-leading-zero;
-		list-style-position: inside;
-		font-family: var(--font-mono);
-		font-size: smaller;
-	}
-
-	li {
+	.transition-item {
 		view-transition-name: match-element;
 		view-transition-class: list-item;
 		animation-timing-function: var(--ease-in-out-quadratic);

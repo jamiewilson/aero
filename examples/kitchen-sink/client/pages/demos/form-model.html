@@ -1,93 +1,121 @@
 <script is:build>
 	import base from '@layouts/base.html'
+	import header from '@components/demos/header.html'
 </script>
 
 <script is:state>
+	let isChecked = false
+
 	let formModel = {
-		email: '',
+		email: 'em@il.me',
 		agree: false,
 		plan: '',
 		bio: '',
 	}
 
+	const emailIsValid = email => {
+		return email.length > 0 && email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+	}
+
+	const planIsValid = plan => {
+		return plan.length > 0 && ['free', 'pro'].includes(plan)
+	}
+
 	const isComplete = () => {
 		return (
-			formModel.email.length > 0 &&
-			formModel.agree &&
-			formModel.plan.length > 0 &&
-			formModel.bio.length > 0
+			emailIsValid(formModel.email) &&
+			planIsValid(formModel.plan) &&
+			formModel.bio.length > 0 &&
+			formModel.agree
 		)
 	}
 </script>
 
 <base-layout title="Form model">
-	<form class="v-stack" class:is-valid="{ isComplete() }">
-		<div class="v-stack">
-			<label for="email">Email</label>
-			<input
-				id="email"
-				type="email"
-				placeholder="Enter your email..."
-				value="{ formModel.email }"
-				required />
-		</div>
+	<article class="max-w-fit justify-self-center pb-[20vh]">
+		<header-component
+			title="Form model"
+			subtitle="A reactive form model with validation and submission." />
 
-		<div class="v-stack">
-			<label for="plan-select">Plan (select)</label>
-			<select id="plan-select" value="{ formModel.plan }">
-				<option value="" disabled selected>Select a plan...</option>
-				<option value="free">Free</option>
-				<option value="pro">Pro</option>
-			</select>
-		</div>
+		<form class="grid gap-4 w-full max-w-sm" class:is-valid="{ isComplete() }">
+			<div class="grid gap-2">
+				<label for="email" class="flex justify-between">
+					Email
+					<span class="text-xs font-mono text-gray-400">{ formModel.email || 'empty' }</span>
+				</label>
+				<input
+					id="email"
+					type="email"
+					placeholder="Enter your email..."
+					value="{ formModel.email }"
+					autocapitalize="off"
+					autocorrect="off"
+					autofocus
+					autocomplete="email"
+					required />
+			</div>
 
-		<fieldset class="v-stack">
-			<label>Plan (radio group)</label>
-			<label class="h-stack items-center">
-				<input type="radio" name="plan-radio" value="free" checked="{ formModel.plan }" />
-				<span>Free</span>
+			<div class="grid gap-2">
+				<label for="plan-select" class="flex justify-between">
+					Plan
+					<span class="text-xs font-mono text-gray-400">{ formModel.plan || 'empty' }</span>
+				</label>
+				<select id="plan-select" value="{ formModel.plan }" required>
+					<option value="" disabled selected>Select a plan...</option>
+					<option value="free">Free</option>
+					<option value="pro">Pro</option>
+				</select>
+			</div>
+
+			<div class="grid gap-2">
+				<fieldset id="plan-options" class="grid gap-2">
+					<legend class="flex justify-between w-full">Radio group</legend>
+					<label>
+						<input
+							type="radio"
+							name="plan-radio"
+							value="free"
+							checked="{ formModel.plan }"
+							required />
+						<span>Free</span>
+					</label>
+					<label>
+						<input
+							type="radio"
+							name="plan-radio"
+							value="pro"
+							checked="{ formModel.plan }"
+							required />
+						<span>Pro</span>
+					</label>
+				</fieldset>
+			</div>
+
+			<div class="grid gap-2">
+				<label for="bio" class="flex justify-between">
+					Bio
+					<span class="text-xs font-mono text-gray-400">{ formModel.bio || 'empty' }</span>
+				</label>
+				<textarea
+					id="bio"
+					placeholder="Add a bio..."
+					value="{ formModel.bio }"
+					rows="3"
+					required></textarea>
+			</div>
+
+			<label>
+				<input type="checkbox" checked="{ formModel.agree }" required />
+				<span>Agree to terms</span>
 			</label>
-			<label class="h-stack items-center">
-				<input type="radio" name="plan-radio" value="pro" checked="{ formModel.plan }" />
-				<span>Pro</span>
-			</label>
-		</fieldset>
 
-		<label class="v-stack">
-			<span>Bio</span>
-			<textarea placeholder="Add a bio..." value="{ formModel.bio }" rows="3"></textarea>
-		</label>
-
-		<label class="h-stack items-center">
-			<input type="checkbox" checked="{ formModel.agree }" />
-			<span>Agree to terms</span>
-		</label>
-	</form>
-
-	<div class="info">
-		<div>Email: <code>{ formModel.email || 'empty' }</code></div>
-		<div>Agreed: <code>{ formModel.agree || 'false' }</code></div>
-		<div>Plan: <code>{ formModel.plan || 'empty' }</code></div>
-		<div>Bio: <code>{ formModel.bio || 'empty' }</code></div>
-		<div>Is valid: <code>{ isComplete() }</code></div>
-	</div>
+			<button type="submit" disabled="{ !isComplete() }">Submit</button>
+		</form>
+	</article>
 </base-layout>
 
 <style>
-	form {
-		min-inline-size: 20rem;
-	}
-
-	.info {
-		position: absolute;
-		text-align: start;
-		font-size: smaller;
-	}
-
 	.is-valid {
-		outline: 2px solid lightgreen;
-		outline-offset: 2rem;
-		corner-shape: squircle;
-		border-radius: var(--radius-md);
+		box-shadow: 0 0 0 5px --opacity(var(--color-green-500), 0.2);
 	}
 </style>

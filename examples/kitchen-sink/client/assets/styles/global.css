@@ -1,81 +1,196 @@
 @layer reset, root, theme, base, layout, components, utils;
 
-@import 'reset.css';
-@import 'colors.css';
-@import 'fonts.css';
-@import 'animation.css';
-@import 'theme.css';
-@import 'forms.css';
-@import 'code.css';
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 @import 'prose.css';
-@import 'card.css';
-@import 'toast.css';
-@import 'utils.css';
-/*@import 'debug.css';*/
+@import 'code.css';
 
-@layer base {
-	:root {
-		--font-sans: system-ui, sans-serif;
-		--font-mono: 'MonaspaceNeadon', monospace;
-		--page-padding: 1rem;
-		--vertical-spacing: 2rem;
-		--element-base-padding: 1rem;
-		--radius-sm: 0.25rem;
-		--radius-md: 0.5rem;
-		--radius-lg: 1rem;
-		--radius-xl: 2rem;
-		--round: calc(infinity * 1px);
+@theme {
+	--font-sans: system-ui, sans-serif;
+	--font-mono: 'MonaspaceNeadon', monospace;
+	--color-light: var(--color-white);
+	--color-dark: var(--color-gray-950);
+	--color-accent: light-dark(var(--color-sky-500), var(--color-sky-400));
+	--color-text: light-dark(var(--color-dark), var(--color-light));
+	--color-bg: light-dark(var(--color-light), var(--color-dark));
+	--color-border: --opacity(currentColor, 0.1);
+	--page-padding: 5vw;
+	--nav-height: 5rem;
+}
+
+@font-face {
+	font-family: 'MonaspaceNeadon';
+	src: url('/fonts/MonaspaceNeadon-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'MonaspaceNeadon';
+	src: url('/fonts/MonaspaceNeadon-Italic.woff2') format('woff2');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+@keyframes slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(2em);
+	}
+}
+
+@keyframes slide-out {
+	to {
+		opacity: 0;
+		transform: translateX(-2em);
+	}
+}
+
+:root {
+	&[data-theme='system'] {
+		color-scheme: light dark;
 	}
 
+	&[data-theme='light'] {
+		color-scheme: light only;
+	}
+
+	&[data-theme='dark'] {
+		color-scheme: dark only;
+	}
+
+	&::view-transition {
+		pointer-events: none;
+	}
+}
+
+@layer base {
 	html,
 	body {
 		height: 100%;
 		font-size: 18px;
+		line-height: 1.5;
 	}
 
 	body {
-		display: grid;
-		place-content: safe center;
-		padding: var(--page-padding);
-		color: var(--color-fg);
+		color: var(--color-text);
 		background: var(--color-bg);
 		font-family: var(--font-sans);
-		line-height: 1.5;
-		text-align: center;
-	}
-
-	header,
-	section {
-		margin-bottom: var(--vertical-spacing);
-	}
-
-	section {
-		display: grid;
-		gap: calc(var(--vertical-spacing) / 4);
-	}
-
-	ul {
-		text-align: left;
+		padding: var(--page-padding);
+		padding-top: calc(var(--nav-height) + var(--page-padding));
 	}
 
 	a {
-		text-decoration: none;
-		color: var(--color-accent);
-		transition: color var(--duration-fast);
+		text-decoration: underline;
+		transition: color 200ms;
 
 		&:hover {
-			color: var(--color-fg);
+			color: var(--color-accent);
+		}
+
+		&.back::before {
+			content: '←';
+			display: inline-block;
+			vertical-align: middle;
+			margin-inline-end: 0.5ch;
+		}
+
+		&[target='_blank']::after {
+			content: '↗';
+			display: inline-block;
+			vertical-align: middle;
+			margin-inline-start: 0.5ch;
 		}
 	}
 
-	hr {
-		border: none;
-		border-top: 1px solid --opacity(currentColor, 0.3);
-		margin: var(--vertical-spacing) 0;
+	input[type='text'],
+	input[type='email'],
+	input[type='password'],
+	input[type='number'],
+	input[type='tel'],
+	input[type='url'],
+	input[type='search'],
+	input[type='submit'],
+	input[type='button'],
+	input[type='reset'],
+	select,
+	textarea,
+	button {
+		@apply inline-block text-sm p-4 rounded-3xl;
+		box-shadow: inset 0 0 0 1px var(--color-border);
+		corner-shape: squircle;
+		background: --opacity(currentColor, 0.05);
+	}
+
+	form,
+	fieldset {
+		@apply inline-block text-sm p-4 rounded-3xl;
+		box-shadow: inset 0 0 0 1px var(--color-border);
+		corner-shape: squircle;
+	}
+
+	button,
+	input[type='submit'],
+	input[type='button'],
+	input[type='reset'] {
+		background: --opacity(var(--color-text), 0.1);
+		transition-property: opacity, background, color;
+		transition-duration: 200ms;
+		cursor: pointer;
+
+		&:hover:not(:disabled) {
+			background: --opacity(var(--color-text), 0.15);
+		}
+
+		&:active:not(:disabled) {
+			scale: 0.99;
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
+	select {
+		appearance: base-select;
+		display: inline-flex;
+	}
+
+	label:has(input[type='radio']:disabled),
+	label:has(input[type='checkbox']:disabled),
+	label:has(input[type='radio']):not(:has(input[type='radio']:checked)),
+	label:has(input[type='checkbox']):not(:has(input[type='checkbox']:checked)) {
+		opacity: 0.5;
 	}
 
 	:focus-visible {
-		outline-offset: 2px;
-		outline: 2px solid var(--color-accent);
+		outline-color: var(--color-accent);
 	}
+}
+
+@layer components {
+	.card {
+		box-shadow: inset 0 0 0 1px var(--color-border);
+		border-radius: var(--radius-2xl);
+		corner-shape: squircle;
+		padding: 2rem;
+	}
+}
+
+@utility debug {
+	* &,
+	* {
+		box-shadow: inset 0 0 0 1px --opacity(red, 0.5);
+	}
+}
+
+@function --opacity(--color, --alpha) {
+	result: oklch(from var(--color) l c h / var(--alpha));
 }

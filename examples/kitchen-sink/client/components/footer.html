@@ -3,46 +3,8 @@
 	const links = site.footer.links
 </script>
 
-<footer>
-	<menu>
-		<template for="{ const { path, label } of links }">
-			<a href="{ path }"> { label } </a>
-		</template>
-	</menu>
-
-	<style>
-		@scope {
-			:scope {
-				position: fixed;
-				inset-inline: 0;
-				margin-inline: auto;
-				bottom: calc(var(--page-padding) * 2);
-
-				border-radius: var(--round);
-				width: fit-content;
-
-				border: 1px solid --opacity(currentColor, 0.1);
-				background: --opacity(currentColor, 0.05);
-				backdrop-filter: blur(10px);
-			}
-
-			menu {
-				display: flex;
-				padding-inline: var(--element-base-padding);
-				justify-content: center;
-				list-style-type: none;
-			}
-
-			a {
-				display: block;
-				text-box: trim-both cap alphabetic;
-				padding: var(--element-base-padding);
-				color: --opacity(var(--color-fg), 0.5);
-
-				&:hover {
-					color: var(--color-accent);
-				}
-			}
-		}
-	</style>
+<footer class="flex gap-6 text-sm mt-auto">
+	<span for="{ const link of links }">
+		<a href="{ link.href }" target="_blank" class="outbound">{ link.label }</a>
+	</span>
 </footer>

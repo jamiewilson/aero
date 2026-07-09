@@ -1,16 +1,17 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site'
-
-	const headerProps = {
-		title: site.home.title,
-		subtitle: site.home.subtitle,
-		requiredProp: true,
-	}
+	import footer from '@components/footer.html'
+	import demoList from '@components/demo-list.html'
 </script>
 
 <base-layout>
-	<header-component props="{ ...headerProps }" />
-	<header-component title="Second header" subtitle="Second subtitle" />
+	<article class="grid gap-4 h-full">
+		<header>
+			<h1 class="text-[4rem] font-semibold tracking-tight">{ site.home.title }</h1>
+			<p class="max-w-prose">{ site.home.subtitle } <a href="/docs">Get started</a>.</p>
+		</header>
+		<demo-list-component />
+		<footer-component />
+	</article>
 </base-layout>
