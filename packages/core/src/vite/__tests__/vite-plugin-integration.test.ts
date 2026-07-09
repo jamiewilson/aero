@@ -353,7 +353,7 @@ describe('Vite Plugin Integration', () => {
 		fs.mkdirSync(pagesDir, { recursive: true })
 		fs.writeFileSync(path.join(pagesDir, 'index.html'), '<p>home</p>', 'utf-8')
 
-		const watcherHandlers = new Map<string, (file: string) => void>()
+		const watcherHandlers = new Map<string, Array<(file: string) => void>>()
 		const invalidatedIds: string[] = []
 		try {
 			configPlugin.config({ root: tmpDir }, { command: 'serve' })
@@ -361,7 +361,9 @@ describe('Vite Plugin Integration', () => {
 			virtualsPlugin.configureServer?.({
 				watcher: {
 					on: (event: string, cb: (file: string) => void) => {
-						watcherHandlers.set(event, cb)
+						const handlers = watcherHandlers.get(event) ?? []
+						handlers.push(cb)
+						watcherHandlers.set(event, handlers)
 					},
 				},
 				moduleGraph: {
@@ -382,24 +384,24 @@ describe('Vite Plugin Integration', () => {
 
 			const add = watcherHandlers.get('add')
 			const unlink = watcherHandlers.get('unlink')
-			expect(add).toBeDefined()
-			expect(unlink).toBeDefined()
+			expect(add?.length).toBeGreaterThan(0)
+			expect(unlink?.length).toBeGreaterThan(0)
 
 			const docsPath = path.join(pagesDir, 'docs.html')
 			fs.writeFileSync(docsPath, '<p>docs</p>', 'utf-8')
-			add!(docsPath)
+			for (const handler of add!) handler(docsPath)
 			expect(readPaths()).toContain('/docs')
 
 			const guidePath = path.join(pagesDir, 'guide.html')
 			fs.renameSync(docsPath, guidePath)
-			unlink!(docsPath)
-			add!(guidePath)
+			for (const handler of unlink!) handler(docsPath)
+			for (const handler of add!) handler(guidePath)
 			const afterRename = readPaths()
 			expect(afterRename).toContain('/guide')
 			expect(afterRename).not.toContain('/docs')
 
 			fs.unlinkSync(guidePath)
-			unlink!(guidePath)
+			for (const handler of unlink!) handler(guidePath)
 			expect(readPaths()).not.toContain('/guide')
 			expect(invalidatedIds).toContain('\0virtual:aero/runtime-instance.ts')
 		} finally {
