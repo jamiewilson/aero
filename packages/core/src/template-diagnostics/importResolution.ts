@@ -7,7 +7,7 @@ export const TEMPLATE_IMPORT_PREFIXES = ['@components/', '@layouts/', '@pages/']
 const INDEX_CANDIDATES = ['index.ts', 'index.tsx', 'index.js', 'index.mjs'] as const
 const MODULE_EXTENSION_CANDIDATES = ['.ts', '.tsx', '.js', '.mjs', '.css', '.md', '.mdx'] as const
 
-function isExistingFile(filePath: string): boolean {
+export function isExistingFile(filePath: string): boolean {
 	try {
 		return fs.existsSync(filePath) && fs.statSync(filePath).isFile()
 	} catch {

@@ -11,7 +11,7 @@ import {
 } from '../utils/aliases'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
 import { loadProjectModule } from '../utils/load-project-module'
-import { resolveImportToFile } from './importResolution'
+import { isExistingFile, resolveImportToFile } from './importResolution'
 
 /** Default dirs when no aero config is available (matches framework defaults). */
 const DEFAULT_DIRS: ResolvedAeroDirs = {
@@ -66,6 +66,11 @@ export interface PathResolver {
 
 const resolverCache = new Map<string, PathResolver>()
 
+function resolveAeroContentTypes(projectRoot: string): string | undefined {
+	const candidate = path.join(projectRoot, 'node_modules', '@aero-js/core', 'env.d.ts')
+	return isExistingFile(candidate) ? candidate : undefined
+}
+
 export function getResolver(filePath: string, workspaceRoot?: string): PathResolver {
 	const docDir = path.dirname(filePath)
 	const rawAliases = loadTsconfigAliases(docDir)
@@ -92,6 +97,10 @@ export function getResolver(filePath: string, workspaceRoot?: string): PathResol
 		layoutsDir,
 		resolve(specifier: string, fromFile?: string): string | undefined {
 			if (/^(https?:|data:|#|\/\/)/.test(specifier)) return undefined
+
+			if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
+				return resolveAeroContentTypes(projectRoot)
+			}
 
 			const importer = fromFile ?? filePath
 			const rawResolved = resolveFn(specifier, importer)

@@ -39,13 +39,19 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			case 'import-path': {
 				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
+				const targetLine =
+					classification.specifier === 'aero:content' ||
+					classification.specifier.startsWith('aero:content/')
+						? findModuleDeclarationLine(resolved, 'aero:content')
+						: 0
+				return [makeLink(classification.range, resolved, targetLine)]
 			}
 
 			case 'import-name': {
 				const resolved = resolver.resolve(classification.specifier, document.uri.fsPath)
 				if (!resolved) return null
-				return [makeLink(classification.range, resolved)]
+				const targetLine = findExportLine(resolved, classification.name)
+				return [makeLink(classification.range, resolved, targetLine)]
 			}
 
 			case 'script-src':
@@ -321,6 +327,36 @@ function makeLink(
  * For `site.home.title`, propertyPath is `['home', 'title']`.
  * Walks the file looking for each property key in sequence.
  */
+function findExportLine(filePath: string, exportName: string): number {
+	try {
+		if (!fs.existsSync(filePath)) return 0
+		const lines = fs.readFileSync(filePath, 'utf-8').split('\n')
+		const pattern = new RegExp(
+			`\\bexport\\s+(?:async\\s+)?(?:function|const|class|type|interface|enum)\\s+${escapeRegex(exportName)}\\b`
+		)
+		for (let i = 0; i < lines.length; i++) {
+			if (pattern.test(lines[i])) return i
+		}
+	} catch {
+		// ignore
+	}
+	return 0
+}
+
+function findModuleDeclarationLine(filePath: string, moduleName: string): number {
+	try {
+		if (!fs.existsSync(filePath)) return 0
+		const lines = fs.readFileSync(filePath, 'utf-8').split('\n')
+		const pattern = new RegExp(`declare\\s+module\\s+['"]${escapeRegex(moduleName)}['"]`)
+		for (let i = 0; i < lines.length; i++) {
+			if (pattern.test(lines[i])) return i
+		}
+	} catch {
+		// ignore
+	}
+	return 0
+}
+
 function findPropertyLine(filePath: string, propertyPath: string[]): number {
 	try {
 		if (!fs.existsSync(filePath)) return 0
