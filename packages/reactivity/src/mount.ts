@@ -29,6 +29,8 @@ import { createEventHandlerActionScope } from '@aero-js/compiler/create-event-ha
 
 export type Cleanup = () => void
 
+export type RowMountResult = Cleanup | { cleanup: Cleanup; refresh?: () => void }
+
 export interface HypermediaRuntimeLike {
 	executeAction(
 		options: {
@@ -80,6 +82,8 @@ export interface MountStateBindingsOptions {
 	readonly allowLegacyRuntimeCompile?: boolean
 	/** When set, used instead of creating scope from store/bindings (e.g. keyed-for row scope). */
 	readonly scope?: StateScope
+	/** Collect reactive effects created during mount for keyed-for row refresh. */
+	readonly effectSink?: Effect[]
 	readonly textBinds: readonly { anchor: StructuralAnchor; read?: ScopeReader; readExpr?: string }[]
 	readonly eventBinds: readonly {
 		selector: string
@@ -499,6 +503,7 @@ function mountBindingSubset(
 		| 'componentBinds'
 		| 'Aero'
 		| 'allowLegacyRuntimeCompile'
+		| 'effectSink'
 	>
 ): Cleanup[] {
 	const cleanups: Cleanup[] = []
@@ -522,6 +527,7 @@ function mountBindingSubset(
 		hypermediaTriggerRef: options.hypermediaTriggerRef,
 		Aero: options.Aero,
 		scope,
+		effectSink: options.effectSink,
 	}
 	cleanups.push(mountStateBindings(subsetOptions))
 	return cleanups
@@ -690,6 +696,7 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			const value = read()
 			setMountTargetText(mountTarget, value == null ? '' : String(value))
 		})
+		options.effectSink?.push(effect)
 		cleanups.push(() => effect.destroy())
 	}
 
@@ -787,12 +794,20 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 						key: toKey(keyReader()),
 						renderHtml: () => bind.renderRow(rowScope, options.Aero),
 						mountRow: rowRoot => {
+							const rowEffects: Effect[] = []
 							const subsetCleanups = mountBindingSubset(rowRoot, rowScope, bind.rowMounts, {
 								...options,
 								hypermediaTriggerRef,
+								effectSink: rowEffects,
 							})
-							return () => {
-								for (const cleanup of subsetCleanups) cleanup()
+							const refresh = () => {
+								for (const effect of rowEffects) effect.schedule()
+							}
+							return {
+								cleanup: () => {
+									for (const cleanup of subsetCleanups) cleanup()
+								},
+								refresh,
 							}
 						},
 					}

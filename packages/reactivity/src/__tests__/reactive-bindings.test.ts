@@ -5,6 +5,7 @@ import { bindClassToggle } from '../bindings/class'
 import { bindProperty } from '../bindings/property'
 import { bindFormModel } from '../bindings/model'
 import { bindKeyedFor } from '../structural/for'
+import { Effect } from '../effect'
 import { createReactivityRuntime } from '../index'
 import { SignalStore } from '../store'
 import { createStateScope } from '../state-scope'
@@ -370,6 +371,44 @@ describe('reactive collections', () => {
 		;(scope.numbersArray as number[]).push(4)
 		expect(harness.rowCount).toBe(4)
 		harness.cleanup()
+	})
+
+	it('refreshes loop metadata text bindings when array grows', () => {
+		const store = new SignalStore()
+		const scope = createStateScope({
+			store,
+			bindings: [{ name: 'numbersArray', derived: false, init: () => [1, 2, 3], dependencies: [] }],
+			functionSources: [],
+		})
+		const container = document.createElement('code')
+		const cleanup = bindKeyedFor({
+			mountTarget: { kind: 'element', element: container },
+			scope,
+			itemsExpr: 'numbersArray',
+			keyExpr: 'number',
+			binding: 'number',
+			bindingNames: ['number'],
+			renderRow: rowScope => ({
+				key: 'unused',
+				renderHtml: () => '<span></span>',
+				mountRow: rowRoot => {
+					const text = document.createTextNode('')
+					rowRoot.appendChild(text)
+					const effect = new Effect(() => {
+						const last = rowScope.last as boolean
+						text.textContent = `${rowScope.number}${last ? '' : ', '}`
+					})
+					return {
+						cleanup: () => effect.destroy(),
+						refresh: () => effect.schedule(),
+					}
+				},
+			}),
+		})
+		expect(container.textContent).toBe('1, 2, 3')
+		;(scope.numbersArray as number[]).push(4)
+		expect(container.textContent).toBe('1, 2, 3, 4')
+		cleanup()
 	})
 
 	it('updates keyed for when Set mutates in place', () => {
