@@ -16,6 +16,7 @@ import {
 	collectFeatureGateIssuesFromSource,
 	loadProjectTsConfig,
 	writeComponentRegistryDts,
+	writeSnippetTypesGenerated,
 } from '@aero-js/core/compile-check'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import {
@@ -277,7 +278,8 @@ function templateDirs(root: string, clientRel: string): string[] {
 type AeroCheckOptions = {
 	/**
 	 * Run TypeScript checks on merged `<script is:build>` and `{ }` interpolations (same virtual files as Volar),
-	 * using the workspace tsconfig (paths, strict). Writes `.aero/cache/types/components.d.ts` for the component registry.
+	 * using the workspace tsconfig (paths, strict). Writes `.aero/cache/types/components.d.ts` and
+	 * `.aero/cache/types/snippets.d.ts` for generated import typings.
 	 */
 	types?: boolean
 }
@@ -348,6 +350,8 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 	const componentReactiveProps = collectComponentReactivePropMetadata([componentsDir, layoutsDir])
 	const registryWritten = runTypes ? writeComponentRegistryDts(root, componentsDir) : null
 	const registryPath = registryWritten?.path
+	const snippetsWritten = runTypes ? writeSnippetTypesGenerated(root) : null
+	const snippetsPath = snippetsWritten?.path
 
 	for (const file of sorted) {
 		let source: string
@@ -391,6 +395,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					project: projectTs ?? undefined,
 					interpolations: true,
 					componentRegistryDtsPath: registryPath,
+					snippetsDtsPath: snippetsPath,
 				})) {
 					const code = issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
 					diagnostics.push({

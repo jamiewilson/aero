@@ -38,6 +38,25 @@ export const AERO_EMPTY_INLINE_CSS_PREFIX = '\0aero:empty-inline-css:'
 /** Prefix for virtual HTML template modules. Resolving .html to this id returns compiled JS so vite:build-html never sees raw/compiled HTML. */
 export const AERO_HTML_VIRTUAL_PREFIX = '\0aero-html:'
 
+/** Prefix for virtual snippet module sources under `content/snippets/`. */
+export const AERO_SNIPPET_VIRTUAL_PREFIX = '\0aero-snippet:'
+
+/** Suffix so Vite treats compiled snippet modules as JS, not by source extension (e.g. `.css`). */
+export const SNIPPET_VIRTUAL_MODULE_SUFFIX = '.mjs'
+
+/** Virtual module id for a snippet source file on disk. */
+export function toSnippetVirtualModuleId(filePath: string): string {
+	return AERO_SNIPPET_VIRTUAL_PREFIX + filePath + SNIPPET_VIRTUAL_MODULE_SUFFIX
+}
+
+/** Source file path from a snippet virtual module id, or null when not a snippet virtual id. */
+export function fromSnippetVirtualModuleId(virtualId: string): string | null {
+	if (!virtualId.startsWith(AERO_SNIPPET_VIRTUAL_PREFIX)) return null
+	const rest = virtualId.slice(AERO_SNIPPET_VIRTUAL_PREFIX.length)
+	if (!rest.endsWith(SNIPPET_VIRTUAL_MODULE_SUFFIX)) return null
+	return rest.slice(0, -SNIPPET_VIRTUAL_MODULE_SUFFIX.length)
+}
+
 /** Default directory names: client source, server (Nitro), dist output. */
 export const DEFAULT_DIRS = {
 	client: 'client',

@@ -30,6 +30,7 @@
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
+		"@shikijs/transformers": "^4.3.0",
 		"@tailwindcss/typography": "^0.5.20",
 		"@types/alpinejs": "^3.13.11",
 		"@types/alpinejs__persist": "^3.13.4",

@@ -197,3 +197,17 @@ let numbersArray = [1, 2, 3]
 		expect(unusedValues).toBeUndefined()
 	})
 })
+
+describe('collectTemplateDiagnostics snippet modules', () => {
+	it('skips template diagnostics for content/snippets html files', () => {
+		const html = `<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+`
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(html, '/app/content/snippets/markup.html'),
+			root: '/app',
+		})
+
+		expect(diagnostics).toEqual([])
+	})
+})

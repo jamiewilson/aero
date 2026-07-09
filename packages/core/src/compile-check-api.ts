@@ -25,6 +25,14 @@ export {
 	renderRouteHelpersTs,
 	writeRouteTypesGenerated,
 } from './routing/route-typegen'
+export {
+	collectSnippetModuleEntries,
+	renderSnippetsDts,
+	writeSnippetTypesGenerated,
+	DEFAULT_SNIPPETS_DTS_REL,
+	SNIPPETS_SOURCE_REL,
+	type SnippetModuleEntry,
+} from './snippet-typegen'
 export type {
 	BuildScriptTypeIssue,
 	ComponentReactivePropMetadata,

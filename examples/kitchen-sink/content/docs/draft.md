@@ -9,6 +9,7 @@ Aero Content will filter out documents without the `published` field set to `tru
 const docs = defineCollection({
 	// collection options...
 	schema: z.object({
+		// [!code highlight]
 		published: z.boolean().default(false),
 		// other fields...
 	}),
@@ -17,7 +18,7 @@ const docs = defineCollection({
 
 Then in your document frontmatter, set `published: true` to include the document in the build.
 
-```
+```md
 ---
 published: true
 title: My Document

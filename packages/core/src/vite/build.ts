@@ -58,6 +58,7 @@ import {
 import { loadTsconfigAliases } from '../utils/aliases'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
+import { writeSnippetTypesGenerated } from '../snippet-typegen'
 import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
 export { addDoctype } from './rewrite'
 
@@ -668,6 +669,7 @@ export async function renderStaticPages(
 	const dirs = resolveDirs(options.dirs)
 	const { manifest: routeManifest } = writeRouteManifestGenerated(root, dirs.client)
 	writeRouteTypesGenerated(root, routeManifest)
+	writeSnippetTypesGenerated(root)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
 	// Pages are always discovered from the client/pages subtree.
 	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))

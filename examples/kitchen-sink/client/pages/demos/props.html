@@ -50,7 +50,7 @@
 				<h3>String prop</h3>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component code="{ stringPropCode }" />
+					<code-component code="{ snippets.propsString.code }" />
 					<greeting-component name="Aero" />
 				</figure>
 			</section>
@@ -59,8 +59,8 @@
 				<h3>Expression prop</h3>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component code="{ expressionPropCode }" />
-					<greeting-component name="{ expressionTitle }" />
+					<code-component code="{ snippets.expressionProp.code }" />
+					<greeting-component name="{ props.title }" />
 				</figure>
 			</section>
 
@@ -68,7 +68,7 @@
 				<h3>Default value</h3>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component code="{ defaultPropCode }" />
+					<code-component code="{ snippets.defaultProp.code }" />
 					<greeting-component />
 				</figure>
 			</section>
@@ -79,7 +79,7 @@
 
 				<figure class="grid gap-4 not-prose">
 					<code-component code="const props = { JSON.stringify(props, null, 2) }" lang="ts" />
-					<code-component code="{ propsShorthandCode }" />
+					<code-component code="{ snippets.propsShorthand.code }" />
 					<card-component props />
 				</figure>
 			</section>
@@ -89,11 +89,8 @@
 				<p><code>props</code> attribute with an object spread — keys become individual props.</p>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component
-						code="const propsSpread = { JSON.stringify(propsSpread, null, 2) }"
-						lang="ts" />
-					<code-component code="{ propsSpreadCode }" />
-					<card-component props="{ ...propsSpread }" />
+					<code-component code="{ snippets.propsSpread.code }" />
+					<card-component props="{ ...props }" />
 				</figure>
 			</section>
 
@@ -102,7 +99,7 @@
 				<p>Child markup lands in the component default slot.</p>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component code="{ slotContentCode }" />
+					<code-component code="{ snippets.slotContent.code }" />
 					<card-component title="With slot" body="Body from prop.">
 						<p>Extra content from the parent page.</p>
 					</card-component>
@@ -114,11 +111,11 @@
 				<p><code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code></p>
 
 				<figure class="grid gap-4 not-prose">
-					<code-component code="{ typedPropsCode }" />
+					<code-component code="{ snippets.typedProps.code }" />
 					<card-component title="Typed" body="Props interface checked with aero check --types." />
-					<code-component code="{ requiredPropCode }" />
+					<code-component code="{ snippets.requiredProp.code }" />
 					<card-component title="Typed" />
-					<code-component code="{ missingPropCode }" />
+					<code-component code="{ snippets.missingProp.code }" />
 					<p class="card bg-red-500/10 text-red-700 p-4 text-sm">
 						{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }
 					</p>

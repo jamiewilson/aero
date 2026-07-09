@@ -33,6 +33,12 @@ import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from '@aero-js/compiler/ambient-preamble'
 
+function isSnippetModuleDocument(filePath: string | undefined): boolean {
+	if (!filePath) return false
+	const normalized = filePath.replace(/\\/g, '/')
+	return normalized.includes('/content/snippets/')
+}
+
 const FULL_FEATURES: CodeInformation = {
 	completion: true,
 	format: true,
@@ -44,6 +50,7 @@ const FULL_FEATURES: CodeInformation = {
 
 const SUPPRESSED_IN_BUILD = new Set([
 	6133, // '{0}' is declared but its value is never read.
+	6192, // All imports in import declaration are unused (template-only bindings).
 	6196, // '{0}' is declared but never used.
 	6198, // All destructured elements are unused.
 	7006, // Parameter '{0}' implicitly has an 'any' type.
@@ -455,6 +462,16 @@ function findTsconfigPath(startDir: string): string | null {
 	return ts.findConfigFile(startDir, ts.sys.fileExists) ?? null
 }
 
+function loadGeneratedSnippetsAmbient(htmlFilePath: string): string {
+	if (!htmlFilePath) return ''
+	const tsconfigPath = findTsconfigPath(path.dirname(htmlFilePath))
+	if (!tsconfigPath) return ''
+	const projectRoot = path.dirname(tsconfigPath)
+	const snippetsDts = path.join(projectRoot, '.aero', 'cache', 'types', 'snippets.d.ts')
+	if (!fs.existsSync(snippetsDts)) return ''
+	return fs.readFileSync(snippetsDts, 'utf-8')
+}
+
 function loadPathAliasesForImporter(importerFile: string): PathAlias[] {
 	const importerDir = path.dirname(importerFile)
 	const tsconfigPath = findTsconfigPath(importerDir)
@@ -730,8 +747,24 @@ export class AeroVirtualCode implements VirtualCode {
 				: undefined
 
 		const tsImportAmbient = buildTsImportAmbientSupplement(this.htmlFilePath ?? '', buildScriptBodies)
+		const snippetsAmbient = loadGeneratedSnippetsAmbient(this.htmlFilePath ?? '')
 		const fullAmbient =
-			AMBIENT_DECLARATIONS + (tsImportAmbient.length > 0 ? `\n${tsImportAmbient}` : '')
+			AMBIENT_DECLARATIONS +
+			(tsImportAmbient.length > 0 ? `\n${tsImportAmbient}` : '') +
+			(snippetsAmbient.length > 0 ? `\n${snippetsAmbient}` : '')
+
+		if (isSnippetModuleDocument(this.htmlFilePath)) {
+			this.embeddedCodes = [
+				{
+					id: 'ambient',
+					languageId: 'typescriptdeclaration',
+					snapshot: createSnapshot(fullAmbient),
+					mappings: [],
+					embeddedCodes: [],
+				},
+			]
+			return
+		}
 
 		this.embeddedCodes = [
 			...this.extractEmbeddedCodes(snapshot, sourceText),

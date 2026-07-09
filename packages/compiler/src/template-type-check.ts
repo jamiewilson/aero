@@ -21,6 +21,7 @@ import {
 /** Match {@link packages/language-server/src/virtualCode.ts} BUILD_SCRIPT_FEATURES suppression. */
 const SUPPRESSED_TS_CODES = new Set([
 	6133, // declared but never read
+	6192, // All imports in import declaration are unused (template-only bindings)
 	6196, // declared but never used
 	6198, // All destructured elements are unused
 	7006, // implicitly has an 'any' type
@@ -155,6 +156,8 @@ export type CheckTemplateTypesOptions = {
 	readonly interpolations?: boolean
 	/** Optional generated registry `.d.ts` (must exist on disk to be included). */
 	readonly componentRegistryDtsPath?: string
+	/** Optional generated snippet module `.d.ts` (must exist on disk to be included). */
+	readonly snippetsDtsPath?: string
 }
 
 /**
@@ -171,6 +174,9 @@ export function checkTemplateTypes(
 	const extraRoots: string[] = []
 	if (options.componentRegistryDtsPath && fs.existsSync(options.componentRegistryDtsPath)) {
 		extraRoots.push(path.resolve(options.componentRegistryDtsPath))
+	}
+	if (options.snippetsDtsPath && fs.existsSync(options.snippetsDtsPath)) {
+		extraRoots.push(path.resolve(options.snippetsDtsPath))
 	}
 
 	const virtualBuildPath = path.join(root, '.aero', 'cache', '__aero_typecheck_build.ts')

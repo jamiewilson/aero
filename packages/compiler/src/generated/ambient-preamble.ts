@@ -21,6 +21,11 @@ declare function \$effect(fn: () => void | (() => void)): void
 
 declare const \$root: ParentNode
 
+interface Snippet {
+	readonly code: string
+	readonly lang: string
+}
+
 declare namespace Aero {
 	interface ComponentRegistry {}
 }

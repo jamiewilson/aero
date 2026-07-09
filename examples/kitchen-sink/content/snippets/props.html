@@ -1,0 +1,29 @@
+<!-- @snippet:propsString -->
+<greeting-component name="Aero" />
+
+<!-- @snippet:expressionProp -->
+<greeting-component name="{ props.title }" />
+
+<!-- @snippet:defaultProp -->
+<greeting-component />
+
+<!-- @snippet:propsShorthand -->
+<card-component props />
+
+<!-- @snippet:propsSpread -->
+<card-component props="{ ...props }" />
+
+<!-- @snippet:slotContent -->
+<card-component title="With slot" body="Body from prop.">
+	<!-- [!code highlight] -->
+	<p>Extra content from the parent page.</p>
+</card-component>
+
+<!-- @snippet:typedProps -->
+<card-component title="Typed" body="Props interface checked with aero check --types." />
+
+<!-- @snippet:requiredProp -->
+<card-component title="Typed" />
+
+<!-- @snippet:missingProp -->
+<card-component />

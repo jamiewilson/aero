@@ -44,6 +44,15 @@ declare function $effect(fn: () => void | (() => void)): void
 declare const $root: ParentNode
 
 /**
+ * Named region of source text exported from `@content/snippets/*` modules.
+ * Per-module export names are generated under `.aero/cache/types/snippets.d.ts`.
+ */
+interface Snippet {
+	readonly code: string
+	readonly lang: string
+}
+
+/**
  * Augment with tag names mapped to `{ props: YourProps }` for typed `renderComponent` (see Phase C / component registry).
  * Generated files may place declarations under `.aero/cache/types/`.
  */

@@ -2,7 +2,12 @@
 	--code-light-bg: --opacity(var(--color-dark), 0.05);
 	--code-dark-bg: oklch(from var(--color-dark) 0.1 c h);
 	--code-bg: light-dark(var(--code-light-bg), var(--code-dark-bg));
-	--code-comment: #636e7b;
+	--code-comment: var(--color-slate-500);
+	--code-highlight: --opacity(var(--color-green-500), 0.2);
+
+	--tab-size: 2ch;
+	--padding: var(--box-padding);
+	--line-height: 1.6;
 }
 
 @layer components {
@@ -14,9 +19,6 @@
 
 	/* Base code styles */
 	code {
-		--tab-size: 2ch;
-		--padding: 2rem;
-		--line-height: 1.6;
 		tab-size: var(--tab-size);
 		font-family: var(--font-mono);
 		font-size: smaller;
@@ -88,5 +90,20 @@
 		font-size: small;
 		text-box-trim: trim-both;
 		opacity: 0.5;
+	}
+
+	/* Code inside block pre with highlighted lines */
+	pre:has(code).has-highlighted code {
+		padding-inline: 0;
+		> span {
+			padding-inline: var(--padding);
+		}
+	}
+
+	/* Highlighted lines */
+	.line.highlighted {
+		background: var(--code-highlight);
+		display: inline-flex;
+		min-width: 100%;
 	}
 }
