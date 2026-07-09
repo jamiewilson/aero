@@ -1,12 +1,12 @@
-import { shikiOptions } from './shiki-options.ts'
-import rehypeShiki from '@shikijs/rehype'
 type RehypePluginTuple = [plugin: any, ...parameters: any[]]
+import rehypeShiki from '@shikijs/rehype'
+import shikiConfig from '../shiki/config.ts'
 
-export function customTheme(): RehypePluginTuple {
+export default function customTheme(): RehypePluginTuple {
 	return [
 		rehypeShiki,
 		{
-			...shikiOptions,
+			...shikiConfig,
 			inline: 'tailing-curly-colon',
 			colorReplacements: {
 				'github-light': {
