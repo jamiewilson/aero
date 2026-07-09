@@ -3,7 +3,10 @@
 	import badge from '@components/badge.html'
 	import { getCollection } from 'aero:content'
 
-	const docs = (await getCollection('docs')).sort((a, b) => b.data.published - a.data.published)
+	const docs = await getCollection('docs')
+	const sortedDocs = docs.sort((a, b) => {
+		return b.data.published - a.data.published
+	})
 </script>
 
 <base-layout title="Docs" description="Learn about Aero">
@@ -13,7 +16,7 @@
 	</header>
 
 	<ul class="grid gap-2 grid-cols-1 md:grid-cols-3" data-testid="docs-list">
-		<li for="{ const { id, data } of docs }">
+		<li for="{ const { id, data } of sortedDocs }">
 			<a class="card block" href="/docs/{ id }">
 				<header>
 					<span class="font-bold">{ data.title }</span>

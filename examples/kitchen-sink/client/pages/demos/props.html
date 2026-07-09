@@ -1,6 +1,5 @@
 <script is:build>
 	import base from '@layouts/base.html'
-	import header from '@components/demos/header.html'
 	import greeting from '@components/demos/greeting.html'
 	import card from '@components/demos/card.html'
 	import site from '@content/site.ts'
@@ -24,13 +23,14 @@
 	const propsShorthandCode = `<card-component props />`
 	const propsSpreadCode = `<card-component props="{ ...propsSpread }" />`
 	const slotContentCode = `<card-component title="With slot" body="Body from prop.">
-<p>Extra content from the parent page.</p>
+	<p>Extra content from the parent page.</p>
 </card-component>`
-	const typedPropsCode = `<card-component
-	title='Typed'
-	body='Props interface checked with aero check --types.' 
-/>`
-	const requiredPropCode = `<card-component title='Typed' />`
+
+	const typedPropsCode = `<card-component 
+	title="Typed" 
+	body="Props interface checked with aero check --types." />`
+
+	const requiredPropCode = `<card-component title="Typed" />`
 	const missingPropCode = `<card-component />`
 </script>
 

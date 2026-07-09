@@ -1,10 +1,12 @@
+/* Disable Tailwind prose backticks around inline code */
 @utility prose {
-	code::before,
-	code::after {
+	code:not(pre code)::before,
+	code:not(pre code)::after {
 		content: '';
 	}
 }
 
+/* Alternative to `dark:prose-invert` that works with user-defined themes */
 @custom-variant prose-dark {
 	&:where([data-theme='dark'], [data-theme='dark'] *) {
 		@slot;
