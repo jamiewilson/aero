@@ -108,6 +108,9 @@ vi.mock('../pathResolver', () => ({
 	getResolver: vi.fn(() => ({
 		root: '/workspace',
 		resolve: vi.fn((specifier: string) => {
+			if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
+				return '/workspace/node_modules/@aero-js/core/env.d.ts'
+			}
 			if (specifier.startsWith('@components/')) {
 				return '/workspace/client/components/' + specifier.replace('@components/', '')
 			}
@@ -344,6 +347,49 @@ describe('AeroDefinitionProvider', () => {
 		expect((result as any).identifier).toBe('Aero')
 	})
 
+	it('should provide definition for aero:content import path', async () => {
+		const lines = [
+			'<script is:build>',
+			"import { getCollection } from 'aero:content'",
+			'</script>',
+		]
+		const fullText = lines.join('\n')
+		const doc = {
+			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },
+			getText: () => fullText,
+			lineAt: (line: number) => ({ text: lines[line] ?? '' }),
+			positionAt: (offset: number) => {
+				let remaining = offset
+				for (let i = 0; i < lines.length; i++) {
+					if (remaining <= lines[i].length) {
+						return { line: i, character: remaining }
+					}
+					remaining -= lines[i].length + 1
+				}
+				return { line: lines.length - 1, character: 0 }
+			},
+			offsetAt: (pos: any) => {
+				let offset = 0
+				for (let i = 0; i < pos.line; i++) {
+					offset += lines[i].length + 1
+				}
+				return offset + pos.character
+			},
+		} as any
+
+		const importLine = lines[1]
+		const specifierStart = importLine.indexOf('aero:content')
+		const pathPosition = { line: 1, character: specifierStart + 2 } as any
+		const pathResult = await provider.provideDefinition(doc, pathPosition, {} as any)
+		expect(pathResult).not.toBeNull()
+		expect((pathResult as any[])[0].targetUri.fsPath).toContain('env.d.ts')
+
+		const nameStart = importLine.indexOf('getCollection')
+		const namePosition = { line: 1, character: nameStart + 2 } as any
+		const nameResult = await provider.provideDefinition(doc, namePosition, {} as any)
+		expect(nameResult).not.toBeNull()
+		expect((nameResult as any[])[0].targetUri.fsPath).toContain('env.d.ts')
+	})
 
 	it('should provide definition for component tag', async () => {
 		const doc = {
