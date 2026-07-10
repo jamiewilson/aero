@@ -61,7 +61,11 @@ import {
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeSnippetTypesGenerated } from '../snippet-typegen'
-import { writeGeneratedNitroConfig } from './nitro-config'
+import {
+	resolveDefaultNitroErrorHandlerDevPluginPath,
+	resolveDefaultNitroErrorHandlerPath,
+	writeGeneratedNitroConfig,
+} from './nitro-config'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -890,7 +894,17 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	]
 
 	if (enableNitro) {
-		const rawNitroPlugins = nitro({ serverDir: dirs.server })
+		const defaultErrorHandler = resolveDefaultNitroErrorHandlerPath()
+		const nitroReplace = {
+			'process.env.AERO_DIST': JSON.stringify(dirs.dist),
+			'process.env.AERO_API_PREFIX': JSON.stringify(apiPrefix),
+		}
+		const rawNitroPlugins = nitro({
+			serverDir: dirs.server,
+			errorHandler: defaultErrorHandler,
+			modules: [resolveDefaultNitroErrorHandlerDevPluginPath()],
+			replace: nitroReplace,
+		})
 		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
 		for (const nitroPlugin of nitroPlugins) {
 			if (!nitroPlugin || typeof nitroPlugin !== 'object') continue

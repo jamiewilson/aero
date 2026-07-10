@@ -2,18 +2,28 @@
  * TypeScript checker–backed type strings for build-script bindings (spike / foundation for Phase C).
  *
  * @remarks
- * Uses the programmatic TypeScript API. Requires `typescript` at runtime when this module is imported.
+ * Uses the programmatic TypeScript API. Requires `typescript` at runtime when these functions run.
  * Narrow scope: types declared in the same file (no module resolution for imports).
  */
 
-import ts from 'typescript'
+import { createRequire } from 'node:module'
+import type ts from 'typescript'
 
-const OPTIONS: ts.CompilerOptions = {
-	target: ts.ScriptTarget.ESNext,
-	module: ts.ModuleKind.ESNext,
-	moduleResolution: ts.ModuleResolutionKind.Bundler,
-	skipLibCheck: true,
-	noEmit: true,
+const require = createRequire(import.meta.url)
+
+function loadTs(): typeof ts {
+	return require('typescript') as typeof ts
+}
+
+function compilerOptions(): ts.CompilerOptions {
+	const ts = loadTs()
+	return {
+		target: ts.ScriptTarget.ESNext,
+		module: ts.ModuleKind.ESNext,
+		moduleResolution: ts.ModuleResolutionKind.Bundler,
+		skipLibCheck: true,
+		noEmit: true,
+	}
 }
 
 const SYNTHETIC = 'build.ts'
@@ -22,6 +32,8 @@ function createProgramForScript(script: string): {
 	program: ts.Program
 	sourceFile: ts.SourceFile
 } {
+	const ts = loadTs()
+	const options = compilerOptions()
 	const sourceFile = ts.createSourceFile(
 		SYNTHETIC,
 		script,
@@ -29,13 +41,13 @@ function createProgramForScript(script: string): {
 		true,
 		ts.ScriptKind.TS
 	)
-	const host = ts.createCompilerHost(OPTIONS)
+	const host = ts.createCompilerHost(options)
 	const original = host.getSourceFile.bind(host)
 	host.getSourceFile = (fileName, languageVersion, ...args) => {
 		if (fileName === SYNTHETIC) return sourceFile
 		return original(fileName, languageVersion, ...args)
 	}
-	const program = ts.createProgram([SYNTHETIC], OPTIONS, host)
+	const program = ts.createProgram([SYNTHETIC], options, host)
 	return { program, sourceFile }
 }
 
@@ -53,6 +65,7 @@ function recordTypeIfMissing(
 }
 
 function recordBindingPatternNames(
+	ts: typeof import('typescript'),
 	name: ts.BindingName,
 	record: (id: ts.Identifier) => void
 ): void {
@@ -63,12 +76,16 @@ function recordBindingPatternNames(
 	if (ts.isObjectBindingPattern(name) || ts.isArrayBindingPattern(name)) {
 		for (const el of name.elements) {
 			if (ts.isOmittedExpression(el)) continue
-			recordBindingPatternNames(el.name, record)
+			recordBindingPatternNames(ts, el.name, record)
 		}
 	}
 }
 
-function recordImportBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+function recordImportBindings(
+	ts: typeof import('typescript'),
+	sourceFile: ts.SourceFile,
+	record: (id: ts.Identifier) => void
+): void {
 	for (const stmt of sourceFile.statements) {
 		if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue
 		const cl = stmt.importClause
@@ -84,10 +101,14 @@ function recordImportBindings(sourceFile: ts.SourceFile, record: (id: ts.Identif
 	}
 }
 
-function recordDeclarationBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+function recordDeclarationBindings(
+	ts: typeof import('typescript'),
+	sourceFile: ts.SourceFile,
+	record: (id: ts.Identifier) => void
+): void {
 	function visit(node: ts.Node) {
 		if (ts.isVariableDeclaration(node)) {
-			recordBindingPatternNames(node.name, record)
+			recordBindingPatternNames(ts, node.name, record)
 		} else if (ts.isFunctionDeclaration(node) && node.name) {
 			record(node.name)
 		}
@@ -104,14 +125,15 @@ export function collectBindingTypeStringsFromBuildScript(script: string): Map<st
 	const out = new Map<string, string>()
 	if (!script.trim()) return out
 
+	const ts = loadTs()
 	const { program, sourceFile } = createProgramForScript(script)
 	const checker = program.getTypeChecker()
 
 	const record = (id: ts.Identifier): void => {
 		recordTypeIfMissing(out, id, checker)
 	}
-	recordImportBindings(sourceFile, record)
-	recordDeclarationBindings(sourceFile, record)
+	recordImportBindings(ts, sourceFile, record)
+	recordDeclarationBindings(ts, sourceFile, record)
 	return out
 }
 

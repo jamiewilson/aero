@@ -8,7 +8,17 @@ import { toPosix } from '../utils/path'
 
 const require = createRequire(import.meta.url)
 
-const DEFAULT_NITRO_ERROR_HANDLER = require.resolve('@aero-js/core/runtime/nitro-error-handler')
+/** Absolute path to Aero's default Nitro error handler module. */
+export function resolveDefaultNitroErrorHandlerPath(): string {
+	return require.resolve('@aero-js/core/runtime/nitro-error-handler')
+}
+
+/** Nitro dev plugin that assigns the default error handler when the user omits devErrorHandler. */
+export function resolveDefaultNitroErrorHandlerDevPluginPath(): string {
+	return require.resolve('@aero-js/core/runtime/nitro-error-handler-dev-plugin')
+}
+
+const DEFAULT_NITRO_ERROR_HANDLER = resolveDefaultNitroErrorHandlerPath()
 
 const NITRO_CONFIG_NAMES = [
 	'nitro.config.ts',

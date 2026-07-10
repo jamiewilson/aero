@@ -57,6 +57,10 @@
 			"types": "./dist/runtime/nitro-error-handler.d.mts",
 			"default": "./dist/runtime/nitro-error-handler.mjs"
 		},
+		"./runtime/nitro-error-handler-dev-plugin": {
+			"types": "./dist/runtime/nitro-error-handler-dev-plugin.d.mts",
+			"default": "./dist/runtime/nitro-error-handler-dev-plugin.mjs"
+		},
 		"./runtime/instance": {
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"

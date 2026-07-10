@@ -18,6 +18,7 @@ const entry = [
 	'src/runtime/fragment.ts',
 	'src/runtime/render-error.ts',
 	'src/runtime/nitro-error-handler.ts',
+	'src/runtime/nitro-error-handler-dev-plugin.ts',
 	'src/runtime/instance.ts',
 	'src/utils/aero-config.ts',
 	'src/config-api.ts',

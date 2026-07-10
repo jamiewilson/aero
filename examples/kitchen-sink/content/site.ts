@@ -39,6 +39,7 @@ export default {
 		{ label: 'HTMX form', href: '/demos/htmx-form' },
 		{ label: 'Numeric text', href: '/demos/numeric-text' },
 		{ label: 'Snippets', href: '/demos/snippets' },
+		{ label: 'Error pages', href: '/demos/error-pages' },
 	],
 	footer: {
 		links: [

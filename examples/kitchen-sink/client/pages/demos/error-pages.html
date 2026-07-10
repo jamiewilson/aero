@@ -1,0 +1,156 @@
+<script is:build>
+	import base from '@layouts/base.html'
+</script>
+
+<base-layout title="Error pages demo">
+	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
+		<header>
+			<h1>Error pages</h1>
+			<p>
+				One template at <code>client/pages/error.html</code> drives every HTTP error response. Aero
+				injects <code>Aero.error</code> (<code>status</code>, <code>message</code>) and keeps
+				<code>Aero.page</code> for request context. The template is not a public route.
+			</p>
+		</header>
+
+		<section>
+			<header>
+				<h2>404 in dev SSR</h2>
+				<p>
+					Missing pages render <code>error.html</code> with live
+					<code>Aero.page.url.pathname</code>.
+				</p>
+			</header>
+			<ul class="not-prose card grid gap-2 text-sm">
+				<li>
+					<a href="/this-page-does-not-exist" data-testid="error-demo-missing-root">
+						Open a missing top-level route
+					</a>
+				</li>
+				<li>
+					<a href="/demos/error-pages/also-missing" data-testid="error-demo-missing-nested">
+						Open a missing nested route
+					</a>
+				</li>
+				<li>
+					<a href="/error" data-testid="error-demo-browse-error-template">
+						Try to browse <code>/error</code> (blocked — same 404 UX)
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section>
+			<header>
+				<h2>Static build artifacts</h2>
+				<p>
+					After <code>pnpm build</code>, Aero prerenders the same template twice with default
+					<code>Aero.error</code> values. Pathname is empty on these files, so copy should not
+					reference the request URL.
+				</p>
+			</header>
+			<ul class="not-prose card grid gap-2 text-sm">
+				<li>
+					<a href="/404.html" data-testid="error-demo-artifact-404"
+						>View <code>dist/404.html</code></a
+					>
+				</li>
+				<li>
+					<a href="/500.html" data-testid="error-demo-artifact-500"
+						>View <code>dist/500.html</code></a
+					>
+				</li>
+			</ul>
+		</section>
+
+		<section>
+			<header>
+				<h2>Server errors (Nitro)</h2>
+				<p>
+					These need the Nitro server (<code>pnpm preview:api</code> or deploy). Dev SSR treats
+					missing pages as 404; thrown routes go through Aero's default <code>errorHandler</code>.
+				</p>
+			</header>
+			<ul class="not-prose card grid gap-2 text-sm">
+				<li>
+					<a href="/nitro-only-missing-route" data-testid="error-demo-nitro-404">
+						Unmatched route (404 via catch-all)
+					</a>
+				</li>
+				<li>
+					<a href="/demos/trigger-error" data-testid="error-demo-nitro-500">
+						Route that throws (500 via error handler)
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section>
+			<header>
+				<h2>API errors (JSON)</h2>
+				<p>
+					Under <code>/api/*</code>, the default handler returns JSON — even when
+					<code>Accept</code> prefers HTML.
+				</p>
+			</header>
+			<div class="card grid gap-4 not-prose text-sm">
+				<div class="flex flex-wrap gap-2">
+					<button type="button" id="fetch-api-404" data-testid="error-demo-fetch-404">
+						GET /api/demos/error/not-found
+					</button>
+					<button type="button" id="fetch-api-500" data-testid="error-demo-fetch-500">
+						GET /api/demos/error/server-error
+					</button>
+				</div>
+				<pre
+					id="api-error-output"
+					class="overflow-x-auto rounded bg-black/20 p-3 text-xs"
+					data-testid="error-demo-api-output">
+Click a button to fetch an API error.</pre>
+			</div>
+		</section>
+
+		<section>
+			<header>
+				<h2>Template source</h2>
+				<p>
+					See <code>client/pages/error.html</code> in the repo. Branch on
+					<code>Aero.error.status</code>; use <code>Aero.page.url.pathname</code> for live 404
+					context and guard on empty pathname for static artifacts.
+				</p>
+			</header>
+		</section>
+	</article>
+</base-layout>
+
+<script>
+	const output = document.getElementById('api-error-output')
+
+	async function fetchApiError(path) {
+		if (!output) return
+		output.textContent = 'Loading…'
+		try {
+			const response = await fetch(path, {
+				headers: { Accept: 'application/json, text/html' },
+			})
+			const body = await response.text()
+			let parsed = body
+			try {
+				parsed = JSON.stringify(JSON.parse(body), null, 2)
+			} catch {
+				// keep raw body
+			}
+			output.textContent = `${response.status} ${response.statusText}\n\n${parsed}`
+		} catch (error) {
+			output.textContent = error instanceof Error ? error.message : String(error)
+		}
+	}
+
+	document.getElementById('fetch-api-404')?.addEventListener('click', () => {
+		fetchApiError('/api/demos/error/not-found')
+	})
+
+	document.getElementById('fetch-api-500')?.addEventListener('click', () => {
+		fetchApiError('/api/demos/error/server-error')
+	})
+</script>
