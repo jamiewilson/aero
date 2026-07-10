@@ -119,10 +119,26 @@ export function installHypermediaSwapLifecycle(binding: HypermediaSwapLifecycleB
 	}
 }
 
+/** Wire `data-aero-on-*` directives on pages without compiled `is:state` bindings. */
+export function processStandaloneHypermediaDirectives(
+	aero: Aero,
+	pathname: string,
+	root: HTMLElement
+): void {
+	if (!isHypermediaEnabled() || aero.hasStateBindingsForPath(pathname)) return
+	const runtime = readBootstrappedHypermediaRuntime() as {
+		process?: (element: ParentNode, store?: unknown) => void
+	} | null
+	if (!runtime?.process) return
+	const reactivity = readBootstrappedReactivityRuntime()
+	runtime.process(root, reactivity?.store)
+}
+
 export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElement): () => void {
 	bootstrapClientRuntimes()
 	composeHypermediaReactivityProcess()
 	let destroyStateBindings = aero.mountStateBindingsForPath(pathname, root)
+	processStandaloneHypermediaDirectives(aero, pathname, root)
 	const runtime = readBootstrappedHypermediaRuntime() as HypermediaRuntimeWithSwapLifecycle | null
 	const cleanupSwapLifecycle = runtime
 		? installHypermediaSwapLifecycle({
@@ -140,6 +156,7 @@ export function mountClientBindings(aero: Aero, pathname: string, root: HTMLElem
 				},
 				remountCompiled() {
 					destroyStateBindings = aero.mountStateBindingsForPath(pathname, root)
+					processStandaloneHypermediaDirectives(aero, pathname, root)
 				},
 			})
 		: () => {}

@@ -75,7 +75,7 @@ function createRuntimeHarness(): TestHypermediaRuntime {
 }
 
 describe('installHypermediaSwapLifecycle', () => {
-	it('does not process-scan the compiled root during initial client mount', () => {
+	it('does not process-scan the compiled root during initial client mount when state bindings exist', () => {
 		vi.stubEnv('AERO_HYPERMEDIA', true as unknown as string)
 		const root = document.createElement('main')
 		const hypermediaProcess = vi.fn()
