@@ -496,6 +496,9 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					const patch = parseSignalPatch(response.html)
 					if (patch) applySignalPatch(defaultStore, patch)
 				}
+				if (requestTarget && opts.target) {
+					requestTarget.textContent = response.html
+				}
 				return response
 			}
 

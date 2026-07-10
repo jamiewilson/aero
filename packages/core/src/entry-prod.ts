@@ -14,6 +14,7 @@ import { resolveMountTarget } from './runtime/mount-target'
 import {
 	bootstrapClientRuntimes,
 	createHypermediaRuntimeAccessor,
+	processStandaloneHypermediaDirectives,
 	type HypermediaRuntimeWithSwapLifecycle,
 	readBootstrappedReactivityRuntime,
 	installHypermediaSwapLifecycle,
@@ -65,6 +66,7 @@ function mount(options: MountOptions = {}): Promise<void> {
 		}
 		destroyStateBindings = result.cleanup
 		hasActiveStateBindings = result.hasStateBindings
+		processStandaloneHypermediaDirectives(aero, currentPathname(), el)
 		const runtime = getHypermediaRuntime()
 		if (runtime) {
 			cleanupSwapLifecycle = installHypermediaSwapLifecycle({
@@ -83,6 +85,7 @@ function mount(options: MountOptions = {}): Promise<void> {
 					const next = await mountStateBindingsForCurrentRoute(el)
 					destroyStateBindings = next.cleanup
 					hasActiveStateBindings = next.hasStateBindings
+					processStandaloneHypermediaDirectives(aero, currentPathname(), el)
 				},
 			})
 		}

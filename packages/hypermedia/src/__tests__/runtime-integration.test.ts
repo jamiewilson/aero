@@ -26,6 +26,27 @@ describe('createHypermediaRuntime integration', () => {
 		expect(btn.innerHTML).toBe('<span>new</span>')
 	})
 
+	it('writes JSON response bodies into an explicit target', async () => {
+		document.body.innerHTML =
+			'<button id="btn">fetch</button><pre id="api-error-output">placeholder</pre>'
+		const btn = document.querySelector('#btn')!
+		const output = document.querySelector('#api-error-output')!
+		const runtime = createHypermediaRuntime()
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('{"statusCode":404,"message":"Demo API route not found"}', {
+				status: 404,
+				headers: { 'Content-Type': 'application/json' },
+			})
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/demos/error/not-found', target: '#api-error-output' },
+			btn as HTMLButtonElement
+		)
+
+		expect(output.textContent).toBe('{"statusCode":404,"message":"Demo API route not found"}')
+	})
+
 	it('applies Aero-Push-Url response header', async () => {
 		document.body.innerHTML = '<button id="btn">x</button>'
 		const btn = document.querySelector('#btn')!
