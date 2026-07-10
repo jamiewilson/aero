@@ -22,82 +22,81 @@
 			<hr />
 		</header>
 
-		<main>
-			<section>
-				<h3>String prop</h3>
+		<section>
+			<h3>String prop</h3>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.propsString.code }" />
+				<greeting-component name="Aero" />
+			</figure>
+		</section>
 
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.propsString.code }" />
-					<greeting-component name="Aero" />
-				</figure>
-			</section>
+		<section>
+			<h3>Expression prop</h3>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.expressionProp.code }" />
+				<greeting-component name="{ props.title }" />
+			</figure>
+		</section>
 
-			<section>
-				<h3>Expression prop</h3>
+		<section>
+			<h3>Default value</h3>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.defaultProp.code }" />
+				<greeting-component />
+			</figure>
+		</section>
 
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.expressionProp.code }" />
-					<greeting-component name="{ props.title }" />
-				</figure>
-			</section>
-
-			<section>
-				<h3>Default value</h3>
-
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.defaultProp.code }" />
-					<greeting-component />
-				</figure>
-			</section>
-
-			<section>
+		<section>
+			<header>
 				<h3>Props shorthand</h3>
 				<p>Bare <code>props</code> when a variable is literally named <code>props</code></p>
+			</header>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="const props = { JSON.stringify(props, null, 2) }" lang="ts" />
+				<code-component code="{ snippets.propsShorthand.code }" />
+				<card-component props />
+			</figure>
+		</section>
 
-				<figure class="grid gap-4 not-prose">
-					<code-component code="const props = { JSON.stringify(props, null, 2) }" lang="ts" />
-					<code-component code="{ snippets.propsShorthand.code }" />
-					<card-component props />
-				</figure>
-			</section>
-
-			<section>
+		<section>
+			<header>
 				<h3>Props spread</h3>
 				<p><code>props</code> attribute with an object spread — keys become individual props.</p>
+			</header>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.propsSpread.code }" />
+				<card-component props="{ ...props }" />
+			</figure>
+		</section>
 
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.propsSpread.code }" />
-					<card-component props="{ ...props }" />
-				</figure>
-			</section>
-
-			<section>
+		<section>
+			<header>
 				<h3>Slot content</h3>
 				<p>Child markup lands in the component default slot.</p>
+			</header>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.slotContent.code }" />
+				<card-component title="With slot" body="Body from prop.">
+					<p>Extra content from the parent page.</p>
+				</card-component>
+			</figure>
+		</section>
 
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.slotContent.code }" />
-					<card-component title="With slot" body="Body from prop.">
-						<p>Extra content from the parent page.</p>
-					</card-component>
-				</figure>
-			</section>
-
-			<section>
+		<section>
+			<header>
 				<h3>Typed props</h3>
 				<p><code>Aero.props as CardProps</code> — see <code>client/types/props.ts</code></p>
-
-				<figure class="grid gap-4 not-prose">
-					<code-component code="{ snippets.typedProps.code }" />
-					<card-component title="Typed" body="Props interface checked with aero check --types." />
-					<code-component code="{ snippets.requiredProp.code }" />
-					<card-component title="Typed" />
-					<code-component code="{ snippets.missingProp.code }" />
-					<p class="card bg-red-500/10 text-red-700 p-4 text-sm">
-						{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }
-					</p>
-				</figure>
-			</section>
-		</main>
+			</header>
+			<figure class="grid gap-4 not-prose">
+				<code-component code="{ snippets.typedProps.code }" />
+				<card-component title="Typed" body="Props interface checked with aero check --types." />
+				<code-component code="{ snippets.requiredProp.code }" />
+				<card-component title="Typed" />
+				<code-component code="{ snippets.missingProp.code }" />
+				<p class="card bg-red-500/10 text-red-700 p-4 text-sm">
+					{ `Missing required prop 'title' for card-component aero(AERO_COMPILE)` }
+				</p>
+			</figure>
+		</section>
 	</article>
 </base-layout>

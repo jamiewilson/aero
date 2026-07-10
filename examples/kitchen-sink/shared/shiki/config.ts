@@ -6,7 +6,12 @@ import {
 	aeroHtml,
 } from '@aero-js/highlight'
 
-import { transformerNotationHighlight } from '@shikijs/transformers'
+import {
+	transformerNotationHighlight,
+	transformerNotationWordHighlight,
+} from '@shikijs/transformers'
+
+import { addCopyButton } from 'shiki-transformer-copy-button'
 
 import { applyOverrides } from './utils.ts'
 import withItalics from './with-italics.ts'
@@ -21,7 +26,13 @@ const shikiConfig: ShikiConfig = {
 	},
 	defaultColor: 'light-dark()' as const,
 	langs: [...DEFAULT_LANGS, 'sh', 'md', aeroHtml],
-	transformers: [addPreDataLang(), addPreNotProse(), transformerNotationHighlight()],
+	transformers: [
+		addPreDataLang(),
+		addPreNotProse(),
+		transformerNotationHighlight(),
+		transformerNotationWordHighlight(),
+		addCopyButton(),
+	],
 }
 
 export default shikiConfig

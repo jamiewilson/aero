@@ -8,15 +8,18 @@
 @theme {
 	--font-sans: system-ui, sans-serif;
 	--font-mono: 'MonaspaceNeadon', monospace;
+	--font-size: 18px;
+	--line-height: 1.5;
 	--color-light: var(--color-white);
 	--color-dark: var(--color-gray-950);
 	--color-accent: light-dark(var(--color-sky-500), var(--color-sky-400));
 	--color-text: light-dark(var(--color-dark), var(--color-light));
 	--color-bg: light-dark(var(--color-light), var(--color-dark));
 	--color-border: --opacity(currentColor, 0.1);
+	--nav-height: 5rem;
 	--page-padding: 5vw;
 	--box-padding: 1.5rem;
-	--nav-height: 5rem;
+	--box-radius: var(--radius-2xl);
 }
 
 @font-face {
@@ -75,8 +78,8 @@
 	html,
 	body {
 		height: 100%;
-		font-size: 18px;
-		line-height: 1.5;
+		font-size: var(--font-size);
+		line-height: var(--line-height);
 	}
 
 	body {
@@ -179,9 +182,9 @@
 @layer components {
 	.card {
 		box-shadow: inset 0 0 0 1px var(--color-border);
-		border-radius: var(--radius-2xl);
-		corner-shape: squircle;
+		border-radius: var(--box-radius);
 		padding: var(--box-padding);
+		corner-shape: squircle;
 	}
 }
 

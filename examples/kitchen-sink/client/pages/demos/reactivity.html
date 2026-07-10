@@ -17,18 +17,18 @@
 			</p>
 		</header>
 
-		<main class="card grid gap-2 place-items-center text-center">
+		<section class="card grid gap-2 place-items-center not-prose">
 			<p class="text-sm">Parent page state:</p>
 			<div class="flex gap-2 items-center">
 				<button on:click="{ count-- }">−</button>
 				<code data-is-even="{ count % 2 === 0 }">{ count }</code>
 				<button on:click="{ count++ }">+</button>
 			</div>
-			<div class="card grid gap-2 mt-4">
+			<div class="card grid gap-2 w-full place-items-center">
 				<p class="text-sm">Child component binding:</p>
 				<counter-component bind:count="{ count }" />
 			</div>
-		</main>
+		</section>
 	</article>
 </base-layout>
 
