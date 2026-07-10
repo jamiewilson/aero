@@ -73,6 +73,8 @@ export default defineNitroConfig({
 		expect(result.content).toContain('"process.env.AERO_DIST": "\\"dist\\""')
 		expect(result.content).toContain('"process.env.AERO_API_PREFIX": "\\"/api\\""')
 		expect(result.content).toContain('"/legacy"')
+		expect(result.content).toContain('errorHandler')
+		expect(result.content).toContain('nitro-error-handler')
 		expect(fs.existsSync(result.filePath)).toBe(true)
 	})
 

@@ -49,6 +49,14 @@
 			"types": "./dist/runtime/fragment.d.mts",
 			"default": "./dist/runtime/fragment.mjs"
 		},
+		"./runtime/render-error": {
+			"types": "./dist/runtime/render-error.d.mts",
+			"default": "./dist/runtime/render-error.mjs"
+		},
+		"./runtime/nitro-error-handler": {
+			"types": "./dist/runtime/nitro-error-handler.d.mts",
+			"default": "./dist/runtime/nitro-error-handler.mjs"
+		},
 		"./runtime/instance": {
 			"types": "./dist/runtime/instance.d.mts",
 			"default": "./dist/runtime/instance.mjs"

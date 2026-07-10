@@ -1,0 +1,24 @@
+<script is:build>
+	import base from '@layouts/base.html'
+
+	const { status, message } = Aero.error
+	const title =
+		status === 404 ? `${status} | Page not found` : `${status} | Something went wrong`
+</script>
+
+<base-layout title="{ title }">
+	<main class="grid content-center gap-4 h-full" data-testid="not-found-page">
+		<header>
+			<h1 if="{ status === 404 }">{ title }</h1>
+			<h1 else>Something went wrong</h1>
+			<p if="{ status === 404 && Aero.page.url.pathname }">
+				Sorry, <code>{ Aero.page.url.pathname }</code> does not exist.
+			</p>
+			<p if="{ status === 404 && !Aero.page.url.pathname }">
+				Sorry, the page you are looking for does not exist.
+			</p>
+			<p else>{ message }</p>
+		</header>
+		<a href="/">Go back to the homepage</a>
+	</main>
+</base-layout>

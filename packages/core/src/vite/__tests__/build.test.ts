@@ -25,6 +25,7 @@ describe('vite build helpers', () => {
 	it('maps routes to root-style output files', () => {
 		expect(__internal.toOutputFile('')).toBe('index.html')
 		expect(__internal.toOutputFile('404')).toBe('404.html')
+		expect(__internal.toOutputFile('500')).toBe('500.html')
 		expect(__internal.toOutputFile('about')).toBe('about/index.html')
 		expect(__internal.toOutputFile('docs/name')).toBe('docs/name/index.html')
 	})
@@ -64,6 +65,7 @@ describe('vite build helpers', () => {
 		expect(__internal.normalizeRelativeRouteLink('about', '')).toBe('..')
 		expect(__internal.normalizeRelativeRouteLink('', '')).toBe('./')
 		expect(__internal.normalizeRelativeRouteLink('', '404')).toBe('./404')
+		expect(__internal.normalizeRelativeRouteLink('', '500')).toBe('./500')
 	})
 
 	it('rewrites asset URLs from manifest entries', () => {
@@ -361,11 +363,11 @@ import h from '@components/h.html'
 		}
 	})
 
-	it('writeSitemap generates sitemap.xml with absolute URLs and excludes 404', () => {
+	it('writeSitemap generates sitemap.xml with absolute URLs and excludes error artifacts', () => {
 		const tmp = path.join(os.tmpdir(), `aero-sitemap-${Date.now()}`)
 		fs.mkdirSync(tmp, { recursive: true })
 		try {
-			__internal.writeSitemap(['', 'about', 'docs', '404'], 'https://example.com', tmp)
+			__internal.writeSitemap(['', 'about', 'docs', '404', '500'], 'https://example.com', tmp)
 			const sitemapPath = path.join(tmp, 'sitemap.xml')
 			expect(fs.existsSync(sitemapPath)).toBe(true)
 			const xml = fs.readFileSync(sitemapPath, 'utf-8')
@@ -374,6 +376,7 @@ import h from '@components/h.html'
 			expect(xml).toContain('<loc>https://example.com/about/</loc>')
 			expect(xml).toContain('<loc>https://example.com/docs/</loc>')
 			expect(xml).not.toContain('404')
+			expect(xml).not.toContain('500')
 		} finally {
 			fs.rmSync(tmp, { recursive: true, force: true })
 		}

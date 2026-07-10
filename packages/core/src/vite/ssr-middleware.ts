@@ -15,6 +15,7 @@ import {
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
+import { ERROR_PAGE_NAME, isErrorPageName } from '../routing/error-pages'
 import { resolvePageName } from '../utils/routing'
 import { addDoctype } from './build'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
@@ -47,6 +48,18 @@ function recordSsrDiagnosticsMetrics(diagnostics: readonly AeroDiagnostic[]): vo
 				`codes=${diagnostics.map(d => d.code).join(',')}`
 		)
 	}
+}
+
+async function renderErrorResponse(
+	aero: { render: (name: string, input: AeroRenderInput) => Promise<string | null> },
+	renderInput: AeroRenderInput,
+	status: number,
+	message: string
+): Promise<string | null> {
+	return aero.render(ERROR_PAGE_NAME, {
+		...renderInput,
+		error: { status, message },
+	})
 }
 
 /**
@@ -116,7 +129,7 @@ export async function handleSsrRequest(
 			headers: requestHeaders,
 		})
 
-		let renderPageName = pageName
+		let renderPageName = isErrorPageName(pageName) ? '__missing__' : pageName
 		let renderInput: AeroRenderInput = {
 			url: requestUrl,
 			request,
@@ -151,7 +164,9 @@ export async function handleSsrRequest(
 				}
 				if (result && 'rewrite' in result) {
 					if (result.rewrite.pageName !== undefined) {
-						renderPageName = result.rewrite.pageName
+						renderPageName = isErrorPageName(result.rewrite.pageName)
+							? '__missing__'
+							: result.rewrite.pageName
 						renderPageNameForDiag = renderPageName
 					}
 					const { pageName: _pn, ...rest } = result.rewrite
@@ -164,7 +179,12 @@ export async function handleSsrRequest(
 
 		if (rendered === null) {
 			res.statusCode = 404
-			rendered = await mod.aero.render('404', renderInput)
+			rendered = await renderErrorResponse(
+				mod.aero,
+				renderInput,
+				404,
+				'Page not found'
+			)
 		}
 
 		if (rendered === null) {
@@ -197,6 +217,28 @@ export async function handleSsrRequest(
 			res.setHeader(AERO_DIAGNOSTICS_HTTP_HEADER, encodeDiagnosticsHeaderValue(diagnostics))
 			res.end(buildDevSsrErrorHtml(diagnostics))
 			return
+		}
+		try {
+			const mod = await server.environments.ssr.runner.import(RUNTIME_INSTANCE_MODULE_ID)
+			const requestUrl = new URL(req.url || '/', 'http://localhost')
+			const rendered = await renderErrorResponse(
+				mod.aero,
+				{
+					url: requestUrl,
+					routePath: pathname,
+					site: state.options.site?.url,
+				},
+				500,
+				'Internal server error'
+			)
+			if (rendered) {
+				res.statusCode = 500
+				res.setHeader('Content-Type', 'text/html; charset=utf-8')
+				res.end(addDoctype(rendered))
+				return
+			}
+		} catch {
+			// fall through to minimal HTML
 		}
 		res.statusCode = 500
 		res.setHeader('Content-Type', 'text/html; charset=utf-8')

@@ -12,17 +12,18 @@ function paramsType(params: string[]): string {
 }
 
 export function renderRouteTypesDts(manifest: RouteManifestFile): string {
-	const routeIds = manifest.routes.map(r => quote(r.id)).join(' | ') || 'never'
-	const routePaths = manifest.routes.map(r => quote(r.path)).join(' | ') || 'never'
-	const routePatterns = manifest.routes.map(r => quote(r.pattern)).join(' | ') || 'never'
+	const routes = manifest.routes.filter(r => !r.isErrorTemplate)
+	const routeIds = routes.map(r => quote(r.id)).join(' | ') || 'never'
+	const routePaths = routes.map(r => quote(r.path)).join(' | ') || 'never'
+	const routePatterns = routes.map(r => quote(r.pattern)).join(' | ') || 'never'
 
-	const paramsById = manifest.routes
+	const paramsById = routes
 		.map(r => `  ${quote(r.id)}: ${paramsType(r.params)}`)
 		.join('\n')
-	const paramsByPath = manifest.routes
+	const paramsByPath = routes
 		.map(r => `  ${quote(r.path)}: ${paramsType(r.params)}`)
 		.join('\n')
-	const paramsByPattern = manifest.routes
+	const paramsByPattern = routes
 		.map(r => `  ${quote(r.pattern)}: ${paramsType(r.params)}`)
 		.join('\n')
 
@@ -52,7 +53,8 @@ export function renderRouteTypesDts(manifest: RouteManifestFile): string {
 }
 
 export function renderRouteHelpersTs(manifest: RouteManifestFile): string {
-	const paramByPattern = manifest.routes
+	const routes = manifest.routes.filter(r => !r.isErrorTemplate)
+	const paramByPattern = routes
 		.map(r => `  ${quote(r.pattern)}: ${quote(r.path)}`)
 		.join(',\n')
 

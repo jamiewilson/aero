@@ -19,7 +19,14 @@ import path from 'node:path'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { parseHTML } from 'linkedom'
 import { analyzeBuildScript, parse } from '@aero-js/compiler'
-import { pagePathToKey } from '../utils/routing'
+import {
+	ERROR_ARTIFACT_ROUTE_PATHS,
+	ERROR_PAGE_NAME,
+	ERROR_PRERENDER_PAGE_URL,
+	ERROR_PRERENDER_PASSES,
+	isErrorPageName,
+	resolveErrorTemplatePath,
+} from '../routing/error-pages'
 import { expandRoutePattern, isDynamicRoutePattern } from '../utils/route-pattern'
 import { createServer } from 'vite'
 
@@ -42,6 +49,7 @@ import {
 } from './rewrite'
 
 import { toPosixRelative } from '../utils/path'
+import { pagePathToKey } from '../utils/routing'
 
 import {
 	AERO_BUILD_MANIFEST_VERSION,
@@ -430,12 +438,12 @@ function toRouteFromPageName(pageName: string): string {
 
 /**
  * Generate sitemap.xml from route paths. Only called when site URL is set.
- * Excludes 404. Writes to distDir/sitemap.xml.
+ * Excludes error artifact routes. Writes to distDir/sitemap.xml.
  */
 function writeSitemap(routePaths: string[], site: string, distDir: string): void {
 	const base = site.replace(/\/$/, '')
 	const urls = routePaths
-		.filter(r => r !== '404')
+		.filter(r => !ERROR_ARTIFACT_ROUTE_PATHS.has(r))
 		.map(routePath => {
 			const pathSegment = routePath === '' ? '' : `/${routePath}/`
 			const loc = `${base}${pathSegment || '/'}`
@@ -524,10 +532,13 @@ export class TemplateDiscovery {
 	}
 }
 
-/** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. */
+/** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. Excludes `error.html`. */
 function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 	const pagesDir = path.resolve(root, pagesRoot)
-	const pageFiles = walkHtmlFiles(pagesDir)
+	const pageFiles = walkHtmlFiles(pagesDir).filter(file => {
+		const relFromRoot = toPosixRelative(file, root)
+		return !isErrorPageName(pagePathToKey(relFromRoot))
+	})
 
 	// Use same key derivation as runtime (pagePathToKey) so page names align.
 	const allPageNames = new Set(pageFiles.map(f => pagePathToKey(toPosixRelative(f, root))))
@@ -852,7 +863,10 @@ export async function renderStaticPages(
 			`static prerender: ${pagesToPrerender.length} of ${pagesToRender.length} page(s) in prerender queue after route expansion (${Date.now() - tBuildStart}ms)`
 		)
 
-		const routeSet = new Set(pagesToRender.map(p => p.routePath))
+		const routeSet = new Set([
+			...pagesToRender.map(p => p.routePath),
+			...ERROR_ARTIFACT_ROUTE_PATHS,
+		])
 		const concurrency = resolveStaticPrerenderConcurrency()
 		aeroStaticBuildDebug(
 			`static prerender: using concurrency ${concurrency} (set AERO_STATIC_PRERENDER_CONCURRENCY to override)`
@@ -921,6 +935,43 @@ export async function renderStaticPages(
 		aeroStaticBuildDebug(
 			`static prerender: wrote HTML in ${Date.now() - tPrerender}ms (${pagesToPrerender.length} page(s))`
 		)
+
+		const errorTemplatePath = resolveErrorTemplatePath(root, dirs.client)
+		if (fs.existsSync(errorTemplatePath)) {
+			for (const pass of ERROR_PRERENDER_PASSES) {
+				const pageUrl = ERROR_PRERENDER_PAGE_URL
+				let rendered = await runtime.aero.render(ERROR_PAGE_NAME, {
+					error: { status: pass.status, message: pass.message },
+					url: pageUrl,
+					request: new Request(pageUrl.toString(), { method: 'GET' }),
+					routePath: '/',
+					page: {
+						url: pageUrl,
+						request: new Request(pageUrl.toString(), { method: 'GET' }),
+						params: {},
+						routePath: '/',
+					},
+					site: options.site,
+				})
+				rendered = rewriteRenderedHtml(
+					addDoctype(rendered),
+					pass.outputFile,
+					manifest,
+					routeSet,
+					apiPrefix
+				)
+				const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+				if (options.minify && isProd) {
+					rendered = await minify(rendered, {
+						collapseWhitespace: true,
+						removeComments: true,
+						minifyCSS: true,
+						minifyJS: true,
+					})
+				}
+				fs.writeFileSync(path.join(distDir, pass.outputFile), rendered, 'utf-8')
+			}
+		}
 
 		if (options.site && options.site.trim() !== '') {
 			const tSite = Date.now()

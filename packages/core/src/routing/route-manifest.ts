@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { pagePathToKey } from '../utils/routing'
 import { getUnsupportedRoutePatternIssues, parseRoutePattern } from '../utils/route-pattern'
+import { isErrorPageName } from './error-pages'
 
 export interface RouteManifestEntry {
 	id: string
@@ -12,7 +13,7 @@ export interface RouteManifestEntry {
 	params: string[]
 	isDynamic: boolean
 	parentId: string | null
-	isNotFound: boolean
+	isErrorTemplate: boolean
 }
 
 export interface RouteManifestFile {
@@ -73,7 +74,7 @@ function toRouteId(pageName: string): string {
 }
 
 function toParentPath(routePath: string): string | null {
-	if (routePath === '/' || routePath === '/404') return null
+	if (routePath === '/' || routePath === '__error__') return null
 	const parts = routePath.split('/').filter(Boolean)
 	if (parts.length === 0) return null
 	parts.pop()
@@ -123,15 +124,16 @@ export function buildRouteManifestWithDiagnostics(
 		}
 		const segs = parseRoutePattern(pattern).segments
 		const params = segs.flatMap(s => (s.type === 'param' ? [s.name] : []))
+		const isErrorTemplate = isErrorPageName(pageName)
 		return {
 			id: toRouteId(pageName),
 			file: relRoot,
 			pageName,
-			path: pageName === '404' ? '/404' : routePath,
+			path: isErrorTemplate ? '__error__' : routePath,
 			pattern,
 			params,
 			isDynamic: params.length > 0,
-			isNotFound: pageName === '404',
+			isErrorTemplate,
 		}
 	})
 
@@ -148,6 +150,7 @@ export function buildRouteManifestWithDiagnostics(
 	}
 	for (const [routePath, entries] of byPath.entries()) {
 		if (entries.length <= 1) continue
+		if (routePath === '__error__') continue
 		diagnostics.push({
 			code: 'AERO_ROUTE',
 			severity: 'error',

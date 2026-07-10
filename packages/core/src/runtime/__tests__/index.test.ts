@@ -230,27 +230,31 @@ describe('Aero class', () => {
 			})
 		})
 
-		it('should render 404 page with input (e.g. fallback page)', async () => {
+		it('should render error page with Aero.error and page input', async () => {
 			let capturedCtx: any
 			aero.registerPages({
-				'pages/404.html': {
+				'pages/error.html': {
 					default: (ctx: any) => {
 						capturedCtx = ctx
-						return `<div>Not found: ${ctx.page?.params?.path ?? 'unknown'}</div>`
+						return `<div>${ctx.error.status}: ${ctx.error.message} — ${ctx.page.url.pathname}</div>`
 					},
 				},
 			})
 
-			const html = await aero.render('404', { params: { path: '/missing' } })
+			const html = await aero.render('error', {
+				error: { status: 404, message: 'Page not found' },
+				params: { path: '/missing' },
+				url: 'http://localhost/missing',
+			})
 
 			expect(capturedCtx).toBeDefined()
-			expect(capturedCtx.page.params).toEqual({ path: '/missing' })
-			expect(html).toContain('Not found: /missing')
+			expect(capturedCtx.error).toEqual({ status: 404, message: 'Page not found' })
+			expect(html).toContain('404: Page not found')
 		})
 
-		it('should inject styles when 404 fallback reuses renderInput after unresolved route', async () => {
+		it('should inject styles when error fallback reuses renderInput after unresolved route', async () => {
 			aero.registerPages({
-				'pages/404.html': {
+				'pages/error.html': {
 					default: (ctx: any) => {
 						ctx.styles?.add('<style>body { border: 1rem solid red; }</style>')
 						return '<html lang="en"><head></head><body>404</body></html>'
@@ -261,7 +265,10 @@ describe('Aero class', () => {
 			const renderInput = { url: 'http://localhost/missing-page' }
 			expect(await aero.render('missing-page', renderInput)).toBeNull()
 
-			const html = await aero.render('404', renderInput)
+			const html = await aero.render('error', {
+				...renderInput,
+				error: { status: 404, message: 'Page not found' },
+			})
 			expect(html).toContain('border: 1rem solid red')
 		})
 
@@ -289,7 +296,7 @@ describe('Aero class', () => {
 			expect(html).toContain('border: 1rem solid lime')
 		})
 
-		it('should inject layout and page styles on 404 fallback with shared renderInput', async () => {
+		it('should inject layout and page styles on error fallback with shared renderInput', async () => {
 			const baseMod = {
 				default: (ctx: any) => {
 					ctx.styles?.add('<style>body { border: 1rem solid lime; }</style>')
@@ -297,12 +304,13 @@ describe('Aero class', () => {
 				},
 			}
 			aero.registerPages({
-				'pages/404.html': {
+				'pages/error.html': {
 					default: async (ctx: any) => {
 						ctx.styles?.add('<style>header { background: yellow; }</style>')
 						return ctx.renderComponent(baseMod, {}, {}, {
 							page: ctx.page,
 							site: ctx.site,
+							error: ctx.error,
 							styles: ctx.styles,
 							scripts: ctx.scripts,
 							headScripts: ctx.headScripts,
@@ -314,7 +322,10 @@ describe('Aero class', () => {
 			const renderInput = { url: 'http://localhost/missing-page' }
 			expect(await aero.render('missing-page', renderInput)).toBeNull()
 
-			const html = await aero.render('404', renderInput)
+			const html = await aero.render('error', {
+				...renderInput,
+				error: { status: 404, message: 'Page not found' },
+			})
 			expect(html).toContain('border: 1rem solid lime')
 			expect(html).toContain('background: yellow')
 		})

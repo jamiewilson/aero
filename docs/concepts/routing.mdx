@@ -35,7 +35,7 @@ Drop an `.html` file in `client/pages/` and Aero turns it into a URL:
 | `client/pages/index.html`      | `/`        | `dist/index.html`       |
 | `client/pages/about.html`      | `/about`   | `dist/about/index.html` |
 | `client/pages/docs/index.html` | `/docs`    | `dist/docs/index.html`  |
-| `client/pages/404.html`        | (404 page) | `dist/404.html`         |
+| `client/pages/error.html`      | (error page) | `dist/404.html`, `dist/500.html` |
 
 `index.html` at the root of the pages directory maps to `/`. Any other filename (e.g. `about.html`) maps to that name (`/about`).
 
@@ -50,9 +50,26 @@ client/pages/
     getting-started.html → /docs/getting-started
 ```
 
-### 404 page
+### Error page
 
-Create `client/pages/404.html` and Aero treats it as your error page. It is written to `dist/404.html` — not inside a `404/` subdirectory. With Nitro preview, unmatched URLs are served this file with a 404 status.
+Create `client/pages/error.html` for all HTTP error responses. Aero prerenders it twice at build time — once as `dist/404.html` and once as `dist/500.html` — with default `Aero.error` values. At request time (dev SSR or Nitro), the same template renders with live `Aero.error` and `Aero.page`.
+
+`error.html` is not a browsable route. Branch on `Aero.error.status` when copy differs between 404 and 5xx:
+
+```html
+<script is:build>
+	const { status, message } = Aero.error
+</script>
+
+<h1 if="{ status === 404 }">Page not found</h1>
+<h1 else>Something went wrong</h1>
+<p if="{ status === 404 && Aero.page.url.pathname }">
+	<code>{ Aero.page.url.pathname }</code> does not exist.
+</p>
+<p else>{ message }</p>
+```
+
+With Nitro preview, unmatched URLs are served `dist/404.html` with a 404 status. When `server: true` and you omit a custom `errorHandler` in `nitro.config.ts`, Aero wires a default handler that renders `error.html` for HTML requests and JSON for `/api/*` routes.
 
 ## Dynamic routes
 

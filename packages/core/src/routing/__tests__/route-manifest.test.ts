@@ -25,7 +25,7 @@ describe('route manifest generation', () => {
 			fs.mkdirSync(path.join(root, 'client', 'pages', 'docs'), { recursive: true })
 			fs.mkdirSync(path.join(root, 'client', 'pages', 'blog', '[id]'), { recursive: true })
 			fs.writeFileSync(path.join(root, 'client', 'pages', 'index.html'), '<html></html>')
-			fs.writeFileSync(path.join(root, 'client', 'pages', '404.html'), '<html></html>')
+			fs.writeFileSync(path.join(root, 'client', 'pages', 'error.html'), '<html></html>')
 			fs.writeFileSync(path.join(root, 'client', 'pages', 'docs', 'index.html'), '<html></html>')
 			fs.writeFileSync(path.join(root, 'client', 'pages', 'docs', '[slug].html'), '<html></html>')
 			fs.writeFileSync(
@@ -46,9 +46,10 @@ describe('route manifest generation', () => {
 			const docsIndex = manifest.routes.find(r => r.pageName === 'docs/index')
 			expect(docsSlug?.parentId).toBe(docsIndex?.id)
 
-			const route404 = manifest.routes.find(r => r.pageName === '404')
-			expect(route404?.isNotFound).toBe(true)
-			expect(route404?.parentId).toBeNull()
+			const routeError = manifest.routes.find(r => r.pageName === 'error')
+			expect(routeError?.isErrorTemplate).toBe(true)
+			expect(routeError?.parentId).toBeNull()
+			expect(routeError?.path).toBe('__error__')
 		} finally {
 			fs.rmSync(root, { recursive: true, force: true })
 		}

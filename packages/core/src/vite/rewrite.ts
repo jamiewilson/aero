@@ -25,6 +25,7 @@ import { toPosix } from '../utils/path'
 export function toOutputFile(routePath: string): string {
 	if (routePath === '') return 'index.html'
 	if (routePath === '404') return '404.html'
+	if (routePath === '500') return '500.html'
 	return toPosix(path.join(routePath, 'index.html'))
 }
 
@@ -42,7 +43,7 @@ export function normalizeRelativeRouteLink(fromDir: string, routePath: string): 
 	const rel = path.posix.relative(fromDir, targetDir)
 	let res = !rel ? './' : rel.startsWith('.') ? rel : `./${rel}`
 
-	if (routePath !== '' && routePath !== '404' && !res.endsWith('/')) {
+	if (routePath !== '' && routePath !== '404' && routePath !== '500' && !res.endsWith('/')) {
 		res += '/'
 	}
 	return res
@@ -93,7 +94,7 @@ export function rewriteAbsoluteUrl(
 	const route = normalizeRoutePathFromHref(noQuery)
 	if (routeSet.has(route) || route === '') {
 		const rel =
-			route === '404'
+			route === '404' || route === '500'
 				? normalizeRelativeLink(fromDir, toOutputFile(route))
 				: normalizeRelativeRouteLink(fromDir, route)
 		return rel + suffix

@@ -12,7 +12,7 @@ Every `.html` file in the pages directory becomes a route. Examples:
 
 - `client/pages/index.html` — `/` → `dist/index.html`
 - `client/pages/about.html` → `/about` outputs to `dist/about/index.html`
-- `client/pages/404.html` → 404 page outputs to `dist/404.html`
+- `client/pages/error.html` → error page outputs to `dist/404.html` and `dist/500.html`
 - `client/pages/docs/index.html` → `/docs` outputs `dist/docs/index.html`
 
 ```sh
@@ -29,7 +29,7 @@ Every `.html` file in the pages directory becomes a route. Examples:
 
 **Nested directories:** Subdirectories map to URL segments. An `index.html` inside a directory is that segment’s root:
 
-**Error pages:** `client/pages/404.html` is the error page, rendered to `dist/404.html`. With Nitro preview, unmatched URLs are served this page with a 404 status.
+**Error pages:** `client/pages/error.html` is the error template. Aero prerenders it to `dist/404.html` and `dist/500.html`. With Nitro preview, unmatched URLs are served the 404 artifact with a 404 status.
 
 ## Dynamic routes
 

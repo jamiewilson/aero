@@ -8,6 +8,7 @@
  */
 
 import type {
+	AeroErrorContext,
 	AeroPageModule,
 	AeroRenderFn,
 	AeroRenderInput,
@@ -65,10 +66,12 @@ export class Aero {
 		}
 	}
 
-	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath). */
+	/** Type guard: true if value looks like an `AeroRenderInput` (has at least one of props, slots, request, url, params, routePath, error). */
 	private isRenderInput(value: unknown): value is AeroRenderInput {
 		if (!value || typeof value !== 'object') return false
-		return ['props', 'slots', 'request', 'url', 'params', 'routePath'].some(key => key in value)
+		return ['props', 'slots', 'request', 'url', 'params', 'routePath', 'error', 'page'].some(
+			key => key in value
+		)
 	}
 
 	/** Coerce various call signatures into a single `AeroRenderInput` (e.g. plain object → `{ props }`). */
@@ -102,6 +105,7 @@ export class Aero {
 		params?: AeroRouteParams
 		routePath?: string
 		site?: string | { url: string }
+		error?: AeroErrorContext
 		page?: { url?: URL; request?: Request; params?: AeroRouteParams; routePath?: string }
 		styles?: Set<string>
 		scripts?: Set<string>
@@ -154,6 +158,7 @@ export class Aero {
 				routePath,
 			},
 			site: { url: siteUrl },
+			error: input.error ?? { status: 0, message: '' },
 			styles: input.styles,
 			scripts: input.scripts,
 			headScripts: input.headScripts,
@@ -258,6 +263,8 @@ export class Aero {
 			params: { ...dynamicParams, ...renderInput.params },
 			routePath,
 			site: renderInput.site,
+			error: renderInput.error,
+			page: renderInput.page,
 			styles: renderInput.styles,
 			scripts: renderInput.scripts,
 			headScripts: renderInput.headScripts,

@@ -1,9 +1,14 @@
+import { createRequire } from 'node:module'
 import type { RedirectRule } from '../types'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { redirectsToRouteRules } from '../utils/redirects'
 import { loadProjectModule } from '../utils/load-project-module'
 import { toPosix } from '../utils/path'
+
+const require = createRequire(import.meta.url)
+
+const DEFAULT_NITRO_ERROR_HANDLER = require.resolve('@aero-js/core/runtime/nitro-error-handler')
 
 const NITRO_CONFIG_NAMES = [
 	'nitro.config.ts',
@@ -255,6 +260,7 @@ export default defineNitroConfig(${JSON.stringify(
 						scanDirs: [serverScanDir],
 						routeRules: effectiveAeroRouteRules,
 						noPublicDir: true,
+						errorHandler: DEFAULT_NITRO_ERROR_HANDLER,
 						replace,
 					},
 					null,
@@ -315,7 +321,9 @@ export default defineNitroConfig({
 	...(userPlugins !== undefined ? { plugins: userPlugins } : {}),
 	...(userTasks !== undefined ? { tasks: userTasks } : {}),
 	...(userModules !== undefined ? { modules: userModules } : {}),
-	...(userErrorHandler !== undefined ? { errorHandler: userErrorHandler } : {}),
+	...(userErrorHandler !== undefined
+		? { errorHandler: userErrorHandler }
+		: { errorHandler: ${JSON.stringify(DEFAULT_NITRO_ERROR_HANDLER)} }),
 	...(userImports !== undefined ? { imports: userImports } : {}),
 	...(userAlias !== undefined ? { alias: userAlias } : {}),
 	...(userServerAssets !== undefined ? { serverAssets: userServerAssets } : {}),

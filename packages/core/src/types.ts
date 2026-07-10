@@ -196,6 +196,13 @@ export interface StaticPathEntry {
  * Used by the runtime when calling the compiled render function and when rendering child components.
  * Top-level request, url, params are normalized into page; site string is wrapped as site.url.
  */
+/** Framework-owned error metadata for `client/pages/error.html`. */
+export interface AeroErrorContext {
+	status: number
+	message: string
+	code?: string
+}
+
 export interface AeroRenderInput {
 	props?: Record<string, any>
 	/** Named slot content (key → HTML string) for layout/page render. */
@@ -205,6 +212,8 @@ export interface AeroRenderInput {
 	params?: AeroRouteParams
 	/** Resolved route path pattern (e.g. `'/posts/[id]'`) for the current request. */
 	routePath?: string
+	/** Framework-owned error metadata when rendering `error.html`. */
+	error?: AeroErrorContext
 	/** Accumulated style URLs/labels for this request. */
 	styles?: Set<string>
 	/** Accumulated script URLs/labels for this request. */
@@ -260,6 +269,8 @@ export interface AeroTemplateContext {
 	page: AeroPageContext
 	/** Site-scoped: canonical URL and future config. */
 	site: AeroSiteContext
+	/** Framework-owned error metadata on `error.html` (empty defaults elsewhere). */
+	error: AeroErrorContext
 	/** Marker/fallback helper for child-mutable reactive props in state scripts. */
 	bindable: {
 		(): undefined

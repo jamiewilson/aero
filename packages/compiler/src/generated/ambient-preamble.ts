@@ -13,6 +13,8 @@ export const BUILD_SCRIPT_PREAMBLE = `declare const Aero: {
 	
 	site: { url: string }
 	
+	error: { status: number; message: string; code?: string }
+	
 	bindable(): undefined
 	bindable<T>(fallback: T): T
 }
