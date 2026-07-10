@@ -53,7 +53,7 @@ const add = () => setItems([...items, { id: 'b' }])
 
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain(
-			'scope.setItems = next => scope.withTransition(() => (scope.items = next))'
+			'scope.setItems = (next) => scope.withTransition(() => (scope.items = next))'
 		)
 		expect(code).not.toContain('scope.next')
 	})

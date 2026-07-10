@@ -118,7 +118,8 @@ function walkAst(
 
 function collectPatternNames(pattern: EstNode | undefined, names: Set<string>): void {
 	if (!pattern) return
-	walkAst(pattern, node => {
+	walkAst(pattern, (node, _parent, key) => {
+		if (key === 'typeAnnotation' || key === 'typeParameters') return 'skip-children'
 		if (node.type === 'Identifier' && typeof node.name === 'string') names.add(node.name)
 	})
 }

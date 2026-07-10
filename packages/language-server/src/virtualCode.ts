@@ -32,7 +32,8 @@ import {
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
 import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
-import { BUILD_SCRIPT_PREAMBLE } from '@aero-js/compiler/ambient-preamble'
+import { AMBIENT_DECLARATIONS, BUILD_SCRIPT_PREAMBLE } from '@aero-js/compiler/ambient-preamble'
+import { collectTemplateReferences, type SourceDocument } from '@aero-js/core/template-diagnostics'
 
 function isSnippetModuleDocument(filePath: string | undefined): boolean {
 	if (!filePath) return false
@@ -56,20 +57,76 @@ const FULL_FEATURES: CodeInformation = {
  */
 const EMBEDDED_MODULE_CLOSURE = '\nexport {}\n'
 
+/** Shared virtual modules (images, aero:content, *.md) — not per-file `*.html` wildcards. */
+const SHARED_VIRTUAL_AMBIENT = AMBIENT_DECLARATIONS.replace(
+	/declare module '\*\.html'[\s\S]*?\}\n\n?/,
+	''
+)
+
 function asEmbeddedModuleSnapshot(source: string): IScriptSnapshot {
 	return createSnapshot(source + EMBEDDED_MODULE_CLOSURE)
 }
 
-function buildTemplateUseFooter(sourceText: string, scriptContent: string): string {
-	const expressions = collectTemplateInterpolationSites(sourceText).map(site => site.expression)
+function createSourceDocumentAdapter(sourceText: string, filePath: string): SourceDocument {
+	const doc = TextDocument.create(filePath, 'html', 0, sourceText)
+	return {
+		uri: { fsPath: filePath },
+		getText: () => sourceText,
+		positionAt: offset => doc.positionAt(offset),
+		offsetAt: position => doc.offsetAt(position),
+	}
+}
+
+function collectTemplateUsedNames(sourceText: string, filePath = ''): Set<string> {
+	const used = new Set<string>()
+	for (const ref of collectTemplateReferences(
+		createSourceDocumentAdapter(sourceText, filePath),
+		sourceText
+	)) {
+		used.add(ref.content)
+	}
+	return used
+}
+
+function formatSyntheticUses(names: Iterable<string>): string {
+	return [...names].map(name => `\nvoid ${name}`).join('')
+}
+
+function buildScriptTemplateUseFooter(
+	sourceText: string,
+	scriptContent: string,
+	filePath = ''
+): string {
+	const usedInTemplate = collectTemplateUsedNames(sourceText, filePath)
 	const names = new Set<string>()
 	for (const binding of iterateBuildScriptBindings(scriptContent)) {
-		const escaped = binding.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-		if (expressions.some(expression => new RegExp(`\\b${escaped}\\b`).test(expression))) {
-			names.add(binding.name)
-		}
+		if (usedInTemplate.has(binding.name)) names.add(binding.name)
 	}
-	return [...names].map(name => `\nvoid ${name}`).join('')
+	try {
+		const { imports } = analyzeBuildScriptForEditor(scriptContent)
+		for (const imp of imports) {
+			if (imp.defaultBinding && usedInTemplate.has(imp.defaultBinding)) {
+				names.add(imp.defaultBinding)
+			}
+			for (const named of imp.namedBindings) {
+				if (usedInTemplate.has(named.local)) names.add(named.local)
+			}
+		}
+	} catch {
+		// Incomplete script syntax — TypeScript reports through the virtual file.
+	}
+	return formatSyntheticUses(names)
+}
+
+function stateScriptTemplateUseFooter(sourceText: string, scriptContent: string, filePath = ''): string {
+	const usedInTemplate = collectTemplateUsedNames(sourceText, filePath)
+	const names = new Set<string>()
+	for (const binding of iterateBuildScriptBindings(scriptContent, {
+		includeNestedBindings: true,
+	})) {
+		if (usedInTemplate.has(binding.name)) names.add(binding.name)
+	}
+	return formatSyntheticUses(names)
 }
 
 
@@ -784,6 +841,7 @@ export class AeroVirtualCode implements VirtualCode {
 		const snippetsAmbient = loadGeneratedSnippetsAmbient(this.htmlFilePath ?? '')
 		const fullAmbient =
 			BUILD_SCRIPT_PREAMBLE +
+			`\n${SHARED_VIRTUAL_AMBIENT}` +
 			(tsImportAmbient.length > 0 ? `\n${tsImportAmbient}` : '') +
 			(nonCodeImportAmbient.length > 0 ? `\n${nonCodeImportAmbient}` : '') +
 			(snippetsAmbient.length > 0 ? `\n${snippetsAmbient}` : '')
@@ -913,7 +971,11 @@ export class AeroVirtualCode implements VirtualCode {
 			}
 
 			if (options?.isForDirectiveHead === true) {
-				const stmt = `for (${expression}) {}`
+				const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
+				const voidUses = [...forBindings].map(name => `void ${name};`).join(' ')
+				const stmt = voidUses
+					? `for (${expression}) { ${voidUses} }`
+					: `for (${expression}) {}`
 				const exprOffsetInVirtual = head.length + 'for ('.length
 				const virtualText = head + stmt
 				return {
@@ -1025,7 +1087,17 @@ export class AeroVirtualCode implements VirtualCode {
 								)
 							: ''
 					const templateUseFooter =
-						scriptType === 'build' ? buildTemplateUseFooter(sourceText, scriptContent) : ''
+						scriptType === 'build'
+							? buildScriptTemplateUseFooter(
+									sourceText,
+									scriptContent,
+									this.htmlFilePath ?? ''
+								)
+							: stateScriptTemplateUseFooter(
+									sourceText,
+									scriptContent,
+									this.htmlFilePath ?? ''
+								)
 					const virtualText =
 						BUILD_SCRIPT_PREAMBLE + buildPrelude + scriptForVirtual.text + templateUseFooter
 					const generatedPreludeLength = BUILD_SCRIPT_PREAMBLE.length + buildPrelude.length

@@ -50,7 +50,9 @@
 		"@types/vscode": "^1.125.0",
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vitest": "catalog:",
+		"vscode-oniguruma": "^2.0.1",
+		"vscode-textmate": "^9.3.2"
 	},
 	"contributes": {
 		"commands": [
@@ -97,7 +99,7 @@
 				"aero.debug": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML\u2192Aero language switching decisions."
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
 				}
 			}
 		},
@@ -119,6 +121,7 @@
 					"source.js": "javascript",
 					"source.json": "json",
 					"source.ts": "typescript",
+					"meta.embedded.block.expression.aero": "typescript",
 					"meta.embedded.expression.aero source.ts": "typescript"
 				}
 			},
@@ -126,24 +129,58 @@
 				"path": "./syntaxes/aero-expressions.json",
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
-					"text.html.aero"
+					"text.html.aero",
+					"text.html.basic",
+					"text.html"
 				],
 				"embeddedLanguages": {
+					"meta.embedded.block.expression.aero": "typescript",
 					"meta.embedded.expression.aero source.ts": "typescript"
+				},
+				"tokenTypes": {
+					"meta.embedded.block.expression.aero": "other",
+					"meta.embedded.expression.aero": "other",
+					"meta.embedded.expression.aero source.ts": "other",
+					"punctuation.section.embedded.begin.aero": "other",
+					"punctuation.section.embedded.end.aero": "other"
 				}
 			},
 			{
 				"path": "./syntaxes/aero-attributes.json",
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
-					"text.html.aero"
-				]
+					"text.html.aero",
+					"text.html.basic",
+					"text.html"
+				],
+				"embeddedLanguages": {
+					"meta.embedded.block.for-directive.aero": "typescript",
+					"meta.embedded.for-directive.aero source.ts": "typescript"
+				},
+				"tokenTypes": {
+					"meta.embedded.block.for-directive.aero": "other",
+					"meta.embedded.for-directive.aero": "other",
+					"meta.embedded.for-directive.aero source.ts": "other",
+					"punctuation.section.embedded.begin.aero": "other",
+					"punctuation.section.embedded.end.aero": "other"
+				}
 			},
 			{
 				"path": "./syntaxes/aero-globals.json",
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
-					"text.html.aero"
+					"text.html.aero",
+					"text.html.basic",
+					"text.html"
+				]
+			},
+			{
+				"path": "./syntaxes/aero-slot-void.json",
+				"scopeName": "aero.slot-void.injection",
+				"injectTo": [
+					"text.html.aero",
+					"text.html.basic",
+					"text.html"
 				]
 			}
 		]

@@ -30,7 +30,7 @@ const add = () => { items = [...items, { id: createID() }] }`
 		expect(moduleConstants).toEqual(['const createID = () => crypto.randomUUID()'])
 		expect(scopeFunctions.map(fn => fn.name)).toEqual(['add'])
 		expect(scopeFunctions[0]!.installSource).toMatch(
-			/^scope\.add = \(\) => \{scope\.items = \[\.\.\.scope\.items/
+			/^scope\.add = \(\) => \{ scope\.items = \[\.\.\.scope\.items/
 		)
 	})
 
@@ -50,7 +50,7 @@ const setItems = next => withTransition(() => (items = next))`
 
 		expect(scopeFunctions).toHaveLength(1)
 		expect(scopeFunctions[0]!.installSource).toBe(
-			'scope.setItems = next => scope.withTransition(() => (scope.items = next))'
+			'scope.setItems = (next) => scope.withTransition(() => (scope.items = next))'
 		)
 	})
 
@@ -93,7 +93,19 @@ const setItems = next => document.startViewTransition({ update: () => (items = n
 		const { scopeFunctions } = lower(script)
 
 		expect(scopeFunctions[0]!.installSource).toBe(
-			"scope.setItems = next => document.startViewTransition({ update: () => (scope.items = next), types: ['list-update'] })"
+			"scope.setItems = (next) => document.startViewTransition({ update: () => (scope.items = next), types: ['list-update'] })"
+		)
+	})
+
+	it('lowers stateful const arrows when params use typeof state bindings', () => {
+		const script = `let items = [{ id: 'a' }]
+const setItems = (next: typeof items) =>
+	document.startViewTransition({ update: () => (items = next), types: ['list-update'] })`
+		const { scopeFunctions, moduleConstants } = lower(script)
+
+		expect(moduleConstants).toEqual([])
+		expect(scopeFunctions[0]!.installSource).toBe(
+			"scope.setItems = (next) => document.startViewTransition({ update: () => (scope.items = next), types: ['list-update'] })"
 		)
 	})
 

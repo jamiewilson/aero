@@ -5,14 +5,14 @@
 <script is:state>
 	import { createID, getRandomIndex } from '@scripts/utils'
 
-	const setItems = next =>
+	let items = Array.from({ length: 5 }, () => ({ id: createID() }))
+	let hasItems = items.length > 0
+
+	const setItems = (next: typeof items) =>
 		document.startViewTransition({
 			update: () => (items = next),
 			types: ['list-update'],
 		})
-
-	let items = Array.from({ length: 5 }, () => ({ id: createID() }))
-	let hasItems = items.length > 0
 
 	const add = () => setItems([...items, { id: createID() }])
 	const remove = () => hasItems && setItems(items.slice(1))

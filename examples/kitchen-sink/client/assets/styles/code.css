@@ -32,6 +32,7 @@
 		/* Only apply background if not inside a shiki block */
 		&:not(.shiki &) {
 			background: var(--code-bg) !important;
+			transition: background 100ms;
 		}
 	}
 
