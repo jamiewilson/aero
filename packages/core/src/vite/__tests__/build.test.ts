@@ -94,6 +94,27 @@ describe('vite build helpers', () => {
 		).toBe('../../assets/global-123.css')
 	})
 
+	it('rewrites stylesheet href to css file when manifest entry has image assets', () => {
+		const routeSet = new Set<string>()
+		const manifest: Manifest = {
+			'client/assets/styles/global.css': {
+				file: 'assets/global.css-BjVN107n.css',
+				src: 'client/assets/styles/global.css',
+				isEntry: true,
+				assets: ['assets/icon-copy.svg-C30HyKXa.svg', 'assets/icon-copied.svg-8keaZJwe.svg'],
+			},
+		}
+
+		expect(
+			__internal.rewriteAbsoluteUrl(
+				'/client/assets/styles/global.css',
+				'',
+				manifest,
+				routeSet
+			)
+		).toBe('./assets/global.css-BjVN107n.css')
+	})
+
 	/** Root-relative script src is resolved via manifest (build discovers and bundles template refs). */
 	it('rewrites local script src (root-relative path) to manifest asset path', () => {
 		const routeSet = new Set<string>()
