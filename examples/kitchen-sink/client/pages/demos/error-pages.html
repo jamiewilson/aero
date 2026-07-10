@@ -95,17 +95,20 @@
 			</header>
 			<div class="card grid gap-4 not-prose text-sm">
 				<div class="flex flex-wrap gap-2">
-					<button type="button" id="fetch-api-404" data-testid="error-demo-fetch-404">
+					<button
+						type="button"
+						on:click="{ GET('/api/demos/error/not-found', { target: '#api-error-output' }) }"
+						data-testid="error-demo-fetch-404">
 						GET /api/demos/error/not-found
 					</button>
-					<button type="button" id="fetch-api-500" data-testid="error-demo-fetch-500">
+					<button
+						type="button"
+						on:click="{ GET('/api/demos/error/server-error', { target: '#api-error-output' }) }"
+						data-testid="error-demo-fetch-500">
 						GET /api/demos/error/server-error
 					</button>
 				</div>
-				<pre
-					id="api-error-output"
-					class="overflow-x-auto rounded bg-black/20 p-3 text-xs"
-					data-testid="error-demo-api-output">
+				<pre id="api-error-output" class="card text-xs" data-testid="error-demo-api-output">
 Click a button to fetch an API error.</pre>
 			</div>
 		</section>
@@ -122,35 +125,3 @@ Click a button to fetch an API error.</pre>
 		</section>
 	</article>
 </base-layout>
-
-<script>
-	const output = document.getElementById('api-error-output')
-
-	async function fetchApiError(path) {
-		if (!output) return
-		output.textContent = 'Loading…'
-		try {
-			const response = await fetch(path, {
-				headers: { Accept: 'application/json, text/html' },
-			})
-			const body = await response.text()
-			let parsed = body
-			try {
-				parsed = JSON.stringify(JSON.parse(body), null, 2)
-			} catch {
-				// keep raw body
-			}
-			output.textContent = `${response.status} ${response.statusText}\n\n${parsed}`
-		} catch (error) {
-			output.textContent = error instanceof Error ? error.message : String(error)
-		}
-	}
-
-	document.getElementById('fetch-api-404')?.addEventListener('click', () => {
-		fetchApiError('/api/demos/error/not-found')
-	})
-
-	document.getElementById('fetch-api-500')?.addEventListener('click', () => {
-		fetchApiError('/api/demos/error/server-error')
-	})
-</script>

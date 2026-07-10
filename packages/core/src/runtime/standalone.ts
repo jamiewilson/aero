@@ -14,8 +14,13 @@ function toDataUrl(moduleSource: string): string {
 }
 
 function normalizeResolvedPath(resolved: string, root: string, importer: string): string {
-	if (path.isAbsolute(resolved)) return resolved
-	if (resolved.startsWith('/')) return path.resolve(root, '.' + resolved)
+	const rootAbs = path.resolve(root)
+	if (path.isAbsolute(resolved)) {
+		if (resolved === rootAbs || resolved.startsWith(rootAbs + path.sep)) return resolved
+		// Compiler emits project-root-relative specifiers like `/client/layouts/base.html`.
+		return path.join(rootAbs, resolved.slice(1))
+	}
+	if (resolved.startsWith('/')) return path.join(rootAbs, resolved.slice(1))
 	if (resolved.startsWith('.')) return path.resolve(path.dirname(importer), resolved)
 	return resolved
 }

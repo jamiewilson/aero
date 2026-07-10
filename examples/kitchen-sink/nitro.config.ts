@@ -47,7 +47,6 @@ export default defineNitroConfig({
 			description: 'Warm the kitchen sink cache endpoint',
 		},
 	},
-	serverEntry: './server/entry.ts',
 	routeRules: {
 		'/health': {
 			headers: {

@@ -69,7 +69,8 @@ export default defineErrorHandler(async (error, event) => {
 			headers: { 'content-type': 'text/html; charset=utf-8' },
 		})
 	} catch {
-		const fallbackPath = path.join(getDistDir(root), '500.html')
+		const fallbackFile = aeroError.status === 404 ? '404.html' : '500.html'
+		const fallbackPath = path.join(getDistDir(root), fallbackFile)
 		try {
 			const html = await fs.readFile(fallbackPath, 'utf-8')
 			return new Response(html, {

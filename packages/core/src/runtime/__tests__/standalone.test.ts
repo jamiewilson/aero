@@ -119,4 +119,42 @@ const { title } = Aero.props as { title: string }
 			})
 		).rejects.toThrow('standalone import resolution failed')
 	})
+
+	it('resolves compiler root-relative html import specifiers', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-standalone-alias-'))
+		const layoutsDir = path.join(dir, 'client', 'layouts')
+		fs.mkdirSync(layoutsDir, { recursive: true })
+		fs.writeFileSync(
+			path.join(layoutsDir, 'base.html'),
+			'<script is:build></script><section><slot /></section>',
+			'utf8'
+		)
+		const pagesDir = path.join(dir, 'client', 'pages')
+		fs.mkdirSync(pagesDir, { recursive: true })
+		const importer = path.join(pagesDir, 'error.html')
+		const source = `<script is:build>import base from '@layouts/base.html'</script><base-layout><p>404 body</p></base-layout>`
+
+		const { loadTsconfigAliases, mergeWithDefaultAliases } = await import('../../utils/aliases')
+		const { resolveDirs } = await import('../../vite/defaults')
+		const merged = mergeWithDefaultAliases(loadTsconfigAliases(dir), dir, resolveDirs({ client: 'client' }))
+
+		const html = await renderTemplate({
+			templateSource: source,
+			root: dir,
+			importer,
+			resolvePath: merged.resolve,
+			input: {
+				error: { status: 404, message: 'Page not found' },
+				url: new URL('http://localhost/missing'),
+				request: new Request('http://localhost/missing'),
+				page: {
+					url: new URL('http://localhost/missing'),
+					request: new Request('http://localhost/missing'),
+					params: {},
+					routePath: '/missing',
+				},
+			},
+		})
+		expect(html).toContain('404 body')
+	})
 })

@@ -93,7 +93,7 @@ export default defineHandler(async event => {
 				headers: { 'Content-Type': 'text/html; charset=utf-8' },
 			})
 		}
-		throw HTTPError.status(404, 'Not found')
+		throw HTTPError.status(404, 'Page not found')
 	}
 
 	return result

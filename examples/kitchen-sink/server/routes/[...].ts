@@ -92,7 +92,7 @@ export default defineHandler(async event => {
 
 	// If serveStatic didn't match a file, serve the 404 page.
 	// The built 404.html uses relative paths (e.g. ./assets/…) which only
-	// resolve correctly from the site root.  Rewrite them to absolute so the
+	// resolve correctly from the site root. Rewrite them to absolute so the
 	// page renders with styles/scripts regardless of the request path depth.
 	if (!result) {
 		if (existsSync(dist404Path)) {
@@ -105,7 +105,7 @@ export default defineHandler(async event => {
 				headers: { 'Content-Type': 'text/html; charset=utf-8' },
 			})
 		}
-		throw HTTPError.status(404, 'Not found')
+		throw HTTPError.status(404, 'Page not found')
 	}
 
 	return result

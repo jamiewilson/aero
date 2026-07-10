@@ -47,7 +47,6 @@ export default defineNitroConfig({
 			description: 'Warm the starter cache endpoint',
 		},
 	},
-	serverEntry: './server/entry.ts',
 	routeRules: {
 		'/health': {
 			headers: {
