@@ -50,6 +50,7 @@ export const DIAGNOSTIC_BANNER_TITLE: Record<AeroDiagnosticCode, string> = {
 	AERO_CONTENT_SCHEMA: 'Aero Content Schema Error',
 	AERO_CONFIG: 'Aero Config Error',
 	AERO_BUILD_SCRIPT: 'Aero Build Script Error',
+	AERO_SCRIPT: 'Aero Script Error',
 	AERO_INTERNAL: 'Aero Internal Error',
 }
 

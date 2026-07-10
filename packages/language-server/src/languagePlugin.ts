@@ -3,6 +3,7 @@ import { forEachEmbeddedCode } from '@volar/language-core'
 import type { TypeScriptExtraServiceScript } from '@volar/typescript'
 import type * as ts from 'typescript'
 import type { URI } from 'vscode-uri'
+import { isAeroProjectPath } from '@aero-js/core/template-diagnostics'
 import { AeroVirtualCode } from './virtualCode'
 
 /**
@@ -15,7 +16,7 @@ function isHtmlTemplateUri(uri: URI): boolean {
 
 function shouldCreateAeroVirtualCode(uri: URI, languageId: string): boolean {
 	if (!isHtmlTemplateUri(uri)) return false
-	return languageId === 'aero' || languageId === 'html'
+	return (languageId === 'aero' || languageId === 'html') && isAeroProjectPath(uri.fsPath)
 }
 
 const MODULE_SCRIPT_CONTENT = "export default '';\n"
@@ -34,7 +35,7 @@ const moduleVirtualCode: VirtualCode = {
 
 export const aeroLanguagePlugin: LanguagePlugin<URI> = {
 	getLanguageId(uri) {
-		if (uri.path.endsWith('.html')) {
+		if (uri.path.endsWith('.html') && isAeroProjectPath(uri.fsPath)) {
 			return 'aero'
 		}
 	},
@@ -46,7 +47,7 @@ export const aeroLanguagePlugin: LanguagePlugin<URI> = {
 	},
 
 	updateVirtualCode(uri, _virtualCode, snapshot) {
-		if (!isHtmlTemplateUri(uri)) return undefined
+		if (!isHtmlTemplateUri(uri) || !isAeroProjectPath(uri.fsPath)) return undefined
 		return new AeroVirtualCode(snapshot, uri.fsPath)
 	},
 

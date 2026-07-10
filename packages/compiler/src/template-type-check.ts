@@ -7,32 +7,25 @@ import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
 import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from './generated/ambient-preamble'
-import { buildTemplateEditorAmbient } from './template-editor-context'
 import {
 	collectTemplateInterpolationSites,
 	buildTemplateInterpolationVirtualText,
 } from './template-interpolation-sites'
+import { collectTemplateScriptBlocks, type TemplateScriptBlock } from './template-source'
+import { iterateBuildScriptBindings } from './build-scope-bindings'
 import {
 	compilerOptionsForVirtualCheck,
 	loadProjectTsConfig,
 	type LoadedProjectTsConfig,
 } from './project-tsconfig'
 
-/** Match {@link packages/language-server/src/virtualCode.ts} BUILD_SCRIPT_FEATURES suppression. */
-const SUPPRESSED_TS_CODES = new Set([
-	6133, // declared but never read
-	6192, // All imports in import declaration are unused (template-only bindings)
-	6196, // declared but never used
-	6198, // All destructured elements are unused
-	7006, // implicitly has an 'any' type
-])
-
-function shouldReportTsDiagnostic(d: ts.Diagnostic): boolean {
-	const c = d.code
-	return typeof c !== 'number' || !SUPPRESSED_TS_CODES.has(c)
-}
-
-export type TemplateTypeIssueKind = 'build' | 'interpolation'
+export type TemplateTypeIssueKind =
+	| 'build'
+	| 'state'
+	| 'bundled'
+	| 'inline'
+	| 'blocking'
+	| 'interpolation'
 
 export type TemplateTypeIssue = {
 	readonly kind: TemplateTypeIssueKind
@@ -110,7 +103,8 @@ function createVirtualProgramDiagnostics(
 	virtualAbsolutePath: string,
 	content: string,
 	options: ts.CompilerOptions,
-	extraExistingRootFiles: string[]
+	extraExistingRootFiles: string[],
+	scriptKind = ts.ScriptKind.TS
 ): ts.Diagnostic[] {
 	const virtualAmbientPath = path.join(root, '.aero', 'cache', '__aero_typecheck_ambient.d.ts')
 	const roots = [
@@ -123,7 +117,7 @@ function createVirtualProgramDiagnostics(
 	host.getSourceFile = (fileName, languageVersion, ...args) => {
 		const normalized = path.normalize(fileName)
 		if (normalized === path.normalize(virtualAbsolutePath)) {
-			return ts.createSourceFile(fileName, content, languageVersion, true, ts.ScriptKind.TS)
+			return ts.createSourceFile(fileName, content, languageVersion, true, scriptKind)
 		}
 		if (normalized === path.normalize(virtualAmbientPath)) {
 			return ts.createSourceFile(
@@ -143,13 +137,15 @@ function createVirtualProgramDiagnostics(
 	if (!sf) return []
 
 	return [...program.getSyntacticDiagnostics(sf), ...program.getSemanticDiagnostics(sf)].filter(
-		d => d.category === ts.DiagnosticCategory.Error && shouldReportTsDiagnostic(d)
+		d => d.category === ts.DiagnosticCategory.Error
 	)
 }
 
 export type CheckTemplateTypesOptions = {
 	/** Project root (tsconfig discovery, path resolution). */
 	readonly root: string
+	/** Original HTML file path, used to resolve relative virtual imports. */
+	readonly templateFilePath?: string
 	/** When set, merged before virtual checks (paths, strict, …). */
 	readonly project?: LoadedProjectTsConfig | null
 	/** Include `{ }` expression checks (same virtual shape as Volar). Default true when `full` implied. */
@@ -158,6 +154,24 @@ export type CheckTemplateTypesOptions = {
 	readonly componentRegistryDtsPath?: string
 	/** Optional generated snippet module `.d.ts` (must exist on disk to be included). */
 	readonly snippetsDtsPath?: string
+}
+
+function scriptUsesTypeScript(block: TemplateScriptBlock): boolean {
+	if (block.kind === 'build' || block.kind === 'state') {
+		return !/\blang\s*=\s*["'](?:js|javascript)["']/i.test(block.attrs)
+	}
+	return /\blang\s*=\s*["'](?:ts|typescript)["']/i.test(block.attrs)
+}
+
+function buildTemplateUseFooter(source: string, script: string): string {
+	const expressions = collectTemplateInterpolationSites(source).map(site => site.expression)
+	return [...iterateBuildScriptBindings(script)]
+		.filter(binding => {
+			const escaped = binding.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+			return expressions.some(expression => new RegExp(`\\b${escaped}\\b`).test(expression))
+		})
+		.map(binding => `\nvoid ${binding.name}`)
+		.join('')
 }
 
 /**
@@ -179,35 +193,42 @@ export function checkTemplateTypes(
 		extraRoots.push(path.resolve(options.snippetsDtsPath))
 	}
 
-	const virtualBuildPath = path.join(root, '.aero', 'cache', '__aero_typecheck_build.ts')
-	const virtualExprDir = path.join(root, '.aero', 'cache')
+	const virtualBase = options.templateFilePath ?? path.join(root, '.aero', 'cache', '__aero_typecheck')
+	const virtualExprDir = path.dirname(virtualBase)
 
 	const out: TemplateTypeIssue[] = []
 
-	const prelude = BUILD_SCRIPT_PREAMBLE + '\n'
-	const { buildScriptBodies } = buildTemplateEditorAmbient(htmlSource)
-	const script = buildScriptBodies.join('\n\n')
-
-	if (script.trim()) {
-		const full = prelude + script
-		const scriptOffset = prelude.length
-		const scriptOnly = script
-		const diags = createVirtualProgramDiagnostics(root, virtualBuildPath, full, tsOpts, extraRoots)
+	let scriptIdx = 0
+	for (const block of collectTemplateScriptBlocks(htmlSource)) {
+		if (block.kind === 'external' || !block.content.trim()) continue
+		const usesTypeScript = scriptUsesTypeScript(block)
+		const prelude = block.kind === 'build' || block.kind === 'state' ? BUILD_SCRIPT_PREAMBLE + '\n' : ''
+		const virtualPath = `${virtualBase}.${block.kind}_${scriptIdx++}.${usesTypeScript ? 'ts' : 'js'}`
+		const content =
+			prelude + block.content + (block.kind === 'build' ? buildTemplateUseFooter(htmlSource, block.content) : '')
+		const diags = createVirtualProgramDiagnostics(
+			root,
+			virtualPath,
+			content,
+			tsOpts,
+			extraRoots,
+			usesTypeScript ? ts.ScriptKind.TS : ts.ScriptKind.JS
+		)
 
 		for (const d of diags) {
-			if (d.start === undefined || d.start < scriptOffset) continue
-			const posInScript = d.start - scriptOffset
-			const lc = offsetToOneBasedLineColumn(scriptOnly, posInScript)
+			if (d.start === undefined || d.start < prelude.length) continue
+			const posInScript = d.start - prelude.length
+			const lc = offsetToOneBasedLineColumn(htmlSource, block.contentStart + posInScript)
 			const message = ts.flattenDiagnosticMessageText(d.messageText, '\n')
 			let lineEnd: number | undefined
 			let columnEnd: number | undefined
 			if (d.length !== undefined && d.length > 0) {
-				const endLc = offsetToOneBasedLineColumn(scriptOnly, posInScript + d.length)
+				const endLc = offsetToOneBasedLineColumn(htmlSource, block.contentStart + posInScript + d.length)
 				lineEnd = endLc.line
 				columnEnd = endLc.column
 			}
 			out.push({
-				kind: 'build',
+				kind: block.kind,
 				message,
 				line: lc.line,
 				column: lc.column,
@@ -228,7 +249,7 @@ export function checkTemplateTypes(
 					site,
 					BUILD_SCRIPT_PREAMBLE + '\n'
 				)
-			const virtualPath = path.join(virtualExprDir, `__aero_typecheck_expr_${exprIdx++}.ts`)
+			const virtualPath = path.join(virtualExprDir, `${path.basename(virtualBase)}.expr_${exprIdx++}.ts`)
 
 			const diags = createVirtualProgramDiagnostics(
 				root,
@@ -285,7 +306,7 @@ export function checkTemplateTypesWithFile(
 	filePath: string,
 	options: CheckTemplateTypesOptions
 ): (TemplateTypeIssue & { readonly file: string })[] {
-	return checkTemplateTypes(htmlSource, options).map(issue => ({
+	return checkTemplateTypes(htmlSource, { ...options, templateFilePath: filePath }).map(issue => ({
 		...issue,
 		file: filePath,
 	}))

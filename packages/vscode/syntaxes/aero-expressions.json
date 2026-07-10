@@ -1,15 +1,20 @@
 {
 	"scopeName": "aero.expressions.injection",
-	"injectionSelector": "L:text.html.aero -source.css -source.js -source.ts -source.css.embedded.html -comment.block.html, L:text.html.aero string.quoted.double.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero, L:text.html.aero string.quoted.single.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero",
+	"injectionSelector": "R:text.html.aero -source.css -source.js -source.ts -source.css.embedded.html -comment.block.html, R:text.html.basic -source.css -source.js -source.ts -source.css.embedded.html -comment.block.html, R:text.html -source.css -source.js -source.ts -source.css.embedded.html -comment.block.html, R:text.html.aero string.quoted.double.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero, R:text.html.basic string.quoted.double.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero, R:text.html string.quoted.double.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero, R:text.html.aero string.quoted.single.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero, R:text.html.basic string.quoted.single.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero, R:text.html string.quoted.single.html -source.css -source.js -source.ts -meta.embedded.for-directive.aero -meta.embedded.block.for-directive.aero",
 	"patterns": [
 		{
-			"begin": "\\{",
-			"end": "\\}",
+			"name": "meta.embedded.block.expression.aero",
+			"begin": "(\\{)",
+			"end": "(\\})",
 			"beginCaptures": {
-				"0": { "name": "punctuation.section.embedded.begin.aero" }
+				"1": {
+					"name": "punctuation.section.embedded.begin.aero punctuation.definition.string.begin.html"
+				}
 			},
 			"endCaptures": {
-				"0": { "name": "punctuation.section.embedded.end.aero" }
+				"1": {
+					"name": "punctuation.section.embedded.end.aero punctuation.definition.string.end.html"
+				}
 			},
 			"contentName": "meta.embedded.expression.aero source.ts",
 			"patterns": [

@@ -3,11 +3,9 @@
  */
 import { analyzeBuildScriptForEditor } from '../entry-editor'
 import { collectInterpolationBodyRanges } from '@aero-js/interpolation'
+import { collectHtmlCommentRanges } from '@aero-js/compiler'
 import type { TemplateScope } from './analyzer/types'
 import { parseScriptBlocks } from './script-tag'
-
-/** Matches HTML comment blocks. */
-const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g
 
 export type IgnoredRange = { start: number; end: number }
 
@@ -73,11 +71,7 @@ export function findInnermostScope(scopes: TemplateScope[], offset: number): Tem
 /** Build an array of byte ranges to ignore (HTML comments + script/style content). */
 export function getIgnoredRanges(text: string): IgnoredRange[] {
 	const ranges: IgnoredRange[] = []
-	HTML_COMMENT_REGEX.lastIndex = 0
-	let match: RegExpExecArray | null
-	while ((match = HTML_COMMENT_REGEX.exec(text)) !== null) {
-		ranges.push({ start: match.index, end: match.index + match[0].length })
-	}
+	for (const range of collectHtmlCommentRanges(text)) ranges.push(range)
 
 	const scriptStyleRegex = /<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi
 	let scriptMatch: RegExpExecArray | null

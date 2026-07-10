@@ -809,7 +809,10 @@ export function referencesStateBindingExpression(
 	bindingNames: ReadonlySet<string>
 ): boolean {
 	for (const name of bindingNames) {
-		if (new RegExp(`\\b${name}\\b`).test(expression)) return true
+		const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+		// Disallow `-` before the name so `text` does not match inside `numeric-text`.
+		const re = new RegExp(`(?<![-\\w])${escaped}(?!\\w)`)
+		if (re.test(expression)) return true
 	}
 	return false
 }

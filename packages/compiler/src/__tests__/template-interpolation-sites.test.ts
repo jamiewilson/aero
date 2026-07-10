@@ -7,6 +7,13 @@ import {
 } from '../template-interpolation-sites'
 
 describe('collectTemplateInterpolationSites', () => {
+	it('ignores component props expressions inside HTML comments', () => {
+		const html = `<!--<card-component props="{ ...props }" />-->\n<p>{ title }</p>`
+		const sites = collectTemplateInterpolationSites(html)
+		expect(sites).toHaveLength(1)
+		expect(sites[0]?.expression.trim()).toBe('title')
+	})
+
 	it('marks props attribute interpolations for object-literal virtual wrap', () => {
 		const html = `<x-component props="{ ...p }" /><p>{ other }</p>`
 		const sites = collectTemplateInterpolationSites(html)

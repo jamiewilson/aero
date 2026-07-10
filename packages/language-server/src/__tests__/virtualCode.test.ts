@@ -21,7 +21,53 @@ function getEmbeddedText(code: AeroVirtualCode, id: string) {
 	return embedded.snapshot.getText(0, embedded.snapshot.getLength())
 }
 
+function semanticDiagnosticCodes(
+	virtualScript: string,
+	ambient: string,
+	extraRootFiles: string[] = []
+): number[] {
+	const opts: ts.CompilerOptions = {
+		target: ts.ScriptTarget.ESNext,
+		module: ts.ModuleKind.ESNext,
+		moduleResolution: ts.ModuleResolutionKind.Bundler,
+		strict: true,
+		noUnusedLocals: true,
+		skipLibCheck: true,
+		noEmit: true,
+	}
+	const virtualFile = '/probe/virtual.ts'
+	const ambientFile = '/probe/ambient.d.ts'
+	const host = ts.createCompilerHost(opts, true)
+	const orig = host.getSourceFile.bind(host)
+	host.getSourceFile = (fileName, languageVersion, ...rest) => {
+		if (fileName === virtualFile) {
+			return ts.createSourceFile(
+				fileName,
+				virtualScript,
+				languageVersion,
+				true,
+				ts.ScriptKind.TS
+			)
+		}
+		if (fileName === ambientFile) {
+			return ts.createSourceFile(fileName, ambient, languageVersion, true, ts.ScriptKind.TS)
+		}
+		return orig(fileName, languageVersion, ...rest)
+	}
+	const program = ts.createProgram([virtualFile, ambientFile, ...extraRootFiles], opts, host)
+	const sf = program.getSourceFile(virtualFile)
+	if (!sf) return []
+	return program.getSemanticDiagnostics(sf).map(d => d.code)
+}
+
 describe('AeroVirtualCode', () => {
+	it('does not generate TypeScript expressions from HTML comments', () => {
+		const html = `<script is:build>const props = { title: 'x', body: 'y' }</script>
+<!--<card-component props="{ ...props }" />-->`
+		const code = new AeroVirtualCode(createSnapshot(html))
+		expect(code.embeddedCodes.some(embedded => embedded.id.startsWith('expr_'))).toBe(false)
+	})
+
 	it('does not produce cross-file TS2451 when build script declares props and interpolations use props (starter-minimal header pattern)', () => {
 		const html = `<script is:build>
 	const props = Aero.props
@@ -123,8 +169,9 @@ const x = 1
 		expect(text).toContain('declare function renderComponent(')
 		expect(text).not.toContain("declare module '*.html'")
 		const ambient = getEmbeddedText(code, 'ambient')!
-		expect(ambient).toContain("declare module '*.html'")
+		expect(ambient).not.toContain("declare module '*.html'")
 		expect(ambient).toContain("declare module '*.jpg'")
+		expect(ambient).toContain("declare module 'aero:content'")
 		expect(ambient).not.toContain("declare module '*.ts'")
 		const preambleEnd = text.indexOf('const x = 1')
 		expect(preambleEnd).toBeGreaterThan(0)
@@ -650,7 +697,8 @@ const o = { a: 1 }
 		const allExprs = code.embeddedCodes?.filter(c => c.id.startsWith('expr_')) ?? []
 		expect(allExprs).toHaveLength(2)
 		const forHead = getEmbeddedText(code, 'expr_0')!
-		expect(forHead).toContain('for (const item of items) {}')
+		expect(forHead).toContain('for (const item of items)')
+		expect(forHead).toMatch(/void item;/)
 		const bodyExpr = getEmbeddedText(code, 'expr_1')!
 		expect(bodyExpr).toContain(' item.name ')
 	})
@@ -794,6 +842,83 @@ import card from '@components/card.html'
 		expect(expr0).toContain('interface ItemSlotProps')
 		expect(expr0).toContain('declare const item: ItemSlotProps["item"];')
 		expect(expr0).toContain(' item.name ')
+	})
+
+	describe('template synthetic uses (TS6133)', () => {
+		it('marks component imports used by tags as read in build virtual TS', () => {
+			const html = `<script is:build>
+import toggle from '@components/theme/toggle.html'
+</script>
+<toggle-component />`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const build = getEmbeddedText(code, 'build_0')!
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(build).toContain('void toggle')
+			expect(semanticDiagnosticCodes(build, ambient)).not.toContain(6133)
+		})
+
+		it('marks layout imports used by tags as read in build virtual TS', () => {
+			const html = `<script is:build>
+import base from '@layouts/base.html'
+</script>
+<base-layout title="Page" />`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const build = getEmbeddedText(code, 'build_0')!
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(build).toContain('void base')
+			expect(semanticDiagnosticCodes(build, ambient)).not.toContain(6133)
+		})
+
+		it('marks bare props shorthand as read in build virtual TS', () => {
+			const html = `<script is:build>
+const props = { title: 'x', body: 'y' }
+</script>
+<card-component props />`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const build = getEmbeddedText(code, 'build_0')!
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(build).toContain('void props')
+			expect(semanticDiagnosticCodes(build, ambient)).not.toContain(6133)
+		})
+
+		it('marks is:state bindings used in template as read in state virtual TS', () => {
+			const html = `<script is:state>
+let count = 1234
+</script>
+<p>{ count }</p>`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const state = getEmbeddedText(code, 'state_0')!
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(state).toContain('void count')
+			expect(semanticDiagnosticCodes(state, ambient)).not.toContain(6133)
+		})
+
+		it('marks for-directive loop bindings as read in for-head virtual TS', () => {
+			const html = `<li for="{ const link of links }">{ link.label }</li>`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const forHead = getEmbeddedText(code, 'expr_0')!
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(forHead).toContain('for (const link of links)')
+			expect(forHead).toContain('void link')
+			expect(semanticDiagnosticCodes(forHead, ambient)).not.toContain(6133)
+		})
+
+		it('declares aero:content in shared ambient without *.html wildcard', () => {
+			const html = `<script is:build>
+import { getCollection } from 'aero:content'
+</script>`
+
+			const code = new AeroVirtualCode(createSnapshot(html))
+			const ambient = getEmbeddedText(code, 'ambient')!
+			expect(ambient).toContain("declare module 'aero:content'")
+			expect(ambient).not.toContain("declare module '*.html'")
+			expect(semanticDiagnosticCodes(getEmbeddedText(code, 'build_0')!, ambient)).not.toContain(2307)
+		})
 	})
 
 })

@@ -6,6 +6,7 @@ const DIAGNOSTIC_SOURCE = 'aero'
 
 const CODE_DOC_FILES: Partial<Record<AeroDiagnostic['code'], string>> = {
 	AERO_BUILD_SCRIPT: 'script-taxonomy.md',
+	AERO_SCRIPT: 'script-taxonomy.md',
 	AERO_COMPILE: 'interpolation.md',
 	AERO_CONFIG: 'aero-config.md',
 	AERO_RESOLVE: 'importing-and-bundling.md',

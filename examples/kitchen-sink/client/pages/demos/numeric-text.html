@@ -5,8 +5,12 @@
 
 <script is:state>
 	let count = 1234
-	let animated = true
-	let trend = 0
+	let text = 'Numeric'
+	let textOptions = ['Numeric', 'Text', 'Animation']
+
+	function cycleTextOptions() {
+		text = textOptions[(textOptions.indexOf(text) + 1) % textOptions.length]
+	}
 </script>
 
 <base-layout title="Numeric text">
@@ -14,13 +18,13 @@
 		<header>
 			<h1>Numeric text</h1>
 			<p>
-				<code>{`<numeric-text />`}</code> wrapper component with bindable <code>value</code> prop.
+				<code>{ `<numeric-text />` }</code> wrapper component with bindable <code>value</code> prop.
 			</p>
 		</header>
 
 		<main class="grid grid-cols-2 gap-4 not-prose">
 			<section class="grid gap-2">
-				<button on:click="{ count = Math.floor(Math.random() * 10000) }">Random number</button>
+				<button on:click="{ count = Math.floor(Math.random() * 1e4) }">Random number</button>
 				<button on:click="{ count++ }">Increment</button>
 				<button on:click="{ count-- }">Decrement</button>
 				<button on:click="{ count = 0 }">Reset</button>
@@ -28,13 +32,13 @@
 
 			<figure class="card grid place-items-center">
 				<!-- FIXME: class bindings don't work here when using a component -->
-				<numeric-text-component
-					bind:value="{ count }"
-					animated="{ animated }"
-					trend="{ trend }"
-					class:is-animated="{ animated }"
-					classes="font-bold text-[4rem]" />
+				<numeric-text-component bind:value="{ count }" classes="text-[4rem] tracking-tight" />
 			</figure>
 		</main>
+
+		<figure class="card grid">
+			<numeric-text-component bind:value="{ text }" classes="text-[4rem] tracking-tight" />
+		</figure>
+		<button on:click="{ cycleTextOptions() }">Cycle text</button>
 	</article>
 </base-layout>

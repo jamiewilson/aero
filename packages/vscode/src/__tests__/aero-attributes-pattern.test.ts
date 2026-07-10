@@ -20,4 +20,22 @@ describe('aero-attributes grammar', () => {
 			'#aero-props-attribute',
 		])
 	})
+
+	it('uses full TypeScript highlighting inside for-directive braced values', () => {
+		const grammarPath = path.join(import.meta.dirname, '..', '..', 'syntaxes', 'aero-attributes.json')
+		const full = JSON.parse(readFileSync(grammarPath, 'utf8')) as {
+			repository: {
+				'aero-for-braced-value': {
+					name?: string
+					contentName?: string
+					patterns: Array<{ include?: string }>
+				}
+			}
+		}
+		const rule = full.repository['aero-for-braced-value']
+		expect(rule.name).toBe('meta.embedded.block.for-directive.aero')
+		expect(rule.contentName).toBe('meta.embedded.for-directive.aero source.ts')
+		expect(rule.patterns).toEqual([{ include: 'source.ts' }])
+		expect(rule.beginCaptures?.['1']?.name).toContain('punctuation.definition.string.begin.html')
+	})
 })

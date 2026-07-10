@@ -7,14 +7,14 @@
 		{
 			"comment": "Match <slot /> as self-closing so it gets void-tag scoping (ligature, bracket matching)",
 			"begin": "(?i)(<)(slot)\\b(?=[^>]*\\/>)",
-			"end": "(\\/>)",
+			"end": "/?>",
 			"name": "meta.tag.structure.slot.void.html",
 			"beginCaptures": {
 				"1": { "name": "punctuation.definition.tag.begin.html" },
 				"2": { "name": "entity.name.tag.html" }
 			},
 			"endCaptures": {
-				"1": { "name": "punctuation.definition.tag.end.html" }
+				"0": { "name": "punctuation.definition.tag.end.html" }
 			},
 			"patterns": [{ "include": "text.html.basic#attribute" }]
 		},

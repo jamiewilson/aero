@@ -50,7 +50,7 @@ const add = () => { items = [...items, { id: 'b' }] }
 
 			expect(code).not.toMatch(/const add = \(\) => \{ items/)
 			expect(install).toMatch(
-				/scope\.add = \(\) => \{scope\.items = \[\.\.\.scope\.items, \{ id: 'b' \}\]\}/
+				/scope\.add = \(\) => \{ scope\.items = \[\.\.\.scope\.items, \{ id: 'b' \}\] \}/
 			)
 		})
 
@@ -84,7 +84,7 @@ const add = () => setItems([...items, { id: 'b' }])
 			const install = installScopeBlock(code)
 
 			expect(install).toContain(
-				'scope.setItems = next => scope.withTransition(() => (scope.items = next))'
+				'scope.setItems = (next) => scope.withTransition(() => (scope.items = next))'
 			)
 			expect(code).not.toContain('scope.next')
 		})
@@ -102,7 +102,7 @@ const add = () => { setItems([...items, { id: 'b' }]) }
 
 			expect(install).toMatch(/scope\.setItems = function\(next\) \{ scope\.items = next \}/)
 			expect(install).toMatch(
-				/scope\.add = \(\) => \{scope\.setItems\(\[\.\.\.scope\.items, \{ id: 'b' \}\]\)\}/
+				/scope\.add = \(\) => \{ scope\.setItems\(\[\.\.\.scope\.items, \{ id: 'b' \}\]\) \}/
 			)
 			expect(code).not.toContain('scope.next')
 		})
@@ -129,7 +129,7 @@ function setItems(next: typeof items) {
 			expect(code).not.toContain('scope.next')
 		})
 
-		it('preserves explicit array type annotations on const arrow params (current behavior)', () => {
+		it('strips TS types from const arrow params in scope install', () => {
 			const html = `<script is:state>
 type Item = { id: string }
 let items: Item[] = [{ id: 'a' }]
@@ -140,7 +140,25 @@ const setItems = (next: Item[]) => { items = next }
 			const code = compile(parse(html), mockOptions)
 			const install = installScopeBlock(code)
 
-			expect(install).toMatch(/scope\.setItems = \(next: Item\[\]\) => \{scope\.items = next\}/)
+			expect(install).toMatch(/scope\.setItems = \(next\) => \{ scope\.items = next \}/)
+			expect(install).not.toContain('Item[]')
+		})
+
+		it('strips typeof state bindings from const arrow params in scope install', () => {
+			const html = `<script is:state>
+let items = [{ id: 'a' }]
+const setItems = (next: typeof items) =>
+	document.startViewTransition({ update: () => (items = next), types: ['list-update'] })
+</script>
+<button on:click="{ setItems([]) }">Clear</button>`
+
+			const code = compile(parse(html), mockOptions)
+			const install = installScopeBlock(code)
+
+			expect(install).toContain(
+				"scope.setItems = (next) => document.startViewTransition({ update: () => (scope.items = next), types: ['list-update'] })"
+			)
+			expect(install).not.toContain('typeof items')
 		})
 	})
 
@@ -232,7 +250,7 @@ const add = () => { items = [...items, { id: 'b' }] }
 
 			expect(install).toMatch(/scope\.remove = function\(\) \{ scope\.items = scope\.items\.slice\(1\) \}/)
 			expect(install).toMatch(
-				/scope\.add = \(\) => \{scope\.items = \[\.\.\.scope\.items, \{ id: 'b' \}\]\}/
+				/scope\.add = \(\) => \{ scope\.items = \[\.\.\.scope\.items, \{ id: 'b' \}\] \}/
 			)
 		})
 	})
@@ -258,7 +276,7 @@ const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
 
 			expect(preamble).toContain("const createID = () => crypto.randomUUID().split('-').pop()")
 			expect(preamble).toContain(
-				'scope.setItems = next => scope.withTransition(() => (scope.items = next))'
+				'scope.setItems = (next) => scope.withTransition(() => (scope.items = next))'
 			)
 			expect(preamble).toMatch(/scope\.add = \(\) => scope\.setItems\(\[\.\.\.scope\.items/)
 			expect(preamble).toMatch(/scope\.remove = \(\) => \(scope\.items\.length === 0/)

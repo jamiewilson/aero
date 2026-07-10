@@ -1,5 +1,6 @@
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseAeroHtmlDocument, walkHtmlNodes } from '@aero-js/html-parser'
+import { maskHtmlComments } from '@aero-js/compiler'
 import { parseScriptBlocks } from '../script-tag'
 import { rangeFromOffsets, type SourceDocument } from '../source-document'
 import {
@@ -43,7 +44,7 @@ export function collectTemplateReferences(
 		}
 	)
 
-	maskedText = maskedText.replace(/<!--[\s\S]*?-->/g, match => ' '.repeat(match.length))
+	maskedText = maskHtmlComments(maskedText)
 
 	const htmlDoc = parseAeroHtmlDocument(
 		escapeInterpolationBodyMarkup(maskedText).text,

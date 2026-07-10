@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.attributes.injection",
-	"injectionSelector": "L:text.html.aero meta.tag -comment -string",
+	"injectionSelector": "R:text.html.aero meta.tag -comment -string, R:text.html.basic meta.tag -comment -string, R:text.html meta.tag -comment -string",
 	"patterns": [
 		{ "include": "#aero-script-type-attributes" },
 		{ "include": "#aero-control-flow-attributes" },
@@ -136,31 +136,21 @@
 			]
 		},
 		"aero-for-braced-value": {
+			"name": "meta.embedded.block.for-directive.aero",
 			"begin": "(\\{)",
 			"end": "(\\})",
 			"beginCaptures": {
-				"1": { "name": "punctuation.section.embedded.begin.aero" }
+				"1": {
+					"name": "punctuation.section.embedded.begin.aero punctuation.definition.string.begin.html"
+				}
 			},
 			"endCaptures": {
-				"1": { "name": "punctuation.section.embedded.end.aero" }
+				"1": {
+					"name": "punctuation.section.embedded.end.aero punctuation.definition.string.end.html"
+				}
 			},
-			"contentName": "meta.embedded.for-directive.aero",
-			"patterns": [{ "include": "#aero-for-of-head" }]
-		},
-		"aero-for-of-head": {
-			"comment": "JavaScript for-of loop head inside for=\"{ … }\"",
-			"patterns": [
-				{
-					"match": "(?x)\\s*(const|let)\\s+((?:\\{[^}]*\\}|\\w+(?:\\s*,\\s*\\w+)*))\\s+(of)\\s+(.+?)\\s*(?=\\})",
-					"captures": {
-						"1": { "name": "storage.type.js" },
-						"2": { "name": "variable.other.readwrite.js" },
-						"3": { "name": "keyword.control.flow.js" },
-						"4": { "patterns": [{ "include": "source.ts" }] }
-					}
-				},
-				{ "include": "source.ts" }
-			]
+			"contentName": "meta.embedded.for-directive.aero source.ts",
+			"patterns": [{ "include": "source.ts" }]
 		}
 	}
 }

@@ -215,9 +215,9 @@ function lowerScopeFunction(
 		}
 		const bodySource = source.slice(rel(fn.body.start), rel(fn.body.end))
 		const rewrittenBody = rewriteExprForScope(bodySource, ctx, rewriteOptions)
-		const rewrittenInit =
-			source.slice(0, rel(fn.body.start)) + rewrittenBody + source.slice(rel(fn.body.end))
-		return `scope.${name} = ${rewrittenInit.trim()}`
+		const params = [...paramNames].join(', ')
+		const asyncPrefix = fn.async === true ? 'async ' : ''
+		return `scope.${name} = ${asyncPrefix}(${params}) => ${rewrittenBody.trim()}`
 	}
 
 	const body = fn.body
@@ -235,9 +235,7 @@ function lowerScopeFunction(
 		return `scope.${name} = ${asyncPrefix}function(${params}) { ${rewrittenInner.trim()} }`
 	}
 
-	const rewrittenInit =
-		source.slice(0, rel(body.start) + 1) + rewrittenInner + source.slice(rel(body.end) - 1)
-	return `scope.${name} = ${rewrittenInit.trim()}`
+	return `scope.${name} = ${asyncPrefix}(${params}) => { ${rewrittenInner.trim()} }`
 }
 
 function buildRewriteContext(

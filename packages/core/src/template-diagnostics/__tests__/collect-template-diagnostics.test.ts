@@ -178,6 +178,23 @@ import card from '@components/card.html'
 })
 
 describe('collectTemplateDiagnostics unused variables', () => {
+	it('does not count a commented props spread as a use', () => {
+		const html = `<script is:build>
+const props = { title: 'Hello', body: 'World' }
+</script>
+<!--<card-component props="{ ...props }" />-->`
+
+		const diagnostics = collectTemplateDiagnostics({
+			document: makeDocument(html, '/tmp/client/pages/commented.html'),
+			root: '/tmp',
+			flags: { reactivity: false, hypermedia: false },
+		})
+
+		expect(
+			diagnostics.some(d => d.message.includes("'props' is declared but its value is never read"))
+		).toBe(true)
+	})
+
 	it('does not flag spread parameter as unused in is:state', () => {
 		const html = `<script is:state>
 const nextNumber = (values: number[]) => Math.max(0, ...values) + 1

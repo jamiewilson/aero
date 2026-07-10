@@ -44,6 +44,7 @@ export function exitCodeForDiagnostics(diagnostics: readonly AeroDiagnostic[]): 
 		case 'AERO_PARSE':
 		case 'AERO_RESOLVE':
 		case 'AERO_BUILD_SCRIPT':
+		case 'AERO_SCRIPT':
 			return AERO_EXIT_COMPILE
 		case 'AERO_ROUTE':
 			return AERO_EXIT_ROUTE

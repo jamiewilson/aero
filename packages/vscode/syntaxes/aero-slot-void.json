@@ -1,0 +1,20 @@
+{
+	"scopeName": "aero.slot-void.injection",
+	"injectionSelector": "L:text.html.aero -meta.embedded.expression.aero, L:text.html.basic -meta.embedded.expression.aero, L:text.html -meta.embedded.expression.aero",
+	"patterns": [
+		{
+			"comment": "Match <slot /> as self-closing so it gets void-tag scoping (ligature, bracket matching)",
+			"begin": "(?i)(<)(slot)\\b(?=[^>]*\\/>)",
+			"end": "/?>",
+			"name": "meta.tag.structure.slot.void.html",
+			"beginCaptures": {
+				"1": { "name": "punctuation.definition.tag.begin.html" },
+				"2": { "name": "entity.name.tag.html" }
+			},
+			"endCaptures": {
+				"0": { "name": "punctuation.definition.tag.end.html" }
+			},
+			"patterns": [{ "include": "text.html.basic#attribute" }]
+		}
+	]
+}

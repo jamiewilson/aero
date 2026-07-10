@@ -20,6 +20,7 @@ import { rewriteHypermediaActionStateRefs } from './hypermedia-action-state-refs
 import { buildHypermediaActionScopeDecl } from './event-handler-action-scope'
 import { AERO_ATTR_PREFIX, ATTR_FOR, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 import { buildDirectiveAttributeNames } from './build-directive-attributes'
+import { maskHtmlComments } from './template-source'
 
 export type TemplateInterpolationSite = {
 	readonly expression: string
@@ -68,6 +69,10 @@ function maskScriptAndStyleInner(sourceText: string): string {
 		/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi,
 		(match, _tag: string, inner: string) => match.replace(inner, ' '.repeat(inner.length))
 	)
+}
+
+function maskInactiveTemplateSource(sourceText: string): string {
+	return maskHtmlComments(maskScriptAndStyleInner(sourceText))
 }
 
 function maskForDirectiveValues(sourceText: string): string {
@@ -307,7 +312,7 @@ export function formatInterpolationBinderPrelude(
 	options?: { writableNames?: ReadonlySet<string> }
 ): string {
 	const doc = parseMinimalHtmlFromText(
-		escapeInterpolationBodyMarkup(maskScriptAndStyleInner(sourceText)).text
+		escapeInterpolationBodyMarkup(maskInactiveTemplateSource(sourceText)).text
 	)
 	const scopes = collectForDirectiveScopes(doc.roots)
 	const forBindings = getForBindingsAtOffset(braceOffset, scopes)
@@ -413,7 +418,7 @@ export function buildTemplateInterpolationVirtualText(
  */
 export function collectTemplateInterpolationSites(sourceText: string): TemplateInterpolationSite[] {
 	const doc = parseMinimalHtmlFromText(
-		escapeInterpolationBodyMarkup(maskScriptAndStyleInner(sourceText)).text
+		escapeInterpolationBodyMarkup(maskInactiveTemplateSource(sourceText)).text
 	)
 	const roots = doc.roots
 	const out: TemplateInterpolationSite[] = []
@@ -432,7 +437,7 @@ export function collectTemplateInterpolationSites(sourceText: string): TemplateI
 		out.push(site)
 	}
 
-	const masked = applyMasks(maskForDirectiveValues(maskScriptAndStyleInner(sourceText)), masks)
+	const masked = applyMasks(maskForDirectiveValues(maskInactiveTemplateSource(sourceText)), masks)
 	for (const seg of tokenizeCurlyInterpolation(masked, { attributeMode: true })) {
 		if (seg.kind !== 'interpolation') continue
 		const expr = seg.expression

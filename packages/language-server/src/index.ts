@@ -4,8 +4,6 @@ import {
 	createTypeScriptProject,
 	loadTsdkByPath,
 } from '@volar/language-server/node'
-import { create as createCssService } from 'volar-service-css'
-import { create as createHtmlService } from 'volar-service-html'
 import { create as createTypeScriptServices } from 'volar-service-typescript'
 import { aeroLanguagePlugin } from './languagePlugin'
 
@@ -22,7 +20,7 @@ connection.onInitialize(params => {
 		createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => ({
 			languagePlugins: [aeroLanguagePlugin],
 		})),
-		[createHtmlService(), createCssService(), ...createTypeScriptServices(tsdk.typescript)]
+		createTypeScriptServices(tsdk.typescript)
 	)
 })
 

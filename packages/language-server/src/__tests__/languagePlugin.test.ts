@@ -3,6 +3,8 @@ import { aeroLanguagePlugin } from '../languagePlugin'
 import { AeroVirtualCode } from '../virtualCode'
 import { URI } from 'vscode-uri'
 import type { IScriptSnapshot } from '@volar/language-core'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 function createSnapshot(text: string): IScriptSnapshot {
 	return {
@@ -13,12 +15,13 @@ function createSnapshot(text: string): IScriptSnapshot {
 }
 
 const dummyCtx = { getAssociatedScript: () => undefined }
+const repoRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
+const aeroTemplateUri = URI.file(path.join(repoRoot, 'examples/kitchen-sink/client/pages/index.html'))
 
 describe('aeroLanguagePlugin', () => {
 	describe('getLanguageId', () => {
-		it('returns "aero" for .html files', () => {
-			const uri = URI.file('/project/client/pages/index.html')
-			expect(aeroLanguagePlugin.getLanguageId(uri)).toBe('aero')
+	it('returns "aero" for .html files', () => {
+		expect(aeroLanguagePlugin.getLanguageId(aeroTemplateUri)).toBe('aero')
 		})
 
 		it('returns undefined for non-HTML files', () => {
@@ -30,15 +33,13 @@ describe('aeroLanguagePlugin', () => {
 	describe('createVirtualCode', () => {
 		it('creates AeroVirtualCode for aero language ID', () => {
 			const snapshot = createSnapshot('<div>test</div>')
-			const uri = URI.file('/project/test.html')
-			const result = aeroLanguagePlugin.createVirtualCode!(uri, 'aero', snapshot, dummyCtx)
+		const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'aero', snapshot, dummyCtx)
 			expect(result).toBeInstanceOf(AeroVirtualCode)
 		})
 
 		it('creates AeroVirtualCode for html language ID on .html (editor often has not switched to aero yet)', () => {
 			const snapshot = createSnapshot('<div>test</div>')
-			const uri = URI.file('/project/test.html')
-			const result = aeroLanguagePlugin.createVirtualCode!(uri, 'html', snapshot, dummyCtx)
+		const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'html', snapshot, dummyCtx)
 			expect(result).toBeInstanceOf(AeroVirtualCode)
 		})
 

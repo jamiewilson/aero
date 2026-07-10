@@ -30,6 +30,7 @@ const CODE_DOC: Record<AeroDiagnosticCode, string> = {
 	AERO_CONTENT_SCHEMA: 'data/content-collections.mdx',
 	AERO_CONFIG: 'quickstart.mdx',
 	AERO_BUILD_SCRIPT: 'concepts/scripts.mdx',
+	AERO_SCRIPT: 'concepts/scripts.mdx',
 	AERO_INTERNAL: DEFAULT_DOC,
 }
 
