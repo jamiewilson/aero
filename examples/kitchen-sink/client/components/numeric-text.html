@@ -18,6 +18,7 @@
 
 	$effect(() => {
 		if (!el) el = $root.querySelector('numeric-text')
+		addStyle(el)
 		wireNumericText(el, {
 			value,
 			animated,
@@ -27,6 +28,16 @@
 		})
 		if (!isMounted) isMounted = true
 	})
+
+	const addStyle = (el: NumericText | null) => {
+		const shadowRoot = el?.shadowRoot
+		if (shadowRoot && !shadowRoot.querySelector('style[data-aero-style]')) {
+			const style = document.createElement('style')
+			style.dataset.aeroStyle = ''
+			style.textContent = `.char { text-box: trim-both cap alphabetic; }`
+			shadowRoot.appendChild(style)
+		}
+	}
 </script>
 
 <numeric-text class="{ classes }" />
