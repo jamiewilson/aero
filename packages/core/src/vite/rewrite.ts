@@ -58,8 +58,6 @@ function isSkippableUrl(value: string): boolean {
 	return SKIP_PROTOCOL_REGEX.test(value)
 }
 
-const ASSET_IMAGE_EXT = /\.(jpg|jpeg|png|gif|webp|svg|ico)(\?|$)/i
-
 /** Rewrite one absolute URL to dist-relative using manifest and route set; leaves API and external URLs unchanged. */
 export function rewriteAbsoluteUrl(
 	value: string,
@@ -83,10 +81,7 @@ export function rewriteAbsoluteUrl(
 	}
 
 	if (manifestEntry?.file) {
-		const entryWithAssets = manifestEntry as { file: string; assets?: string[] }
-		const imageAsset = entryWithAssets.assets?.find((a: string) => ASSET_IMAGE_EXT.test(a))
-		const fileToUse = imageAsset ?? manifestEntry.file
-		const rel = normalizeRelativeLink(fromDir, fileToUse)
+		const rel = normalizeRelativeLink(fromDir, manifestEntry.file)
 		return rel + suffix
 	}
 
