@@ -38,6 +38,7 @@
 		"nitro": "catalog:",
 		"prettier": "^3.9.3",
 		"shiki": "^4.3.0",
+		"shiki-transformer-copy-button": "^0.0.6",
 		"vite": "catalog:",
 		"zod": "^4.4.3"
 	}

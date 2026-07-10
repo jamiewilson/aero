@@ -5,10 +5,11 @@
 	--code-comment: var(--color-slate-500);
 	--code-highlight: --opacity(var(--color-green-500), 0.2);
 
-	--tab-size: 2ch;
-	--padding: var(--box-padding);
-	--line-height: 1.6;
+	--code-tab-size: 2ch;
+	--code-font-size: smaller;
+	--code-line-height: var(--line-height);
 	--code-border: --opacity(currentColor, 0.2);
+	--code-label-inset: 0.5rem;
 }
 
 @layer components {
@@ -20,19 +21,19 @@
 
 	/* Base code styles */
 	code {
-		tab-size: var(--tab-size);
+		tab-size: var(--code-tab-size);
 		font-family: var(--font-mono);
-		font-size: smaller;
+		font-size: var(--code-font-size);
 	}
 
 	/* Add a border to both inline and block code */
 	code:not(pre code),
 	pre:has(code) {
 		border: 1px solid var(--code-border);
+
 		/* Only apply background if not inside a shiki block */
 		&:not(.shiki &) {
 			background: var(--code-bg) !important;
-			transition: background 100ms;
 		}
 	}
 
@@ -52,8 +53,8 @@
 
 	/* Code inside block pre */
 	pre:has(code) code {
-		line-height: var(--line-height);
-		padding: var(--padding);
+		line-height: var(--code-line-height);
+		padding: var(--box-padding);
 		overflow-x: auto;
 	}
 
@@ -85,26 +86,91 @@
 	pre:has(code)[data-lang]::before {
 		content: attr(data-lang);
 		position: absolute;
-		top: 0.5rem;
-		right: 0.5rem;
+		top: var(--code-label-inset);
+		right: var(--code-label-inset);
 		font-family: var(--font-sans);
 		font-size: small;
 		text-box-trim: trim-both;
 		opacity: 0.5;
+		transition: opacity 200ms;
+	}
+
+	/* Hide language label when copy button is visible */
+	pre:has(code):has(button.copy):hover[data-lang]::before,
+	pre:has(code):has(button.copied)[data-lang]::before {
+		opacity: 0;
+	}
+
+	/* Hide copy button when not hovering */
+	pre:has(code):has(button.copy) {
+		position: relative;
+
+		button.copy {
+			opacity: 0;
+		}
+
+		&:hover button.copy,
+		button.copied {
+			opacity: 1;
+		}
+	}
+
+	/* Copy button */
+	pre button.copy {
+		all: initial;
+		position: absolute;
+		z-index: 100;
+		top: 0;
+		right: 0;
+		cursor: pointer;
+		padding: var(--code-label-inset);
+
+		& span {
+			background-repeat: no-repeat;
+			background-position: center;
+			background-size: cover;
+			display: flex;
+			height: 16px;
+			width: 16px;
+		}
+
+		& .ready {
+			background-image: url(@images/icon-copy.svg);
+		}
+
+		& .success {
+			display: none;
+			background-image: url(@images/icon-copied.svg);
+		}
+
+		&.copied .success {
+			display: block;
+		}
+
+		&.copied .ready {
+			display: none;
+		}
 	}
 
 	/* Code inside block pre with highlighted lines */
 	pre:has(code).has-highlighted code {
 		padding-inline: 0;
 		> span {
-			padding-inline: var(--padding);
+			padding-inline: var(--box-padding);
 		}
 	}
 
-	/* Highlighted lines */
 	.line.highlighted {
 		background: var(--code-highlight);
 		display: inline-flex;
 		min-width: 100%;
+	}
+
+	.highlighted-word {
+		padding-inline: 0.3ch;
+		box-shadow: 0 0 0 1px var(--code-border);
+		background: var(--code-highlight);
+		border-radius: var(--radius-sm);
+		display: inline-flex;
 	}
 }
