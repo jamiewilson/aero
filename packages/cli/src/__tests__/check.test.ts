@@ -6,6 +6,24 @@ import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('runAeroCheck', () => {
+	it('reports type errors from non-build template scripts with AERO_SCRIPT', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-client-types-'))
+		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })
+		fs.writeFileSync(
+			path.join(dir, 'client/pages/bad-client-types.html'),
+			'<script lang="ts">\nconst x: string = 1\n</script><p></p>\n',
+			'utf-8'
+		)
+		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
+		try {
+			const code = await runAeroCheck(dir, { types: true })
+			expect(code).toBe(AERO_EXIT_COMPILE)
+			expect(spy.mock.calls.map(args => String(args[0])).join('')).toContain('AERO_SCRIPT')
+		} finally {
+			spy.mockRestore()
+		}
+	})
+
 	it('returns non-zero when --types and build script has a type error', async () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-check-types-'))
 		fs.mkdirSync(path.join(dir, 'client/pages'), { recursive: true })

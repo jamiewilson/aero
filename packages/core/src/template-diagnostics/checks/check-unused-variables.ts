@@ -2,6 +2,7 @@ import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
 import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
+import { maskHtmlComments } from '@aero-js/compiler'
 import { maskJsComments } from '../analyzer'
 import type { ParsedDocument } from '../document-analysis'
 
@@ -16,8 +17,9 @@ export function checkUnusedVariables(
 	}
 
 	const propsValueRegex = /(?:(?:data-aero-|aero-)?props)\s*=\s*(['"])([\s\S]*?)\1/gi
+	const liveText = maskHtmlComments(parsed.text)
 	let pdMatch: RegExpExecArray | null
-	while ((pdMatch = propsValueRegex.exec(parsed.text)) !== null) {
+	while ((pdMatch = propsValueRegex.exec(liveText)) !== null) {
 		const value = pdMatch[2]
 		const identifiers = value.match(/\b([a-zA-Z_$][\w$]*)\b/g)
 		if (identifiers) {

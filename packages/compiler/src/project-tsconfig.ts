@@ -45,8 +45,5 @@ export function compilerOptionsForVirtualCheck(
 	o.noEmit = true
 	o.skipLibCheck = true
 	o.noEmitOnError = false
-	// Imports are often for side effects / default HTML modules; virtual files are not real project roots.
-	o.noUnusedLocals = false
-	o.noUnusedParameters = false
 	return o
 }

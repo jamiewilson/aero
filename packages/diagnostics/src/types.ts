@@ -16,6 +16,7 @@ export type AeroDiagnosticCode =
 	| 'AERO_CONTENT_SCHEMA'
 	| 'AERO_CONFIG'
 	| 'AERO_BUILD_SCRIPT'
+	| 'AERO_SCRIPT'
 	| 'AERO_INTERNAL'
 
 export interface AeroDiagnosticSpan {

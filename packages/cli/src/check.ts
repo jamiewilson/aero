@@ -397,7 +397,10 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					componentRegistryDtsPath: registryPath,
 					snippetsDtsPath: snippetsPath,
 				})) {
-					const code = issue.kind === 'interpolation' ? 'AERO_COMPILE' : 'AERO_BUILD_SCRIPT'
+					const code =
+						issue.kind === 'interpolation' ? 'AERO_COMPILE'
+						: issue.kind === 'build' ? 'AERO_BUILD_SCRIPT'
+						: 'AERO_SCRIPT'
 					diagnostics.push({
 						severity: 'error',
 						code,

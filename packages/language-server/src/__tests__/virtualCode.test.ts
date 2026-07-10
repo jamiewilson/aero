@@ -22,6 +22,13 @@ function getEmbeddedText(code: AeroVirtualCode, id: string) {
 }
 
 describe('AeroVirtualCode', () => {
+	it('does not generate TypeScript expressions from HTML comments', () => {
+		const html = `<script is:build>const props = { title: 'x', body: 'y' }</script>
+<!--<card-component props="{ ...props }" />-->`
+		const code = new AeroVirtualCode(createSnapshot(html))
+		expect(code.embeddedCodes.some(embedded => embedded.id.startsWith('expr_'))).toBe(false)
+	})
+
 	it('does not produce cross-file TS2451 when build script declares props and interpolations use props (starter-minimal header pattern)', () => {
 		const html = `<script is:build>
 	const props = Aero.props
@@ -123,8 +130,8 @@ const x = 1
 		expect(text).toContain('declare function renderComponent(')
 		expect(text).not.toContain("declare module '*.html'")
 		const ambient = getEmbeddedText(code, 'ambient')!
-		expect(ambient).toContain("declare module '*.html'")
-		expect(ambient).toContain("declare module '*.jpg'")
+		expect(ambient).not.toContain("declare module '*.html'")
+		expect(ambient).not.toContain("declare module '*.jpg'")
 		expect(ambient).not.toContain("declare module '*.ts'")
 		const preambleEnd = text.indexOf('const x = 1')
 		expect(preambleEnd).toBeGreaterThan(0)

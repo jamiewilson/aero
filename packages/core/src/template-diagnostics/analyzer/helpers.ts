@@ -5,6 +5,7 @@ import {
 	maskInterpolationExpressionBodies,
 	restoreInterpolationBodyMarkup,
 } from '@aero-js/interpolation'
+import { collectHtmlCommentRanges } from '@aero-js/compiler'
 
 export {
 	collectInterpolationBodyRanges,
@@ -63,13 +64,5 @@ export function maskTemplateLiteralStatic(text: string): string {
 }
 
 export function isInsideHtmlComment(text: string, position: number): boolean {
-	const commentRegex = /<!--[\s\S]*?-->/g
-	let match: RegExpExecArray | null
-	commentRegex.lastIndex = 0
-	while ((match = commentRegex.exec(text)) !== null) {
-		if (position >= match.index && position < match.index + match[0].length) {
-			return true
-		}
-	}
-	return false
+	return collectHtmlCommentRanges(text).some(range => position >= range.start && position < range.end)
 }

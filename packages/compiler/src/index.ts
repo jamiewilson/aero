@@ -39,6 +39,17 @@ export {
 	EVENT_HANDLER_SCOPE_DECL,
 	type TemplateInterpolationSite,
 } from './template-interpolation-sites'
+export {
+	analyzeTemplateSource,
+	classifyTemplateScriptTag,
+	collectHtmlCommentRanges,
+	collectTemplateScriptBlocks,
+	maskHtmlComments,
+	type TemplateScriptBlock,
+	type TemplateScriptKind,
+	type TemplateSourceAnalysis,
+	type TemplateSourceRange,
+} from './template-source'
 export { rewriteHypermediaActionStateRefs, COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE, type RewriteHypermediaActionStateRefsOptions } from './hypermedia-action-state-refs'
 export {
 	HYPERMEDIA_HTTP_METHODS,

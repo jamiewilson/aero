@@ -4,6 +4,8 @@ export {
 	parseDocument,
 	getResolver,
 	clearResolverCache,
+	findAeroProjectRoot,
+	isAeroProjectPath,
 	type CollectTemplateDiagnosticsInput,
 	type ParsedDocument,
 	type PathResolver,

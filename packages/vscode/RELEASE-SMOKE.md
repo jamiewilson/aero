@@ -30,6 +30,9 @@ Confirm Problems panel shows stable Aero codes and docs links:
 - [ ] `AERO_COMPILE` (e.g. malformed directive braces)
 - [ ] `AERO_RESOLVE` (missing component import/reference)
 - [ ] `AERO_BUILD_SCRIPT` (invalid script taxonomy usage)
+- [ ] Aero templates remain language mode `HTML`; a normal HTML extension still activates.
+- [ ] A commented component expression creates neither TypeScript nor Aero diagnostics.
+- [ ] A missing local script import reports a module-not-found diagnostic.
 - [ ] `AERO_TEMPLATE` / `AERO_SWITCH` warnings (template/switch warnings)
 - [ ] `AERO_ROUTE` (route-contract issue, e.g. unsupported route segment like `client/pages/docs/[...slug].html`)
 

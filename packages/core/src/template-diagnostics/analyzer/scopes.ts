@@ -1,4 +1,5 @@
 import { collectForDirectiveBindingNames, parseForDirective } from '@aero-js/compiler'
+import { maskHtmlComments } from '@aero-js/compiler'
 import { rangeFromOffsets, type SourceDocument } from '../source-document'
 import type { TemplateScope } from './types'
 
@@ -11,9 +12,10 @@ export function collectTemplateScopes(document: SourceDocument, text: string): T
 	const scopes: TemplateScope[] = []
 	const stack: StackItem[] = []
 	const tagRegex = /<\/?([a-z][a-z0-9-]*)\b([^>]*?)>/gi
+	const activeText = maskHtmlComments(text)
 
 	let match: RegExpExecArray | null
-	while ((match = tagRegex.exec(text)) !== null) {
+	while ((match = tagRegex.exec(activeText)) !== null) {
 		const fullTag = match[0]
 		const isClosing = fullTag.startsWith('</')
 		const tagName = match[1]

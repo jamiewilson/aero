@@ -26,7 +26,7 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
   - **Aero: Run check (config, content, templates)** — runs `aero check` in the workspace (pnpm / yarn / npx depending on lockfiles). This matches the default compile check only; for **TypeScript** validation of build scripts and `{ }` interpolations in CI, use **`aero check --types`** from the terminal (see [CLI](../../docs/tooling/cli.mdx)).
 
 - **Project-only activation**
-  - The extension only switches `.html`/`.htm` files to the `aero` language inside detected Aero projects.
+  - The extension adds Aero tooling only inside detected Aero projects while keeping `.html`/`.htm` files in VS Code's native `html` language.
   - Detection uses the **nearest project root candidate** (`aero.config.*`, `vite.config.*`, or `package.json`) and strong Aero signals (`@aero-js/core/config`, `@aero-js/core/vite`, or `@aero-js/*` deps).
 
 - **Cache invalidation**
@@ -58,7 +58,9 @@ Open an Aero template (e.g. `client/pages/about.html`, `client/components/meta.h
 - Completions, hovers, and definitions work for Aero components and props.
 - Diagnostics appear for invalid expressions or missing props.
 
-Plain HTML files outside detected Aero projects are left untouched.
+Plain HTML files outside detected Aero projects are left untouched. Aero ignores HTML comments for
+template diagnostics and TypeScript fragments; snippet modules under `content/snippets/` continue
+to use raw `@snippet` comment markers.
 
 ## Configuration
 

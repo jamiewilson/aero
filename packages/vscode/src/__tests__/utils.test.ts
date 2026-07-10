@@ -39,15 +39,16 @@ describe('scope', () => {
 	})
 
 	describe('isAeroDocument', () => {
-		it('returns true only for file:// documents with languageId=aero', async () => {
+		it('returns true for html and legacy aero documents in an Aero project', async () => {
 			const { isAeroDocument } = await import('../scope')
+			setFile('/workspace/package.json', '{"dependencies":{"@aero-js/core":"1.0.0"}}')
 
 			expect(
-				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
+				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
 			).toBe(true)
 			expect(
-				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
-			).toBe(false)
+				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
+			).toBe(true)
 			expect(
 				isAeroDocument({ languageId: 'aero', uri: { scheme: 'untitled', fsPath: '/x.html' } } as any)
 			).toBe(false)
@@ -59,17 +60,17 @@ describe('scope', () => {
 			setScopeDebugLogger(log)
 
 			expect(
-				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
+				isAeroDocument({ languageId: 'json', uri: { scheme: 'file', fsPath: '/x.html' } } as any)
 			).toBe(false)
 			expect(log).not.toHaveBeenCalled()
 			setScopeDebugLogger(undefined)
 		})
 	})
 
-	describe('shouldSwitchToAeroLanguage', () => {
-		it('switches html files in a detected Aero project', async () => {
+	describe('project scope', () => {
+		it('recognizes html files in a detected Aero project', async () => {
 			setFile('/workspace/apps/site/vite.config.ts', "import { aero } from '@aero-js/core/vite'")
-			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			const { isAeroDocument, clearScopeCache } = await import('../scope')
 			clearScopeCache()
 
 			const doc = {
@@ -77,12 +78,12 @@ describe('scope', () => {
 				uri: { scheme: 'file', fsPath: '/workspace/apps/site/client/pages/index.html' },
 			} as any
 
-			expect(shouldSwitchToAeroLanguage(doc)).toBe(true)
+			expect(isAeroDocument(doc)).toBe(true)
 		})
 
-		it('does not switch html files outside detected Aero projects', async () => {
+		it('does not recognize html files outside detected Aero projects', async () => {
 			setFile('/workspace/apps/other/package.json', '{"name":"other"}')
-			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			const { isAeroDocument, clearScopeCache } = await import('../scope')
 			clearScopeCache()
 
 			const doc = {
@@ -90,13 +91,13 @@ describe('scope', () => {
 				uri: { scheme: 'file', fsPath: '/workspace/apps/other/client/pages/index.html' },
 			} as any
 
-			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+			expect(isAeroDocument(doc)).toBe(false)
 		})
 
 		it('uses nearest project root candidate and stops there', async () => {
 			setFile('/workspace/package.json', '{"dependencies":{"@aero-js/core":"1.0.0"}}')
 			setFile('/workspace/apps/other/package.json', '{"name":"other"}')
-			const { shouldSwitchToAeroLanguage, clearScopeCache } = await import('../scope')
+			const { isAeroDocument, clearScopeCache } = await import('../scope')
 			clearScopeCache()
 
 			const doc = {
@@ -104,11 +105,11 @@ describe('scope', () => {
 				uri: { scheme: 'file', fsPath: '/workspace/apps/other/client/pages/index.html' },
 			} as any
 
-			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+			expect(isAeroDocument(doc)).toBe(false)
 		})
 
 		it('does not log for non-html documents when debug logger is set', async () => {
-			const { shouldSwitchToAeroLanguage, setScopeDebugLogger, clearScopeCache } =
+			const { isAeroDocument, setScopeDebugLogger, clearScopeCache } =
 				await import('../scope')
 			clearScopeCache()
 			const log = vi.fn()
@@ -119,7 +120,7 @@ describe('scope', () => {
 				uri: { scheme: 'file', fsPath: '/workspace/package.json' },
 			} as any
 
-			expect(shouldSwitchToAeroLanguage(doc)).toBe(false)
+			expect(isAeroDocument(doc)).toBe(false)
 			expect(log).not.toHaveBeenCalled()
 			setScopeDebugLogger(undefined)
 		})

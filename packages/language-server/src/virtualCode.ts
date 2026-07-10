@@ -20,6 +20,7 @@ import {
 	buildTemplateEditorAmbient,
 	collectForDirectiveBindingNames,
 	collectTemplateInterpolationSites,
+	collectTemplateScriptBlocks,
 	parse,
 	parsePropsAttributeBindings,
 	formatPropsInjectedAmbientDecls,
@@ -31,7 +32,7 @@ import {
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
 import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
-import { BUILD_SCRIPT_PREAMBLE, AMBIENT_DECLARATIONS } from '@aero-js/compiler/ambient-preamble'
+import { BUILD_SCRIPT_PREAMBLE } from '@aero-js/compiler/ambient-preamble'
 
 function isSnippetModuleDocument(filePath: string | undefined): boolean {
 	if (!filePath) return false
@@ -48,25 +49,6 @@ const FULL_FEATURES: CodeInformation = {
 	verification: true,
 }
 
-const SUPPRESSED_IN_BUILD = new Set([
-	6133, // '{0}' is declared but its value is never read.
-	6192, // All imports in import declaration are unused (template-only bindings).
-	6196, // '{0}' is declared but never used.
-	6198, // All destructured elements are unused.
-	7006, // Parameter '{0}' implicitly has an 'any' type.
-])
-
-const BUILD_SCRIPT_FEATURES: CodeInformation = {
-	completion: true,
-	format: true,
-	navigation: true,
-	semantic: true,
-	structure: true,
-	verification: {
-		shouldReport: (_source, code) => !SUPPRESSED_IN_BUILD.has(Number(code)),
-	},
-}
-
 /**
  * Each Volar extra service script is its own root file. Without a module marker, TypeScript treats
  * them as classic scripts sharing one global scope (`module: None`), so a build-script `const
@@ -76,6 +58,18 @@ const EMBEDDED_MODULE_CLOSURE = '\nexport {}\n'
 
 function asEmbeddedModuleSnapshot(source: string): IScriptSnapshot {
 	return createSnapshot(source + EMBEDDED_MODULE_CLOSURE)
+}
+
+function buildTemplateUseFooter(sourceText: string, scriptContent: string): string {
+	const expressions = collectTemplateInterpolationSites(sourceText).map(site => site.expression)
+	const names = new Set<string>()
+	for (const binding of iterateBuildScriptBindings(scriptContent)) {
+		const escaped = binding.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+		if (expressions.some(expression => new RegExp(`\\b${escaped}\\b`).test(expression))) {
+			names.add(binding.name)
+		}
+	}
+	return [...names].map(name => `\nvoid ${name}`).join('')
 }
 
 
@@ -112,6 +106,16 @@ function resolveAliasImportPath(
 
 function resolveTsImportPath(specifier: string, importerFile: string): string | null {
 	return resolveAliasImportPath(specifier, importerFile, tryResolveToTs)
+}
+
+function tryResolveToExistingFile(candidateBasePath: string): string | null {
+	try {
+		return fs.existsSync(candidateBasePath) && fs.statSync(candidateBasePath).isFile()
+			? candidateBasePath
+			: null
+	} catch {
+		return null
+	}
 }
 
 function hasExportModifier(node: ts.Node): boolean {
@@ -222,6 +226,29 @@ function buildTsImportAmbientSupplement(
 		blocks.push(...lines)
 	}
 	return blocks.join('\n')
+}
+
+function buildNonCodeImportAmbientSupplement(
+	htmlFilePath: string,
+	scriptBodies: readonly string[]
+): string {
+	if (!htmlFilePath) return ''
+	const specifiers = new Set<string>()
+	for (const body of scriptBodies) {
+		try {
+			for (const imp of analyzeBuildScriptForEditor(body).imports) {
+				if (/\.(?:[cm]?[jt]sx?|json)$/i.test(imp.specifier)) continue
+				if (resolveAliasImportPath(imp.specifier, htmlFilePath, tryResolveToExistingFile)) {
+					specifiers.add(imp.specifier)
+				}
+			}
+		} catch {
+			// Let TypeScript report incomplete script syntax through its virtual file.
+		}
+	}
+	return [...specifiers]
+		.map(specifier => `declare module '${specifier.replace(/'/g, "\\'")}' {\n  const value: any\n  export default value\n}`)
+		.join('\n\n')
 }
 
 function getScriptType(
@@ -746,11 +773,19 @@ export class AeroVirtualCode implements VirtualCode {
 				? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
 				: undefined
 
-		const tsImportAmbient = buildTsImportAmbientSupplement(this.htmlFilePath ?? '', buildScriptBodies)
+		const allScriptBodies = collectTemplateScriptBlocks(sourceText)
+			.filter(block => block.kind !== 'external')
+			.map(block => block.content)
+		const tsImportAmbient = buildTsImportAmbientSupplement(this.htmlFilePath ?? '', allScriptBodies)
+		const nonCodeImportAmbient = buildNonCodeImportAmbientSupplement(
+			this.htmlFilePath ?? '',
+			allScriptBodies
+		)
 		const snippetsAmbient = loadGeneratedSnippetsAmbient(this.htmlFilePath ?? '')
 		const fullAmbient =
-			AMBIENT_DECLARATIONS +
+			BUILD_SCRIPT_PREAMBLE +
 			(tsImportAmbient.length > 0 ? `\n${tsImportAmbient}` : '') +
+			(nonCodeImportAmbient.length > 0 ? `\n${nonCodeImportAmbient}` : '') +
 			(snippetsAmbient.length > 0 ? `\n${snippetsAmbient}` : '')
 
 		if (isSnippetModuleDocument(this.htmlFilePath)) {
@@ -870,7 +905,7 @@ export class AeroVirtualCode implements VirtualCode {
 							sourceOffsets: [sourceOffset],
 							generatedOffsets: [exprOffsetInVirtual],
 							lengths: [expression.length],
-							data: BUILD_SCRIPT_FEATURES,
+							data: FULL_FEATURES,
 						},
 					],
 					embeddedCodes: [],
@@ -890,7 +925,7 @@ export class AeroVirtualCode implements VirtualCode {
 							sourceOffsets: [sourceOffset],
 							generatedOffsets: [exprOffsetInVirtual],
 							lengths: [expression.length],
-							data: BUILD_SCRIPT_FEATURES,
+							data: FULL_FEATURES,
 						},
 					],
 					embeddedCodes: [],
@@ -911,7 +946,7 @@ export class AeroVirtualCode implements VirtualCode {
 						sourceOffsets: [sourceOffset],
 						generatedOffsets: [exprOffsetInVirtual],
 						lengths: [expression.length],
-						data: BUILD_SCRIPT_FEATURES,
+						data: FULL_FEATURES,
 					},
 				],
 				embeddedCodes: [],
@@ -989,7 +1024,10 @@ export class AeroVirtualCode implements VirtualCode {
 									this.buildScriptBodies
 								)
 							: ''
-					const virtualText = BUILD_SCRIPT_PREAMBLE + buildPrelude + scriptForVirtual.text
+					const templateUseFooter =
+						scriptType === 'build' ? buildTemplateUseFooter(sourceText, scriptContent) : ''
+					const virtualText =
+						BUILD_SCRIPT_PREAMBLE + buildPrelude + scriptForVirtual.text + templateUseFooter
 					const generatedPreludeLength = BUILD_SCRIPT_PREAMBLE.length + buildPrelude.length
 					yield {
 						id: `${idPrefix}_${idx}`,
@@ -999,7 +1037,7 @@ export class AeroVirtualCode implements VirtualCode {
 							sourceOffsets: [node.startTagEnd! + segment.sourceStart],
 							generatedOffsets: [generatedPreludeLength + segment.generatedStart],
 							lengths: [segment.sourceLength],
-							data: BUILD_SCRIPT_FEATURES,
+							data: FULL_FEATURES,
 						})),
 						embeddedCodes: [],
 					}
@@ -1013,7 +1051,7 @@ export class AeroVirtualCode implements VirtualCode {
 								sourceOffsets: [node.startTagEnd],
 								generatedOffsets: [0],
 								lengths: [scriptContent.length],
-								data: BUILD_SCRIPT_FEATURES,
+								data: FULL_FEATURES,
 							},
 						],
 						embeddedCodes: [],

@@ -108,6 +108,19 @@ function diagnostics2307(script: string, fullAmbient: string): string[] {
 }
 
 describe('module ambient declarations', () => {
+	it('declares only resolved template modules and reports missing local templates', () => {
+		const kitchenSink = path.resolve(__dirname, '../../../../examples/kitchen-sink')
+		const pagePath = path.join(kitchenSink, 'client/pages/demos/testing.html')
+		const code = new AeroVirtualCode(
+			createSnapshot(`<script is:build>import code from '@client/components/code.html'</script>`),
+			pagePath
+		)
+		const ambient = getEmbeddedText(code, 'ambient')!
+		expect(ambient).toContain("declare module '@client/components/code.html'")
+		expect(diagnostics2307(`import code from '@client/components/code.html'`, ambient)).toEqual([])
+		expect(diagnostics2307(`import missing from './missing.html'`, ambient)).toHaveLength(1)
+	})
+
 	it('includes image wildcard modules in shared ambient', () => {
 		expect(AMBIENT_DECLARATIONS).toContain("declare module '*.jpg'")
 		expect(AMBIENT_DECLARATIONS).not.toContain("declare module '*.ts'")
