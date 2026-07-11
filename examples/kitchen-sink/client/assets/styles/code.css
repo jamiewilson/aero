@@ -33,7 +33,7 @@
 
 		/* Only apply background if not inside a shiki block */
 		&:not(.shiki &) {
-			background: var(--code-bg) !important;
+			background: var(--code-bg);
 		}
 	}
 
@@ -144,7 +144,12 @@
 		}
 
 		&.copied .success {
-			display: block;
+			display: flex;
+			&::before {
+				content: 'Copied';
+				position: absolute;
+				inset-inline-end: calc(var(--copy-button-size) + 0.5ch);
+			}
 		}
 
 		&.copied .ready {
@@ -158,6 +163,11 @@
 		> span {
 			padding-inline: var(--box-padding);
 		}
+	}
+
+	/* Hide copy button on non-pre elements */
+	:where(:not(pre) > button.copy) {
+		display: none;
 	}
 
 	.line.highlighted {

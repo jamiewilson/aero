@@ -1,6 +1,6 @@
 <script is:build>
 	import { highlight } from '@aero-js/highlight'
-	import shikiConfig from '@shared/shiki/config.ts'
+	import shikiConfig from '@shared/shiki/config'
 	const { code, lang = 'html' } = Aero.props
 	const highlighted = await highlight(code, lang, shikiConfig)
 </script>
