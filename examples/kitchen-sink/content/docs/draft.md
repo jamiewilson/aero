@@ -18,7 +18,7 @@ const docs = defineCollection({
 
 Then in your document frontmatter, set `published: true` to include the document in the build.
 
-```md
+```
 ---
 published: true
 title: My Document

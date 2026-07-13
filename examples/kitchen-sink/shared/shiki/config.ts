@@ -12,7 +12,6 @@ import {
 	addColors,
 	addItalics,
 	addPreDataLang,
-	addPreNotProseShiki,
 	applyOverrides,
 } from './custom'
 
@@ -25,7 +24,6 @@ const shikiConfig: ShikiConfig = {
 	langs: [...DEFAULT_LANGS, 'sh', 'md', aeroHtml],
 	transformers: [
 		addPreDataLang(),
-		addPreNotProseShiki(),
 		transformerNotationHighlight(),
 		transformerNotationWordHighlight(),
 		addCopyButton(),

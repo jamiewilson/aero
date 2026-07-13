@@ -117,8 +117,11 @@
 
 	/* Copy button */
 	pre button.copy {
+		--copy-button-size: 16px;
 		all: initial;
 		position: absolute;
+		font-size: small;
+		font-family: var(--font-sans);
 		z-index: 100;
 		top: 0;
 		right: 0;
@@ -126,12 +129,15 @@
 		padding: var(--code-label-inset);
 
 		& span {
+			position: relative;
 			background-repeat: no-repeat;
 			background-position: center;
 			background-size: cover;
 			display: flex;
-			height: 16px;
-			width: 16px;
+			align-items: center;
+			width: var(--copy-button-size);
+			font-size: small;
+			aspect-ratio: 1;
 		}
 
 		& .ready {
