@@ -20,6 +20,7 @@ import {
 } from '@aero-js/core/compile-check'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import {
+	enrichDiagnosticsWithSourceFrames,
 	exitCodeForDiagnostics,
 	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
@@ -220,23 +221,36 @@ function collectTemplateFeatureGateDiagnostics(
 	// When both flags are on, compile-time validateFeatureGates covers hypermedia semantics.
 	if (flags.reactivity && flags.hypermedia) return []
 
-	return collectFeatureGateIssuesFromSource(source, flags).map(issue => ({
-		severity: 'error' as const,
-		code: issue.code,
-		message: `[aero check] ${issue.message}`,
-		file,
-		...(issue.start !== undefined && issue.end !== undefined
-			? {
-					span: {
-						file,
-						line: 0,
-						column: issue.start,
-						lineEnd: 0,
-						columnEnd: issue.end,
-					},
-				}
-			: {}),
-	}))
+	const positionAt = (offset: number): { line: number; column: number } => {
+		const before = source.slice(0, offset)
+		const lineStart = before.lastIndexOf('\n') + 1
+		return {
+			line: before.split('\n').length,
+			column: offset - lineStart + 1,
+		}
+	}
+
+	return collectFeatureGateIssuesFromSource(source, flags).map(issue => {
+		const start = issue.start === undefined ? undefined : positionAt(issue.start)
+		const end = issue.end === undefined ? undefined : positionAt(issue.end)
+		return {
+			severity: 'error' as const,
+			code: issue.code,
+			message: issue.message,
+			file,
+			...(start && end
+				? {
+						span: {
+							file,
+							line: start.line,
+							column: start.column,
+							lineEnd: end.line,
+							columnEnd: end.column,
+						},
+					}
+				: {}),
+		}
+	})
 }
 
 function contentConfigPathFromAero(root: string, aero: AeroOptions): string {
@@ -363,7 +377,9 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		}
 
 		try {
-			diagnostics.push(...collectTemplateFeatureGateDiagnostics(source, file, featureFlags))
+			const featureDiagnostics = collectTemplateFeatureGateDiagnostics(source, file, featureFlags)
+			diagnostics.push(...featureDiagnostics)
+			if (featureDiagnostics.length > 0) continue
 			compileTemplate(source, {
 				root,
 				resolvePath,
@@ -421,8 +437,12 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		}
 	}
 
-	const errors = diagnostics.filter(d => d.severity === 'error')
-	const warnings = diagnostics.filter(d => d.severity === 'warning')
+	const errors = enrichDiagnosticsWithSourceFrames(
+		diagnostics.filter(d => d.severity === 'error')
+	)
+	const warnings = enrichDiagnosticsWithSourceFrames(
+		diagnostics.filter(d => d.severity === 'warning')
+	)
 	if (warnings.length > 0) {
 		const warningText = formatDiagnosticsTerminal(warnings, { plain: true })
 		process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))

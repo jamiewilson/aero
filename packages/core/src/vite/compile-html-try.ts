@@ -13,6 +13,7 @@ function toAeroCompileError(unknown: unknown, importer: string): AeroCompileErro
 			file: unknown.file ?? importer,
 			line: unknown.line,
 			column: unknown.column,
+			...(unknown.code ? { code: unknown.code } : {}),
 		})
 	}
 	if (unknown instanceof Error) {

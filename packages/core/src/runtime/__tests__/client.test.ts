@@ -1,11 +1,29 @@
 /**
  * @vitest-environment happy-dom
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const showAeroViteErrorOverlay = vi.fn(async () => {})
+const clearAeroViteErrorOverlay = vi.fn()
+
+vi.mock('../vite-error-overlay', () => ({
+	showAeroViteErrorOverlay: (...args: unknown[]) => showAeroViteErrorOverlay(...args),
+	clearAeroViteErrorOverlay: (...args: unknown[]) => clearAeroViteErrorOverlay(...args),
+}))
+
 import { renderPage } from '../client'
+import { encodeDiagnosticsHeaderValue } from '@aero-js/diagnostics'
 
 afterEach(() => {
 	vi.unstubAllGlobals()
+	showAeroViteErrorOverlay.mockClear()
+	clearAeroViteErrorOverlay.mockClear()
+})
+
+beforeEach(() => {
+	document.body.innerHTML = ''
+	document.body.removeAttribute('id')
+	document.body.className = ''
 })
 
 describe('renderPage', () => {
@@ -84,5 +102,114 @@ describe('renderPage', () => {
 
 		expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
 		expect(document.documentElement.getAttribute('lang')).toBe('en')
+	})
+
+	it('mounts Vite ErrorOverlay for overlay bootstrap SSR errors without replacing page', async () => {
+		document.body.id = 'app'
+		document.body.innerHTML = '<div id="page">existing</div>'
+
+		const diagnostics = [
+			{
+				code: 'AERO_INTERNAL' as const,
+				severity: 'error' as const,
+				message: 'numbers is not defined',
+				file: 'client/pages/demos/iterables.html',
+				span: {
+					file: 'client/pages/demos/iterables.html',
+					line: 7,
+					column: 20,
+				},
+			},
+		]
+		const bootstrap =
+			'<!doctype html><html data-aero-overlay-bootstrap><body><p>Loading overlay...</p></body></html>'
+		const header = encodeDiagnosticsHeaderValue(diagnostics)
+
+		if (!import.meta.hot) {
+			throw new Error('expected import.meta.hot in client HMR tests')
+		}
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => ({
+				ok: false,
+				status: 500,
+				text: async () => bootstrap,
+				headers: { get: (name: string) => (name === 'x-aero-diagnostics' ? header : null) },
+			}))
+		)
+
+		await renderPage(document.body, async () => null)
+
+		expect(document.body.innerHTML).toContain('existing')
+		expect(showAeroViteErrorOverlay).toHaveBeenCalledOnce()
+		expect(showAeroViteErrorOverlay.mock.calls[0]![0]).toMatchObject({
+			message: 'numbers is not defined',
+			plugin: 'vite-plugin-aero-ssr',
+			id: 'client/pages/demos/iterables.html',
+		})
+	})
+
+	it('falls back to inline diagnostics when Vite ErrorOverlay cannot mount', async () => {
+		document.body.id = 'app'
+		document.body.innerHTML = '<div id="page">existing</div>'
+		showAeroViteErrorOverlay.mockRejectedValueOnce(new Error('overlay unavailable'))
+
+		const diagnostics = [
+			{
+				code: 'AERO_INTERNAL' as const,
+				severity: 'error' as const,
+				message: 'numbers is not defined',
+				file: 'client/pages/demos/iterables.html',
+			},
+		]
+		const bootstrap =
+			'<!doctype html><html data-aero-overlay-bootstrap><body><p>Loading overlay...</p></body></html>'
+		const header = encodeDiagnosticsHeaderValue(diagnostics)
+
+		if (!import.meta.hot) {
+			throw new Error('expected import.meta.hot in client HMR tests')
+		}
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => ({
+				ok: false,
+				status: 500,
+				text: async () => bootstrap,
+				headers: { get: (name: string) => (name === 'x-aero-diagnostics' ? header : null) },
+			}))
+		)
+
+		await renderPage(document.body, async () => null)
+
+		expect(document.body.textContent).toContain('Error rendering page')
+		expect(document.body.textContent).toContain('numbers is not defined')
+	})
+
+	it('clears Vite ErrorOverlay after a successful HMR fetch', async () => {
+		document.body.id = 'app'
+		document.body.innerHTML = '<div>old</div>'
+		const html =
+			'<!DOCTYPE html><html lang="en"><head></head><body id="app"><div>fixed</div></body></html>'
+
+		if (!import.meta.hot) {
+			throw new Error('expected import.meta.hot in client HMR tests')
+		}
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => ({
+				ok: true,
+				status: 200,
+				text: async () => html,
+				headers: { get: () => null },
+			}))
+		)
+
+		await renderPage(document.body, async () => html)
+
+		expect(clearAeroViteErrorOverlay).toHaveBeenCalledOnce()
+		expect(document.body.innerHTML).toContain('fixed')
 	})
 })

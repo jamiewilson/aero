@@ -1,6 +1,8 @@
 import {
+	AERO_EXIT_BUILD_GENERIC,
 	AERO_EXIT_NITRO,
 	AeroBuildCancelledError,
+	AeroCompileError,
 	type AeroDiagnostic,
 	type DiagnosticsSurface,
 	enrichDiagnosticsWithSourceFrames,
@@ -26,6 +28,14 @@ interface StaticBuildReportingOptions {
 	recordMetrics?: (surface: MetricsSurface, diagnostics: readonly AeroDiagnostic[]) => void
 }
 
+function isAeroOwnedError(err: unknown): boolean {
+	if (err instanceof AeroCompileError) return true
+	if (!(err instanceof Error)) return false
+	if (/^\[AERO_[A-Z_]+\]/.test(err.message)) return true
+	const plugin = (err as Error & { plugin?: unknown }).plugin
+	return typeof plugin === 'string' && plugin.includes('aero')
+}
+
 export function createStaticBuildReportingService(
 	options: StaticBuildReportingOptions = {}
 ): StaticBuildReportingService {
@@ -37,16 +47,21 @@ export function createStaticBuildReportingService(
 				process.exitCode = exitCodeForThrown(err)
 				throw err
 			}
-			const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-			recordMetrics('static-prerender', diagnostics)
-			logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
-			process.exitCode = exitCodeForThrown(err)
+			if (isAeroOwnedError(err)) {
+				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
+				recordMetrics('static-prerender', diagnostics)
+				logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
+				process.exitCode = exitCodeForThrown(err)
+				throw err
+			}
+			const message = err instanceof Error ? (err.stack ?? err.message) : String(err)
+			logger.error(message)
+			process.exitCode = AERO_EXIT_BUILD_GENERIC
 			throw err
 		},
 		reportNitroFailure(err: unknown, logger: BuildLogger): never {
-			const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
-			recordMetrics('static-nitro', diagnostics)
-			logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
+			const message = err instanceof Error ? (err.stack ?? err.message) : String(err)
+			logger.error(message)
 			process.exitCode = AERO_EXIT_NITRO
 			throw err
 		},

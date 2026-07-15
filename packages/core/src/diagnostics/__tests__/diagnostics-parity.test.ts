@@ -1,5 +1,6 @@
 import { PARITY_SCENARIOS } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { compile, parse } from '@aero-js/compiler'
+import { unknownToAeroDiagnostics } from '@aero-js/diagnostics'
 import { describe, expect, it } from 'vitest'
 
 const mockOptions = {
@@ -20,9 +21,9 @@ function compileDiagnostic(
 		})
 		return null
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error)
-		const code = message.includes('aero.config') ? 'AERO_CONFIG' : 'AERO_COMPILE'
-		return { code, message }
+		const diagnostic = unknownToAeroDiagnostics(error)[0]
+		if (!diagnostic) return null
+		return { code: diagnostic.code, message: diagnostic.message }
 	}
 }
 
@@ -70,7 +71,7 @@ describe('diagnostics parity — snapshot baseline', () => {
 			    "messageIncludes": "Directive \`props\`",
 			  },
 			  {
-			    "code": "AERO_COMPILE",
+			    "code": "AERO_CONFIG",
 			    "id": "hypermedia-string-state-option",
 			    "messageIncludes": "Hypermedia action \`state\` must reference a boolean state binding",
 			  },

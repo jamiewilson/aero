@@ -3,6 +3,7 @@ import type { CompileOptions, ParseResult } from './types'
 import { CompileError } from './types'
 import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
+import { lineColumnAtOffset } from './helpers'
 import {
 	collectHypermediaActionImportsInBuildScript,
 	collectMissingHypermediaActionImportsInStateScript,
@@ -29,6 +30,35 @@ const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/scri
 const EFFECT_CALL_RE = /(?:\$effect|Aero\.effect)\s*\(/
 const RUNTIME_BRACED_ATTR_RE =
 	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
+const STATE_REACTIVITY_MESSAGE =
+	'`<script is:state>` requires `reactivity: true` in aero.config. Enable the reactivity flag or remove the state script.'
+const RUNTIME_BRACED_ATTR_MESSAGE =
+	'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.'
+const EFFECT_STATE_MESSAGE =
+	'`$effect` requires `<script is:state>` and `reactivity: true` in aero.config.'
+const HYPERMEDIA_DISABLED_MESSAGE =
+	'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.'
+
+function busyFlagsMessage(flags: FeatureGateFlags): string {
+	if (!flags.hypermedia && !flags.reactivity) {
+		return '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.'
+	}
+	const missing: string[] = []
+	if (!flags.hypermedia) missing.push('hypermedia: true')
+	if (!flags.reactivity) missing.push('reactivity: true')
+	return `\`busy\` requires ${missing.join(' and ')} in aero.config.`
+}
+
+function sourceLocationForScriptHit(
+	source: string | undefined,
+	script: string,
+	offset: number
+): { line: number; column: number } | undefined {
+	if (source === undefined) return undefined
+	const scriptStart = source.indexOf(script)
+	if (scriptStart < 0) return undefined
+	return lineColumnAtOffset(source, scriptStart + offset)
+}
 
 function spanForMatch(source: string, re: RegExp): { start: number; end: number } | undefined {
 	const match = re.exec(source)
@@ -121,7 +151,7 @@ export function collectFeatureGateIssuesFromSource(
 			out,
 			source,
 			IS_STATE_SCRIPT_RE,
-			'`<script is:state>` requires `reactivity: true` in aero.config.'
+			STATE_REACTIVITY_MESSAGE
 		)
 	}
 
@@ -130,7 +160,7 @@ export function collectFeatureGateIssuesFromSource(
 			out,
 			source,
 			RUNTIME_BRACED_ATTR_RE,
-			'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript.'
+			RUNTIME_BRACED_ATTR_MESSAGE
 		)
 	}
 
@@ -139,7 +169,7 @@ export function collectFeatureGateIssuesFromSource(
 			out,
 			source,
 			EFFECT_CALL_RE,
-			'`$effect` requires `<script is:state>` and `reactivity: true` in aero.config.'
+			EFFECT_STATE_MESSAGE
 		)
 	}
 
@@ -148,7 +178,7 @@ export function collectFeatureGateIssuesFromSource(
 			out,
 			source,
 			/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/i,
-			'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.'
+			HYPERMEDIA_DISABLED_MESSAGE
 		)
 	}
 
@@ -159,14 +189,11 @@ export function collectFeatureGateIssuesFromSource(
 
 	if (busyMatch) {
 		if (!flags.reactivity || !flags.hypermedia) {
-			const missing: string[] = []
-			if (!flags.hypermedia) missing.push('hypermedia: true')
-			if (!flags.reactivity) missing.push('reactivity: true')
 			pushSourceIssue(
 				out,
 				source,
 				busyRegex,
-				`\`busy\` requires ${missing.join(' and ')} in aero.config.`
+				busyFlagsMessage(flags)
 			)
 		} else if (!IS_STATE_SCRIPT_RE.test(source)) {
 			pushSourceIssue(
@@ -240,8 +267,7 @@ export function collectFeatureGateIssues(
 	if (parsed.stateScript && options.reactivity === false) {
 		out.push({
 			code: 'AERO_CONFIG',
-			message:
-				'`<script is:state>` requires `reactivity: true` in aero.config. Enable the reactivity flag or remove the state script.',
+			message: STATE_REACTIVITY_MESSAGE,
 		})
 	}
 
@@ -283,8 +309,7 @@ export function collectFeatureGateIssues(
 			if (/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(bind.handlerExpr)) {
 				out.push({
 					code: 'AERO_CONFIG',
-					message:
-						'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
+					message: HYPERMEDIA_DISABLED_MESSAGE,
 				})
 				break
 			}
@@ -296,8 +321,7 @@ export function collectFeatureGateIssues(
 		) {
 			out.push({
 				code: 'AERO_CONFIG',
-				message:
-					'Hypermedia action calls require `hypermedia: true` in aero.config. Enable the hypermedia flag or remove action calls.',
+				message: HYPERMEDIA_DISABLED_MESSAGE,
 			})
 		}
 	}
@@ -305,13 +329,19 @@ export function collectFeatureGateIssues(
 	if (reactiveBinds.busyBinds.length > 0 && (options.reactivity === false || options.hypermedia === false)) {
 		out.push({
 			code: 'AERO_CONFIG',
-			message: '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.',
+			message: busyFlagsMessage({
+				reactivity: options.reactivity !== false,
+				hypermedia: options.hypermedia !== false,
+			}),
 		})
 	}
 
 	const hasBusyAttr = /\b(?:data-aero-|aero-)?busy\b\s*=/i.test(parsed.template)
 	if (hasBusyAttr && (options.reactivity === false || options.hypermedia === false)) {
-		const busyMessage = '`busy` requires both `reactivity: true` and `hypermedia: true` in aero.config.'
+		const busyMessage = busyFlagsMessage({
+			reactivity: options.reactivity !== false,
+			hypermedia: options.hypermedia !== false,
+		})
 		if (!out.some(issue => issue.message === busyMessage)) {
 			out.push({ code: 'AERO_CONFIG', message: busyMessage })
 		}
@@ -320,16 +350,14 @@ export function collectFeatureGateIssues(
 	if (!parsed.stateScript && RUNTIME_BRACED_ATTR_RE.test(parsed.template)) {
 		out.push({
 			code: 'AERO_CONFIG',
-			message:
-				'Braced reactive `data-aero-*` attributes require `<script is:state>` (compiled bindings) or trusted `unsafeProcessFragment()` from JavaScript. Restricted `process()` supports `$store` refs and hypermedia action grammar only.',
+			message: RUNTIME_BRACED_ATTR_MESSAGE,
 		})
 	}
 
 	if (!parsed.stateScript && sourceUsesEffectCall(parsed)) {
 		out.push({
 			code: 'AERO_CONFIG',
-			message:
-				'`$effect` requires `<script is:state>` and `reactivity: true` in aero.config.',
+			message: EFFECT_STATE_MESSAGE,
 		})
 	}
 
@@ -431,20 +459,30 @@ export function validateFeatureGates(
 	const file = options.importer
 
 	for (const issue of collectFeatureGateIssues(parsed, options, bodyIR, stateAnalysis)) {
-		throw new CompileError({ message: issue.message, file })
+		throw new CompileError({ message: issue.message, file, code: issue.code })
 	}
 
 	if (parsed.buildScript) {
 		const banned = collectHypermediaActionImportsInBuildScript(parsed.buildScript.content)
 		if (banned.length > 0) {
-			throw new CompileError({ message: HYPERMEDIA_BUILD_IMPORT_MESSAGE, file })
+			const loc = sourceLocationForScriptHit(
+				options.diagnosticTemplateSource,
+				parsed.buildScript.content,
+				banned[0]!.start
+			)
+			throw new CompileError({ message: HYPERMEDIA_BUILD_IMPORT_MESSAGE, file, ...loc })
 		}
 	}
 
 	if (parsed.stateScript) {
 		const missing = collectMissingHypermediaActionImportsInStateScript(parsed.stateScript.content)
 		if (missing.length > 0) {
-			throw new CompileError({ message: HYPERMEDIA_STATE_IMPORT_MESSAGE, file })
+			const loc = sourceLocationForScriptHit(
+				options.diagnosticTemplateSource,
+				parsed.stateScript.content,
+				missing[0]!.start
+			)
+			throw new CompileError({ message: HYPERMEDIA_STATE_IMPORT_MESSAGE, file, ...loc })
 		}
 	}
 

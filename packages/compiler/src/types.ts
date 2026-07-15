@@ -106,6 +106,8 @@ export interface CompileErrorOptions {
 	file?: string
 	line?: number
 	column?: number
+	/** Stable Aero code when this is not a plain compile/parse error (e.g. `AERO_CONFIG`). */
+	code?: 'AERO_COMPILE' | 'AERO_CONFIG'
 }
 
 /**
@@ -115,6 +117,7 @@ export class CompileError extends Error {
 	readonly file?: string
 	readonly line?: number
 	readonly column?: number
+	readonly code?: 'AERO_COMPILE' | 'AERO_CONFIG'
 
 	constructor(options: CompileErrorOptions) {
 		super(options.message)
@@ -122,5 +125,6 @@ export class CompileError extends Error {
 		this.file = options.file
 		this.line = options.line
 		this.column = options.column
+		this.code = options.code
 	}
 }

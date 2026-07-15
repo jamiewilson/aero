@@ -71,10 +71,41 @@ describe('feature gates hypermedia build imports', () => {
 				root: '/',
 				resolvePath: (v: string) => v,
 				importer: '/test.html',
+				diagnosticTemplateSource: html,
 				reactivity: true,
 				hypermedia: true,
 			})
 		).toThrow(HYPERMEDIA_STATE_IMPORT_MESSAGE)
+	})
+
+	it('reports source location for unimported GET in is:state', async () => {
+		const { CompileError } = await import('../../types')
+		const { compile } = await import('../../codegen')
+		const { parse } = await import('../../parser')
+		const html = `<script is:state>
+	const load = () => GET('/api/x')
+</script>
+<button on:click="{ load() }">Go</button>`
+		let error: unknown
+		try {
+			compile(parse(html), {
+				root: '/',
+				resolvePath: (v: string) => v,
+				importer: '/test.html',
+				diagnosticTemplateSource: html,
+				reactivity: true,
+				hypermedia: true,
+			})
+		} catch (err) {
+			error = err
+		}
+
+		expect(error).toBeInstanceOf(CompileError)
+		expect(error).toMatchObject({
+			file: '/test.html',
+			line: 2,
+			column: 20,
+		})
 	})
 
 	it('allows GET import in is:state', async () => {

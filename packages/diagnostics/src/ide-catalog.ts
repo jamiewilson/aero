@@ -3,7 +3,7 @@
  * Keeps dependency surface minimal: no Effect, no formatters.
  */
 
-import type { AeroDiagnosticCode } from './types'
+import type { AeroDiagnostic, AeroDiagnosticCode } from './types'
 
 const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs'
 
@@ -28,7 +28,7 @@ const CODE_DOC: Record<AeroDiagnosticCode, string> = {
 	AERO_TEMPLATE: 'concepts/html-template.mdx',
 	AERO_SWITCH: 'concepts/html-template.mdx',
 	AERO_CONTENT_SCHEMA: 'data/content-collections.mdx',
-	AERO_CONFIG: 'quickstart.mdx',
+	AERO_CONFIG: 'configuration/aero-config.mdx',
 	AERO_BUILD_SCRIPT: 'concepts/scripts.mdx',
 	AERO_SCRIPT: 'concepts/scripts.mdx',
 	AERO_INTERNAL: DEFAULT_DOC,
@@ -39,4 +39,23 @@ const CODE_DOC: Record<AeroDiagnosticCode, string> = {
  */
 export function aeroIdeDocsUrlForCode(code: AeroDiagnosticCode): string {
 	return aeroIdeDocHref(CODE_DOC[code] ?? DEFAULT_DOC)
+}
+
+/**
+ * Resolve the most specific canonical documentation URL for a diagnostic.
+ */
+export function aeroIdeDocsUrlForDiagnostic(
+	diagnostic: Pick<AeroDiagnostic, 'code' | 'message' | 'docsUrl'>
+): string {
+	if (diagnostic.docsUrl) return diagnostic.docsUrl
+	if (
+		diagnostic.code === 'AERO_COMPILE' &&
+		/readonly|state variable|reactive/i.test(diagnostic.message)
+	) {
+		return aeroIdeDocHref('getting-started/reactivity.mdx')
+	}
+	if (diagnostic.code === 'AERO_COMPILE' && /prop/i.test(diagnostic.message)) {
+		return aeroIdeDocHref('data/props.mdx')
+	}
+	return aeroIdeDocsUrlForCode(diagnostic.code)
 }
