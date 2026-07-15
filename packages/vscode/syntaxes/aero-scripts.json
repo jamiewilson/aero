@@ -1,0 +1,114 @@
+{
+	"scopeName": "aero.scripts.injection",
+	"comment": "L-priority injection: lang=ts → TypeScript; importmap → JSON; is:build/is:state (no lang=js) → TypeScript. Wins over built-in HTML script→JS so native html templates get correct embeddedLanguages.",
+	"injectionSelector": "L:text.html.basic, L:text.html",
+	"patterns": [
+		{ "include": "#explicit-typescript" },
+		{ "include": "#importmap" },
+		{ "include": "#aero-typescript-default" }
+	],
+	"repository": {
+		"explicit-typescript": {
+			"comment": "Script with lang=\"ts\" or lang=\"typescript\" → TypeScript",
+			"name": "meta.embedded.block.ts.aero",
+			"begin": "(?i)(^[ \\t]+)?(<)(script)\\b(?=[^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])",
+			"beginCaptures": {
+				"2": { "name": "punctuation.definition.tag.begin.html" },
+				"3": { "name": "entity.name.tag.html" }
+			},
+			"end": "(?i)(</)(script)\\s*(>)",
+			"endCaptures": {
+				"1": { "name": "punctuation.definition.tag.begin.html" },
+				"2": { "name": "entity.name.tag.html" },
+				"3": { "name": "punctuation.definition.tag.end.html" }
+			},
+			"patterns": [
+				{
+					"comment": "Opening tag attributes",
+					"begin": "\\G",
+					"end": "(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"name": "meta.tag.metadata.script.start.html",
+					"patterns": [{ "include": "text.html.basic#attribute" }]
+				},
+				{
+					"comment": "Script body as TypeScript",
+					"begin": "(?!\\G)",
+					"end": "(?=</(?i:script))",
+					"contentName": "source.ts",
+					"patterns": [{ "include": "source.ts" }]
+				}
+			]
+		},
+		"importmap": {
+			"comment": "Script with type=\"importmap\" → JSON (not JS/TS)",
+			"name": "meta.embedded.block.importmap.aero",
+			"begin": "(?i)(^[ \\t]+)?(<)(script)\\b(?=[^>]*\\btype\\s*=\\s*[\"']importmap[\"'])",
+			"beginCaptures": {
+				"2": { "name": "punctuation.definition.tag.begin.html" },
+				"3": { "name": "entity.name.tag.html" }
+			},
+			"end": "(?i)(</)(script)\\s*(>)",
+			"endCaptures": {
+				"1": { "name": "punctuation.definition.tag.begin.html" },
+				"2": { "name": "entity.name.tag.html" },
+				"3": { "name": "punctuation.definition.tag.end.html" }
+			},
+			"patterns": [
+				{
+					"comment": "Opening tag attributes",
+					"begin": "\\G",
+					"end": "(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"name": "meta.tag.metadata.script.start.html",
+					"patterns": [{ "include": "text.html.basic#attribute" }]
+				},
+				{
+					"comment": "Import map body as JSON",
+					"begin": "(?!\\G)",
+					"end": "(?=</(?i:script))",
+					"contentName": "source.json",
+					"patterns": [{ "include": "source.json" }]
+				}
+			]
+		},
+		"aero-typescript-default": {
+			"comment": "is:build / is:state without lang=\"js\" → TypeScript (lang=\"js\" opts out; lang=\"ts\" matched above)",
+			"name": "meta.embedded.block.ts.aero",
+			"begin": "(?i)(^[ \\t]+)?(<)(script)\\b(?=[^>]*\\bis:(?:build|state)(?=[\\s=/>]))(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\blang\\s*=\\s*[\"'](?:js|javascript)[\"'])",
+			"beginCaptures": {
+				"2": { "name": "punctuation.definition.tag.begin.html" },
+				"3": { "name": "entity.name.tag.html" }
+			},
+			"end": "(?i)(</)(script)\\s*(>)",
+			"endCaptures": {
+				"1": { "name": "punctuation.definition.tag.begin.html" },
+				"2": { "name": "entity.name.tag.html" },
+				"3": { "name": "punctuation.definition.tag.end.html" }
+			},
+			"patterns": [
+				{
+					"comment": "Opening tag attributes",
+					"begin": "\\G",
+					"end": "(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"name": "meta.tag.metadata.script.start.html",
+					"patterns": [{ "include": "text.html.basic#attribute" }]
+				},
+				{
+					"comment": "Build/state script body as TypeScript",
+					"begin": "(?!\\G)",
+					"end": "(?=</(?i:script))",
+					"contentName": "source.ts",
+					"patterns": [{ "include": "source.ts" }]
+				}
+			]
+		}
+	}
+}

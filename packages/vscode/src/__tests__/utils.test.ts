@@ -39,18 +39,18 @@ describe('scope', () => {
 	})
 
 	describe('isAeroDocument', () => {
-		it('returns true for html and legacy aero documents in an Aero project', async () => {
+		it('returns true for html documents in an Aero project', async () => {
 			const { isAeroDocument } = await import('../scope')
 			setFile('/workspace/package.json', '{"dependencies":{"@aero-js/core":"1.0.0"}}')
 
 			expect(
-				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
-			).toBe(true)
-			expect(
 				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
 			).toBe(true)
 			expect(
-				isAeroDocument({ languageId: 'aero', uri: { scheme: 'untitled', fsPath: '/x.html' } } as any)
+				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
+			).toBe(false)
+			expect(
+				isAeroDocument({ languageId: 'html', uri: { scheme: 'untitled', fsPath: '/x.html' } } as any)
 			).toBe(false)
 		})
 

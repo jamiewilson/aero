@@ -21,7 +21,7 @@ Open a known Aero project and verify:
 - [ ] completions for Aero attributes/components
 - [ ] go-to-definition for imported components/layouts
 - [ ] hover info appears for Aero expressions/usages
-- [ ] Emmet abbreviations work in Aero templates without manually setting `emmet.includeLanguages`
+- [ ] Emmet abbreviations work via native HTML language mode
 
 ## 4) Diagnostics parity checks
 
@@ -43,7 +43,7 @@ For each diagnostic above:
 
 ## 5) Scope/config behavior
 
-- [ ] `.html`/`.htm` files switch to `aero` only inside detected Aero projects
+- [ ] `.html`/`.htm` files remain language mode `HTML`; Aero providers only run inside detected Aero projects
 - [ ] plain HTML files outside Aero projects remain `html` (no Aero diagnostics/providers)
 - [ ] toggling `aero.debug` writes scope logs to the Aero Output channel
 

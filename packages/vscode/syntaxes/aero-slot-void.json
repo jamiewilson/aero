@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.slot-void.injection",
-	"injectionSelector": "L:text.html.aero -meta.embedded.expression.aero, L:text.html.basic -meta.embedded.expression.aero, L:text.html -meta.embedded.expression.aero",
+	"injectionSelector": "L:text.html.basic -meta.embedded.expression.aero, L:text.html -meta.embedded.expression.aero",
 	"patterns": [
 		{
 			"comment": "Match <slot /> as self-closing so it gets void-tag scoping (ligature, bracket matching)",

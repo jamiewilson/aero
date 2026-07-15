@@ -1934,7 +1934,7 @@ describe('AeroDiagnostics Component References', () => {
 			},
 			getText: () => text,
 			positionAt: (offset: number) => positionAtOffset(text, offset),
-			languageId: 'aero',
+			languageId: 'html',
 			fileName: '/app/content/snippets/markup.html',
 			lineAt: (line: number) => ({ text: text.split('\n')[line] ?? '' }),
 		} as any

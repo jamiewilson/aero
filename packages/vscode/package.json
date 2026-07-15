@@ -79,57 +79,36 @@
 				}
 			}
 		],
-		"languages": [
-			{
-				"id": "aero",
-				"aliases": [
-					"Aero",
-					"Aero HTML"
-				],
-				"icon": {
-					"light": "./images/html-icon.svg",
-					"dark": "./images/html-icon.svg"
-				},
-				"configuration": "./language-configuration.json"
-			}
-		],
 		"configuration": {
 			"title": "Aero",
 			"properties": {
 				"aero.debug": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and provider-scope decisions."
 				}
 			}
 		},
 		"configurationDefaults": {
-			"emmet.includeLanguages": {
-				"aero": "html"
-			},
-			"[aero]": {
-				"editor.defaultFormatter": "esbenp.prettier-vscode"
-			}
+			"html.validate.scripts": false
 		},
 		"grammars": [
 			{
-				"language": "aero",
-				"scopeName": "text.html.aero",
-				"path": "./syntaxes/aero.tmLanguage.json",
+				"path": "./syntaxes/aero-scripts.json",
+				"scopeName": "aero.scripts.injection",
+				"injectTo": [
+					"text.html.basic",
+					"text.html"
+				],
 				"embeddedLanguages": {
-					"source.css": "css",
-					"source.js": "javascript",
-					"source.json": "json",
 					"source.ts": "typescript",
-					"meta.embedded.block.expression.aero": "typescript",
-					"meta.embedded.expression.aero source.ts": "typescript"
+					"source.json": "json"
 				}
 			},
 			{
 				"path": "./syntaxes/aero-expressions.json",
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
 					"text.html"
 				],
@@ -149,7 +128,6 @@
 				"path": "./syntaxes/aero-attributes.json",
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
 					"text.html"
 				],
@@ -169,7 +147,6 @@
 				"path": "./syntaxes/aero-globals.json",
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
 					"text.html"
 				]
@@ -178,7 +155,6 @@
 				"path": "./syntaxes/aero-slot-void.json",
 				"scopeName": "aero.slot-void.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
 					"text.html"
 				]

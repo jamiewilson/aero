@@ -1,7 +1,9 @@
 <script is:build>
 	import base from '@layouts/base.html'
 
-	const dismiss = el => setTimeout(() => el.replaceChildren(), 3000)
+	const dismiss = (el: HTMLElement) => {
+		return setTimeout(() => el.replaceChildren(), 3000)
+	}
 </script>
 
 <base-layout title="HTMX/Alpine form">

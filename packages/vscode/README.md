@@ -33,10 +33,11 @@ Language support for Aero templates in HTML files: syntax highlighting, completi
   - Caches cleared when relevant project files change (`tsconfig.json`, `package.json`, `vite.config.*`, `aero.config.*`).
 
 - **Emmet**
-  - The extension contributes a default `emmet.includeLanguages` mapping (`aero` → `html`), so Aero templates keep standard HTML Emmet abbreviations without manual settings changes.
+  - Templates stay in native `html` language mode, so standard HTML Emmet abbreviations work without extra mappings.
 
 - **TypeScript in templates**
-  - **`<script is:build>`** defaults to TypeScript (with `Aero` build ambients). Use **`lang="js"`** or **`lang="javascript"`** for JavaScript-only build scripts. For **client**, **inline**, and **blocking** scripts, add **`lang="ts"`** / **`lang="typescript"`** when you want TypeScript (otherwise they stay JavaScript). Curly interpolations `{ ... }` use small TypeScript virtual fragments that include the same build-scoped bindings as `<script is:build>` so expressions type-check in the editor.
+  - **`<script is:build>`** and **`<script is:state>`** default to TypeScript (with `Aero` build ambients). Use **`lang="js"`** or **`lang="javascript"`** for JavaScript-only build/state scripts. For **client**, **inline**, and **blocking** scripts, add **`lang="ts"`** / **`lang="typescript"`** when you want TypeScript (otherwise they stay JavaScript). Curly interpolations `{ ... }` use small TypeScript virtual fragments that include the same build-scoped bindings as `<script is:build>` so expressions type-check in the editor.
+  - The extension defaults **`html.validate.scripts`** to **`false`** so the built-in HTML/JavaScript checker does not flag TypeScript syntax inside templates. Aero’s language server still type-checks build/state scripts and expressions.
 
 ## Installation
 
@@ -66,7 +67,7 @@ to use raw `@snippet` comment markers.
 
 In VS Code settings, search for **Aero**:
 
-- **aero.debug** — Default **`false`**. When enabled, writes project-detection and language-switch decisions to the **Aero** Output channel.
+- **aero.debug** — Default **`false`**. When enabled, writes project-detection and provider-scope decisions to the **Aero** Output channel.
 
 ## Development
 

@@ -20,8 +20,8 @@ const aeroTemplateUri = URI.file(path.join(repoRoot, 'examples/kitchen-sink/clie
 
 describe('aeroLanguagePlugin', () => {
 	describe('getLanguageId', () => {
-	it('returns "aero" for .html files', () => {
-		expect(aeroLanguagePlugin.getLanguageId(aeroTemplateUri)).toBe('aero')
+	it('returns "html" for Aero project .html files', () => {
+		expect(aeroLanguagePlugin.getLanguageId(aeroTemplateUri)).toBe('html')
 		})
 
 		it('returns undefined for non-HTML files', () => {
@@ -31,16 +31,16 @@ describe('aeroLanguagePlugin', () => {
 	})
 
 	describe('createVirtualCode', () => {
-		it('creates AeroVirtualCode for aero language ID', () => {
-			const snapshot = createSnapshot('<div>test</div>')
-		const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'aero', snapshot, dummyCtx)
-			expect(result).toBeInstanceOf(AeroVirtualCode)
-		})
-
-		it('creates AeroVirtualCode for html language ID on .html (editor often has not switched to aero yet)', () => {
+		it('creates AeroVirtualCode for html language ID on .html', () => {
 			const snapshot = createSnapshot('<div>test</div>')
 		const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'html', snapshot, dummyCtx)
 			expect(result).toBeInstanceOf(AeroVirtualCode)
+		})
+
+		it('returns undefined for non-html language IDs', () => {
+			const snapshot = createSnapshot('<div>test</div>')
+			const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'typescript', snapshot, dummyCtx)
+			expect(result).toBeUndefined()
 		})
 
 		it('returns undefined for html language ID on non-.html paths', () => {
