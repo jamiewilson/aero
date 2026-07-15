@@ -68,6 +68,20 @@
 		list-style-type: decimal-leading-zero;
 	}
 
+	@keyframes slide-in {
+		from {
+			opacity: 0;
+			transform: translateX(2em);
+		}
+	}
+
+	@keyframes slide-out {
+		to {
+			opacity: 0;
+			transform: translateX(-2em);
+		}
+	}
+
 	html:active-view-transition-type(list-update) {
 		view-transition-name: none;
 	}
