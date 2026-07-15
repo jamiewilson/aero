@@ -25,12 +25,23 @@ describe('feature gates', () => {
 
 	it('errors on action calls when hypermedia is disabled', () => {
 		const html = `<script is:state>
+			import { POST } from '@aero-js/hypermedia'
 			function save() { POST('/api/save') }
 		</script>
 		<button on:click="{ save() }">Save</button>`
 		expect(() =>
 			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: false })
 		).toThrow('hypermedia: true')
+	})
+
+	it('errors on unimported action calls in is:state', () => {
+		const html = `<script is:state>
+			function save() { POST('/api/save') }
+		</script>
+		<button on:click="{ save() }">Save</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
+		).toThrow('must be imported from `@aero-js/hypermedia`')
 	})
 
 	it('errors on direct action in handler when hypermedia is disabled', () => {
@@ -136,6 +147,16 @@ describe('feature gates', () => {
 		expect(() =>
 			compile(parse(html), { ...mockOptions, reactivity: true, hypermedia: true })
 		).toThrow('Hypermedia action `state` must reference a boolean state binding')
+	})
+
+	it('rejects hypermedia action imports in is:build', () => {
+		const html = `<script is:build>
+			import { GET } from '@aero-js/hypermedia'
+		</script>
+		<button on:click="{ GET('/api/x') }">Go</button>`
+		expect(() =>
+			compile(parse(html), { ...mockOptions, hypermedia: true })
+		).toThrow('cannot be imported in `<script is:build>`')
 	})
 
 	it('rejects visible action state references to missing or non-boolean bindings', () => {

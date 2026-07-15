@@ -7,6 +7,7 @@ import { getResolver } from './path-resolver'
 import { checkComponentProps } from './checks/check-component-props'
 import { checkComponentReferences } from './checks/check-component-references'
 import { checkTemplateImportSpecifiers } from './checks/check-template-import-specifiers'
+import { checkHypermediaBuildImports } from './checks/check-hypermedia-build-imports'
 import { checkConditionalChains } from './checks/check-conditional-chains'
 import { checkDirectiveExpressionBraces } from './checks/check-directive-braces'
 import { checkDuplicateDeclarations } from './checks/check-duplicate-declarations'
@@ -71,6 +72,7 @@ export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInpu
 	checkConditionalChains(document, text, diagnostics)
 	checkDirectiveExpressionBraces(document, text, diagnostics)
 	checkTemplateImportSpecifiers(document, text, diagnostics)
+	checkHypermediaBuildImports(document, text, diagnostics)
 	checkComponentReferences(document, text, diagnostics, resolver)
 	checkComponentProps(
 		document,

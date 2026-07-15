@@ -46,7 +46,19 @@ export default defineHandler(() => {
 })
 ```
 
-`GET`, `POST`, `PUT`, `PATCH`, and `DELETE` are available in `on:*` handlers when hypermedia is enabled — no import in the template.
+`GET`, `POST`, `PUT`, `PATCH`, and `DELETE` are available in `on:*` handlers when hypermedia is enabled — no import needed.
+
+Call them from `<script is:state>` only after an explicit import:
+
+```html
+<script is:state>
+	import { GET } from '@aero-js/hypermedia'
+
+	const loadPanel = () => GET('/api/panel', { target: '#panel' })
+</script>
+```
+
+Do not import these actions in `<script is:build>` — that is a compile error.
 
 ## Action methods
 

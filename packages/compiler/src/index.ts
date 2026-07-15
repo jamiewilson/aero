@@ -74,6 +74,17 @@ export {
 } from './feature-gates'
 
 export {
+	HYPERMEDIA_PACKAGE_SPECIFIER,
+	HYPERMEDIA_BUILD_IMPORT_MESSAGE,
+	HYPERMEDIA_STATE_IMPORT_MESSAGE,
+	isHypermediaActionImport,
+	collectHypermediaActionImportsInBuildScript,
+	collectMissingHypermediaActionImportsInStateScript,
+	type HypermediaBuildImportHit,
+	type HypermediaMissingStateImportHit,
+} from './hypermedia-build-imports'
+
+export {
 	collectComponentReactivePropMetadata,
 	collectComponentRegistryEntries,
 	renderComponentRegistryDts,
