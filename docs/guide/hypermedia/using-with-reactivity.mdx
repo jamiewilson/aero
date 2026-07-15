@@ -21,6 +21,8 @@ export default defineConfig({
 | Hypermedia | `GET` / `POST` / … fetch HTML, swap into targets, lifecycle events |
 | Together | Actions run from reactive handlers; swapped HTML is **processed** into the page signal store |
 
+`on:*` handlers can call `GET` / `POST` without an import. Calls from `<script is:state>` need `import { GET } from '@aero-js/hypermedia'` (do not import these in `is:build`).
+
 You do not call `process()` manually for standard hypermedia targets when both flags are on — the runtime runs destroy → swap → remount/process for compiled regions.
 
 ## Form state + partial server response

@@ -348,6 +348,33 @@ let status = 'Ready'
 		expect(codes).not.toContain(2304)
 	})
 
+	it('emits TS2304 for unimported GET in is:state virtual TS', () => {
+		const html = `<script is:state>
+const load = () => GET('/api/x')
+</script>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const text = getEmbeddedText(code, 'state_0')!
+		expect(text).not.toContain('declare function GET')
+
+		const opts: ts.CompilerOptions = {
+			target: ts.ScriptTarget.ESNext,
+			module: ts.ModuleKind.ESNext,
+			strict: true,
+			skipLibCheck: true,
+			noEmit: true,
+		}
+		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const host = ts.createCompilerHost(opts)
+		const originalGetSourceFile = host.getSourceFile.bind(host)
+		host.getSourceFile = (fileName, languageVersion, ...rest) => {
+			if (fileName.endsWith('state.ts')) return source
+			return originalGetSourceFile(fileName, languageVersion, ...rest)
+		}
+		const program = ts.createProgram(['state.ts'], opts, host)
+		expect(program.getSemanticDiagnostics(source).map(d => d.code)).toContain(2304)
+	})
+
 	it('does not emit TS2322 for hypermedia state option with owned binding', () => {
 		const html = `<script is:state>let isSaving = false</script>
 <button on:click="{ POST('/api/save', { target: '#save-status', state: isSaving }) }">Save</button>`

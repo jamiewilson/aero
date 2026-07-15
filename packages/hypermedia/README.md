@@ -22,14 +22,14 @@ export default defineConfig({
 })
 ```
 
-Action functions are injected into `<script is:state>` mount scope — no manual import in templates.
+Action functions are injected into `on:*` handlers when hypermedia is enabled — no import needed there. Import them in `<script is:state>` when calling from state script code; do not import them in `<script is:build>`.
 
 ## Public API
 
 | Export | Description |
 | --- | --- |
 | `createHypermediaRuntime(options?)` | Runtime with `executeAction`, `swapElement`, `process` |
-| `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | Action functions (also available in template state scope) |
+| `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | Action functions (import in `is:state`; intrinsic in `on:*` handlers) |
 | `performSwap`, `resolveTarget`, `parseSwapStyle` | Swap helpers |
 | `dispatchLifecycleEvent` | Lifecycle event dispatch |
 | `process` | Hypermedia-specific fragment wiring |

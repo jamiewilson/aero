@@ -3,6 +3,12 @@ import type { CompileOptions, ParseResult } from './types'
 import { CompileError } from './types'
 import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
+import {
+	collectHypermediaActionImportsInBuildScript,
+	collectMissingHypermediaActionImportsInStateScript,
+	HYPERMEDIA_BUILD_IMPORT_MESSAGE,
+	HYPERMEDIA_STATE_IMPORT_MESSAGE,
+} from './hypermedia-build-imports'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { stripBraces } from '@aero-js/interpolation'
 
@@ -426,6 +432,20 @@ export function validateFeatureGates(
 
 	for (const issue of collectFeatureGateIssues(parsed, options, bodyIR, stateAnalysis)) {
 		throw new CompileError({ message: issue.message, file })
+	}
+
+	if (parsed.buildScript) {
+		const banned = collectHypermediaActionImportsInBuildScript(parsed.buildScript.content)
+		if (banned.length > 0) {
+			throw new CompileError({ message: HYPERMEDIA_BUILD_IMPORT_MESSAGE, file })
+		}
+	}
+
+	if (parsed.stateScript) {
+		const missing = collectMissingHypermediaActionImportsInStateScript(parsed.stateScript.content)
+		if (missing.length > 0) {
+			throw new CompileError({ message: HYPERMEDIA_STATE_IMPORT_MESSAGE, file })
+		}
 	}
 
 	const reactiveBinds = parsed.stateScript
