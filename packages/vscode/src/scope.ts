@@ -1,10 +1,10 @@
 /**
- * Aero project detection + language-switch gating.
+ * Aero project detection and provider gating.
  *
  * @remarks
- * The extension only switches `.html` / `.htm` to `aero` when the file is inside a
- * detected Aero project. Detection uses the nearest project root candidate and strong
- * signals only (`aero.config.*`, `vite.config.*`, `package.json`).
+ * Providers and diagnostics run only for `.html` / `.htm` files inside a detected Aero
+ * project. Detection uses the nearest project root candidate and strong signals
+ * (`aero.config.*`, `vite.config.*`, `package.json` with `@aero-js/*`).
  */
 import * as vscode from 'vscode'
 import * as path from 'node:path'
@@ -26,12 +26,6 @@ export function isHtmlTemplatePath(document: vscode.TextDocument): boolean {
 	return p.endsWith('.html') || p.endsWith('.htm')
 }
 
-/** Built-in HTML shell language IDs we can switch from. */
-export function isSwitchableToAeroShell(document: vscode.TextDocument): boolean {
-	const id = document.languageId
-	return id === 'html' || (id === 'plaintext' && isHtmlTemplatePath(document))
-}
-
 /** Clear project-detection cache (e.g. on config change). */
 export function clearScopeCache(): void {
 	cache.clear()
@@ -41,7 +35,7 @@ export function clearScopeCache(): void {
 export function isAeroDocument(document: vscode.TextDocument): boolean {
 	return (
 		document.uri.scheme === 'file' &&
-		(document.languageId === 'html' || document.languageId === 'aero') &&
+		document.languageId === 'html' &&
 		isHtmlTemplatePath(document) &&
 		isInAeroProject(document.uri.fsPath)
 	)

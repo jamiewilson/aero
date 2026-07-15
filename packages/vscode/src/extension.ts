@@ -4,8 +4,9 @@
  *
  * @remarks
  * Starts a Volar language server for TypeScript IntelliSense inside script blocks, and
- * registers definition, completion, hover, and diagnostics for HTML/Aero files while preserving
- * the native HTML language identity. Clears path/scope caches on relevant project config changes.
+ * registers definition, completion, hover, and diagnostics for HTML files in Aero projects
+ * while preserving native HTML language identity. Clears path/scope caches on relevant
+ * project config changes.
  */
 import * as vscode from 'vscode'
 import {
@@ -70,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 	const tsdk = await getTsdk(context)
 	const clientOptions: LanguageClientOptions = {
-		documentSelector: [{ language: 'html' }, { language: 'aero' }],
+		documentSelector: [{ language: 'html' }],
 		initializationOptions: {
 			typescript: { tsdk: tsdk?.tsdk },
 		},

@@ -79,59 +79,46 @@
 				}
 			}
 		],
-		"languages": [
-			{
-				"id": "aero",
-				"aliases": [
-					"Aero",
-					"Aero HTML"
-				],
-				"icon": {
-					"light": "./images/html-icon.svg",
-					"dark": "./images/html-icon.svg"
-				},
-				"configuration": "./language-configuration.json"
-			}
-		],
 		"configuration": {
 			"title": "Aero",
 			"properties": {
 				"aero.debug": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and HTML→Aero language switching decisions."
+					"markdownDescription": "Enable Aero extension debug logs in the Output panel (Aero channel), including project detection and provider-scope decisions."
 				}
 			}
 		},
 		"configurationDefaults": {
-			"emmet.includeLanguages": {
-				"aero": "html"
-			},
-			"[aero]": {
-				"editor.defaultFormatter": "esbenp.prettier-vscode"
-			}
+			"html.validate.scripts": false
 		},
 		"grammars": [
 			{
-				"language": "aero",
-				"scopeName": "text.html.aero",
-				"path": "./syntaxes/aero.tmLanguage.json",
+				"path": "./syntaxes/aero-scripts.json",
+				"scopeName": "aero.scripts.injection",
+				"injectTo": [
+					"text.html.basic",
+					"text.html.derivative"
+				],
 				"embeddedLanguages": {
-					"source.css": "css",
-					"source.js": "javascript",
-					"source.json": "json",
+					"meta.embedded.block.ts.aero": "typescript",
 					"source.ts": "typescript",
-					"meta.embedded.block.expression.aero": "typescript",
-					"meta.embedded.expression.aero source.ts": "typescript"
+					"meta.embedded.block.importmap.aero": "json",
+					"source.json": "json"
+				},
+				"tokenTypes": {
+					"meta.embedded.block.ts.aero": "other",
+					"meta.embedded.block.importmap.aero": "other",
+					"source.ts": "other",
+					"source.json": "other"
 				}
 			},
 			{
 				"path": "./syntaxes/aero-expressions.json",
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
 					"meta.embedded.block.expression.aero": "typescript",
@@ -149,9 +136,8 @@
 				"path": "./syntaxes/aero-attributes.json",
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
 					"meta.embedded.block.for-directive.aero": "typescript",
@@ -169,18 +155,16 @@
 				"path": "./syntaxes/aero-globals.json",
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				]
 			},
 			{
 				"path": "./syntaxes/aero-slot-void.json",
 				"scopeName": "aero.slot-void.injection",
 				"injectTo": [
-					"text.html.aero",
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				]
 			}
 		]

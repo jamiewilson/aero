@@ -30,6 +30,6 @@ describe('aero-expressions grammar', () => {
 		expect(grammar.injectionSelector).toMatch(/^R:/)
 		expect(grammar.injectionSelector).not.toContain('L:')
 		expect(grammar.injectionSelector).toContain('text.html.basic')
-		expect(grammar.injectionSelector).toContain('text.html.aero')
+		expect(grammar.injectionSelector).not.toContain('text.html.aero')
 	})
 })

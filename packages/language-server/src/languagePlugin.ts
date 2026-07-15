@@ -6,17 +6,13 @@ import type { URI } from 'vscode-uri'
 import { isAeroProjectPath } from '@aero-js/core/template-diagnostics'
 import { AeroVirtualCode } from './virtualCode'
 
-/**
- * VS Code's first language-id resolver returns the TextDocument's languageId. Files are often
- * still `html` until the extension runs setTextDocumentLanguage → `aero`, so we must accept both.
- */
 function isHtmlTemplateUri(uri: URI): boolean {
 	return uri.path.toLowerCase().endsWith('.html')
 }
 
 function shouldCreateAeroVirtualCode(uri: URI, languageId: string): boolean {
 	if (!isHtmlTemplateUri(uri)) return false
-	return (languageId === 'aero' || languageId === 'html') && isAeroProjectPath(uri.fsPath)
+	return languageId === 'html' && isAeroProjectPath(uri.fsPath)
 }
 
 const MODULE_SCRIPT_CONTENT = "export default '';\n"
@@ -36,7 +32,7 @@ const moduleVirtualCode: VirtualCode = {
 export const aeroLanguagePlugin: LanguagePlugin<URI> = {
 	getLanguageId(uri) {
 		if (uri.path.endsWith('.html') && isAeroProjectPath(uri.fsPath)) {
-			return 'aero'
+			return 'html'
 		}
 	},
 

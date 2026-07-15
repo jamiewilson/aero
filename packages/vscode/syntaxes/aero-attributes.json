@@ -1,6 +1,6 @@
 {
 	"scopeName": "aero.attributes.injection",
-	"injectionSelector": "R:text.html.aero meta.tag -comment -string, R:text.html.basic meta.tag -comment -string, R:text.html meta.tag -comment -string",
+	"injectionSelector": "R:text.html.basic meta.tag -comment -string, R:text.html meta.tag -comment -string",
 	"patterns": [
 		{ "include": "#aero-script-type-attributes" },
 		{ "include": "#aero-control-flow-attributes" },
@@ -8,8 +8,8 @@
 	],
 	"repository": {
 		"aero-script-type-attributes": {
-			"comment": "Highlight is:build, is:inline, and is:blocking as special script type attributes",
-			"match": "\\b(is:(build|inline|blocking))\\b",
+			"comment": "Highlight is:build, is:state, is:inline, and is:blocking as special script type attributes",
+			"match": "\\b(is:(build|state|inline|blocking))\\b",
 			"captures": {
 				"1": { "name": "entity.other.attribute-name.html" }
 			}

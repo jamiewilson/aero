@@ -30,7 +30,7 @@ pnpm add -D prettier @aero-js/prettier-plugin-aero
 }
 ```
 
-3. Install the [Prettier VS Code extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode). The [Aero extension](/tooling/vscode-extension) recommends it and sets `[aero]` files to use Prettier by default.
+3. Install the [Prettier VS Code extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode). The [Aero extension](/tooling/vscode-extension) recommends it; configure Prettier for `.html` files via project `.prettierrc` (and optional editor defaults for `[html]` if you want workspace-wide formatting).
 
 4. (Optional) Exclude Aero HTML from oxfmt so templates are not double-formatted. In `.oxfmtrc.json`:
 
