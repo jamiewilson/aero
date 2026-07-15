@@ -1,7 +1,7 @@
 {
 	"scopeName": "aero.scripts.injection",
-	"comment": "L-priority injection: lang=ts → TypeScript; importmap → JSON; is:build/is:state (no lang=js) → TypeScript. Wins over built-in HTML script→JS so native html templates get correct embeddedLanguages.",
-	"injectionSelector": "L:text.html.basic, L:text.html",
+	"comment": "L-priority injection into HTML language (text.html.derivative) and text.html.basic: lang=ts → TypeScript; importmap → JSON; is:build/is:state (no lang=js) → TypeScript. injectTo must list text.html.derivative so embeddedLanguages merge for comment toggle.",
+	"injectionSelector": "L:text.html.basic, L:text.html.derivative",
 	"patterns": [
 		{ "include": "#explicit-typescript" },
 		{ "include": "#importmap" },

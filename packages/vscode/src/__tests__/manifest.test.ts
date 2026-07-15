@@ -29,7 +29,8 @@ describe('vscode manifest', () => {
 		const scripts = manifest?.contributes?.grammars?.find(
 			(g: { scopeName?: string }) => g.scopeName === 'aero.scripts.injection'
 		)
-		expect(scripts?.injectTo).toEqual(['text.html.basic', 'text.html'])
+		expect(scripts?.injectTo).toEqual(['text.html.basic', 'text.html.derivative'])
+		expect(scripts?.embeddedLanguages?.['meta.embedded.block.ts.aero']).toBe('typescript')
 		expect(scripts?.embeddedLanguages?.['source.ts']).toBe('typescript')
 	})
 })

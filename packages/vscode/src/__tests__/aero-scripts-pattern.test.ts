@@ -21,7 +21,7 @@ describe('aero-scripts grammar', () => {
 	it('registers L-priority injection into native HTML scopes', () => {
 		expect(grammar.injectionSelector).toMatch(/^L:/)
 		expect(grammar.injectionSelector).toContain('text.html.basic')
-		expect(grammar.injectionSelector).toContain('text.html')
+		expect(grammar.injectionSelector).toContain('text.html.derivative')
 		expect(grammar.injectionSelector).not.toContain('text.html.aero')
 	})
 
@@ -44,7 +44,9 @@ describe('aero-scripts grammar', () => {
 			}
 		}
 		const scripts = manifest.contributes.grammars.find(g => g.scopeName === 'aero.scripts.injection')
+		expect(scripts?.embeddedLanguages?.['meta.embedded.block.ts.aero']).toBe('typescript')
 		expect(scripts?.embeddedLanguages?.['source.ts']).toBe('typescript')
+		expect(scripts?.embeddedLanguages?.['meta.embedded.block.importmap.aero']).toBe('json')
 		expect(scripts?.embeddedLanguages?.['source.json']).toBe('json')
 	})
 })

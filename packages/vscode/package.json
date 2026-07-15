@@ -98,11 +98,19 @@
 				"scopeName": "aero.scripts.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
+					"meta.embedded.block.ts.aero": "typescript",
 					"source.ts": "typescript",
+					"meta.embedded.block.importmap.aero": "json",
 					"source.json": "json"
+				},
+				"tokenTypes": {
+					"meta.embedded.block.ts.aero": "other",
+					"meta.embedded.block.importmap.aero": "other",
+					"source.ts": "other",
+					"source.json": "other"
 				}
 			},
 			{
@@ -110,7 +118,7 @@
 				"scopeName": "aero.expressions.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
 					"meta.embedded.block.expression.aero": "typescript",
@@ -129,7 +137,7 @@
 				"scopeName": "aero.attributes.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				],
 				"embeddedLanguages": {
 					"meta.embedded.block.for-directive.aero": "typescript",
@@ -148,7 +156,7 @@
 				"scopeName": "aero.globals.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				]
 			},
 			{
@@ -156,7 +164,7 @@
 				"scopeName": "aero.slot-void.injection",
 				"injectTo": [
 					"text.html.basic",
-					"text.html"
+					"text.html.derivative"
 				]
 			}
 		]
