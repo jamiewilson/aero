@@ -18,19 +18,3 @@ export function addPreDataLang(): ShikiTransformer {
 		},
 	}
 }
-
-/**
- * Add `not-prose` to the generated `<pre>` element.
- *
- * @remarks
- * Opt-in helper for Tailwind Typography: prose skips elements with `not-prose`.
- * Uses Shiki's `addClassToHast` so classes merge with Shiki's own `pre` classes.
- */
-export function addPreNotProse(): ShikiTransformer {
-	return {
-		name: 'aero-js:pre-not-prose-transformer',
-		pre(node) {
-			this.addClassToHast(node, 'not-prose')
-		},
-	}
-}

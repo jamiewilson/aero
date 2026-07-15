@@ -33,7 +33,7 @@
 
 		/* Only apply background if not inside a shiki block */
 		&:not(.shiki &) {
-			background: var(--code-bg) !important;
+			background: var(--code-bg);
 		}
 	}
 
@@ -117,8 +117,11 @@
 
 	/* Copy button */
 	pre button.copy {
+		--copy-button-size: 16px;
 		all: initial;
 		position: absolute;
+		font-size: small;
+		font-family: var(--font-sans);
 		z-index: 100;
 		top: 0;
 		right: 0;
@@ -126,12 +129,15 @@
 		padding: var(--code-label-inset);
 
 		& span {
+			position: relative;
 			background-repeat: no-repeat;
 			background-position: center;
 			background-size: cover;
 			display: flex;
-			height: 16px;
-			width: 16px;
+			align-items: center;
+			width: var(--copy-button-size);
+			font-size: small;
+			aspect-ratio: 1;
 		}
 
 		& .ready {
@@ -144,7 +150,12 @@
 		}
 
 		&.copied .success {
-			display: block;
+			display: flex;
+			&::before {
+				content: 'Copied';
+				position: absolute;
+				inset-inline-end: calc(var(--copy-button-size) + 0.5ch);
+			}
 		}
 
 		&.copied .ready {
@@ -158,6 +169,11 @@
 		> span {
 			padding-inline: var(--box-padding);
 		}
+	}
+
+	/* Hide copy button on non-pre elements */
+	:where(:not(pre) > button.copy) {
+		display: none;
 	}
 
 	.line.highlighted {
