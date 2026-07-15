@@ -4,7 +4,11 @@
 
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildDevSsrErrorHtml, extractDiagnosticsFromDevErrorHtml } from '../error-page'
+import {
+	buildDevSsrErrorHtml,
+	extractDiagnosticsFromDevErrorHtml,
+	AERO_OVERLAY_BOOTSTRAP_ATTR,
+} from '../error-page'
 import {
 	decodeDiagnosticsHeaderValue,
 	encodeDiagnosticsHeaderValue,
@@ -38,10 +42,8 @@ describe('wire-format and error-page', () => {
 
 	it('extractDiagnosticsFromDevErrorHtml reads script payload from buildDevSsrErrorHtml', () => {
 		const html = buildDevSsrErrorHtml(sample)
-		expect(html).toContain('bad &lt;script&gt; edge')
-		expect(html).toContain('<h1>Aero Compiler Error</h1>')
-		expect(html).toContain('<title>Aero Compiler Error</title>')
-		expect(html).not.toContain('class="aero-diag-banner')
+		expect(html).toContain('Aero Compile Error: Loading overlay...')
+		expect(html).toContain(AERO_OVERLAY_BOOTSTRAP_ATTR)
 		const parsed = extractDiagnosticsFromDevErrorHtml(html)
 		expect(parsed).toEqual(sample)
 	})

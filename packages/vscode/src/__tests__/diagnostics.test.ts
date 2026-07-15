@@ -1545,7 +1545,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		)
 		expect(directiveDiag).toBeDefined()
 		expect(directiveDiag.code.value).toBe('AERO_COMPILE')
-		expect(String(directiveDiag.code.target)).toContain('interpolation.md')
+		expect(String(directiveDiag.code.target)).toContain('concepts/templating.mdx')
 	})
 
 	it('should NOT flag directive with braced expression', () => {
@@ -2005,7 +2005,7 @@ const spread = { title: 'hello' }
 			)
 			expect(missing).toBeDefined()
 			expect(missing.code.value).toBe('AERO_COMPILE')
-			expect(String(missing.code.target)).toContain('props.md')
+			expect(String(missing.code.target)).toContain('data/props.mdx')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
@@ -2463,7 +2463,7 @@ const props = { title: 'hello' }
 			)
 			expect(missing).toBeDefined()
 			expect(missing.code.value).toBe('AERO_COMPILE')
-			expect(String(missing.code.target)).toContain('props.md')
+			expect(String(missing.code.target)).toContain('data/props.mdx')
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}

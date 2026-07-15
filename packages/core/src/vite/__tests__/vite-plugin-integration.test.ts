@@ -424,8 +424,8 @@ describe('Vite Plugin Integration', () => {
 		type ViteErr = { message: string; loc?: { line: number; column: number } }
 		const recorded = viteErrorRef.current as ViteErr | null
 		expect(recorded).not.toBeNull()
-		expect(recorded!.message).toContain('[AERO_COMPILE]')
 		expect(recorded!.message).toMatch(/for|brace|const/i)
+		expect(recorded!.message).not.toMatch(/^\[AERO_COMPILE\]/)
 		expect(recorded!.loc).toMatchObject({
 			file: id,
 			line: 5,

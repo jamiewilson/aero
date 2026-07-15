@@ -8,18 +8,21 @@ export class AeroCompileError extends Error {
 	readonly file?: string
 	readonly line?: number
 	readonly column?: number
+	readonly code?: 'AERO_COMPILE' | 'AERO_CONFIG'
 
 	constructor(fields: {
 		readonly message: string
 		readonly file?: string
 		readonly line?: number
 		readonly column?: number
+		readonly code?: 'AERO_COMPILE' | 'AERO_CONFIG'
 	}) {
 		super(fields.message)
 		this.name = 'AeroCompileError'
 		this.file = fields.file
 		this.line = fields.line
 		this.column = fields.column
+		this.code = fields.code
 	}
 }
 

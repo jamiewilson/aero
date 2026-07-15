@@ -99,6 +99,8 @@ interface AeroPluginState {
 	options: AeroOptions
 	/** Dedupes compile warnings when unchanged templates are recompiled during dev HMR. */
 	compileWarningHashes: Map<string, string>
+	/** Set when Vite `buildEnd` receives an error so static prerender does not run after a failed bundle. */
+	staticBuildFailed: boolean
 }
 
 export interface CompileWarningPayload {
@@ -786,6 +788,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		apiPrefix,
 		options: pluginOptions,
 		compileWarningHashes: new Map<string, string>(),
+		staticBuildFailed: false,
 	}
 
 	const aeroConfigPlugin = createAeroConfigPlugin(state)
@@ -799,7 +802,11 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	const staticBuildPlugin: Plugin = {
 		name: 'vite-plugin-aero-static',
 		apply: 'build',
+		buildEnd(error) {
+			if (error) state.staticBuildFailed = true
+		},
 		async closeBundle() {
+			if (state.staticBuildFailed) return
 			// Project root (site/app directory: e.g. examples/kitchen-sink or @aero-js/create generated project), not monorepo root
 			const resolvedConfig = requireResolvedConfig(state)
 			const aliasResult = requireAliasResult(state)

@@ -155,6 +155,7 @@
 				content: 'Copied';
 				position: absolute;
 				inset-inline-end: calc(var(--copy-button-size) + 0.5ch);
+				color: var(--color-text);
 			}
 		}
 

@@ -14,15 +14,37 @@ import { augmentFromCssSyntaxError } from './css-postcss-error'
 import { diagnosticPathForDisplay } from './path-display'
 import { tryRefineHtmlReferenceErrorSpan } from './refine-html-reference-error-span'
 import { firstStackSpan } from './stack-frame'
+import { stripAeroViteMessageDecorations } from './vite-error'
 
 function isCompileError(
 	err: unknown
-): err is { message: string; file?: string; line?: number; column?: number } {
+): err is {
+	message: string
+	file?: string
+	line?: number
+	column?: number
+	code?: 'AERO_COMPILE' | 'AERO_CONFIG'
+} {
 	return err instanceof Error && err.name === 'CompileError'
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === 'object' && v !== null
+}
+
+interface ViteErrorMeta {
+	id?: string
+	frame?: string
+	loc?: { file?: string; line?: number; column?: number }
+}
+
+function viteErrorMeta(err: Error): ViteErrorMeta {
+	const record = err as Error & ViteErrorMeta
+	return {
+		...(typeof record.id === 'string' ? { id: record.id } : {}),
+		...(typeof record.frame === 'string' ? { frame: record.frame } : {}),
+		...(record.loc && typeof record.loc === 'object' ? { loc: record.loc } : {}),
+	}
 }
 
 /**
@@ -38,13 +60,21 @@ function errorWithContextToDiagnostic(
 	contextFile: string | undefined
 ): AeroDiagnostic {
 	const css = augmentFromCssSyntaxError(err)
-	const stackSpan = css ? undefined : firstStackSpan(err.stack)
-	let diagFile = css?.file ?? stackSpan?.file ?? contextFile
+	const vite = viteErrorMeta(err)
+	const parsedMessage = stripAeroViteMessageDecorations(err.message || String(err))
+	const stackSpan = css || vite.loc || vite.id ? undefined : firstStackSpan(err.stack)
+	let diagFile = css?.file ?? (vite.loc?.file || vite.id) ?? stackSpan?.file ?? contextFile
 	let span =
 		css?.span ??
-		(stackSpan
-			? { file: stackSpan.file, line: stackSpan.line, column: stackSpan.column }
-			: undefined)
+		(vite.loc?.line !== undefined
+			? {
+					file: vite.loc.file ?? vite.id ?? diagFile ?? '',
+					line: vite.loc.line,
+					column: vite.loc.column ?? 0,
+				}
+			: stackSpan
+				? { file: stackSpan.file, line: stackSpan.line, column: stackSpan.column }
+				: undefined)
 
 	const promoteInlineCssPath =
 		css != null &&
@@ -75,19 +105,20 @@ function errorWithContextToDiagnostic(
 			hint = parts.length > 0 ? parts.join('\n') : undefined
 		}
 	} else {
+		const failingFile = diagFile ?? span?.file
 		hint =
-			contextFile && stackSpan && path.normalize(contextFile) !== path.normalize(stackSpan.file)
+			contextFile && failingFile && path.normalize(contextFile) !== path.normalize(failingFile)
 				? `while rendering ${diagnosticPathForDisplay(contextFile)}`
 				: undefined
 	}
 
 	return {
-		code,
+		code: parsedMessage.code ?? code,
 		severity: 'error',
-		message: css?.message ?? (err.message || String(err)),
+		message: css?.message ?? parsedMessage.message,
 		file: diagFile,
 		span,
-		...(css?.frame ? { frame: css.frame } : {}),
+		...(css?.frame ? { frame: css.frame } : vite.frame ? { frame: vite.frame } : {}),
 		...(hint ? { hint } : {}),
 	}
 }
@@ -122,9 +153,10 @@ export function unknownToAeroDiagnostics(
 			err.file !== undefined && err.line !== undefined
 				? { file: err.file, line: err.line, column: err.column ?? 0 }
 				: undefined
+		const compileCode = err.code === 'AERO_CONFIG' || err.code === 'AERO_COMPILE' ? err.code : 'AERO_COMPILE'
 		return [
 			{
-				code: 'AERO_COMPILE',
+				code: compileCode,
 				severity: 'error',
 				message: err.message,
 				file: err.file,

@@ -12,7 +12,6 @@ import {
 	buildDevSsrErrorHtml,
 	encodeDiagnosticsHeaderValue,
 	enrichDiagnosticsWithSourceFrames,
-	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
@@ -25,6 +24,13 @@ interface AeroSsrMiddlewareState {
 	dirs: ReturnType<typeof resolveDirs>
 	apiPrefix: string
 	options: AeroOptions
+}
+
+/** Project-relative Vite client URL for an absolute source file. */
+function toViteClientModuleUrl(absFile: string, root: string): string | undefined {
+	const rel = path.relative(root, absFile)
+	if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return undefined
+	return '/' + rel.split(path.sep).join('/')
 }
 
 function isDebugEnabled(): boolean {
@@ -189,13 +195,31 @@ export async function handleSsrRequest(
 			unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {})
 		)
 		recordSsrDiagnosticsMetrics(diagnostics)
-		server.config.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 		const devDetails = server.config.mode === 'development'
 		if (devDetails) {
+			// Transform-hook Aero errors are already logged by Vite; runtime SSR failures are not.
+			const plugin =
+				err && typeof err === 'object' && 'plugin' in err
+					? (err as { plugin?: unknown }).plugin
+					: undefined
+			const viteAlreadyLogged =
+				typeof plugin === 'string' && plugin.includes('aero')
+			if (!viteAlreadyLogged) {
+				const message =
+					err instanceof Error ? (err.stack ?? err.message) : String(err)
+				server.config.logger.error(message)
+			}
 			res.statusCode = 500
 			res.setHeader('Content-Type', 'text/html; charset=utf-8')
 			res.setHeader(AERO_DIAGNOSTICS_HTTP_HEADER, encodeDiagnosticsHeaderValue(diagnostics))
-			res.end(buildDevSsrErrorHtml(diagnostics))
+			const recoverFile = diagnostics[0]?.span?.file ?? diagnostics[0]?.file ?? pageTemplateHint
+			const recoverModuleId =
+				root && recoverFile ? toViteClientModuleUrl(recoverFile, root) : undefined
+			const bootstrap = buildDevSsrErrorHtml(diagnostics, {
+				...(recoverModuleId ? { recoverModuleId } : {}),
+			})
+			const transformed = await server.transformIndexHtml(req.url ?? '/', bootstrap)
+			res.end(transformed)
 			return
 		}
 		res.statusCode = 500

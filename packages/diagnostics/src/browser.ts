@@ -19,7 +19,12 @@ export {
 export {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
 	AERO_DIAGNOSTICS_SCRIPT_ID,
+	AERO_OVERLAY_BOOTSTRAP_ATTR,
 	decodeDiagnosticsHeaderValue,
 	parseDiagnosticsJson,
 } from './wire-format'
 export { extractDiagnosticsFromDevErrorHtml } from './error-page-parse'
+export {
+	diagnosticToViteOverlayError,
+	type ViteOverlayErrorPayload,
+} from './vite-overlay-error'

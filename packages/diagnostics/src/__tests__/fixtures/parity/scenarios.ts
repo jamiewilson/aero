@@ -51,11 +51,11 @@ export const PARITY_SCENARIOS: readonly ParityScenario[] = [
 			},
 			cli: {
 				code: 'AERO_CONFIG',
-				messageIncludes: '`busy` requires hypermedia: true and reactivity: true',
+				messageIncludes: '`busy` requires both `reactivity: true` and `hypermedia: true`',
 			},
 			vscode: {
 				code: 'AERO_CONFIG',
-				messageIncludes: '`busy` requires hypermedia: true and reactivity: true',
+				messageIncludes: '`busy` requires both `reactivity: true` and `hypermedia: true`',
 			},
 		},
 	},
@@ -108,11 +108,11 @@ export const PARITY_SCENARIOS: readonly ParityScenario[] = [
 		flags: { reactivity: true, hypermedia: true },
 		surfaces: {
 			compiler: {
-				code: 'AERO_COMPILE',
+				code: 'AERO_CONFIG',
 				messageIncludes: 'Hypermedia action `state` must reference a boolean state binding',
 			},
 			cli: {
-				code: 'AERO_COMPILE',
+				code: 'AERO_CONFIG',
 				messageIncludes: 'Hypermedia action `state` must reference a boolean state binding',
 			},
 			vscode: {

@@ -94,6 +94,9 @@ describe('runAeroCheck', () => {
 			expect(normalized).toMatchInlineSnapshot(`
 				"[aero] [AERO_COMPILE] <TMP>/client/pages/bad.html:1:31
 				  error: Directive \`props\` on <div> must use a braced expression, e.g. props="{ expression }".
+				> 1 | <script is:build></script><div props="not-braced">x</div>
+				    |                                ^
+				  2 | 
 				"
 			`)
 		} finally {
@@ -171,6 +174,9 @@ describe('runAeroCheck', () => {
 			const out = spy.mock.calls.map(args => String(args[0])).join('')
 			expect(out).toContain('[AERO_CONFIG]')
 			expect(out).toContain('`<script is:state>` requires `reactivity: true`')
+			expect(out).not.toContain('[aero check]')
+			expect(out.match(/`<script is:state>` requires `reactivity: true`/g)).toHaveLength(1)
+			expect(out).toContain('index.html:1:1')
 		} finally {
 			spy.mockRestore()
 		}
@@ -191,7 +197,9 @@ describe('runAeroCheck', () => {
 			expect(code).toBe(AERO_EXIT_CONFIG)
 			const out = spy.mock.calls.map(args => String(args[0])).join('')
 			expect(out).toContain('[AERO_CONFIG]')
-			expect(out).toContain('`busy` requires hypermedia: true and reactivity: true')
+			expect(out).toContain(
+				'`busy` requires both `reactivity: true` and `hypermedia: true`'
+			)
 		} finally {
 			spy.mockRestore()
 		}
@@ -216,9 +224,9 @@ describe('runAeroCheck', () => {
 		const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true as any)
 		try {
 			const code = await runAeroCheck(dir)
-			expect(code).toBe(AERO_EXIT_COMPILE)
+			expect(code).toBe(AERO_EXIT_CONFIG)
 			const out = spy.mock.calls.map(args => String(args[0])).join('')
-			expect(out).toContain('[AERO_COMPILE]')
+			expect(out).toContain('[AERO_CONFIG]')
 			expect(out).toContain('Hypermedia action `state` must reference a boolean state binding')
 		} finally {
 			spy.mockRestore()

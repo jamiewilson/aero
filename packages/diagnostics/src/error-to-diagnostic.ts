@@ -19,7 +19,7 @@ export function compileErrorToDiagnostic(value: AeroCompileError): AeroDiagnosti
 			: undefined
 
 	return {
-		code: 'AERO_COMPILE',
+		code: value.code ?? 'AERO_COMPILE',
 		severity: 'error',
 		message: value.message,
 		file: value.file,

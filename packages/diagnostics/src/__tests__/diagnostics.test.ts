@@ -115,8 +115,10 @@ describe('diagnostics', () => {
 			line: 4,
 			column: 1,
 		})
-		expect(fields.message).toContain('[AERO_COMPILE]')
-		expect(fields.message).toContain('client/pages/x.html')
+		expect(fields.message).toBe('fail')
+		expect(fields.message).not.toContain('[AERO_COMPILE]')
+		expect(fields.message).not.toContain('client/pages/x.html')
+		expect(fields.id).toBe('client/pages/x.html')
 		expect(fields.plugin).toBe('vite-plugin-aero-transform')
 	})
 
@@ -227,8 +229,48 @@ describe('diagnostics', () => {
 			},
 		])
 		expect(m.split('\n')).toHaveLength(2)
-		expect(m).toContain('one')
-		expect(m).toContain('two')
+		expect(m).toBe('one\ntwo')
+		expect(m).not.toContain('[AERO_COMPILE]')
+	})
+
+	it('stripAeroViteMessageDecorations removes code and location prefixes', async () => {
+		const { stripAeroViteMessageDecorations } = await import('../vite-error')
+		expect(
+			stripAeroViteMessageDecorations(
+				'[AERO_COMPILE] client/pages/demos/hypermedia.html:13:8: Hypermedia actions must be imported'
+			)
+		).toEqual({
+			code: 'AERO_COMPILE',
+			message: 'Hypermedia actions must be imported',
+		})
+	})
+
+	it('unknownToAeroDiagnostics prefers Vite id/loc over context file', () => {
+		const err = Object.assign(
+			new Error(
+				'[AERO_COMPILE] client/pages/demos/hypermedia.html:13:8: Hypermedia actions must be imported'
+			),
+			{
+				id: '/proj/client/pages/demos/hypermedia.html',
+				loc: {
+					file: '/proj/client/pages/demos/hypermedia.html',
+					line: 13,
+					column: 8,
+				},
+				frame: '> 13 | await GET(\n     |       ^',
+				plugin: 'vite-plugin-aero-transform',
+			}
+		)
+		const d = unknownToAeroDiagnostics(err, { file: '/proj/client/pages/index.html' })
+		expect(d[0]!.message).toBe('Hypermedia actions must be imported')
+		expect(d[0]!.file).toBe('/proj/client/pages/demos/hypermedia.html')
+		expect(d[0]!.span).toEqual({
+			file: '/proj/client/pages/demos/hypermedia.html',
+			line: 13,
+			column: 8,
+		})
+		expect(d[0]!.frame).toContain('await GET')
+		expect(d[0]!.hint).toContain('while rendering')
 	})
 
 	it('unknownToAeroDiagnostics maps AeroCompileError', () => {
@@ -310,9 +352,10 @@ describe('diagnostics', () => {
 		expect(terminal).toContain('Directive props must be braced')
 
 		const vite = aeroDiagnosticToViteErrorFields(d, 'vite-plugin-aero-transform')
-		expect(vite.message).toContain('[AERO_COMPILE]')
-		expect(vite.message).toContain('Directive props must be braced')
+		expect(vite.message).toBe('Directive props must be braced')
+		expect(vite.message).not.toContain('[AERO_COMPILE]')
 		expect(vite.loc).toEqual({ file: 'client/pages/bad.html', line: 1, column: 31 })
+		expect(vite.id).toBe('client/pages/bad.html')
 
 		const browser = formatDiagnosticsBrowserHtml([d])
 		expect(browser).toContain('data-aero-code="AERO_COMPILE"')

@@ -36,12 +36,19 @@ export {
 export {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
 	AERO_DIAGNOSTICS_SCRIPT_ID,
+	AERO_OVERLAY_BOOTSTRAP_ATTR,
 	decodeDiagnosticsHeaderValue,
 	encodeDiagnosticsHeaderValue,
 	parseDiagnosticsJson,
 	diagnosticsForWire,
 } from './wire-format'
-export { buildDevSsrErrorHtml, extractDiagnosticsFromDevErrorHtml } from './error-page'
+export {
+	buildDevSsrErrorHtml,
+	diagnosticToViteOverlayError,
+	extractDiagnosticsFromDevErrorHtml,
+	type BuildDevSsrErrorHtmlOptions,
+	type ViteOverlayErrorPayload,
+} from './error-page'
 
 // --- Error-to-diagnostic mapping ---
 export {
@@ -79,8 +86,16 @@ export {
 export {
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
+	stripAeroViteMessageDecorations,
 	type AeroViteErrorFields,
 } from './vite-error'
+export {
+	createDiagnosticLogGate,
+	diagnosticFingerprint,
+	diagnosticsFingerprint,
+	type CreateDiagnosticLogGateOptions,
+	type DiagnosticLogGate,
+} from './diagnostic-log-gate'
 
 // --- Content schema ---
 export {

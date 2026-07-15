@@ -11,13 +11,16 @@ import type { PageFragments } from '../types'
 import type { AeroDiagnostic } from '@aero-js/diagnostics/browser'
 import {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
+	AERO_OVERLAY_BOOTSTRAP_ATTR,
 	decodeDiagnosticsHeaderValue,
+	diagnosticToViteOverlayError,
 	escapeForBrowserPre,
 	extractDiagnosticsFromDevErrorHtml,
 	formatDiagnosticsBrowserHtml,
 } from '@aero-js/diagnostics/browser'
 import { resolvePageName } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
+import { clearAeroViteErrorOverlay, showAeroViteErrorOverlay } from './vite-error-overlay'
 
 /**
  * Parse a full HTML string into head/body fragments and the parsed document (for shell attribute sync).
@@ -36,7 +39,11 @@ function parseDocumentHtml(html: string): PageFragments & { doc: Document } {
 }
 
 /** Copy attributes from one element onto another; removes target attrs absent on the source unless mergeOnly. */
-function copyElementAttributes(from: Element, to: Element, options?: { mergeOnly?: boolean }): void {
+function copyElementAttributes(
+	from: Element,
+	to: Element,
+	options?: { mergeOnly?: boolean }
+): void {
 	const fromNames = new Set<string>()
 	for (const attr of from.attributes) {
 		fromNames.add(attr.name)
@@ -90,6 +97,19 @@ function showRenderDiagnostics(
 		aeroDevLog('error', d.code, `${loc ? `${loc} ` : ''}${d.message}`)
 	}
 	console.groupEnd()
+}
+
+async function showDevErrorOverlay(diagnostics: AeroDiagnostic[]): Promise<boolean> {
+	const primary = diagnostics[0]
+	if (!primary) return false
+	try {
+		await showAeroViteErrorOverlay(
+			diagnosticToViteOverlayError(primary, 'vite-plugin-aero-ssr')
+		)
+		return true
+	} catch {
+		return false
+	}
 }
 
 /** CSS selectors for nodes that must be kept in <head> during HMR (Vite dev client and dev-injected modules). */
@@ -163,11 +183,16 @@ export async function renderPage(
 			if (!res.ok) {
 				const diagnostics = diagnosticsFromDevFetch(res, html)
 				if (diagnostics !== null && diagnostics.length > 0) {
-					showRenderDiagnostics(appEl, pageName, diagnostics)
+					const shown = await showDevErrorOverlay(diagnostics)
+					if (!shown) showRenderDiagnostics(appEl, pageName, diagnostics)
+					return
+				}
+				if (html.includes(AERO_OVERLAY_BOOTSTRAP_ATTR)) {
 					return
 				}
 				throw new Error(`Fetch failed: ${res.status}`)
 			}
+			clearAeroViteErrorOverlay()
 		} else {
 			const rendered = await renderFn(pageName)
 			if (rendered == null) {

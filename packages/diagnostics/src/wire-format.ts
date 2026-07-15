@@ -12,6 +12,9 @@ export const AERO_DIAGNOSTICS_HTTP_HEADER = 'x-aero-diagnostics'
 /** `document.querySelector` target for JSON payload embedded in error HTML. */
 export const AERO_DIAGNOSTICS_SCRIPT_ID = '__AERO_DIAGNOSTICS__'
 
+/** `document.documentElement` marker for overlay-bootstrap SSR error pages. */
+export const AERO_OVERLAY_BOOTSTRAP_ATTR = 'data-aero-overlay-bootstrap'
+
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === 'object' && v !== null
 }
