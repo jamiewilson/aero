@@ -10,7 +10,7 @@
 	--code-line-height: var(--line-height);
 	--code-border: --opacity(currentColor, 0.2);
 	--code-label-inset: 0.5rem;
-	--code-action-transition: opacity 300ms ease-in-out;
+	--code-action-transition: opacity 200ms ease-in-out;
 }
 
 @layer components {
@@ -79,7 +79,8 @@
 	}
 
 	/* Block code with language label */
-	pre:has(code)[data-lang] {
+	pre:has(code)[data-lang],
+	pre:has(code):has(button.copy) {
 		position: relative;
 	}
 
@@ -92,7 +93,7 @@
 		font-family: var(--font-sans);
 		font-size: small;
 		text-box-trim: trim-both;
-		opacity: 0.5;
+		color: var(--color-slate-500);
 		transition: var(--code-action-transition);
 	}
 
@@ -102,76 +103,66 @@
 		opacity: 0;
 	}
 
-	/* Show copy button when hovering code block */
-	pre:has(code):has(button.copy) {
-		position: relative;
+	/* Show copy button when hovering and copied */
+	pre:has(code):hover button.copy,
+	pre:has(code) button.copied {
+		opacity: 1;
+	}
 
-		button.copy {
-			opacity: 0;
-		}
-
-		&:hover button.copy,
-		button.copied {
-			opacity: 1;
-		}
+	/* Hide copy button on non-pre elements */
+	:where(:not(pre) > button.copy) {
+		display: none;
 	}
 
 	/* Copy button */
 	pre button.copy {
-		--copy-button-size: 16px;
-		all: initial;
-		color-scheme: inherit;
+		--copy-button-size: 1rem;
+		--copy-button-ready-color: var(--color-slate-500);
+		--copy-button-success-color: var(--color-green-500);
+		--copy-button-success-bg: --opacity(var(--copy-button-success-color), 0.2);
+
 		position: absolute;
-		font-size: small;
-		font-family: var(--font-sans);
-		z-index: 100;
-		top: 0;
-		right: 0;
-		cursor: pointer;
+		top: var(--code-label-inset);
+		right: var(--code-label-inset);
 		padding: var(--code-label-inset);
+		border-radius: var(--radius-lg);
+
+		display: grid;
+		font-family: var(--font-sans);
+		font-size: small;
+		opacity: 0;
 
 		& span {
-			position: relative;
-			background-repeat: no-repeat;
-			background-position: center;
-			background-size: cover;
-			display: flex;
-			align-items: center;
+			grid-area: 1 / 1;
 			width: var(--copy-button-size);
-			font-size: small;
 			aspect-ratio: 1;
-			transition-behavior: allow-discrete;
+			mask-repeat: no-repeat;
+			mask-position: center;
+			mask-size: cover;
 			transition: var(--code-action-transition);
 		}
 
 		& .ready {
-			opacity: 1;
-			background-image: url(@images/icon-copy.svg);
+			mask-image: url(@images/icon-copy.svg);
+			background-color: var(--copy-button-ready-color);
 		}
 
 		& .success {
-			display: none;
-			opacity: 0;
-			background-image: url(@images/icon-copied.svg);
+			mask-image: url(@images/icon-copied.svg);
+			background-color: var(--copy-button-success-color);
 		}
 
-		&.copied .success {
-			display: flex;
-			opacity: 1;
-
-			&::before {
-				content: 'Copied';
-				position: absolute;
-				inset-inline-end: calc(var(--copy-button-size) + 0.5ch);
-			}
-
-			@starting-style {
-				opacity: 0;
+		/* Change background color and show success icon */
+		&.copied {
+			background-color: var(--copy-button-success-bg);
+			.success {
+				opacity: 1;
 			}
 		}
 
+		/* Hide success/ready buttons when copied */
+		& .success,
 		&.copied .ready {
-			display: none;
 			opacity: 0;
 		}
 	}
@@ -182,11 +173,6 @@
 		> span {
 			padding-inline: var(--box-padding);
 		}
-	}
-
-	/* Hide copy button on non-pre elements */
-	:where(:not(pre) > button.copy) {
-		display: none;
 	}
 
 	.line.highlighted {
