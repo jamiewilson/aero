@@ -1,15 +1,19 @@
 /**
- * Vite logger + SSR HMR logger: keep Vite's default console format; only suppress
- * noisy HTML SSR parse dumps and raw Error object inspection (`pluginCode`).
+ * Vite logger + SSR HMR logger: Aero-owned errors use the shared dev console format;
+ * only suppress noisy HTML SSR parse dumps and raw Error object inspection (`pluginCode`).
  */
 
 import type { Logger, ServerModuleRunnerOptions } from 'vite'
 import {
-	createDiagnosticLogGate,
+	aeroDiagnosticToViteErrorFields,
 	enrichDiagnosticsWithSourceFrames,
 	formatCondensedHtmlSsrParseError,
+	formatDiagnosticsDevConsole,
+	frameForViteOverlay,
 	isCondensableHtmlSsrParseError,
+	sharedDiagnosticLogGate,
 	unknownToAeroDiagnostics,
+	type AeroDiagnostic,
 	type DiagnosticLogGate,
 } from '@aero-js/diagnostics'
 
@@ -28,8 +32,6 @@ interface ViteErrorLike {
 	loc?: { file?: string; line?: number; column?: number }
 }
 
-const defaultGate = createDiagnosticLogGate()
-
 function asViteErrorLike(value: unknown): ViteErrorLike | undefined {
 	if (typeof value !== 'object' || value === null) return undefined
 	const record = value as Record<string, unknown>
@@ -44,11 +46,39 @@ function isAeroViteError(err: ViteErrorLike): boolean {
 	)
 }
 
-function shouldLogAeroViteError(err: ViteErrorLike, gate: DiagnosticLogGate): boolean {
-	const diagnostics = enrichDiagnosticsWithSourceFrames(
-		unknownToAeroDiagnostics(Object.assign(new Error(err.message), err))
-	)
-	return gate.shouldLog(diagnostics)
+/** CSS syntax errors Aero already maps to file + frame diagnostics. */
+function isCssSyntaxError(value: unknown): boolean {
+	return value instanceof Error && value.name === 'CssSyntaxError'
+}
+
+function shouldOwnViteError(err: ViteErrorLike, rawError: unknown): boolean {
+	return isAeroViteError(err) || isCssSyntaxError(rawError)
+}
+
+function diagnosticsFromViteError(err: ViteErrorLike, rawError?: unknown) {
+	const source =
+		rawError instanceof Error ? rawError : Object.assign(new Error(err.message), err)
+	return enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(source))
+}
+
+/**
+ * Vite's `prepareError` / ErrorOverlay read `frame`/`id`/`loc` from the raw error after
+ * `logger.error`. Stamp Aero-enriched fields so the overlay matches the console frame.
+ */
+function stampViteOverlayFields(rawError: unknown, diagnostics: readonly AeroDiagnostic[]): void {
+	if (!(rawError instanceof Error) || diagnostics.length === 0) return
+	const d0 = diagnostics[0]!
+	const plugin =
+		typeof (rawError as Error & { plugin?: unknown }).plugin === 'string'
+			? (rawError as Error & { plugin: string }).plugin
+			: undefined
+	const fields = aeroDiagnosticToViteErrorFields(d0, plugin)
+	const target = rawError as Error & Record<string, unknown>
+	if (fields.id) target.id = fields.id
+	if (fields.loc) target.loc = fields.loc
+	const overlayFrame = frameForViteOverlay(fields.frame)
+	if (overlayFrame) target.frame = overlayFrame
+	if (fields.message) target.message = fields.message
 }
 
 function isRuntimeInstanceHmrNoise(msg: string): boolean {
@@ -59,9 +89,13 @@ function isRuntimeInstanceHmrNoise(msg: string): boolean {
 }
 
 /**
- * Pass through Vite's default error formatting. Only rewrite condensable HTML SSR parse noise.
+ * Print Aero diagnostics with the shared colored console layout; skip Vite's default string.
+ * Owns Aero plugin errors and CssSyntaxError (already framed by diagnostics).
  */
-export function wrapAeroViteLogger(base: Logger, gate: DiagnosticLogGate = defaultGate): Logger {
+export function wrapAeroViteLogger(
+	base: Logger,
+	gate: DiagnosticLogGate = sharedDiagnosticLogGate
+): Logger {
 	return {
 		...base,
 		error(msg: string, options) {
@@ -74,7 +108,17 @@ export function wrapAeroViteLogger(base: Logger, gate: DiagnosticLogGate = defau
 				})
 				return
 			}
-			if (err && isAeroViteError(err) && !shouldLogAeroViteError(err, gate)) {
+			if (err && shouldOwnViteError(err, rawError)) {
+				const diagnostics = diagnosticsFromViteError(err, rawError)
+				// Always stamp before prepareError (runs after logger.error even when we skip printing).
+				stampViteOverlayFields(rawError, diagnostics)
+				if (!gate.shouldLog(diagnostics)) return
+				// Dev console format includes its own timestamp; avoid `time [vite] time [aero]`.
+				base.error(formatDiagnosticsDevConsole(diagnostics, { colors: base.hasColors }), {
+					...options,
+					timestamp: false,
+					error: rawError instanceof Error ? rawError : options?.error,
+				})
 				return
 			}
 			base.error(msg, options)

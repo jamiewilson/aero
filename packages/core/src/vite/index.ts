@@ -158,7 +158,7 @@ function compileHtmlWithDedupedWarnings(
 	},
 	clientScripts: Map<string, ScriptEntry>,
 	compileWarningHashes: Map<string, string>
-): string {
+): { code: string; map: object | null } {
 	const warnings: CompileWarningPayload[] = []
 	const componentReactiveProps = collectComponentReactivePropMetadata([
 		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
@@ -401,13 +401,13 @@ function collectSnippetHotUpdateModules(file: string, server: ViteDevServer): Mo
 	return [...affected]
 }
 
-/** Turn a compile failure into JS source, or call Vite `error` on failure. */
+/** Turn a compile failure into JS source + map, or call Vite `error` on failure. */
 function compileOrReport(
 	ctx: { error(payload: unknown): never },
-	compileFn: () => string,
+	compileFn: () => { code: string; map: object | null },
 	filePath: string,
 	pluginName: string
-): string {
+): { code: string; map: object | null } {
 	try {
 		return compileFn()
 	} catch (err) {
@@ -633,7 +633,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 				const source = readFileSync(filePath, 'utf-8')
 				return compileOrReport(
 					this,
-					() => compileSnippetModule(source, filePath),
+					() => ({ code: compileSnippetModule(source, filePath), map: null }),
 					filePath,
 					'vite-plugin-aero-virtuals'
 				)
@@ -668,7 +668,7 @@ function createAeroVirtualsPlugin(state: AeroPluginState): Plugin {
 					filePath,
 					'vite-plugin-aero-virtuals'
 				)
-				return { code: generated, map: null }
+				return generated
 			}
 
 			if (id.startsWith('\0' + CLIENT_SCRIPT_PREFIX)) {
@@ -725,10 +725,7 @@ function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 				id,
 				'vite-plugin-aero-transform'
 			)
-			return {
-				code: generated,
-				map: null,
-			}
+			return generated
 		},
 	}
 }

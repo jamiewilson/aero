@@ -14,6 +14,19 @@ import { Aero } from '../../runtime'
 import { aero } from '../../vite'
 import { AERO_HTML_VIRTUAL_PREFIX, AERO_SNIPPET_VIRTUAL_PREFIX, toSnippetVirtualModuleId } from '../../vite/defaults'
 
+function loadSource(result: unknown): string {
+	if (typeof result === 'string') return result
+	if (
+		result &&
+		typeof result === 'object' &&
+		'code' in result &&
+		typeof (result as { code: unknown }).code === 'string'
+	) {
+		return (result as { code: string }).code
+	}
+	return String(result ?? '')
+}
+
 describe('Vite Plugin Integration', () => {
 	const plugins: any[] = aero()
 	const configPlugin = plugins.find((p: any) => p.config)
@@ -464,7 +477,7 @@ describe('Vite Plugin Integration', () => {
 			'utf-8'
 		)
 		try {
-			const loaded = virtualsPlugin.load.call(pluginCtx, toSnippetVirtualModuleId(snippetPath))
+			const loaded = loadSource(virtualsPlugin.load.call(pluginCtx, toSnippetVirtualModuleId(snippetPath)))
 			expect(loaded).toContain('export const propsString = { code:')
 			expect(loaded).toContain('lang: "html"')
 		} finally {
@@ -537,7 +550,7 @@ describe('Vite Plugin Integration', () => {
 			addWatchFile: (file: string) => watched.push(file),
 		}
 		try {
-			const v1 = virtualsPlugin.load.call(loadCtx, virtualId)
+			const v1 = loadSource(virtualsPlugin.load.call(loadCtx, virtualId))
 			expect(watched).toContain(snippetPath)
 			expect(v1).toContain('Aero')
 
@@ -548,7 +561,7 @@ describe('Vite Plugin Integration', () => {
 `,
 				'utf-8'
 			)
-			const v2 = virtualsPlugin.load.call(loadCtx, virtualId)
+			const v2 = loadSource(virtualsPlugin.load.call(loadCtx, virtualId))
 			expect(v2).toContain('Updated')
 			expect(v2).not.toContain('Aero')
 		} finally {
@@ -572,7 +585,7 @@ describe('Vite Plugin Integration', () => {
 		try {
 			const virtualId = toSnippetVirtualModuleId(snippetPath)
 			expect(virtualId.endsWith('.mjs')).toBe(true)
-			const loaded = virtualsPlugin.load.call(pluginCtx, virtualId)
+			const loaded = loadSource(virtualsPlugin.load.call(pluginCtx, virtualId))
 			expect(loaded).toContain('export const prose = { code:')
 			expect(loaded).toContain('lang: "css"')
 		} finally {

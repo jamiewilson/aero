@@ -57,7 +57,10 @@ function wrapTailwindPlugin(plugin: Plugin, root: string, clientDir: string): vo
 				const importer = path.join(importerBase, '__aero_css_resolve.css')
 				const resolved = await this.resolve(spec, importer)
 				if (!resolved?.id) return false
-				return resolved.id.replace(/^\0+/, '').split('?')[0]!
+				const cleaned = resolved.id.replace(/^\0+/, '').split('?')[0]!
+				// Vite may resolve `tailwindcss` to optimized JS under `.vite/deps`; that is not CSS.
+				if (cleaned.includes('/node_modules/.vite/deps/')) return false
+				return cleaned
 			}
 			throw await enrichCssSyntaxError(err, {
 				root,

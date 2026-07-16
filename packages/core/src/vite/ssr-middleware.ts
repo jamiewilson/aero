@@ -10,10 +10,10 @@ import {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
 	type AeroDiagnostic,
 	buildDevSsrErrorHtml,
-	createDiagnosticLogGate,
 	encodeDiagnosticsHeaderValue,
 	enrichDiagnosticsWithSourceFrames,
-	formatDiagnosticsTerminal,
+	formatDiagnosticsDevConsole,
+	sharedDiagnosticLogGate,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
@@ -23,9 +23,6 @@ import {
 	collectClientStyleCssFiles,
 	enrichCssSyntaxError,
 } from './enrich-css-syntax-error'
-
-/** Collapse duplicate terminal prints from recovery fetches of the same SSR failure. */
-const ssrErrorLogGate = createDiagnosticLogGate()
 
 /** Subset of Aero plugin state needed for SSR (avoids circular import from `index.ts`). */
 interface AeroSsrMiddlewareState {
@@ -227,7 +224,9 @@ export async function handleSsrRequest(
 							const importer = path.join(importerBase, '__aero_css_resolve.css')
 							const resolved = await server.pluginContainer.resolveId(spec, importer)
 							if (!resolved?.id) return false
-							return resolved.id.replace(/^\0+/, '').split('?')[0]!
+							const cleaned = resolved.id.replace(/^\0+/, '').split('?')[0]!
+							if (cleaned.includes('/node_modules/.vite/deps/')) return false
+							return cleaned
 						},
 					})
 				: err
@@ -248,11 +247,15 @@ export async function handleSsrRequest(
 			const aeroAlreadyLogged =
 				typeof plugin === 'string' && plugin.includes('aero')
 			const shouldLog =
-				!aeroAlreadyLogged && ssrErrorLogGate.shouldLog(diagnostics)
+				!aeroAlreadyLogged && sharedDiagnosticLogGate.shouldLog(diagnostics)
 			if (shouldLog) {
 				// Runtime SSR failures never hit Vite's transform error path, so dump
 				// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
-				server.config.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
+				server.config.logger.error(
+					formatDiagnosticsDevConsole(diagnostics, {
+						colors: server.config.logger.hasColors,
+					})
+				)
 			}
 			res.statusCode = 500
 			res.setHeader('Content-Type', 'text/html; charset=utf-8')

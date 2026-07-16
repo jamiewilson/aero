@@ -62,13 +62,14 @@ export function firstStackSpan(stack: string | undefined): AeroDiagnosticSpan | 
 		}
 
 		const line = Number(tail[1])
-		const column = Number(tail[2])
+		// V8 / remapped stacks use 1-based columns; AeroDiagnosticSpan.column is 0-based (Rollup/Vite).
+		const column1Based = Number(tail[2])
 		if (!Number.isFinite(line) || line < 1) continue
 
 		return {
 			file: pathPart,
 			line,
-			column: Number.isFinite(column) && column >= 0 ? column : 0,
+			column: Number.isFinite(column1Based) && column1Based >= 1 ? column1Based - 1 : 0,
 		}
 	}
 

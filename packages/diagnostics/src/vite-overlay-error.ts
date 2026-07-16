@@ -2,7 +2,10 @@
  * Browser-safe Vite ErrorOverlay payload from Aero diagnostics.
  */
 
-import { aeroDiagnosticToViteErrorFields } from './vite-error-fields'
+import {
+	aeroDiagnosticToViteErrorFields,
+	frameForViteOverlay,
+} from './vite-error-fields'
 import type { AeroDiagnostic } from './types'
 
 /** Payload shape accepted by Vite's `ErrorOverlay`. */
@@ -23,7 +26,7 @@ export function diagnosticToViteOverlayError(
 	return {
 		message: fields.message,
 		id: fields.id,
-		frame: fields.frame,
+		frame: frameForViteOverlay(fields.frame),
 		plugin: fields.plugin,
 		loc: fields.loc,
 		stack: '',

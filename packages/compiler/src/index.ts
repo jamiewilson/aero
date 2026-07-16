@@ -5,7 +5,14 @@
  */
 
 export { CodeBuilder } from './code-builder'
-export { compile, compileTemplate } from './codegen'
+export { compile, compileTemplate, compileTemplateModule, type CompiledTemplateModule } from './codegen'
+export {
+	buildTemplateSourceMap,
+	collectTemplateSourceMapSites,
+	findBarePropsAttributeOffset,
+	type EncodedTemplateSourceMap,
+	type TemplateSourceMapSite,
+} from './template-source-map'
 export { buildTemplateAnalysis, type TemplateAnalysis } from './template-analysis'
 
 export {

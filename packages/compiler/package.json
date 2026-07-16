@@ -108,7 +108,7 @@
 	},
 	"scripts": {
 		"prebuild": "node scripts/generate-ambient-preamble.mjs",
-		"build": "tsdown src/index.ts src/helpers.ts src/constants.ts src/emit.ts src/escapes.ts src/code-builder.ts src/for-directive.ts src/build-directive-attributes.ts src/resolver.ts src/parser.ts src/codegen.ts src/template-analysis.ts src/template-editor-context.ts src/generated/ambient-preamble.ts src/project-tsconfig.ts src/template-interpolation-sites.ts src/template-source.ts src/template-type-check.ts src/component-registry-codegen.ts src/emit-client-script-tag.ts src/ir.ts src/build-script-analysis.ts src/build-scope-bindings.ts src/build-script-type-inference.ts src/parse-props-attribute-bindings.ts src/types.ts src/path.ts src/directive-attributes.ts src/tokenizer.ts src/lowerer/index.ts src/lowerer/lowerer.ts src/lowerer/attributes.ts src/lowerer/conditionals.ts src/lowerer/slots.ts src/lowerer/switch.ts src/lowerer/template.ts src/lowerer/types.ts src/create-event-handler-action-scope.ts src/event-handler-action-scope.ts src/hypermedia-action-state-refs.ts src/hypermedia-build-imports.ts --format esm --dts --clean --out-dir dist",
+		"build": "tsdown src/index.ts src/helpers.ts src/constants.ts src/emit.ts src/escapes.ts src/code-builder.ts src/for-directive.ts src/build-directive-attributes.ts src/resolver.ts src/parser.ts src/codegen.ts src/template-analysis.ts src/template-editor-context.ts src/template-source-map.ts src/generated/ambient-preamble.ts src/project-tsconfig.ts src/template-interpolation-sites.ts src/template-source.ts src/template-type-check.ts src/component-registry-codegen.ts src/emit-client-script-tag.ts src/ir.ts src/build-script-analysis.ts src/build-scope-bindings.ts src/build-script-type-inference.ts src/parse-props-attribute-bindings.ts src/types.ts src/path.ts src/directive-attributes.ts src/tokenizer.ts src/lowerer/index.ts src/lowerer/lowerer.ts src/lowerer/attributes.ts src/lowerer/conditionals.ts src/lowerer/slots.ts src/lowerer/switch.ts src/lowerer/template.ts src/lowerer/types.ts src/create-event-handler-action-scope.ts src/event-handler-action-scope.ts src/hypermedia-action-state-refs.ts src/hypermedia-build-imports.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run"
 	},
@@ -116,6 +116,7 @@
 		"@aero-js/html-parser": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"linkedom": "^0.18.12",
+		"magic-string": "^0.30.21",
 		"oxc-parser": "^0.138.0",
 		"oxc-transform": "^0.138.0"
 	},

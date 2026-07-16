@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { firstStackSpan } from '../stack-frame'
 
 describe('firstStackSpan', () => {
-	it('parses unix path in parentheses', () => {
+	it('parses unix path in parentheses (1-based stack column → 0-based span)', () => {
 		const stack = `ReferenceError: toggle is not defined
     at render (/app/frontend/components/nav.html.js:42:10)
     at processTicksAndRejections (node:internal/process/task_queues:95:5)`
 		expect(firstStackSpan(stack)).toEqual({
 			file: '/app/frontend/components/nav.html.js',
 			line: 42,
-			column: 10,
+			column: 9,
 		})
 	})
 
@@ -29,7 +29,7 @@ describe('firstStackSpan', () => {
 		expect(firstStackSpan(stack)).toEqual({
 			file: 'C:\\proj\\a.js',
 			line: 9,
-			column: 1,
+			column: 0,
 		})
 	})
 

@@ -69,10 +69,13 @@ describe('createAeroSsrHmrLogger', () => {
 })
 
 describe('wrapAeroViteLogger', () => {
-	it('passes Aero errors through to Vite default formatting', () => {
+	it('prints Aero diagnostics with the shared dev console format', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger({ error: baseError } as any, gate)
+		const wrapped = wrapAeroViteLogger(
+			{ error: baseError, hasColors: false } as any,
+			gate
+		)
 		const err = {
 			message: 'Hypermedia actions must be imported',
 			id: '/tmp/hypermedia.html',
@@ -83,15 +86,20 @@ describe('wrapAeroViteLogger', () => {
 		wrapped.error('Internal server error: Hypermedia actions must be imported', { error: err })
 
 		expect(baseError).toHaveBeenCalledTimes(1)
-		expect(baseError.mock.calls[0]![0]).toBe(
-			'Internal server error: Hypermedia actions must be imported'
-		)
+		const printed = String(baseError.mock.calls[0]![0])
+		expect(printed).toContain('[aero] Error: Hypermedia actions must be imported')
+		expect(printed).toContain('/tmp/hypermedia.html:13:8')
+		expect(printed).not.toContain('Internal server error:')
+		expect(printed).not.toContain('File:')
 	})
 
-	it('dedupes Vite default Aero error blocks by diagnostic fingerprint', () => {
+	it('dedupes Aero error blocks by diagnostic fingerprint', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger({ error: baseError } as any, gate)
+		const wrapped = wrapAeroViteLogger(
+			{ error: baseError, hasColors: false } as any,
+			gate
+		)
 		const err = {
 			message: 'Hypermedia actions must be imported',
 			id: '/tmp/hypermedia.html',
@@ -103,8 +111,77 @@ describe('wrapAeroViteLogger', () => {
 		wrapped.error('Internal server error: Hypermedia actions must be imported', { error: err })
 
 		expect(baseError).toHaveBeenCalledTimes(1)
-		expect(baseError.mock.calls[0]![0]).toBe(
-			'Pre-transform error: Hypermedia actions must be imported'
+		expect(String(baseError.mock.calls[0]![0])).toContain('[aero] Error:')
+	})
+
+	it('owns CssSyntaxError and suppresses Vite Internal server error dumps', () => {
+		const gate = createDiagnosticLogGate()
+		const baseError = vi.fn()
+		const wrapped = wrapAeroViteLogger(
+			{ error: baseError, hasColors: false } as any,
+			gate
 		)
+		const err = Object.assign(new Error('/tmp/global.css:6:1: Missing closing } at @theme'), {
+			name: 'CssSyntaxError',
+			plugin: '@tailwindcss/vite:generate:serve',
+			id: '/tmp/global.css',
+			loc: { file: '/tmp/global.css', line: 6, column: 1 },
+		})
+
+		wrapped.error('Internal server error: /tmp/global.css:6:1: Missing closing } at @theme', {
+			error: err,
+			timestamp: true,
+		})
+
+		expect(baseError).toHaveBeenCalledTimes(1)
+		const printed = String(baseError.mock.calls[0]![0])
+		expect(printed).toContain('[aero] Error: Missing closing } at @theme')
+		expect(printed).not.toContain('Internal server error:')
+		expect(baseError.mock.calls[0]![1]).toMatchObject({ timestamp: false })
+	})
+
+	it('stamps frame/id/loc onto CssSyntaxError for Vite ErrorOverlay prepareError', () => {
+		const gate = createDiagnosticLogGate()
+		const baseError = vi.fn()
+		const wrapped = wrapAeroViteLogger(
+			{ error: baseError, hasColors: false } as any,
+			gate
+		)
+		const source = 'a {\n  color: red\n}\n'
+		const err = Object.assign(new Error('Missed semicolon'), {
+			name: 'CssSyntaxError',
+			plugin: 'vite:css',
+			id: '/tmp/global.css',
+			file: '/tmp/global.css',
+			line: 2,
+			column: 14,
+			source,
+		})
+
+		wrapped.error('Internal server error: Missed semicolon', { error: err })
+
+		expect(typeof (err as { frame?: string }).frame).toBe('string')
+		expect((err as { frame: string }).frame).toContain('>')
+		expect((err as { loc?: { line: number } }).loc?.line).toBe(2)
+		expect((err as { id?: string }).id).toContain('global.css')
+	})
+
+	it('does not own unrelated Vite plugin errors', () => {
+		const gate = createDiagnosticLogGate()
+		const baseError = vi.fn()
+		const wrapped = wrapAeroViteLogger(
+			{ error: baseError, hasColors: false } as any,
+			gate
+		)
+		const err = Object.assign(new Error('Unexpected token'), {
+			plugin: 'vite:oxc',
+			id: '/tmp/foo.ts',
+		})
+		const msg = 'Internal server error: Unexpected token'
+
+		wrapped.error(msg, { error: err, timestamp: true })
+
+		expect(baseError).toHaveBeenCalledTimes(1)
+		expect(baseError.mock.calls[0]![0]).toBe(msg)
 	})
 })

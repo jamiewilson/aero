@@ -9,6 +9,8 @@
  * `file:line:col: reason` when compile `from` is set (Vite `css.devSourcemap`).
  */
 
+import { readdirSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import { formatSourceFrameFromSource } from './source-frame'
 import { collapsePathSlashes } from './path-display'
 import type { AeroDiagnosticSpan } from './types'
@@ -147,6 +149,73 @@ function resolveCssSyntaxLocation(e: {
 }
 
 /**
+ * Tailwind/PostCSS may report compiled entry CSS (`global.css:952`) while the typo is in
+ * an imported sibling stylesheet. When the embedded source line is out of range or does not
+ * match disk, scan sibling `.css` files in the same directory.
+ */
+function tryRemapToSiblingStylesheet(resolved: ResolvedCssLocation): ResolvedCssLocation {
+	const { rawFile, line, source } = resolved
+	if (!source) return resolved
+
+	let diskLines: string[]
+	try {
+		diskLines = readFileSync(rawFile, 'utf8').split(/\r?\n/)
+	} catch {
+		return resolved
+	}
+
+	const compiledLine = source.split(/\r?\n/)[line - 1]?.trim()
+	if (!compiledLine) return resolved
+
+	const diskLine = diskLines[line - 1]
+	const lineOutOfRange = line > diskLines.length
+	const lineMismatch =
+		diskLine !== undefined && diskLine.trim() !== compiledLine.trim()
+	if (!lineOutOfRange && !lineMismatch) return resolved
+
+	const compiledHead = compiledLine.split(/\s+/)[0] ?? compiledLine
+	let entries: string[]
+	try {
+		entries = readdirSync(path.dirname(rawFile)).filter(name => name.endsWith('.css'))
+	} catch {
+		return resolved
+	}
+
+	for (const name of entries) {
+		const candidatePath = path.join(path.dirname(rawFile), name)
+		if (path.normalize(candidatePath) === path.normalize(rawFile)) continue
+		let candidateSource: string
+		try {
+			candidateSource = readFileSync(candidatePath, 'utf8')
+		} catch {
+			continue
+		}
+		const candidateLines = candidateSource.split(/\r?\n/)
+		for (let i = 0; i < candidateLines.length; i++) {
+			const candidateLine = candidateLines[i]!
+			const candidateTrim = candidateLine.trim()
+			if (!candidateTrim) continue
+			if (
+				compiledLine.includes(candidateTrim) ||
+				candidateTrim.includes(compiledHead) ||
+				compiledLine.startsWith(candidateTrim)
+			) {
+				const start = candidateLine.indexOf(candidateTrim)
+				const column = start + candidateTrim.length + 1
+				return {
+					rawFile: candidatePath,
+					line: i + 1,
+					column,
+					source: candidateSource,
+				}
+			}
+		}
+	}
+
+	return resolved
+}
+
+/**
  * When `error.name === 'CssSyntaxError'`, return file/span/frame for diagnostics.
  */
 export function augmentFromCssSyntaxError(err: Error): {
@@ -170,8 +239,9 @@ export function augmentFromCssSyntaxError(err: Error): {
 		showSourceCode?: (color?: boolean) => string
 	}
 
-	const resolved = resolveCssSyntaxLocation(e)
-	if (!resolved) return null
+	const initial = resolveCssSyntaxLocation(e)
+	if (!initial) return null
+	const resolved = tryRemapToSiblingStylesheet(initial)
 
 	const { rawFile, line, column, source } = resolved
 	const { displayFile, styleExtractHint } = normalizePostcssDisplayPath(rawFile)

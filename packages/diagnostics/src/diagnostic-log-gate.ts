@@ -59,3 +59,8 @@ export function createDiagnosticLogGate(
 		},
 	}
 }
+
+/**
+ * Shared gate for Vite logger + SSR middleware so one diagnostic is not printed twice.
+ */
+export const sharedDiagnosticLogGate = createDiagnosticLogGate()

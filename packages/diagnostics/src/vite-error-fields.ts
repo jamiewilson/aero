@@ -13,6 +13,14 @@ export interface AeroViteErrorFields {
 	frame?: string
 }
 
+/**
+ * Preserve the first line's gutter indentation when Vite ErrorOverlay calls `frame.trim()`.
+ * U+200B has zero display width but prevents trim from consuming following spaces.
+ */
+export function frameForViteOverlay(frame: string | undefined): string | undefined {
+	return frame ? `\u200b${frame}` : undefined
+}
+
 const AERO_CODE_PREFIX_RE = /^\[(AERO_[A-Z_]+)\]\s*/
 const LOCATION_PREFIX_RE = /^(?:[^\n]+?\.(?:html|aero|ts|js|mjs|cjs|tsx|jsx))(?::\d+:\d+)?:\s*/
 

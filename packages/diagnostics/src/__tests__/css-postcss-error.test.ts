@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { augmentFromCssSyntaxError, normalizePostcssDisplayPath } from '../css-postcss-error'
 import { unknownToAeroDiagnostics } from '../from-unknown'
@@ -31,6 +34,35 @@ describe('css-postcss-error', () => {
 		expect(a!.frame).toContain('^')
 		expect(a!.frame).toMatch(/> 15 \|/)
 		expect(a!.hint).toContain('inline <style>')
+	})
+
+	it('augmentFromCssSyntaxError remaps compiled entry CSS to imported sibling stylesheet', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-css-remap-'))
+		const styles = path.join(dir, 'styles')
+		fs.mkdirSync(styles, { recursive: true })
+		const globalCss = path.join(styles, 'global.css')
+		const baseCss = path.join(styles, 'base.css')
+		fs.writeFileSync(globalCss, `@import "tailwindcss";\n@import "base.css";\n`)
+		fs.writeFileSync(
+			baseCss,
+			`@layer base {\n  html, body {\n    font-size: var(--font-size)\n    line-height: 1.5;\n  }\n}\n`
+		)
+		const compiledLine = '    font-size: var(--font-size)\tline-height: var(--line-height);'
+		const err = new Error(`${globalCss}:952:19: Missed semicolon`)
+		err.name = 'CssSyntaxError'
+		Object.assign(err, {
+			file: globalCss,
+			line: 952,
+			column: 19,
+			source: `${Array.from({ length: 951 }, (_, i) => `x${i}`).join('\n')}\n${compiledLine}\n`,
+		})
+		const a = augmentFromCssSyntaxError(err)
+		expect(a).not.toBeNull()
+		expect(a!.file).toBe(baseCss)
+		expect(a!.span?.file).toBe(baseCss)
+		expect(a!.span?.line).toBe(3)
+		expect(a!.frame).toContain('font-size: var(--font-size)')
+		expect(a!.frame).toMatch(/> 3 \|/)
 	})
 
 	it('unknownToAeroDiagnostics maps CssSyntaxError without postcss stack frame', () => {
@@ -98,6 +130,6 @@ describe('css-postcss-error', () => {
 		expect(d[0]!.file).toBe('/abs/code.css')
 		expect(d[0]!.span).toEqual({ file: '/abs/code.css', line: 1, column: 1 })
 		expect(d[0]!.message).toBe('Missing opening {')
-		expect(d[0]!.hint).toContain('while rendering')
+		expect(d[0]!.hint).toBeUndefined()
 	})
 })
