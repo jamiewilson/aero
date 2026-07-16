@@ -16,6 +16,10 @@ import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
+import {
+	findUndeclaredReactiveIdentifiers,
+	REACTIVE_EXPR_AMBIENT_GLOBALS,
+} from '../scope-expr-codegen'
 import { Resolver } from '../resolver'
 import { CompileError, type ComponentReactivePropMetadata } from '../types'
 import { buildForLoopBodyScopeNames, collectForDirectiveBindingNames } from '../for-directive'
@@ -56,6 +60,8 @@ export class Lowerer {
 	private slotCounter = 0
 	private readonly diag: LowererDiag
 	private readonly reactiveState: LowererReactiveState | null
+	/** Build-script bindings visible in `{ }` when `<script is:state>` is also present. */
+	private readonly buildScopeNames: ReadonlySet<string>
 
 	private readonly hypermedia: boolean
 	private readonly componentReactiveProps: Record<string, readonly ComponentReactivePropMetadata[]>
@@ -66,12 +72,14 @@ export class Lowerer {
 		stateBindingNames?: ReadonlySet<string>,
 		options?: {
 			writableStateBindingNames?: ReadonlySet<string>
+			buildScopeNames?: ReadonlySet<string>
 			hypermedia?: boolean
 			componentReactiveProps?: Record<string, readonly ComponentReactivePropMetadata[]>
 		}
 	) {
 		this.resolver = resolver
 		this.diag = diag
+		this.buildScopeNames = options?.buildScopeNames ?? new Set()
 		this.hypermedia = options?.hypermedia === true
 		this.componentReactiveProps = options?.componentReactiveProps ?? {}
 		this.reactiveState =
@@ -219,6 +227,9 @@ export class Lowerer {
 				? new Set([...this.reactiveState.bindingNames, ...parentHoist.forBodyScopeNames])
 				: this.reactiveState.bindingNames
 			: undefined
+		if (!skipInterpolation && reactiveBindingNames) {
+			this.assertInterpolationsInScope(text, reactiveBindingNames, parentHoist?.forBodyScopeNames)
+		}
 		if (
 			!skipInterpolation &&
 			reactiveBindingNames &&
@@ -388,8 +399,14 @@ export class Lowerer {
 		const inner: IRNode[] = []
 		let switchBind: import('../ir').IRReactiveSwitchBind | null = null
 		const childHoist: ChildHoistContext = {}
+		if (parentHoist?.forBodyScopeNames) {
+			childHoist.forBodyScopeNames = parentHoist.forBodyScopeNames
+		}
 		if (loopData) {
-			childHoist.forBodyScopeNames = buildForLoopBodyScopeNames(loopData.binding)
+			const loopScope = buildForLoopBodyScopeNames(loopData.binding)
+			childHoist.forBodyScopeNames = childHoist.forBodyScopeNames
+				? new Set([...childHoist.forBodyScopeNames, ...loopScope])
+				: loopScope
 		}
 		let reactiveSwitchBindId: number | undefined
 
@@ -848,6 +865,36 @@ export class Lowerer {
 					file: this.diag?.file,
 				})
 			}
+		}
+	}
+
+	private assertInterpolationsInScope(
+		text: string,
+		stateBindingNames: ReadonlySet<string>,
+		forBodyScopeNames?: ReadonlySet<string>
+	): void {
+		const allowed = new Set<string>(REACTIVE_EXPR_AMBIENT_GLOBALS)
+		for (const name of stateBindingNames) allowed.add(name)
+		for (const name of this.buildScopeNames) allowed.add(name)
+		for (const name of forBodyScopeNames ?? []) allowed.add(name)
+		for (const segment of tokenizeCurlyInterpolation(text, { attributeMode: false })) {
+			if (segment.kind !== 'interpolation') continue
+			const expr = segment.expression?.trim() ?? ''
+			if (!expr) continue
+			const undeclared = findUndeclaredReactiveIdentifiers(expr, allowed)
+			if (undeclared.length === 0) continue
+			const name = undeclared[0]!
+			const loc = this.diag?.source
+				? Helper.lineColumnAtOffset(
+						this.diag.source,
+						Math.max(0, this.diag.source.indexOf(name))
+					)
+				: {}
+			throw new CompileError({
+				message: `Unknown name \`${name}\` in reactive expression. Declare it in \`<script is:state>\` or import it.`,
+				file: this.diag?.file,
+				...loc,
+			})
 		}
 	}
 

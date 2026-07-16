@@ -27,6 +27,42 @@ export const MODEL_WRITE_SHADOWS = new Set(['$value'])
 /** Mount-injected scope names rewritten to `scope.<name>` in compiled handlers/effects. */
 export const MOUNT_SCOPE_BUILTINS = new Set(['$root'])
 
+/**
+ * Bare globals left unrewritten in reactive expressions (browser / JS ambient).
+ * Unknown free identifiers outside this set and mount scope are compile errors.
+ */
+export const REACTIVE_EXPR_AMBIENT_GLOBALS = new Set([
+	'Math',
+	'document',
+	'console',
+	'window',
+	'globalThis',
+	'crypto',
+	'undefined',
+	'NaN',
+	'Infinity',
+	'Array',
+	'Object',
+	'String',
+	'Number',
+	'Boolean',
+	'JSON',
+	'Promise',
+	'Error',
+	'Map',
+	'Set',
+	'Date',
+	'RegExp',
+	'parseInt',
+	'parseFloat',
+	'isNaN',
+	'isFinite',
+	'encodeURIComponent',
+	'decodeURIComponent',
+	'URL',
+	'URLSearchParams',
+])
+
 /** Shared rewrite environment for one page's is:state script. */
 export interface ScopeRewriteContext {
 	readonly scopeNames: ReadonlySet<string>
@@ -341,9 +377,13 @@ export function rewriteExprForScope(
 	return applyRewrites(wrapped.source, rewrites)
 }
 
-function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<string> {
+function collectFreeIdentifiers(
+	program: unknown,
+	_sourceOffset: number,
+	initialShadows?: ReadonlySet<string>
+): Set<string> {
 	const names = new Set<string>()
-	const shadowStack: Set<string>[] = [new Set()]
+	const shadowStack: Set<string>[] = [new Set(initialShadows)]
 
 	function activeShadows(): Set<string> {
 		const merged = new Set<string>()
@@ -368,6 +408,12 @@ function collectFreeIdentifiers(program: unknown, sourceOffset: number): Set<str
 				walkAst(node.body, visit)
 			}
 			shadowStack.pop()
+			return 'skip-children'
+		}
+
+		if (node.type === 'VariableDeclarator') {
+			walkAst(node.init, visit, node, 'init')
+			collectPatternNames(node.id, shadowStack[shadowStack.length - 1]!)
 			return 'skip-children'
 		}
 
@@ -396,6 +442,33 @@ export function collectScopeReferences(
 		if (scopeNames.has(name)) refs.add(name)
 	}
 	return refs
+}
+
+/**
+ * Free identifiers in a reactive template expression that are not in `allowed`.
+ */
+export function findUndeclaredReactiveIdentifiers(
+	expr: string,
+	allowed: ReadonlySet<string>,
+	options?: { initialShadows?: ReadonlySet<string> }
+): string[] {
+	const trimmed = expr.trim()
+	if (!trimmed) return []
+	const wrapped = parseWrappedExpression(trimmed)
+	if (!wrapped) {
+		const asStmt = parseWrappedStatements(trimmed)
+		if (!asStmt) return []
+		const undeclared: string[] = []
+		for (const name of collectFreeIdentifiers(asStmt.program, asStmt.offset, options?.initialShadows)) {
+			if (!allowed.has(name)) undeclared.push(name)
+		}
+		return undeclared
+	}
+	const undeclared: string[] = []
+	for (const name of collectFreeIdentifiers(wrapped.program, wrapped.offset, options?.initialShadows)) {
+		if (!allowed.has(name)) undeclared.push(name)
+	}
+	return undeclared
 }
 
 export function rewriteStmtForScope(

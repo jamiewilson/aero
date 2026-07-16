@@ -347,6 +347,11 @@ export function collectStateReferenceNames(
 ): Set<string> {
 	const names = new Set<string>()
 	for (const binding of analysis.bindings) names.add(binding.name)
+	for (const imp of stateImports) {
+		if (imp.defaultBinding) names.add(imp.defaultBinding)
+		for (const binding of imp.namedBindings) names.add(binding.local)
+		if (imp.namespaceBinding) names.add(imp.namespaceBinding)
+	}
 	if (!script.trim()) return names
 
 	const lowered = lowerStateScript(script, analysis, stateImports)

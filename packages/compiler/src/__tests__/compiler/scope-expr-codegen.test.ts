@@ -5,6 +5,8 @@ import {
 	EVENT_HANDLER_SHADOWS,
 	HYPERMEDIA_ACTION_NAMES,
 	collectScopeReferences,
+	findUndeclaredReactiveIdentifiers,
+	REACTIVE_EXPR_AMBIENT_GLOBALS,
 	rewriteStmtForScope,
 	scopeRewriteContext,
 } from '../../scope-expr-codegen'
@@ -125,5 +127,12 @@ await GET(\`/api/x?n=\${itemCount}\`, { target: '#list' })`
 			lang: 'ts',
 		})
 		expect(collectScopeReferences(parsed.program, 0, new Set(['items'])).size).toBe(0)
+	})
+
+	it('findUndeclaredReactiveIdentifiers reports missing names and ignores ambient globals', () => {
+		const allowed = new Set(['items', ...REACTIVE_EXPR_AMBIENT_GLOBALS])
+		expect(findUndeclaredReactiveIdentifiers('add()', allowed)).toEqual(['add'])
+		expect(findUndeclaredReactiveIdentifiers('Math.random()', allowed)).toEqual([])
+		expect(findUndeclaredReactiveIdentifiers('items.length', allowed)).toEqual([])
 	})
 })

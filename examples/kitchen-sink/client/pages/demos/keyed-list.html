@@ -8,11 +8,11 @@
 	let items = Array.from({ length: 5 }, () => ({ id: createID() }))
 	let hasItems = items.length > 0
 
-	const setItems = (next: typeof items) =>
-		document.startViewTransition({
-			update: () => (items = next),
-			types: ['list-update'],
-		})
+	//const setItems = (next: typeof items) =>
+	//	document.startViewTransition({
+	//		update: () => (items = next),
+	//		types: ['list-update'],
+	//	})
 
 	const add = () => setItems([...items, { id: createID() }])
 	const remove = () => hasItems && setItems(items.slice(1))
