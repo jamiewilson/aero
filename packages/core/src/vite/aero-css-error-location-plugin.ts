@@ -1,0 +1,89 @@
+/**
+ * Wrap `@tailwindcss/vite` generate transforms so CssSyntaxError keeps the original CSS path.
+ */
+
+import type { Plugin, TransformPluginContext } from 'vite'
+import path from 'node:path'
+import {
+	collectClientStyleCssFiles,
+	enrichCssSyntaxError,
+} from './enrich-css-syntax-error'
+
+const TAILWIND_GENERATE = new Set([
+	'@tailwindcss/vite:generate:serve',
+	'@tailwindcss/vite:generate:build',
+])
+
+type TransformHook = Plugin['transform']
+
+function getTransformHandler(
+	transform: TransformHook
+):
+	| ((this: TransformPluginContext, code: string, id: string) => unknown)
+	| undefined {
+	if (!transform) return undefined
+	if (typeof transform === 'function') return transform
+	if (typeof transform === 'object' && typeof transform.handler === 'function') {
+		return transform.handler as (this: TransformPluginContext, code: string, id: string) => unknown
+	}
+	return undefined
+}
+
+function setTransformHandler(
+	plugin: Plugin,
+	transform: TransformHook,
+	handler: (this: TransformPluginContext, code: string, id: string) => unknown
+): void {
+	if (typeof transform === 'function') {
+		plugin.transform = handler
+		return
+	}
+	if (transform && typeof transform === 'object') {
+		plugin.transform = { ...transform, handler }
+	}
+}
+
+function wrapTailwindPlugin(plugin: Plugin, root: string, clientDir: string): void {
+	if (!plugin.name || !TAILWIND_GENERATE.has(plugin.name)) return
+	const transform = plugin.transform
+	const original = getTransformHandler(transform)
+	if (!original) return
+
+	const wrapped = async function (this: TransformPluginContext, code: string, id: string) {
+		try {
+			return await original.call(this, code, id)
+		} catch (err) {
+			const resolveCss = async (spec: string, importerBase: string) => {
+				const importer = path.join(importerBase, '__aero_css_resolve.css')
+				const resolved = await this.resolve(spec, importer)
+				if (!resolved?.id) return false
+				return resolved.id.replace(/^\0+/, '').split('?')[0]!
+			}
+			throw await enrichCssSyntaxError(err, {
+				root,
+				entryCode: code,
+				entryId: id,
+				candidateFiles: collectClientStyleCssFiles(root, clientDir),
+				resolveCss,
+			})
+		}
+	}
+
+	setTransformHandler(plugin, transform, wrapped)
+}
+
+/**
+ * Plugin that patches Tailwind generate hooks after the full config is resolved
+ * (Tailwind is often merged in after Aero via `mergeConfig`).
+ */
+export function aeroCssErrorLocationPlugin(clientDir: string): Plugin {
+	return {
+		name: 'vite-plugin-aero-css-error-location',
+		configResolved(config) {
+			for (const plugin of config.plugins) {
+				if (!plugin || typeof plugin !== 'object') continue
+				wrapTailwindPlugin(plugin as Plugin, config.root, clientDir)
+			}
+		},
+	}
+}

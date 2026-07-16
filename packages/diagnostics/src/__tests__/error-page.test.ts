@@ -32,9 +32,9 @@ describe('buildDevSsrErrorHtml', () => {
 		expect(html).toContain('bad \\u003cscript> edge')
 		expect(html).not.toContain('[AERO_COMPILE] /proj/pages/a.html')
 		expect(html).toContain('vite:afterUpdate')
-		expect(html).toContain('pageIsHealthy')
-		expect(html).toContain('reloadWhenFixed')
-		expect(html).not.toContain('vite:beforeFullReload')
+		expect(html).toContain('reloadWhenChanged')
+		expect(html).toContain('extractDiagnosticsPayload')
+		expect(html).toContain("'<' + '/script>'")
 		expect(html).not.toContain('class="aero-diagnostics"')
 	})
 

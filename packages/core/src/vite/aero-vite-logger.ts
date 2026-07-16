@@ -83,8 +83,8 @@ export function wrapAeroViteLogger(base: Logger, gate: DiagnosticLogGate = defau
 }
 
 /**
- * SSR module-runner HMR logger. Aero compile errors are already printed by Vite's
- * logger — skip them here. Never dump revived Error objects (avoids `pluginCode`).
+ * SSR module-runner HMR logger. Plugin-tagged transform errors are already printed by
+ * Vite's logger - skip them here. Never dump revived Error objects (avoids `pluginCode`).
  */
 export function createAeroSsrHmrLogger(): HmrLoggerLike {
 	return {
@@ -104,8 +104,8 @@ export function createAeroSsrHmrLogger(): HmrLoggerLike {
 				return
 			}
 			const err = asViteErrorLike(msg)
-			if (err && isAeroViteError(err)) {
-				// Vite's logger already owns Aero compile/transform console output.
+			// Plugin-tagged errors are already owned by Vite's logger.
+			if (err?.plugin) {
 				return
 			}
 			console.error('[vite]', msg.stack ?? msg.message)

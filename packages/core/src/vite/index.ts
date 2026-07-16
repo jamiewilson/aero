@@ -47,6 +47,7 @@ import { compileHtmlSourceForVite } from './compile-html-for-vite'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { requireAliasResult, requireResolvedConfig } from './plugin-state'
 import { handleSsrRequest } from './ssr-middleware'
+import { aeroCssErrorLocationPlugin } from './aero-css-error-location-plugin'
 import { collectComponentReactivePropMetadata, parse } from '@aero-js/compiler'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { toPosixRelative } from '../utils/path'
@@ -861,6 +862,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		aeroVirtualsPlugin,
 		aeroTransformPlugin,
 		aeroSsrPlugin,
+		aeroCssErrorLocationPlugin(dirs.client),
 		staticBuildPlugin,
 		ViteImageOptimizer({
 			exclude: undefined,

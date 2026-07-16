@@ -10,6 +10,7 @@ import {
 	AERO_DIAGNOSTICS_HTTP_HEADER,
 	type AeroDiagnostic,
 	buildDevSsrErrorHtml,
+	createDiagnosticLogGate,
 	encodeDiagnosticsHeaderValue,
 	enrichDiagnosticsWithSourceFrames,
 	unknownToAeroDiagnostics,
@@ -17,6 +18,13 @@ import {
 import { resolvePageName } from '../utils/routing'
 import { addDoctype } from './build'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
+import {
+	collectClientStyleCssFiles,
+	enrichCssSyntaxError,
+} from './enrich-css-syntax-error'
+
+/** Collapse duplicate terminal prints from recovery fetches of the same SSR failure. */
+const ssrErrorLogGate = createDiagnosticLogGate()
 
 /** Subset of Aero plugin state needed for SSR (avoids circular import from `index.ts`). */
 interface AeroSsrMiddlewareState {
@@ -28,7 +36,17 @@ interface AeroSsrMiddlewareState {
 
 /** Project-relative Vite client URL for an absolute source file. */
 function toViteClientModuleUrl(absFile: string, root: string): string | undefined {
-	const rel = path.relative(root, absFile)
+	// Virtual / CSS-proxy ids are not valid client module URLs for HMR recovery.
+	if (
+		!absFile ||
+		absFile.includes('\0') ||
+		absFile.includes('html-proxy') ||
+		absFile.includes('?')
+	) {
+		return undefined
+	}
+	const absolute = path.isAbsolute(absFile) ? absFile : path.join(root, absFile)
+	const rel = path.relative(root, absolute)
 	if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return undefined
 	return '/' + rel.split(path.sep).join('/')
 }
@@ -191,22 +209,50 @@ export async function handleSsrRequest(
 			root && renderPageNameForDiag
 				? path.join(root, state.dirs.client, 'pages', `${renderPageNameForDiag}.html`)
 				: undefined
+		const pluginCode =
+			err && typeof err === 'object' && 'pluginCode' in err
+				? (err as { pluginCode?: unknown }).pluginCode
+				: undefined
+		const entryId =
+			err && typeof err === 'object' && 'id' in err ? (err as { id?: unknown }).id : undefined
+		const enrichedErr =
+			root
+				? await enrichCssSyntaxError(err, {
+						root,
+						...(typeof pluginCode === 'string' ? { entryCode: pluginCode } : {}),
+						...(typeof entryId === 'string' ? { entryId } : {}),
+						candidateFiles: collectClientStyleCssFiles(root, state.dirs.client),
+						resolveCss: async (spec, importerBase) => {
+							const importer = path.join(importerBase, '__aero_css_resolve.css')
+							const resolved = await server.pluginContainer.resolveId(spec, importer)
+							if (!resolved?.id) return false
+							return resolved.id.replace(/^\0+/, '').split('?')[0]!
+						},
+					})
+				: err
 		const diagnostics = enrichDiagnosticsWithSourceFrames(
-			unknownToAeroDiagnostics(err, pageTemplateHint ? { file: pageTemplateHint } : {})
+			unknownToAeroDiagnostics(enrichedErr, pageTemplateHint ? { file: pageTemplateHint } : {})
 		)
 		recordSsrDiagnosticsMetrics(diagnostics)
 		const devDetails = server.config.mode === 'development'
 		if (devDetails) {
-			// Transform-hook Aero errors are already logged by Vite; runtime SSR failures are not.
+			// Aero transform errors are already logged by Vite. Other plugin/runtime failures
+			// may only surface here — print once via the gate (HMR logger suppresses duplicates).
 			const plugin =
-				err && typeof err === 'object' && 'plugin' in err
-					? (err as { plugin?: unknown }).plugin
-					: undefined
-			const viteAlreadyLogged =
+				enrichedErr && typeof enrichedErr === 'object' && 'plugin' in enrichedErr
+					? (enrichedErr as { plugin?: unknown }).plugin
+					: err && typeof err === 'object' && 'plugin' in err
+						? (err as { plugin?: unknown }).plugin
+						: undefined
+			const aeroAlreadyLogged =
 				typeof plugin === 'string' && plugin.includes('aero')
-			if (!viteAlreadyLogged) {
+			const shouldLog =
+				!aeroAlreadyLogged && ssrErrorLogGate.shouldLog(diagnostics)
+			if (shouldLog) {
 				const message =
-					err instanceof Error ? (err.stack ?? err.message) : String(err)
+					enrichedErr instanceof Error
+						? (enrichedErr.stack ?? enrichedErr.message)
+						: String(enrichedErr)
 				server.config.logger.error(message)
 			}
 			res.statusCode = 500
@@ -217,9 +263,12 @@ export async function handleSsrRequest(
 				root && recoverFile ? toViteClientModuleUrl(recoverFile, root) : undefined
 			const bootstrap = buildDevSsrErrorHtml(diagnostics, {
 				...(recoverModuleId ? { recoverModuleId } : {}),
+				...(typeof plugin === 'string' ? { plugin } : {}),
 			})
-			const transformed = await server.transformIndexHtml(req.url ?? '/', bootstrap)
-			res.end(transformed)
+			// Serve raw: transformIndexHtml rewrites the inline bootstrap into an
+			// html-proxy module cached by URL, which serves stale error scripts on
+			// subsequent failures (the .html file on disk never changes).
+			res.end(bootstrap)
 			return
 		}
 		res.statusCode = 500

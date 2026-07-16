@@ -1,6 +1,12 @@
 /**
- * Map PostCSS {@link https://postcss.org/api/#csssyntaxerror CssSyntaxError} into Aero locations.
- * Vite prefixes messages with `[postcss]` and may use virtual ids like `page.html?html-proxy&index=0.css`.
+ * Map PostCSS / Tailwind {@link https://postcss.org/api/#csssyntaxerror CssSyntaxError}
+ * into Aero locations.
+ *
+ * @remarks
+ * Vite may use virtual ids like `page.html?html-proxy&index=0.css`.
+ * Tailwind v4 uses a different shape than PostCSS: `loc` is
+ * `[{ file, code }, startOffset, endOffset]` and the message is often
+ * `file:line:col: reason` when compile `from` is set (Vite `css.devSourcemap`).
  */
 
 import { formatSourceFrameFromSource } from './source-frame'
@@ -15,7 +21,7 @@ export function normalizePostcssDisplayPath(rawFile: string): {
 	styleExtractHint?: string
 } {
 	const qIndex = rawFile.indexOf('?')
-	const pathPart = (qIndex === -1 ? rawFile : rawFile.slice(0, qIndex)).trim()
+	const pathPart = (qIndex === -1 ? rawFile : rawFile.slice(0, qIndex)).trim().replace(/^\0+/, '')
 	const displayFile = collapsePathSlashes(pathPart)
 
 	if (!rawFile.includes('html-proxy')) {
@@ -50,11 +56,94 @@ function stripDuplicateLocationFromMessage(
 	const escaped = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 	const re = new RegExp(`^${escaped}:${line}:${column}:\\s*`, 'i')
 	let m = message.replace(re, '').trim()
-	const reAnyPath = /^(?:\/|[A-Za-z]:\\).*?:\d+:\d+:\s*/
+	const reAnyPath = /^(?:\/|[A-Za-z]:\\|[^\s:]+\.(?:css|scss|sass|less|styl)).*?:\d+:\d+:\s*/
 	if (m === message && reAnyPath.test(message)) {
 		m = message.replace(reAnyPath, '').trim()
 	}
 	return m || message
+}
+
+/** Byte offset → 1-based line and column (PostCSS / Tailwind message convention). */
+export function offsetToLineColumn(
+	source: string,
+	offset: number
+): { line: number; column: number } {
+	const clamped = Math.max(0, Math.min(offset, source.length))
+	let line = 1
+	let lineStart = 0
+	for (let i = 0; i < clamped; i++) {
+		if (source.charCodeAt(i) === 10) {
+			line++
+			lineStart = i + 1
+		}
+	}
+	return { line, column: clamped - lineStart + 1 }
+}
+
+interface ResolvedCssLocation {
+	rawFile: string
+	line: number
+	column: number
+	source?: string
+}
+
+/**
+ * Resolve file/line/column from PostCSS fields, Tailwind `loc` tuple, or `file:line:col:` message.
+ */
+function resolveCssSyntaxLocation(e: {
+	message: string
+	file?: string
+	line?: number
+	column?: number
+	source?: string
+	input?: { file?: string; line?: number; column?: number; source?: string }
+	loc?: unknown
+}): ResolvedCssLocation | null {
+	const postcssFile = e.file ?? e.input?.file
+	const postcssLine = e.line ?? e.input?.line
+	const postcssColumn = e.column ?? e.input?.column
+	if (postcssFile && postcssLine !== undefined && postcssColumn !== undefined) {
+		const source =
+			typeof e.source === 'string' && e.source.length > 0
+				? e.source
+				: typeof e.input?.source === 'string' && e.input.source.length > 0
+					? e.input.source
+					: undefined
+		return { rawFile: postcssFile, line: postcssLine, column: postcssColumn, source }
+	}
+
+	// Tailwind v4: loc = [{ file, code }, startOffset, endOffset]
+	const loc = e.loc
+	if (Array.isArray(loc) && loc.length >= 2) {
+		const head = loc[0]
+		const start = loc[1]
+		if (
+			head &&
+			typeof head === 'object' &&
+			typeof (head as { file?: unknown }).file === 'string' &&
+			typeof (head as { code?: unknown }).code === 'string' &&
+			typeof start === 'number'
+		) {
+			const file = (head as { file: string }).file
+			const code = (head as { code: string }).code
+			const { line, column } = offsetToLineColumn(code, start)
+			return { rawFile: file, line, column, source: code }
+		}
+	}
+
+	// Message prefix when Vite drops `loc` but keeps `file:line:col: reason`
+	const prefixed = stripPostcssNoise(e.message).match(
+		/^((?:\/|[A-Za-z]:\\)?[^\n]+?\.(?:css|scss|sass|less|styl))(?::\w+)?:(\d+):(\d+):\s*([\s\S]*)$/
+	)
+	if (prefixed) {
+		return {
+			rawFile: prefixed[1]!,
+			line: Number(prefixed[2]),
+			column: Number(prefixed[3]),
+		}
+	}
+
+	return null
 }
 
 /**
@@ -77,14 +166,14 @@ export function augmentFromCssSyntaxError(err: Error): {
 		column?: number
 		source?: string
 		input?: { file?: string; line?: number; column?: number; source?: string }
+		loc?: unknown
 		showSourceCode?: (color?: boolean) => string
 	}
 
-	const rawFile = e.file ?? e.input?.file
-	const line = e.line ?? e.input?.line
-	const column = e.column ?? e.input?.column
-	if (!rawFile || line === undefined || column === undefined) return null
+	const resolved = resolveCssSyntaxLocation(e)
+	if (!resolved) return null
 
+	const { rawFile, line, column, source } = resolved
 	const { displayFile, styleExtractHint } = normalizePostcssDisplayPath(rawFile)
 
 	const reason = typeof e.reason === 'string' ? e.reason.trim() : ''
@@ -93,17 +182,10 @@ export function augmentFromCssSyntaxError(err: Error): {
 	message = stripDuplicateLocationFromMessage(message, displayFile, line, column)
 	if (!message) message = stripPostcssNoise(err.message)
 
-	const fullSource =
-		typeof e.source === 'string' && e.source.length > 0
-			? e.source
-			: typeof e.input?.source === 'string' && e.input.source.length > 0
-				? e.input.source
-				: undefined
-
 	let frame: string | undefined
-	if (fullSource !== undefined) {
-		// PostCSS column is 1-based; frame uses Rollup/Vite 0-based column.
-		frame = formatSourceFrameFromSource(fullSource, line, Math.max(0, column - 1))
+	if (source !== undefined && source.length > 0) {
+		// PostCSS/Tailwind column is 1-based; frame uses Rollup/Vite 0-based column.
+		frame = formatSourceFrameFromSource(source, line, Math.max(0, column - 1))
 	} else {
 		try {
 			frame = e.showSourceCode?.(false)?.trim()

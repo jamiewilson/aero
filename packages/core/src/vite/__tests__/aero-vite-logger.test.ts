@@ -8,6 +8,18 @@ describe('createAeroSsrHmrLogger', () => {
 		vi.restoreAllMocks()
 	})
 
+	it('skips plugin-tagged Vite errors so Vite owns console output', () => {
+		const error = Object.assign(new Error('Transform failed'), {
+			plugin: 'vite:oxc',
+			id: 'content/site.ts',
+		})
+		const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+		createAeroSsrHmrLogger().error(error)
+
+		expect(spy).not.toHaveBeenCalled()
+	})
+
 	it('skips Aero Vite errors so Vite owns console output and pluginCode is not dumped', () => {
 		const error = Object.assign(new Error('Hypermedia actions must be imported'), {
 			id: path.join(process.cwd(), 'client/pages/demos/hypermedia.html'),
