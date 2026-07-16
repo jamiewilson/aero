@@ -10,6 +10,7 @@
 	--code-line-height: var(--line-height);
 	--code-border: --opacity(currentColor, 0.2);
 	--code-label-inset: 0.5rem;
+	--code-action-transition: opacity 300ms ease-in-out;
 }
 
 @layer components {
@@ -92,7 +93,7 @@
 		font-size: small;
 		text-box-trim: trim-both;
 		opacity: 0.5;
-		transition: opacity 200ms;
+		transition: var(--code-action-transition);
 	}
 
 	/* Hide language label when copy button is visible */
@@ -101,7 +102,7 @@
 		opacity: 0;
 	}
 
-	/* Hide copy button when not hovering */
+	/* Show copy button when hovering code block */
 	pre:has(code):has(button.copy) {
 		position: relative;
 
@@ -119,6 +120,7 @@
 	pre button.copy {
 		--copy-button-size: 16px;
 		all: initial;
+		color-scheme: inherit;
 		position: absolute;
 		font-size: small;
 		font-family: var(--font-sans);
@@ -138,29 +140,39 @@
 			width: var(--copy-button-size);
 			font-size: small;
 			aspect-ratio: 1;
+			transition-behavior: allow-discrete;
+			transition: var(--code-action-transition);
 		}
 
 		& .ready {
+			opacity: 1;
 			background-image: url(@images/icon-copy.svg);
 		}
 
 		& .success {
 			display: none;
+			opacity: 0;
 			background-image: url(@images/icon-copied.svg);
 		}
 
 		&.copied .success {
 			display: flex;
+			opacity: 1;
+
 			&::before {
 				content: 'Copied';
 				position: absolute;
 				inset-inline-end: calc(var(--copy-button-size) + 0.5ch);
-				color: var(--color-text);
+			}
+
+			@starting-style {
+				opacity: 0;
 			}
 		}
 
 		&.copied .ready {
 			display: none;
+			opacity: 0;
 		}
 	}
 
