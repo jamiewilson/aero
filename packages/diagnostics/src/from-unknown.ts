@@ -118,7 +118,12 @@ function errorWithContextToDiagnostic(
 		message: css?.message ?? parsedMessage.message,
 		file: diagFile,
 		span,
-		...(css?.frame ? { frame: css.frame } : vite.frame ? { frame: vite.frame } : {}),
+		// Drop Vite frame when we remapped the span — it was built from the wrong HTML line.
+		...(css?.frame
+			? { frame: css.frame }
+			: !refinedSpan && vite.frame
+				? { frame: vite.frame }
+				: {}),
 		...(hint ? { hint } : {}),
 	}
 }

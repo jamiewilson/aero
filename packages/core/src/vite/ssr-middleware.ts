@@ -13,6 +13,7 @@ import {
 	createDiagnosticLogGate,
 	encodeDiagnosticsHeaderValue,
 	enrichDiagnosticsWithSourceFrames,
+	formatDiagnosticsTerminal,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
@@ -236,8 +237,8 @@ export async function handleSsrRequest(
 		recordSsrDiagnosticsMetrics(diagnostics)
 		const devDetails = server.config.mode === 'development'
 		if (devDetails) {
-			// Aero transform errors are already logged by Vite. Other plugin/runtime failures
-			// may only surface here — print once via the gate (HMR logger suppresses duplicates).
+			// Aero transform errors are already logged by Vite. Runtime SSR failures
+			// print Aero terminal diagnostics once via the gate (HMR logger suppresses duplicates).
 			const plugin =
 				enrichedErr && typeof enrichedErr === 'object' && 'plugin' in enrichedErr
 					? (enrichedErr as { plugin?: unknown }).plugin
@@ -249,11 +250,9 @@ export async function handleSsrRequest(
 			const shouldLog =
 				!aeroAlreadyLogged && ssrErrorLogGate.shouldLog(diagnostics)
 			if (shouldLog) {
-				const message =
-					enrichedErr instanceof Error
-						? (enrichedErr.stack ?? enrichedErr.message)
-						: String(enrichedErr)
-				server.config.logger.error(message)
+				// Runtime SSR failures never hit Vite's transform error path, so dump
+				// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
+				server.config.logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
 			}
 			res.statusCode = 500
 			res.setHeader('Content-Type', 'text/html; charset=utf-8')
