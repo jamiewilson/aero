@@ -25,6 +25,10 @@ export {
 	type FormatDiagnosticsTerminalOptions,
 } from './render/terminal'
 export {
+	formatDiagnosticsDevConsole,
+	type FormatDiagnosticsDevConsoleOptions,
+} from './render/dev-console'
+export {
 	htmlRenderer,
 	formatDiagnosticsBrowserHtml,
 	formatDiagnosticPlainText,
@@ -70,7 +74,6 @@ export {
 	tryReadSourceFrameForDiagnostic,
 } from './source-frame'
 export { normalizeParseErrorFrame } from './frame-normalize'
-export { tryRefineHtmlReferenceErrorSpan } from './refine-html-reference-error-span'
 
 // --- HTML SSR parse errors ---
 export {
@@ -86,6 +89,7 @@ export {
 export {
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
+	frameForViteOverlay,
 	stripAeroViteMessageDecorations,
 	type AeroViteErrorFields,
 } from './vite-error'
@@ -93,6 +97,7 @@ export {
 	createDiagnosticLogGate,
 	diagnosticFingerprint,
 	diagnosticsFingerprint,
+	sharedDiagnosticLogGate,
 	type CreateDiagnosticLogGateOptions,
 	type DiagnosticLogGate,
 } from './diagnostic-log-gate'

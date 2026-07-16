@@ -200,6 +200,7 @@ const add = () => { items = [...items, { id: createID() }] }
 	describe('hypermedia actions in handlers', () => {
 		it('qualifies state refs in action handlers without rewriting object keys', () => {
 			const html = `<script is:state>
+import { GET } from '@aero-js/hypermedia'
 let target = '#x'
 function load() { GET('/api', { target, swap: 'innerHTML' }) }
 </script>

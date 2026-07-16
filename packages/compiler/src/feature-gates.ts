@@ -10,8 +10,10 @@ import {
 	HYPERMEDIA_BUILD_IMPORT_MESSAGE,
 	HYPERMEDIA_STATE_IMPORT_MESSAGE,
 } from './hypermedia-build-imports'
+import { analyzeBuildScript } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { stripBraces } from '@aero-js/interpolation'
+import { validateReactiveScopeRefs } from './validate-reactive-scope-refs'
 
 export interface FeatureGateFlags {
 	readonly reactivity: boolean
@@ -513,5 +515,19 @@ export function validateFeatureGates(
 			}
 			options.onWarning?.({ code: 'AERO_COMPILE', message: issue.message, file })
 		}
+	}
+
+	if (parsed.stateScript && stateAnalysis) {
+		const stateImports = analyzeBuildScript(parsed.stateScript.content).imports
+		validateReactiveScopeRefs(
+			bodyIR,
+			stateAnalysis,
+			parsed.stateScript.content,
+			stateImports,
+			{
+				file,
+				diagnosticSource: options.diagnosticTemplateSource,
+			}
+		)
 	}
 }

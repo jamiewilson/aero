@@ -4,8 +4,8 @@
 
 import type { ResolvedConfig } from 'vite'
 import type { ScriptEntry } from '../types'
-import type { ComponentReactivePropMetadata } from '@aero-js/compiler'
-import { compileTemplate, parse } from '@aero-js/compiler'
+import type { ComponentReactivePropMetadata, CompiledTemplateModule } from '@aero-js/compiler'
+import { compileTemplateModule, parse } from '@aero-js/compiler'
 import { getClientScriptVirtualUrl } from './defaults'
 import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
@@ -39,7 +39,7 @@ export function compileHtmlSourceForVite(
 	filePath: string,
 	params: CompileHtmlForViteParams,
 	clientScripts: Map<string, ScriptEntry>
-): string {
+): CompiledTemplateModule {
 	const parsed = parse(code)
 	const relativePath = toPosixRelative(filePath, params.resolvedConfig.root)
 	const baseName = relativePath.replace(/\.html$/i, '')
@@ -53,7 +53,7 @@ export function compileHtmlSourceForVite(
 			)
 		}
 	}
-	return compileTemplate(
+	return compileTemplateModule(
 		code,
 		{
 			root: params.resolvedConfig.root,

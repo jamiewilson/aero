@@ -22,6 +22,8 @@ export interface BuildDevSsrErrorHtmlOptions {
 	 * Imported so Vite tracks the module for HMR recovery after a fix.
 	 */
 	recoverModuleId?: string
+	/** Vite plugin id for the overlay label when known (e.g. `@tailwindcss/vite:generate:serve`). */
+	plugin?: string
 }
 
 function buildOverlayBootstrapScript(
@@ -69,35 +71,89 @@ async function showViteOverlay() {
 	if (status) status.hidden = true;
 }
 
-async function pageIsHealthy() {
+function extractDiagnosticsPayload(html) {
+	const marker = 'id="' + ${JSON.stringify(AERO_DIAGNOSTICS_SCRIPT_ID)} + '"';
+	const start = html.indexOf(marker);
+	if (start < 0) return '';
+	const openEnd = html.indexOf('>', start);
+	if (openEnd < 0) return '';
+	// Build the close tag without a literal "<" + "/script>" sequence in this HTML module.
+	const closeTag = '<' + '/script>';
+	const close = html.indexOf(closeTag, openEnd);
+	if (close < 0) return '';
+	return html.slice(openEnd + 1, close).trim();
+}
+
+function diagnosticFingerprint(b64) {
+	if (!b64) return '';
+	try {
+		const d = JSON.parse(atob(b64))[0];
+		if (!d) return b64;
+		return String(d.message || '') + '\\0' + String(d.file || '');
+	} catch {
+		return b64;
+	}
+}
+
+async function fetchDevDocument() {
 	try {
 		const res = await fetch(location.href, {
 			headers: { Accept: 'text/html' },
 			cache: 'no-store',
 		});
-		if (!res.ok) return false;
 		const html = await res.text();
-		return !html.includes(${JSON.stringify(AERO_OVERLAY_BOOTSTRAP_ATTR)});
+		return { ok: res.ok, html };
 	} catch {
-		return false;
+		return null;
 	}
 }
 
-async function reloadWhenFixed() {
-	if (await pageIsHealthy()) location.reload();
+let reloadInFlight = false;
+async function reloadWhenChanged() {
+	if (reloadInFlight) return;
+	const doc = await fetchDevDocument();
+	if (!doc) return;
+	const stillError = doc.html.includes(${JSON.stringify(AERO_OVERLAY_BOOTSTRAP_ATTR)});
+	if (!stillError) {
+		if (doc.ok) {
+			reloadInFlight = true;
+			location.reload();
+		}
+		return;
+	}
+	const nextPayload = extractDiagnosticsPayload(doc.html);
+	const current =
+		document.getElementById(${JSON.stringify(AERO_DIAGNOSTICS_SCRIPT_ID)})?.textContent?.trim() ??
+		'';
+	const nextFp = diagnosticFingerprint(nextPayload);
+	const currentFp = diagnosticFingerprint(current);
+	const shouldReload = Boolean(nextPayload) && nextFp !== currentFp;
+	if (shouldReload) {
+		reloadInFlight = true;
+		location.reload();
+	}
 }
 
-function watchForRecovery() {
-	if (import.meta.hot) {
-		import.meta.hot.on('vite:afterUpdate', () => {
-			void reloadWhenFixed();
-		});
-	}
+async function watchForRecovery() {
+	// This page is served raw (never transformed by Vite), so import.meta.hot does not
+	// exist here — create an HMR context manually to hear about updates and new errors.
+	try {
+		const vite = await import('/@vite/client');
+		if (typeof vite.createHotContext === 'function') {
+			const hot = vite.createHotContext('/__aero-dev-error__');
+			hot.on('vite:afterUpdate', () => {
+				void reloadWhenChanged();
+			});
+			hot.on('vite:error', () => {
+				void reloadWhenChanged();
+			});
+		}
+	} catch {}
 	if (!RECOVER_MODULE) return;
-	// Track the failing module for HMR; only reload once SSR serves a real page.
-	import(/* @vite-ignore */ RECOVER_MODULE).then(
+	// Track the failing module for HMR; reload when SSR serves a real page or a new error.
+	import(RECOVER_MODULE).then(
 		() => {
-			void reloadWhenFixed();
+			void reloadWhenChanged();
 		},
 		() => {}
 	);
@@ -128,7 +184,10 @@ export function buildDevSsrErrorHtml(
 	const b64 = Buffer.from(JSON.stringify(wire), 'utf-8').toString('base64')
 	const primary = wire[0]
 	const overlayError = primary
-		? diagnosticToViteOverlayError(primary, 'vite-plugin-aero-transform')
+		? diagnosticToViteOverlayError(
+				primary,
+				options.plugin ?? 'vite-plugin-aero-transform'
+			)
 		: {
 				message: '[AERO_COMPILE] Unknown Aero compile error',
 				stack: '',

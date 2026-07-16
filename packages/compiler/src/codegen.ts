@@ -33,6 +33,7 @@ import {
 	AERO_JSON_ROLE_STATE,
 	emitAeroJsonScriptTagTemplate,
 } from './json-script-payload'
+import { buildTemplateSourceMap } from './template-source-map'
 
 function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {
 	const hasVirtualClientScripts =
@@ -258,6 +259,11 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 	return output
 }
 
+export interface CompiledTemplateModule {
+	code: string
+	map: import('./template-source-map').EncodedTemplateSourceMap | null
+}
+
 /**
  * Compile an HTML template source into a JavaScript module string. Single entry for parse + compile.
  *
@@ -269,12 +275,26 @@ export function compileTemplate(
 	options: CompileOptions,
 	parsed?: ParseResult
 ): string {
+	return compileTemplateModule(htmlSource, options, parsed).code
+}
+
+/**
+ * Like {@link compileTemplate}, but also returns an HTML→JS source map for Vite/SSR stack remapping.
+ */
+export function compileTemplateModule(
+	htmlSource: string,
+	options: CompileOptions,
+	parsed?: ParseResult
+): CompiledTemplateModule {
 	const p = parsed ?? parse(htmlSource)
-	return compile(p, {
+	const code = compile(p, {
 		...options,
 		diagnosticTemplateSource: options.diagnosticTemplateSource ?? htmlSource,
 		clientScripts: options.clientScripts ?? p.clientScripts,
 		inlineScripts: options.inlineScripts ?? p.inlineScripts,
 		blockingScripts: options.blockingScripts ?? p.blockingScripts,
 	})
+	const sourceFileName = options.importer ?? 'template.html'
+	const map = buildTemplateSourceMap(code, htmlSource, sourceFileName)
+	return { code, map }
 }

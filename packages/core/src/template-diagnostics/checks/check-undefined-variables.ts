@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushSpanDiagnostic } from '../aero-diagnostic-build'
+import { type SourceDocument } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import type { ParsedDocument } from '../document-analysis'
 import { findInnermostScope } from '../utils'
@@ -105,7 +105,6 @@ export function checkUndefinedVariables(
 	const stateBindings = collectStateBindingNames(parsed)
 	const templateScopes = parsed.templateScopes
 	const references = parsed.templateReferences
-	const buildContentGlobalRefs = parsed.buildContentGlobalReferences
 
 	for (const ref of references) {
 		if (ALLOWED_GLOBALS.has(ref.content)) continue
@@ -140,17 +139,18 @@ export function checkUndefinedVariables(
 		}
 		if (foundInScope) continue
 
-		const message = ref.isComponent
-			? `Component '${ref.content}' is not defined`
-			: `Variable '${ref.content}' is not defined`
+		// Template free-identifier errors are covered by virtual TS (TS2304). Keep Aero-only
+		// component-missing diagnostics here; skip `Variable 'x' is not defined` duplicates.
+		if (!ref.isComponent) continue
 
-		pushSpanDiagnostic(diagnostics, document, ref.range, message, 'AERO_COMPILE', 'error')
-	}
-
-	for (const ref of buildContentGlobalRefs) {
-		if (definedVars.has(ref.content) || stateBindings.has(ref.content)) continue
-
-		pushSpanDiagnostic(diagnostics, document, ref.range, `Variable '${ref.content}' is not defined`, 'AERO_COMPILE', 'error')
+		pushSpanDiagnostic(
+			diagnostics,
+			document,
+			ref.range,
+			`Component '${ref.content}' is not defined`,
+			'AERO_COMPILE',
+			'error'
+		)
 	}
 }
 

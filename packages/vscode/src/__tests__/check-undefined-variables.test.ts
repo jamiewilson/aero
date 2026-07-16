@@ -50,7 +50,7 @@ describe('checkUndefinedVariables state scope', () => {
 		expect(hasStateScript(parsed)).toBe(true)
 	})
 
-	it('flags handler refs missing from is:state bindings', () => {
+	it('does not emit Aero Variable diagnostics for missing is:state handlers (TS2304 covers them)', () => {
 		const text = `<script is:state>
 	let count = 0
 	//const inc = () => count++
@@ -63,7 +63,7 @@ describe('checkUndefinedVariables state scope', () => {
 		const diagnostics: any[] = []
 		checkUndefinedVariables(doc, parsed, diagnostics)
 
-		expect(diagnostics.find(d => d.message.includes("'inc' is not defined"))).toBeDefined()
+		expect(diagnostics.find(d => d.message.includes("'inc' is not defined"))).toBeUndefined()
 		expect(diagnostics.find(d => d.message.includes("'count' is not defined"))).toBeUndefined()
 	})
 

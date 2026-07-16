@@ -118,6 +118,54 @@ const trustedHTML = '<em>Trusted HTML</em>'
 		expect(expressions).toContain('count')
 	})
 
+	it('includes braced expressions on Aero reactive binding directives', () => {
+		const html = `<script is:state>
+	let body = 'x'
+	let saving = false
+</script>
+<div show="{ open }" class:is-active="{ active }" html="{ body }" busy="{ saving }"></div>`
+		const sites = collectTemplateInterpolationSites(html)
+		const expressions = sites.map(s => s.expression.trim())
+		expect(expressions).toContain('open')
+		expect(expressions).toContain('active')
+		expect(expressions).toContain('body')
+		expect(expressions).toContain('saving')
+	})
+
+	it('emits TS2304 for missing names in show and class:* binding virtual TS', () => {
+		const html = `<script is:state>
+	let body = 'x'
+	let saving = false
+</script>
+<div show="{ isOpen }" class:is-active="{ isActive }"></div>`
+		const sites = collectTemplateInterpolationSites(html)
+		const openSite = sites.find(s => s.expression.trim() === 'isOpen')
+		const activeSite = sites.find(s => s.expression.trim() === 'isActive')
+		expect(openSite).toBeDefined()
+		expect(activeSite).toBeDefined()
+
+		for (const site of [openSite!, activeSite!]) {
+			const { virtualText } = buildTemplateInterpolationVirtualText(html, site, '')
+			const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+			const opts: ts.CompilerOptions = {
+				target: ts.ScriptTarget.ESNext,
+				module: ts.ModuleKind.ESNext,
+				strict: true,
+				skipLibCheck: true,
+				noEmit: true,
+			}
+			const host = ts.createCompilerHost(opts)
+			const originalGetSourceFile = host.getSourceFile.bind(host)
+			host.getSourceFile = (fileName, languageVersion, ...rest) => {
+				if (fileName.endsWith('expr.ts')) return source
+				return originalGetSourceFile(fileName, languageVersion, ...rest)
+			}
+			const program = ts.createProgram(['expr.ts'], opts, host)
+			const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+			expect(codes.some(code => code === 2304 || code === 2552)).toBe(true)
+		}
+	})
+
 	it('does not extract interpolations from Alpine directive attribute values', () => {
 		const html = `<div x-bind:class="{ foo }">{ bar }</div>`
 		const sites = collectTemplateInterpolationSites(html)

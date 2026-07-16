@@ -12,6 +12,7 @@ import type { CompileOptions, ParseResult } from './types'
 import { parseHTML } from 'linkedom'
 import { CompileError } from './types'
 import { analyzeBuildScript, stripBuildScriptTypes, type BuildScriptImport } from './build-script-analysis'
+import { collectBuildScopeBindingNames } from './build-scope-bindings'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { Lowerer } from './lowerer/lowerer'
 import type { LowererDiag } from './lowerer/types'
@@ -153,8 +154,13 @@ export function buildTemplateAnalysis(
 					.map(binding => binding.name)
 			)
 		: undefined
+	const buildScopeNames =
+		parsed.buildScript && parsed.buildScript.content.trim().length > 0
+			? collectBuildScopeBindingNames([parsed.buildScript.content])
+			: undefined
 	const lowerer = new Lowerer(resolver, diag, stateBindingNames, {
 		writableStateBindingNames,
+		buildScopeNames,
 		hypermedia: options.hypermedia,
 		componentReactiveProps: options.componentReactiveProps,
 	})

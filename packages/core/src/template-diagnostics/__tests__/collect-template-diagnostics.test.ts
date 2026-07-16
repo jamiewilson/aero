@@ -71,7 +71,7 @@ describe('collectTemplateDiagnostics feature flags', () => {
 })
 
 describe('collectTemplateDiagnostics undefined variables gate', () => {
-	it('runs undefined variable checks when build script exists', () => {
+	it('does not emit Aero Variable diagnostics when build script exists (TS2304 covers them)', () => {
 		const html = `<script is:build>
 const title = 'Hello'
 </script>
@@ -83,7 +83,7 @@ const title = 'Hello'
 			flags: { reactivity: false, hypermedia: false },
 		})
 
-		expect(diagnostics.some(d => d.message.includes("Variable 'missingVar' is not defined"))).toBe(true)
+		expect(diagnostics.some(d => d.message.includes("Variable 'missingVar' is not defined"))).toBe(false)
 	})
 })
 

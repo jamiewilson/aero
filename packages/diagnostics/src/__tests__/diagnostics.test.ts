@@ -6,6 +6,7 @@ import {
 	AeroBuildCancelledError,
 	AeroCompileError,
 	aeroDiagnosticToViteErrorFields,
+	diagnosticToViteOverlayError,
 	AERO_EXIT_BUILD_CANCELLED,
 	AERO_EXIT_COMPILE,
 	AERO_EXIT_CONTENT,
@@ -37,8 +38,9 @@ describe('diagnostics', () => {
 		expect(d[0]!.file).toBe('/x/y.html')
 	})
 
-	it('unknownToAeroDiagnostics uses stack location and hint when page differs', () => {
+	it('unknownToAeroDiagnostics uses stack location without while-rendering hint', () => {
 		const err = new Error('toggle is not defined')
+		err.name = 'ReferenceError'
 		err.stack = `ReferenceError: toggle is not defined
     at render (/proj/frontend/components/toggle.html.js:5:1)`
 		const d = unknownToAeroDiagnostics(err, { file: '/proj/frontend/pages/index.html' })
@@ -46,10 +48,9 @@ describe('diagnostics', () => {
 		expect(d[0]!.span).toEqual({
 			file: '/proj/frontend/components/toggle.html.js',
 			line: 5,
-			column: 1,
+			column: 0,
 		})
-		expect(d[0]!.hint).toContain('while rendering')
-		expect(d[0]!.hint).toContain('index.html')
+		expect(d[0]!.hint).toBeUndefined()
 	})
 
 	it('formatDiagnosticsTerminal includes title, path, and message', () => {
@@ -149,6 +150,19 @@ describe('diagnostics', () => {
 			'vite-plugin-aero'
 		)
 		expect(fields.frame).toBe('> 1 | oops\n  | ^')
+	})
+
+	it('diagnosticToViteOverlayError preserves first-line gutter through Vite trim', () => {
+		const frame = '  25 | before\n> 26 | bad\n     | ^'
+		const payload = diagnosticToViteOverlayError({
+			code: 'AERO_COMPILE',
+			severity: 'error',
+			message: 'fail',
+			file: 'a.css',
+			span: { file: 'a.css', line: 26, column: 0 },
+			frame,
+		})
+		expect(payload.frame?.trim()).toBe(`\u200b${frame}`)
 	})
 
 	it('formatSourceFrameFromSource builds Rollup-style snippet', () => {
@@ -270,7 +284,7 @@ describe('diagnostics', () => {
 			column: 8,
 		})
 		expect(d[0]!.frame).toContain('await GET')
-		expect(d[0]!.hint).toContain('while rendering')
+		expect(d[0]!.hint).toBeUndefined()
 	})
 
 	it('unknownToAeroDiagnostics maps AeroCompileError', () => {

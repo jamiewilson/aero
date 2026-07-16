@@ -2,8 +2,9 @@
  * Map thrown values to AeroDiagnostic[] for catch blocks before tagged errors exist everywhere.
  */
 
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import type { AeroDiagnostic, AeroDiagnosticCode } from './types'
+import type { AeroDiagnostic, AeroDiagnosticCode, AeroDiagnosticSpan } from './types'
 import { failureToAeroDiagnostics } from './cause-map'
 import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 import {
@@ -11,8 +12,6 @@ import {
 	isContentSchemaAggregateError,
 } from './content-schema-aggregate'
 import { augmentFromCssSyntaxError } from './css-postcss-error'
-import { diagnosticPathForDisplay } from './path-display'
-import { tryRefineHtmlReferenceErrorSpan } from './refine-html-reference-error-span'
 import { firstStackSpan } from './stack-frame'
 import { stripAeroViteMessageDecorations } from './vite-error'
 
@@ -47,12 +46,110 @@ function viteErrorMeta(err: Error): ViteErrorMeta {
 	}
 }
 
+const SIMPLE_REFERENCE = /^([A-Za-z_$][\w$]*) is not defined$/
+
+function resolveFsPath(filePath: string): string {
+	if (path.isAbsolute(filePath)) return filePath
+	if (typeof process === 'undefined' || typeof process.cwd !== 'function') return filePath
+	return path.resolve(process.cwd(), filePath)
+}
+
 /**
- * Map a generic Error with contextFile-specific enrichment (CSS path promotion,
- * HTML reference span refinement, "while rendering" hint).
+ * First non-comment `\bid\b` in `source` as a 1-based-line / 0-based-column span.
+ * `is not defined` always fails at the first evaluation of the binding.
+ */
+function firstLiveIdentifierSpan(
+	spanFile: string,
+	source: string,
+	id: string
+): AeroDiagnosticSpan | undefined {
+	const idRe = new RegExp(`\\b${id.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`, 'g')
+	for (const m of source.matchAll(idRe)) {
+		const abs = m.index ?? 0
+		const lineStart = source.lastIndexOf('\n', abs - 1) + 1
+		const lineEnd = source.indexOf('\n', abs)
+		const line = source.slice(lineStart, lineEnd === -1 ? source.length : lineEnd)
+		if (/^\s*\/\//.test(line) || /^\s*\/\*/.test(line)) continue
+		const before = source.slice(0, abs)
+		const lastBlockOpen = before.lastIndexOf('/*')
+		const lastBlockClose = before.lastIndexOf('*/')
+		if (lastBlockOpen > lastBlockClose) continue
+		let lineNum = 1
+		for (let i = 0; i < abs; i++) if (source.charCodeAt(i) === 10) lineNum++
+		return { file: spanFile, line: lineNum, column: abs - lineStart }
+	}
+	return undefined
+}
+
+/** `demoList` → `demo-list` (component import binding → tag base). */
+function camelToKebabCase(id: string): string {
+	return id.replace(/[A-Z]/g, ch => `-${ch.toLowerCase()}`)
+}
+
+/**
+ * Component bindings are camelCase in `<script is:build>` but kebab tags in markup
+ * (`demoList` → `<demo-list-component>`). Fall back when the camelCase id is absent.
+ */
+function firstLiveComponentTagSpan(
+	spanFile: string,
+	source: string,
+	camelId: string
+): AeroDiagnosticSpan | undefined {
+	const kebab = camelToKebabCase(camelId)
+	const escaped = kebab.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')
+	const tagRe = new RegExp(`<(${escaped}-(?:component|layout))\\b`, 'g')
+	for (const m of source.matchAll(tagRe)) {
+		const abs = (m.index ?? 0) + 1 // caret on tag name, not `<`
+		const lineStart = source.lastIndexOf('\n', abs - 1) + 1
+		const lineEnd = source.indexOf('\n', abs)
+		const line = source.slice(lineStart, lineEnd === -1 ? source.length : lineEnd)
+		if (/^\s*\/\//.test(line) || /^\s*\/\*/.test(line)) continue
+		const before = source.slice(0, abs)
+		const lastBlockOpen = before.lastIndexOf('/*')
+		const lastBlockClose = before.lastIndexOf('*/')
+		if (lastBlockOpen > lastBlockClose) continue
+		let lineNum = 1
+		for (let i = 0; i < abs; i++) if (source.charCodeAt(i) === 10) lineNum++
+		return { file: spanFile, line: lineNum, column: abs - lineStart }
+	}
+	return undefined
+}
+
+/**
+ * ReferenceError stacks for HTML modules are often remapped to a later duplicate of the
+ * identifier (state script is emitted more than once). Snap to the first live occurrence.
+ */
+function dropMisleadingHtmlReferenceSpan(
+	err: Error,
+	span: AeroDiagnosticSpan | undefined,
+	diagFile: string | undefined
+): AeroDiagnosticSpan | undefined {
+	if (err.name !== 'ReferenceError') return span
+	const m = SIMPLE_REFERENCE.exec((err.message || '').trim())
+	if (!m) return span
+	const id = m[1]!
+	const file = span?.file || diagFile
+	if (!file || !file.endsWith('.html')) return span
+
+	const resolved = resolveFsPath(file)
+	if (!existsSync(resolved)) return span
+	let source: string
+	try {
+		source = readFileSync(resolved, 'utf8')
+	} catch {
+		return span
+	}
+
+	const idSpan = firstLiveIdentifierSpan(file, source, id)
+	return idSpan ?? firstLiveComponentTagSpan(file, source, id)
+}
+
+/**
+ * Map a generic Error with contextFile-specific enrichment (CSS path promotion).
  *
- * This is the catch-block path that adds context-file awareness on top of the
- * shared `genericErrorToDiagnostic` logic.
+ * Stack locations for HTML modules are expected to be remapped via compiler source maps.
+ * When a ReferenceError stack still points at a `.html` line that does not contain the
+ * missing identifier, drop the span so we do not draw a confident wrong caret.
  */
 function errorWithContextToDiagnostic(
 	err: Error,
@@ -87,30 +184,9 @@ function errorWithContextToDiagnostic(
 		if (span) span = { ...span, file: contextFile! }
 	}
 
-	const refinedSpan = tryRefineHtmlReferenceErrorSpan(err, span, diagFile)
-	if (refinedSpan) {
-		span = refinedSpan
-	}
+	span = dropMisleadingHtmlReferenceSpan(err, span, diagFile)
 
-	let hint: string | undefined
-	if (css) {
-		if (promoteInlineCssPath) {
-			hint = css.hint
-		} else {
-			const parts: string[] = []
-			if (css.hint) parts.push(css.hint)
-			if (contextFile && path.normalize(contextFile) !== path.normalize(css.file)) {
-				parts.push(`while rendering ${diagnosticPathForDisplay(contextFile)}`)
-			}
-			hint = parts.length > 0 ? parts.join('\n') : undefined
-		}
-	} else {
-		const failingFile = diagFile ?? span?.file
-		hint =
-			contextFile && failingFile && path.normalize(contextFile) !== path.normalize(failingFile)
-				? `while rendering ${diagnosticPathForDisplay(contextFile)}`
-				: undefined
-	}
+	const hint = css?.hint
 
 	return {
 		code: parsedMessage.code ?? code,
@@ -118,7 +194,11 @@ function errorWithContextToDiagnostic(
 		message: css?.message ?? parsedMessage.message,
 		file: diagFile,
 		span,
-		...(css?.frame ? { frame: css.frame } : vite.frame ? { frame: vite.frame } : {}),
+		...(css?.frame
+			? { frame: css.frame }
+			: vite.frame && span
+				? { frame: vite.frame }
+				: {}),
 		...(hint ? { hint } : {}),
 	}
 }

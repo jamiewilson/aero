@@ -738,7 +738,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		mockSet.mockClear()
 	})
 
-	it('should flag undefined variable in template expression', () => {
+	it('does not emit Aero Variable diagnostics for undefined template refs (TS2304 covers them)', () => {
 		const text = `
 <script is:build></script>
 <div>{undefinedVar}</div>
@@ -762,7 +762,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
 			d.message.includes("'undefinedVar' is not defined")
 		)
-		expect(undefinedDiag).toBeDefined()
+		expect(undefinedDiag).toBeUndefined()
 	})
 
 	it('should NOT flag false keyword as undefined', () => {
@@ -882,7 +882,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		expect(undefinedVarDiags).toHaveLength(0)
 	})
 
-	it('should flag content global in build script when import is commented out', () => {
+	it('does not emit Aero Variable diagnostics for missing build-script imports (TS2304 covers them)', () => {
 		const text = `
 <script is:build>
 	//import site from '@content/site.ts'
@@ -909,7 +909,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		const siteDiag = reportedDiagnostics.filter((d: any) =>
 			d.message.includes("'site' is not defined")
 		)
-		expect(siteDiag.length).toBeGreaterThan(0)
+		expect(siteDiag).toHaveLength(0)
 	})
 
 	it('should NOT flag content global in build script when imported', () => {
@@ -942,7 +942,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		expect(siteDiag).toBeUndefined()
 	})
 
-	it('should flag undefined is:state handler refs when bindings are removed from state script', () => {
+	it('does not emit Aero Variable diagnostics for missing is:state handlers (TS2304 covers them)', () => {
 		const text = `<script is:build>
 	import base from '@layouts/base.html'
 </script>
@@ -983,11 +983,11 @@ describe('AeroDiagnostics Undefined Variables', () => {
 			const undefinedDiag = reportedDiagnostics.find((d: any) =>
 				d.message.includes(`'${name}' is not defined`)
 			)
-			expect(undefinedDiag).toBeDefined()
+			expect(undefinedDiag).toBeUndefined()
 		}
 	})
 
-	it('should flag content globals when not imported in build script or template', () => {
+	it('does not emit Aero Variable diagnostics for unimported content globals in templates (TS2304 covers them)', () => {
 		const text = `
 <script is:build></script>
 <div>{site.title}</div>
@@ -1011,10 +1011,10 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		const undefinedDiag = reportedDiagnostics.find((d: any) =>
 			d.message.includes("'site' is not defined")
 		)
-		expect(undefinedDiag).toBeDefined()
+		expect(undefinedDiag).toBeUndefined()
 	})
 
-	it('should flag site in for-loop iterable when import is commented out', () => {
+	it('does not emit Aero Variable diagnostics for missing for-loop iterables (TS2304 covers them)', () => {
 		const text = `<script is:build>
 	import base from '@layouts/base.html'
 	//import site from '@content/site'
@@ -1044,10 +1044,7 @@ describe('AeroDiagnostics Undefined Variables', () => {
 		const siteDiag = reportedDiagnostics.find((d: any) =>
 			d.message.includes("'site' is not defined")
 		)
-		expect(siteDiag).toBeDefined()
-		const siteStart = text.indexOf('site', text.indexOf('for='))
-		expect(siteDiag.range.start).toEqual(positionAtOffset(text, siteStart))
-		expect(siteDiag.range.end).toEqual(positionAtOffset(text, siteStart + 'site'.length))
+		expect(siteDiag).toBeUndefined()
 	})
 
 	it('should NOT flag undefined variable in Alpine x-data', () => {

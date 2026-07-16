@@ -802,6 +802,54 @@ const o = { a: 1 }
 		expect(getEmbeddedById(code, 'expr_1')).toBeUndefined()
 	})
 
+	it('extracts Aero show and class:* binding expressions for virtual TS', () => {
+		const html = `<script is:state>
+	let body = 'x'
+</script>
+<div show="{ isOpen }" class:is-active="{ isActive }" html="{ body }"></div>`
+
+		const code = new AeroVirtualCode(createSnapshot(html))
+		for (const name of ['isOpen', 'isActive', 'body']) {
+			const fragment = code.embeddedCodes?.find(ec => getEmbeddedText(code, ec.id)?.includes(name))
+			expect(fragment, name).toBeDefined()
+		}
+	})
+
+	it('emits TS2304 for missing names in show and class:* virtual fragments', () => {
+		const html = `<script is:state>let saving = false</script>
+<div show="{ isOpen }" class:is-active="{ isActive }"></div>`
+		const code = new AeroVirtualCode(createSnapshot(html))
+		const openFragment = code.embeddedCodes?.find(ec =>
+			getEmbeddedText(code, ec.id)?.includes('isOpen')
+		)
+		const activeFragment = code.embeddedCodes?.find(ec =>
+			getEmbeddedText(code, ec.id)?.includes('isActive')
+		)
+		expect(openFragment).toBeDefined()
+		expect(activeFragment).toBeDefined()
+
+		for (const fragment of [openFragment!, activeFragment!]) {
+			const virtualText = getEmbeddedText(code, fragment.id)!
+			const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+			const opts: ts.CompilerOptions = {
+				target: ts.ScriptTarget.ESNext,
+				module: ts.ModuleKind.ESNext,
+				strict: true,
+				skipLibCheck: true,
+				noEmit: true,
+			}
+			const host = ts.createCompilerHost(opts)
+			const originalGetSourceFile = host.getSourceFile.bind(host)
+			host.getSourceFile = (fileName, languageVersion, ...rest) => {
+				if (fileName.endsWith('expr.ts')) return source
+				return originalGetSourceFile(fileName, languageVersion, ...rest)
+			}
+			const program = ts.createProgram(['expr.ts'], opts, host)
+			const codes = program.getSemanticDiagnostics(source).map(d => d.code)
+			expect(codes.some(code => code === 2304 || code === 2552)).toBe(true)
+		}
+	})
+
 	it('does not treat component markup inside template literal snippets as attribute sites', () => {
 		const html = `<script is:state>
 	const { count = Aero.bindable() } = Aero.props
