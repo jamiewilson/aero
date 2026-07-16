@@ -884,12 +884,17 @@ export class Lowerer {
 			const undeclared = findUndeclaredReactiveIdentifiers(expr, allowed)
 			if (undeclared.length === 0) continue
 			const name = undeclared[0]!
-			const loc = this.diag?.source
-				? Helper.lineColumnAtOffset(
-						this.diag.source,
-						Math.max(0, this.diag.source.indexOf(name))
+			const haystack = this.diag?.source
+				? this.diag.source.replace(
+						/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
+						match => ' '.repeat(match.length)
 					)
-				: {}
+				: undefined
+			const nameIdx = haystack ? haystack.indexOf(name) : -1
+			const loc =
+				this.diag?.source && nameIdx >= 0
+					? Helper.lineColumnAtOffset(this.diag.source, nameIdx)
+					: {}
 			throw new CompileError({
 				message: `Unknown name \`${name}\` in reactive expression. Declare it in \`<script is:state>\` or import it.`,
 				file: this.diag?.file,

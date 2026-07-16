@@ -38,20 +38,31 @@ function buildAllowedNames(ctx: ScopeRewriteContext): Set<string> {
 	return allowed
 }
 
+function maskScriptAndStyleForLocation(source: string): string {
+	return source.replace(
+		/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
+		match => ' '.repeat(match.length)
+	)
+}
+
 function locateNameInSource(
 	source: string | undefined,
 	expr: string,
 	name: string
 ): { line?: number; column?: number } {
 	if (!source) return {}
-	const exprIdx = source.indexOf(expr)
-	if (exprIdx >= 0) {
-		const local = expr.indexOf(name)
-		const offset = local >= 0 ? exprIdx + local : exprIdx
-		return lineColumnAtOffset(source, offset)
+	// Prefer template markup: first `indexOf(expr)` otherwise hits commented decls in is:state.
+	const templateHaystack = maskScriptAndStyleForLocation(source)
+	for (const haystack of [templateHaystack, source]) {
+		const exprIdx = haystack.indexOf(expr)
+		if (exprIdx >= 0) {
+			const local = expr.indexOf(name)
+			const offset = local >= 0 ? exprIdx + local : exprIdx
+			return lineColumnAtOffset(source, offset)
+		}
+		const nameIdx = haystack.indexOf(name)
+		if (nameIdx >= 0) return lineColumnAtOffset(source, nameIdx)
 	}
-	const nameIdx = source.indexOf(name)
-	if (nameIdx >= 0) return lineColumnAtOffset(source, nameIdx)
 	return {}
 }
 
