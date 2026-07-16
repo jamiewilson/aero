@@ -71,14 +71,14 @@ describe('for-loop undefined diagnostics (build-only templates)', () => {
 		expect(hasBuildScript(parsed)).toBe(true)
 	})
 
-	it('flags undefined links iterable and label binding', () => {
+	it('does not emit Aero Variable diagnostics for undefined for-loop refs (TS2304 covers them)', () => {
 		const doc = makeDoc(footerLike)
 		const parsed = parseDocument(doc)
 		const diagnostics: any[] = []
 		checkUndefinedVariables(doc, parsed, diagnostics)
 		const messages = diagnostics.map((d: { message: string }) => d.message)
-		expect(messages.some(m => m.includes("'links' is not defined"))).toBe(true)
-		expect(messages.some(m => m.includes("'label' is not defined"))).toBe(true)
+		expect(messages.some(m => m.includes("'links' is not defined"))).toBe(false)
+		expect(messages.some(m => m.includes("'label' is not defined"))).toBe(false)
 	})
 
 	it('does not flag when links is defined and label is destructured', () => {

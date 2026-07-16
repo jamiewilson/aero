@@ -129,7 +129,12 @@ function collectAttributeInterpolations(
 			const absValueStart = attrsStart + matchStartInAttrs + quoteIndex + 1
 
 			const runtimeDirective = normalizeRuntimeDirectiveName(name)
-			if (isDirectiveAttr(name) && runtimeDirective?.family !== 'event') {
+			// Alpine/HTMX directives skip interpolation; Aero runtime `on:*` and binding attrs type-check.
+			const skipDirectiveInterpolation =
+				isDirectiveAttr(name) &&
+				runtimeDirective?.family !== 'event' &&
+				runtimeDirective?.family !== 'binding'
+			if (skipDirectiveInterpolation) {
 				masks.push({ start: absValueStart, length: value.length })
 				continue
 			}

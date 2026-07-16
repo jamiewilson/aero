@@ -3,10 +3,10 @@
 </script>
 
 <script is:state>
-	let open = false
-	let body = '<strong>html="{ body }"</strong> binding'
-	let active = false
-	let saving = false
+	let markup = '<strong>html="{ markup }"</strong> binding'
+	let isOpen = false
+	let isActive = false
+	let isSaving = false
 </script>
 
 <base-layout title="Binding handlers">
@@ -21,8 +21,8 @@
 				<h2>Show binding</h2>
 			</header>
 			<div class="grid gap-4 not-prose">
-				<button on:click="{ open = !open }">Toggle show</button>
-				<div show="{ open }" class="card bg-green-500/10 text-center">
+				<button on:click="{ isOpen = !isOpen }">Toggle show</button>
+				<div show="{ isOpen }" class="card bg-green-500/10 text-center">
 					Shown when <code>open</code> is true
 				</div>
 			</div>
@@ -32,7 +32,7 @@
 			<header>
 				<h2>HTML binding</h2>
 			</header>
-			<div html="{ body }" class="card text-center"></div>
+			<div html="{ markup }" class="card text-center"></div>
 		</section>
 
 		<section>
@@ -40,9 +40,11 @@
 				<h2>Class binding</h2>
 			</header>
 			<div class="grid gap-4 not-prose">
-				<button on:click="{ active = !active }">Toggle <code>active</code> class binding</button>
-				<div class:is-active="{ active }" class="card text-center">
-					<code>class="{ active ? 'is-active' : '' }"</code>
+				<button on:click="{ isActive = !isActive }">
+					Toggle <code>active</code> class binding
+				</button>
+				<div class:is-active="{ isActive }" class="card text-center">
+					<code>class="{ isActive ? 'is-active' : '' }"</code>
 				</div>
 			</div>
 		</section>
@@ -52,8 +54,8 @@
 				<h2>Property binding</h2>
 			</header>
 			<div class="grid gap-4 not-prose">
-				<button on:click="{ saving = !saving }">Toggle disabled (property binding)</button>
-				<button disabled="{ saving }">disabled="{ saving }"</button>
+				<button on:click="{ isSaving = !isSaving }">Toggle disabled (property binding)</button>
+				<button disabled="{ isSaving }">disabled="{ isSaving }"</button>
 			</div>
 		</section>
 	</article>
