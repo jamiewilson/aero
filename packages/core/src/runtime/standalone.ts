@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import fs from 'node:fs'
-import { compileTemplate } from '@aero-js/compiler'
+import { compileTemplate } from '@aero-js/compiler/codegen'
 import { Aero } from './index'
 import type {
 	AeroPageModule,

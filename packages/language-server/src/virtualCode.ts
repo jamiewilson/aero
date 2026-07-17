@@ -1083,7 +1083,11 @@ export class AeroVirtualCode implements VirtualCode {
 							? formatBuildScopeAmbientPrelude(
 									this.buildOnlyBindingNames,
 									this.buildTypeDeclTexts,
-									this.buildScriptBodies
+									undefined,
+									undefined,
+									this.buildScriptBodies.some(body => body.trim().length > 0)
+										? collectBindingTypeStringsFromBuildScripts(this.buildScriptBodies)
+										: undefined
 								)
 							: ''
 					const templateUseFooter =

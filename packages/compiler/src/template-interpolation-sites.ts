@@ -8,6 +8,7 @@
 import { escapeInterpolationBodyMarkup, tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { parseMinimalHtmlFromText, walkHtmlNodes, type Node } from '@aero-js/html-parser'
 import { formatBuildScopeAmbientPrelude } from './build-scope-bindings'
+import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
 import {
 	collectForDirectiveBindingNames,
 	FOR_LOOP_IMPLICIT_NAMES,
@@ -327,11 +328,17 @@ export function formatInterpolationBinderPrelude(
 		options?.writableNames && options.writableNames.size > 0
 			? new Set([...options.writableNames].filter(name => allBindings.has(name)))
 			: undefined
+	const inferenceBodies = [...buildScriptBodies, ...stateScriptBodies]
+	const bindingTypes =
+		inferenceBodies.some(body => body.trim().length > 0)
+			? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+			: undefined
 	return formatBuildScopeAmbientPrelude(
 		allBindings,
 		buildTypeDeclTexts,
-		[...buildScriptBodies, ...stateScriptBodies],
-		writableNames
+		undefined,
+		writableNames,
+		bindingTypes
 	)
 }
 
@@ -360,10 +367,17 @@ export function formatInterpolationBinderPreludeFromTemplate(
  */
 function formatBuildScopeAmbientPreludeFromTemplate(sourceText: string): string {
 	const ambient = buildTemplateEditorAmbient(sourceText)
+	const inferenceBodies = [...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
+	const bindingTypes =
+		inferenceBodies.some(body => body.trim().length > 0)
+			? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+			: undefined
 	return formatBuildScopeAmbientPrelude(
 		ambient.bindingNames,
 		ambient.typeDeclarationTexts,
-		[...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
+		undefined,
+		undefined,
+		bindingTypes
 	)
 }
 
