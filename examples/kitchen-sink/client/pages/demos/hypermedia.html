@@ -59,7 +59,8 @@
 			<header>
 				<h2>Render fragment</h2>
 				<p>
-					<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server.
+					<code>renderAeroFragment</code> renders a real <code>.html</code> component on the server,
+					with <code>outerHTML</code> swap.
 				</p>
 			</header>
 			<div class="card grid gap-4 not-prose">
@@ -251,6 +252,52 @@
 				</button>
 				<div id="nested-host" class="card text-sm">
 					Click above to load a fragment with its own hypermedia bindings.
+				</div>
+			</div>
+		</section>
+
+		<section>
+			<header>
+				<h2>Server errors</h2>
+				<p>
+					Intentional HTML error fragments still swap. Infrastructure failures (throws, mistyped
+					routes, full error pages) do not — they emit <code>error</code> and show the Vite overlay
+					in dev.
+				</p>
+			</header>
+
+			<div class="grid gap-8 not-prose">
+				<div class="card grid gap-4">
+					<p class="text-sm opacity-80">
+						<strong class="font-bold">422 fragment</strong> — application outcome; swaps into the
+						target.
+					</p>
+					<button
+						on:click="{ GET('/api/hypermedia/validate', { target: '#error-fragment', swap: 'outerHTML' }) }">
+						Load 422 fragment
+					</button>
+					<div id="error-fragment" class="card text-sm">Waiting…</div>
+				</div>
+
+				<div class="card grid gap-4">
+					<p class="text-sm opacity-80">
+						<strong class="font-bold">Handler throw</strong> — <code>HTTPError</code>. Target stays
+						unchanged; Vite overlay (with code frame) in the browser; youch in the terminal via
+						Aero's Nitro runtime plugin.
+					</p>
+					<button on:click="{ GET('/api/hypermedia/throw', { target: '#error-throw' }) }">
+						Trigger throw
+					</button>
+				</div>
+
+				<div class="card grid gap-4">
+					<p class="text-sm opacity-80">
+						<strong class="font-bold">Mistyped route</strong> — Nitro JSON 404; no DOM dump.
+					</p>
+					<button
+						on:click="{ GET('/api/hypermedia/does-not-exist', { target: '#error-missing' }) }">
+						Call missing route
+					</button>
 				</div>
 			</div>
 		</section>

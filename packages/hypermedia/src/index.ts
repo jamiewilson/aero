@@ -22,6 +22,7 @@ export { applySelectFilter, isAbortError, shouldRetryError, shouldRetryStatus, M
 export { resolveTarget, performSwap, performSwaps, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 export { hasCompiledBindSubtree, isCompiledBindMarker } from './compiled-bindings'
 export { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
+export { isSwappableFragmentHtml } from './fragment-html'
 export { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
 export {
 	AERO_SSE_PATCH_ELEMENTS,

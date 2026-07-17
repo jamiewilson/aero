@@ -51,6 +51,28 @@ Prevent double submission with `on:submit.prevent`:
 
 The handler can return a success or error fragment for `#status`.
 
+## Application errors vs infrastructure errors
+
+**The server owns application outcomes. The client owns transport and infrastructure failures.**
+
+| Outcome | Who owns UI | What happens |
+| --- | --- | --- |
+| Validation / not-found **HTML fragment** (any status) | Server | Swapped into the target like a 200 |
+| Uncaught throw, mistyped `/api` route, full Nitro/Vite error **document** | Client | **No swap**; lifecycle `error` fires; Vite overlay in `vite dev` |
+| Network / abort | Client | Lifecycle `error`; no response body to swap |
+
+Return a small HTML fragment for expected failures (for example `422` with field errors). Do not rely on Nitro’s full error page inside a fragment target — Aero refuses to inject full documents (`<!DOCTYPE` / `<html>`) or overlay-bootstrap shells.
+
+Listen for transport and infrastructure failures:
+
+```html
+<div
+	id="panel"
+	on:error="{ /* offline or unexpected server failure — panel unchanged */ }">
+	…
+</div>
+```
+
 ## Save with loading feedback
 
 Use `busy` or `state` so the trigger reflects in-flight requests (requires reactivity + hypermedia):
@@ -94,10 +116,10 @@ Listen for swap completion (analytics, focus management):
 | Event | When |
 | --- | --- |
 | `request` | Before fetch |
-| `response` | After headers/body received |
+| `response` | After headers/body received (swappable HTML path) |
 | `swap` | Before DOM mutation |
 | `settle` | After swap and process |
-| `error` | On failure |
+| `error` | Network/abort, or infrastructure response (full error document / `!ok` JSON) |
 
 ## Server-driven URL
 
