@@ -4,6 +4,7 @@ import {
 	formatBuildScopeAmbientPrelude,
 	iterateBuildScriptBindings,
 } from '../build-scope-bindings'
+import { collectBindingTypeStringsFromBuildScripts } from '../build-script-type-inference'
 
 describe('iterateBuildScriptBindings', () => {
 	it('yields imports then declarations in script order', () => {
@@ -113,11 +114,14 @@ describe('formatBuildScopeAmbientPrelude', () => {
 		expect(prelude).toContain('declare const title: any;')
 	})
 
-	it('uses checker types for bindings when build script bodies are provided', () => {
+	it('uses checker types for bindings when precomputed types are provided', () => {
+		const bodies = ['const x: number = 1', 'const y = "hi"']
 		const prelude = formatBuildScopeAmbientPrelude(
 			new Set(['x', 'y']),
 			[],
-			['const x: number = 1', 'const y = "hi"']
+			undefined,
+			undefined,
+			collectBindingTypeStringsFromBuildScripts(bodies)
 		)
 		expect(prelude).toContain('declare const x: number;')
 		expect(prelude).toContain('declare const y:')

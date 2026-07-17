@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { compileTemplate } from '@aero-js/compiler'
+import { compileTemplate } from '@aero-js/compiler/codegen'
 import { loadCompiledTemplateModule, renderTemplate } from '../standalone'
 import { Aero } from '../index'
 

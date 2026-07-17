@@ -2,14 +2,18 @@
  * Build-script value bindings for Aero tooling (language server ambient decls, VS Code diagnostics).
  *
  * @remarks {@link iterateBuildScriptBindings} is the single implementation; consumers derive names or full ranges from it.
+ *
+ * Intentionally does **not** import `build-script-type-inference` (optional peer `typescript`).
+ * The compile/runtime path only needs binding *names*; checker types must be passed via
+ * `precomputedBindingTypes` from tooling that already depends on TypeScript.
  */
 import {
 	analyzeBuildScriptForEditor,
 	extractBuildScriptTypeDeclarationTexts,
 } from './build-script-analysis'
-import { collectBindingTypeStringsFromBuildScripts } from './build-script-type-inference'
 import { collectPatternBindings } from './for-directive'
 import { parseSync } from 'oxc-parser'
+
 
 const SIMPLE_DECL_REGEX =
 	/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
@@ -340,13 +344,18 @@ export function collectBuildScriptTypeDeclarationTexts(
 
 /**
  * Ambient prelude for template expression checking: optional type declarations from the build
- * script(s), then `declare const` per binding. When `buildScriptBodiesForInference` is set,
- * TypeScript checker types are used instead of `any` where resolution succeeds (same-file only).
+ * script(s), then `declare const` per binding.
+ *
+ * @remarks
+ * Pass checker types via `precomputedBindingTypes` (from
+ * {@link collectBindingTypeStringsFromBuildScripts}). The unused
+ * `buildScriptBodiesForInference` slot is retained for call-site compatibility; prefer
+ * precomputed maps so this module stays free of the optional `typescript` peer.
  */
 export function formatBuildScopeAmbientPrelude(
 	names: ReadonlySet<string>,
 	typeDeclarationSources: readonly string[],
-	buildScriptBodiesForInference?: readonly string[],
+	_buildScriptBodiesForInference?: readonly string[],
 	writableNames?: ReadonlySet<string>,
 	precomputedBindingTypes?: ReadonlyMap<string, string>
 ): string {
@@ -354,12 +363,11 @@ export function formatBuildScopeAmbientPrelude(
 		.map(s => s.trim())
 		.filter(Boolean)
 		.join('\n\n')
-	const bindingTypes =
-		precomputedBindingTypes ??
-		(buildScriptBodiesForInference !== undefined && buildScriptBodiesForInference.length > 0
-			? collectBindingTypeStringsFromBuildScripts(buildScriptBodiesForInference)
-			: undefined)
-	const bindingBlock = formatBuildBindingAmbientBlock(names, bindingTypes, writableNames)
+	const bindingBlock = formatBuildBindingAmbientBlock(
+		names,
+		precomputedBindingTypes,
+		writableNames
+	)
 	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
 	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
 	return bindingBlock
