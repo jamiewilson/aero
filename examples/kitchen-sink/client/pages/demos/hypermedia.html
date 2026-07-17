@@ -5,6 +5,7 @@
 <script is:state>
 	import { GET } from '@aero-js/hypermedia'
 
+	let isLoading = false
 	let isSaving = false
 	let itemCount = 0
 
@@ -89,7 +90,7 @@
 					</p>
 
 					<button on:click="{ POST('/api/hypermedia/save', { target: '#save-status' }) }">
-						Save (auto-disabled while in flight)
+						Save (auto-disabled while in flight, no signal/busy)
 					</button>
 					<div id="save-status">
 						<div class="card text-sm">Not saved yet.</div>
@@ -106,18 +107,18 @@
 					<div class="flex gap-4">
 						<button
 							class="flex-1"
-							busy="{ isSaving }"
-							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
+							busy="{ isLoading }"
+							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isLoading }) }">
 							<code>busy</code> only
 						</button>
 						<button
 							class="flex-1"
-							disabled="{ isSaving }"
-							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isSaving }) }">
+							disabled="{ isLoading }"
+							on:click="{ GET('/api/hypermedia/fragment', { target: '#load-status', state: isLoading }) }">
 							<code>disabled</code> only
 						</button>
 					</div>
-					<p class="text-sm opacity-60 m-0"><code>isSaving</code>: { isSaving }</p>
+					<p class="text-sm opacity-60 m-0">isLoading: { isLoading }</p>
 					<div id="load-status">
 						<div class="card text-sm">Nothing loaded yet.</div>
 					</div>
@@ -137,7 +138,7 @@
 						</button>
 						<button class="flex-1" disabled="{ isSaving }">Cancel (disabled while saving)</button>
 					</div>
-					<p class="text-sm opacity-60 m-0">Status: { isSaving ? 'Saving…' : 'Idle' }</p>
+					<p class="text-sm opacity-60 m-0">isSaving: { isSaving }</p>
 					<div id="save-status-2">
 						<div class="card text-sm">Not saved yet.</div>
 					</div>
@@ -183,8 +184,7 @@
 			</header>
 
 			<div class="card grid gap-4 not-prose">
-				<form
-					on:submit.prevent="{ POST('/api/hypermedia/contact', { target: '#contact-status' }) }">
+				<form on:submit.prevent="{ POST('/api/hypermedia/form', { target: '#form-status' }) }">
 					<div class="flex gap-4">
 						<input
 							class="flex-1"
@@ -196,7 +196,7 @@
 						<button type="submit">Send</button>
 					</div>
 				</form>
-				<div id="contact-status" class="card">
+				<div id="form-status" class="card">
 					<span class="text-sm opacity-60">No message yet.</span>
 				</div>
 			</div>
@@ -256,3 +256,9 @@
 		</section>
 	</article>
 </base-layout>
+
+<style>
+	[id] {
+		overflow-wrap: anywhere;
+	}
+</style>
