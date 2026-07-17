@@ -188,18 +188,9 @@ function throwDirectiveError(
 ): never {
 	const raw = attrValue ?? ''
 	const needles = [`${attrName}="${raw}"`, `${attrName}='${raw}'`, attrName]
-	if (diag?.source) {
-		for (const needle of needles) {
-			if (!needle) continue
-			const idx = diag.source.indexOf(needle)
-			if (idx >= 0) {
-				const { line, column } = Helper.lineColumnAtOffset(diag.source, idx)
-				throw new CompileError({ message, file: diag.file, line, column })
-			}
-		}
-	}
-	if (diag?.file) {
-		throw new CompileError({ message, file: diag.file })
+	const loc = Helper.locateInTemplateSource(diag?.source, { needles })
+	if (diag?.file || loc) {
+		throw new CompileError({ message, file: diag?.file, ...loc })
 	}
 	throw new Error(message)
 }
