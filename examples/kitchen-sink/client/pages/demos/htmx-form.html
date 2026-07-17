@@ -8,13 +8,12 @@
 
 <base-layout title="HTMX/Alpine form">
 	<article class="prose prose-dark:prose-invert place-self-center pb-[20vh]">
-		<header>
+		<header class="text-center">
 			<h1>HTMX/Alpine form</h1>
 			<p>Alpine <code>x-model</code> with an HTMX POST and toast fragment.</p>
 		</header>
 
 		<main x-data="{ input: '', dismiss: ${dismiss} }" class="grid gap-4 text-center">
-			<p>Test the server:</p>
 			<form
 				class="grid gap-2 w-full"
 				data-testid="htmx-form"
