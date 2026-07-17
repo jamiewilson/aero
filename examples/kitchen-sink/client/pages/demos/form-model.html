@@ -10,11 +10,11 @@
 		bio: '',
 	}
 
-	const emailIsValid = email => {
+	const emailIsValid = (email: string) => {
 		return email.length > 0 && email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 	}
 
-	const planIsValid = plan => {
+	const planIsValid = (plan: string) => {
 		return plan.length > 0 && ['free', 'pro'].includes(plan)
 	}
 
