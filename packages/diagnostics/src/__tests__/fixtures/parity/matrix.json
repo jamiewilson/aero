@@ -1,0 +1,136 @@
+{
+	"version": 1,
+	"triagePolicy": [
+		"Runs on source alone → shared collector + both compile and ide surfaces required.",
+		"Needs IR / project graph → compile authoritative; IDE calls same analysis when feasible.",
+		"IDE-only (live resolution, unused-info) → matrix row marked intentionalAsymmetry; compile catches at build if possible.",
+		"Severity/message changes require fixture/scenario updates."
+	],
+	"rules": [
+		{
+			"ruleId": "feature-gate.is-state-requires-reactivity",
+			"category": "feature-gates",
+			"surfaces": ["compile", "ide", "cli"],
+			"code": "AERO_CONFIG",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/feature-gates.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["is-state-without-reactivity"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "feature-gate.busy-requires-flags",
+			"category": "feature-gates",
+			"surfaces": ["compile", "ide", "cli"],
+			"code": "AERO_CONFIG",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/feature-gates.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["busy-without-flags"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "feature-gate.action-requires-hypermedia",
+			"category": "feature-gates",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_CONFIG",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/feature-gates.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["hypermedia-action-without-hypermedia"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "directive-braces.props",
+			"category": "directive-braces",
+			"surfaces": ["compile", "ide", "cli"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/helpers.ts#validateSingleBracedExpression",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["malformed-props-braces"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "hypermedia.action-state-must-be-binding",
+			"category": "hypermedia",
+			"surfaces": ["compile", "ide", "cli"],
+			"code": "AERO_CONFIG",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/feature-gates.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["hypermedia-string-state-option"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "reactive-scope.class-binding-state-ref",
+			"category": "reactive-scope",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/collect-reactive-binding-issues.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["reactive-class-undeclared-state"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "reactive-scope.unknown-name-in-handler",
+			"category": "reactive-scope",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/collect-reactive-binding-issues.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["reactive-event-unknown-name"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "structural.switch-direct-children",
+			"category": "structural",
+			"surfaces": ["compile"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/lowerer/switch.ts",
+			"intentionalAsymmetry": true,
+			"intentionalNote": "IDE does not yet validate switch structure; shared validator planned.",
+			"scenarioIds": ["switch-orphan-child"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "structural.orphaned-else",
+			"category": "structural",
+			"surfaces": ["ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/core/src/template-diagnostics/checks/check-conditional-chains.ts",
+			"intentionalAsymmetry": true,
+			"intentionalNote": "Compile currently strips orphaned else/else-if silently; IDE errors. Align in a follow-up.",
+			"scenarioIds": ["orphaned-else"],
+			"owner": "core"
+		},
+		{
+			"ruleId": "ide.unused-variables",
+			"category": "warnings",
+			"surfaces": ["ide"],
+			"code": "AERO_TEMPLATE",
+			"severity": "warning",
+			"sharedModule": "packages/core/src/template-diagnostics/checks/check-unused-variables.ts",
+			"intentionalAsymmetry": true,
+			"intentionalNote": "IDE-only live unused binding hints.",
+			"scenarioIds": [],
+			"owner": "core"
+		},
+		{
+			"ruleId": "ide.undefined-script-variables",
+			"category": "warnings",
+			"surfaces": ["ide"],
+			"code": "AERO_SCRIPT",
+			"severity": "error",
+			"sharedModule": "packages/core/src/template-diagnostics/checks/check-undefined-script-variables.ts",
+			"intentionalAsymmetry": true,
+			"intentionalNote": "IDE-only; free template identifiers covered by virtual TS (TS2304).",
+			"scenarioIds": [],
+			"owner": "core"
+		}
+	]
+}

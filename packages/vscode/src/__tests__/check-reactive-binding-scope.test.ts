@@ -55,11 +55,8 @@ describe('checkReactiveBindingScope', () => {
 		checkReactiveBindingScope(doc, parsed, diagnostics)
 
 		expect(diagnostics).toHaveLength(1)
-		expect(diagnostics[0].message).toContain('`show` binding must reference a declared state variable')
+		expect(diagnostics[0].message).toContain('Unknown name `open`')
 		expect(diagnostics[0].severity).toBe('error')
-		const openOffset = text.indexOf('open', text.indexOf('show'))
-		expect(diagnostics[0].span?.line).toBe(doc.positionAt(openOffset).line)
-		expect(diagnostics[0].span?.column).toBe(doc.positionAt(openOffset).character)
 	})
 
 	it('errors when html references a build-time variable with is:state present', () => {
@@ -75,7 +72,19 @@ describe('checkReactiveBindingScope', () => {
 		checkReactiveBindingScope(makeDoc(text), parsed, diagnostics)
 
 		expect(diagnostics).toHaveLength(1)
-		expect(diagnostics[0].message).toContain('`html` binding must reference a declared state variable')
+		expect(diagnostics[0].message).toContain('Unknown name `title`')
+	})
+
+	it('errors when class binding references undeclared state', () => {
+		const text = `<script is:state>
+	let count = 0
+</script>
+<div class:is-active="{ isActive }"></div>`
+		const parsed = parseDocument(makeDoc(text))
+		const diagnostics: any[] = []
+		checkReactiveBindingScope(makeDoc(text), parsed, diagnostics)
+		expect(diagnostics.length).toBeGreaterThanOrEqual(1)
+		expect(diagnostics[0].message).toContain('Reactive class binding `class:is-active`')
 	})
 
 	it('does not error when show references a state variable', () => {

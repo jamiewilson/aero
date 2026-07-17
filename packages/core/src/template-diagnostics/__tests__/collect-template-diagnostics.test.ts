@@ -36,7 +36,7 @@ function makeDocument(text: string, fsPath: string): SourceDocument {
 
 describe('collectTemplateDiagnostics parity', () => {
 	for (const scenario of PARITY_SCENARIOS) {
-		const expectation = scenario.surfaces.vscode ?? scenario.surfaces.cli
+		const expectation = scenario.surfaces.ide ?? scenario.surfaces.vscode ?? scenario.surfaces.cli
 		if (!expectation) continue
 
 		it(`${scenario.id}: ${scenario.description}`, () => {
@@ -46,9 +46,9 @@ describe('collectTemplateDiagnostics parity', () => {
 				flags: scenario.flags,
 			})
 
-			const match = diagnostics.find(
-				d => d.code === expectation.code || d.message.includes(expectation.messageIncludes)
-			)
+			const match =
+				diagnostics.find(d => d.message.includes(expectation.messageIncludes)) ??
+				diagnostics.find(d => d.code === expectation.code)
 			expect(match).toBeDefined()
 			expect(match!.message).toContain(expectation.messageIncludes)
 			expect(match!.code).toBe(expectation.code)
