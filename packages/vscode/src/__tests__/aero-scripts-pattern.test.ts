@@ -111,7 +111,7 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-scripts tokenization', () =>
 		const result = g!.tokenizeLine(line, INITIAL)
 		return {
 			tokens: result.tokens,
-			scopes: [...new Set(result.tokens.flatMap((t: { scopes: string[] }) => t.scopes))],
+			scopes: [...new Set(result.tokens.flatMap((t: { scopes: string[] }) => t.scopes))] as string[],
 		}
 	}
 

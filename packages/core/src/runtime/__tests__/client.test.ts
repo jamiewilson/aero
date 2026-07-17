@@ -2,13 +2,14 @@
  * @vitest-environment happy-dom
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ViteOverlayErrorPayload } from '@aero-js/diagnostics/browser'
 
-const showAeroViteErrorOverlay = vi.fn(async () => {})
+const showAeroViteErrorOverlay = vi.fn(async (_err: ViteOverlayErrorPayload) => {})
 const clearAeroViteErrorOverlay = vi.fn()
 
 vi.mock('../vite-error-overlay', () => ({
-	showAeroViteErrorOverlay: (...args: unknown[]) => showAeroViteErrorOverlay(...args),
-	clearAeroViteErrorOverlay: (...args: unknown[]) => clearAeroViteErrorOverlay(...args),
+	showAeroViteErrorOverlay: (err: ViteOverlayErrorPayload) => showAeroViteErrorOverlay(err),
+	clearAeroViteErrorOverlay: () => clearAeroViteErrorOverlay(),
 }))
 
 import { renderPage } from '../client'

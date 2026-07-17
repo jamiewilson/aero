@@ -7,6 +7,9 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"types": ["node", "vite/client"],
+		"paths": {
+			"/@vite/client": ["./src/vite-client-shim.ts"]
+		},
 		"noEmit": true
 	},
 	"include": ["src/**/*.ts"]

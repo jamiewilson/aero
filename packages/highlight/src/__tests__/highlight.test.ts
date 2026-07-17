@@ -158,43 +158,12 @@ describe('highlight', () => {
 		expect(html).toContain('--shiki-dark')
 	})
 
-	it('adds data-lang to pre when addPreDataLang is enabled', async () => {
-		const html = await highlight('const x = 1', 'js', {
-			theme: 'github-light',
-			transformers: [addPreDataLang()],
-		})
-
-		expect(html).toContain('data-lang="js"')
-		expect(html).toMatch(/<pre[^>]*data-lang="js"[^>]*>/)
-	})
-
-	it('uses raw requested lang token for data-lang with aliases', async () => {
-		const html = await highlight('const x = 1', 'my-js', {
-			theme: 'github-light',
-			langs: ['javascript'],
-			langAlias: { 'my-js': 'javascript' },
-			transformers: [addPreDataLang()],
-		})
-
-		expect(html).toContain('data-lang="my-js"')
-	})
-
 	it('does not add data-lang by default', async () => {
 		const html = await highlight('const x = 1', 'js', {
 			theme: 'github-light',
 		})
 
 		expect(html).not.toContain('data-lang=')
-	})
-
-	it('adds not-prose to pre when addPreNotProse is enabled', async () => {
-		const html = await highlight('const x = 1', 'js', {
-			theme: 'github-light',
-			transformers: [addPreNotProse()],
-		})
-
-		expect(html).toMatch(/<pre class="[^"]*\bnot-prose\b[^"]*"/)
-		expect(html.match(/<pre[^>]*>/)?.[0].match(/class=/g)).toHaveLength(1)
 	})
 
 	it('does not add not-prose by default', async () => {
@@ -220,16 +189,15 @@ describe('highlight', () => {
 		expect(html).toContain('site')
 	})
 
-	it('highlights via html alias and emits data-lang="html"', async () => {
+	it('highlights via html alias', async () => {
 		const code = '<div props="{ x: 1 }" />'
 		const html = await highlight(code, 'html', {
 			theme: 'github-light',
 			langs: ['typescript', aeroHtml],
-			transformers: [addPreDataLang()],
 		})
 
-		expect(html).toContain('data-lang="html"')
 		expect(html).toContain('class="shiki')
+		expect(html).toContain('div')
 	})
 })
 

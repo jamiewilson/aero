@@ -1,6 +1,6 @@
 import { Computed } from './computed'
 import { Effect } from './effect'
-import { readHydrationState, reviveStateValue, type HydrationRoot } from './hydration'
+import { readAeroJsonPayload, readHydrationState, reviveStateValue, type HydrationRoot } from './hydration'
 import { mountStateBindings, bindEvent, bindText } from './mount'
 import { Signal } from './signal'
 import { createStateScope, type StateBindingSpec } from './state-scope'
