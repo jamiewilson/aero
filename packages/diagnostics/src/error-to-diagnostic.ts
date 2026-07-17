@@ -1,6 +1,6 @@
 /**
  * Shared Error → AeroDiagnostic mapping used by both the Effect Cause pipeline
- * and the catch-block `unknownToAeroDiagnostics` path.
+ * and the catch-block {@link normalizeToDiagnostics} path.
  *
  * Consolidates CSS augmentation and stack-span extraction so they
  * don't drift between the two entry points.
@@ -38,7 +38,7 @@ export function cancelledErrorToDiagnostic(value: AeroBuildCancelledError): Aero
 
 /**
  * Map a generic `Error` (with possible CSS augmentation and stack span) to a diagnostic.
- * This is the shared core that both `failureToAeroDiagnostics` and `unknownToAeroDiagnostics` use.
+ * This is the shared core that both `failureToAeroDiagnostics` and {@link normalizeToDiagnostics} use.
  */
 export function genericErrorToDiagnostic(
 	err: Error,

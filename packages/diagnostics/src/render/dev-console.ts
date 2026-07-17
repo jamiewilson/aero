@@ -33,6 +33,7 @@ function wantColors(explicit?: boolean): boolean {
 	if (typeof process === 'undefined') return false
 	if (process.env.NO_COLOR !== undefined && process.env.NO_COLOR !== '') return false
 	if (process.env.FORCE_COLOR === '0') return false
+	if (process.env.FORCE_COLOR !== undefined && process.env.FORCE_COLOR !== '') return true
 	return Boolean(process.stdout?.isTTY)
 }
 

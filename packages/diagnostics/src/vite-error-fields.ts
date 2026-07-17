@@ -4,6 +4,9 @@
 
 import type { AeroDiagnostic, AeroDiagnosticCode } from './types'
 
+/** Property stamped on Vite plugin errors so the logger keeps framed diagnostics. */
+export const AERO_DIAGNOSTICS_ERROR_PROP = '__aeroDiagnostics' as const
+
 /** Rollup-compatible error fields (Vite plugin context / ErrorOverlay). */
 export interface AeroViteErrorFields {
 	message: string
@@ -11,6 +14,7 @@ export interface AeroViteErrorFields {
 	plugin?: string
 	loc?: { file?: string; line: number; column: number }
 	frame?: string
+	[AERO_DIAGNOSTICS_ERROR_PROP]?: readonly AeroDiagnostic[]
 }
 
 /**

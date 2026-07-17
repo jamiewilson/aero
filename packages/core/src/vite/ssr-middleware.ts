@@ -11,10 +11,10 @@ import {
 	type AeroDiagnostic,
 	buildDevSsrErrorHtml,
 	encodeDiagnosticsHeaderValue,
-	enrichDiagnosticsWithSourceFrames,
-	formatDiagnosticsDevConsole,
+	enrichDiagnostics,
+	normalizeToDiagnostics,
+	renderDiagnostics,
 	sharedDiagnosticLogGate,
-	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
 import { addDoctype } from './build'
@@ -230,8 +230,8 @@ export async function handleSsrRequest(
 						},
 					})
 				: err
-		const diagnostics = enrichDiagnosticsWithSourceFrames(
-			unknownToAeroDiagnostics(enrichedErr, pageTemplateHint ? { file: pageTemplateHint } : {})
+		const diagnostics = enrichDiagnostics(
+			normalizeToDiagnostics(enrichedErr, pageTemplateHint ? { file: pageTemplateHint } : {})
 		)
 		recordSsrDiagnosticsMetrics(diagnostics)
 		const devDetails = server.config.mode === 'development'
@@ -251,10 +251,13 @@ export async function handleSsrRequest(
 			if (shouldLog) {
 				// Runtime SSR failures never hit Vite's transform error path, so dump
 				// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
+				const loggerHasColors = (server.config.logger as { hasColors?: boolean }).hasColors
 				server.config.logger.error(
-					formatDiagnosticsDevConsole(diagnostics, {
-						colors: 'hasColors' in server.config.logger && Boolean(server.config.logger.hasColors),
-					})
+					renderDiagnostics(
+						diagnostics,
+						'dev-console',
+						typeof loggerHasColors === 'boolean' ? { colors: loggerHasColors } : {}
+					)
 				)
 			}
 			res.statusCode = 500

@@ -61,8 +61,26 @@ export {
 	genericErrorToDiagnostic,
 	unknownValueToDiagnostic,
 } from './error-to-diagnostic'
-export { unknownToAeroDiagnostics } from './from-unknown'
+export {
+	normalizeToDiagnostics,
+	unknownToAeroDiagnostics,
+	type NormalizeContext,
+} from './from-unknown'
 export { failureToAeroDiagnostics, thrownToAeroDiagnostics } from './cause-map'
+
+// --- Unified failure pipeline (normalize → enrich → render) ---
+export {
+	enrichDiagnostics,
+	renderDiagnostics,
+	reportAeroFailure,
+	type EnrichContext,
+	type ErrorContext,
+	type RenderDiagnosticsOptions,
+	type RenderDiagnosticsResult,
+	type RenderSurface,
+	type ReportAeroFailureContext,
+	type ViteOverlayRenderResult,
+} from './pipeline'
 
 // --- Error types ---
 export { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
@@ -87,6 +105,7 @@ export {
 
 // --- Vite integration ---
 export {
+	AERO_DIAGNOSTICS_ERROR_PROP,
 	aeroDiagnosticToViteErrorFields,
 	diagnosticsToSingleMessage,
 	frameForViteOverlay,

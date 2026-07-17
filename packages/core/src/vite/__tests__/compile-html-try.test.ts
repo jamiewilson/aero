@@ -50,6 +50,26 @@ describe('htmlCompileTry', () => {
 		expect(d[0]!.span).toEqual({ file: 'real.html', line: 5, column: 0 })
 	})
 
+	it('maps duck-typed CompileError and preserves span', () => {
+		const d = thrownToAeroDiagnostics(
+			(() => {
+				try {
+					htmlCompileTry('/proj/pages/b.html', () => {
+						const err = new Error(
+							'Reactive class binding `class:is-active` must reference a declared state variable.'
+						)
+						err.name = 'CompileError'
+						Object.assign(err, { file: '/proj/pages/b.html', line: 46, column: 9 })
+						throw err
+					})
+				} catch (err) {
+					return err
+				}
+			})()
+		)
+		expect(d[0]!.span).toEqual({ file: '/proj/pages/b.html', line: 46, column: 9 })
+	})
+
 	it('maps thrown non-Error values to compile diagnostics (no silent failure)', () => {
 		const d = thrownToAeroDiagnostics(
 			(() => {

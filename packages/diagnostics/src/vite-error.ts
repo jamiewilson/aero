@@ -8,6 +8,7 @@ import { stripAeroViteMessageDecorations } from './vite-error-fields'
 
 export type { AeroViteErrorFields } from './vite-error-fields'
 export {
+	AERO_DIAGNOSTICS_ERROR_PROP,
 	aeroDiagnosticToViteErrorFields,
 	frameForViteOverlay,
 	stripAeroViteMessageDecorations,

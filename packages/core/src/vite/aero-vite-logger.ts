@@ -5,14 +5,15 @@
 
 import type { Logger, ServerModuleRunnerOptions } from 'vite'
 import {
+	AERO_DIAGNOSTICS_ERROR_PROP,
 	aeroDiagnosticToViteErrorFields,
-	enrichDiagnosticsWithSourceFrames,
+	enrichDiagnostics,
 	formatCondensedHtmlSsrParseError,
-	formatDiagnosticsDevConsole,
 	frameForViteOverlay,
 	isCondensableHtmlSsrParseError,
+	normalizeToDiagnostics,
+	renderDiagnostics,
 	sharedDiagnosticLogGate,
-	unknownToAeroDiagnostics,
 	type AeroDiagnostic,
 	type DiagnosticLogGate,
 } from '@aero-js/diagnostics'
@@ -27,8 +28,13 @@ interface LoggerWithColors extends Logger {
 	hasColors?: boolean
 }
 
-function loggerUsesColors(logger: Logger): boolean {
-	return Boolean((logger as LoggerWithColors).hasColors)
+/**
+ * Vite loggers do not always expose `hasColors`. Only pass an explicit boolean
+ * through to the formatter; otherwise let it use TTY / `NO_COLOR` defaults.
+ */
+function loggerDevConsoleColors(logger: Logger): boolean | undefined {
+	const hasColors = (logger as LoggerWithColors).hasColors
+	return typeof hasColors === 'boolean' ? hasColors : undefined
 }
 
 interface ViteErrorLike {
@@ -63,10 +69,19 @@ function shouldOwnViteError(err: ViteErrorLike, rawError: unknown): boolean {
 	return isAeroViteError(err) || isCssSyntaxError(rawError)
 }
 
+function attachedAeroDiagnostics(rawError: unknown): AeroDiagnostic[] | undefined {
+	if (typeof rawError !== 'object' || rawError === null) return undefined
+	const attached = (rawError as Record<string, unknown>)[AERO_DIAGNOSTICS_ERROR_PROP]
+	if (!Array.isArray(attached) || attached.length === 0) return undefined
+	return attached as AeroDiagnostic[]
+}
+
 function diagnosticsFromViteError(err: ViteErrorLike, rawError?: unknown) {
+	const attached = attachedAeroDiagnostics(rawError)
+	if (attached) return enrichDiagnostics(attached)
 	const source =
 		rawError instanceof Error ? rawError : Object.assign(new Error(err.message), err)
-	return enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(source))
+	return enrichDiagnostics(normalizeToDiagnostics(source))
 }
 
 /**
@@ -122,11 +137,19 @@ export function wrapAeroViteLogger(
 				stampViteOverlayFields(rawError, diagnostics)
 				if (!gate.shouldLog(diagnostics)) return
 				// Dev console format includes its own timestamp; avoid `time [vite] time [aero]`.
-				base.error(formatDiagnosticsDevConsole(diagnostics, { colors: loggerUsesColors(base) }), {
-					...options,
-					timestamp: false,
-					error: rawError instanceof Error ? rawError : options?.error,
-				})
+				const colors = loggerDevConsoleColors(base)
+				base.error(
+					renderDiagnostics(
+						diagnostics,
+						'dev-console',
+						colors === undefined ? {} : { colors }
+					),
+					{
+						...options,
+						timestamp: false,
+						error: rawError instanceof Error ? rawError : options?.error,
+					}
+				)
 				return
 			}
 			base.error(msg, options)

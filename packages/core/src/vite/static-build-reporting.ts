@@ -5,11 +5,11 @@ import {
 	AeroCompileError,
 	type AeroDiagnostic,
 	type DiagnosticsSurface,
-	enrichDiagnosticsWithSourceFrames,
+	enrichDiagnostics,
 	exitCodeForThrown,
-	formatDiagnosticsTerminal,
+	normalizeToDiagnostics,
 	recordDiagnosticsMetrics,
-	unknownToAeroDiagnostics,
+	renderDiagnostics,
 } from '@aero-js/diagnostics'
 
 interface BuildLogger {
@@ -48,9 +48,9 @@ export function createStaticBuildReportingService(
 				throw err
 			}
 			if (isAeroOwnedError(err)) {
-				const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(err))
+				const diagnostics = enrichDiagnostics(normalizeToDiagnostics(err))
 				recordMetrics('static-prerender', diagnostics)
-				logger.error('\n' + formatDiagnosticsTerminal(diagnostics) + '\n')
+				logger.error('\n' + renderDiagnostics(diagnostics, 'terminal') + '\n')
 				process.exitCode = exitCodeForThrown(err)
 				throw err
 			}

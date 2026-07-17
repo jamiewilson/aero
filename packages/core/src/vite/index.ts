@@ -37,12 +37,7 @@ import {
 	STATE_BINDINGS_REGISTRY_MODULE_ID,
 } from './defaults'
 
-import {
-	aeroDiagnosticToViteErrorFields,
-	diagnosticsToSingleMessage,
-	enrichDiagnosticsWithSourceFrames,
-	thrownToAeroDiagnostics,
-} from '@aero-js/diagnostics'
+import { reportAeroFailure } from '@aero-js/diagnostics'
 import { htmlCompileTry } from './compile-html-try'
 import { compileHtmlSourceForVite } from './compile-html-for-vite'
 import { syncClientScriptsForTemplate } from './client-script-sync'
@@ -418,17 +413,9 @@ function compileOrReport(
 	try {
 		return compileFn()
 	} catch (err) {
-		const raw = thrownToAeroDiagnostics(err)
-		const merged = enrichDiagnosticsWithSourceFrames(
-			raw.map(d => ({
-				...d,
-				file: d.file ?? d.span?.file ?? filePath,
-			}))
+		ctx.error(
+			reportAeroFailure(err, { defaultFile: filePath, plugin: pluginName }, 'vite-overlay')
 		)
-		const fields = aeroDiagnosticToViteErrorFields(merged[0]!, pluginName)
-		const payload =
-			merged.length > 1 ? { ...fields, message: diagnosticsToSingleMessage(merged) } : fields
-		ctx.error(payload)
 	}
 }
 

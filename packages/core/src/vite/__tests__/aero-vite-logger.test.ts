@@ -93,6 +93,51 @@ describe('wrapAeroViteLogger', () => {
 		expect(printed).not.toContain('File:')
 	})
 
+	it('applies ANSI colors when the Vite logger reports hasColors', () => {
+		const gate = createDiagnosticLogGate()
+		const baseError = vi.fn()
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: true } as any, gate)
+		const err = {
+			message: 'Missing opening {',
+			id: '/tmp/code.css',
+			loc: { file: '/tmp/code.css', line: 191, column: 1 },
+			plugin: 'vite-plugin-aero-transform',
+		}
+
+		wrapped.error('Internal server error: Missing opening {', { error: err })
+
+		const printed = String(baseError.mock.calls[0]![0])
+		expect(printed).toMatch(/\x1b\[31m/)
+		expect(printed).toContain('[aero] Error: Missing opening {')
+	})
+
+	it('does not force colors off when the Vite logger omits hasColors', () => {
+		const gate = createDiagnosticLogGate()
+		const baseError = vi.fn()
+		const wrapped = wrapAeroViteLogger({ error: baseError } as any, gate)
+		const err = {
+			message: 'Missing opening {',
+			id: '/tmp/code.css',
+			loc: { file: '/tmp/code.css', line: 191, column: 1 },
+			plugin: 'vite-plugin-aero-transform',
+			frame: '> 191 | }\n      | ^',
+		}
+		const prevForce = process.env.FORCE_COLOR
+		const prevNoColor = process.env.NO_COLOR
+		process.env.FORCE_COLOR = '1'
+		delete process.env.NO_COLOR
+		try {
+			wrapped.error('Internal server error: Missing opening {', { error: err })
+			const printed = String(baseError.mock.calls[0]![0])
+			expect(printed).toMatch(/\x1b\[31m/)
+		} finally {
+			if (prevForce === undefined) delete process.env.FORCE_COLOR
+			else process.env.FORCE_COLOR = prevForce
+			if (prevNoColor === undefined) delete process.env.NO_COLOR
+			else process.env.NO_COLOR = prevNoColor
+		}
+	})
+
 	it('dedupes Aero error blocks by diagnostic fingerprint', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()

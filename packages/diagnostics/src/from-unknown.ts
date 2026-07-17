@@ -1,11 +1,14 @@
 /**
- * Map thrown values to AeroDiagnostic[] for catch blocks before tagged errors exist everywhere.
+ * Normalize thrown values to AeroDiagnostic[] (canonical catch-block entry).
  */
 
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { AeroDiagnostic, AeroDiagnosticCode, AeroDiagnosticSpan } from './types'
-import { failureToAeroDiagnostics } from './cause-map'
+import {
+	cancelledErrorToDiagnostic,
+	compileErrorToDiagnostic,
+} from './error-to-diagnostic'
 import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 import {
 	contentSchemaIssuePayloadsToDiagnostics,
@@ -14,6 +17,12 @@ import {
 import { augmentFromCssSyntaxError } from './css-postcss-error'
 import { firstStackSpan } from './stack-frame'
 import { stripAeroViteMessageDecorations } from './vite-error'
+
+/** Optional file/code hints when normalizing a caught failure. */
+export interface NormalizeContext {
+	file?: string
+	code?: AeroDiagnosticCode
+}
 
 function isCompileError(
 	err: unknown
@@ -160,14 +169,16 @@ function errorWithContextToDiagnostic(
 	const vite = viteErrorMeta(err)
 	const parsedMessage = stripAeroViteMessageDecorations(err.message || String(err))
 	const stackSpan = css || vite.loc || vite.id ? undefined : firstStackSpan(err.stack)
+	const viteLocLine =
+		typeof vite.loc?.line === 'number' && vite.loc.line > 0 ? vite.loc.line : undefined
 	let diagFile = css?.file ?? (vite.loc?.file || vite.id) ?? stackSpan?.file ?? contextFile
 	let span =
 		css?.span ??
-		(vite.loc?.line !== undefined
+		(viteLocLine !== undefined
 			? {
-					file: vite.loc.file ?? vite.id ?? diagFile ?? '',
-					line: vite.loc.line,
-					column: vite.loc.column ?? 0,
+					file: vite.loc!.file ?? vite.id ?? diagFile ?? '',
+					line: viteLocLine,
+					column: typeof vite.loc!.column === 'number' ? vite.loc!.column : 0,
 				}
 			: stackSpan
 				? { file: stackSpan.file, line: stackSpan.line, column: stackSpan.column }
@@ -194,32 +205,37 @@ function errorWithContextToDiagnostic(
 		message: css?.message ?? parsedMessage.message,
 		file: diagFile,
 		span,
-		...(css?.frame
-			? { frame: css.frame }
-			: vite.frame && span
-				? { frame: vite.frame }
-				: {}),
+		// Keep Vite frames even when loc was remapped/stripped (TransformPluginContext).
+		...(css?.frame ? { frame: css.frame } : vite.frame ? { frame: vite.frame } : {}),
 		...(hint ? { hint } : {}),
 	}
 }
 
 /**
  * Normalize unknown caught errors into one or more diagnostics.
+ *
+ * @remarks
+ * Single implementation for compile, Vite logger, SSR, CLI, and static build.
+ * Prefer {@link reportAeroFailure} / {@link enrichDiagnostics} at call sites.
  */
-export function unknownToAeroDiagnostics(
+export function normalizeToDiagnostics(
 	err: unknown,
-	base: { file?: string; code?: AeroDiagnosticCode } = {}
+	base: NormalizeContext = {}
 ): AeroDiagnostic[] {
+	if (err instanceof AggregateError) {
+		return err.errors.flatMap(inner => normalizeToDiagnostics(inner, base))
+	}
+
 	const code: AeroDiagnosticCode = base.code ?? 'AERO_COMPILE'
 	const file = base.file
 
 	if (err instanceof AeroBuildCancelledError) {
-		return failureToAeroDiagnostics(err)
+		return [cancelledErrorToDiagnostic(err)]
 	}
 
 	if (err instanceof AeroCompileError) {
-		const fromTagged = failureToAeroDiagnostics(err)
-		return fromTagged.map(d => (file && !d.file ? { ...d, file } : d))
+		const d = compileErrorToDiagnostic(err)
+		return [file && !d.file ? { ...d, file } : d]
 	}
 
 	if (isContentSchemaAggregateError(err)) {
@@ -233,13 +249,14 @@ export function unknownToAeroDiagnostics(
 			err.file !== undefined && err.line !== undefined
 				? { file: err.file, line: err.line, column: err.column ?? 0 }
 				: undefined
-		const compileCode = err.code === 'AERO_CONFIG' || err.code === 'AERO_COMPILE' ? err.code : 'AERO_COMPILE'
+		const compileCode =
+			err.code === 'AERO_CONFIG' || err.code === 'AERO_COMPILE' ? err.code : 'AERO_COMPILE'
 		return [
 			{
 				code: compileCode,
 				severity: 'error',
 				message: err.message,
-				file: err.file,
+				file: err.file ?? file,
 				span,
 			},
 		]
@@ -265,4 +282,14 @@ export function unknownToAeroDiagnostics(
 			file,
 		},
 	]
+}
+
+/**
+ * @deprecated Use {@link normalizeToDiagnostics}.
+ */
+export function unknownToAeroDiagnostics(
+	err: unknown,
+	base: NormalizeContext = {}
+): AeroDiagnostic[] {
+	return normalizeToDiagnostics(err, base)
 }

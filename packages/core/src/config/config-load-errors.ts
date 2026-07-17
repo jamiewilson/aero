@@ -3,7 +3,7 @@
  */
 
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { unknownToAeroDiagnostics } from '@aero-js/diagnostics'
+import { normalizeToDiagnostics } from '@aero-js/diagnostics'
 
 export class AeroConfigLoadError extends Error {
 	readonly filePath: string
@@ -20,7 +20,7 @@ export class AeroConfigLoadError extends Error {
 /** Map strict config-load errors to canonical diagnostics category/codes. */
 export function configLoadErrorToDiagnostics(err: unknown): AeroDiagnostic[] {
 	if (err instanceof AeroConfigLoadError) {
-		return unknownToAeroDiagnostics(err.causeUnknown, {
+		return normalizeToDiagnostics(err.causeUnknown, {
 			code: 'AERO_CONFIG',
 			file: err.filePath,
 		}).map(d => ({
@@ -29,5 +29,5 @@ export function configLoadErrorToDiagnostics(err: unknown): AeroDiagnostic[] {
 			span: d.span ? { ...d.span, file: err.filePath } : d.span,
 		}))
 	}
-	return unknownToAeroDiagnostics(err, { code: 'AERO_CONFIG' })
+	return normalizeToDiagnostics(err, { code: 'AERO_CONFIG' })
 }
