@@ -2,11 +2,11 @@ import {
 	AERO_EXIT_BUILD_GENERIC,
 	AERO_EXIT_NITRO,
 	AeroBuildCancelledError,
-	AeroCompileError,
 	type AeroDiagnostic,
 	type DiagnosticsSurface,
 	enrichDiagnostics,
 	exitCodeForThrown,
+	isAeroOwnedFailure,
 	normalizeToDiagnostics,
 	recordDiagnosticsMetrics,
 	renderDiagnostics,
@@ -28,14 +28,6 @@ interface StaticBuildReportingOptions {
 	recordMetrics?: (surface: MetricsSurface, diagnostics: readonly AeroDiagnostic[]) => void
 }
 
-function isAeroOwnedError(err: unknown): boolean {
-	if (err instanceof AeroCompileError) return true
-	if (!(err instanceof Error)) return false
-	if (/^\[AERO_[A-Z_]+\]/.test(err.message)) return true
-	const plugin = (err as Error & { plugin?: unknown }).plugin
-	return typeof plugin === 'string' && plugin.includes('aero')
-}
-
 export function createStaticBuildReportingService(
 	options: StaticBuildReportingOptions = {}
 ): StaticBuildReportingService {
@@ -47,7 +39,7 @@ export function createStaticBuildReportingService(
 				process.exitCode = exitCodeForThrown(err)
 				throw err
 			}
-			if (isAeroOwnedError(err)) {
+			if (isAeroOwnedFailure(err)) {
 				const diagnostics = enrichDiagnostics(normalizeToDiagnostics(err))
 				recordMetrics('static-prerender', diagnostics)
 				logger.error('\n' + renderDiagnostics(diagnostics, 'terminal') + '\n')

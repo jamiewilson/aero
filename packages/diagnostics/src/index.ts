@@ -81,6 +81,7 @@ export {
 	type ReportAeroFailureContext,
 	type ViteOverlayRenderResult,
 } from './pipeline'
+export { isAeroOwnedFailure, viteLoggerHasColors } from './ownership'
 
 // --- Error types ---
 export { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'

@@ -5,9 +5,9 @@ import path from 'node:path'
 import { compileTemplate } from '../../codegen'
 import { CompileError } from '../../types'
 import {
-	enrichDiagnosticsWithSourceFrames,
+	enrichDiagnostics,
 	formatDiagnosticsDevConsole,
-	unknownToAeroDiagnostics,
+	normalizeToDiagnostics,
 } from '@aero-js/diagnostics'
 
 const mockOptions = {
@@ -40,7 +40,7 @@ describe('reactive class binding diagnostics', () => {
 		expect(compileError.line).toBe(4)
 		expect(compileError.column).toBeTypeOf('number')
 
-		const diagnostics = enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(compileError))
+		const diagnostics = enrichDiagnostics(normalizeToDiagnostics(compileError))
 		const diagnostic = diagnostics[0]
 		expect(diagnostic?.span?.line).toBe(4)
 		expect(diagnostic?.frame).toBeTruthy()

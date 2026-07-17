@@ -15,6 +15,7 @@ import {
 	normalizeToDiagnostics,
 	renderDiagnostics,
 	sharedDiagnosticLogGate,
+	viteLoggerHasColors,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
 import { addDoctype } from './build'
@@ -244,6 +245,7 @@ export async function handleSsrRequest(
 					: err && typeof err === 'object' && 'plugin' in err
 						? (err as { plugin?: unknown }).plugin
 						: undefined
+			// Transform-path errors are already printed by Vite's logger; runtime SSR is not.
 			const aeroAlreadyLogged =
 				typeof plugin === 'string' && plugin.includes('aero')
 			const shouldLog =
@@ -251,12 +253,12 @@ export async function handleSsrRequest(
 			if (shouldLog) {
 				// Runtime SSR failures never hit Vite's transform error path, so dump
 				// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
-				const loggerHasColors = (server.config.logger as { hasColors?: boolean }).hasColors
+				const colors = viteLoggerHasColors(server.config.logger)
 				server.config.logger.error(
 					renderDiagnostics(
 						diagnostics,
 						'dev-console',
-						typeof loggerHasColors === 'boolean' ? { colors: loggerHasColors } : {}
+						colors === undefined ? {} : { colors }
 					)
 				)
 			}

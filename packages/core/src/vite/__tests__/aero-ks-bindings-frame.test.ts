@@ -3,10 +3,10 @@ import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, mkdirSync } fro
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
-	aeroDiagnosticToViteErrorFields,
-	enrichDiagnosticsWithSourceFrames,
+	enrichDiagnostics,
 	formatDiagnosticsDevConsole,
-	thrownToAeroDiagnostics,
+	normalizeToDiagnostics,
+	reportAeroFailure,
 } from '@aero-js/diagnostics'
 import { htmlCompileTry } from '../compile-html-try'
 import { compileHtmlSourceForVite } from '../compile-html-for-vite'
@@ -60,16 +60,21 @@ describe('kitchen-sink bindings frame', () => {
 			caught = e
 		}
 
-		const raw = thrownToAeroDiagnostics(caught)
-		const merged = enrichDiagnosticsWithSourceFrames(
-			raw.map(d => ({ ...d, file: d.file ?? file }))
-		)
+		const merged = enrichDiagnostics(normalizeToDiagnostics(caught), {
+			defaultFile: file,
+		})
 		const printed = formatDiagnosticsDevConsole(merged, { colors: false })
-		console.log('line', (caught as any)?.line, 'printed:\n', printed)
+		const overlay = reportAeroFailure(
+			caught,
+			{ defaultFile: file, plugin: 'vite-plugin-aero-transform' },
+			'vite-overlay'
+		)
 
 		expect((caught as any)?.line).toBeTypeOf('number')
 		expect(merged[0]?.frame).toContain('class:is-active')
 		expect(printed).toMatch(/bindings\.html:\d+:\d+/)
 		expect(printed).toMatch(/>\s*\d+\s*\|/)
+		expect(overlay.loc?.line).toBe(merged[0]?.span?.line)
+		expect(overlay.frame).toContain('class:is-active')
 	})
 })
