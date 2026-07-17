@@ -41,7 +41,7 @@
 			</header>
 			<div class="grid gap-4 not-prose">
 				<button on:click="{ isActive = !isActive }">
-					Toggle <code>active</code> class binding
+					Toggle <code>isActive</code> class binding
 				</button>
 				<div class:is-active="{ isActive }" class="card text-center">
 					<code>class="{ isActive ? 'is-active' : '' }"</code>
@@ -55,7 +55,9 @@
 			</header>
 			<div class="grid gap-4 not-prose">
 				<button on:click="{ isSaving = !isSaving }">Toggle disabled (property binding)</button>
-				<button disabled="{ isSaving }">disabled="{ isSaving }"</button>
+				<button class="disabled:bg-red-700/20" disabled="{ isSaving }">
+					disabled="{ isSaving }"
+				</button>
 			</div>
 		</section>
 	</article>
@@ -63,6 +65,6 @@
 
 <style>
 	.is-active {
-		outline: 2px solid var(--accent, #0b57d0);
+		background-color: --opacity(var(--color-green-500), 0.1);
 	}
 </style>
