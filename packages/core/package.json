@@ -110,8 +110,8 @@
 		"@aero-js/hypermedia": "workspace:*",
 		"@aero-js/interpolation": "workspace:*",
 		"@aero-js/reactivity": "workspace:*",
-		"get-tsconfig": "^4.14.0",
 		"consola": "^3.4.2",
+		"get-tsconfig": "^4.14.0",
 		"html-minifier-next": "^7.0.0",
 		"jiti": "^2.7.0",
 		"linkedom": "^0.18.12",
@@ -125,6 +125,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
+		"source-map": "^0.7.6",
 		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"

@@ -22,8 +22,12 @@ describe('shouldLogIntentionalHttpError', () => {
 		expect(shouldLogIntentionalHttpError(HTTPError.status(404, 'missing'), event)).toBe(false)
 	})
 
-	it('logs intentional non-404 HTTPErrors', () => {
+	it('skips client HTTPErrors such as 422', () => {
+		expect(shouldLogIntentionalHttpError(HTTPError.status(422, 'invalid'), event)).toBe(false)
+	})
+
+	it('logs intentional 5xx HTTPErrors', () => {
 		expect(shouldLogIntentionalHttpError(HTTPError.status(500, 'fail'), event)).toBe(true)
-		expect(shouldLogIntentionalHttpError(HTTPError.status(422, 'invalid'), event)).toBe(true)
+		expect(shouldLogIntentionalHttpError(HTTPError.status(503, 'unavailable'), event)).toBe(true)
 	})
 })

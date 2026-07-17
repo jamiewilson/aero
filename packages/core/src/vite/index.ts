@@ -62,7 +62,7 @@ import {
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeSnippetTypesGenerated } from '../snippet-typegen'
-import { writeGeneratedNitroConfig } from './nitro-config'
+import { writeGeneratedNitroConfig, resolveAeroNitroPluginsForVite } from './nitro-config'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -896,7 +896,12 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	]
 
 	if (enableNitro) {
-		const rawNitroPlugins = nitro({ serverDir: dirs.server })
+		const root = process.cwd()
+		const aeroNitroPlugins = resolveAeroNitroPluginsForVite(root)
+		const rawNitroPlugins = nitro({
+			serverDir: dirs.server,
+			plugins: aeroNitroPlugins,
+		})
 		const nitroPlugins = Array.isArray(rawNitroPlugins) ? rawNitroPlugins : [rawNitroPlugins]
 		for (const nitroPlugin of nitroPlugins) {
 			if (!nitroPlugin || typeof nitroPlugin !== 'object') continue

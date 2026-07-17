@@ -1,6 +1,8 @@
 import type { RedirectRule } from '../types'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { redirectsToRouteRules } from '../utils/redirects'
 import { loadProjectModule } from '../utils/load-project-module'
 import { toPosix } from '../utils/path'
@@ -14,8 +16,32 @@ const NITRO_CONFIG_NAMES = [
 	'nitro.config.cjs',
 ] as const
 
-/** Aero invariant Nitro plugin (response marker + intentional HTTPError logs). */
+/** Package export id (docs / identity). Nitro plugins must use {@link resolveAeroNitroRuntimePluginPath}. */
 export const AERO_NITRO_RUNTIME_PLUGIN = '@aero-js/core/nitro/runtime-plugin'
+
+const requireFromHere = createRequire(import.meta.url)
+
+/**
+ * Absolute filesystem path to Aero's Nitro runtime plugin.
+ *
+ * Nitro resolves bare/package plugin ids relative to the app root (e.g.
+ * `kitchen-sink/@aero-js/core/...`), so the Vite/dev and generated configs must
+ * pass a real file path.
+ */
+export function resolveAeroNitroRuntimePluginPath(): string {
+	try {
+		return toPosix(requireFromHere.resolve(AERO_NITRO_RUNTIME_PLUGIN))
+	} catch {
+		const mjs = fileURLToPath(new URL('../nitro/runtime-plugin.mjs', import.meta.url))
+		if (existsSync(mjs)) return toPosix(mjs)
+		return toPosix(fileURLToPath(new URL('../nitro/runtime-plugin.ts', import.meta.url)))
+	}
+}
+
+function isAeroNitroRuntimePluginEntry(entry: string): boolean {
+	if (entry === AERO_NITRO_RUNTIME_PLUGIN) return true
+	return /[/\\]nitro[/\\]runtime-plugin\.(mjs|js|ts)$/.test(entry)
+}
 
 type NitroConfigObject = Record<string, unknown>
 
@@ -129,13 +155,28 @@ function serializeInline(value: unknown): string {
 
 /** Prepend Aero's runtime plugin; keep user plugins after. */
 export function mergeAeroNitroPlugins(userPlugins: unknown): string[] {
+	const aeroPlugin = resolveAeroNitroRuntimePluginPath()
 	const rest = Array.isArray(userPlugins)
 		? userPlugins.filter(
-				(entry): entry is string =>
-					typeof entry === 'string' && entry !== AERO_NITRO_RUNTIME_PLUGIN
+				(entry): entry is string => typeof entry === 'string' && !isAeroNitroRuntimePluginEntry(entry)
 			)
 		: []
-	return [AERO_NITRO_RUNTIME_PLUGIN, ...rest]
+	return [aeroPlugin, ...rest]
+}
+
+/**
+ * Plugins for Vite-dev Nitro (`nitro/vite`): Aero invariant + project nitro.config plugins.
+ *
+ * Vite-dev does not use `.aero/nitro.config.mjs`; overrides must include the merged list
+ * so c12 does not drop either Aero or user plugins.
+ */
+export function resolveAeroNitroPluginsForVite(root: string): string[] {
+	const userConfig = loadProjectNitroConfigDetailed(root)
+	if (!userConfig.ok) return mergeAeroNitroPlugins(undefined)
+
+	const configDir = path.dirname(userConfig.filePath)
+	const normalized = normalizePlugins(userConfig.config.plugins, configDir)
+	return mergeAeroNitroPlugins(normalized)
 }
 
 export function findProjectNitroConfigFile(root: string): string | null {
