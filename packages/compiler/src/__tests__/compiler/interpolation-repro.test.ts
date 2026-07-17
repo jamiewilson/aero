@@ -38,8 +38,8 @@ describe('interpolation entity repro', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, {
 			root: '/',
-			clientDir: 'client',
-			resolver: { resolve: () => null },
+			resolvePath: (v: string) => v,
+			importer: '/',
 		})
 		const out = await execute(code)
 
@@ -54,8 +54,8 @@ describe('interpolation entity repro', () => {
 		const parsed = parse(html)
 		const code = compile(parsed, {
 			root: '/',
-			clientDir: 'client',
-			resolver: { resolve: () => null },
+			resolvePath: (v: string) => v,
+			importer: '/',
 		})
 		const out = await execute(code)
 		expect(out).toBe('<p>{ literal }</p>')

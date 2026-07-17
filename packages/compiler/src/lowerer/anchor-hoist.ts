@@ -57,7 +57,7 @@ export function firstIfChainIndex(nodes: NodeList | undefined): number {
 
 export function injectReactiveMarkerOnOpenTag(
 	openTagContent: string,
-	directive: 'if' | 'for' | 'switch',
+	directive: 'if' | 'for' | 'switch' | 'text',
 	bindId: number
 ): string {
 	const attr = `data-aero-${directive}="${bindId}"`

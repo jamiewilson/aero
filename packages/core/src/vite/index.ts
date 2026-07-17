@@ -13,6 +13,7 @@ import type {
 	Plugin,
 	PluginOption,
 	ResolvedConfig,
+	TransformResult,
 	ViteDevServer,
 	WebSocketServer,
 } from 'vite'
@@ -158,7 +159,7 @@ function compileHtmlWithDedupedWarnings(
 	},
 	clientScripts: Map<string, ScriptEntry>,
 	compileWarningHashes: Map<string, string>
-): { code: string; map: object | null } {
+): Pick<TransformResult, 'code' | 'map'> {
 	const warnings: CompileWarningPayload[] = []
 	const componentReactiveProps = collectComponentReactivePropMetadata([
 		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
@@ -179,7 +180,7 @@ function compileHtmlWithDedupedWarnings(
 	flushCompileWarnings(compileWarningHashes, filePath, code, warnings, warning =>
 		logCompileWarning(params.resolvedConfig, filePath, warning)
 	)
-	return generated
+	return generated as Pick<TransformResult, 'code' | 'map'>
 }
 
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
@@ -353,23 +354,27 @@ function isAeroTemplateHtml(
 	)
 }
 
+interface SnippetGraphModule {
+	importers: Set<SnippetGraphModule>
+}
+
 interface ModuleGraphLike {
-	getModuleById(id: string): ModuleNode | undefined
-	invalidateModule(mod: ModuleNode, seen?: Set<ModuleNode>): void
+	getModuleById(id: string): SnippetGraphModule | undefined
+	invalidateModule(mod: SnippetGraphModule, seen?: Set<SnippetGraphModule>): void
 }
 
 /** Invalidate snippet virtual module, its importers, and runtime instance in one module graph. */
 function invalidateSnippetModulesInGraph(
 	moduleGraph: ModuleGraphLike,
 	snippetFile: string,
-	affected: Set<ModuleNode>
+	affected: Set<SnippetGraphModule>
 ): void {
 	const virtualId = toSnippetVirtualModuleId(path.resolve(snippetFile))
 	const snippetMod = moduleGraph.getModuleById(virtualId)
 	if (!snippetMod) return
 
-	const queue: ModuleNode[] = [snippetMod]
-	const seen = new Set<ModuleNode>()
+	const queue: SnippetGraphModule[] = [snippetMod]
+	const seen = new Set<SnippetGraphModule>()
 	while (queue.length > 0) {
 		const mod = queue.shift()!
 		if (seen.has(mod)) continue
@@ -394,20 +399,22 @@ function invalidateSnippetModulesInGraph(
  */
 function collectSnippetHotUpdateModules(file: string, server: ViteDevServer): ModuleNode[] {
 	if (!isSnippetModulePath(file)) return []
-	const affected = new Set<ModuleNode>()
+	const affected = new Set<SnippetGraphModule>()
 	invalidateSnippetModulesInGraph(server.moduleGraph, file, affected)
 	const ssrGraph = server.environments.ssr?.moduleGraph
 	if (ssrGraph) invalidateSnippetModulesInGraph(ssrGraph, file, affected)
-	return [...affected]
+	return [...affected] as ModuleNode[]
 }
 
 /** Turn a compile failure into JS source + map, or call Vite `error` on failure. */
+type ViteCompileResult = Pick<TransformResult, 'code' | 'map'>
+
 function compileOrReport(
 	ctx: { error(payload: unknown): never },
-	compileFn: () => { code: string; map: object | null },
+	compileFn: () => ViteCompileResult,
 	filePath: string,
 	pluginName: string
-): { code: string; map: object | null } {
+): ViteCompileResult {
 	try {
 		return compileFn()
 	} catch (err) {

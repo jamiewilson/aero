@@ -253,7 +253,7 @@ export async function handleSsrRequest(
 				// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
 				server.config.logger.error(
 					formatDiagnosticsDevConsole(diagnostics, {
-						colors: server.config.logger.hasColors,
+						colors: 'hasColors' in server.config.logger && Boolean(server.config.logger.hasColors),
 					})
 				)
 			}

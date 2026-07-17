@@ -73,8 +73,8 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-slot-void tokenization', () 
 		const brTokens = g!.tokenizeLine(brLine, INITIAL).tokens
 		const slotTokens = g!.tokenizeLine(line, INITIAL).tokens
 
-		const brClose = brTokens.find((t) => brLine.slice(t.startIndex, t.endIndex) === '/>')
-		const slotClose = slotTokens.find((t) => line.slice(t.startIndex, t.endIndex) === '/>')
+		const brClose = brTokens.find((t: { startIndex: number; endIndex: number; scopes: string[] }) => brLine.slice(t.startIndex, t.endIndex) === '/>')
+		const slotClose = slotTokens.find((t: { startIndex: number; endIndex: number; scopes: string[] }) => line.slice(t.startIndex, t.endIndex) === '/>')
 
 		expect(brClose).toBeDefined()
 		expect(brClose!.scopes).toContain('punctuation.definition.tag.end.html')

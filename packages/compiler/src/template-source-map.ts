@@ -218,14 +218,13 @@ export function buildTemplateSourceMap(
 		includeContent: true,
 		hires: true,
 	})
-	const json = typeof map.toURL === 'function' ? JSON.parse(map.toString()) : map
 	return {
 		version: 3,
 		file: sourceFileName,
-		sources: json.sources ?? [sourceFileName],
-		sourcesContent: json.sourcesContent ?? [htmlSource],
-		names: json.names ?? [],
-		mappings: json.mappings ?? '',
+		sources: map.sources ?? [sourceFileName],
+		sourcesContent: map.sourcesContent ?? [htmlSource],
+		names: map.names ?? [],
+		mappings: map.mappings ?? '',
 	}
 }
 

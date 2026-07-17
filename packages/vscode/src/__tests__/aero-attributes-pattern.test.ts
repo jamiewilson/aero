@@ -28,6 +28,7 @@ describe('aero-attributes grammar', () => {
 				'aero-for-braced-value': {
 					name?: string
 					contentName?: string
+					beginCaptures?: Record<string, { name?: string }>
 					patterns: Array<{ include?: string }>
 				}
 			}

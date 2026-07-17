@@ -2,7 +2,7 @@
  * Wrap `@tailwindcss/vite` generate transforms so CssSyntaxError keeps the original CSS path.
  */
 
-import type { Plugin, TransformPluginContext } from 'vite'
+import type { HookHandler, Plugin } from 'vite'
 import path from 'node:path'
 import {
 	collectClientStyleCssFiles,
@@ -15,16 +15,13 @@ const TAILWIND_GENERATE = new Set([
 ])
 
 type TransformHook = Plugin['transform']
+type TransformHookHandler = HookHandler<NonNullable<TransformHook>>
 
-function getTransformHandler(
-	transform: TransformHook
-):
-	| ((this: TransformPluginContext, code: string, id: string) => unknown)
-	| undefined {
+function getTransformHandler(transform: TransformHook): TransformHookHandler | undefined {
 	if (!transform) return undefined
 	if (typeof transform === 'function') return transform
 	if (typeof transform === 'object' && typeof transform.handler === 'function') {
-		return transform.handler as (this: TransformPluginContext, code: string, id: string) => unknown
+		return transform.handler
 	}
 	return undefined
 }
@@ -32,7 +29,7 @@ function getTransformHandler(
 function setTransformHandler(
 	plugin: Plugin,
 	transform: TransformHook,
-	handler: (this: TransformPluginContext, code: string, id: string) => unknown
+	handler: TransformHookHandler
 ): void {
 	if (typeof transform === 'function') {
 		plugin.transform = handler
@@ -49,7 +46,7 @@ function wrapTailwindPlugin(plugin: Plugin, root: string, clientDir: string): vo
 	const original = getTransformHandler(transform)
 	if (!original) return
 
-	const wrapped = async function (this: TransformPluginContext, code: string, id: string) {
+	const wrapped: TransformHookHandler = async function (this, code, id) {
 		try {
 			return await original.call(this, code, id)
 		} catch (err) {

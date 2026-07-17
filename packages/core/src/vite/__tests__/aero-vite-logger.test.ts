@@ -161,7 +161,7 @@ describe('wrapAeroViteLogger', () => {
 		wrapped.error('Internal server error: Missed semicolon', { error: err })
 
 		expect(typeof (err as { frame?: string }).frame).toBe('string')
-		expect((err as { frame: string }).frame).toContain('>')
+		expect((err as unknown as { frame: string }).frame).toContain('>')
 		expect((err as { loc?: { line: number } }).loc?.line).toBe(2)
 		expect((err as { id?: string }).id).toContain('global.css')
 	})

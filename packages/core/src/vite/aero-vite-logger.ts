@@ -23,6 +23,14 @@ interface HmrLoggerLike {
 	debug(...msg: unknown[]): void
 }
 
+interface LoggerWithColors extends Logger {
+	hasColors?: boolean
+}
+
+function loggerUsesColors(logger: Logger): boolean {
+	return Boolean((logger as LoggerWithColors).hasColors)
+}
+
 interface ViteErrorLike {
 	message: string
 	stack?: string
@@ -114,7 +122,7 @@ export function wrapAeroViteLogger(
 				stampViteOverlayFields(rawError, diagnostics)
 				if (!gate.shouldLog(diagnostics)) return
 				// Dev console format includes its own timestamp; avoid `time [vite] time [aero]`.
-				base.error(formatDiagnosticsDevConsole(diagnostics, { colors: base.hasColors }), {
+				base.error(formatDiagnosticsDevConsole(diagnostics, { colors: loggerUsesColors(base) }), {
 					...options,
 					timestamp: false,
 					error: rawError instanceof Error ? rawError : options?.error,

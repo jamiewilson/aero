@@ -1,5 +1,6 @@
 import {
 	AERO_EXIT_COMPILE,
+	AeroCompileError,
 	exitCodeForDiagnostics,
 	thrownToAeroDiagnostics,
 	unknownToAeroDiagnostics,
@@ -32,7 +33,10 @@ describe('failure parity across entry points', () => {
 		const logger = { warn: () => {}, error: () => {} }
 		process.exitCode = undefined
 		try {
-			reporting.reportPrerenderFailure(new Error('compile failed'), logger)
+			reporting.reportPrerenderFailure(
+				new AeroCompileError({ message: 'compile failed' }),
+				logger
+			)
 		} catch {
 			// expected rethrow
 		}

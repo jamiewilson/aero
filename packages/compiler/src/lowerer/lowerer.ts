@@ -232,6 +232,7 @@ export class Lowerer {
 		}
 		if (
 			!skipInterpolation &&
+			this.reactiveState &&
 			reactiveBindingNames &&
 			textReferencesStateBindings(text, reactiveBindingNames, value =>
 				tokenizeCurlyInterpolation(value, { attributeMode: false })
