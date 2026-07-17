@@ -1,4 +1,5 @@
 import { createHypermediaRuntime, type HypermediaRuntime } from '@aero-js/hypermedia'
+import { showHypermediaInfrastructureErrorOverlay } from './hypermedia-dev-errors'
 import { readBootstrappedReactivityRuntime } from './reactivity-bootstrap'
 
 export const HYPERMEDIA_RUNTIME_GLOBAL_KEY = '__AERO_HYPERMEDIA_RUNTIME__'
@@ -23,6 +24,7 @@ export function bootstrapHypermediaRuntime(): HypermediaRuntime {
 	const created = createHypermediaRuntime({
 		reactivity,
 		store: reactivityRuntime?.store,
+		onInfrastructureError: showHypermediaInfrastructureErrorOverlay,
 	})
 	runtimeGlobal()[HYPERMEDIA_RUNTIME_GLOBAL_KEY] = created
 	return created

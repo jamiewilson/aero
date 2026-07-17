@@ -16,10 +16,20 @@ export function normalizeMethod(method: string): HttpMethod {
 	return 'GET'
 }
 
+const DEFAULT_ACCEPT = 'application/json, text/html'
+
+function hasHeader(headers: Record<string, string>, name: string): boolean {
+	const lower = name.toLowerCase()
+	return Object.keys(headers).some(key => key.toLowerCase() === lower)
+}
+
 export function buildRequest(options: ActionOptions, trigger?: Element): HypermediaRequest {
 	const method = normalizeMethod(options.method ?? 'GET')
 	const url = options.url ?? ''
 	const headers: Record<string, string> = { ...options.headers }
+	if (!hasHeader(headers, 'Accept')) {
+		headers.Accept = DEFAULT_ACCEPT
+	}
 
 	syncMethodOverride(trigger, method)
 

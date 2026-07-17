@@ -26,12 +26,16 @@ describe('createHypermediaRuntime integration', () => {
 		expect(btn.innerHTML).toBe('<span>new</span>')
 	})
 
-	it('writes JSON response bodies into an explicit target', async () => {
+	it('does not write !ok JSON error envelopes into the target', async () => {
 		document.body.innerHTML =
 			'<button id="btn">fetch</button><pre id="api-error-output">placeholder</pre>'
 		const btn = document.querySelector('#btn')!
 		const output = document.querySelector('#api-error-output')!
 		const runtime = createHypermediaRuntime()
+		const errors: string[] = []
+		btn.addEventListener('error', event => {
+			errors.push(((event as CustomEvent).detail.error as Error).message)
+		})
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			new Response('{"statusCode":404,"message":"Demo API route not found"}', {
 				status: 404,
@@ -39,12 +43,101 @@ describe('createHypermediaRuntime integration', () => {
 			})
 		)
 
-		await runtime.executeAction(
+		const response = await runtime.executeAction(
 			{ method: 'GET', url: '/api/demos/error/not-found', target: '#api-error-output' },
 			btn as HTMLButtonElement
 		)
 
-		expect(output.textContent).toBe('{"statusCode":404,"message":"Demo API route not found"}')
+		expect(response.ok).toBe(false)
+		expect(output.textContent).toBe('placeholder')
+		expect(errors).toEqual(['Demo API route not found'])
+	})
+
+	it('writes ok JSON response bodies into an explicit target', async () => {
+		document.body.innerHTML =
+			'<button id="btn">fetch</button><pre id="json-out">placeholder</pre>'
+		const btn = document.querySelector('#btn')!
+		const output = document.querySelector('#json-out')!
+		const runtime = createHypermediaRuntime()
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('{"ok":true}', {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			})
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/ok', target: '#json-out' },
+			btn as HTMLButtonElement
+		)
+
+		expect(output.textContent).toBe('{"ok":true}')
+	})
+
+	it('does not swap full error documents into the target', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		const errors: string[] = []
+		btn.addEventListener('error', event => {
+			errors.push(((event as CustomEvent).detail.error as Error).message)
+		})
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>boom</body></html>', {
+				status: 500,
+				headers: { 'Content-Type': 'text/html' },
+			})
+		)
+
+		const response = await runtime.executeAction(
+			{ method: 'GET', url: '/api/boom', target: '#result', swap: 'innerHTML' },
+			btn
+		)
+
+		expect(response.ok).toBe(false)
+		expect(target.innerHTML).toBe('old')
+		expect(errors).toEqual(['[aero] Hypermedia infrastructure error (500)'])
+	})
+
+	it('does not swap overlay-bootstrap HTML into the target', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<div data-aero-overlay-bootstrap>overlay</div>', {
+				status: 500,
+				headers: { 'Content-Type': 'text/html' },
+			})
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/boom', target: '#result', swap: 'innerHTML' },
+			btn
+		)
+
+		expect(target.innerHTML).toBe('old')
+	})
+
+	it('still swaps intentional 4xx HTML fragments', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const target = document.querySelector('#result')!
+		const runtime = createHypermediaRuntime()
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span class="error">not found</span>', {
+				status: 404,
+				headers: { 'Content-Type': 'text/html' },
+			})
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/item', target: '#result', swap: 'innerHTML' },
+			btn
+		)
+
+		expect(target.innerHTML).toBe('<span class="error">not found</span>')
 	})
 
 	it('applies Aero-Push-Url response header', async () => {
@@ -371,10 +464,25 @@ describe('createHypermediaRuntime integration', () => {
 		expect(order).toEqual(['primary', 'oob-b', 'oob-a'])
 	})
 
-	it('reloads the page on popstate after boosted navigation', () => {
-		const assign = vi.spyOn(location, 'assign').mockImplementation(() => {})
-		createHypermediaRuntime()
-		window.dispatchEvent(new PopStateEvent('popstate'))
-		expect(assign).toHaveBeenCalled()
+	it('invokes onInfrastructureError for !ok JSON envelopes', async () => {
+		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
+		const btn = document.querySelector('#btn')!
+		const onInfrastructureError = vi.fn()
+		const runtime = createHypermediaRuntime({ onInfrastructureError })
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('{"statusCode":500,"message":"boom"}', {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' },
+			})
+		)
+
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/boom', target: '#result' },
+			btn
+		)
+
+		expect(onInfrastructureError).toHaveBeenCalledOnce()
+		expect(onInfrastructureError.mock.calls[0][0].error.message).toBe('boom')
+		expect(document.querySelector('#result')?.textContent).toBe('old')
 	})
 })

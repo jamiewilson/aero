@@ -16,6 +16,7 @@ import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 import { syncMethodOverride } from './method-override'
 import { applySelectFilter, isAbortError } from './request-policy'
 import { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
+import { isSwappableFragmentHtml } from './fragment-html'
 import {
 	type SseElementPatch,
 	handleSseMessage,
@@ -23,6 +24,21 @@ import {
 	readSseStream,
 	runSseSession,
 } from './sse'
+
+function infrastructureResponseError(response: HypermediaResponse): Error {
+	const status = response.status
+	if (isJsonContentType(response.headers['content-type'])) {
+		try {
+			const parsed = JSON.parse(response.html) as { message?: unknown }
+			if (typeof parsed.message === 'string' && parsed.message.trim()) {
+				return new Error(parsed.message)
+			}
+		} catch {
+			/* not JSON */
+		}
+	}
+	return new Error(`[aero] Hypermedia infrastructure error (${status})`)
+}
 
 type LifecyclePhase = 'loading' | 'swapping' | 'settling'
 
@@ -49,6 +65,12 @@ export interface HypermediaRuntimeOptions {
 	readonly defaultTarget?: string
 	readonly swapLifecycleAdapter?: HypermediaSwapLifecycleAdapter
 	readonly store?: HypermediaSignalStore
+	/**
+	 * Called for infrastructure failures (full error documents, `!ok` JSON envelopes)
+	 * after the lifecycle `error` event is prepared. Not used for intentional HTML
+	 * error fragments or transport failures.
+	 */
+	readonly onInfrastructureError?: (detail: LifecycleDetail) => void
 }
 
 function resolveSwapTarget(
@@ -251,6 +273,7 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 	const reactivityEnabled = options.reactivity === true
 	const defaultSwap = options.defaultSwap ?? 'innerHTML'
 	const defaultTarget = options.defaultTarget
+	const onInfrastructureError = options.onInfrastructureError
 	const busyBindings = new Map<Element, { signalName: string; signal: HypermediaBooleanSignal }>()
 	const inFlightCounts = new WeakMap<HypermediaBooleanSignal, number>()
 	const triggerCancelControllers = new Map<Element, AbortController>()
@@ -272,6 +295,15 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		if (target && target !== trigger) {
 			emit(name, detail, target)
 		}
+	}
+
+	function reportInfrastructureError(
+		detail: LifecycleDetail,
+		trigger: Element | undefined,
+		target: Element | undefined
+	): void {
+		emitLifecycle('error', detail, trigger, target)
+		onInfrastructureError?.(detail)
 	}
 
 	function setBusyForSignal(signal: HypermediaBooleanSignal | undefined, busy: boolean): void {
@@ -492,11 +524,27 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			}
 
 			if (isJsonContentType(response.headers['content-type'])) {
+				if (!response.ok) {
+					setPhaseClass([...phasedElements], null)
+					reportInfrastructureError(
+						{
+							request,
+							response,
+							error: infrastructureResponseError(response),
+							target: requestTargetSelector,
+							trigger,
+						},
+						trigger,
+						requestTarget
+					)
+					return response
+				}
+				let appliedSignalPatch = false
 				if (reactivityEnabled) {
 					const patch = parseSignalPatch(response.html)
-					if (patch) applySignalPatch(defaultStore, patch)
+					if (patch) appliedSignalPatch = applySignalPatch(defaultStore, patch)
 				}
-				if (requestTarget && opts.target) {
+				if (!appliedSignalPatch && requestTarget && opts.target) {
 					requestTarget.textContent = response.html
 				}
 				return response
@@ -517,6 +565,22 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 					abortSignal,
 					openWhenHidden: opts.openWhenHidden ?? true,
 				})
+				return response
+			}
+
+			if (!isSwappableFragmentHtml(response.html)) {
+				setPhaseClass([...phasedElements], null)
+				reportInfrastructureError(
+					{
+						request,
+						response,
+						error: infrastructureResponseError(response),
+						target: requestTargetSelector,
+						trigger,
+					},
+					trigger,
+					requestTarget
+				)
 				return response
 			}
 

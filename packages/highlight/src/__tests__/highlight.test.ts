@@ -1,5 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { highlight, getHighlighter, resetHighlighter, addPreDataLang, addPreNotProse, aeroHtml } from '../index'
+import {
+	highlight,
+	getHighlighter,
+	resetHighlighter,
+	aeroHtml,
+} from '../index'
 import type { ShikiConfig } from '../types'
 
 beforeEach(() => {
