@@ -71,7 +71,7 @@ The fullstack starter includes concrete files for the cookbook patterns in this 
 - `server/api/kv/[key].ts` + `[key].post.ts` — KV storage example
 - `server/api/cache/time.ts` — cached handler example
 - `server/api/database/users.ts` — database example
-- `server/plugins/runtime.ts` — Nitro plugin hook example
+- `server/plugins/` — optional Nitro plugin hooks (Aero already injects its runtime plugin)
 - `server/tasks/cache/warm.ts` + `server/api/tasks/cache-warm.post.ts` — Nitro tasks example
 - `server/entry.ts` — server entry example
 - `nitro.config.ts` — canonical Nitro config
@@ -85,6 +85,7 @@ Aero only injects the parts it must own:
 - `rootDir`
 - `output.dir`
 - `scanDirs`
+- `plugins` — always includes `@aero-js/core/nitro/runtime-plugin` (prepended ahead of user plugins)
 - `replace` values for `process.env.AERO_DIST` and `process.env.AERO_API_PREFIX`
 - redirect-derived `routeRules`
 - `noPublicDir: true` so Nitro serves the Aero-built `dist/` through your catch-all route
@@ -326,15 +327,15 @@ export default defineHandler(async () => {
 
 ## Plugins, Tasks, and Server Entry
 
-Plugins use Nitro lifecycle hooks:
+Aero auto-registers `@aero-js/core/nitro/runtime-plugin`. Add your own plugins under `server/plugins/` and list them in `nitro.config.ts`:
 
 ```ts
-// server/plugins/runtime.ts
+// server/plugins/app-header.ts
 import { definePlugin } from 'nitro'
 
 export default definePlugin(nitroApp => {
 	nitroApp.hooks.hook('response', response => {
-		response.headers.set('x-aero-nitro', 'true')
+		response.headers.set('x-app', 'true')
 	})
 })
 ```

@@ -3,8 +3,10 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+	AERO_NITRO_RUNTIME_PLUGIN,
 	findProjectNitroConfigFile,
 	loadProjectNitroConfigDetailed,
+	mergeAeroNitroPlugins,
 	writeGeneratedNitroConfig,
 } from '../nitro-config'
 
@@ -24,6 +26,18 @@ afterEach(() => {
 })
 
 describe('nitro-config helpers', () => {
+	it('merges Aero runtime plugin ahead of user plugins and dedupes', () => {
+		expect(mergeAeroNitroPlugins(undefined)).toEqual([AERO_NITRO_RUNTIME_PLUGIN])
+		expect(mergeAeroNitroPlugins(['./plugins/app.ts'])).toEqual([
+			AERO_NITRO_RUNTIME_PLUGIN,
+			'./plugins/app.ts',
+		])
+		expect(mergeAeroNitroPlugins([AERO_NITRO_RUNTIME_PLUGIN, './plugins/app.ts'])).toEqual([
+			AERO_NITRO_RUNTIME_PLUGIN,
+			'./plugins/app.ts',
+		])
+	})
+
 	it('finds a project nitro config file in the root', () => {
 		const root = makeTempDir()
 		const filePath = path.join(root, 'nitro.config.ts')
@@ -70,6 +84,7 @@ export default defineNitroConfig({
 		expect(result.conflictingRedirects).toEqual([])
 		expect(result.content).toContain("import { defineNitroConfig } from 'nitro/config'")
 		expect(result.content).not.toContain('extends:')
+		expect(result.content).toContain(AERO_NITRO_RUNTIME_PLUGIN)
 		expect(result.content).toContain('"process.env.AERO_DIST": "\\"dist\\""')
 		expect(result.content).toContain('"process.env.AERO_API_PREFIX": "\\"/api\\""')
 		expect(result.content).toContain('"/legacy"')
@@ -123,6 +138,7 @@ export default defineNitroConfig({
 		expect(result.conflictingRedirects).toEqual(['/legacy'])
 		expect(result.content).toContain('...userNitroConfigObject')
 		expect(result.content).not.toContain('extends: "../nitro.config.ts"')
+		expect(result.content).toContain(AERO_NITRO_RUNTIME_PLUGIN)
 		expect(result.content).toContain(path.join(root, 'plugins', 'runtime.ts').replace(/\\/g, '/'))
 		expect(result.content).toContain(
 			path.join(root, 'tasks', 'cache', 'warm.ts').replace(/\\/g, '/')

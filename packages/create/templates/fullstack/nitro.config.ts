@@ -40,7 +40,6 @@ export default defineNitroConfig({
 			options: { name: 'app-dev' },
 		},
 	},
-	plugins: ['./server/plugins/runtime.ts'],
 	tasks: {
 		'cache:warm': {
 			handler: './server/tasks/cache/warm.ts',

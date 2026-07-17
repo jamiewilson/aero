@@ -3,22 +3,34 @@ import consola from 'consola'
 import { definePlugin } from 'nitro'
 import { getRequestURL, HTTPError } from 'nitro/h3'
 import type { HTTPEvent } from 'nitro/h3'
-import { Youch } from 'youch'
-import { ErrorParser } from 'youch-core'
 
 /**
- * Same terminal formatting Nitro uses for unhandled errors (youch + consola),
- * applied to intentional HTTPError responses that Nitro otherwise silences.
+ * Whether Aero should print youch for this Nitro `error` hook invocation.
+ *
+ * Nitro already logs unhandled throws. Intentional `HTTPError`s (except 404)
+ * are otherwise silent — Aero logs those for request-error parity in the terminal.
  */
+export function shouldLogIntentionalHttpError(
+	error: unknown,
+	event: HTTPEvent | undefined
+): error is Error {
+	if ((error as { unhandled?: boolean }).unhandled) return false
+	if (!event || !HTTPError.isError(error) || error.status === 404) return false
+	return true
+}
+
+/** Same terminal formatting Nitro uses for unhandled errors (youch + consola). */
 async function logRequestErrorLikeNitro(error: Error, event: HTTPEvent): Promise<void> {
 	const url = getRequestURL(event)
 	await enrichStackForYouch(error).catch(() => {})
+	const { Youch } = await import('youch')
 	const ansi = (await new Youch().toANSI(error)).replaceAll(process.cwd(), '.')
 	consola.error(`[request error] [${event.req.method}] ${url}\n\n`, ansi)
 }
 
 /** Mirror Nitro's loadStackTrace so youch can show source frames. */
 async function enrichStackForYouch(error: Error): Promise<void> {
+	const { ErrorParser } = await import('youch-core')
 	const parsed = await new ErrorParser()
 		.defineSourceLoader(async frame => {
 			if (!frame.fileName || frame.fileType !== 'fs' || frame.type === 'native') return
@@ -44,16 +56,16 @@ async function enrichStackForYouch(error: Error): Promise<void> {
 	}
 }
 
+/**
+ * Aero Nitro invariant plugin: response marker + intentional HTTPError terminal logs.
+ */
 export default definePlugin(nitroApp => {
 	nitroApp.hooks.hook('response', response => {
 		response.headers.set('x-aero-nitro', 'true')
 	})
 
 	nitroApp.hooks.hook('error', (error, { event }) => {
-		// Unhandled throws: Nitro's default error handler already prints youch.
-		if ((error as { unhandled?: boolean }).unhandled) return
-		if (!event || !HTTPError.isError(error) || error.status === 404) return
-
+		if (!shouldLogIntentionalHttpError(error, event) || !event) return
 		void logRequestErrorLikeNitro(error, event)
 	})
 })

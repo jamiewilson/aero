@@ -227,21 +227,12 @@ importers:
       alpinejs:
         specifier: ^3.15.12
         version: 3.15.12
-      consola:
-        specifier: ^3.4.2
-        version: 3.4.2
       htmx.org:
         specifier: ^2.0.10
         version: 2.0.10
       tailwindcss:
         specifier: ^4.3.2
         version: 4.3.2
-      youch:
-        specifier: ^4.1.1
-        version: 4.1.1
-      youch-core:
-        specifier: ^0.3.3
-        version: 0.3.3
     devDependencies:
       '@aero-js/prettier-plugin-aero':
         specifier: workspace:*
@@ -300,7 +291,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -337,7 +328,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -392,7 +383,7 @@ importers:
         version: 2.2.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -429,6 +420,9 @@ importers:
       '@aero-js/reactivity':
         specifier: workspace:*
         version: link:../reactivity
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       get-tsconfig:
         specifier: ^4.14.0
         version: 4.14.0
@@ -459,6 +453,12 @@ importers:
       vite-plugin-image-optimizer:
         specifier: ^2.0.3
         version: 2.0.3(sharp@0.35.2)(svgo@4.0.1)(vite@8.1.0(@types/node@26.0.1)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.48.0))
+      youch:
+        specifier: ^4.1.1
+        version: 4.1.1
+      youch-core:
+        specifier: ^0.3.3
+        version: 0.3.3
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -486,7 +486,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -511,7 +511,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -533,7 +533,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -561,7 +561,7 @@ importers:
         version: 20.10.6
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -576,7 +576,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -622,7 +622,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -653,7 +653,7 @@ importers:
         version: 3.9.3
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -675,7 +675,7 @@ importers:
         version: 26.0.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -712,7 +712,7 @@ importers:
         version: 1.125.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
+        version: 0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1))
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -5768,7 +5768,7 @@ snapshots:
       - oxc-resolver
       - vue-tsc
 
-  tsdown@0.22.3(oxc-resolver@11.21.3)(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)):
+  tsdown@0.22.3(typescript@6.0.3)(unrun@0.2.34(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0

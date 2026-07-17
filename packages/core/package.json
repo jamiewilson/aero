@@ -82,6 +82,10 @@
 			"types": "./dist/compile-check-api.d.mts",
 			"default": "./dist/compile-check-api.mjs"
 		},
+		"./nitro/runtime-plugin": {
+			"types": "./dist/nitro/runtime-plugin.d.mts",
+			"default": "./dist/nitro/runtime-plugin.mjs"
+		},
 		"./routing/route-manifest": {
 			"types": "./dist/routing/route-manifest.d.mts",
 			"default": "./dist/routing/route-manifest.mjs"
@@ -107,6 +111,7 @@
 		"@aero-js/interpolation": "workspace:*",
 		"@aero-js/reactivity": "workspace:*",
 		"get-tsconfig": "^4.14.0",
+		"consola": "^3.4.2",
 		"html-minifier-next": "^7.0.0",
 		"jiti": "^2.7.0",
 		"linkedom": "^0.18.12",
@@ -114,7 +119,9 @@
 		"oxc-resolver": "^11.21.3",
 		"sharp": "^0.35.2",
 		"svgo": "^4.0.1",
-		"vite-plugin-image-optimizer": "^2.0.3"
+		"vite-plugin-image-optimizer": "^2.0.3",
+		"youch": "^4.1.1",
+		"youch-core": "^0.3.3"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",

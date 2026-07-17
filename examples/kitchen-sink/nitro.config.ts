@@ -40,7 +40,6 @@ export default defineNitroConfig({
 			options: { name: 'kitchen-sink-dev' },
 		},
 	},
-	plugins: ['./server/plugins/runtime.ts'],
 	tasks: {
 		'cache:warm': {
 			handler: './server/tasks/cache/warm.ts',
