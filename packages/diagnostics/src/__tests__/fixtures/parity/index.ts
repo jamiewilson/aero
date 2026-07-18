@@ -3,8 +3,10 @@ export {
 	ROUTE_PARITY_SCENARIOS,
 	type ParityScenario,
 	type ParitySurface,
+	type ParityCategory,
 	type ParityExpectation,
 	type RouteParityScenario,
+	type LegacyParitySurface,
 } from './scenarios'
 export {
 	DIRECTIVE_PARITY_SCENARIOS,

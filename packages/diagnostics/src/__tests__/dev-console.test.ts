@@ -56,4 +56,31 @@ describe('formatDiagnosticsDevConsole', () => {
 		expect(text).toContain('\x1b[33m') // yellow frame
 		expect(text).not.toContain('\u001b]8;;')
 	})
+
+	it('honors FORCE_COLOR when colors option is omitted', () => {
+		const prevForce = process.env.FORCE_COLOR
+		const prevNoColor = process.env.NO_COLOR
+		process.env.FORCE_COLOR = '1'
+		delete process.env.NO_COLOR
+		try {
+			const text = formatDiagnosticsDevConsole(
+				[
+					{
+						code: 'AERO_COMPILE',
+						severity: 'error',
+						message: 'boom',
+						file: 'a.html',
+						span: { file: 'a.html', line: 1, column: 0 },
+					},
+				],
+				{ now: fixed }
+			)
+			expect(text).toContain('\x1b[31m')
+		} finally {
+			if (prevForce === undefined) delete process.env.FORCE_COLOR
+			else process.env.FORCE_COLOR = prevForce
+			if (prevNoColor === undefined) delete process.env.NO_COLOR
+			else process.env.NO_COLOR = prevNoColor
+		}
+	})
 })

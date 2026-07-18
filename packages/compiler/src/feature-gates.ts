@@ -3,7 +3,7 @@ import type { CompileOptions, ParseResult } from './types'
 import { CompileError } from './types'
 import { collectReactiveBinds } from './state-mount-codegen'
 import { detectHypermediaIssues } from './hypermedia-script-analysis'
-import { lineColumnAtOffset } from './helpers'
+import { locateInEmbeddedScript, locateInTemplateSource } from './helpers'
 import {
 	collectHypermediaActionImportsInBuildScript,
 	collectMissingHypermediaActionImportsInStateScript,
@@ -56,10 +56,43 @@ function sourceLocationForScriptHit(
 	script: string,
 	offset: number
 ): { line: number; column: number } | undefined {
-	if (source === undefined) return undefined
-	const scriptStart = source.indexOf(script)
-	if (scriptStart < 0) return undefined
-	return lineColumnAtOffset(source, scriptStart + offset)
+	return locateInEmbeddedScript(source, script, offset)
+}
+
+function locationForFeatureGateIssue(
+	source: string | undefined,
+	issue: FeatureGateIssue
+): { line: number; column: number } | undefined {
+	if (!source) return undefined
+	if (issue.start !== undefined) {
+		return locateInTemplateSource(source, { offset: issue.start })
+	}
+
+	const patterns: RegExp[] = []
+	if (issue.message === STATE_REACTIVITY_MESSAGE) patterns.push(IS_STATE_SCRIPT_RE)
+	else if (issue.message === EFFECT_STATE_MESSAGE) patterns.push(EFFECT_CALL_RE)
+	else if (issue.message === RUNTIME_BRACED_ATTR_MESSAGE) patterns.push(RUNTIME_BRACED_ATTR_RE)
+	else if (issue.message === HYPERMEDIA_DISABLED_MESSAGE) {
+		patterns.push(/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/)
+	} else if (issue.message.includes('`busy`') || issue.message.includes('busy signal')) {
+		patterns.push(/\b(?:data-aero-|aero-)?busy\b\s*=/i)
+	} else if (issue.message.includes('Reactive directives')) {
+		patterns.push(/\b(?:text|busy)\s*=/, /\bon:[\w:-]+\s*=/)
+	}
+
+	const nameMatch =
+		/Hypermedia (?:busy|action state) signal (?:not found|must be boolean): (\w+)/.exec(
+			issue.message
+		)
+	if (nameMatch?.[1]) {
+		patterns.push(new RegExp(`\\b${nameMatch[1]}\\b`))
+	}
+
+	for (const re of patterns) {
+		const span = spanForMatch(source, re)
+		if (span) return locateInTemplateSource(source, { offset: span.start })
+	}
+	return undefined
 }
 
 function spanForMatch(source: string, re: RegExp): { start: number; end: number } | undefined {
@@ -461,7 +494,8 @@ export function validateFeatureGates(
 	const file = options.importer
 
 	for (const issue of collectFeatureGateIssues(parsed, options, bodyIR, stateAnalysis)) {
-		throw new CompileError({ message: issue.message, file, code: issue.code })
+		const loc = locationForFeatureGateIssue(options.diagnosticTemplateSource, issue)
+		throw new CompileError({ message: issue.message, file, code: issue.code, ...loc })
 	}
 
 	if (parsed.buildScript) {
@@ -511,7 +545,15 @@ export function validateFeatureGates(
 		const issues = detectHypermediaIssues(eventBinds, parsed.template, parsed.stateScript !== null)
 		for (const issue of issues) {
 			if (issue.severity === 'error') {
-				throw new CompileError({ message: issue.message, file })
+				const needles =
+					issue.message.includes('busy')
+						? ['busy=', 'busy="', 'aero-busy', 'data-aero-busy']
+						: ['POST(', 'GET(', 'PUT(', 'PATCH(', 'DELETE(', 'on:']
+				const loc = locateInTemplateSource(options.diagnosticTemplateSource, {
+					needles,
+					maskEmbedded: true,
+				})
+				throw new CompileError({ message: issue.message, file, ...loc })
 			}
 			options.onWarning?.({ code: 'AERO_COMPILE', message: issue.message, file })
 		}

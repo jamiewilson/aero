@@ -36,6 +36,72 @@ export function lineColumnAtOffset(
 	return { line, column: o - lineStart }
 }
 
+/** 1-based line / 0-based column in a template source string. */
+export type TemplateSourceLocation = { line: number; column: number }
+
+export interface LocateInTemplateSourceOptions {
+	/** Absolute byte offset in `source`. */
+	offset?: number
+	/** Try these substrings in order; first hit wins. */
+	needles?: readonly string[]
+	/**
+	 * When searching needles, blank `<script>` / `<style>` bodies so markup matches
+	 * win over duplicate identifiers inside state/build scripts.
+	 */
+	maskEmbedded?: boolean
+}
+
+function maskScriptAndStyleBodies(source: string): string {
+	return source.replace(
+		/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
+		match => ' '.repeat(match.length)
+	)
+}
+
+/**
+ * Resolve a template source location from an offset and/or needle search.
+ *
+ * @returns `undefined` when source is missing or nothing matched.
+ */
+export function locateInTemplateSource(
+	source: string | undefined,
+	options: LocateInTemplateSourceOptions
+): TemplateSourceLocation | undefined {
+	if (!source) return undefined
+	if (options.offset !== undefined) {
+		return lineColumnAtOffset(source, options.offset)
+	}
+	const needles = options.needles
+	if (!needles || needles.length === 0) return undefined
+	const haystacks = options.maskEmbedded
+		? [maskScriptAndStyleBodies(source), source]
+		: [source]
+	for (const haystack of haystacks) {
+		for (const needle of needles) {
+			if (!needle) continue
+			const idx = haystack.indexOf(needle)
+			if (idx >= 0) return lineColumnAtOffset(source, idx)
+		}
+	}
+	return undefined
+}
+
+/**
+ * Map a byte offset inside an embedded script body to a location in the full template.
+ */
+export function locateInEmbeddedScript(
+	templateSource: string | undefined,
+	scriptContent: string,
+	offsetInScript: number
+): TemplateSourceLocation | undefined {
+	if (!templateSource || !scriptContent) return undefined
+	const scriptStart = templateSource.indexOf(scriptContent)
+	if (scriptStart < 0) return undefined
+	return locateInTemplateSource(templateSource, {
+		offset: scriptStart + Math.max(0, offsetInScript),
+	})
+}
+
 /** Options for validateSingleBracedExpression (directive/tag for error message). */
 export interface ValidateSingleBracedExpressionOptions {
 	directive?: string
@@ -69,10 +135,9 @@ export function validateSingleBracedExpression(
 		const needle = options.positionNeedle
 		const file = options.diagnosticFile
 		if (src !== undefined && needle !== undefined && needle.length > 0) {
-			const idx = src.indexOf(needle)
-			if (idx >= 0) {
-				const { line, column } = lineColumnAtOffset(src, idx)
-				throw new CompileError({ message, file, line, column })
+			const loc = locateInTemplateSource(src, { needles: [needle] })
+			if (loc) {
+				throw new CompileError({ message, file, ...loc })
 			}
 		}
 		if (file !== undefined) {

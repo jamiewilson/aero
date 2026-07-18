@@ -5,9 +5,42 @@
 import { AeroCompileError } from '@aero-js/diagnostics'
 import { CompileError } from '@aero-js/compiler'
 
+/** Duck-type — `instanceof` fails across duplicate package copies. */
+function isCompileErrorLike(
+	value: unknown
+): value is {
+	message: string
+	file?: string
+	line?: number
+	column?: number
+	code?: 'AERO_COMPILE' | 'AERO_CONFIG'
+} {
+	if (value instanceof CompileError) return true
+	return value instanceof Error && value.name === 'CompileError'
+}
+
 function toAeroCompileError(unknown: unknown, importer: string): AeroCompileError {
 	if (unknown instanceof AeroCompileError) return unknown
-	if (unknown instanceof CompileError) {
+	if (
+		unknown instanceof Error &&
+		(unknown.name === 'AeroCompileError' ||
+			(unknown as { _tag?: string })._tag === 'AeroCompileError')
+	) {
+		const err = unknown as Error & {
+			file?: string
+			line?: number
+			column?: number
+			code?: 'AERO_COMPILE' | 'AERO_CONFIG'
+		}
+		return new AeroCompileError({
+			message: err.message,
+			file: err.file ?? importer,
+			line: err.line,
+			column: err.column,
+			...(err.code ? { code: err.code } : {}),
+		})
+	}
+	if (isCompileErrorLike(unknown)) {
 		return new AeroCompileError({
 			message: unknown.message,
 			file: unknown.file ?? importer,

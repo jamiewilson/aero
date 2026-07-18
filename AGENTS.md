@@ -75,6 +75,8 @@ Read these before domain-specific edits:
 - Nitro/server handlers: `.agents/rules/aero-server.mdc`
 - User-facing docs (`README`, `docs/**`, site docs): `.agents/rules/aero-user-docs.mdc`
 - TypeScript doc comments: `.agents/rules/aero-tsdoc.mdc`
+- Compile ↔ IDE diagnostics parity: `_reference/diagnostics/parity-matrix.md` (matrix + scenarios + shared validators)
+- Error pipeline (normalize → enrich → render): `_reference/diagnostics/error-pipeline.md`
 
 If instructions conflict, follow: system/developer instructions > this file > task-specific rule files.
 

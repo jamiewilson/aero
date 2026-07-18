@@ -19,6 +19,7 @@ import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
+import { resolveRuntimeDirectiveHasValue } from '../runtime-directive-braces'
 import {
 	deriveHypermediaFallbackAttrs,
 	renderFallbackAttributeString,
@@ -187,16 +188,10 @@ function throwDirectiveError(
 	message: string
 ): never {
 	const raw = attrValue ?? ''
-	const needle = `${attrName}="${raw}"`
-	if (diag?.source && needle.length > 0) {
-		const idx = diag.source.indexOf(needle)
-		if (idx >= 0) {
-			const { line, column } = Helper.lineColumnAtOffset(diag.source, idx)
-			throw new CompileError({ message, file: diag.file, line, column })
-		}
-	}
-	if (diag?.file) {
-		throw new CompileError({ message, file: diag.file })
+	const needles = [`${attrName}="${raw}"`, `${attrName}='${raw}'`, attrName]
+	const loc = Helper.locateInTemplateSource(diag?.source, { needles })
+	if (diag?.file || loc) {
+		throw new CompileError({ message, file: diag?.file, ...loc })
 	}
 	throw new Error(message)
 }
@@ -477,8 +472,17 @@ export function parseElementAttributes(
 
 		if (parsedRuntime?.canonicalBareName?.startsWith('class-') && reactiveState) {
 			const className = parsedRuntime.canonicalBareName.slice('class-'.length)
-			const readExpr = attr.value
-				? Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, attr.value))
+			// Prefer original template source: linkedom outerHTML collapses `attr=""` to bare.
+			const sourceSlice =
+				diag?.source ??
+				(typeof (node as { outerHTML?: string }).outerHTML === 'string'
+					? (node as { outerHTML: string }).outerHTML
+					: undefined)
+			const hasValue = resolveRuntimeDirectiveHasValue(attr.name, attr.value, sourceSlice)
+			const readExpr = hasValue
+				? Helper.stripBraces(
+						validateBracedDirectiveValue(node, diag, attr.name, attr.value ?? '')
+					)
 				: className
 			if (!referencesStateBindingExpression(readExpr, reactiveState.bindingNames)) {
 				throwDirectiveError(

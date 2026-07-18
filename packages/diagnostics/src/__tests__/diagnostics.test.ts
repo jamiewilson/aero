@@ -287,6 +287,34 @@ describe('diagnostics', () => {
 		expect(d[0]!.hint).toBeUndefined()
 	})
 
+	it('unknownToAeroDiagnostics keeps Vite frame when loc is missing', () => {
+		const err = Object.assign(
+			new Error('Reactive class binding `class:is-active` must reference a declared state variable.'),
+			{
+				id: '/proj/client/pages/demos/bindings.html',
+				frame:
+					'> 46 | <div class:is-active="{ isActive }" class="card text-center">\n     |      ^',
+				plugin: 'vite-plugin-aero-transform',
+			}
+		)
+		const d = unknownToAeroDiagnostics(err)
+		expect(d[0]!.file).toBe('/proj/client/pages/demos/bindings.html')
+		expect(d[0]!.span).toBeUndefined()
+		expect(d[0]!.frame).toContain('class:is-active')
+	})
+
+	it('unknownToAeroDiagnostics ignores non-numeric Vite loc lines', () => {
+		const err = Object.assign(new Error('boom'), {
+			id: '/proj/a.html',
+			loc: { file: '/proj/a.html', line: null, column: null },
+			frame: '> 1 | x\n    | ^',
+			plugin: 'vite-plugin-aero-transform',
+		})
+		const d = unknownToAeroDiagnostics(err)
+		expect(d[0]!.span).toBeUndefined()
+		expect(d[0]!.frame).toContain('>')
+	})
+
 	it('unknownToAeroDiagnostics maps AeroCompileError', () => {
 		const err = new AeroCompileError({
 			message: 'bad',

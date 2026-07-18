@@ -4,7 +4,7 @@
  */
 
 import type { AeroDiagnostic } from './types'
-import { unknownToAeroDiagnostics } from './from-unknown'
+import { normalizeToDiagnostics } from './from-unknown'
 import { AeroBuildCancelledError } from './tagged-errors'
 
 /** Config load or validation (reserved — use when errors map to `AERO_CONFIG`). */
@@ -31,7 +31,7 @@ export const AERO_EXIT_BUILD_CANCELLED = 16
 /**
  * Map the primary diagnostic code to an exit code bucket.
  *
- * @param diagnostics - Non-empty list from {@link unknownToAeroDiagnostics} or similar.
+ * @param diagnostics - Non-empty list from {@link normalizeToDiagnostics} or similar.
  */
 export function exitCodeForDiagnostics(diagnostics: readonly AeroDiagnostic[]): number {
 	const code = diagnostics[0]?.code
@@ -56,5 +56,5 @@ export function exitCodeForDiagnostics(diagnostics: readonly AeroDiagnostic[]): 
 /** Convenience: normalize any thrown value, then derive exit code. */
 export function exitCodeForThrown(err: unknown): number {
 	if (err instanceof AeroBuildCancelledError) return AERO_EXIT_BUILD_CANCELLED
-	return exitCodeForDiagnostics(unknownToAeroDiagnostics(err))
+	return exitCodeForDiagnostics(normalizeToDiagnostics(err))
 }

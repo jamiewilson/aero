@@ -5,14 +5,16 @@
 
 import type { Logger, ServerModuleRunnerOptions } from 'vite'
 import {
-	aeroDiagnosticToViteErrorFields,
-	enrichDiagnosticsWithSourceFrames,
+	AERO_DIAGNOSTICS_ERROR_PROP,
+	enrichDiagnostics,
 	formatCondensedHtmlSsrParseError,
-	formatDiagnosticsDevConsole,
 	frameForViteOverlay,
+	isAeroOwnedFailure,
 	isCondensableHtmlSsrParseError,
+	normalizeToDiagnostics,
+	renderDiagnostics,
 	sharedDiagnosticLogGate,
-	unknownToAeroDiagnostics,
+	viteLoggerHasColors,
 	type AeroDiagnostic,
 	type DiagnosticLogGate,
 } from '@aero-js/diagnostics'
@@ -21,14 +23,6 @@ import {
 interface HmrLoggerLike {
 	error(msg: string | Error): void
 	debug(...msg: unknown[]): void
-}
-
-interface LoggerWithColors extends Logger {
-	hasColors?: boolean
-}
-
-function loggerUsesColors(logger: Logger): boolean {
-	return Boolean((logger as LoggerWithColors).hasColors)
 }
 
 interface ViteErrorLike {
@@ -47,46 +41,44 @@ function asViteErrorLike(value: unknown): ViteErrorLike | undefined {
 	return record as unknown as ViteErrorLike
 }
 
-function isAeroViteError(err: ViteErrorLike): boolean {
-	const plugin = err.plugin
-	return (
-		(typeof plugin === 'string' && plugin.includes('aero')) || /^\[AERO_[A-Z_]+\]/.test(err.message)
-	)
-}
-
-/** CSS syntax errors Aero already maps to file + frame diagnostics. */
-function isCssSyntaxError(value: unknown): boolean {
-	return value instanceof Error && value.name === 'CssSyntaxError'
-}
-
 function shouldOwnViteError(err: ViteErrorLike, rawError: unknown): boolean {
-	return isAeroViteError(err) || isCssSyntaxError(rawError)
+	return isAeroOwnedFailure(rawError) || isAeroOwnedFailure(err)
+}
+
+/** Prefer diagnostics attached by {@link renderDiagnostics}(`vite-overlay`). */
+function attachedAeroDiagnostics(rawError: unknown): AeroDiagnostic[] | undefined {
+	if (typeof rawError !== 'object' || rawError === null) return undefined
+	const attached = (rawError as Record<string, unknown>)[AERO_DIAGNOSTICS_ERROR_PROP]
+	if (!Array.isArray(attached) || attached.length === 0) return undefined
+	return attached as AeroDiagnostic[]
 }
 
 function diagnosticsFromViteError(err: ViteErrorLike, rawError?: unknown) {
+	const attached = attachedAeroDiagnostics(rawError)
+	if (attached) return enrichDiagnostics(attached)
 	const source =
 		rawError instanceof Error ? rawError : Object.assign(new Error(err.message), err)
-	return enrichDiagnosticsWithSourceFrames(unknownToAeroDiagnostics(source))
+	return enrichDiagnostics(normalizeToDiagnostics(source))
 }
 
 /**
- * Vite's `prepareError` / ErrorOverlay read `frame`/`id`/`loc` from the raw error after
- * `logger.error`. Stamp Aero-enriched fields so the overlay matches the console frame.
+ * Stamp Vite ErrorOverlay fields from pipeline `vite-overlay` render.
+ * Attaches {@link AERO_DIAGNOSTICS_ERROR_PROP} only here (and in `renderDiagnostics('vite-overlay')`).
  */
 function stampViteOverlayFields(rawError: unknown, diagnostics: readonly AeroDiagnostic[]): void {
 	if (!(rawError instanceof Error) || diagnostics.length === 0) return
-	const d0 = diagnostics[0]!
 	const plugin =
 		typeof (rawError as Error & { plugin?: unknown }).plugin === 'string'
 			? (rawError as Error & { plugin: string }).plugin
 			: undefined
-	const fields = aeroDiagnosticToViteErrorFields(d0, plugin)
+	const fields = renderDiagnostics(diagnostics, 'vite-overlay', { plugin })
 	const target = rawError as Error & Record<string, unknown>
 	if (fields.id) target.id = fields.id
 	if (fields.loc) target.loc = fields.loc
 	const overlayFrame = frameForViteOverlay(fields.frame)
 	if (overlayFrame) target.frame = overlayFrame
 	if (fields.message) target.message = fields.message
+	target[AERO_DIAGNOSTICS_ERROR_PROP] = fields[AERO_DIAGNOSTICS_ERROR_PROP]
 }
 
 function isRuntimeInstanceHmrNoise(msg: string): boolean {
@@ -122,11 +114,19 @@ export function wrapAeroViteLogger(
 				stampViteOverlayFields(rawError, diagnostics)
 				if (!gate.shouldLog(diagnostics)) return
 				// Dev console format includes its own timestamp; avoid `time [vite] time [aero]`.
-				base.error(formatDiagnosticsDevConsole(diagnostics, { colors: loggerUsesColors(base) }), {
-					...options,
-					timestamp: false,
-					error: rawError instanceof Error ? rawError : options?.error,
-				})
+				const colors = viteLoggerHasColors(base)
+				base.error(
+					renderDiagnostics(
+						diagnostics,
+						'dev-console',
+						colors === undefined ? {} : { colors }
+					),
+					{
+						...options,
+						timestamp: false,
+						error: rawError instanceof Error ? rawError : options?.error,
+					}
+				)
 				return
 			}
 			base.error(msg, options)

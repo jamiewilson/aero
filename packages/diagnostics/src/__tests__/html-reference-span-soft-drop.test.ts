@@ -120,4 +120,28 @@ describe('HTML ReferenceError span soft-drop', () => {
 			column: source.split('\n')[4]!.indexOf('demo-list-component'),
 		})
 	})
+
+	it('prefers <code-component> over native <code> for missing code import', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-span-'))
+		dirs.push(dir)
+		const file = path.join(dir, 'images.html')
+		const source = `<script is:build>
+	//import code from '@components/code.html'
+</script>
+<p>Import from <code>@images/</code>.</p>
+<code-component code="{ x }" />
+`
+		fs.writeFileSync(file, source)
+		const err = new Error('code is not defined')
+		err.name = 'ReferenceError'
+		err.stack = `ReferenceError: code is not defined
+    at render (${file}:3:20)`
+		const d = unknownToAeroDiagnostics(err)
+		const tagLine = source.split('\n').findIndex(l => l.includes('code-component'))
+		expect(d[0]!.span).toEqual({
+			file,
+			line: tagLine + 1,
+			column: source.split('\n')[tagLine]!.indexOf('code-component'),
+		})
+	})
 })

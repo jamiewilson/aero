@@ -20,10 +20,10 @@ import {
 } from '@aero-js/core/compile-check'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import {
-	enrichDiagnosticsWithSourceFrames,
+	enrichDiagnostics,
 	exitCodeForDiagnostics,
-	formatDiagnosticsTerminal,
-	unknownToAeroDiagnostics,
+	normalizeToDiagnostics,
+	renderDiagnostics,
 } from '@aero-js/diagnostics'
 import {
 	buildRouteManifestWithDiagnostics,
@@ -144,7 +144,7 @@ function collectRouteCollisionDiagnostics(root: string, clientDir: string): Aero
 		return dedupe([...fromManifest, ...fallback])
 	} catch (err) {
 		if (fallback.length > 0) return dedupe(fallback)
-		return unknownToAeroDiagnostics(err)
+		return normalizeToDiagnostics(err)
 	}
 }
 
@@ -311,7 +311,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 	try {
 		loadedRaw = loadAeroConfig(root)
 	} catch (err) {
-		diagnostics.push(...unknownToAeroDiagnostics(err))
+		diagnostics.push(...normalizeToDiagnostics(err))
 	}
 
 	const aero = resolveAeroOptions(loadedRaw)
@@ -335,7 +335,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					file: path.resolve(root, contentRel),
 				})
 			} else if (contentLoad.reason === 'error') {
-				diagnostics.push(...unknownToAeroDiagnostics(contentLoad.error))
+				diagnostics.push(...normalizeToDiagnostics(contentLoad.error))
 			}
 		} else {
 			try {
@@ -347,7 +347,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					diagnostics.push(...contentSchemaIssuesToAeroDiagnostics(schemaIssues, 'error'))
 				}
 			} catch (err) {
-				diagnostics.push(...unknownToAeroDiagnostics(err))
+				diagnostics.push(...normalizeToDiagnostics(err))
 			}
 		}
 	}
@@ -372,7 +372,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		try {
 			source = fs.readFileSync(file, 'utf-8')
 		} catch (err) {
-			diagnostics.push(...unknownToAeroDiagnostics(err))
+			diagnostics.push(...normalizeToDiagnostics(err))
 			continue
 		}
 
@@ -433,18 +433,18 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 				}
 			}
 		} catch (err) {
-			diagnostics.push(...unknownToAeroDiagnostics(err))
+			diagnostics.push(...normalizeToDiagnostics(err))
 		}
 	}
 
-	const errors = enrichDiagnosticsWithSourceFrames(
+	const errors = enrichDiagnostics(
 		diagnostics.filter(d => d.severity === 'error')
 	)
-	const warnings = enrichDiagnosticsWithSourceFrames(
+	const warnings = enrichDiagnostics(
 		diagnostics.filter(d => d.severity === 'warning')
 	)
 	if (warnings.length > 0) {
-		const warningText = formatDiagnosticsTerminal(warnings, { plain: true })
+		const warningText = renderDiagnostics(warnings, 'terminal', { plain: true })
 		process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))
 	}
 	if (errors.length === 0) {
@@ -452,7 +452,7 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		return 0
 	}
 	recordCliDiagnosticsMetrics(errors)
-	const text = formatDiagnosticsTerminal(errors, { plain: true })
+	const text = renderDiagnostics(errors, 'terminal', { plain: true })
 	process.stderr.write(text + (text.endsWith('\n') ? '' : '\n'))
 	span.end(`errors=${errors.length}`)
 	return exitCodeForDiagnostics(errors)

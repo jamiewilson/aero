@@ -81,6 +81,13 @@ export {
 } from './feature-gates'
 
 export {
+	collectReactiveBindingIssuesFromHtml,
+	collectReactiveScopeIssues,
+	type ReactiveScopeIssue,
+} from './collect-reactive-binding-issues'
+export { validateReactiveScopeRefs } from './validate-reactive-scope-refs'
+
+export {
 	HYPERMEDIA_PACKAGE_SPECIFIER,
 	HYPERMEDIA_BUILD_IMPORT_MESSAGE,
 	HYPERMEDIA_STATE_IMPORT_MESSAGE,
@@ -146,6 +153,9 @@ export {
 	escapeTemplateLiteralContent,
 	escapeHtml,
 	escapeScriptJson,
+	lineColumnAtOffset,
+	locateInTemplateSource,
+	locateInEmbeddedScript,
 	validateSingleBracedExpression,
 	compileInterpolation,
 	compileAttributeInterpolation,
@@ -171,6 +181,8 @@ export {
 	emitSlotOutput,
 	emitRenderComponentStatement,
 	RENDER_INTERNAL_CONTEXT_KEYS,
+	type LocateInTemplateSourceOptions,
+	type TemplateSourceLocation,
 	type ValidateSingleBracedExpressionOptions,
 	type RenderFunctionOptions,
 } from './helpers'
@@ -235,6 +247,13 @@ export {
 	type NormalizedRuntimeDirective,
 	type RuntimeDirectiveFamily,
 } from './runtime-directive-attributes'
+export {
+	attributeHasExplicitValueInSource,
+	resolveRuntimeDirectiveHasValue,
+	runtimeDirectiveRequiresBracedValue,
+	getRuntimeDirectiveBraceIssue,
+	type RuntimeDirectiveBraceInput,
+} from './runtime-directive-braces'
 export {
 	parseEventDirectiveName,
 	type EventDirectiveParseResult,

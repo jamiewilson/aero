@@ -87,4 +87,25 @@ describe('undeclared reactive scope names', () => {
 			compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })
 		).toThrow(/Unknown name `missing`/)
 	})
+
+	it('points at { status } not cycleStatus when status is undeclared', () => {
+		const html = `<script is:state>
+	let count = 0
+	function cycleStatus() {}
+</script>
+<button on:click="{ cycleStatus() }">Cycle status</button>
+<code>status = { status }</code>`
+
+		let error: unknown
+		try {
+			compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })
+		} catch (err) {
+			error = err
+		}
+		expect(error).toBeInstanceOf(CompileError)
+		expect((error as CompileError).message).toContain('`status`')
+		expect((error as CompileError).line).toBe(6)
+		const statusLine = html.split('\n')[5]!
+		expect((error as CompileError).column).toBe(statusLine.indexOf('{ status }') + 2)
+	})
 })

@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushOffsetDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument } from '../source-document'
 /**
  * Diagnostic check: directive attributes must use brace-wrapped expressions.
  */
@@ -10,7 +10,11 @@ import {
 	normalizeAttributeValue,
 	resolveBuildDirectiveName,
 } from '@aero-js/compiler/build-directive-attributes'
-import { parseEventDirectiveName } from '@aero-js/compiler'
+import {
+	getRuntimeDirectiveBraceIssue,
+	parseEventDirectiveName,
+	resolveRuntimeDirectiveHasValue,
+} from '@aero-js/compiler'
 import { parseAeroHtmlDocument, type Node } from '@aero-js/html-parser'
 import {
 	attributeSectionBase,
@@ -75,11 +79,14 @@ export function checkDirectiveExpressionBraces(
 		const parentHasSwitch = nodeHasSwitchAttr(parent)
 
 		for (const [attrName, rawParserValue] of Object.entries(attrs)) {
-			if (rawParserValue == null) continue
-
 			const attrRange = findAttributeRange(rawAttrs, attrBase, attrName)
 			if (!attrRange) continue
 
+			const hasValue = resolveRuntimeDirectiveHasValue(
+				attrName,
+				rawParserValue,
+				rawAttrs
+			)
 			const attrValue = normalizeAttributeValue(rawParserValue)
 
 			const buildIssue = getBuildDirectiveValidationIssue({
@@ -99,6 +106,22 @@ export function checkDirectiveExpressionBraces(
 				continue
 			}
 
+			const runtimeBraceIssue = getRuntimeDirectiveBraceIssue({
+				attrName,
+				rawValue: attrValue,
+				hasValue,
+			})
+			if (runtimeBraceIssue) {
+				pushDirectiveDiagnostic(
+					document,
+					diagnostics,
+					attrRange.start,
+					attrRange.end,
+					runtimeBraceIssue
+				)
+				continue
+			}
+
 			const parsed = parseEventDirectiveName(attrName)
 			if (parsed.kind === 'non-event') continue
 
@@ -112,6 +135,9 @@ export function checkDirectiveExpressionBraces(
 				)
 				continue
 			}
+
+			// Bare `on:click` (no `=`) is left alone; empty/`non-braced` values must be braced.
+			if (!hasValue && rawParserValue == null) continue
 
 			if (!looksBracedDirectiveValue(attrValue)) {
 				const example = `${attrName}="{ expression }"`

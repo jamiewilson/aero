@@ -14,6 +14,25 @@ import { CompileError } from '../types'
 import type { LowererDiag } from './types'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 
+const SWITCH_NEEDLES = [
+	'switch="',
+	"switch='",
+	'aero-switch=',
+	'data-switch=',
+	'switch={',
+] as const
+
+function throwSwitchError(diag: LowererDiag, message: string, needles: readonly string[]): never {
+	const loc = Helper.locateInTemplateSource(diag?.source, {
+		needles,
+		maskEmbedded: true,
+	})
+	if (diag?.file || loc) {
+		throw new CompileError({ message, file: diag?.file, ...loc })
+	}
+	throw new Error(message)
+}
+
 export function hasSwitchAttr(node: any): boolean {
 	return node?.nodeType === 1 && hasBuildDirectiveAttribute(node, CONST.ATTR_SWITCH)
 }
@@ -73,19 +92,21 @@ export function parseCaseComparands(node: any, diag: LowererDiag): string[] {
 	const tagName = node?.tagName?.toLowerCase?.() || 'element'
 	const attr = getBuildDirectiveAttribute(node, CONST.ATTR_CASE)
 	if (!attr) {
-		throw new CompileError({
-			message: `Directive \`case\` on <${tagName}> requires a value (literal or braced expression).`,
-			file: diag?.file,
-		})
+		throwSwitchError(
+			diag,
+			`Directive \`case\` on <${tagName}> requires a value (literal or braced expression).`,
+			['case=', 'aero-case=', 'data-case=', ...SWITCH_NEEDLES]
+		)
 	}
 	const raw = attr.value ?? ''
 	const attrLabel = attr.name
 
 	if (raw === null || raw === '') {
-		throw new CompileError({
-			message: `Directive \`${attrLabel}\` on <${tagName}> requires a value (literal or braced expression).`,
-			file: diag?.file,
-		})
+		throwSwitchError(
+			diag,
+			`Directive \`${attrLabel}\` on <${tagName}> requires a value (literal or braced expression).`,
+			[`${attrLabel}=`, ...SWITCH_NEEDLES]
+		)
 	}
 
 	const trimmed = raw.trim()
@@ -104,10 +125,11 @@ export function parseCaseComparands(node: any, diag: LowererDiag): string[] {
 		if (inner.startsWith('[') && inner.endsWith(']')) {
 			const segments = splitTopLevelCommaSegments(inner)
 			if (segments.length === 0) {
-				throw new CompileError({
-					message: `Grouped \`${attrLabel}\` must be a non-empty array literal, e.g. { ['a', 'b'] }.`,
-					file: diag?.file,
-				})
+				throwSwitchError(
+					diag,
+					`Grouped \`${attrLabel}\` must be a non-empty array literal, e.g. { ['a', 'b'] }.`,
+					[`${attrLabel}="${raw}"`, `${attrLabel}=`, ...SWITCH_NEEDLES]
+				)
 			}
 			return segments
 		}
@@ -159,27 +181,29 @@ export function compileSwitchContainer(
 			continue
 		}
 		if (n.nodeType !== 1) {
-			throw new CompileError({
-				message:
-					'A `switch` container may only contain `case` / `default` branch elements, whitespace, and comments.',
-				file: diag?.file,
-			})
+			throwSwitchError(
+				diag,
+				'A `switch` container may only contain `case` / `default` branch elements, whitespace, and comments.',
+				[...SWITCH_NEEDLES]
+			)
 		}
 
 		if (seenDefault) {
-			throw new CompileError({
-				message: 'In a `switch`, `default` must be last; remove branches after `default`.',
-				file: diag?.file,
-			})
+			throwSwitchError(
+				diag,
+				'In a `switch`, `default` must be last; remove branches after `default`.',
+				['default', 'aero-default', ...SWITCH_NEEDLES]
+			)
 		}
 
 		const hasCase = hasCaseAttr(n)
 		const hasDef = hasDefaultAttr(n)
 		if (hasCase && hasDef) {
-			throw new CompileError({
-				message: 'A branch cannot have both `case` and `default`.',
-				file: diag?.file,
-			})
+			throwSwitchError(
+				diag,
+				'A branch cannot have both `case` and `default`.',
+				['case=', 'default', ...SWITCH_NEEDLES]
+			)
 		}
 
 		if (hasDef) {
@@ -207,18 +231,19 @@ export function compileSwitchContainer(
 			continue
 		}
 
-		throw new CompileError({
-			message:
-				'A `switch` container may only contain `case` / `default` branch elements (direct children).',
-			file: diag?.file,
-		})
+		throwSwitchError(
+			diag,
+			'A `switch` container may only contain `case` / `default` branch elements (direct children).',
+			[...SWITCH_NEEDLES]
+		)
 	}
 
 	if (cases.length === 0 && !seenDefault) {
-		throw new CompileError({
-			message: '`switch` requires at least one `case` or `default` branch.',
-			file: diag?.file,
-		})
+		throwSwitchError(
+			diag,
+			'`switch` requires at least one `case` or `default` branch.',
+			[...SWITCH_NEEDLES]
+		)
 	}
 
 	if (!seenDefault) {
