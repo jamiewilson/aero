@@ -2,10 +2,11 @@
  * Shared constants for the Aero compiler (parser, codegen, helpers).
  *
  * @remarks
- * Build directives accept bare names or optional `aero-*` / `data-aero-*` prefixes. Script taxonomy uses
- * `is:build`, `is:state`, `is:inline`, `is:blocking`; default scripts are treated as client (virtual module).
- * When changing script taxonomy (is:build, is:inline, etc.), update all consumers per
- * _reference/script-taxonomy-sync.md.
+ * Build directives and other Aero framework attributes accept bare names or optional `aero-*` /
+ * `data-aero-*` prefixes. Prefix spelling and Prettier rewrite criteria live in
+ * {@link ./author-attribute-format.ts}. Script taxonomy uses `is:build`, `is:state`, `is:inline`,
+ * `is:blocking` (also `aero-is:*` / `data-aero-is-*`). Default scripts are treated as client
+ * (virtual module).
  */
 
 /** Prefix for namespaced Aero directives (e.g. `aero-for`). */
@@ -16,7 +17,7 @@ export const DATA_AERO_ATTR_PREFIX = 'data-aero-'
 export const LEGACY_BUILD_ATTR_PREFIX = 'data-'
 
 /** Prettier / formatter output mode for build directive attribute names. */
-export type BuildDirectivePrefixMode = 'none' | 'aero' | 'data-aero'
+export type BuildDirectivePrefixMode = 'none' | 'aero' | 'strict'
 
 /** Attribute for spreading props onto a component: `props` or `aero-props="{ ... }"`. */
 export const ATTR_PROPS = 'props'

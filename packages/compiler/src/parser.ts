@@ -10,6 +10,12 @@ import {
 import { parseHTML } from 'linkedom'
 import * as CONST from './constants'
 import { AERO_ATTR_PREFIX, DATA_AERO_ATTR_PREFIX } from './constants'
+import {
+	elementHasScriptIsAttribute,
+	removeScriptIsAttribute,
+	scriptIsAttributeNames,
+	type PrefixableScriptIsKind,
+} from './author-attribute-format'
 
 const BOM_PREFIX = /^\uFEFF/
 const FRAGMENT_DOCUMENT_PREFIX = '<html><head></head><body>'
@@ -20,12 +26,9 @@ const DATA_PROPS_ATTRS = [
 	`${DATA_AERO_ATTR_PREFIX}${CONST.ATTR_PROPS}`,
 ]
 
-const SCRIPT_TAXONOMY_ATTRS = new Set([
-	CONST.ATTR_IS_BUILD,
-	CONST.ATTR_IS_STATE,
-	CONST.ATTR_IS_INLINE,
-	CONST.ATTR_IS_BLOCKING,
-])
+const SCRIPT_IS_KINDS = ['build', 'state', 'inline', 'blocking'] as const satisfies readonly PrefixableScriptIsKind[]
+
+const SCRIPT_TAXONOMY_ATTRS = new Set(SCRIPT_IS_KINDS.flatMap(kind => [...scriptIsAttributeNames(kind)]))
 
 const CLIENT_SCRIPT_EXCLUDED_ATTRS = new Set([
 	...SCRIPT_TAXONOMY_ATTRS,
@@ -274,15 +277,15 @@ function classifyScriptElement(
 	scriptEl: Element,
 	placement: ScriptPlacement
 ): ScriptClassification {
-	const hasBuild = scriptEl.hasAttribute(CONST.ATTR_IS_BUILD)
-	const hasState = scriptEl.hasAttribute(CONST.ATTR_IS_STATE)
-	const hasInline = scriptEl.hasAttribute(CONST.ATTR_IS_INLINE)
+	const hasBuild = elementHasScriptIsAttribute(scriptEl, 'build')
+	const hasState = elementHasScriptIsAttribute(scriptEl, 'state')
+	const hasInline = elementHasScriptIsAttribute(scriptEl, 'inline')
 	return {
 		placement,
 		hasBuild,
 		hasState,
 		hasInline,
-		hasBlocking: scriptEl.hasAttribute(CONST.ATTR_IS_BLOCKING),
+		hasBlocking: elementHasScriptIsAttribute(scriptEl, 'blocking'),
 		src: scriptEl.getAttribute(CONST.ATTR_SRC) ?? '',
 		passData: getPassData(scriptEl),
 		cleanedAttrs: getCleanedScriptAttrs(scriptEl, hasInline, placement.inHead),
@@ -371,8 +374,8 @@ export function parse(html: string): ParseResult {
 
 		if (script.hasInline) {
 			pushInlineScript(inlineScripts, script)
-			// Strip is:inline in place so serialized template has clean script tag
-			scriptEl.removeAttribute(CONST.ATTR_IS_INLINE)
+			// Strip is:inline (any supported prefix spelling) so serialized template has a clean script tag
+			removeScriptIsAttribute(scriptEl, 'inline')
 			continue
 		}
 
