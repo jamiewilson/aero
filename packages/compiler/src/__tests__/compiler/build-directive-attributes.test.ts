@@ -36,7 +36,7 @@ describe('build-directive-attributes', () => {
 		it('formats bare, aero, and data-aero names', () => {
 			expect(formatBuildDirectiveName('if', 'none')).toBe('if')
 			expect(formatBuildDirectiveName('if', 'aero')).toBe('aero-if')
-			expect(formatBuildDirectiveName('else-if', 'data-aero')).toBe('data-aero-else-if')
+			expect(formatBuildDirectiveName('else-if', 'strict')).toBe('data-aero-else-if')
 		})
 
 		it('lists all supported attribute names for a directive', () => {

@@ -48,9 +48,23 @@ The plugin adds three **Aero-only** options (also set in `.prettierrc.json` or u
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `aeroAttributePrefix` | `"none"` | Prefix form for Aero build directives: `"none"` (bare `props`, `for`, `if`), `"aero"` (`aero-props`, `aero-for`, …), or `"data-aero"` (`data-aero-props`, …). Plain HTML attributes (e.g. `<label for="email">`) are never rewritten. |
+| `aeroAttributePrefix` | `"none"` | Prefix form for Aero framework attributes (see below). |
 | `aeroBracketSpacing` | `true` | When `true`, use `{ expr }` wrapper spacing in directive values and text interpolation. When `false`, use `{expr}`. Inner JS/TS still follows Prettier's `bracketSpacing` for object literals. |
 | `aeroSelfClosingComponents` | `true` | When `true`, prefer `<my-component />` for `*-component` tags with no element children. `*-layout` tags always keep explicit close tags. |
+
+### What `aeroAttributePrefix` rewrites
+
+Prettier rewrites **Aero framework attribute names that are not native HTML**. It leaves real HTML alone (including when Aero binds it), third-party attrs (`x-*`, `hx-*`, …), emit-only markers (`data-aero-event`, `data-aero-bind`, …), and unimplemented names (`computed:*`, `state`).
+
+**Rewritten families:** build directives (`if`, `for`, `props`, …), `key`, simple runtime (`show`, `html`, `busy`, `text`), `on:*`, `class:*`, `bind:*`, and script taxonomy (`is:build`, `is:state`, `is:inline`, `is:blocking`).
+
+| Mode | Example forms | Rule |
+|------|---------------|------|
+| `"none"` | `is:build`, `on:click`, `class:is-active`, `text` | Author form; keep colons |
+| `"aero"` | `aero-is:build`, `aero-on:click`, `aero-class:is-active`, `aero-text` | Ownership prefix; **keep colons** |
+| `"strict"` | `data-aero-is-build`, `data-aero-on-click`, `data-aero-class-is-active`, `data-aero-text` | **Strict HTML**; colons → hyphens |
+
+Plain HTML attributes (e.g. `<label for="email">`, `disabled="{ saving }"`) are never rewritten. Author `text="{ … }"` and `data-aero-text="{ … }"` are the **same** directive under different modes — not an emit-only marker.
 
 Example with Aero options:
 

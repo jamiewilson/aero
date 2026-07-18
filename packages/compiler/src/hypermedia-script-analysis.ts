@@ -30,7 +30,9 @@ function extractActionUrl(handlerExpr: string): string | null {
 export function detectHypermediaIssues(
 	eventBinds: readonly IRReactiveEventBind[],
 	templateSource: string,
-	hasStateScript = /\bis:state\b/.test(templateSource)
+	hasStateScript = /(?:^|\s)(?:data-aero-is-state|aero-is[:\-]state|is:state)(?=[\s=>/]|$)/i.test(
+		templateSource
+	)
 ): HypermediaIssue[] {
 	const issues: HypermediaIssue[] = []
 

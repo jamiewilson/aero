@@ -127,7 +127,7 @@ export function formatBuildDirectiveName(
 			return directive
 		case 'aero':
 			return AERO_ATTR_PREFIX + directive
-		case 'data-aero':
+		case 'strict':
 			return DATA_AERO_ATTR_PREFIX + directive
 	}
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
+import { collectFeatureGateIssuesFromSource } from '../../feature-gates'
 
 const mockOptions = {
 	root: '/',
@@ -175,5 +176,17 @@ describe('feature gates', () => {
 		expect(() =>
 			compile(parse(nonBoolean), { ...mockOptions, reactivity: true, hypermedia: true })
 		).toThrow('Hypermedia action state signal must be boolean: status')
+	})
+
+	it('source gates recognize data-aero-is-state with braced reactive attrs', () => {
+		const html = `<script data-aero-is-state>
+			let isOpen = false
+			let isLoading = false
+		</script>
+		<div data-aero-show="{ isOpen }"></div>
+		<button data-aero-busy="{ isLoading }" data-aero-on-click="{ GET('/x', { state: isLoading }) }"></button>`
+		expect(
+			collectFeatureGateIssuesFromSource(html, { reactivity: true, hypermedia: true })
+		).toEqual([])
 	})
 })

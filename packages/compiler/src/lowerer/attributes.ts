@@ -11,6 +11,7 @@ import {
 	resolveBuildDirectiveName,
 	type BuildDirective,
 } from '../build-directive-attributes'
+import { isKeyAttributeName, parseBindAttributePropName } from '../author-attribute-format'
 import { isDirectiveAttr } from '../directive-attributes'
 import { parentIsSwitchContainer } from './switch'
 import { Resolver } from '../resolver'
@@ -294,7 +295,7 @@ export function parseComponentAttributes(node: NodeLike, diag: LowererDiag): Par
 			propVal = hasInterpolation ? `\`${compiled}\`` : JSON.stringify(rawValue)
 		}
 
-		const propName = attr.name.startsWith('bind:') ? attr.name.slice('bind:'.length) : attr.name
+		const propName = parseBindAttributePropName(attr.name) ?? attr.name
 		propsEntries.push(`${JSON.stringify(propName)}: ${propVal}`)
 	})
 
@@ -566,7 +567,7 @@ export function parseElementAttributes(
 }
 
 function isKeyAttribute(name: string): boolean {
-	return name === 'key' || name === `${CONST.AERO_ATTR_PREFIX}key` || name === `${CONST.DATA_AERO_ATTR_PREFIX}key`
+	return isKeyAttributeName(name)
 }
 
 function getInputType(node: NodeLike): string | null | undefined {

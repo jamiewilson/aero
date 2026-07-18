@@ -14,6 +14,7 @@ import { analyzeBuildScript } from './build-script-analysis'
 import type { StateScriptAnalysisResult } from './state-script-analysis'
 import { stripBraces } from '@aero-js/interpolation'
 import { validateReactiveScopeRefs } from './validate-reactive-scope-refs'
+import { collectTemplateScriptBlocks } from './template-source'
 
 export interface FeatureGateFlags {
 	readonly reactivity: boolean
@@ -27,8 +28,9 @@ export interface FeatureGateIssue {
 	readonly end?: number
 }
 
-const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
-const STATE_SCRIPT_BLOCK_RE = /<script\b[^>]*\bis:state\b[^>]*>([\s\S]*?)<\/script>/i
+/** Opening-tag match for bare / aero- / data-aero- `is:state` spellings (location only). */
+const IS_STATE_SCRIPT_RE =
+	/<script\b[^>]*\b(?:data-aero-is-state|aero-is[:\-]state|is:state)\b/i
 const EFFECT_CALL_RE = /(?:\$effect|Aero\.effect)\s*\(/
 const RUNTIME_BRACED_ATTR_RE =
 	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
@@ -117,12 +119,21 @@ function isDefinitelyNonBooleanInit(initExpr: string): boolean {
 	)
 }
 
+function findStateScriptBlock(source: string) {
+	return collectTemplateScriptBlocks(source).find(block => block.kind === 'state')
+}
+
+function sourceHasStateScript(source: string): boolean {
+	return findStateScriptBlock(source) != null
+}
+
 function collectStateBindings(source: string): Map<string, string> {
-	const match = source.match(STATE_SCRIPT_BLOCK_RE)
 	const bindings = new Map<string, string>()
-	if (!match) return bindings
-	const script = match[1]
-	for (const declaration of script.matchAll(/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g)) {
+	const block = findStateScriptBlock(source)
+	if (!block) return bindings
+	for (const declaration of block.content.matchAll(
+		/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g
+	)) {
 		bindings.set(declaration[1], declaration[2])
 	}
 	return bindings
@@ -181,7 +192,9 @@ export function collectFeatureGateIssuesFromSource(
 ): FeatureGateIssue[] {
 	const out: FeatureGateIssue[] = []
 
-	if (!flags.reactivity && IS_STATE_SCRIPT_RE.test(source)) {
+	const hasStateScript = sourceHasStateScript(source)
+
+	if (!flags.reactivity && hasStateScript) {
 		pushSourceIssue(
 			out,
 			source,
@@ -190,7 +203,7 @@ export function collectFeatureGateIssuesFromSource(
 		)
 	}
 
-	if (!IS_STATE_SCRIPT_RE.test(source) && RUNTIME_BRACED_ATTR_RE.test(source)) {
+	if (!hasStateScript && RUNTIME_BRACED_ATTR_RE.test(source)) {
 		pushSourceIssue(
 			out,
 			source,
@@ -199,7 +212,7 @@ export function collectFeatureGateIssuesFromSource(
 		)
 	}
 
-	if (!IS_STATE_SCRIPT_RE.test(source) && EFFECT_CALL_RE.test(source)) {
+	if (!hasStateScript && EFFECT_CALL_RE.test(source)) {
 		pushSourceIssue(
 			out,
 			source,
@@ -230,7 +243,7 @@ export function collectFeatureGateIssuesFromSource(
 				busyRegex,
 				busyFlagsMessage(flags)
 			)
-		} else if (!IS_STATE_SCRIPT_RE.test(source)) {
+		} else if (!hasStateScript) {
 			pushSourceIssue(
 				out,
 				source,

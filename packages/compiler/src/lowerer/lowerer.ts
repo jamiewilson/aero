@@ -13,6 +13,7 @@ import type { LowererDiag, LowererReactiveState } from './types'
 
 import * as CONST from '../constants'
 import { getBuildDirectiveAttribute } from '../build-directive-attributes'
+import { parseBindAttributePropName } from '../author-attribute-format'
 import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
 import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
@@ -777,7 +778,7 @@ export class Lowerer {
 				})
 			}
 			const value = String(attr.value ?? '')
-			const bindName = name.startsWith('bind:') ? name.slice('bind:'.length) : null
+			const bindName = parseBindAttributePropName(name)
 			if (bindName !== null && !isSingleWrappedExpression(value)) {
 				throw new CompileError({
 					message: `Component bind prop \`${name}\` must reference one writable state binding.`,
@@ -807,7 +808,7 @@ export class Lowerer {
 		for (let i = 0; i < node.attributes.length; i++) {
 			const attr = node.attributes[i]
 			const name = String(attr.name ?? '')
-			if (!name.startsWith('bind:')) continue
+			if (parseBindAttributePropName(name) == null) continue
 			throw new CompileError({
 				message: `Component bind prop \`${name}\` on <${tagName}> requires a writable state binding in \`<script is:state>\`.`,
 				file: this.diag?.file,
