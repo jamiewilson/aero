@@ -32,6 +32,7 @@ describe('aero-scripts grammar', () => {
 		expect(bodyNames).toContain('source.ts')
 		expect(bodyNames).toContain('source.json')
 		expect(grammar.repository['aero-typescript-default']?.begin).toContain('is:(?:build|state)')
+		expect(grammar.repository['aero-typescript-default']?.begin).toContain('data-aero-|aero-')
 	})
 
 	it('maps source.ts to typescript in the extension manifest', () => {
@@ -120,6 +121,18 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-scripts tokenization', () =>
 		const { tokens, scopes } = await tokenize(line)
 		expect(scopes.some(s => s.includes('source.ts'))).toBe(true)
 		expect(bodyHasScope(line, tokens, 'source.js')).toBe(false)
+	})
+
+	it('scopes aero-is:build as TypeScript', async () => {
+		const line = `<script aero-is:build>import type { X } from './x'</script>`
+		const { scopes } = await tokenize(line)
+		expect(scopes.some(s => s.includes('source.ts'))).toBe(true)
+	})
+
+	it('scopes data-aero-is-state as TypeScript', async () => {
+		const line = `<script data-aero-is-state>let n: number = 1</script>`
+		const { scopes } = await tokenize(line)
+		expect(scopes.some(s => s.includes('source.ts'))).toBe(true)
 	})
 
 	it('scopes is:state default as TypeScript', async () => {
