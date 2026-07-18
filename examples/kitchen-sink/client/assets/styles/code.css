@@ -1,7 +1,7 @@
 @theme {
-	--code-light-bg: --opacity(var(--color-dark), 0.05);
-	--code-dark-bg: oklch(from var(--color-dark) 0.1 c h);
-	--code-bg: light-dark(var(--code-light-bg), var(--code-dark-bg));
+	--code-bg-light: --opacity(var(--color-dark), 0.05);
+	--code-bg-dark: oklch(from var(--color-dark) 0.1 c h);
+	--code-bg: light-dark(var(--code-bg-light), var(--code-bg-dark));
 	--code-comment: var(--color-slate-500);
 	--code-highlight: --opacity(var(--color-green-500), 0.2);
 

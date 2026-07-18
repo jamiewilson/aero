@@ -4,16 +4,16 @@
 
 <script is:state>
 	let count = 0
-	let status = 'loading'
+	let branch = 'loading'
 
-	const nextStatus: Record<string, string> = {
+	const nextBranch: Record<string, string> = {
 		loading: 'error',
 		error: 'ready',
 		ready: 'loading',
 	}
 
-	function cycleStatus() {
-		status = nextStatus[status]
+	function cycleBranch() {
+		branch = nextBranch[branch]
 	}
 </script>
 
@@ -41,7 +41,7 @@
 				<button on:click="{ count++ }">+</button>
 			</section>
 
-			<section class="card bg-green-500/10 p-4 not-prose">
+			<section class="card bg-green-500/10 not-prose">
 				<p if="{ count > 0 }">Positive branch</p>
 				<p else-if="{ count < 0 }">Negative branch</p>
 				<p else>Zero branch</p>
@@ -50,11 +50,11 @@
 			<p>Reactive <code>switch</code> / <code>case</code> / <code>default</code></p>
 
 			<div class="flex gap-2 items-center">
-				<button on:click="{ cycleStatus() }">Cycle status</button>
-				<code>status = { status }</code>
+				<button on:click="{ cycleBranch() }">Cycle branch</button>
+				<code>branch = { branch }</code>
 			</div>
 
-			<div switch="{ status }" class="card bg-green-500/10 p-4 not-prose">
+			<div switch="{ branch }" class="card bg-green-500/10 not-prose">
 				<p case="loading">Loading branch</p>
 				<p case="error">Error branch</p>
 				<p default>Ready branch</p>
