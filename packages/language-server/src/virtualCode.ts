@@ -30,6 +30,7 @@ import {
 	type BuildBindingProperties,
 } from '@aero-js/compiler'
 import { buildDirectiveAttributeNames } from '@aero-js/compiler/build-directive-attributes'
+import { resolveAuthorAttributeForFormatting } from '@aero-js/compiler/author-attribute-format'
 import { ATTR_FOR } from '@aero-js/compiler/constants'
 import { analyzeBuildScriptForEditor } from '@aero-js/compiler/build-script-analysis'
 import { AMBIENT_DECLARATIONS, BUILD_SCRIPT_PREAMBLE } from '@aero-js/compiler/ambient-preamble'
@@ -317,11 +318,21 @@ function getScriptType(
 	if (!attrs) return 'client'
 
 	if ('src' in attrs) return 'external'
-	if ('is:build' in attrs) return 'build'
-	if ('is:state' in attrs) return 'state'
-	if ('is:inline' in attrs) return 'inline'
+
+	let scriptIsKind: 'build' | 'state' | 'inline' | 'blocking' | null = null
+	for (const key of Object.keys(attrs)) {
+		const canonical = resolveAuthorAttributeForFormatting(key)
+		if (canonical?.family === 'script-is') {
+			scriptIsKind = canonical.kind
+			break
+		}
+	}
+
+	if (scriptIsKind === 'build') return 'build'
+	if (scriptIsKind === 'state') return 'state'
+	if (scriptIsKind === 'inline') return 'inline'
 	if (hasPropsAttribute(attrs)) return 'inline'
-	if ('is:blocking' in attrs) return 'blocking'
+	if (scriptIsKind === 'blocking') return 'blocking'
 	if (hasTypeImportmap(node, sourceText)) return 'importmap'
 	return 'client'
 }
