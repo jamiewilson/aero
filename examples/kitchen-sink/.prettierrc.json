@@ -1,0 +1,24 @@
+{
+	"arrowParens": "avoid",
+	"bracketSameLine": true,
+	"bracketSpacing": true,
+	"printWidth": 100,
+	"semi": false,
+	"singleAttributePerLine": false,
+	"singleQuote": true,
+	"tabWidth": 2,
+	"trailingComma": "es5",
+	"useTabs": true,
+	"plugins": ["@aero-js/prettier-plugin-aero"],
+	"overrides": [
+		{
+			"files": ["**/*.html"],
+			"options": {
+				"parser": "aero",
+				"aeroAttributePrefix": "data-aero",
+				"aeroBracketSpacing": true,
+				"aeroSelfClosingComponents": true
+			}
+		}
+	]
+}

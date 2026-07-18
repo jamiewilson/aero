@@ -32,7 +32,7 @@
 	"main": "./dist/extension.cjs",
 	"scripts": {
 		"dev": "tsdown --watch",
-		"build": "pnpm --dir ../compiler exec npm run prebuild && tsdown --minify",
+		"build": "pnpm --dir ../compiler exec npm run prebuild && cp ../prettier-plugin-aero/schema.json ./schemas/prettierrc-aero.json && tsdown --minify",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"vscode:prepublish": "cp ../../LICENSE ."
@@ -55,6 +55,18 @@
 		"vscode-textmate": "^9.3.2"
 	},
 	"contributes": {
+		"jsonValidation": [
+			{
+				"fileMatch": [
+					".prettierrc",
+					".prettierrc.json",
+					".prettierrc.json5",
+					".prettierrc.yml",
+					".prettierrc.yaml"
+				],
+				"url": "./schemas/prettierrc-aero.json"
+			}
+		],
 		"commands": [
 			{
 				"command": "aero.runCheck",

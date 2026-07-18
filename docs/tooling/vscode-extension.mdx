@@ -34,7 +34,7 @@ Or search for **Aero** in the VS Code Extensions panel.
 - **Hover info** — Hover over components and expressions to see type information.
 - **Go to definition** — Jump from a component reference in a template to its source `.html` file.
 - **Diagnostics** — Template errors and configured TypeScript/JavaScript issues are underlined inline. `aero check --types` validates live build, state, bundled, inline, and blocking scripts plus expressions on the command line.
-- **Formatting** — Recommends the Prettier extension for Aero HTML templates (see [Formatting](/tooling/formatting)).
+- **Formatting** — Recommends the Prettier extension for Aero HTML templates (see [Formatting](/tooling/formatting)). Also contributes Prettier config schema so `aero*` options autocomplete and show hover docs in `.prettierrc` / `.prettierrc.json`.
 
 <Tip>
 	If you see false positives or missing diagnostics, run `aero doctor` in your project root to
@@ -44,6 +44,8 @@ Or search for **Aero** in the VS Code Extensions panel.
 ## Formatting
 
 Install [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) and add `@aero-js/prettier-plugin-aero` to your project. See [Formatting](/tooling/formatting) for `.prettierrc` setup and Aero-specific options.
+
+In `.prettierrc` / `.prettierrc.json`, typing `aero` under top-level options or `overrides[].options` should suggest `aeroAttributePrefix`, `aeroBracketSpacing`, and `aeroSelfClosingComponents`, with hover text describing each value.
 
 ## Comments and snippets
 

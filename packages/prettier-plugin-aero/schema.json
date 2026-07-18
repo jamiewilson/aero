@@ -1,0 +1,65 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://aero-js.dev/schemas/prettierrc-aero.json",
+	"title": "Aero Prettier plugin options",
+	"description": "Additive schema for @aero-js/prettier-plugin-aero. Merged with the SchemaStore Prettier schema by the Aero VS Code extension.",
+	"definitions": {
+		"aeroAttributePrefix": {
+			"default": "none",
+			"markdownDescription": "Prefix form for Aero build directives.\n\n- `none`: bare names (`props`, `for`, `if`, …)\n- `aero`: `aero-*` names\n- `data-aero`: `data-aero-*` names\n\nPlain HTML attributes (e.g. `<label for=\"email\">`) are never rewritten.",
+			"enum": ["none", "aero", "data-aero"],
+			"markdownEnumDescriptions": [
+				"Bare names (`props`, `for`, `if`, …).",
+				"`aero-*` names (`aero-props`, `aero-for`, …).",
+				"`data-aero-*` names (`data-aero-props`, …)."
+			]
+		},
+		"aeroBracketSpacing": {
+			"type": "boolean",
+			"default": true,
+			"markdownDescription": "Add spaces inside Aero template braces (`{ expr }` vs `{expr}`).\n\nInner JS/TS object literals still follow Prettier's `bracketSpacing`."
+		},
+		"aeroSelfClosingComponents": {
+			"type": "boolean",
+			"default": true,
+			"markdownDescription": "Prefer self-closing tags for `*-component` elements without children.\n\n`*-layout` tags always keep explicit close tags."
+		},
+		"aeroOptions": {
+			"type": "object",
+			"properties": {
+				"aeroAttributePrefix": {
+					"$ref": "#/definitions/aeroAttributePrefix"
+				},
+				"aeroBracketSpacing": {
+					"$ref": "#/definitions/aeroBracketSpacing"
+				},
+				"aeroSelfClosingComponents": {
+					"$ref": "#/definitions/aeroSelfClosingComponents"
+				}
+			}
+		}
+	},
+	"type": "object",
+	"properties": {
+		"aeroAttributePrefix": {
+			"$ref": "#/definitions/aeroAttributePrefix"
+		},
+		"aeroBracketSpacing": {
+			"$ref": "#/definitions/aeroBracketSpacing"
+		},
+		"aeroSelfClosingComponents": {
+			"$ref": "#/definitions/aeroSelfClosingComponents"
+		},
+		"overrides": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"options": {
+						"$ref": "#/definitions/aeroOptions"
+					}
+				}
+			}
+		}
+	}
+}

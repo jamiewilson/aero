@@ -48,7 +48,7 @@ function collectAttributeEdits(
 			const desired = formatBuildDirectiveName(canonical, prefixMode)
 			if (name === desired) continue
 
-			const nameStart = findAttributeNameStart(source, tagStart, name)
+			const nameStart = findAttributeNameStart(source, tagStart, name, node.startTagEnd ?? undefined)
 			if (nameStart == null) continue
 			edits.push({ start: nameStart, end: nameStart + name.length, text: desired })
 		}
@@ -56,8 +56,20 @@ function collectAttributeEdits(
 	return edits
 }
 
-function findAttributeNameStart(source: string, tagStart: number, name: string): number | null {
-	const tagSlice = source.slice(tagStart)
+function findAttributeNameStart(
+	source: string,
+	tagStart: number,
+	name: string,
+	tagEnd?: number
+): number | null {
+	const openEnd =
+		tagEnd ??
+		(() => {
+			const gt = source.indexOf('>', tagStart)
+			return gt >= 0 ? gt + 1 : undefined
+		})()
+	const tagSlice =
+		openEnd != null && openEnd > tagStart ? source.slice(tagStart, openEnd) : source.slice(tagStart)
 	const patterns = [
 		new RegExp(`\\s${name}\\s*=`, 'i'),
 		new RegExp(`\\s${name}(\\s|>|/>)`, 'i'),
@@ -168,7 +180,8 @@ async function collectBracketSpacingEdits(
 					source,
 					node.start ?? 0,
 					name,
-					rawValue
+					rawValue,
+					node.startTagEnd ?? undefined
 				)
 				if (valueStart == null) continue
 				const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
@@ -216,9 +229,17 @@ function findAttributeValueStart(
 	source: string,
 	tagStart: number,
 	name: string,
-	rawValue: string
+	rawValue: string,
+	tagEnd?: number
 ): number | null {
-	const tagSlice = source.slice(tagStart)
+	const openEnd =
+		tagEnd ??
+		(() => {
+			const gt = source.indexOf('>', tagStart)
+			return gt >= 0 ? gt + 1 : undefined
+		})()
+	const tagSlice =
+		openEnd != null && openEnd > tagStart ? source.slice(tagStart, openEnd) : source.slice(tagStart)
 	const unquoted = normalizeAttributeValue(rawValue)
 	const search = unquoted.startsWith('{')
 		? unquoted
@@ -237,9 +258,10 @@ function findAttributeValueContentStart(
 	source: string,
 	tagStart: number,
 	name: string,
-	rawValue: string
+	rawValue: string,
+	tagEnd?: number
 ): number | null {
-	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue)
+	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue, tagEnd)
 	if (valueStart == null) return null
 	const quote = source[valueStart]
 	if (quote === '"' || quote === "'") return valueStart + 1

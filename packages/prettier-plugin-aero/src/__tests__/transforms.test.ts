@@ -74,6 +74,16 @@ describe('applyAeroTransforms', () => {
 		expect(bare).toBe('<header-component props />')
 	})
 
+	it('rewrites earlier boolean props even when a later props= exists', async () => {
+		const input = `<meta-component props />
+<script props="{ storageKey, attribute }"></script>`
+		const once = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(once).toContain('<meta-component aero-props />')
+		expect(once).toContain('<script aero-props="{ storageKey, attribute }">')
+		const twice = await formatAero(once, { aeroAttributePrefix: 'aero' })
+		expect(twice).toBe(once)
+	})
+
 	it('does not rewrite plain html for attribute', async () => {
 		const input = '<label for="email">Email</label>'
 		const output = await formatAero(input, { aeroAttributePrefix: 'aero' })

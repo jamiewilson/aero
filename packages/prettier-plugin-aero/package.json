@@ -10,7 +10,8 @@
 		"directory": "packages/prettier-plugin-aero"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"schema.json"
 	],
 	"type": "module",
 	"main": "./dist/index.mjs",
@@ -19,7 +20,8 @@
 		".": {
 			"types": "./dist/index.d.mts",
 			"default": "./dist/index.mjs"
-		}
+		},
+		"./schema.json": "./schema.json"
 	},
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
