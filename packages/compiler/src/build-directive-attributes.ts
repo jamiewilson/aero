@@ -258,8 +258,14 @@ export function classifyBuildAttribute(input: ClassifyBuildAttributeInput): Buil
 		return { kind: 'invalid-braced-for-on-native-host', directive: ATTR_FOR }
 	}
 
+	// Bare `props` / `aero-props` / `data-aero-props` (no value) spreads local `props` — not a brace error.
+	const isBarePropsShorthand =
+		canonical === ATTR_PROPS && !normalizeAttributeValue(rawValue).trim()
+
 	const requiresBracedValue =
-		BRACED_VALUE_DIRECTIVES.has(canonical) && !looksBracedDirectiveValue(rawValue)
+		BRACED_VALUE_DIRECTIVES.has(canonical) &&
+		!looksBracedDirectiveValue(rawValue) &&
+		!isBarePropsShorthand
 
 	return {
 		kind: 'build-directive',

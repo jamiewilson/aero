@@ -187,6 +187,35 @@ describe('build-directive-attributes', () => {
 				requiresBracedValue: true,
 			})
 		})
+
+		it('allows bare props shorthand without requiring braces', () => {
+			for (const attrName of ['props', 'aero-props', 'data-aero-props'] as const) {
+				expect(
+					classifyBuildAttribute({ tagName: 'meta-component', attrName, rawValue: '' })
+				).toEqual({
+					kind: 'build-directive',
+					directive: 'props',
+					attrName,
+					requiresBracedValue: false,
+				})
+				expect(
+					classifyBuildAttribute({ tagName: 'meta-component', attrName, rawValue: null })
+				).toEqual({
+					kind: 'build-directive',
+					directive: 'props',
+					attrName,
+					requiresBracedValue: false,
+				})
+			}
+			expect(
+				classifyBuildAttribute({ tagName: 'div', attrName: 'props', rawValue: 'not-braced' })
+			).toEqual({
+				kind: 'build-directive',
+				directive: 'props',
+				attrName: 'props',
+				requiresBracedValue: true,
+			})
+		})
 	})
 
 	describe('getBuildDirectiveValidationIssue', () => {
@@ -197,11 +226,37 @@ describe('build-directive-attributes', () => {
 			expect(getBuildDirectiveValidationIssue({ tagName: 'li', attrName: 'for', rawValue: 'const x of xs' })).toContain(
 				'must use a braced expression'
 			)
+			expect(
+				getBuildDirectiveValidationIssue({ tagName: 'div', attrName: 'props', rawValue: 'not-braced' })
+			).toContain('must use a braced expression')
 		})
 
 		it('returns null for valid native and braced directives', () => {
 			expect(getBuildDirectiveValidationIssue({ tagName: 'label', attrName: 'for', rawValue: 'email' })).toBeNull()
 			expect(getBuildDirectiveValidationIssue({ tagName: 'div', attrName: 'if', rawValue: '{ ok }' })).toBeNull()
+		})
+
+		it('returns null for bare props shorthand', () => {
+			expect(
+				getBuildDirectiveValidationIssue({ tagName: 'meta-component', attrName: 'props', rawValue: '' })
+			).toBeNull()
+			expect(
+				getBuildDirectiveValidationIssue({ tagName: 'meta-component', attrName: 'props', rawValue: null })
+			).toBeNull()
+			expect(
+				getBuildDirectiveValidationIssue({
+					tagName: 'meta-component',
+					attrName: 'aero-props',
+					rawValue: '',
+				})
+			).toBeNull()
+			expect(
+				getBuildDirectiveValidationIssue({
+					tagName: 'meta-component',
+					attrName: 'data-aero-props',
+					rawValue: '',
+				})
+			).toBeNull()
 		})
 
 		it('flags braced for on native host tags', () => {
