@@ -17,3 +17,7 @@ export {
 	type DirectiveParityPrettierExpectation,
 	type DirectiveParityOutcome,
 } from './directive-scenarios'
+export {
+	AUTHOR_ATTRIBUTE_PREFIX_SCENARIOS,
+	type AuthorAttributePrefixScenario,
+} from './author-attribute-prefix-scenarios'

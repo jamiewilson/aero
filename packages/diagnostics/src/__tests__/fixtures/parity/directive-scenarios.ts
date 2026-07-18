@@ -16,7 +16,7 @@ export interface DirectiveParityExpectation {
 }
 
 export interface DirectiveParityPrettierExpectation {
-	readonly aeroAttributePrefix: 'none' | 'aero' | 'data-aero'
+	readonly aeroAttributePrefix: 'none' | 'aero' | 'strict'
 	readonly mustContain?: readonly string[]
 	readonly mustNotContain?: readonly string[]
 }
