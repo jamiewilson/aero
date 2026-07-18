@@ -18,7 +18,7 @@ import {
 	viteLoggerHasColors,
 } from '@aero-js/diagnostics'
 import { resolvePageName } from '../utils/routing'
-import { addDoctype } from './build'
+import { addDoctype } from './rewrite'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
 import {
 	collectClientStyleCssFiles,

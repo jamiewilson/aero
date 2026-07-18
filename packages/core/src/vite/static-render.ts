@@ -2,11 +2,9 @@
  * Static page prerender: discover pages, expand dynamic routes, render via Vite SSR, rewrite URLs.
  */
 
-import type { AeroDirs, RedirectRule, StaticPathEntry } from '../types'
+import type { AeroDirs, RedirectRule } from '../types'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { isRunnableDevEnvironment } from 'vite'
-import { minify } from 'html-minifier-next'
-import fs from 'node:fs'
 import path from 'node:path'
 import { createServer } from 'vite'
 import {
@@ -14,46 +12,25 @@ import {
 	RUNTIME_INSTANCE_MODULE_ID,
 	resolveDirs,
 } from './defaults'
-import {
-	addDoctype,
-	readManifest,
-	rewriteRenderedHtml,
-	toOutputFile,
-} from './rewrite'
-import {
-	AERO_BUILD_MANIFEST_VERSION,
-	canSkipEntirePrerender,
-	computeClientHtmlFingerprint,
-	diffTemplateFileHashes,
-	hashStaticBuildOptions,
-	hashViteOutputManifest,
-	isIncrementalStaticBuildEnabled,
-	readBuildManifest,
-	writeBuildManifest,
-} from './build-manifest'
+import { readManifest } from './rewrite'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeSnippetTypesGenerated } from '../snippet-typegen'
-import { toPosixRelative } from '../utils/path'
 import {
 	aeroStaticBuildDebug,
 	resolveStaticPrerenderConcurrency,
 	runPrerenderWithCancellation,
 } from './static-prerender-pool'
 import { writeSitemap } from './sitemap'
+import { discoverPages } from './static-page-discovery'
+import { expandDynamicPages } from './static-dynamic-expansion'
 import {
-	discoverPages,
-	expandPattern,
-	isDynamicPage,
-	toRouteFromPageName,
-	trimEdgeSlashes,
-	type StaticPage,
-} from './static-page-discovery'
-import {
-	collectTransitiveTemplateImports,
-	computeTemplateFileHashesMap,
-	getResolvePathForProject,
-} from './template-import-closure'
+	evaluateIncrementalGate,
+	filterPagesAgainstRedirects,
+	finalizeIncrementalManifest,
+	selectPagesToPrerender,
+} from './static-incremental-gate'
+import { prerenderStaticPage } from './static-prerender-worker'
 
 /** Options for renderStaticPages: root, dirs, resolvePath, vitePlugins, optional minify, site, redirects, resolvedConfig. */
 export interface StaticBuildOptions {
@@ -88,49 +65,29 @@ export async function renderStaticPages(
 	writeRouteTypesGenerated(root, routeManifest)
 	writeSnippetTypesGenerated(root)
 	const apiPrefix = options.apiPrefix || DEFAULT_API_PREFIX
-	// Pages are always discovered from the client/pages subtree.
 	const discoveredPages = discoverPages(root, path.join(dirs.client, 'pages'))
 	const distDir = path.resolve(root, outDir)
 
-	const prevBuildManifest = readBuildManifest(root)
-	const viteManifestHashForIncremental = hashViteOutputManifest(distDir)
-	const clientHtmlFingerprint = computeClientHtmlFingerprint(root, dirs.client)
-	const staticBuildOptionsHash = hashStaticBuildOptions(
-		options.site?.trim() ?? '',
-		JSON.stringify(options.redirects ?? [])
-	)
-	const templateFileHashesCurrent = computeTemplateFileHashesMap(root, dirs.client)
-	const hasDynamicRoutes = discoveredPages.some(p => isDynamicPage(p))
+	const gate = evaluateIncrementalGate({
+		root,
+		clientDir: dirs.client,
+		distDir,
+		site: options.site?.trim() ?? '',
+		redirectsJson: JSON.stringify(options.redirects ?? []),
+		discoveredPages,
+		resolvePath: options.resolvePath,
+	})
 
-	if (isIncrementalStaticBuildEnabled() && hasDynamicRoutes) {
-		aeroStaticBuildDebug(
-			'static prerender: incremental whole-phase skip disabled (dynamic [param] page(s) present; getStaticPaths must run each build)'
-		)
-	}
-
-	if (
-		isIncrementalStaticBuildEnabled() &&
-		!hasDynamicRoutes &&
-		canSkipEntirePrerender({
-			previous: prevBuildManifest,
-			currentViteManifestHash: viteManifestHashForIncremental,
-			currentClientHtmlFingerprint: clientHtmlFingerprint,
-			currentStaticBuildOptionsHash: staticBuildOptionsHash,
-		})
-	) {
+	if (gate.skipEntirePrerender) {
 		aeroStaticBuildDebug('static prerender: skipped (incremental manifest match)')
 		return
 	}
 
 	const manifest = readManifest(distDir)
 
-	// Disable Nitro plugin during static page rendering to prevent it from handling
-	// requests or starting watchers that might hang the build.
 	const previousAeroServer = process.env.AERO_SERVER
 	process.env.AERO_SERVER = 'false'
 
-	// Use a dedicated cache dir so the static server does not reuse the main build's
-	// transform cache (which would hand compiled .html→JS to import-analysis and fail).
 	const staticCacheDir = path.join(root, '.aero', 'vite-ssr')
 	const resolvedConfig = options.resolvedConfig
 	const server = await createServer({
@@ -166,104 +123,17 @@ export async function renderStaticPages(
 			`static prerender: runtime loaded (${Date.now() - tBuildStart}ms since build step start)`
 		)
 
-		// Expand dynamic pages via getStaticPaths before rendering.
-		const pages: StaticPage[] = []
-		for (const page of discoveredPages) {
-			if (!isDynamicPage(page)) {
-				pages.push(page)
-				continue
-			}
-
-			// Load the compiled module to check for getStaticPaths export
-			const mod = await ssrEnv.runner.import(page.sourceFile)
-			if (typeof mod.getStaticPaths !== 'function') {
-				console.warn(
-					`[aero] ⚠ Skipping dynamic page "${path.relative(root, page.sourceFile)}" — ` +
-						`no getStaticPaths() exported. Page will not be pre-rendered.`
-				)
-				continue
-			}
-
-			const staticPaths: StaticPathEntry[] = await mod.getStaticPaths()
-			if (!Array.isArray(staticPaths) || staticPaths.length === 0) {
-				console.warn(
-					`[aero] ⚠ getStaticPaths() for "${path.relative(root, page.sourceFile)}" ` +
-						`returned no paths. Page will not be pre-rendered.`
-				)
-				continue
-			}
-
-			for (const entry of staticPaths) {
-				const expandedPageName = expandPattern(page.pageName, entry.params)
-				const expandedRoute = toRouteFromPageName(expandedPageName)
-				pages.push({
-					pageName: expandedPageName,
-					routePath: expandedRoute,
-					sourceFile: page.sourceFile,
-					outputFile: toOutputFile(expandedRoute),
-					params: entry.params,
-					props: entry.props,
-				})
-			}
-		}
-
-		// Skip building pages that are redirect sources so the Nitro routeRule is the only handler.
-		const redirectFromSet = new Set(
-			(options.redirects ?? []).map(r => trimEdgeSlashes(r.from).trim() || '')
+		const pages = await expandDynamicPages(discoveredPages, root, sourceFile =>
+			ssrEnv.runner.import(sourceFile)
 		)
-		const pathMatchesRedirect = (page: StaticPage): boolean => {
-			const pathSegment = page.routePath === '' ? '' : page.routePath
-			return redirectFromSet.has(pathSegment)
-		}
-		const pagesToRender = options.redirects?.length
-			? pages.filter(p => !pathMatchesRedirect(p))
-			: pages
-
-		let pagesToPrerender = pagesToRender
-		if (
-			isIncrementalStaticBuildEnabled() &&
-			!hasDynamicRoutes &&
-			prevBuildManifest &&
-			prevBuildManifest.templateFileHashes &&
-			prevBuildManifest.viteManifestHash === viteManifestHashForIncremental &&
-			prevBuildManifest.staticBuildOptionsHash === staticBuildOptionsHash
-		) {
-			const changed = diffTemplateFileHashes(
-				prevBuildManifest.templateFileHashes,
-				templateFileHashesCurrent
-			)
-			if (changed.length > 0) {
-				const resolvePath = getResolvePathForProject(root, options.resolvePath)
-				const dirty: StaticPage[] = []
-				for (const page of pagesToRender) {
-					const closure = collectTransitiveTemplateImports(
-						root,
-						dirs.client,
-						resolvePath,
-						page.sourceFile
-					)
-					let needs = false
-					for (const c of changed) {
-						if (closure.has(c)) {
-							needs = true
-							break
-						}
-					}
-					if (needs) dirty.push(page)
-				}
-				if (dirty.length === 0) {
-					aeroStaticBuildDebug(
-						'static prerender: incremental partial — no page depends on changed template(s); skipping HTML writes'
-					)
-					pagesToPrerender = []
-				} else if (dirty.length < pagesToRender.length) {
-					pagesToPrerender = dirty
-					aeroStaticBuildDebug(
-						`static prerender: incremental partial (${dirty.length} of ${pagesToRender.length} page(s))`
-					)
-				}
-			}
-		}
+		const pagesToRender = filterPagesAgainstRedirects(pages, options.redirects)
+		const pagesToPrerender = selectPagesToPrerender(
+			pagesToRender,
+			gate,
+			root,
+			dirs.client,
+			options.resolvePath
+		)
 
 		aeroStaticBuildDebug(
 			`static prerender: ${pagesToPrerender.length} of ${pagesToRender.length} page(s) in prerender queue after route expansion (${Date.now() - tBuildStart}ms)`
@@ -286,50 +156,19 @@ export async function renderStaticPages(
 				items: pagesToPrerender,
 				concurrency,
 				signal: prerenderAbort.signal,
-				worker: async page => {
-					const routePath = page.routePath ? `/${page.routePath}` : '/'
-					const pageUrl = new URL(routePath, 'http://localhost')
-
-					// For expanded dynamic pages we must render via the original
-					// dynamic page name (e.g. "[id]") so the runtime finds the module,
-					// while passing the concrete params so the template has real values.
-					const renderTarget = isDynamicPage(page)
-						? toPosixRelative(
-								path.resolve(page.sourceFile),
-								path.resolve(root, dirs.client, 'pages')
-							).replace(/\.html$/i, '')
-						: page.pageName
-
-					let rendered = await runtime.aero.render(renderTarget, {
-						url: pageUrl,
-						request: new Request(pageUrl.toString(), { method: 'GET' }),
-						routePath,
-						params: page.params || {},
-						props: page.props || {},
+				worker: page =>
+					prerenderStaticPage({
+						page,
+						root,
+						clientDir: dirs.client,
+						distDir,
+						apiPrefix,
 						site: options.site,
-					})
-					rendered = rewriteRenderedHtml(
-						addDoctype(rendered),
-						page.outputFile,
+						minifyHtml: options.minify === true,
 						manifest,
 						routeSet,
-						apiPrefix
-					)
-
-					const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-					if (options.minify && isProd) {
-						rendered = await minify(rendered, {
-							collapseWhitespace: true,
-							removeComments: true,
-							minifyCSS: true,
-							minifyJS: true,
-						})
-					}
-
-					const outPath = path.join(distDir, page.outputFile)
-					fs.mkdirSync(path.dirname(outPath), { recursive: true })
-					fs.writeFileSync(outPath, rendered, 'utf-8')
-				},
+						runtime,
+					}),
 			})
 		} finally {
 			process.removeListener('SIGINT', onSigint)
@@ -346,28 +185,7 @@ export async function renderStaticPages(
 			aeroStaticBuildDebug(`static prerender: sitemap in ${Date.now() - tSite}ms`)
 		}
 
-		if (isIncrementalStaticBuildEnabled()) {
-			const produced = new Set(pagesToRender.map(p => p.outputFile))
-			if (prevBuildManifest) {
-				for (const entry of Object.values(prevBuildManifest.pages)) {
-					if (!produced.has(entry.outputFile)) {
-						const stale = path.join(distDir, entry.outputFile)
-						if (fs.existsSync(stale)) fs.unlinkSync(stale)
-					}
-				}
-			}
-			writeBuildManifest(root, {
-				version: AERO_BUILD_MANIFEST_VERSION,
-				generatedAt: new Date().toISOString(),
-				viteManifestHash: hashViteOutputManifest(distDir) ?? '',
-				clientHtmlFingerprint: computeClientHtmlFingerprint(root, dirs.client),
-				staticBuildOptionsHash,
-				templateFileHashes: templateFileHashesCurrent,
-				pages: Object.fromEntries(
-					pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])
-				),
-			})
-		}
+		finalizeIncrementalManifest(root, dirs.client, distDir, pagesToRender, gate)
 
 		aeroStaticBuildDebug(`static prerender: total ${Date.now() - tBuildStart}ms`)
 	} finally {

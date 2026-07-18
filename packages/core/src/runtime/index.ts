@@ -12,13 +12,12 @@ import type {
 	AeroRenderFn,
 	AeroRenderInput,
 	AeroRouteParams,
-	AeroTemplateContext,
 	MountOptions,
 } from '../types'
-import { escapeScriptJson } from '@aero-js/compiler/helpers'
-import { formatAttributeBind } from '@aero-js/reactivity'
-import { pagePathToKey, pageNameToRoutePath, normalizeRoutePath, resolvePageName, resolvePageTarget } from '../utils/routing'
+import { pagePathToKey, pageNameToRoutePath, resolvePageName, resolvePageTarget } from '../utils/routing'
 import { aeroDevLog } from './dev-log'
+import { createTemplateContext } from './template-context'
+import { applyRootRenderInjections } from './root-render-injection'
 
 export { aeroDevLog }
 
@@ -84,95 +83,6 @@ export class Aero {
 		return pageNameToRoutePath(pageName)
 	}
 
-	/** Build a URL from route path and optional raw URL. Uses `http://localhost` as base when only a path is given. */
-	private toURL(routePath: string, rawUrl?: URL | string): URL {
-		if (rawUrl instanceof URL) return rawUrl
-		if (typeof rawUrl === 'string' && rawUrl.length > 0) {
-			return new URL(rawUrl, 'http://localhost')
-		}
-		return new URL(routePath, 'http://localhost')
-	}
-
-	/** Build template context: globals, props, slots, page, site, and `renderComponent`. */
-	private createContext(input: {
-		props?: Record<string, unknown>
-		slots?: Record<string, string>
-		request?: Request
-		url?: URL | string
-		params?: AeroRouteParams
-		routePath?: string
-		site?: string | { url: string }
-		page?: { url?: URL; request?: Request; params?: AeroRouteParams; routePath?: string }
-		styles?: Set<string>
-		scripts?: Set<string>
-		headScripts?: Set<string>
-	}): AeroTemplateContext {
-		const routePath = normalizeRoutePath(input.page?.routePath ?? input.routePath ?? '/')
-		const pageInput = input.page
-		const url = pageInput?.url ?? this.toURL(routePath, input.url)
-		const urlResolved = url instanceof URL ? url : new URL(String(url), 'http://localhost')
-		const request =
-			pageInput?.request ?? input.request ?? new Request(urlResolved.toString(), { method: 'GET' })
-		const params = pageInput?.params ?? input.params ?? {}
-		const siteUrl = typeof input.site === 'string' ? input.site : (input.site?.url ?? '')
-
-		const raw = (s: unknown): string => {
-			if (s == null) return ''
-			return String(s)
-		}
-
-		const trim = (s: unknown): string => {
-			if (s == null) return ''
-			return String(s).trim()
-		}
-
-		const trimStart = (s: unknown): string => {
-			if (s == null) return ''
-			return String(s).trimStart()
-		}
-
-		const trimEnd = (s: unknown): string => {
-			if (s == null) return ''
-			return String(s).trimEnd()
-		}
-
-		const bindable = (fallback?: unknown): unknown => fallback
-
-		const createScriptTag = (attrs: string, src: string): string => {
-			const normalizedAttrs = attrs.trim()
-			return `<script${normalizedAttrs ? ' ' + normalizedAttrs : ''} src="${this.escapeHtml(src)}"></script>`
-		}
-
-		const context = {
-			...this.globals,
-			props: input.props || {},
-			slots: input.slots || {},
-			page: {
-				url: urlResolved,
-				request,
-				params,
-				routePath,
-			},
-			site: { url: siteUrl },
-			styles: input.styles,
-			scripts: input.scripts,
-			headScripts: input.headScripts,
-			renderComponent: this.renderComponent.bind(this),
-			createScriptTag,
-			escapeHtml: this.escapeHtml.bind(this),
-			formatAttributeBind: (name: string, value: unknown) =>
-				formatAttributeBind(name, value, this.escapeHtml.bind(this)),
-			escapeScriptJson,
-			bindable,
-			raw,
-			trim,
-			trimStart,
-			trimEnd,
-		} as AeroTemplateContext
-
-		return context
-	}
-
 	/** True if entry params and request params have the same keys and stringified values. */
 	private paramsMatch(entryParams: AeroRouteParams, requestParams: AeroRouteParams): boolean {
 		const entryKeys = Object.keys(entryParams)
@@ -181,6 +91,17 @@ export class Aero {
 			if (String(entryParams[key]) !== String(requestParams[key])) return false
 		}
 		return true
+	}
+
+	private buildContext(input: Parameters<typeof createTemplateContext>[1]) {
+		return createTemplateContext(
+			{
+				globals: this.globals,
+				escapeHtml: this.escapeHtml.bind(this),
+				renderComponent: this.renderComponent.bind(this),
+			},
+			input
+		)
 	}
 
 	/**
@@ -250,7 +171,7 @@ export class Aero {
 		}
 
 		const routePath = this.toRoutePath(matchedPageName)
-		const context = this.createContext({
+		const context = this.buildContext({
 			props: renderInput.props || {},
 			slots: renderInput.slots || {},
 			request: renderInput.request,
@@ -270,42 +191,7 @@ export class Aero {
 		if (typeof renderFn === 'function') {
 			let html: string = await renderFn(context)
 			if (isRootRender) {
-				// Layout returns full document; page's trailing nodes (e.g. inline scripts) can end up after </html>.
-				// Move that content into the body so it isn't lost.
-				if (html.includes('</html>')) {
-					const afterHtml = html.split('</html>')[1]?.trim()
-					if (afterHtml && html.includes('</body>')) {
-						html = html.split('</html>')[0] + '</html>'
-						html = html.replace('</body>', `\n${afterHtml}\n</body>`)
-					}
-				}
-
-				let headInjections = ''
-				if (context.styles && context.styles.size > 0) {
-					headInjections += Array.from(context.styles).join('\n') + '\n'
-				}
-				if (context.headScripts && context.headScripts.size > 0) {
-					headInjections += Array.from(context.headScripts).join('\n') + '\n'
-				}
-
-				if (headInjections) {
-					if (html.includes('</head>')) {
-						html = html.replace('</head>', `\n${headInjections}</head>`)
-					} else if (html.includes('<body')) {
-						html = html.replace(/(<body[^>]*>)/i, `<head>\n${headInjections}</head>\n$1`)
-					} else {
-						html = `${headInjections}${html}`
-					}
-				}
-
-				if (context.scripts && context.scripts.size > 0) {
-					const scriptsHtml = Array.from(context.scripts).join('\n')
-					if (html.includes('</body>')) {
-						html = html.replace('</body>', `\n${scriptsHtml}\n</body>`)
-					} else {
-						html = `${html}\n${scriptsHtml}`
-					}
-				}
+				html = applyRootRenderInjections(html, context)
 			}
 			return html
 		}
@@ -329,7 +215,7 @@ export class Aero {
 		slots: Record<string, string> = {},
 		input: AeroRenderInput = {}
 	) {
-		const context = this.createContext({
+		const context = this.buildContext({
 			props,
 			slots,
 			page: input.page,
