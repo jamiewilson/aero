@@ -1,0 +1,65 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://aero-js.dev/schemas/prettierrc-aero.json",
+	"title": "Aero Prettier plugin options",
+	"description": "Additive schema for @aero-js/prettier-plugin-aero. Merged with the SchemaStore Prettier schema by the Aero VS Code extension.",
+	"definitions": {
+		"aeroAttributePrefix": {
+			"default": "none",
+			"markdownDescription": "Prefix form for Aero framework attributes (build directives, `show`/`html`/`busy`/`text`, `on:*`, `class:*`, `bind:*`, `is:*`, `key`).\n\n- `none`: bare author forms (`props`, `on:click`, `is:build`, …)\n- `aero`: ownership prefix; **keep colons** (`aero-on:click`, `aero-is:build`)\n- `strict`: strict HTML; **colons → hyphens** (`data-aero-on-click`, `data-aero-is-build`)\n\nNative HTML (e.g. `<label for=\"email\">`, `disabled=\"{ x }\"`) is never rewritten.",
+			"enum": ["none", "aero", "strict"],
+			"markdownEnumDescriptions": [
+				"Bare author forms (`props`, `on:click`, `is:build`, …).",
+				"`aero-*` with colons kept (`aero-on:click`, `aero-is:build`).",
+				"`data-aero-*` with hyphens (`data-aero-on-click`, `data-aero-is-build`)."
+			]
+		},
+		"aeroBracketSpacing": {
+			"type": "boolean",
+			"default": true,
+			"markdownDescription": "Add spaces inside Aero template braces (`{ expr }` vs `{expr}`).\n\nInner JS/TS object literals still follow Prettier's `bracketSpacing`."
+		},
+		"aeroSelfClosingComponents": {
+			"type": "boolean",
+			"default": true,
+			"markdownDescription": "Prefer self-closing tags for `*-component` elements without children.\n\n`*-layout` tags always keep explicit close tags."
+		},
+		"aeroOptions": {
+			"type": "object",
+			"properties": {
+				"aeroAttributePrefix": {
+					"$ref": "#/definitions/aeroAttributePrefix"
+				},
+				"aeroBracketSpacing": {
+					"$ref": "#/definitions/aeroBracketSpacing"
+				},
+				"aeroSelfClosingComponents": {
+					"$ref": "#/definitions/aeroSelfClosingComponents"
+				}
+			}
+		}
+	},
+	"type": "object",
+	"properties": {
+		"aeroAttributePrefix": {
+			"$ref": "#/definitions/aeroAttributePrefix"
+		},
+		"aeroBracketSpacing": {
+			"$ref": "#/definitions/aeroBracketSpacing"
+		},
+		"aeroSelfClosingComponents": {
+			"$ref": "#/definitions/aeroSelfClosingComponents"
+		},
+		"overrides": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"options": {
+						"$ref": "#/definitions/aeroOptions"
+					}
+				}
+			}
+		}
+	}
+}

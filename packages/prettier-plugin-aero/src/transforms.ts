@@ -3,11 +3,12 @@ import { parseMinimalHtmlFromText, walkHtmlNodes } from '@aero-js/html-parser'
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import prettier from 'prettier'
 import {
+	formatAuthorAttributeName,
+	isPrefixableAuthorAttribute,
+	resolveAuthorAttributeForFormatting,
+} from '@aero-js/compiler/author-attribute-format'
+import {
 	BUILD_DIRECTIVES,
-	canonicalBuildDirectiveNameForFormatting,
-	classifyBuildAttribute,
-	formatBuildDirectiveName,
-	isBuildDirectiveAttributeForFormatting,
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
 import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
@@ -32,23 +33,21 @@ function collectAttributeEdits(
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
-			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
-			// prefixed form would change their meaning.
 			if (
-				classifyBuildAttribute({
+				!isPrefixableAuthorAttribute({
 					tagName: node.tag,
 					attrName: name,
 					rawValue: effectiveValue,
-				}).kind === 'native-html'
+				})
 			) {
 				continue
 			}
-			if (!isBuildDirectiveAttributeForFormatting(name, effectiveValue)) continue
-			const canonical = canonicalBuildDirectiveNameForFormatting(name)
-			const desired = formatBuildDirectiveName(canonical, prefixMode)
+			const canonical = resolveAuthorAttributeForFormatting(name)
+			if (canonical == null) continue
+			const desired = formatAuthorAttributeName(canonical, prefixMode)
 			if (name === desired) continue
 
-			const nameStart = findAttributeNameStart(source, tagStart, name)
+			const nameStart = findAttributeNameStart(source, tagStart, name, node.startTagEnd ?? undefined)
 			if (nameStart == null) continue
 			edits.push({ start: nameStart, end: nameStart + name.length, text: desired })
 		}
@@ -56,17 +55,34 @@ function collectAttributeEdits(
 	return edits
 }
 
-function findAttributeNameStart(source: string, tagStart: number, name: string): number | null {
-	const tagSlice = source.slice(tagStart)
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function findAttributeNameStart(
+	source: string,
+	tagStart: number,
+	name: string,
+	tagEnd?: number
+): number | null {
+	const openEnd =
+		tagEnd ??
+		(() => {
+			const gt = source.indexOf('>', tagStart)
+			return gt >= 0 ? gt + 1 : undefined
+		})()
+	const tagSlice =
+		openEnd != null && openEnd > tagStart ? source.slice(tagStart, openEnd) : source.slice(tagStart)
+	const escaped = escapeRegExp(name)
 	const patterns = [
-		new RegExp(`\\s${name}\\s*=`, 'i'),
-		new RegExp(`\\s${name}(\\s|>|/>)`, 'i'),
-		new RegExp(`^<[^>]*?\\s${name}\\s*=`, 'i'),
+		new RegExp(`\\s${escaped}\\s*=`, 'i'),
+		new RegExp(`\\s${escaped}(\\s|>|/>)`, 'i'),
+		new RegExp(`^<[^>]*?\\s${escaped}\\s*=`, 'i'),
 	]
 	for (const pattern of patterns) {
 		const match = tagSlice.match(pattern)
 		if (match?.index != null) {
-			const offset = match[0].search(new RegExp(name, 'i'))
+			const offset = match[0].search(new RegExp(escaped, 'i'))
 			if (offset >= 0) return tagStart + match.index + offset
 		}
 	}
@@ -168,7 +184,8 @@ async function collectBracketSpacingEdits(
 					source,
 					node.start ?? 0,
 					name,
-					rawValue
+					rawValue,
+					node.startTagEnd ?? undefined
 				)
 				if (valueStart == null) continue
 				const segments = tokenizeCurlyInterpolation(value, { attributeMode: true })
@@ -216,9 +233,17 @@ function findAttributeValueStart(
 	source: string,
 	tagStart: number,
 	name: string,
-	rawValue: string
+	rawValue: string,
+	tagEnd?: number
 ): number | null {
-	const tagSlice = source.slice(tagStart)
+	const openEnd =
+		tagEnd ??
+		(() => {
+			const gt = source.indexOf('>', tagStart)
+			return gt >= 0 ? gt + 1 : undefined
+		})()
+	const tagSlice =
+		openEnd != null && openEnd > tagStart ? source.slice(tagStart, openEnd) : source.slice(tagStart)
 	const unquoted = normalizeAttributeValue(rawValue)
 	const search = unquoted.startsWith('{')
 		? unquoted
@@ -237,9 +262,10 @@ function findAttributeValueContentStart(
 	source: string,
 	tagStart: number,
 	name: string,
-	rawValue: string
+	rawValue: string,
+	tagEnd?: number
 ): number | null {
-	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue)
+	const valueStart = findAttributeValueStart(source, tagStart, name, rawValue, tagEnd)
 	if (valueStart == null) return null
 	const quote = source[valueStart]
 	if (quote === '"' || quote === "'") return valueStart + 1

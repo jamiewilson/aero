@@ -77,9 +77,9 @@
 			]
 		},
 		"aero-typescript-default": {
-			"comment": "is:build / is:state without lang=\"js\" → TypeScript (lang=\"js\" opts out; lang=\"ts\" matched above)",
+			"comment": "is:build / is:state (bare, aero-*, data-aero-*) without lang=\"js\" → TypeScript (lang=\"js\" opts out; lang=\"ts\" matched above)",
 			"name": "meta.embedded.block.ts.aero",
-			"begin": "(?i)(^[ \\t]+)?(<)(script)\\b(?=[^>]*\\bis:(?:build|state)(?=[\\s=/>]))(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\blang\\s*=\\s*[\"'](?:js|javascript)[\"'])",
+			"begin": "(?i)(^[ \\t]+)?(<)(script)\\b(?=[^>]*(?:\\bis:(?:build|state)|(?:data-aero-|aero-)is[:\\-](?:build|state))(?=[\\s=/>]))(?![^>]*\\blang\\s*=\\s*[\"'](?:ts|typescript)[\"'])(?![^>]*\\blang\\s*=\\s*[\"'](?:js|javascript)[\"'])",
 			"beginCaptures": {
 				"2": { "name": "punctuation.definition.tag.begin.html" },
 				"3": { "name": "entity.name.tag.html" }
