@@ -103,6 +103,78 @@ export const PARITY_SCENARIOS: readonly ParityScenario[] = [
 		}),
 	},
 	{
+		id: 'malformed-class-binding-braces',
+		ruleId: 'directive-braces.runtime-class',
+		category: 'directive-braces',
+		description: 'Reactive class:* with a value must use braced expression',
+		html: `<script is:state>
+	let count = 0
+</script>
+<div class:is-active="true"></div>`,
+		flags: { reactivity: true, hypermedia: false },
+		surfaces: surfaces(
+			{
+				code: 'AERO_COMPILE',
+				messageIncludes: 'Directive `class:is-active`',
+			},
+			['compiler', 'ide']
+		),
+	},
+	{
+		id: 'empty-class-binding-braces',
+		ruleId: 'directive-braces.runtime-class',
+		category: 'directive-braces',
+		description: 'Empty class:*="" must use braced expression (not bare shorthand)',
+		html: `<script is:state>
+	let isActive = false
+</script>
+<div class:is-active=""></div>`,
+		flags: { reactivity: true, hypermedia: false },
+		surfaces: surfaces(
+			{
+				code: 'AERO_COMPILE',
+				messageIncludes: 'must use a braced expression',
+			},
+			['compiler', 'ide']
+		),
+	},
+	{
+		id: 'malformed-show-braces',
+		ruleId: 'directive-braces.show',
+		category: 'directive-braces',
+		description: 'Reactive show must use braced expression',
+		html: `<script is:state>
+	let open = false
+</script>
+<div show="open"></div>`,
+		flags: { reactivity: true, hypermedia: false },
+		surfaces: surfaces(
+			{
+				code: 'AERO_COMPILE',
+				messageIncludes: 'Directive `show`',
+			},
+			['compiler', 'ide']
+		),
+	},
+	{
+		id: 'malformed-html-braces',
+		ruleId: 'directive-braces.html',
+		category: 'directive-braces',
+		description: 'Reactive html must use braced expression',
+		html: `<script is:state>
+	let markup = '<b>x</b>'
+</script>
+<div html="markup"></div>`,
+		flags: { reactivity: true, hypermedia: false },
+		surfaces: surfaces(
+			{
+				code: 'AERO_COMPILE',
+				messageIncludes: 'Directive `html`',
+			},
+			['compiler', 'ide']
+		),
+	},
+	{
 		id: 'hypermedia-string-state-option',
 		ruleId: 'hypermedia.action-state-must-be-binding',
 		category: 'hypermedia',

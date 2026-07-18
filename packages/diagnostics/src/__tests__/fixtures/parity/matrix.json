@@ -52,6 +52,40 @@
 			"owner": "compiler"
 		},
 		{
+			"ruleId": "directive-braces.runtime-class",
+			"category": "directive-braces",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/runtime-directive-braces.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["malformed-class-binding-braces", "empty-class-binding-braces"],
+			"owner": "compiler",
+			"notes": "Bare class:is-active (no =) remains shorthand for a state binding named after the class token; any quoted value including empty requires braces."
+		},
+		{
+			"ruleId": "directive-braces.show",
+			"category": "directive-braces",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/runtime-directive-braces.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["malformed-show-braces"],
+			"owner": "compiler"
+		},
+		{
+			"ruleId": "directive-braces.html",
+			"category": "directive-braces",
+			"surfaces": ["compile", "ide"],
+			"code": "AERO_COMPILE",
+			"severity": "error",
+			"sharedModule": "packages/compiler/src/runtime-directive-braces.ts",
+			"intentionalAsymmetry": false,
+			"scenarioIds": ["malformed-html-braces"],
+			"owner": "compiler"
+		},
+		{
 			"ruleId": "hypermedia.action-state-must-be-binding",
 			"category": "hypermedia",
 			"surfaces": ["compile", "ide", "cli"],

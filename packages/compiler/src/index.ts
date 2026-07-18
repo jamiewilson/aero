@@ -248,6 +248,13 @@ export {
 	type RuntimeDirectiveFamily,
 } from './runtime-directive-attributes'
 export {
+	attributeHasExplicitValueInSource,
+	resolveRuntimeDirectiveHasValue,
+	runtimeDirectiveRequiresBracedValue,
+	getRuntimeDirectiveBraceIssue,
+	type RuntimeDirectiveBraceInput,
+} from './runtime-directive-braces'
+export {
 	parseEventDirectiveName,
 	type EventDirectiveParseResult,
 	type ParsedEventDirective,

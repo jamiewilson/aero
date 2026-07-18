@@ -85,6 +85,8 @@ describe('checkReactiveBindingScope', () => {
 		checkReactiveBindingScope(makeDoc(text), parsed, diagnostics)
 		expect(diagnostics.length).toBeGreaterThanOrEqual(1)
 		expect(diagnostics[0].message).toContain('Reactive class binding `class:is-active`')
+		const span = diagnostics[0].span
+		expect(span.columnEnd - span.column).toBe('class:is-active="{ isActive }"'.length)
 	})
 
 	it('does not error when show references a state variable', () => {
