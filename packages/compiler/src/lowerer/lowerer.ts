@@ -20,6 +20,7 @@ import {
 	findUndeclaredReactiveIdentifiers,
 	REACTIVE_EXPR_AMBIENT_GLOBALS,
 } from '../scope-expr-codegen'
+import { findBracedIdentifierOffsets } from '../template-source-map'
 import { Resolver } from '../resolver'
 import { CompileError, type ComponentReactivePropMetadata } from '../types'
 import { buildForLoopBodyScopeNames, collectForDirectiveBindingNames } from '../for-directive'
@@ -891,7 +892,17 @@ export class Lowerer {
 						match => ' '.repeat(match.length)
 					)
 				: undefined
-			const nameIdx = haystack ? haystack.indexOf(name) : -1
+			const bracedIdx = haystack ? findBracedIdentifierOffsets(haystack, name)[0] : undefined
+			const nameIdx =
+				bracedIdx ??
+				(haystack
+					? (() => {
+							const m = new RegExp(
+								`\\b${name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`
+							).exec(haystack)
+							return m ? m.index : -1
+						})()
+					: -1)
 			const loc =
 				this.diag?.source && nameIdx >= 0
 					? Helper.lineColumnAtOffset(this.diag.source, nameIdx)

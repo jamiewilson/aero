@@ -7,6 +7,7 @@ import { FOR_LOOP_IMPLICIT_NAMES } from './for-directive'
 import { locateInTemplateSource } from './helpers'
 import type { IRNode } from './ir'
 import { lowerStateScript } from './lower-state-script'
+import { findBracedIdentifierOffsets } from './template-source-map'
 import {
 	EVENT_HANDLER_SHADOWS,
 	findUndeclaredReactiveIdentifiers,
@@ -62,15 +63,39 @@ function locateNameInSource(
 ): { line?: number; column?: number } {
 	if (!source) return {}
 	const templateHaystack = maskScriptAndStyleForLocation(source)
+	const trimmedExpr = expr.trim()
 	for (const haystack of [templateHaystack, source]) {
-		const exprIdx = haystack.indexOf(expr)
-		if (exprIdx >= 0) {
-			const local = expr.indexOf(name)
-			const offset = local >= 0 ? exprIdx + local : exprIdx
+		// Prefer `{ …name… }` sites so substrings like `status` in `cycleStatus` / prose lose.
+		const bracedOffsets = findBracedIdentifierOffsets(haystack, name)
+		if (bracedOffsets.length > 0) {
+			let offset = bracedOffsets[0]!
+			if (trimmedExpr) {
+				for (const candidate of bracedOffsets) {
+					const open = haystack.lastIndexOf('{', candidate)
+					const close = haystack.indexOf('}', candidate)
+					if (open < 0 || close < 0) continue
+					if (haystack.slice(open + 1, close).includes(trimmedExpr)) {
+						offset = candidate
+						break
+					}
+				}
+			}
 			return locateInTemplateSource(source, { offset }) ?? {}
 		}
-		const nameIdx = haystack.indexOf(name)
-		if (nameIdx >= 0) return locateInTemplateSource(source, { offset: nameIdx }) ?? {}
+		if (trimmedExpr) {
+			const exprIdx = haystack.indexOf(trimmedExpr)
+			if (exprIdx >= 0) {
+				const nameRe = new RegExp(`\\b${name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`)
+				const local = nameRe.exec(trimmedExpr)
+				const offset = local ? exprIdx + local.index : exprIdx
+				return locateInTemplateSource(source, { offset }) ?? {}
+			}
+		}
+		const nameRe = new RegExp(`\\b${name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`)
+		const m = nameRe.exec(haystack)
+		if (m) {
+			return locateInTemplateSource(source, { offset: m.index }) ?? {}
+		}
 	}
 	return {}
 }

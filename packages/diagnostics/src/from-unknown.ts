@@ -83,6 +83,9 @@ function firstLiveIdentifierSpan(
 		const lastBlockOpen = before.lastIndexOf('/*')
 		const lastBlockClose = before.lastIndexOf('*/')
 		if (lastBlockOpen > lastBlockClose) continue
+		// Skip HTML tag names (`<code>`, `</code>`) — not JS identifier sites.
+		const beforeChar = abs > 0 ? source[abs - 1]! : ''
+		if (beforeChar === '<' || beforeChar === '/') continue
 		let lineNum = 1
 		for (let i = 0; i < abs; i++) if (source.charCodeAt(i) === 10) lineNum++
 		return { file: spanFile, line: lineNum, column: abs - lineStart }
@@ -149,8 +152,9 @@ function dropMisleadingHtmlReferenceSpan(
 		return span
 	}
 
-	const idSpan = firstLiveIdentifierSpan(file, source, id)
-	return idSpan ?? firstLiveComponentTagSpan(file, source, id)
+	const tagSpan = firstLiveComponentTagSpan(file, source, id)
+	// Prefer `<x-component>` / `<x-layout>` over coincidental HTML/`code` tag matches.
+	return tagSpan ?? firstLiveIdentifierSpan(file, source, id)
 }
 
 /**
