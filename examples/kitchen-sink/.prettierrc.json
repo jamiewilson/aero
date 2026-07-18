@@ -15,7 +15,7 @@
 			"files": ["**/*.html"],
 			"options": {
 				"parser": "aero",
-				"aeroAttributePrefix": "data-aero",
+				"aeroAttributePrefix": "none",
 				"aeroBracketSpacing": true,
 				"aeroSelfClosingComponents": true
 			}

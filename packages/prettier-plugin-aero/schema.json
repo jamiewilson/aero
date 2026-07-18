@@ -6,12 +6,12 @@
 	"definitions": {
 		"aeroAttributePrefix": {
 			"default": "none",
-			"markdownDescription": "Prefix form for Aero build directives.\n\n- `none`: bare names (`props`, `for`, `if`, …)\n- `aero`: `aero-*` names\n- `data-aero`: `data-aero-*` names\n\nPlain HTML attributes (e.g. `<label for=\"email\">`) are never rewritten.",
-			"enum": ["none", "aero", "data-aero"],
+			"markdownDescription": "Prefix form for Aero framework attributes (build directives, `show`/`html`/`busy`/`text`, `on:*`, `class:*`, `bind:*`, `is:*`, `key`).\n\n- `none`: bare author forms (`props`, `on:click`, `is:build`, …)\n- `aero`: ownership prefix; **keep colons** (`aero-on:click`, `aero-is:build`)\n- `strict`: strict HTML; **colons → hyphens** (`data-aero-on-click`, `data-aero-is-build`)\n\nNative HTML (e.g. `<label for=\"email\">`, `disabled=\"{ x }\"`) is never rewritten.",
+			"enum": ["none", "aero", "strict"],
 			"markdownEnumDescriptions": [
-				"Bare names (`props`, `for`, `if`, …).",
-				"`aero-*` names (`aero-props`, `aero-for`, …).",
-				"`data-aero-*` names (`data-aero-props`, …)."
+				"Bare author forms (`props`, `on:click`, `is:build`, …).",
+				"`aero-*` with colons kept (`aero-on:click`, `aero-is:build`).",
+				"`data-aero-*` with hyphens (`data-aero-on-click`, `data-aero-is-build`)."
 			]
 		},
 		"aeroBracketSpacing": {

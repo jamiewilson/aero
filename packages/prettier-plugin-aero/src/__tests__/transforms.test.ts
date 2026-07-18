@@ -29,9 +29,9 @@ describe('applyAeroTransforms', () => {
 		expect(output).toContain('aero-if="{ ok }"')
 	})
 
-	it('adds data-aero- prefix when aeroAttributePrefix is data-aero', async () => {
+	it('adds data-aero- prefix when aeroAttributePrefix is strict', async () => {
 		const input = '<div props="{ title }" if="{ ok }"></div>'
-		const output = await formatAero(input, { aeroAttributePrefix: 'data-aero' })
+		const output = await formatAero(input, { aeroAttributePrefix: 'strict' })
 		expect(output).toContain('data-aero-props="{ title }"')
 		expect(output).toContain('data-aero-if="{ ok }"')
 	})
@@ -67,7 +67,7 @@ describe('applyAeroTransforms', () => {
 
 	it('rewrites bare props attribute with prefix toggle', async () => {
 		const input = '<header-component props />'
-		const prefixed = await formatAero(input, { aeroAttributePrefix: 'data-aero' })
+		const prefixed = await formatAero(input, { aeroAttributePrefix: 'strict' })
 		expect(prefixed).toBe('<header-component data-aero-props />')
 
 		const bare = await formatAero(prefixed, { aeroAttributePrefix: 'none' })
@@ -82,6 +82,46 @@ describe('applyAeroTransforms', () => {
 		expect(once).toContain('<script aero-props="{ storageKey, attribute }">')
 		const twice = await formatAero(once, { aeroAttributePrefix: 'aero' })
 		expect(twice).toBe(once)
+	})
+
+	it('rewrites runtime, event, class, bind, key, and script is attrs', async () => {
+		const input = `<script is:state>let count = 0
+let open = true
+let active = false</script>
+<button on:click="{ count++ }" show="{ open }" class:is-active="{ active }" key="{ count }" text="{ count }"></button>
+<header-component bind:count="{ count }" />`
+		const aero = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(aero).toContain('<script aero-is:state>')
+		expect(aero).toContain('aero-on:click="{ count++ }"')
+		expect(aero).toContain('aero-show="{ open }"')
+		expect(aero).toContain('aero-class:is-active="{ active }"')
+		expect(aero).toContain('aero-key="{ count }"')
+		expect(aero).toContain('aero-text="{ count }"')
+		expect(aero).toContain('aero-bind:count="{ count }"')
+
+		const data = await formatAero(input, { aeroAttributePrefix: 'strict' })
+		expect(data).toContain('<script data-aero-is-state>')
+		expect(data).toContain('data-aero-on-click="{ count++ }"')
+		expect(data).toContain('data-aero-show="{ open }"')
+		expect(data).toContain('data-aero-class-is-active="{ active }"')
+		expect(data).toContain('data-aero-key="{ count }"')
+		expect(data).toContain('data-aero-bind-count="{ count }"')
+
+		const bare = await formatAero(data, { aeroAttributePrefix: 'none' })
+		expect(bare).toContain('<script is:state>')
+		expect(bare).toContain('on:click="{ count++ }"')
+		expect(bare).toContain('class:is-active="{ active }"')
+		expect(bare).toContain('bind:count="{ count }"')
+	})
+
+	it('does not rewrite native HTML or emit-only markers', async () => {
+		const input = `<label for="email">Email</label>
+<div data-aero-event="0" data-aero-bind="1"></div>`
+		const output = await formatAero(input, { aeroAttributePrefix: 'aero' })
+		expect(output).toContain('for="email"')
+		expect(output).toContain('data-aero-event="0"')
+		expect(output).toContain('data-aero-bind="1"')
+		expect(output).not.toContain('aero-for')
 	})
 
 	it('does not rewrite plain html for attribute', async () => {

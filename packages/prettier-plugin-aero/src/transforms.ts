@@ -3,11 +3,12 @@ import { parseMinimalHtmlFromText, walkHtmlNodes } from '@aero-js/html-parser'
 import { tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import prettier from 'prettier'
 import {
+	formatAuthorAttributeName,
+	isPrefixableAuthorAttribute,
+	resolveAuthorAttributeForFormatting,
+} from '@aero-js/compiler/author-attribute-format'
+import {
 	BUILD_DIRECTIVES,
-	canonicalBuildDirectiveNameForFormatting,
-	classifyBuildAttribute,
-	formatBuildDirectiveName,
-	isBuildDirectiveAttributeForFormatting,
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
 import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
@@ -32,20 +33,18 @@ function collectAttributeEdits(
 
 		for (const [name, rawValue] of Object.entries(node.attributes)) {
 			const effectiveValue = rawValue ?? '""'
-			// Leave native HTML attributes (e.g. `default` on <track>) untouched; renaming them to a
-			// prefixed form would change their meaning.
 			if (
-				classifyBuildAttribute({
+				!isPrefixableAuthorAttribute({
 					tagName: node.tag,
 					attrName: name,
 					rawValue: effectiveValue,
-				}).kind === 'native-html'
+				})
 			) {
 				continue
 			}
-			if (!isBuildDirectiveAttributeForFormatting(name, effectiveValue)) continue
-			const canonical = canonicalBuildDirectiveNameForFormatting(name)
-			const desired = formatBuildDirectiveName(canonical, prefixMode)
+			const canonical = resolveAuthorAttributeForFormatting(name)
+			if (canonical == null) continue
+			const desired = formatAuthorAttributeName(canonical, prefixMode)
 			if (name === desired) continue
 
 			const nameStart = findAttributeNameStart(source, tagStart, name, node.startTagEnd ?? undefined)
@@ -54,6 +53,10 @@ function collectAttributeEdits(
 		}
 	}
 	return edits
+}
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function findAttributeNameStart(
@@ -70,15 +73,16 @@ function findAttributeNameStart(
 		})()
 	const tagSlice =
 		openEnd != null && openEnd > tagStart ? source.slice(tagStart, openEnd) : source.slice(tagStart)
+	const escaped = escapeRegExp(name)
 	const patterns = [
-		new RegExp(`\\s${name}\\s*=`, 'i'),
-		new RegExp(`\\s${name}(\\s|>|/>)`, 'i'),
-		new RegExp(`^<[^>]*?\\s${name}\\s*=`, 'i'),
+		new RegExp(`\\s${escaped}\\s*=`, 'i'),
+		new RegExp(`\\s${escaped}(\\s|>|/>)`, 'i'),
+		new RegExp(`^<[^>]*?\\s${escaped}\\s*=`, 'i'),
 	]
 	for (const pattern of patterns) {
 		const match = tagSlice.match(pattern)
 		if (match?.index != null) {
-			const offset = match[0].search(new RegExp(name, 'i'))
+			const offset = match[0].search(new RegExp(escaped, 'i'))
 			if (offset >= 0) return tagStart + match.index + offset
 		}
 	}

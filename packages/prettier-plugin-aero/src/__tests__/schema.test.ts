@@ -27,7 +27,7 @@ describe('prettier config schema', () => {
 			overrides: expect.any(Object),
 		})
 		expect(schema.definitions.aeroAttributePrefix).toMatchObject({
-			enum: ['none', 'aero', 'data-aero'],
+			enum: ['none', 'aero', 'strict'],
 			default: 'none',
 		})
 	})

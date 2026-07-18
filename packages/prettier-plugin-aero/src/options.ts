@@ -18,11 +18,22 @@ export const aeroOptions: Record<keyof AeroPluginOptions, SupportOption> = {
 		type: 'choice',
 		category: 'Aero',
 		default: 'none',
-		description: 'Prefix form for Aero build directives.',
+		description:
+			'Prefix form for Aero framework attributes (build directives, show/html/busy/text, on:*, class:*, bind:*, is:*, key).',
 		choices: [
-			{ value: 'none', description: 'Bare names (props, for, if, …).' },
-			{ value: 'aero', description: 'aero-* names (aero-props, aero-for, …).' },
-			{ value: 'data-aero', description: 'data-aero-* names (data-aero-props, …).' },
+			{
+				value: 'none',
+				description: 'Bare author forms (props, show, on:click, is:build, …).',
+			},
+			{
+				value: 'aero',
+				description: 'aero-* ownership prefix; keep colons (aero-on:click, aero-is:build).',
+			},
+			{
+				value: 'strict',
+				description:
+					'data-aero-* strict HTML names; colons become hyphens (data-aero-on-click, data-aero-is-build).',
+			},
 		],
 	},
 	aeroBracketSpacing: {
