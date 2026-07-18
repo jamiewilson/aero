@@ -1,5 +1,5 @@
 /**
- * Unit tests for the Vite static build pipeline (build.ts) and related defaults.
+ * Unit tests for Vite static build helpers and related defaults.
  *
  * Covers route→output mapping, URL rewriting (routes, assets, API passthrough),
  * directory resolution, build config, and dynamic page helpers (bracket patterns,
@@ -12,21 +12,36 @@ import os from 'node:os'
 import type { Manifest } from 'vite'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { collectTransitiveTemplateImports } from '../template-import-closure'
+import { createBuildConfig } from '../rollup-input-discovery'
+import { discoverRuntimeTemplatePaths } from '../runtime-template-discovery'
 import {
-	collectTransitiveTemplateImports,
-	createBuildConfig,
-	discoverRuntimeTemplatePaths,
-	__internal,
-} from '../build'
+	normalizeRelativeLink,
+	normalizeRelativeRouteLink,
+	rewriteAbsoluteUrl,
+	rewriteRenderedHtml,
+	toOutputFile,
+} from '../rewrite'
+import {
+	resolveStaticPrerenderConcurrency,
+	runPrerenderWithCancellation,
+} from '../static-prerender-pool'
+import { writeSitemap } from '../sitemap'
+import {
+	discoverPages,
+	expandPattern,
+	isDynamicPage,
+	trimEdgeSlashes,
+} from '../static-page-discovery'
 import { resolveDirs } from '../defaults'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../../utils/aliases'
 
 describe('vite build helpers', () => {
 	it('maps routes to root-style output files', () => {
-		expect(__internal.toOutputFile('')).toBe('index.html')
-		expect(__internal.toOutputFile('404')).toBe('404.html')
-		expect(__internal.toOutputFile('about')).toBe('about/index.html')
-		expect(__internal.toOutputFile('docs/name')).toBe('docs/name/index.html')
+		expect(toOutputFile('')).toBe('index.html')
+		expect(toOutputFile('404')).toBe('404.html')
+		expect(toOutputFile('about')).toBe('about/index.html')
+		expect(toOutputFile('docs/name')).toBe('docs/name/index.html')
 	})
 
 	/**
@@ -37,33 +52,33 @@ describe('vite build helpers', () => {
 		const routeSet = new Set(['', 'about', 'docs', 'docs/name'])
 		const manifest: Manifest = {}
 
-		expect(__internal.rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)).toBe('../about/')
-		expect(__internal.rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe('./name/')
-		expect(__internal.rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
+		expect(rewriteAbsoluteUrl('/about', 'docs', manifest, routeSet)).toBe('../about/')
+		expect(rewriteAbsoluteUrl('/docs/name', 'docs', manifest, routeSet)).toBe('./name/')
+		expect(rewriteAbsoluteUrl('/', 'about', manifest, routeSet)).toBe('..')
 	})
 
 	/** normalizeRelativeLink: fromDir → targetPath; returns ./ for empty or same-dir, else ./relative path. */
 	it('normalizeRelativeLink returns ./ for empty or same-dir', () => {
-		expect(__internal.normalizeRelativeLink('', '')).toBe('./')
-		expect(__internal.normalizeRelativeLink('about', 'about')).toBe('./')
-		expect(__internal.normalizeRelativeLink('docs/name', 'docs/name')).toBe('./')
+		expect(normalizeRelativeLink('', '')).toBe('./')
+		expect(normalizeRelativeLink('about', 'about')).toBe('./')
+		expect(normalizeRelativeLink('docs/name', 'docs/name')).toBe('./')
 	})
 	it('normalizeRelativeLink produces relative path to file in same dir or child', () => {
-		expect(__internal.normalizeRelativeLink('about', 'about/index.html')).toBe('./index.html')
-		expect(__internal.normalizeRelativeLink('', 'assets/foo.js')).toBe('./assets/foo.js')
-		expect(__internal.normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe(
+		expect(normalizeRelativeLink('about', 'about/index.html')).toBe('./index.html')
+		expect(normalizeRelativeLink('', 'assets/foo.js')).toBe('./assets/foo.js')
+		expect(normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe(
 			'./intro/index.html'
 		)
 	})
 
 	/** normalizeRelativeRouteLink: fromDir → routePath; appends trailing slash except for root and 404 (file). */
 	it('normalizes relative route links with trailing slashes for directories', () => {
-		expect(__internal.normalizeRelativeRouteLink('', 'docs')).toBe('./docs/')
-		expect(__internal.normalizeRelativeRouteLink('about', 'docs')).toBe('../docs/')
-		expect(__internal.normalizeRelativeRouteLink('', 'about/team')).toBe('./about/team/')
-		expect(__internal.normalizeRelativeRouteLink('about', '')).toBe('..')
-		expect(__internal.normalizeRelativeRouteLink('', '')).toBe('./')
-		expect(__internal.normalizeRelativeRouteLink('', '404')).toBe('./404')
+		expect(normalizeRelativeRouteLink('', 'docs')).toBe('./docs/')
+		expect(normalizeRelativeRouteLink('about', 'docs')).toBe('../docs/')
+		expect(normalizeRelativeRouteLink('', 'about/team')).toBe('./about/team/')
+		expect(normalizeRelativeRouteLink('about', '')).toBe('..')
+		expect(normalizeRelativeRouteLink('', '')).toBe('./')
+		expect(normalizeRelativeRouteLink('', '404')).toBe('./404')
 	})
 
 	it('rewrites asset URLs from manifest entries', () => {
@@ -81,11 +96,11 @@ describe('vite build helpers', () => {
 			},
 		}
 
-		expect(__internal.rewriteAbsoluteUrl('/client/index.ts', 'about', manifest, routeSet)).toBe(
+		expect(rewriteAbsoluteUrl('/client/index.ts', 'about', manifest, routeSet)).toBe(
 			'../assets/client/index-123.js'
 		)
 		expect(
-			__internal.rewriteAbsoluteUrl(
+			rewriteAbsoluteUrl(
 				'/client/assets/styles/global.css',
 				'docs/name',
 				manifest,
@@ -106,7 +121,7 @@ describe('vite build helpers', () => {
 		}
 
 		expect(
-			__internal.rewriteAbsoluteUrl(
+			rewriteAbsoluteUrl(
 				'/client/assets/styles/global.css',
 				'',
 				manifest,
@@ -119,7 +134,7 @@ describe('vite build helpers', () => {
 	it('rewrites local script src (root-relative path) to manifest asset path', () => {
 		const routeSet = new Set<string>()
 		expect(
-			__internal.rewriteAbsoluteUrl(
+			rewriteAbsoluteUrl(
 				'/client/assets/scripts/module.ts',
 				'',
 				{
@@ -147,7 +162,7 @@ describe('vite build helpers', () => {
 				isEntry: true,
 			},
 		}
-		const result = __internal.rewriteRenderedHtml(html, 'index.html', manifest, new Set())
+		const result = rewriteRenderedHtml(html, 'index.html', manifest, new Set())
 		expect(result).toContain('src="./assets/home.js-abc123.js"')
 		expect(result).toContain('type="module"')
 		expect(result).not.toContain('@aero/client')
@@ -166,7 +181,7 @@ describe('vite build helpers', () => {
 </body>
 </html>`
 		// output docs/index.html → fromDir is 'docs'; route links become relative
-		const result = __internal.rewriteRenderedHtml(html, 'docs/index.html', manifest, routeSet)
+		const result = rewriteRenderedHtml(html, 'docs/index.html', manifest, routeSet)
 		expect(result).toContain('href="../about/"')
 		expect(result).toContain('action="../contact/"')
 		expect(result).toContain('hx-get="./"')
@@ -178,21 +193,21 @@ describe('vite build helpers', () => {
 	it('keeps api routes absolute for preview/server mode', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(__internal.rewriteAbsoluteUrl('/api/submit', '', manifest, routeSet)).toBe('/api/submit')
+		expect(rewriteAbsoluteUrl('/api/submit', '', manifest, routeSet)).toBe('/api/submit')
 	})
 
 	it('preserves query and hash suffix when rewriting absolute URLs', () => {
 		const routeSet = new Set(['', 'about'])
 		const manifest: Manifest = {}
 		expect(
-			__internal.rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet)
+			rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet)
 		).toBe('./about/?q=1&sort=asc#section')
 	})
 
 	it('rewrites /assets/ path to relative when not in manifest', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(__internal.rewriteAbsoluteUrl('/assets/foo.js', 'about', manifest, routeSet)).toBe(
+		expect(rewriteAbsoluteUrl('/assets/foo.js', 'about', manifest, routeSet)).toBe(
 			'../assets/foo.js'
 		)
 	})
@@ -200,10 +215,10 @@ describe('vite build helpers', () => {
 	it('rewrites dist-root files (e.g. favicon) to relative path', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe(
+		expect(rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe(
 			'./favicon.ico'
 		)
-		expect(__internal.rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe(
+		expect(rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe(
 			'../favicon.ico'
 		)
 	})
@@ -256,17 +271,17 @@ describe('vite build helpers', () => {
 			outputFile: 'docs/[slug]/index.html',
 		}
 
-		expect(__internal.isDynamicPage(staticPage)).toBe(false)
-		expect(__internal.isDynamicPage(dynamicPage)).toBe(true)
-		expect(__internal.isDynamicPage(nestedDynamic)).toBe(true)
+		expect(isDynamicPage(staticPage)).toBe(false)
+		expect(isDynamicPage(dynamicPage)).toBe(true)
+		expect(isDynamicPage(nestedDynamic)).toBe(true)
 	})
 
 	/** expandPattern replaces [key] with params[key]; used for getStaticPaths → output paths. */
 	it('expands bracket patterns with concrete params', () => {
-		expect(__internal.expandPattern('[id]', { id: 'alpha' })).toBe('alpha')
-		expect(__internal.expandPattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
+		expect(expandPattern('[id]', { id: 'alpha' })).toBe('alpha')
+		expect(expandPattern('docs/[slug]', { slug: 'intro' })).toBe('docs/intro')
 		expect(
-			__internal.expandPattern('[category]/[id]', {
+			expandPattern('[category]/[id]', {
 				category: 'blog',
 				id: 'post-1',
 			})
@@ -274,16 +289,16 @@ describe('vite build helpers', () => {
 	})
 
 	it('throws when a required param is missing from expandPattern', () => {
-		expect(() => __internal.expandPattern('[id]', {})).toThrow('missing param "id"')
-		expect(() => __internal.expandPattern('docs/[slug]', { id: 'x' })).toThrow(
+		expect(() => expandPattern('[id]', {})).toThrow('missing param "id"')
+		expect(() => expandPattern('docs/[slug]', { id: 'x' })).toThrow(
 			'missing param "slug"'
 		)
 	})
 
 	it('trims leading and trailing slashes without regex backtracking', () => {
-		expect(__internal.trimEdgeSlashes('///docs///')).toBe('docs')
-		expect(__internal.trimEdgeSlashes('/')).toBe('')
-		expect(__internal.trimEdgeSlashes('docs')).toBe('docs')
+		expect(trimEdgeSlashes('///docs///')).toBe('docs')
+		expect(trimEdgeSlashes('/')).toBe('')
+		expect(trimEdgeSlashes('docs')).toBe('docs')
 	})
 
 	// =========================================================================
@@ -300,7 +315,7 @@ describe('vite build helpers', () => {
 			fs.writeFileSync(path.join(pagesDir, 'about.html'), '<html></html>')
 			fs.writeFileSync(path.join(pagesDir, 'about', 'index.html'), '<html></html>')
 
-			const pages = __internal.discoverPages(tmp, 'pages')
+			const pages = discoverPages(tmp, 'pages')
 
 			expect(pages.length).toBe(3)
 			const byName = Object.fromEntries(pages.map(p => [p.pageName, p]))
@@ -365,7 +380,7 @@ import h from '@components/h.html'
 		const tmp = path.join(os.tmpdir(), `aero-sitemap-${Date.now()}`)
 		fs.mkdirSync(tmp, { recursive: true })
 		try {
-			__internal.writeSitemap(['', 'about', 'docs', '404'], 'https://example.com', tmp)
+			writeSitemap(['', 'about', 'docs', '404'], 'https://example.com', tmp)
 			const sitemapPath = path.join(tmp, 'sitemap.xml')
 			expect(fs.existsSync(sitemapPath)).toBe(true)
 			const xml = fs.readFileSync(sitemapPath, 'utf-8')
@@ -386,17 +401,17 @@ import h from '@components/h.html'
 
 		it('uses AERO_STATIC_PRERENDER_CONCURRENCY when set', () => {
 			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '3')
-			expect(__internal.resolveStaticPrerenderConcurrency()).toBe(3)
+			expect(resolveStaticPrerenderConcurrency()).toBe(3)
 		})
 
 		it('caps explicit concurrency at 64', () => {
 			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '200')
-			expect(__internal.resolveStaticPrerenderConcurrency()).toBe(64)
+			expect(resolveStaticPrerenderConcurrency()).toBe(64)
 		})
 
 		it('ignores invalid env and falls back to CPU-based default', () => {
 			vi.stubEnv('AERO_STATIC_PRERENDER_CONCURRENCY', '0')
-			const n = __internal.resolveStaticPrerenderConcurrency()
+			const n = resolveStaticPrerenderConcurrency()
 			expect(n).toBeGreaterThanOrEqual(1)
 			expect(n).toBeLessThanOrEqual(8)
 		})
@@ -406,7 +421,7 @@ import h from '@components/h.html'
 		it('runs worker for each item', async () => {
 			const seen: number[] = []
 			const abort = new AbortController()
-			await __internal.runPrerenderWithCancellation({
+			await runPrerenderWithCancellation({
 				items: [1, 2, 3],
 				concurrency: 2,
 				signal: abort.signal,
@@ -420,7 +435,7 @@ import h from '@components/h.html'
 		it('propagates worker failures', async () => {
 			const abort = new AbortController()
 			await expect(
-				__internal.runPrerenderWithCancellation({
+				runPrerenderWithCancellation({
 					items: [1, 2, 3],
 					concurrency: 2,
 					signal: abort.signal,
@@ -435,7 +450,7 @@ import h from '@components/h.html'
 			const abort = new AbortController()
 			abort.abort()
 			await expect(
-				__internal.runPrerenderWithCancellation({
+				runPrerenderWithCancellation({
 					items: [1],
 					concurrency: 1,
 					signal: abort.signal,
@@ -447,7 +462,7 @@ import h from '@components/h.html'
 		it('rethrows non-abort failures unchanged', async () => {
 			const abort = new AbortController()
 			await expect(
-				__internal.runPrerenderWithCancellation({
+				runPrerenderWithCancellation({
 					items: [1],
 					concurrency: 1,
 					signal: abort.signal,

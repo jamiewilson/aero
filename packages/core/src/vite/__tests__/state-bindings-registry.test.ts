@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { discoverReactivePagePaths } from '../build'
+import { discoverReactivePagePaths } from '../runtime-template-discovery'
 import { getStateBindingsRegistryModuleSource } from '../state-bindings-registry'
 
 describe('state bindings registry', () => {

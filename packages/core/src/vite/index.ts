@@ -166,4 +166,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 }
 
 export { DEFAULT_DIRS, resolveDirs } from './defaults'
-export { discoverReactivePagePaths, discoverRuntimeTemplatePaths } from './build'
+export {
+	discoverReactivePagePaths,
+	discoverRuntimeTemplatePaths,
+} from './runtime-template-discovery'

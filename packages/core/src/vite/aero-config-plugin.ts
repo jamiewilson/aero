@@ -16,9 +16,9 @@ import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import {
 	TemplateDiscovery,
 	createBuildConfig,
-	discoverReactivePagePaths,
-	getRuntimeInstanceModuleSource,
-} from './build'
+} from './rollup-input-discovery'
+import { discoverReactivePagePaths } from './runtime-template-discovery'
+import { getRuntimeInstanceModuleSource } from './runtime-instance-module'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
 import { writeSnippetTypesGenerated } from '../snippet-typegen'

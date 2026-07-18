@@ -5,7 +5,7 @@
 import type { AeroOptions } from '../types'
 import type { Plugin } from 'vite'
 import { spawn } from 'node:child_process'
-import { renderStaticPages } from './build'
+import { renderStaticPages } from './static-render'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { createStaticBuildReportingService } from './static-build-reporting'
 import { requireAliasResult, requireResolvedConfig, type AeroPluginState } from './plugin-state'
