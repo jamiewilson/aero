@@ -14,6 +14,7 @@ import { DEFAULT_API_PREFIX, resolveDirs } from './defaults'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { aeroCssErrorLocationPlugin } from './aero-css-error-location-plugin'
+import { aeroCssImportHmrPlugin } from './aero-css-import-hmr-plugin'
 import { createAeroConfigPlugin } from './aero-config-plugin'
 import { createAeroVirtualsPlugin } from './aero-virtuals-plugin'
 import { createAeroTransformPlugin } from './aero-transform-plugin'
@@ -97,6 +98,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		aeroTransformPlugin,
 		aeroSsrPlugin,
 		aeroCssErrorLocationPlugin(dirs.client),
+		aeroCssImportHmrPlugin(),
 		staticBuildPlugin,
 		ViteImageOptimizer({
 			exclude: undefined,
