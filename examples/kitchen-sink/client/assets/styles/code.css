@@ -8,6 +8,9 @@
 	--code-tab-size: 2ch;
 	--code-font-size: smaller;
 	--code-line-height: var(--line-height);
+	--code-font-feature-settings:
+		'calt' 1, 'liga' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1,
+		'ss08' 1, 'ss09' 1, 'ss10' 1;
 	--code-border: --opacity(currentColor, 0.2);
 	--code-label-inset: 0.5rem;
 	--code-action-transition: opacity 200ms ease-in-out;
@@ -15,7 +18,7 @@
 
 @layer components {
 	/* Italic comments via @shared/shiki/with-italics */
-	pre.shiki span {
+	.shiki span {
 		font-style: var(--shiki-dark-font-style);
 		font-style: var(--shiki-light-font-style);
 	}
@@ -25,23 +28,21 @@
 		tab-size: var(--code-tab-size);
 		font-family: var(--font-mono);
 		font-size: var(--code-font-size);
+		line-height: var(--code-line-height);
+		font-feature-settings: var(--code-font-feature-settings);
 	}
 
-	/* Add a border to both inline and block code */
-	code:not(pre code),
-	pre:has(code) {
-		border: 1px solid var(--code-border);
-
-		/* Only apply background if not inside a shiki block */
-		&:not(.shiki &) {
-			background: var(--code-bg);
-		}
-	}
-
-	/* Inline code */
-	code:not(pre code) {
-		padding: 0.1em 0.4em 0.2em;
-		border-radius: var(--radius-sm);
+	span.shiki,
+	pre:has(code),
+	code:not(pre code, span.shiki code) {
+		display: inline-flex;
+		vertical-align: middle;
+		box-shadow: inset 0 0 0 1px var(--code-border);
+		padding-inline: 0.6ch;
+		padding-block-end: 0.1ex;
+		background: var(--code-bg);
+		border-radius: var(--radius-md);
+		corner-shape: squircle;
 	}
 
 	/* Block code */
@@ -49,33 +50,12 @@
 		display: grid;
 		overflow: hidden;
 		border-radius: var(--radius-2xl);
-		corner-shape: squircle;
-	}
+		padding: unset;
 
-	/* Code inside block pre */
-	pre:has(code) code {
-		line-height: var(--code-line-height);
-		padding: var(--box-padding);
-		overflow-x: auto;
-	}
-
-	/* Add font features to inline code and block code */
-	pre:has(code),
-	pre:has(code) code,
-	code:not(pre code) {
-		font-feature-settings:
-			'calt' 1,
-			'liga' 1,
-			'ss01' 1,
-			'ss02' 1,
-			'ss03' 1,
-			'ss04' 1,
-			'ss05' 1,
-			'ss06' 1,
-			'ss07' 1,
-			'ss08' 1,
-			'ss09' 1,
-			'ss10' 1;
+		code {
+			padding: var(--box-padding);
+			overflow-x: auto;
+		}
 	}
 
 	/* Block code with language label */
@@ -92,8 +72,8 @@
 		right: var(--code-label-inset);
 		font-family: var(--font-sans);
 		font-size: small;
-		text-box-trim: trim-both;
-		color: var(--color-slate-500);
+		text-box: trim-both cap alphabetic;
+		color: var(--color-slate-400);
 		transition: var(--code-action-transition);
 	}
 
@@ -124,7 +104,7 @@
 		position: absolute;
 		top: var(--code-label-inset);
 		right: var(--code-label-inset);
-		padding: var(--code-label-inset);
+		padding: 0.5rem;
 		border-radius: var(--radius-lg);
 
 		display: grid;

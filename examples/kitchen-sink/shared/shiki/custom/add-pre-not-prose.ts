@@ -20,8 +20,15 @@ function addClassToPre(node: { properties?: Record<string, unknown> }, className
 export function addPreNotProseReyhype() {
 	return (tree: any) => {
 		const visit = (node: any) => {
-			if (node.type === 'element' && node.tagName === 'pre') {
-				addClassToPre(node, NOT_PROSE_CLASS)
+			if (node.type === 'element') {
+				const classes = [
+					...normalizeClasses(node.properties?.class),
+					...normalizeClasses(node.properties?.className),
+				]
+				const isShikiSpan = node.tagName === 'span' && classes.includes('shiki')
+				if (node.tagName === 'pre' || node.tagName === 'code' || isShikiSpan) {
+					addClassToPre(node, NOT_PROSE_CLASS)
+				}
 			}
 			node.children?.forEach(visit)
 		}
