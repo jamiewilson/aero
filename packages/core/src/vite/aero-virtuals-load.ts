@@ -9,6 +9,7 @@ import {
 	AERO_EMPTY_INLINE_CSS_PREFIX,
 	AERO_HTML_VIRTUAL_PREFIX,
 	AERO_SNIPPET_VIRTUAL_PREFIX,
+	fromAeroStyleVirtualModuleId,
 	fromSnippetVirtualModuleId,
 	CLIENT_SCRIPT_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
@@ -22,6 +23,7 @@ import {
 } from './compile-warning-dedup'
 import type { AeroPluginState } from './plugin-state'
 import { compileSnippetModule } from '../snippets'
+import { extractTopLevelStyleBodies } from './template-style-bodies'
 
 type LoadFn = NonNullable<Plugin['load']>
 
@@ -45,6 +47,14 @@ export function createAeroVirtualsLoad(state: AeroPluginState): LoadFn {
 
 		if (id.startsWith(AERO_EMPTY_INLINE_CSS_PREFIX)) {
 			return '/* aero: no inline styles */'
+		}
+
+		const styleRef = fromAeroStyleVirtualModuleId(id)
+		if (styleRef) {
+			this.addWatchFile(styleRef.filePath)
+			const source = readFileSync(styleRef.filePath, 'utf-8')
+			const bodies = extractTopLevelStyleBodies(source)
+			return bodies[styleRef.index] ?? '/* aero: missing style block */'
 		}
 
 		if (id.startsWith(AERO_SNIPPET_VIRTUAL_PREFIX)) {

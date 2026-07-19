@@ -3,12 +3,41 @@
  */
 
 import type { AeroOptions } from '../types'
-import type { Plugin } from 'vite'
+import type { Plugin, ResolvedConfig } from 'vite'
 import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { renderStaticPages } from './static-render'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { createStaticBuildReportingService } from './static-build-reporting'
 import { requireAliasResult, requireResolvedConfig, type AeroPluginState } from './plugin-state'
+
+function resolvedHasTailwind(resolved: ResolvedConfig): boolean {
+	return resolved.plugins.some(
+		p => p && typeof p === 'object' && 'name' in p && /tailwindcss/i.test(String((p as Plugin).name))
+	)
+}
+
+/**
+ * Fresh `@tailwindcss/vite` for the prerender server.
+ * Parent build plugins use `apply: 'build'` and are skipped by `createServer` (serve).
+ */
+async function loadProjectTailwindPlugins(root: string): Promise<Plugin[]> {
+	try {
+		const require = createRequire(path.join(root, 'package.json'))
+		const id = require.resolve('@tailwindcss/vite')
+		const mod = (await import(pathToFileURL(id).href)) as {
+			default?: () => Plugin | Plugin[]
+		}
+		const factory = mod.default
+		if (typeof factory !== 'function') return []
+		const plugins = factory()
+		return Array.isArray(plugins) ? plugins : [plugins]
+	} catch {
+		return []
+	}
+}
 
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
 async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
@@ -60,9 +89,14 @@ export function createAeroStaticBuildPlugin(
 				resolvedConfig.build.minify !== false &&
 				typeof import.meta !== 'undefined' &&
 				import.meta.env?.PROD
-			const staticPlugins = pluginOptions.staticServerPlugins?.length
-				? [...aeroCorePlugins, ...pluginOptions.staticServerPlugins]
-				: aeroCorePlugins
+			const tailwindPlugins = resolvedHasTailwind(resolvedConfig)
+				? await loadProjectTailwindPlugins(root)
+				: []
+			const staticPlugins = [
+				...aeroCorePlugins,
+				...(pluginOptions.staticServerPlugins ?? []),
+				...tailwindPlugins,
+			]
 			const reporting = createStaticBuildReportingService()
 			try {
 				await renderStaticPages(

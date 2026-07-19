@@ -103,6 +103,7 @@ export async function renderStaticPages(
 				}
 			: undefined,
 		define: resolvedConfig?.define,
+		css: resolvedConfig?.css,
 		plugins: options.vitePlugins ?? [],
 		environments: { ssr: {} },
 		server: {

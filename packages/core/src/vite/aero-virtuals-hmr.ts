@@ -6,7 +6,11 @@ import type { Plugin, ViteDevServer } from 'vite'
 import { parse } from '@aero-js/compiler'
 import { toPosixRelative } from '../utils/path'
 import path from 'path'
-import { RESOLVED_RUNTIME_INSTANCE_MODULE_ID } from './defaults'
+import {
+	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
+	toAeroStyleInlineImportId,
+	toAeroStyleVirtualModuleId,
+} from './defaults'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'
@@ -14,9 +18,21 @@ import { writeSnippetTypesGenerated } from '../snippet-typegen'
 import { isAeroTemplateHtml } from './is-aero-template-html'
 import { collectSnippetHotUpdateModules } from './snippet-hmr'
 import type { AeroPluginState } from './plugin-state'
+import { extractTopLevelStyleBodies } from './template-style-bodies'
 
 type HandleHotUpdateFn = NonNullable<Plugin['handleHotUpdate']>
 type ConfigureServerFn = NonNullable<Plugin['configureServer']>
+
+function invalidateId(
+	server: ViteDevServer,
+	id: string,
+	invalidated: Set<unknown>
+): void {
+	const mod = server.moduleGraph.getModuleById(id)
+	if (!mod || invalidated.has(mod)) return
+	server.moduleGraph.invalidateModule(mod)
+	invalidated.add(mod)
+}
 
 export function createAeroVirtualsHandleHotUpdate(state: AeroPluginState): HandleHotUpdateFn {
 	return async function handleHotUpdate(ctx) {
@@ -30,6 +46,13 @@ export function createAeroVirtualsHandleHotUpdate(state: AeroPluginState): Handl
 
 		const code = await ctx.read()
 		const parsed = parse(code)
+		const styleCount = extractTopLevelStyleBodies(code).length
+		const invalidated = new Set<unknown>()
+		// +2 covers a style block removed on this edit still cached in the graph
+		for (let i = 0; i < styleCount + 2; i++) {
+			invalidateId(ctx.server, toAeroStyleVirtualModuleId(ctx.file, i), invalidated)
+			invalidateId(ctx.server, toAeroStyleInlineImportId(ctx.file, i), invalidated)
+		}
 
 		const relativePath = toPosixRelative(ctx.file, state.config.root)
 		const baseName = relativePath.replace(/\.html$/i, '')
@@ -38,17 +61,14 @@ export function createAeroVirtualsHandleHotUpdate(state: AeroPluginState): Handl
 			baseName,
 			state.clientScripts
 		)
-		if (!changed || affectedIds.length === 0) return
+		if (!changed || affectedIds.length === 0) {
+			// Style/markup-only: CSS virtuals invalidated above; Vite continues with SSR refresh.
+			return
+		}
 
-		const invalidated = new Set<any>()
 		for (const virtualId of affectedIds) {
-			const moduleId = '\0' + virtualId
-			const mod =
-				ctx.server.moduleGraph.getModuleById(moduleId) ||
-				ctx.server.moduleGraph.getModuleById(virtualId)
-			if (!mod || invalidated.has(mod)) continue
-			ctx.server.moduleGraph.invalidateModule(mod)
-			invalidated.add(mod)
+			invalidateId(ctx.server, '\0' + virtualId, invalidated)
+			invalidateId(ctx.server, virtualId, invalidated)
 		}
 
 		// Module scripts executed via injected <script type="module" src="..."> need a full reload

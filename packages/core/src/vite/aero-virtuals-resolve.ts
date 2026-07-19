@@ -7,6 +7,7 @@ import {
 	AERO_EMPTY_INLINE_CSS_PREFIX,
 	AERO_HTML_VIRTUAL_PREFIX,
 	AERO_SNIPPET_VIRTUAL_PREFIX,
+	AERO_STYLE_VIRTUAL_PREFIX,
 	toSnippetVirtualModuleId,
 	CLIENT_SCRIPT_PREFIX,
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
@@ -73,6 +74,10 @@ export function createAeroVirtualsResolveId(state: AeroPluginState): ResolveIdFn
 		}
 
 		if (id.startsWith(AERO_HTML_VIRTUAL_PREFIX)) {
+			return id
+		}
+
+		if (id.startsWith(AERO_STYLE_VIRTUAL_PREFIX)) {
 			return id
 		}
 
