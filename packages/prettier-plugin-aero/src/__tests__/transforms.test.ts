@@ -142,6 +142,29 @@ let active = false</script>
 		expect(compact).toContain('{title}')
 	})
 
+	it('applies aeroBracketSpacing to text next to element siblings', async () => {
+		const input =
+			'<p class="max-w-prose">{ site.home.subtitle } <a href="/docs">Get started</a>.</p>'
+		const compact = await formatAero(input, { aeroBracketSpacing: false })
+		expect(compact).toContain('{site.home.subtitle}')
+		expect(compact).not.toContain('{ site.home.subtitle }')
+
+		const spaced = await formatAero(
+			'<p>{site.home.subtitle} <a href="/docs">Go</a>.</p>',
+			{ aeroBracketSpacing: true }
+		)
+		expect(spaced).toContain('{ site.home.subtitle }')
+	})
+
+	it('applies aeroBracketSpacing inside template literals that look like HTML', async () => {
+		const input = '<code>{ `<slot />` }</code>'
+		const compact = await formatAero(input, { aeroBracketSpacing: false })
+		expect(compact).toBe('<code>{`<slot />`}</code>')
+
+		const spaced = await formatAero('<code>{`<slot />`}</code>', { aeroBracketSpacing: true })
+		expect(spaced).toBe('<code>{ `<slot />` }</code>')
+	})
+
 	it('prefers self-closing *-component tags when enabled', async () => {
 		const input = '<nav-component></nav-component>'
 		const output = await formatAero(input, { aeroSelfClosingComponents: true })
