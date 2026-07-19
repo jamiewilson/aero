@@ -4,13 +4,10 @@
 
 import path from 'node:path'
 import type { StaticPathEntry } from '../types'
+import { pageNameToRelativeRoutePath } from '../utils/routing'
+import { expandRoutePattern } from '../utils/route-pattern'
 import { toOutputFile } from './rewrite'
-import {
-	expandPattern,
-	isDynamicPage,
-	toRouteFromPageName,
-	type StaticPage,
-} from './static-page-discovery'
+import { isDynamicPage, type StaticPage } from './static-page-discovery'
 
 /** Module shape loaded from the SSR runner for a page source file. */
 export interface StaticPageModule {
@@ -53,8 +50,8 @@ export async function expandDynamicPages(
 		}
 
 		for (const entry of staticPaths) {
-			const expandedPageName = expandPattern(page.pageName, entry.params)
-			const expandedRoute = toRouteFromPageName(expandedPageName)
+			const expandedPageName = expandRoutePattern(page.pageName, entry.params)
+			const expandedRoute = pageNameToRelativeRoutePath(expandedPageName)
 			pages.push({
 				pageName: expandedPageName,
 				routePath: expandedRoute,

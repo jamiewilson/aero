@@ -12,7 +12,7 @@ import { toPosixRelative } from '../utils/path'
 import { getClientScriptVirtualUrl, resolveDirs, SKIP_PROTOCOL_REGEX } from './defaults'
 import { isIncrementalStaticBuildEnabled } from './build-manifest'
 import { discoverReactivePagePaths } from './runtime-template-discovery'
-import { walkFiles, walkHtmlFiles } from './template-walk'
+import { walkFiles, walkHtmlFiles } from '../utils/fs-walk'
 
 /**
  * Register client scripts from parsed template into a Map.

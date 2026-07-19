@@ -4,7 +4,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { walkHtmlFiles, walkHtmlFilesDirectOnly } from './template-walk'
+import { walkHtmlFiles, walkHtmlFilesDirectOnly } from '../utils/fs-walk'
 
 const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
 

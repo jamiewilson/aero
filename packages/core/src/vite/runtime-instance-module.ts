@@ -2,13 +2,8 @@
  * Dev/build runtime instance module source: explicit imports per discovered template.
  */
 
-import path from 'node:path'
+import { toRootRelativeImportUrl } from '../utils/path'
 import { discoverRuntimeTemplatePaths } from './runtime-template-discovery'
-
-function toRootRelativeImportUrl(root: string, absolutePath: string): string {
-	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
-	return '/' + rel.replace(/^\//, '')
-}
 
 function appendLines(lines: string[], ...entries: string[]): void {
 	lines.push(...entries)

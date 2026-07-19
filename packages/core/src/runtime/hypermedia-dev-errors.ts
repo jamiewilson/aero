@@ -7,10 +7,7 @@
 
 import type { ViteOverlayErrorPayload } from '@aero-js/diagnostics/browser'
 import { showAeroViteErrorOverlay } from './vite-error-overlay'
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null
-}
+import { isRecord } from '../utils/is-record'
 
 function formatNitroStack(stack: unknown): string | undefined {
 	if (typeof stack === 'string') return stack

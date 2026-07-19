@@ -13,16 +13,12 @@ import {
 } from './build-script-analysis'
 import { collectPatternBindings } from './for-directive'
 import { parseSync } from 'oxc-parser'
-
+import { maskJsComments } from './mask-js-comments'
 
 const SIMPLE_DECL_REGEX =
 	/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::\s*[\w.$<>,\s[\]|{}]+)?\s*=\s*(\{[\s\S]*?\})?/g
 const DESTRUCTURING_DECL_REGEX = /\b(?:const|let|var)\s+\{([^}]+)\}\s*=/g
 const FUNCTION_DECL_REGEX = /\bfunction\s+\*?\s*([A-Za-z_$][\w$]*)\s*\(/g
-
-function maskJsComments(text: string): string {
-	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
-}
 
 function collectObjectLiteralKeys(initializer: string): Set<string> {
 	const properties = new Set<string>()

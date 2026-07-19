@@ -3,11 +3,11 @@
  */
 
 import path from 'node:path'
-import { pagePathToKey } from '../utils/routing'
+import { pagePathToKey, pageNameToRelativeRoutePath } from '../utils/routing'
 import { isDynamicRoutePattern, expandRoutePattern } from '../utils/route-pattern'
 import { toPosixRelative } from '../utils/path'
 import { toOutputFile } from './rewrite'
-import { walkHtmlFiles } from './template-walk'
+import { walkHtmlFiles } from '../utils/fs-walk'
 
 /** One page to render: pageName (e.g. index or posts/[id]), routePath, source/output paths, optional params/props for dynamic pages. */
 export interface StaticPage {
@@ -24,10 +24,8 @@ export function isDynamicPage(page: StaticPage): boolean {
 	return isDynamicRoutePattern(page.pageName)
 }
 
-/** Replace `[key]` in pattern with params[key]; throws if a key is missing. */
-export function expandPattern(pattern: string, params: Record<string, string>): string {
-	return expandRoutePattern(pattern, params)
-}
+/** @deprecated Use {@link expandRoutePattern} from `utils/route-pattern`. */
+export const expandPattern = expandRoutePattern
 
 /** Trim leading/trailing slashes for redirect path matching. */
 export function trimEdgeSlashes(value: string): string {
@@ -38,12 +36,8 @@ export function trimEdgeSlashes(value: string): string {
 	return value.slice(start, end)
 }
 
-/** Page name to route path (e.g. index → '', about → about, blog/index → blog). */
-export function toRouteFromPageName(pageName: string): string {
-	if (pageName === 'index') return ''
-	if (pageName.endsWith('/index')) return pageName.slice(0, -'/index'.length)
-	return pageName
-}
+/** @deprecated Use {@link pageNameToRelativeRoutePath} from `utils/routing`. */
+export const toRouteFromPageName = pageNameToRelativeRoutePath
 
 /** Static pages from pagesRoot: file paths, page names (via pagePathToKey), route paths, output files; home → index when no sibling index. */
 export function discoverPages(root: string, pagesRoot: string): StaticPage[] {
@@ -68,7 +62,7 @@ export function discoverPages(root: string, pagesRoot: string): StaticPage[] {
 			}
 		}
 
-		const routePath = toRouteFromPageName(pageName)
+		const routePath = pageNameToRelativeRoutePath(pageName)
 		return {
 			pageName,
 			routePath,

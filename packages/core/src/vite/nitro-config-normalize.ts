@@ -4,10 +4,9 @@
 
 import path from 'node:path'
 import { toPosix } from '../utils/path'
+import { isRecord } from '../utils/is-record'
 
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export { isRecord as isPlainObject }
 
 function isRelativePath(value: string): boolean {
 	return value.startsWith('./') || value.startsWith('../')
@@ -18,25 +17,33 @@ export function normalizeRelativeModulePath(value: unknown, configDir: string): 
 	return toPosix(path.resolve(configDir, value))
 }
 
+function mapArray(
+	value: unknown,
+	configDir: string,
+	mapEntry: (entry: unknown, configDir: string) => unknown
+): unknown {
+	if (!Array.isArray(value)) return undefined
+	return value.map(entry => mapEntry(entry, configDir))
+}
+
 export function normalizeScanDirs(scanDirs: unknown, configDir: string): string[] {
 	if (!Array.isArray(scanDirs)) return []
 	return scanDirs.map(entry => {
 		if (typeof entry !== 'string' || !isRelativePath(entry)) return entry
 		return toPosix(path.resolve(configDir, entry))
-	})
+	}) as string[]
 }
 
 export function normalizePlugins(plugins: unknown, configDir: string): unknown {
-	if (!Array.isArray(plugins)) return undefined
-	return plugins.map(entry => normalizeRelativeModulePath(entry, configDir))
+	return mapArray(plugins, configDir, normalizeRelativeModulePath)
 }
 
 export function normalizeTasks(tasks: unknown, configDir: string): unknown {
-	if (!isPlainObject(tasks)) return undefined
+	if (!isRecord(tasks)) return undefined
 
 	return Object.fromEntries(
 		Object.entries(tasks).map(([taskName, taskConfig]) => {
-			if (!isPlainObject(taskConfig)) return [taskName, taskConfig]
+			if (!isRecord(taskConfig)) return [taskName, taskConfig]
 
 			return [
 				taskName,
@@ -50,12 +57,11 @@ export function normalizeTasks(tasks: unknown, configDir: string): unknown {
 }
 
 export function normalizeModules(modules: unknown, configDir: string): unknown {
-	if (!Array.isArray(modules)) return undefined
-	return modules.map(entry => normalizeRelativeModulePath(entry, configDir))
+	return mapArray(modules, configDir, normalizeRelativeModulePath)
 }
 
 export function normalizeImports(imports: unknown, configDir: string): unknown {
-	if (!isPlainObject(imports)) return undefined
+	if (!isRecord(imports)) return undefined
 	const dirs = Array.isArray(imports.dirs)
 		? imports.dirs.map(entry => normalizeRelativeModulePath(entry, configDir))
 		: imports.dirs
@@ -66,7 +72,7 @@ export function normalizeImports(imports: unknown, configDir: string): unknown {
 }
 
 export function normalizeAlias(alias: unknown, configDir: string): unknown {
-	if (!isPlainObject(alias)) return undefined
+	if (!isRecord(alias)) return undefined
 	return Object.fromEntries(
 		Object.entries(alias).map(([key, value]) => [
 			key,
@@ -76,9 +82,8 @@ export function normalizeAlias(alias: unknown, configDir: string): unknown {
 }
 
 export function normalizeAssetEntries(entries: unknown, configDir: string): unknown {
-	if (!Array.isArray(entries)) return undefined
-	return entries.map(entry => {
-		if (!isPlainObject(entry)) return entry
+	return mapArray(entries, configDir, entry => {
+		if (!isRecord(entry)) return entry
 		return {
 			...entry,
 			dir: normalizeRelativeModulePath(entry.dir, configDir),

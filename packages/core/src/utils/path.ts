@@ -20,3 +20,9 @@ export function toPosixRelative(value: string, root: string): string {
 	if (relative === '') return ''
 	return relative.split(path.sep).join('/')
 }
+
+/** Root-relative URL for a file under `root` (e.g. `/client/pages/about.html`). */
+export function toRootRelativeImportUrl(root: string, absolutePath: string): string {
+	const rel = toPosixRelative(absolutePath, root)
+	return '/' + rel.replace(/^\//, '')
+}

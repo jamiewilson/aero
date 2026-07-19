@@ -7,7 +7,7 @@ describe('mountStateBindingsForRoute', () => {
 		const aero = new Aero()
 		const target = {} as HTMLElement
 		let cleaned = false
-		const cleanup = await mountStateBindingsForRoute(
+		const result = await mountStateBindingsForRoute(
 			aero,
 			'/demos/counter',
 			target,
@@ -21,17 +21,19 @@ describe('mountStateBindingsForRoute', () => {
 				}
 			}
 		)
-		cleanup()
+		expect(result.hasStateBindings).toBe(true)
+		result.cleanup()
 		expect(cleaned).toBe(true)
 	})
 
 	it('returns no-op cleanup when route has no reactive module', async () => {
-		const cleanup = await mountStateBindingsForRoute(
+		const result = await mountStateBindingsForRoute(
 			new Aero(),
 			'/about',
 			{} as HTMLElement,
 			async () => null
 		)
-		expect(cleanup()).toBeUndefined()
+		expect(result.hasStateBindings).toBe(false)
+		expect(result.cleanup()).toBeUndefined()
 	})
 })

@@ -1,13 +1,8 @@
-import path from 'node:path'
 import { pagePathToKey } from '../utils/routing'
-
-function toRootRelativeImportUrl(root: string, absolutePath: string): string {
-	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
-	return '/' + rel.replace(/^\//, '')
-}
+import { toPosixRelative, toRootRelativeImportUrl } from '../utils/path'
 
 function toPosixPageKey(root: string, absolutePath: string): string {
-	return path.relative(root, absolutePath).split(path.sep).join('/')
+	return toPosixRelative(absolutePath, root)
 }
 
 /**
@@ -33,17 +28,10 @@ export function getStateBindingsRegistryModuleSource(
 		entries.push(`${JSON.stringify(pageName)}: () => import(${JSON.stringify(importUrl)})`)
 	}
 
-	return `const __aeroStatePageLoaders = {
-	${entries.join(',\n\t')}
-}
+	return `import { resolvePageName as __aeroResolvePageName } from '@aero-js/core/utils/resolve-page-name'
 
-function __aeroResolvePageName(url) {
-	const pathPart = String(url ?? '/').split('?')[0] || '/'
-	let clean = pathPart
-	if (clean === '/' || clean === '') return 'index'
-	if (clean.endsWith('/')) clean = clean + 'index'
-	clean = clean.replace(/^\\//, '').replace(/\\.html$/, '')
-	return clean || 'index'
+const __aeroStatePageLoaders = {
+	${entries.join(',\n\t')}
 }
 
 function __aeroResolveStatePageLoader(pageName) {

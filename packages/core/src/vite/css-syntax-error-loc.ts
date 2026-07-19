@@ -4,15 +4,14 @@
 
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { isRecord } from '../utils/is-record'
 
 export type TailwindLocSource = {
 	file: string
 	code: string
 }
 
-export function isRecord(v: unknown): v is Record<string, unknown> {
-	return typeof v === 'object' && v !== null
-}
+export { isRecord }
 
 export function hasTailwindLoc(err: Error): boolean {
 	const loc = (err as Error & { loc?: unknown }).loc

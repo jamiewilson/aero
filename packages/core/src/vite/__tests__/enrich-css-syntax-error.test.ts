@@ -3,10 +3,8 @@ import os from 'node:os'
 import { describe, expect, it } from 'vitest'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-	collectClientStyleCssFiles,
-	enrichCssSyntaxError,
-} from '../enrich-css-syntax-error'
+import { enrichCssSyntaxError } from '../css-syntax-error-probe'
+import { collectClientStyleCssFiles } from '../collect-client-style-css'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../../')
 const kitchenSink = path.join(repoRoot, 'examples/kitchen-sink')

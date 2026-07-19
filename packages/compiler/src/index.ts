@@ -57,6 +57,7 @@ export {
 	type TemplateSourceAnalysis,
 	type TemplateSourceRange,
 } from './template-source'
+export { maskJsComments } from './mask-js-comments'
 export { rewriteHypermediaActionStateRefs, COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE, type RewriteHypermediaActionStateRefsOptions } from './hypermedia-action-state-refs'
 export {
 	HYPERMEDIA_HTTP_METHODS,

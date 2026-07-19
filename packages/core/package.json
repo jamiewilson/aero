@@ -70,6 +70,10 @@
 			"types": "./dist/utils/redirects.d.mts",
 			"default": "./dist/utils/redirects.mjs"
 		},
+		"./utils/resolve-page-name": {
+			"types": "./dist/utils/resolve-page-name.d.mts",
+			"default": "./dist/utils/resolve-page-name.mjs"
+		},
 		"./editor": {
 			"types": "./dist/entry-editor.d.mts",
 			"default": "./dist/entry-editor.mjs"

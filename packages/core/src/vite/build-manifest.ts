@@ -10,6 +10,7 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import { walkHtmlFiles } from '../utils/fs-walk'
 
 /** Bump when the JSON shape or invalidation rules change. */
 export const AERO_BUILD_MANIFEST_VERSION = 2 as const
@@ -66,20 +67,7 @@ export function hashViteOutputManifest(distDir: string): string | null {
  */
 export function computeClientHtmlFingerprint(root: string, clientRoot: string): string {
 	const base = path.resolve(root, clientRoot)
-	const files: string[] = []
-	function walk(dir: string): void {
-		if (!fs.existsSync(dir)) return
-		for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
-			const full = path.join(dir, item.name)
-			if (item.isDirectory()) {
-				walk(full)
-				continue
-			}
-			if (item.isFile() && item.name.endsWith('.html')) files.push(full)
-		}
-	}
-	walk(base)
-	files.sort((a, b) => a.localeCompare(b))
+	const files = walkHtmlFiles(base).sort((a, b) => a.localeCompare(b))
 	const h = createHash('sha256')
 	for (const f of files) {
 		const rel = path.relative(root, f).split(path.sep).join('/')

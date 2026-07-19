@@ -6,39 +6,10 @@ import * as fs from 'node:fs'
 import {
 	loadTsconfigAliases,
 	mergeWithDefaultAliases,
-	resolveDirs,
-	type ResolvedAeroDirs,
 } from '../utils/aliases'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
-import { loadProjectModule } from '../utils/load-project-module'
+import { loadResolvedAeroConfig } from '../config/loadResolvedAeroConfig'
 import { isExistingFile, resolveImportToFile } from './importResolution'
-
-/** Default dirs when no aero config is available (matches framework defaults). */
-const DEFAULT_DIRS: ResolvedAeroDirs = {
-	client: 'client',
-	server: 'server',
-	dist: 'dist',
-}
-
-function loadAeroConfigDirs(root: string): ResolvedAeroDirs | undefined {
-	for (const name of AERO_CONFIG_NAMES) {
-		const filePath = path.join(root, name)
-		if (!fs.existsSync(filePath)) continue
-		try {
-			const config = loadProjectModule(root, './' + name)
-			if (!config || (typeof config !== 'object' && typeof config !== 'function')) continue
-			const resolved =
-				typeof config === 'function' ? config({ command: 'dev', mode: 'development' }) : config
-			const dirs = resolved?.dirs
-			if (dirs && typeof dirs === 'object') {
-				return resolveDirs(dirs)
-			}
-		} catch {
-			// Load failed; try next extension
-		}
-	}
-	return undefined
-}
 
 function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | undefined {
 	let current = startDir
@@ -80,7 +51,7 @@ export function getResolver(filePath: string, workspaceRoot?: string): PathResol
 	const cached = resolverCache.get(projectRoot)
 	if (cached) return cached
 
-	const dirs = loadAeroConfigDirs(projectRoot) ?? DEFAULT_DIRS
+	const { dirs } = loadResolvedAeroConfig(projectRoot)
 
 	const aliasResult = mergeWithDefaultAliases(rawAliases, projectRoot, dirs)
 	const resolveFn = aliasResult.resolve

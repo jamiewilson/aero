@@ -8,7 +8,7 @@ import { analyzeBuildScript, parse } from '@aero-js/compiler'
 import { toPosixRelative } from '../utils/path'
 import { hashFileSha256 } from './build-manifest'
 import { loadTsconfigAliases } from '../utils/aliases'
-import { walkHtmlFiles } from './template-walk'
+import { walkHtmlFiles } from '../utils/fs-walk'
 
 /** Per `*.html` file under `clientDir` → sha256 (keys: posix path relative to `root`). */
 export function computeTemplateFileHashesMap(root: string, clientDir: string): Record<string, string> {

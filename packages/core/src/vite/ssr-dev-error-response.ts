@@ -15,10 +15,8 @@ import {
 	sharedDiagnosticLogGate,
 	viteLoggerHasColors,
 } from '@aero-js/diagnostics'
-import {
-	collectClientStyleCssFiles,
-	enrichCssSyntaxError,
-} from './enrich-css-syntax-error'
+import { enrichCssSyntaxError } from './css-syntax-error-probe'
+import { collectClientStyleCssFiles } from './collect-client-style-css'
 
 /** Project-relative Vite client URL for an absolute source file. */
 export function toViteClientModuleUrl(absFile: string, root: string): string | undefined {

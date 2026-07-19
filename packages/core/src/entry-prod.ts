@@ -12,14 +12,14 @@ import type { MountOptions } from './types'
 import { Aero } from './runtime'
 import { resolveMountTarget } from './runtime/mount-target'
 import {
+	attachRuntimeAccessors,
 	bootstrapClientRuntimes,
-	createHypermediaRuntimeAccessor,
 	processStandaloneHypermediaDirectives,
 	type HypermediaRuntimeWithSwapLifecycle,
-	readBootstrappedReactivityRuntime,
 	installHypermediaSwapLifecycle,
 } from './runtime/client-mount'
 import { shouldRemountCompiledSwap } from './runtime/swap-remount'
+import { mountStateBindingsForRoute } from './runtime/state-bindings-prod'
 import { resolveStateBindingsModule } from 'virtual:aero/state-bindings-registry.ts'
 
 let destroyStateBindings: (() => void) | null = null
@@ -31,17 +31,8 @@ function currentPathname(): string {
 	return typeof window !== 'undefined' ? window.location.pathname : '/'
 }
 
-async function mountStateBindingsForCurrentRoute(el: HTMLElement): Promise<{
-	cleanup: () => void
-	hasStateBindings: boolean
-}> {
-	const mountFn = await resolveStateBindingsModule(currentPathname())
-	if (!mountFn) return { cleanup: () => {}, hasStateBindings: false }
-	const cleanup = mountFn(el, aero)
-	return {
-		cleanup: typeof cleanup === 'function' ? cleanup : () => {},
-		hasStateBindings: true,
-	}
+function mountStateBindingsForCurrentRoute(el: HTMLElement) {
+	return mountStateBindingsForRoute(aero, currentPathname(), el, resolveStateBindingsModule)
 }
 
 function mount(options: MountOptions = {}): Promise<void> {
@@ -93,15 +84,9 @@ function mount(options: MountOptions = {}): Promise<void> {
 	})
 }
 
-const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
-const getHypermediaRuntime = createHypermediaRuntimeAccessor()
-
 const aero = new Aero()
 aero.mount = mount
-;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
-	getReactivityRuntime
-;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
-	getHypermediaRuntime
+const { getReactivityRuntime, getHypermediaRuntime } = attachRuntimeAccessors(aero)
 
 export default aero as Aero & {
 	mount: typeof mount

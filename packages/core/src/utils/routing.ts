@@ -13,6 +13,8 @@ import type { AeroPageModule, AeroRouteParams } from '../types'
 import { toPosix } from './path'
 import { matchRoutePattern } from './route-pattern'
 
+export { resolvePageName } from './resolve-page-name'
+
 /**
  * Result of resolving a page: the module (or lazy loader), canonical page name, and route params.
  */
@@ -46,37 +48,6 @@ export function pagePathToKey(path: string): string {
 }
 
 /**
- * Resolves a URL path to an Aero page name.
- *
- * @param url - Full URL or path (e.g. `/about`, `/about?foo=bar`, `/blog/`).
- * @returns Page name for lookup in pagesMap (e.g. `index`, `about`, `blog/index`, `blog/post`).
- *
- * @example
- * resolvePageName('/') // 'index'
- * resolvePageName('/about') // 'about'
- * resolvePageName('/about.html') // 'about'
- * resolvePageName('/blog/') // 'blog/index'
- * resolvePageName('/blog/post') // 'blog/post'
- * resolvePageName('/about?foo=bar') // 'about'
- */
-export function resolvePageName(url: string): string {
-	const [pathPart] = url.split('?')
-	let clean = pathPart || '/'
-
-	if (clean === '/' || clean === '') return 'index'
-
-	// If it ends with a slash, treat as /foo/ -> foo/index
-	if (clean.endsWith('/')) {
-		clean = clean + 'index'
-	}
-
-	clean = clean.replace(/^\//, '')
-	clean = clean.replace(/\.html$/, '')
-
-	return clean || 'index'
-}
-
-/**
  * Canonical URL path for a resolved page name (no trailing slash; root is `'/'`).
  *
  * @example
@@ -90,6 +61,14 @@ export function pageNameToRoutePath(pageName = 'index'): string {
 		return '/' + pageName.slice(0, -'/index'.length)
 	}
 	return pageName.startsWith('/') ? pageName : '/' + pageName
+}
+
+/**
+ * Page name to relative route path for static output (index → `''`, about → `about`).
+ * Same mapping as {@link pageNameToRoutePath} without a leading slash.
+ */
+export function pageNameToRelativeRoutePath(pageName: string): string {
+	return pageNameToRoutePath(pageName).replace(/^\//, '')
 }
 
 /**

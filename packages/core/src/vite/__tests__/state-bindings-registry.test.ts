@@ -34,6 +34,7 @@ describe('state bindings registry', () => {
 
 			const source = getStateBindingsRegistryModuleSource(tmp, [pagePath])
 			expect(source).toContain('"demos/counter": () => import("/client/pages/demos/counter.html")')
+			expect(source).toContain("from '@aero-js/core/utils/resolve-page-name'")
 			expect(source).toContain('export async function resolveStateBindingsModule(pathname)')
 		} finally {
 			fs.rmSync(tmp, { recursive: true, force: true })
