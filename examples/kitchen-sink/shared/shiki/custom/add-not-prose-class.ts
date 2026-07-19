@@ -1,12 +1,20 @@
 const NOT_PROSE_CLASS = 'not-prose'
 
+/**
+ * @remarks
+ * - Add the 'not-prose' class to the following elements:
+ *   - <pre>
+ *   - <code>
+ *   - <span class="shiki">
+ */
+
 function normalizeClasses(raw: unknown): string[] {
 	if (Array.isArray(raw)) return [...raw]
 	if (typeof raw === 'string') return raw.split(/\s+/).filter(Boolean)
 	return []
 }
 
-function addClassToPre(node: { properties?: Record<string, unknown> }, className: string) {
+function addClass(node: { properties?: Record<string, unknown> }, className: string) {
 	node.properties ??= {}
 	const classes = [
 		...normalizeClasses(node.properties.class),
@@ -17,7 +25,7 @@ function addClassToPre(node: { properties?: Record<string, unknown> }, className
 	delete node.properties.className
 }
 
-export function addPreNotProseReyhype() {
+export function addNotProseClass() {
 	return (tree: any) => {
 		const visit = (node: any) => {
 			if (node.type === 'element') {
@@ -27,7 +35,7 @@ export function addPreNotProseReyhype() {
 				]
 				const isShikiSpan = node.tagName === 'span' && classes.includes('shiki')
 				if (node.tagName === 'pre' || node.tagName === 'code' || isShikiSpan) {
-					addClassToPre(node, NOT_PROSE_CLASS)
+					addClass(node, NOT_PROSE_CLASS)
 				}
 			}
 			node.children?.forEach(visit)

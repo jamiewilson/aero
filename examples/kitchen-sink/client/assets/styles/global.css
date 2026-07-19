@@ -10,7 +10,7 @@
 	--line-height: 1.5;
 	--color-light: var(--color-white);
 	--color-dark: var(--color-gray-950);
-	--color-accent: light-dark(var(--color-green-500), var(--color-green-400));
+	--color-accent: light-dark(var(--color-pink-600), var(--color-pink-400));
 	--color-text: light-dark(var(--color-dark), var(--color-light));
 	--color-bg: light-dark(var(--color-light), var(--color-dark));
 	--color-border: --opacity(currentColor, 0.1);
@@ -60,14 +60,6 @@
 
 @view-transition {
 	navigation: auto;
-}
-
-/* Disable Tailwind prose backticks around inline code */
-@utility prose {
-	code:not(pre code)::before,
-	code:not(pre code)::after {
-		content: '';
-	}
 }
 
 /* Alternative to `dark:prose-invert` that works with user-defined themes */

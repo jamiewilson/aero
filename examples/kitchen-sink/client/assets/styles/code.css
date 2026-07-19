@@ -1,23 +1,38 @@
 @theme {
+	--code-color: var(--color-accent);
 	--code-bg-light: --opacity(var(--color-dark), 0.05);
 	--code-bg-dark: oklch(from var(--color-dark) 0.1 c h);
 	--code-bg: light-dark(var(--code-bg-light), var(--code-bg-dark));
 	--code-comment: var(--color-slate-500);
-	--code-highlight: --opacity(var(--color-green-500), 0.2);
+	--code-highlight: --opacity(var(--color-emerald-500), 0.2);
 
 	--code-tab-size: 2ch;
 	--code-font-size: smaller;
 	--code-line-height: var(--line-height);
 	--code-font-feature-settings:
-		'calt' 1, 'liga' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1,
-		'ss08' 1, 'ss09' 1, 'ss10' 1;
-	--code-border: --opacity(currentColor, 0.2);
+		'calt' on, 'liga' on, 'ss01' on, 'ss02' on, 'ss03' on, 'ss04' on, 'ss05' on, 'ss06' on,
+		'ss07' on, 'ss08' on, 'ss09' on, 'ss10' on;
+	--code-border: --opacity(var(--color-text), 0.2);
 	--code-label-inset: 0.5rem;
 	--code-action-transition: opacity 200ms ease-in-out;
 }
 
+/* Override Tailwind prose backticks around inline code styles */
+@utility prose {
+	code:not(pre code) {
+		color: var(--code-color);
+		font-size: var(--code-font-size);
+		font-weight: initial;
+
+		&::before,
+		&::after {
+			display: none;
+		}
+	}
+}
+
 @layer components {
-	/* Italic comments via @shared/shiki/with-italics */
+	/* Italic comments via @shared/shiki/add-italics */
 	.shiki span {
 		font-style: var(--shiki-dark-font-style);
 		font-style: var(--shiki-light-font-style);
@@ -32,9 +47,12 @@
 		font-feature-settings: var(--code-font-feature-settings);
 	}
 
+	/* 1. Non-Shiki inline code
+	 * 2. Shiki inline code
+	 * 3. Block code  */
+	code:not(pre code, span.shiki code),
 	span.shiki,
-	pre:has(code),
-	code:not(pre code, span.shiki code) {
+	pre:has(code) {
 		display: inline-flex;
 		vertical-align: middle;
 		box-shadow: inset 0 0 0 1px var(--code-border);
@@ -53,7 +71,9 @@
 		padding: unset;
 
 		code {
+			text-box-trim: trim-start;
 			padding: var(--box-padding);
+			overflow-y: hidden;
 			overflow-x: auto;
 		}
 	}
@@ -162,10 +182,11 @@
 	}
 
 	.highlighted-word {
-		padding-inline: 0.3ch;
+		display: inline-block;
+		text-box-trim: trim-start;
+		padding-inline: 0.5ch;
 		box-shadow: 0 0 0 1px var(--code-border);
 		background: var(--code-highlight);
 		border-radius: var(--radius-sm);
-		display: inline-flex;
 	}
 }

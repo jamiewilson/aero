@@ -6,14 +6,9 @@ import {
 } from '@shikijs/transformers'
 
 import { addCopyButton } from 'shiki-transformer-copy-button'
-import lightTheme from '@shikijs/themes/github-light'
-import darkTheme from '@shikijs/themes/github-dark-high-contrast'
-import {
-	addColors,
-	addItalics,
-	addPreDataLang,
-	applyOverrides,
-} from './custom'
+import lightTheme from '@shikijs/themes/github-light-default'
+import darkTheme from '@shikijs/themes/github-dark-default'
+import { addColors, addItalics, addPreDataLang, applyOverrides } from './custom'
 
 const shikiConfig: ShikiConfig = {
 	themes: {
