@@ -1,5 +1,6 @@
 import { pagePathToKey } from '../utils/routing'
 import { toPosixRelative, toRootRelativeImportUrl } from '../utils/path'
+import { emitResolvePageNameFnSource } from '../utils/resolve-page-name'
 
 function toPosixPageKey(root: string, absolutePath: string): string {
 	return toPosixRelative(absolutePath, root)
@@ -8,6 +9,11 @@ function toPosixPageKey(root: string, absolutePath: string): string {
 /**
  * Generated client module: lazy-load compiled page chunks and return `mountStateBindings`.
  * Written to `.aero/state-bindings-registry.mjs` during production builds.
+ *
+ * @remarks
+ * Must not import `@aero-js/core/*` — production aliases `@aero-js/core` to `entry-prod.mjs`,
+ * so subpath imports resolve as `entry-prod.mjs/utils/...` and fail. Page-name logic is
+ * inlined from {@link emitResolvePageNameFnSource} instead.
  */
 export function getStateBindingsRegistryModuleSource(
 	root: string,
@@ -28,7 +34,7 @@ export function getStateBindingsRegistryModuleSource(
 		entries.push(`${JSON.stringify(pageName)}: () => import(${JSON.stringify(importUrl)})`)
 	}
 
-	return `import { resolvePageName as __aeroResolvePageName } from '@aero-js/core/utils/resolve-page-name'
+	return `${emitResolvePageNameFnSource('__aeroResolvePageName')}
 
 const __aeroStatePageLoaders = {
 	${entries.join(',\n\t')}

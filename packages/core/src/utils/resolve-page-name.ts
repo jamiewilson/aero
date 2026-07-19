@@ -28,3 +28,18 @@ export function resolvePageName(url: string): string {
 
 	return clean || 'index'
 }
+
+/**
+ * Emit `resolvePageName` as a plain JS function for generated client modules.
+ * Production aliases `@aero-js/core` → `entry-prod`, so the registry cannot import this module.
+ */
+export function emitResolvePageNameFnSource(fnName: string): string {
+	return `function ${fnName}(url) {
+	const pathPart = String(url ?? '/').split('?')[0] || '/'
+	let clean = pathPart
+	if (clean === '/' || clean === '') return 'index'
+	if (clean.endsWith('/')) clean = clean + 'index'
+	clean = clean.replace(/^\\//, '').replace(/\\.html$/, '')
+	return clean || 'index'
+}`
+}
