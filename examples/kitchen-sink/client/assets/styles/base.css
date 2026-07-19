@@ -25,15 +25,15 @@
 		&.back::before {
 			content: '←';
 			display: inline-block;
-			vertical-align: middle;
 			margin-inline-end: 0.5ch;
+			line-height: 0;
 		}
 
 		&[target='_blank']::after {
 			content: '↗';
 			display: inline-block;
-			vertical-align: middle;
 			margin-inline-start: 0.5ch;
+			line-height: 0;
 		}
 	}
 

@@ -16,9 +16,10 @@ const ITALIC_SCOPES = [
 ]
 
 /**
- * Clone a Shiki theme and add fontStyle: italic to token colors matching ITALIC_SCOPES.
- * Also adds new rules for scopes in ITALIC_SCOPES that the base theme doesn't define
- * (e.g. entity.other.attribute-name for HTML attributes), so they work in the browser.
+ * @remarks
+ * - Clone a Shiki theme and add fontStyle: italic to token colors matching ITALIC_SCOPES.
+ * - Also adds new rules for scopes in ITALIC_SCOPES that the base theme doesn't define
+ *   (e.g. entity.other.attribute-name for HTML attributes), so they work in the browser.
  */
 export function addItalics(theme: ThemeRegistrationAny): ThemeRegistrationAny {
 	const base = JSON.parse(JSON.stringify(theme)) as ThemeRegistrationAny
@@ -39,8 +40,8 @@ export function addItalics(theme: ThemeRegistrationAny): ThemeRegistrationAny {
 	const coveredScopes = new Set<string>()
 
 	for (const entry of tokenColors) {
-		for (const s of ITALIC_SCOPES) {
-			if (scopeMatches(entry.scope, [s])) coveredScopes.add(s)
+		for (const scope of ITALIC_SCOPES) {
+			if (scopeMatches(entry.scope, [scope])) coveredScopes.add(scope)
 		}
 	}
 

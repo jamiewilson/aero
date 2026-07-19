@@ -1,5 +1,10 @@
 import type { ThemeRegistrationAny } from 'shiki'
 
+/**
+ * @remarks
+ * - Apply the overrides to the theme.
+ */
+
 export function applyOverrides(
 	base: unknown,
 	...overrides: Array<(theme: ThemeRegistrationAny) => ThemeRegistrationAny>

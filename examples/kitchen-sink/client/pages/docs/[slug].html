@@ -16,7 +16,7 @@
 </script>
 
 <base-layout title="{ doc.data.title }" description="{ doc.data.subtitle }">
-	<span slot="into-nav">← <a href="/docs">All docs</a></span>
+	<a href="/docs" slot="into-nav" class="back">All docs</a>
 	<article class="prose prose-slate prose-dark:prose-invert place-self-center pb-[20vh]">
 		<header>
 			<badge-component if="{ !doc.data.published }" label="Draft" />

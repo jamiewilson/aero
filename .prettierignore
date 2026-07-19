@@ -11,4 +11,3 @@ pnpm-lock.yaml
 **/dist/**
 **/.output/**
 **/.aero/**
-**/examples/**/*.md

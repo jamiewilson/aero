@@ -1,7 +1,7 @@
 type RehypePluginTuple = [plugin: any, ...parameters: any[]]
 import rehypeShiki from '@shikijs/rehype'
 import shikiConfig from '@shared/shiki/config'
-import { addPreNotProseReyhype } from '@shared/shiki/custom'
+import { addNotProseClass } from '@shared/shiki/custom'
 
 export default function customTheme(): RehypePluginTuple {
 	return [
@@ -12,6 +12,6 @@ export default function customTheme(): RehypePluginTuple {
 				inline: 'tailing-curly-colon',
 			},
 		],
-		addPreNotProseReyhype,
+		addNotProseClass,
 	]
 }
