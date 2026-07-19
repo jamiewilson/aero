@@ -38,8 +38,18 @@ export function bootstrapClientRuntimes(): void {
 	}
 }
 
-export function createHypermediaRuntimeAccessor(): () => ReturnType<typeof readBootstrappedHypermediaRuntime> {
-	return () => readBootstrappedHypermediaRuntime()
+/** Attach shared runtime accessors used by entry-dev and entry-prod. */
+export function attachRuntimeAccessors(aero: Aero): {
+	getReactivityRuntime: () => ReturnType<typeof readBootstrappedReactivityRuntime>
+	getHypermediaRuntime: () => ReturnType<typeof readBootstrappedHypermediaRuntime>
+} {
+	const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
+	const getHypermediaRuntime = () => readBootstrappedHypermediaRuntime()
+	;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
+		getReactivityRuntime
+	;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
+		getHypermediaRuntime
+	return { getReactivityRuntime, getHypermediaRuntime }
 }
 
 let hypermediaReactivityProcessComposed = false

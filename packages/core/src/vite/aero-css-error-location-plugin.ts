@@ -4,10 +4,8 @@
 
 import type { HookHandler, Plugin } from 'vite'
 import path from 'node:path'
-import {
-	collectClientStyleCssFiles,
-	enrichCssSyntaxError,
-} from './enrich-css-syntax-error'
+import { enrichCssSyntaxError } from './css-syntax-error-probe'
+import { collectClientStyleCssFiles } from './collect-client-style-css'
 
 const TAILWIND_GENERATE = new Set([
 	'@tailwindcss/vite:generate:serve',

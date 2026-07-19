@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { discoverReactivePagePaths } from '../build'
+import { discoverReactivePagePaths } from '../runtime-template-discovery'
 import { getStateBindingsRegistryModuleSource } from '../state-bindings-registry'
 
 describe('state bindings registry', () => {
@@ -34,6 +34,7 @@ describe('state bindings registry', () => {
 
 			const source = getStateBindingsRegistryModuleSource(tmp, [pagePath])
 			expect(source).toContain('"demos/counter": () => import("/client/pages/demos/counter.html")')
+			expect(source).toContain('function __aeroResolvePageName(url)')
 			expect(source).toContain('export async function resolveStateBindingsModule(pathname)')
 		} finally {
 			fs.rmSync(tmp, { recursive: true, force: true })

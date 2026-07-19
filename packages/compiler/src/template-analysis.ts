@@ -14,6 +14,7 @@ import { CompileError } from './types'
 import { analyzeBuildScript, stripBuildScriptTypes, type BuildScriptImport } from './build-script-analysis'
 import { collectBuildScopeBindingNames } from './build-scope-bindings'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
+import { CodeBuilder } from './code-builder'
 import { Lowerer } from './lowerer/lowerer'
 import type { LowererDiag } from './lowerer/types'
 import { expandSelfClosingTags } from './parser'
@@ -24,9 +25,10 @@ import {
 } from '@aero-js/interpolation'
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
-import { locateInEmbeddedScript } from './helpers'
+import { locateInEmbeddedScript, validateSingleBracedExpression } from './helpers'
 import { analyzeStateScript, stripStateEffectStatements, type StateScriptAnalysisResult } from './state-script-analysis'
 import { collectStateReferenceNames } from './lower-state-script'
+import { AERO_ATTR_PREFIX, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 
 function buildImportsCode(
 	imports: ReturnType<typeof analyzeBuildScript>['imports'],
@@ -59,20 +61,85 @@ function isStyleElement(node: Node): node is Element {
 	return node.nodeType === 1 && (node as Element).tagName === 'STYLE'
 }
 
-function extractTopLevelStyleCode(body: HTMLElement | null, lowerer: Lowerer): string {
-	if (!body) return ''
+function getStylePassDataExpr(el: Element): string | undefined {
+	const aeroProps = el.getAttribute(`${AERO_ATTR_PREFIX}${ATTR_PROPS}`)
+	const dataAeroProps = el.getAttribute(`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`)
+	let passData = el.getAttribute(ATTR_PROPS) ?? aeroProps ?? dataAeroProps ?? undefined
+	const hasProps =
+		el.hasAttribute(ATTR_PROPS) || aeroProps != null || dataAeroProps != null
+	if (passData === '' && hasProps) passData = '{ ...props }'
+	return passData
+}
+
+/** Emit style injection that appends a Vite-processed CSS string (`cssVar`) into `<style>…</style>`. */
+function emitViteProcessedStyleBlock(
+	styleVar: string,
+	cssVar: string,
+	passDataExpr: string | undefined,
+	options: CompileOptions
+): string {
+	const b = new CodeBuilder()
+	b.stmtSlotVar(styleVar)
+	b.stmtAppendOut('<style>', styleVar)
+	if (passDataExpr) {
+		const validated = validateSingleBracedExpression(passDataExpr, {
+			directive: ATTR_PROPS,
+			tagName: 'style',
+			diagnosticSource: options.diagnosticTemplateSource,
+			diagnosticFile: options.importer,
+		})
+		const cssMapExpr = `Object.entries(${validated}).map(([k, v]) => "\\n  --" + k + ": " + String(v) + ";").join("")`
+		b.stmtAppendOut('\n:root {' + '${' + cssMapExpr + '}' + '\n}\n', styleVar)
+	}
+	b.raw(`${styleVar} += ${cssVar};\n`)
+	b.stmtAppendOut('</style>', styleVar)
+	b.stmtStylesAdd(styleVar)
+	return b.toString()
+}
+
+function extractTopLevelStyleCode(
+	body: HTMLElement | null,
+	lowerer: Lowerer,
+	options: CompileOptions
+): { styleCode: string; styleImportsCode: string } {
+	if (!body) return { styleCode: '', styleImportsCode: '' }
 	let emittedStyleVarId = 0
 	const nextStyleVar = (): string => `__aero_style_${emittedStyleVarId++}`
 	let styleCode = ''
+	const styleImports: string[] = []
+	const moduleIds = options.styleCssModuleIds
 	const children = Array.from(body.childNodes)
+	let styleIndex = 0
 	for (const node of children) {
 		if (!isStyleElement(node)) continue
 		const styleVar = nextStyleVar()
-		const styleIR = lowerer.compileNode(node, false, styleVar)
-		styleCode += emitStyleBlock(styleIR, styleVar)
+		if (moduleIds) {
+			const moduleId = moduleIds[styleIndex]
+			if (!moduleId) {
+				throw new CompileError({
+					message: `Missing style CSS module id for top-level <style> index ${styleIndex}`,
+					file: options.importer,
+				})
+			}
+			const cssVar = `__aero_css_${styleIndex}`
+			styleImports.push(`import ${cssVar} from ${JSON.stringify(moduleId)}`)
+			styleCode += emitViteProcessedStyleBlock(
+				styleVar,
+				cssVar,
+				getStylePassDataExpr(node),
+				options
+			)
+		} else {
+			const styleIR = lowerer.compileNode(node, false, styleVar)
+			styleCode += emitStyleBlock(styleIR, styleVar)
+		}
 		node.remove()
+		styleIndex++
 	}
-	return styleCode
+	return {
+		styleCode,
+		styleImportsCode: styleImports.length > 0 ? styleImports.join('\n') : '',
+	}
 }
 
 /** Undo {@link escapeInterpolationBodyMarkup} in DOM text/attributes before lowering to IR. */
@@ -204,13 +271,14 @@ export function buildTemplateAnalysis(
 			restoreEntityEncodedElementMarkup(restore(value))
 		)
 	}
-	const styleCode = extractTopLevelStyleCode(document.body, lowerer)
+	const { styleCode, styleImportsCode } = extractTopLevelStyleCode(document.body, lowerer, options)
 	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
 	const editorAmbient = getTemplateEditorAmbientFromParsed(parsed)
+	const importsWithStyles = [styleImportsCode, importsCode].filter(Boolean).join('\n')
 
 	return {
-		importsCode,
+		importsCode: importsWithStyles,
 		styleCode,
 		bodyIR,
 		bodyCode,

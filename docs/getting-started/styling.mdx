@@ -18,7 +18,7 @@ This resolves to `client/assets/styles/global.css`. Vite processes the file thro
 
 ## `<style>` blocks
 
-Add `<style>` tags directly in components and layouts. They are extracted and bundled by Vite:
+Add `<style>` tags directly in components, layouts, and pages. Top-level style bodies are compiled through Vite’s CSS pipeline, then injected into the document `<head>` at render time (dev, build, and preview):
 
 ```html client/components/card.html
 <div class="card">
@@ -33,6 +33,8 @@ Add `<style>` tags directly in components and layouts. They are extracted and bu
 	}
 </style>
 ```
+
+Only **top-level** `<style>` siblings of the template body are collected this way. Nested `<style>` tags inside markup stay as ordinary HTML.
 
 ### Dynamic CSS custom properties
 
@@ -53,17 +55,33 @@ Use the `props` attribute on `<style>` to inject build-time values as CSS custom
 </style>
 ```
 
-Each key in the spread becomes a `--keyName` custom property.
+Each key in the spread becomes a `--keyName` custom property. Props are applied at render time on top of the Vite-processed CSS.
 
 ## CSS frameworks
-
-{/* TODO: Verify Tailwind v4 setup steps with Aero */}
 
 Because Aero uses Vite, CSS frameworks that integrate with PostCSS or Vite work out of the box. Install the framework, configure it in your Vite or PostCSS config, and import or link the styles:
 
 ```html
 <link rel="stylesheet" href="@styles/tailwind.css" />
 ```
+
+### Tailwind CSS v4 in `<style>` blocks
+
+With `@tailwindcss/vite`, page and component `<style>` blocks go through the same pipeline as linked CSS. Use `@reference` so `@apply` / `@utility` can see your theme without duplicating global CSS:
+
+```html
+<style>
+	@import 'tailwindcss/utilities';
+	@reference '@styles/global.css';
+
+	@utility keyed-list {
+		@apply list-inside font-mono text-sm space-y-2;
+		list-style-type: decimal-leading-zero;
+	}
+</style>
+```
+
+Keep shared `@theme` tokens and site-wide `@utility` definitions in linked stylesheets (for example `client/assets/styles/global.css`). Use template `<style>` blocks for page- or component-local rules.
 
 ## No scoped styles
 

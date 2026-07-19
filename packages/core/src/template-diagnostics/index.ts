@@ -1,6 +1,4 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import * as fs from 'node:fs'
-import * as path from 'node:path'
 import { isSnippetModulePath } from '../snippets'
 import { parseDocument } from './document-analysis'
 import { getResolver } from './path-resolver'
@@ -24,31 +22,7 @@ import { checkFeatureGates, type FeatureGateFlags } from './checks/check-feature
 import { checkReadonlyReactivePropWrites } from './checks/check-readonly-reactive-prop-writes'
 import { checkReactiveBindingScope } from './checks/check-reactive-binding-scope'
 import type { SourceDocument } from './source-document'
-import { AERO_CONFIG_NAMES } from '../utils/aero-config'
-import { loadProjectModule } from '../utils/load-project-module'
-
-function loadFeatureFlags(root: string): FeatureGateFlags {
-	for (const name of AERO_CONFIG_NAMES) {
-		const filePath = path.join(root, name)
-		if (!fs.existsSync(filePath)) continue
-		try {
-			const loaded = loadProjectModule(root, './' + name)
-			const config =
-				typeof loaded === 'function'
-					? loaded({ command: 'dev', mode: 'development' })
-					: loaded
-			if (config && typeof config === 'object') {
-				return {
-					reactivity: config.reactivity === true,
-					hypermedia: config.hypermedia === true,
-				}
-			}
-		} catch {
-			// try next config extension
-		}
-	}
-	return { reactivity: false, hypermedia: false }
-}
+import { loadResolvedAeroConfig } from '../config/loadResolvedAeroConfig'
 
 export interface CollectTemplateDiagnosticsInput {
 	document: SourceDocument
@@ -66,7 +40,7 @@ export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInpu
 	const diagnostics: AeroDiagnostic[] = []
 	const resolver = getResolver(document.uri.fsPath, workspaceRoot ?? input.root)
 	const { text } = parsed
-	const flags = input.flags ?? loadFeatureFlags(resolver.root)
+	const flags = input.flags ?? loadResolvedAeroConfig(resolver.root).flags
 
 	checkScriptTags(document, text, diagnostics, parsed)
 	checkConditionalChains(document, text, diagnostics)

@@ -6,9 +6,10 @@ import type { ResolvedConfig } from 'vite'
 import type { ScriptEntry } from '../types'
 import type { ComponentReactivePropMetadata, CompiledTemplateModule } from '@aero-js/compiler'
 import { compileTemplateModule, parse } from '@aero-js/compiler'
-import { getClientScriptVirtualUrl } from './defaults'
+import { getClientScriptVirtualUrl, toAeroStyleInlineImportId } from './defaults'
 import { toPosixRelative } from '../utils/path'
 import { syncClientScriptsForTemplate } from './client-script-sync'
+import { extractTopLevelStyleBodies } from './template-style-bodies'
 
 interface CompileHtmlWarning {
 	code: 'AERO_COMPILE' | 'AERO_TEMPLATE' | 'AERO_SWITCH'
@@ -53,6 +54,11 @@ export function compileHtmlSourceForVite(
 			)
 		}
 	}
+	const styleCount = extractTopLevelStyleBodies(code).length
+	const styleCssModuleIds =
+		styleCount > 0
+			? Array.from({ length: styleCount }, (_, i) => toAeroStyleInlineImportId(filePath, i))
+			: undefined
 	return compileTemplateModule(
 		code,
 		{
@@ -66,6 +72,7 @@ export function compileHtmlSourceForVite(
 			reactivity: params.reactivity,
 			hypermedia: params.hypermedia,
 			componentReactiveProps: params.componentReactiveProps,
+			styleCssModuleIds,
 		},
 		parsed
 	)

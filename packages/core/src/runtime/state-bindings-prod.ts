@@ -10,6 +10,11 @@ export type ResolveStateBindingsModule = (
 	pathname: string
 ) => Promise<StateBindingsMountFn | null>
 
+export interface MountStateBindingsResult {
+	cleanup: () => void
+	hasStateBindings: boolean
+}
+
 /**
  * Load the current route's compiled `mountStateBindings` and invoke it against the mount root.
  */
@@ -18,11 +23,14 @@ export async function mountStateBindingsForRoute(
 	pathname: string,
 	root: HTMLElement,
 	resolveModule: ResolveStateBindingsModule
-): Promise<() => void> {
+): Promise<MountStateBindingsResult> {
 	const mountFn = await resolveModule(pathname)
-	if (!mountFn) return () => {}
+	if (!mountFn) return { cleanup: () => {}, hasStateBindings: false }
 	const cleanup = mountFn(root, aero)
-	return typeof cleanup === 'function' ? cleanup : () => {}
+	return {
+		cleanup: typeof cleanup === 'function' ? cleanup : () => {},
+		hasStateBindings: true,
+	}
 }
 
 /** @internal Test helper mirroring registry page-name lookup order. */

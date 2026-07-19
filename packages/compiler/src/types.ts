@@ -51,6 +51,11 @@ export interface CompileOptions {
 	 * name (`counter` for `<counter-component>`) or by the kebab component base.
 	 */
 	componentReactiveProps?: Record<string, readonly ComponentReactivePropMetadata[]>
+	/**
+	 * When set (Vite compile path), each top-level `<style>` injects processed CSS from this
+	 * module id (typically `?inline&index=N.css`) instead of embedding raw CSS source.
+	 */
+	styleCssModuleIds?: readonly string[]
 }
 
 export interface CompileWarning {

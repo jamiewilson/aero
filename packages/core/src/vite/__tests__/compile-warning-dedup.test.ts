@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { flushCompileWarnings } from '../index'
+import { flushCompileWarnings } from '../compile-warning-dedup'
 
 describe('flushCompileWarnings', () => {
 	it('logs warnings once per unchanged source', () => {

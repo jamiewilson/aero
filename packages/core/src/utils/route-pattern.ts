@@ -1,6 +1,6 @@
 /**
  * Centralized handling of [param]-style route segments.
- * Shared by runtime (routing.ts) and build (vite/build.ts) for matching and expanding dynamic routes.
+ * Shared by runtime (routing.ts) and static page discovery for matching and expanding dynamic routes.
  *
  * @packageDocumentation
  */

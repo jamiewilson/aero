@@ -13,11 +13,7 @@ import { Aero } from './runtime'
 import { aero, onUpdate } from './runtime/instance'
 import { renderPage } from './runtime/client'
 import { resolveMountTarget } from './runtime/mount-target'
-import {
-	createHypermediaRuntimeAccessor,
-	mountClientBindings,
-	readBootstrappedReactivityRuntime,
-} from './runtime/client-mount'
+import { attachRuntimeAccessors, mountClientBindings } from './runtime/client-mount'
 import { resetBootstrappedReactivityRuntime } from './runtime/reactivity-bootstrap'
 
 /** Bound `aero.render` so the same function reference is passed to `renderPage` for HMR re-renders. */
@@ -93,14 +89,8 @@ function mount(options: MountOptions = {}): Promise<void> {
 	return done
 }
 
-const getReactivityRuntime = () => readBootstrappedReactivityRuntime()
-const getHypermediaRuntime = createHypermediaRuntimeAccessor()
-
 aero.mount = mount
-;(aero as Aero & { getReactivityRuntime: typeof getReactivityRuntime }).getReactivityRuntime =
-	getReactivityRuntime
-;(aero as Aero & { getHypermediaRuntime: typeof getHypermediaRuntime }).getHypermediaRuntime =
-	getHypermediaRuntime
+const { getReactivityRuntime, getHypermediaRuntime } = attachRuntimeAccessors(aero)
 
 export default aero as Aero & {
 	mount: typeof mount

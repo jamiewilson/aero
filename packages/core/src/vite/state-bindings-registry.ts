@@ -1,18 +1,19 @@
-import path from 'node:path'
 import { pagePathToKey } from '../utils/routing'
-
-function toRootRelativeImportUrl(root: string, absolutePath: string): string {
-	const rel = path.relative(root, absolutePath).split(path.sep).join('/')
-	return '/' + rel.replace(/^\//, '')
-}
+import { toPosixRelative, toRootRelativeImportUrl } from '../utils/path'
+import { emitResolvePageNameFnSource } from '../utils/resolve-page-name'
 
 function toPosixPageKey(root: string, absolutePath: string): string {
-	return path.relative(root, absolutePath).split(path.sep).join('/')
+	return toPosixRelative(absolutePath, root)
 }
 
 /**
  * Generated client module: lazy-load compiled page chunks and return `mountStateBindings`.
  * Written to `.aero/state-bindings-registry.mjs` during production builds.
+ *
+ * @remarks
+ * Must not import `@aero-js/core/*` — production aliases `@aero-js/core` to `entry-prod.mjs`,
+ * so subpath imports resolve as `entry-prod.mjs/utils/...` and fail. Page-name logic is
+ * inlined from {@link emitResolvePageNameFnSource} instead.
  */
 export function getStateBindingsRegistryModuleSource(
 	root: string,
@@ -33,17 +34,10 @@ export function getStateBindingsRegistryModuleSource(
 		entries.push(`${JSON.stringify(pageName)}: () => import(${JSON.stringify(importUrl)})`)
 	}
 
-	return `const __aeroStatePageLoaders = {
-	${entries.join(',\n\t')}
-}
+	return `${emitResolvePageNameFnSource('__aeroResolvePageName')}
 
-function __aeroResolvePageName(url) {
-	const pathPart = String(url ?? '/').split('?')[0] || '/'
-	let clean = pathPart
-	if (clean === '/' || clean === '') return 'index'
-	if (clean.endsWith('/')) clean = clean + 'index'
-	clean = clean.replace(/^\\//, '').replace(/\\.html$/, '')
-	return clean || 'index'
+const __aeroStatePageLoaders = {
+	${entries.join(',\n\t')}
 }
 
 function __aeroResolveStatePageLoader(pageName) {

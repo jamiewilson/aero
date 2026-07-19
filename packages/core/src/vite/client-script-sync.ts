@@ -4,7 +4,7 @@
 
 import type { ScriptEntry } from '../types'
 import { parse } from '@aero-js/compiler'
-import { registerClientScriptsToMap } from './build'
+import { registerClientScriptsToMap } from './rollup-input-discovery'
 import { CLIENT_SCRIPT_PREFIX } from './defaults'
 
 /** Compare two ScriptEntry records for semantic equality (used to detect client script changes on HMR). */

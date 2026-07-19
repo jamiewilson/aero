@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { pagePathToKey } from '../utils/routing'
+import { walkHtmlFiles } from '../utils/fs-walk'
 import { getUnsupportedRoutePatternIssues, parseRoutePattern } from '../utils/route-pattern'
 
 export interface RouteManifestEntry {
@@ -32,20 +33,6 @@ export interface RouteManifestDiagnostic {
 export interface RouteManifestBuildResult {
 	manifest: RouteManifestFile
 	diagnostics: RouteManifestDiagnostic[]
-}
-
-function walkHtmlFiles(dir: string): string[] {
-	if (!fs.existsSync(dir)) return []
-	const out: string[] = []
-	for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
-		const abs = path.join(dir, item.name)
-		if (item.isDirectory()) {
-			out.push(...walkHtmlFiles(abs))
-			continue
-		}
-		if (item.isFile() && item.name.endsWith('.html')) out.push(abs)
-	}
-	return out
 }
 
 function toRoutePath(pageName: string): string {

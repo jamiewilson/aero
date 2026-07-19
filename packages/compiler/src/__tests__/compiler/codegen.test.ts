@@ -1440,6 +1440,106 @@ describe('Codegen', () => {
 			expect(stylesOutput).toContain('--bg: #eee;')
 		})
 
+		it('should import Vite-processed CSS modules when styleCssModuleIds is set', async () => {
+			const html = `<style>
+				.card { color: red; }
+			</style>
+			<p>hi</p>`
+			const moduleId = 'virtual:aero-style-test?inline&index=0.css'
+			const parsed = parse(html)
+			const code = compile(parsed, {
+				...mockOptions,
+				styleCssModuleIds: [moduleId],
+			})
+
+			expect(code).toContain(`import __aero_css_0 from ${JSON.stringify(moduleId)}`)
+			expect(code).toContain('__aero_css_0')
+			expect(code).not.toContain('.card { color: red; }')
+
+			const defaultIdx = code.indexOf('export default async function')
+			const renderCode = code.slice(defaultIdx)
+			const bodyStart = renderCode.indexOf('{')
+			const bodyEnd = renderCode.lastIndexOf('}')
+			const body =
+				"const __aero_css_0 = '.card{color:red}';\n" + renderCode.substring(bodyStart + 1, bodyEnd)
+			const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+			const renderFn = new AsyncFunction('Aero', body)
+			const styles = new Set<string>()
+			await renderFn({
+				styles,
+				scripts: new Set(),
+				headScripts: new Set(),
+				renderComponent: async () => '',
+				page: {
+					url: new URL('http://localhost'),
+					request: new Request('http://localhost'),
+					params: {},
+				},
+				site: { url: '' },
+				slots: {},
+				props: {},
+				escapeHtml,
+				escapeScriptJson,
+				raw,
+				trim,
+				trimStart,
+				trimEnd,
+			})
+			const stylesOutput = Array.from(styles).join('\n')
+			expect(stylesOutput).toContain('<style>')
+			expect(stylesOutput).toContain('.card{color:red}')
+			expect(stylesOutput).toContain('</style>')
+		})
+
+		it('should keep style props CSS vars with styleCssModuleIds', async () => {
+			const html = `<script is:build>
+				const theme = { fg: 'white', bg: 'black' };
+			</script>
+			<style props="{ ...theme }">
+				body { color: var(--fg); }
+			</style>`
+			const moduleId = 'virtual:aero-style-theme?inline&index=0.css'
+			const parsed = parse(html)
+			const code = compile(parsed, {
+				...mockOptions,
+				styleCssModuleIds: [moduleId],
+			})
+			const defaultIdx = code.indexOf('export default async function')
+			const renderCode = code.slice(defaultIdx)
+			const bodyStart = renderCode.indexOf('{')
+			const bodyEnd = renderCode.lastIndexOf('}')
+			const body =
+				"const __aero_css_0 = 'body { color: var(--fg); }';\n" +
+				renderCode.substring(bodyStart + 1, bodyEnd)
+			const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+			const renderFn = new AsyncFunction('Aero', body)
+			const styles = new Set<string>()
+			await renderFn({
+				styles,
+				scripts: new Set(),
+				headScripts: new Set(),
+				renderComponent: async () => '',
+				page: {
+					url: new URL('http://localhost'),
+					request: new Request('http://localhost'),
+					params: {},
+				},
+				site: { url: '' },
+				slots: {},
+				props: {},
+				escapeHtml,
+				escapeScriptJson,
+				raw,
+				trim,
+				trimStart,
+				trimEnd,
+			})
+			const stylesOutput = Array.from(styles).join('\n')
+			expect(stylesOutput).toContain('--fg: white;')
+			expect(stylesOutput).toContain('--bg: black;')
+			expect(stylesOutput).toContain('body { color: var(--fg); }')
+		})
+
 		it('should throw when props value is not a single braced expression (tokenizer validation)', () => {
 			// "{{ }}" is literal braces in attribute mode, so no interpolation segment
 			const html = `<script is:build></script><div props="{{ literal }}">x</div>`

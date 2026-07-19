@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { RouteManifestFile } from './route-manifest'
+import { writeIfChanged } from '../utils/write-if-changed'
 
 function quote(value: string): string {
 	return JSON.stringify(value)
@@ -74,11 +75,6 @@ export function renderRouteHelpersTs(manifest: RouteManifestFile): string {
 		'}',
 		'',
 	].join('\n')
-}
-
-function writeIfChanged(filePath: string, content: string): void {
-	const prev = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
-	if (prev !== content) fs.writeFileSync(filePath, content, 'utf8')
 }
 
 export function writeRouteTypesGenerated(root: string, manifest: RouteManifestFile): void {

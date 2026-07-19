@@ -5,7 +5,7 @@ import {
 	maskInterpolationExpressionBodies,
 	restoreInterpolationBodyMarkup,
 } from '@aero-js/interpolation'
-import { collectHtmlCommentRanges } from '@aero-js/compiler'
+import { collectHtmlCommentRanges, maskJsComments } from '@aero-js/compiler'
 
 export {
 	collectInterpolationBodyRanges,
@@ -13,11 +13,7 @@ export {
 	isOffsetInRanges,
 	maskInterpolationExpressionBodies,
 	restoreInterpolationBodyMarkup,
-}
-
-/** Replace JS comments with spaces to preserve character indices for range calculations. */
-export function maskJsComments(text: string): string {
-	return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, match => ' '.repeat(match.length))
+	maskJsComments,
 }
 
 /** Mask template literal static spans; keep `${...}` expressions for identifier analysis. */

@@ -343,14 +343,18 @@ describe('Vite Plugin Integration', () => {
 		transformPlugin.transform.call(pluginCtx, v1, id)
 
 		const sends: any[] = []
+		const invalidated: string[] = []
+		const styleId = `\0aero:style:${id}?index=0.css`
+		const styleInlineId = `\0aero:style:${id}?inline&index=0.css`
 		const result = await virtualsPlugin.handleHotUpdate({
 			file: id,
 			read: async () => v2,
 			server: {
 				ws: { send: (payload: any) => sends.push(payload) },
 				moduleGraph: {
-					getModuleById: () => null,
-					invalidateModule: () => {},
+					getModuleById: (moduleId: string) =>
+						moduleId === styleId || moduleId === styleInlineId ? { id: moduleId } : null,
+					invalidateModule: (mod: { id: string }) => invalidated.push(mod.id),
 				},
 			},
 			modules: [],
@@ -358,6 +362,8 @@ describe('Vite Plugin Integration', () => {
 
 		expect(result).toBeUndefined()
 		expect(sends).toEqual([])
+		expect(invalidated).toContain(styleId)
+		expect(invalidated).toContain(styleInlineId)
 	})
 
 	it('regenerates route artifacts on route file add/unlink (rename flow)', () => {

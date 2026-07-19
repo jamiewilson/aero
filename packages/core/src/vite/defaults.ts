@@ -35,6 +35,37 @@ export const STATE_BINDINGS_REGISTRY_FILENAME = 'state-bindings-registry.mjs'
 /** Prefix for virtual empty-CSS modules used when Vite requests .html?html-proxy&inline-css (Aero .html are JS, not HTML with styles). */
 export const AERO_EMPTY_INLINE_CSS_PREFIX = '\0aero:empty-inline-css:'
 
+/**
+ * Virtual CSS from a template top-level `<style>` block.
+ * Query ends with `index=N.css` so Vite and `@tailwindcss/vite` treat the id as CSS.
+ */
+export const AERO_STYLE_VIRTUAL_PREFIX = '\0aero:style:'
+
+/** Virtual module id for the Nth top-level `<style>` in an Aero template (CSS source). */
+export function toAeroStyleVirtualModuleId(filePath: string, index: number): string {
+	return `${AERO_STYLE_VIRTUAL_PREFIX}${filePath}?index=${index}.css`
+}
+
+/** Import specifier that yields processed CSS as a string (`?inline`). */
+export function toAeroStyleInlineImportId(filePath: string, index: number): string {
+	return `${AERO_STYLE_VIRTUAL_PREFIX}${filePath}?inline&index=${index}.css`
+}
+
+/** Parse `\0aero:style:<absPath>?…index=N.css` into file path + index, or null. */
+export function fromAeroStyleVirtualModuleId(
+	id: string
+): { filePath: string; index: number } | null {
+	if (!id.startsWith(AERO_STYLE_VIRTUAL_PREFIX)) return null
+	const rest = id.slice(AERO_STYLE_VIRTUAL_PREFIX.length)
+	const q = rest.indexOf('?')
+	if (q < 0) return null
+	const filePath = rest.slice(0, q)
+	const query = rest.slice(q + 1)
+	const match = /(?:^|&)index=(\d+)\.css(?:&|$)/.exec(query)
+	if (!match) return null
+	return { filePath, index: Number(match[1]) }
+}
+
 /** Prefix for virtual HTML template modules. Resolving .html to this id returns compiled JS so vite:build-html never sees raw/compiled HTML. */
 export const AERO_HTML_VIRTUAL_PREFIX = '\0aero-html:'
 
