@@ -114,6 +114,27 @@ function isSingleBracedExpression(text: string): boolean {
 	)
 }
 
+/** Comma-separated idents / spreads / keyed props — Aero binding-list shape. */
+function isSimpleBindingList(expr: string): boolean {
+	return /^(?:\.\.\.[A-Za-z_$][\w$]*|[A-Za-z_$][\w$]*(?:\s*:\s*[^,]+)?)\s*(?:,\s*(?:\.\.\.[A-Za-z_$][\w$]*|[A-Za-z_$][\w$]*(?:\s*:\s*[^,]+)?)\s*)*$/.test(
+		expr
+	)
+}
+
+/**
+ * Prettier parenthesizes comma-operator expressions (`a, b` → `(a, b)`).
+ * Aero brace inners often use comma-separated binding lists (e.g. props),
+ * which must not gain those parens.
+ */
+function stripSpuriousCommaOperatorParens(original: string, formatted: string): string {
+	for (const candidate of [formatted, original]) {
+		if (!candidate.startsWith('(') || !candidate.endsWith(')')) continue
+		const inner = candidate.slice(1, -1).trim()
+		if (inner.includes(',') && isSimpleBindingList(inner)) return inner
+	}
+	return formatted
+}
+
 async function formatExpressionContents(
 	expression: string,
 	options: prettier.Options
@@ -132,7 +153,8 @@ async function formatExpressionContents(
 			.replace(/;\s*$/, '')
 
 	try {
-		return stripFormatted(await prettier.format(trimmed, formatOptions))
+		const rawFormatted = stripFormatted(await prettier.format(trimmed, formatOptions))
+		return stripSpuriousCommaOperatorParens(trimmed, rawFormatted)
 	} catch {
 		try {
 			const wrapped = await prettier.format(`(${trimmed})`, formatOptions)
