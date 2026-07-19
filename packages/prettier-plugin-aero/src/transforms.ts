@@ -206,8 +206,10 @@ async function collectBracketSpacingEdits(
 
 		const innerStart = node.startTagEnd
 		const innerEnd = node.endTagStart
-		const hasElementChildren = node.children?.some(child => Boolean(child.tag)) ?? false
-		if (hasElementChildren) continue
+		// Format braces in the raw inner source (not the DOM tree). The HTML parser may
+		// invent element children inside template literals (e.g. `{ \`<slot />\` }`), and
+		// mixed text+element content still has interpolations in the leading/trailing text.
+		// Skipping when `children` has tags left those braces unformatted.
 		if (innerStart != null && innerEnd != null && innerEnd > innerStart) {
 			const text = source.slice(innerStart, innerEnd)
 			const segments = tokenizeCurlyInterpolation(text, { attributeMode: false })
