@@ -84,6 +84,29 @@ describe('applyAeroTransforms', () => {
 		expect(twice).toBe(once)
 	})
 
+	it('does not parenthesize comma-separated props binding lists', async () => {
+		const component = await formatAero(
+			'<meta-component props="{ storageKey, attribute }" />',
+			{ aeroBracketSpacing: true }
+		)
+		expect(component).toContain('props="{ storageKey, attribute }"')
+		expect(component).not.toContain('(storageKey')
+
+		const nestedScript = await formatAero(
+			'<head><script props="{ storageKey, attribute }"></script></head>',
+			{ aeroBracketSpacing: true }
+		)
+		expect(nestedScript).toContain('props="{ storageKey, attribute }"')
+		expect(nestedScript).not.toContain('(storageKey')
+
+		const healsExisting = await formatAero(
+			'<head><script props="{ (storageKey, attribute) }"></script></head>',
+			{ aeroBracketSpacing: true }
+		)
+		expect(healsExisting).toContain('props="{ storageKey, attribute }"')
+		expect(healsExisting).not.toContain('(storageKey')
+	})
+
 	it('rewrites runtime, event, class, bind, key, and script is attrs', async () => {
 		const input = `<script is:state>let count = 0
 let open = true
