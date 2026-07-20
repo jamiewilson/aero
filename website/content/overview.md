@@ -80,7 +80,7 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 - **Components** live in `client/components/`; use `<name-component>` (e.g. `header.html` → `<header-component>`).
 - **Path aliases**: For convenience, `@aero-js/create` gives you: `@client/*`, `@pages/*`, `@layouts/*`, `@components/*`, and more out of the box. See `tsconfig.json` for all of them.
 
-> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/data/content-collections.mdx).
+> For dynamic routes (e.g. `blog/[slug].html`), export `getStaticPaths()` from the page's build script so the build knows which paths to generate. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/_archive/data/content-collections.mdx).
 
 ## [Components & Layouts](#components--layouts)
 
@@ -298,7 +298,7 @@ So, nav's default slot accepts all the slotted content, i.e. both links:
 
 ## [Content Collections](#content-collections)
 
-Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site.ts` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/data/content-collections.mdx).
+Put TypeScript or JavaScript in `content/` (e.g. `content/site.ts`). Import in build scripts as `@content/site.ts` and use the exported data in your templates. For content collections (e.g. markdown docs), use `getCollection('name')` and optional `render()` for markdown. See [Content collections](https://github.com/jamiewilson/aero/blob/main/docs/_archive/data/content-collections.mdx).
 
 ```html
 <script is:build>

@@ -68,7 +68,7 @@ To use it, import the layout in your page's `<script is:build>` block and wrap y
 Everything between `<base-layout>` and `</base-layout>` is rendered where `<slot />` appears in the layout.
 
 <Note>
-	Import the layout without its `.html` extension: `import base from '@layouts/base.html'` resolves to
+	Include the `.html` extension: `import base from '@layouts/base.html'` resolves to
 	`client/layouts/base.html`.
 </Note>
 
@@ -187,3 +187,35 @@ The nav component's default slot receives both the passed-through link and the b
 <Tip>
   Slot passthrough lets deep page content reach ancestor layout slots without every layout in between having to manually wire it up — just forward the slot with `name="..."` and `slot="..."` on the `<slot>` element.
 </Tip>
+
+## Root layout and client entry
+
+In dev, Aero re-renders pages on template changes only when the browser has loaded the app client entry and called `aero.mount()`. Put that entry in **one root layout** — the full-document layout that emits `<html>`.
+
+```html
+<!-- client/layouts/base.html -->
+<html lang="en">
+	<head>
+		<link rel="stylesheet" href="@styles/global.css" />
+		<script src="@scripts/index.ts"></script>
+	</head>
+	<body id="app">
+		<slot />
+	</body>
+</html>
+```
+
+```ts
+// client/assets/scripts/index.ts
+import aero from '@aero-js/core'
+
+aero.mount({ target: '#app' })
+```
+
+Rules:
+
+- **Root layout only:** include `<script src="@scripts/index.ts">` (or equivalent) in the outermost full-document layout. Nested layouts such as `sub.html` compose into `base-layout` and must **not** duplicate the entry script.
+- **Match mount target:** the `target` passed to `aero.mount()` must match an element in the root layout (for example `body id="app"` and `target: '#app'`).
+- **Alternate root layouts:** if you need a minimal chrome-free shell, create another root layout that still includes the same entry script and mount target — not a head-only wrapper without the client bundle.
+
+Without the entry script, static HTML still renders, but dev HMR will not patch the page when templates change.

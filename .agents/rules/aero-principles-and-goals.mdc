@@ -35,7 +35,7 @@ Intentional tradeoffs and product identity that should survive compiler and runt
 ### Aero vs Nitro (boundary)
 
 - **Aero owns** generating site **HTML into `dist/`** (the template and static pipeline). **Nitro** is the **optional** server and deployment layer—exposed in a **thin**, **Nitro-native** way (e.g. `server: true`, project `nitro.config.ts`), not re-abstracted into a parallel Aero-specific server API.
-- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md), [Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx).
+- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md), [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx).
 
 ### Web platform and author experience
 
@@ -110,7 +110,7 @@ Deliberate dependencies and patterns; change only for strong reasons (security, 
 | Area | Commitment | Role |
 | --- | --- | --- |
 | **Vite** | Primary dev server, bundler, and **plugin** surface | HMR, asset pipeline, ecosystem plugins (e.g. PostCSS/Tailwind) without Aero wrapping everything ([Overview](docs/get-started/overview.mdx)) |
-| **Nitro** | Optional **server** and deployment | API routes, presets, and adapters without replacing Aero’s static HTML pipeline ([Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx)) |
+| **Nitro** | Optional **server** and deployment | API routes, presets, and adapters without replacing Aero’s static HTML pipeline ([Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx)) |
 | **Oxc** (`oxc-parser`, `oxc-transform`, `oxc-resolver`) | JS/TS **parsing**, transform, and resolution in compiler/core | Fast, modern toolchain aligned with the broader JS ecosystem |
 | **tsdown** | **Building** published `@aero-js/*` packages | ESM + typings for framework packages |
 | **Vitest** | **Testing** the framework | Fast unit/integration tests in CI |
@@ -147,11 +147,11 @@ Day-to-day code and architecture follow **[.agents/rules/aero-coding-principles.
 | --- | --- |
 | Product pitch & thin layer | [README.md](README.md), [Philosophy](docs/get-started/philosophy.mdx) |
 | Design goals & stack table | [Overview](docs/get-started/overview.mdx) |
-| Routing vision and boundaries | [_reference/exploration/aero-routing-vision.md](_reference/exploration/aero-routing-vision.md), [Pages & routing](docs/concepts/routing.mdx) |
+| Routing vision and boundaries | [_reference/exploration/aero-routing-vision.md](_reference/exploration/aero-routing-vision.md), [Pages & routing](docs/_archive/concepts/routing.mdx) |
 | Web Components tradeoff | [Philosophy](docs/get-started/philosophy.mdx) |
 | Hypermedia, reactivity, SPA/islands | [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md) |
-| Nitro in Aero | [Nitro](docs/server/nitro.mdx), [Deploy with Nitro](docs/deploy/nitro.mdx), [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md) |
-| Scripts & execution | [Scripts](docs/concepts/scripts.mdx), [.agents/AGENTS.md](.agents/AGENTS.md) |
+| Nitro in Aero | [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx), [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md) |
+| Scripts & execution | [Scripts](docs/_archive/concepts/scripts.mdx), [.agents/AGENTS.md](.agents/AGENTS.md) |
 | Monorepo & compilation pipeline | [.agents/AGENTS.md](.agents/AGENTS.md), [_reference/refactors/compilation/compilation-review.md](_reference/refactors/compilation/compilation-review.md), [_reference/plans/_archive/compilation-refactor.md](_reference/plans/_archive/compilation-refactor.md) |
 | Incremental builds | [_reference/refactors/incremental/incremental-builds.md](_reference/refactors/incremental/incremental-builds.md) |
 | Standalone runtime | [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md) |

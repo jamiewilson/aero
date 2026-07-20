@@ -9,14 +9,15 @@ Build scripts, component props, and content frontmatter are all dynamic data tha
 
 ## How Aero helps
 
-Aero supports TypeScript in `<script is:build>` blocks, content config files, and shared type modules. The VS Code extension provides IntelliSense and diagnostics for build scripts automatically. You can type component props, validate content schemas, and run `aero check --types` in CI to catch errors before they reach production.
+Aero supports TypeScript in `<script is:build lang="ts">` blocks, content config files, and shared type modules. The VS Code extension provides IntelliSense and diagnostics for build scripts automatically. You can type component props, validate content schemas, and run `aero check --types` in CI to catch errors before they reach production.
 
 ## Typing component props
 
 `Aero.props` is typed as `Record<string, any>` by default. To add type safety, define an interface and cast when you destructure:
 
-```html client/components/greeting.html
-<script is:build>
+```html
+<!-- client/components/greeting.html -->
+<script is:build lang="ts">
 	interface GreetingProps {
 		name: string
 		title?: string
@@ -32,15 +33,17 @@ Aero supports TypeScript in `<script is:build>` blocks, content config files, an
 
 For types shared across multiple components, define them in a `.ts` file and import them:
 
-```ts client/types/props.ts
+```ts
+// client/types/props.ts
 export interface HeaderProps {
 	title: string
 	subtitle?: string
 }
 ```
 
-```html client/components/header.html
-<script is:build>
+```html
+<!-- client/components/header.html -->
+<script is:build lang="ts">
 	import type { HeaderProps } from 'types/props'
 
 	const { title, subtitle } = Aero.props as HeaderProps
@@ -61,8 +64,9 @@ export interface HeaderProps {
 
 Type the object you spread so TypeScript catches missing required props at the call site:
 
-```html client/pages/index.html
-<script is:build>
+```html
+<!-- client/pages/index.html -->
+<script is:build lang="ts">
 	import header from '@components/header.html'
 	import site from '@content/site.ts'
 	import type { HeaderProps } from 'types/props'
@@ -80,7 +84,8 @@ Type the object you spread so TypeScript catches missing required props at the c
 
 Use a [Standard Schema](https://standardschema.dev)-compliant validator (Zod, ArkType, Valibot) in `content.config.ts` to type your collection entries:
 
-```ts content.config.ts
+```ts
+// content.config.ts
 import { defineConfig, defineCollection } from '@aero-js/content'
 import { z } from 'zod'
 
@@ -105,8 +110,9 @@ export default defineConfig({
 
 Use the schema-inferred types in dynamic page scripts:
 
-```html client/pages/docs/[slug].html
-<script is:build>
+```html
+<!-- client/pages/docs/[slug].html -->
+<script is:build lang="ts">
 	import { getCollection, render } from 'aero:content'
 
 	export async function getStaticPaths() {
@@ -127,8 +133,8 @@ Use the schema-inferred types in dynamic page scripts:
 
 For stricter typing on `doc.data`, add an inline interface and assert:
 
-```html client/pages/docs/[slug].html
-<script is:build>
+```html
+<script is:build lang="ts">
 	import { getCollection, render } from 'aero:content'
 
 	interface DocData {
@@ -182,7 +188,8 @@ Aero ships ambient declarations in `@aero-js/core/env` that make `Aero`, `render
 
 Create an `env.d.ts` in your project root to add types for `import.meta.env.SITE` and any custom `VITE_` variables:
 
-```ts env.d.ts
+```ts
+// env.d.ts
 /// <reference types="@aero-js/core/env" />
 
 interface ImportMetaEnv {
@@ -205,27 +212,8 @@ For path aliases to resolve correctly in the TypeScript language server, keep `t
 
 The language server type-checks your build scripts in the editor. To enforce the same checks in CI without an IDE, run:
 
-<CodeGroup>
-```bash pnpm
+```bash
 pnpm exec aero check --types
 ```
 
-```bash npm
-npm exec aero check --types
-```
-
-```bash yarn
-yarn exec aero check --types
-```
-
-</CodeGroup>
-
 This runs compile checks first, then TypeScript on build scripts and `{ }` interpolation sites using your workspace `tsconfig.json`. See [CLI](/tooling/cli) for flags and exit codes.
-
-```
-
-```
-
-```
-
-```
