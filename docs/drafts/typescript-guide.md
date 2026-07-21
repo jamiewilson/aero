@@ -96,7 +96,7 @@ When passing props from a page or parent component, type the object you spread:
 
 ## Slot prop types (convention)
 
-For a **named** slot (`<slot name="item" … />`), the child component can declare what the parent passes into the slot body using an interface named **`{Name}SlotProps`**, where `{Name}` is the **PascalCase** slot name (for example, slot `item` → `ItemSlotProps`; slot `default` → `DefaultSlotProps`). This naming convention is agreed for generators and future tooling; **full IntelliSense for expressions inside the parent’s slot markup** is not guaranteed yet and may arrive in a later tooling pass. For the decision record, see [phase-c-slot-typing.md](../_reference/refactors/compilation/phase-c-slot-typing.md).
+For a **named** slot (`<slot name="item" … />`), the child component can declare what the parent passes into the slot body using an interface named **`{Name}SlotProps`**, where `{Name}` is the **PascalCase** slot name (for example, slot `item` → `ItemSlotProps`; slot `default` → `DefaultSlotProps`). This naming convention is agreed for generators and future tooling; **full IntelliSense for expressions inside the parent’s slot markup** is not guaranteed yet and may arrive in a later tooling pass. For the decision record, see [phase-c-slot-typing.md](../_reference/plans/compilation/phase-c-slot-typing.md).
 
 ---
 

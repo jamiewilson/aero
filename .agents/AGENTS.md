@@ -130,19 +130,20 @@ Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be se
 - **packages/core/** - Framework (runtime, Vite plugin, config helpers; `@aero-js/core` and subpaths)
 - **packages/vscode/** - VS Code extension
 
-For a detailed monorepo and packages layout, see [\_reference/guides/monorepo.md](_reference/guides/monorepo.md).
+For a detailed monorepo and packages layout, see [`docs/drafts/monorepo.md`](docs/drafts/monorepo.md).
 
 ## Documentation (TSDoc)
 
-When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [\_reference/tsdoc-guide.md](_reference/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.agents/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
+When adding or refactoring comments in TypeScript files, use **block-style TSDoc** and **standard tags only** (no `@property`—it is not in the TSDoc spec). See [`_reference/guides/tsdoc-guide.md`](_reference/guides/tsdoc-guide.md) for the full guide (summary, `@param`/`@returns`/`@remarks`/`@see`/`@example`/`@defaultValue`; describe interface members in prose). The Cursor rule **aero-tsdoc** (`.agents/rules/aero-tsdoc.mdc`) applies when editing `**/*.ts`. Example: `packages/core/src/types.ts`.
 
 ## Documentation: implementation progress vs discoveries
 
-- **[\_reference/refactors/effect/effect-implementation-progress.md](_reference/refactors/effect/effect-implementation-progress.md)** — What **shipped** in the Effect / `AeroDiagnostic` initiative (phases 0–5 partial), user-visible gains, and file pointers. Update this when you **complete** a planned diagnostics/Effect slice.
-- **[\_reference/aero-cli-and-check.md](_reference/aero-cli-and-check.md)** — **`@aero-js/cli`**, **`aero check`**, and tooling APIs (`loadAeroConfig`, `loadContentConfigFileSync`, `@aero-js/core/compile-check`), CI usage, limitations.
-- **[\_reference/DISCOVERY.md](_reference/DISCOVERY.md)** — **Follow-up gaps only**: things you uncover during unrelated work (quirks, tech debt, “callers must pass X”) that someone should fix later. **Do not** paste phase changelogs, env var lists, or full feature writeups here; use the progress doc or a dedicated `_reference/*.md`.
-- **Roadmap** — Ordered future work: [\_reference/refactors/effect/effect_implementation_phased_plan.md](_reference/refactors/effect/effect_implementation_phased_plan.md).
-- **[\_reference/effect-opportunities.md](_reference/effect-opportunities.md)** — Effect adoption opportunities and phased roadmap (framework packages); complements the progress doc and plan.
+- **[`_reference/README.md`](_reference/README.md)** — Engineering knowledge map: ADRs, FDRs, architecture, [`plans/`](_reference/plans/INDEX.md) (`deferred/`, `archive/`), exploration. Plan lifecycle: [`guides/plan-management.md`](_reference/guides/plan-management.md).
+- **[`_reference/plans/effect/effect-implementation-progress.md`](_reference/plans/effect/effect-implementation-progress.md)** — What **shipped** in the Effect / `AeroDiagnostic` initiative (phases 0–5 partial), user-visible gains, and file pointers. Update this when you **complete** a planned diagnostics/Effect slice.
+- **[`_reference/guides/cli-and-check.md`](_reference/guides/cli-and-check.md)** — **`@aero-js/cli`**, **`aero check`**, and tooling APIs (`loadAeroConfig`, `loadContentConfigFileSync`, `@aero-js/core/compile-check`), CI usage, limitations.
+- **[`_reference/DISCOVERY.md`](_reference/DISCOVERY.md)** — **Follow-up gaps only**: quirks/tech debt found while spelunking. **Do not** paste phase changelogs, env catalogs, or full feature writeups here; use an FDR/ADR, progress doc, or focused plan.
+- **Roadmap** — Ordered future work: [`_reference/plans/effect/effect_implementation_phased_plan.md`](_reference/plans/effect/effect_implementation_phased_plan.md); status board: [`_reference/plans/sequence-guidance.md`](_reference/plans/sequence-guidance.md).
+- **[`_reference/plans/effect/effect-architecture-opportunities.md`](_reference/plans/effect/effect-architecture-opportunities.md)** — Effect adoption opportunities and phased roadmap (framework packages); complements the progress doc and plan.
 
 ## Gotchas
 

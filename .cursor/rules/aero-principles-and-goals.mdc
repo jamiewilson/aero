@@ -35,7 +35,7 @@ Intentional tradeoffs and product identity that should survive compiler and runt
 ### Aero vs Nitro (boundary)
 
 - **Aero owns** generating site **HTML into `dist/`** (the template and static pipeline). **Nitro** is the **optional** server and deployment layer—exposed in a **thin**, **Nitro-native** way (e.g. `server: true`, project `nitro.config.ts`), not re-abstracted into a parallel Aero-specific server API.
-- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md), [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx).
+- Aero does **not** treat Nitro as its **primary** renderer or prerender engine for Aero pages; Nitro composes **around** Aero’s built output. Details: [_reference/plans/nitro/nitro-features.md](_reference/plans/nitro/nitro-features.md), [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx).
 
 ### Web platform and author experience
 
@@ -76,13 +76,13 @@ What exists today, what is exploratory, and where plans live. Update as features
 
 ### Compiler and build pipeline
 
-- **Author-facing output** is **HTML-oriented** (sites and documents). **Internal** representation—strings, IR, DOM walks, structured emitters—is an **implementation detail** and will evolve ([_reference/refactors/compilation/compilation-review.md](_reference/refactors/compilation/compilation-review.md), [_reference/refactors/compilation/compilation-plan.md](_reference/refactors/compilation/compilation-plan.md), [_reference/plans/_archive/compilation-refactor.md](_reference/plans/_archive/compilation-refactor.md)).
-- **Incremental builds** at the Aero level (dependency-aware dirty sets, persistent caches) are **direction**, not fully realized yet: [_reference/refactors/incremental/incremental-builds.md](_reference/refactors/incremental/incremental-builds.md).
+- **Author-facing output** is **HTML-oriented** (sites and documents). **Internal** representation—strings, IR, DOM walks, structured emitters—is an **implementation detail** and will evolve ([_reference/plans/compilation/compilation-review.md](_reference/plans/compilation/compilation-review.md), [_reference/plans/compilation/compilation-plan.md](_reference/plans/compilation/compilation-plan.md), [_reference/plans/archive/compilation-refactor.md](_reference/plans/archive/compilation-refactor.md)).
+- **Incremental builds** at the Aero level (dependency-aware dirty sets, persistent caches) are **direction**, not fully realized yet: [_reference/plans/incremental/incremental-builds.md](_reference/plans/incremental/incremental-builds.md).
 
 ### Type system and author-time guarantees
 
 - **Today:** Partial type safety in build scripts, content collections, language-server tooling, and some template/build-time workflows; route manifests, params, component props across template boundaries, route context, and loader outputs are not yet modeled end to end.
-- **Direction:** Move toward full compile-time coverage via generated route types, stronger prop typing, typed loader/context proposals, and unified diagnostics. [_reference/exploration/type-system/index.md](_reference/exploration/type-system/index.md).
+- **Direction:** Move toward full compile-time coverage via generated route types, stronger prop typing, typed loader/context proposals, and unified diagnostics. [_reference/plans/type-system/index.md](_reference/plans/type-system/index.md).
 
 ### Client interactivity and Aero-native behavior
 
@@ -95,11 +95,11 @@ What exists today, what is exploratory, and where plans live. Update as features
 
 ### Standalone template runtime
 
-- Compiled templates and `@aero-js/core` **runtime** are intended to be usable **outside** a full Vite-first app (standalone render path, ESM-first). [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md).
+- Compiled templates and `@aero-js/core` **runtime** are intended to be usable **outside** a full Vite-first app (standalone render path, ESM-first). [_reference/exploration/runtime/standalone-runtime.md](_reference/exploration/runtime/standalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md).
 
 ### Nitro configuration
 
-- **Nitro** integration is moving toward a single **user-owned** `nitro.config.ts` merged with Aero **invariants** in generated config; dev/build/preview parity is an active concern. [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md).
+- **Nitro** integration is moving toward a single **user-owned** `nitro.config.ts` merged with Aero **invariants** in generated config; dev/build/preview parity is an active concern. [_reference/plans/nitro/nitro-features.md](_reference/plans/nitro/nitro-features.md).
 
 ---
 
@@ -128,14 +128,14 @@ Deliberate dependencies and patterns; change only for strong reasons (security, 
 
 Day-to-day code and architecture follow **[.agents/rules/aero-coding-principles.mdc](.agents/rules/aero-coding-principles.mdc)**—twelve principles and **priority order** when they conflict: correctness → clarity → simplicity → safety → performance → generality.
 
-**Compiler and plugin work:** Prefer **clear boundaries** between parse, analysis, codegen, and Vite integration; **validate at boundaries** and use typed structures inside; **surface errors early** (diagnostics, compile-time checks). Large refactors should **reduce duplicated pipelines** and **unsafe string assembly** in favor of single ownership and testable units—[_reference/refactors/compilation/compilation-review.md](_reference/refactors/compilation/compilation-review.md).
+**Compiler and plugin work:** Prefer **clear boundaries** between parse, analysis, codegen, and Vite integration; **validate at boundaries** and use typed structures inside; **surface errors early** (diagnostics, compile-time checks). Large refactors should **reduce duplicated pipelines** and **unsafe string assembly** in favor of single ownership and testable units—[_reference/plans/compilation/compilation-review.md](_reference/plans/compilation/compilation-review.md).
 
 ---
 
 ## 6. Quality and operations
 
 - **TDD (red → green → refactor):** [.agents/AGENTS.md](.agents/AGENTS.md)—new behavior and bug fixes should be anchored by tests where practical.
-- **Browser E2E:** **Playwright**-based E2E across dev, static preview, and Nitro-backed preview are the **intended** complement to Vitest; [_reference/plans/_archive/e2e-testing.md](_reference/plans/_archive/e2e-testing.md).
+- **Browser E2E:** **Playwright**-based E2E across dev, static preview, and Nitro-backed preview are the **intended** complement to Vitest; [_reference/plans/archive/e2e-testing.md](_reference/plans/archive/e2e-testing.md).
 - **Diagnostics and Effect:** Structured errors and Effect-style patterns—see AGENTS for pointers; **do not** duplicate the roadmap here.
 - **Documentation:** Public behavior belongs in `docs/`; implementation notes often live under `_reference/` (e.g. [_reference/DISCOVERY.md](_reference/DISCOVERY.md)).
 
@@ -150,16 +150,16 @@ Day-to-day code and architecture follow **[.agents/rules/aero-coding-principles.
 | Routing vision and boundaries | [_reference/exploration/aero-routing-vision.md](_reference/exploration/aero-routing-vision.md), [Pages & routing](docs/_archive/concepts/routing.mdx) |
 | Web Components tradeoff | [Philosophy](docs/get-started/philosophy.mdx) |
 | Hypermedia, reactivity, SPA/islands | [_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md](_reference/exploration/hypermedia-reactivity/aero-hypermedia-reactivity-overview.md) |
-| Nitro in Aero | [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx), [_reference/refactors/nitro/nitro-features.md](_reference/refactors/nitro/nitro-features.md) |
+| Nitro in Aero | [Nitro](docs/_archive/server/nitro.mdx), [Deploy with Nitro](docs/getting-started/deployment.mdx), [_reference/plans/nitro/nitro-features.md](_reference/plans/nitro/nitro-features.md) |
 | Scripts & execution | [Scripts](docs/_archive/concepts/scripts.mdx), [.agents/AGENTS.md](.agents/AGENTS.md) |
-| Monorepo & compilation pipeline | [.agents/AGENTS.md](.agents/AGENTS.md), [_reference/refactors/compilation/compilation-review.md](_reference/refactors/compilation/compilation-review.md), [_reference/plans/_archive/compilation-refactor.md](_reference/plans/_archive/compilation-refactor.md) |
-| Incremental builds | [_reference/refactors/incremental/incremental-builds.md](_reference/refactors/incremental/incremental-builds.md) |
-| Standalone runtime | [_reference/exploration/runtime/stanalone-runtime.md](_reference/exploration/runtime/stanalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md) |
+| Monorepo & compilation pipeline | [.agents/AGENTS.md](.agents/AGENTS.md), [_reference/plans/compilation/compilation-review.md](_reference/plans/compilation/compilation-review.md), [_reference/plans/archive/compilation-refactor.md](_reference/plans/archive/compilation-refactor.md) |
+| Incremental builds | [_reference/plans/incremental/incremental-builds.md](_reference/plans/incremental/incremental-builds.md) |
+| Standalone runtime | [_reference/exploration/runtime/standalone-runtime.md](_reference/exploration/runtime/standalone-runtime.md), [Standalone runtime](docs/guide/standalone-runtime.mdx), [monorepo.md](docs/drafts/monorepo.md) |
 | Template portability / adapters | [_reference/exploration/adapterless/eliminating-server-adapters.md](_reference/exploration/adapterless/eliminating-server-adapters.md) |
 | Optional builtins / async | [_reference/exploration/async/async-support-plan.md](_reference/exploration/async/async-support-plan.md), [_reference/exploration/builtins/aero-builtins-exporation.md](_reference/exploration/builtins/aero-builtins-exporation.md) |
-| Browser E2E | [_reference/plans/_archive/e2e-testing.md](_reference/plans/_archive/e2e-testing.md) |
+| Browser E2E | [_reference/plans/archive/e2e-testing.md](_reference/plans/archive/e2e-testing.md) |
 | Coding principles | [.agents/rules/aero-coding-principles.mdc](.agents/rules/aero-coding-principles.mdc) |
-| Type-system proposals (planned) | [_reference/exploration/type-system/index.md](_reference/exploration/type-system/index.md) — must stay consistent with §2–§3 here |
+| Type-system proposals (planned) | [_reference/plans/type-system/index.md](_reference/plans/type-system/index.md) — must stay consistent with §2–§3 here |
 | Dependencies & catalog | [Dependency policy](docs/guide/dependency-policy.mdx), [pnpm-workspace.yaml](pnpm-workspace.yaml) |
 
 ---
