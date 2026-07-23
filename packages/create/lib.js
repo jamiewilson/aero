@@ -128,7 +128,7 @@ export function writeReadme(targetDir, projectName, template) {
 			'',
 			'## Learn More',
 			'',
-			'- [Nitro](https://github.com/jamiewilson/aero/blob/main/docs/server/nitro.mdx) · [Deploy with Nitro](https://github.com/jamiewilson/aero/blob/main/docs/deploy/nitro.mdx)',
+			'- [Server](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/server.mdx) · [Deployment](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/deployment.mdx)',
 			'',
 		]
 

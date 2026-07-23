@@ -29,4 +29,4 @@ export default defineHandler(async event => {
 })
 ```
 
-See [Nitro](../../docs/server/nitro.mdx) and [Deploy with Nitro](../../docs/deploy/nitro.mdx).
+See [Nitro](../../docs/_archive/server/nitro.mdx) and [Deploy with Nitro](../../docs/getting-started/deployment.mdx).

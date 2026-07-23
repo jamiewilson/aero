@@ -102,4 +102,4 @@ Directive attributes (`if`, `for`, `switch`, `case`, `default`, etc.) are compil
 - [Interpolation — Loops](interpolation.md#loops-for--for) — `for` / `for` syntax and loop metadata.
 - [Props](props.md) — Directive expression rules (`if="{ … }"`, `for="{ … }"`).
 
-For compiler internals (e.g. `template.content` vs `childNodes`), see [\_reference/refactors/wrapperless/template-lowering-in-compiler.md](../_reference/refactors/wrapperless/template-lowering-in-compiler.md).
+For compiler internals (e.g. `template.content` vs `childNodes`), see [\_reference/plans/wrapperless/template-lowering-in-compiler.md](../_reference/plans/wrapperless/template-lowering-in-compiler.md).

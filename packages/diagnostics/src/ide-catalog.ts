@@ -10,27 +10,27 @@ const REPO_DOCS_BASE = 'https://github.com/jamiewilson/aero/blob/main/docs'
 /**
  * Full URL to a documentation file under the repo `docs/` directory (MDX source).
  *
- * @param docsFile - Relative path under `docs/`, e.g. `concepts/templating.mdx`
+ * @param docsFile - Relative path under `docs/`, e.g. `getting-started/templates.mdx`
  */
 export function aeroIdeDocHref(docsFile: string): string {
 	const trimmed = docsFile.replace(/^\/+/, '')
 	return `${REPO_DOCS_BASE}/${trimmed}`
 }
 
-const DEFAULT_DOC = 'introduction.mdx'
+const DEFAULT_DOC = 'index.mdx'
 
 /** Default docs page per stable {@link AeroDiagnosticCode} (Problems “Learn more”). */
 const CODE_DOC: Record<AeroDiagnosticCode, string> = {
-	AERO_COMPILE: 'concepts/templating.mdx',
-	AERO_PARSE: 'concepts/templating.mdx',
+	AERO_COMPILE: 'getting-started/templates.mdx',
+	AERO_PARSE: 'getting-started/templates.mdx',
 	AERO_RESOLVE: 'guide/importing-and-bundling.mdx',
-	AERO_ROUTE: 'concepts/routing.mdx',
-	AERO_TEMPLATE: 'concepts/html-template.mdx',
-	AERO_SWITCH: 'concepts/html-template.mdx',
-	AERO_CONTENT_SCHEMA: 'data/content-collections.mdx',
-	AERO_CONFIG: 'configuration/aero-config.mdx',
-	AERO_BUILD_SCRIPT: 'concepts/scripts.mdx',
-	AERO_SCRIPT: 'concepts/scripts.mdx',
+	AERO_ROUTE: 'getting-started/routing.mdx',
+	AERO_TEMPLATE: 'guide/html-template.mdx',
+	AERO_SWITCH: 'guide/html-template.mdx',
+	AERO_CONTENT_SCHEMA: 'getting-started/content.mdx',
+	AERO_CONFIG: 'getting-started/configuration.mdx',
+	AERO_BUILD_SCRIPT: 'getting-started/scripts.mdx',
+	AERO_SCRIPT: 'getting-started/scripts.mdx',
 	AERO_INTERNAL: DEFAULT_DOC,
 }
 
@@ -55,7 +55,7 @@ export function aeroIdeDocsUrlForDiagnostic(
 		return aeroIdeDocHref('getting-started/reactivity.mdx')
 	}
 	if (diagnostic.code === 'AERO_COMPILE' && /prop/i.test(diagnostic.message)) {
-		return aeroIdeDocHref('data/props.mdx')
+		return aeroIdeDocHref('getting-started/templates.mdx')
 	}
 	return aeroIdeDocsUrlForCode(diagnostic.code)
 }

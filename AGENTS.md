@@ -75,16 +75,24 @@ Read these before domain-specific edits:
 - Nitro/server handlers: `.agents/rules/aero-server.mdc`
 - User-facing docs (`README`, `docs/**`, site docs): `.agents/rules/aero-user-docs.mdc`
 - TypeScript doc comments: `.agents/rules/aero-tsdoc.mdc`
-- Compile ↔ IDE diagnostics parity: `_reference/diagnostics/parity-matrix.md` (matrix + scenarios + shared validators)
-- Error pipeline (normalize → enrich → render): `_reference/diagnostics/error-pipeline.md`
+- Compile ↔ IDE diagnostics parity: `_reference/guides/diagnostics/parity-matrix.md` (also summarized in `_reference/architecture/diagnostics-surfaces.md`)
+- Error pipeline (normalize → enrich → render): `_reference/guides/diagnostics/error-pipeline.md`
+- Engineering knowledge map: `_reference/README.md` (ADR / FDR / architecture)
 
 If instructions conflict, follow: system/developer instructions > this file > task-specific rule files.
 
 ## 6) Documentation discipline
 
-- Put durable user-facing behavior in `docs/` and README.
-- Record notable discovered gaps/tech debt in `_reference/DISCOVERY.md` when appropriate.
-- Keep plans/progress docs focused (do not mix roadmap logs into discovery notes).
+- Put durable **user-facing** behavior in `docs/` and README.
+- Put durable **engineering** knowledge in `_reference/` — start at [`_reference/README.md`](_reference/README.md):
+  - Cross-cutting decisions → [`_reference/adr/`](_reference/adr/INDEX.md)
+  - Feature behaviour → [`_reference/fdr/`](_reference/fdr/INDEX.md)
+  - Current system shape → [`_reference/architecture/`](_reference/architecture/INDEX.md)
+  - Implementation sequencing → [`_reference/plans/`](_reference/plans/INDEX.md) (`deferred/`, `archive/`; lifecycle: [`_reference/guides/plan-management.md`](_reference/guides/plan-management.md))
+  - Research → [`_reference/exploration/`](_reference/exploration/INDEX.md)
+  - Status / order / checklist → [`_reference/plans/sequence-guidance.md`](_reference/plans/sequence-guidance.md), [`_reference/plans/order-of-work.md`](_reference/plans/order-of-work.md), [`_reference/plans/work-checklist.md`](_reference/plans/work-checklist.md)
+- Record opportunistic gaps/tech debt in [`_reference/DISCOVERY.md`](_reference/DISCOVERY.md) only (not full specs).
+- Prefer [glossary](_reference/GLOSSARY.md) terms when naming new concepts.
 
 ## 7) Practical defaults for edits
 

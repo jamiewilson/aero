@@ -251,14 +251,16 @@ export default defineHandler(async () => {
 
 Plugins let you hook into Nitro's lifecycle. Tasks let you run server-side work on demand.
 
+Aero automatically registers `@aero-js/core/nitro/runtime-plugin` (response marker and intentional `HTTPError` terminal logs). Add your own plugins under `server/plugins/` and list them in `nitro.config.ts`.
+
 <CodeGroup>
 
-```ts server/plugins/runtime.ts
+```ts server/plugins/app-header.ts
 import { definePlugin } from 'nitro'
 
 export default definePlugin(nitroApp => {
 	nitroApp.hooks.hook('response', response => {
-		response.headers.set('x-aero-nitro', 'true')
+		response.headers.set('x-app', 'true')
 	})
 })
 ```

@@ -26,7 +26,7 @@ For diagnostics, reactivity, and hypermedia, import `@aero-js/diagnostics`, `@ae
 
 ## Script taxonomy
 
-Script blocks are classified by attributes (see [Scripts](https://github.com/jamiewilson/aero/blob/main/docs/concepts/scripts.mdx) in the repo):
+Script blocks are classified by attributes (see [Scripts](https://github.com/jamiewilson/aero/blob/main/docs/_archive/concepts/scripts.mdx) in the repo):
 
 | Script type | Attribute              | When it runs      | Notes                                                                                     |
 | ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
