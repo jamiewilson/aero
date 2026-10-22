@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	attributeHasExplicitValueInSource,
 	getRuntimeDirectiveBraceIssue,
@@ -26,9 +26,9 @@ describe('runtime-directive-braces', () => {
 			expect(
 				resolveRuntimeDirectiveHasValue('class:is-active', '', '<div class:is-active="">')
 			).toBe(true)
-			expect(
-				attributeHasExplicitValueInSource('<div class:is-active="">', 'class:is-active')
-			).toBe(true)
+			expect(attributeHasExplicitValueInSource('<div class:is-active="">', 'class:is-active')).toBe(
+				true
+			)
 		})
 	})
 

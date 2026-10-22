@@ -2,7 +2,7 @@
  * Source map sites: bare props attribute → `{ ...props }` in generated JS.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compileTemplateModule } from '../../codegen'
 import {
 	collectTemplateSourceMapSites,

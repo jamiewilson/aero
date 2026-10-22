@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	formatAuthorAttributeName,
 	isPrefixableAuthorAttribute,
@@ -27,7 +27,11 @@ describe('author-attribute-format', () => {
 				aero: 'aero-on:submit.prevent',
 				dataAero: 'data-aero-on-submit-prevent',
 			},
-			{ none: 'class:is-active', aero: 'aero-class:is-active', dataAero: 'data-aero-class-is-active' },
+			{
+				none: 'class:is-active',
+				aero: 'aero-class:is-active',
+				dataAero: 'data-aero-class-is-active',
+			},
 			{ none: 'bind:count', aero: 'aero-bind:count', dataAero: 'data-aero-bind-count' },
 		]
 

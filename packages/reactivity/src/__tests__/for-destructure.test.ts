@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { bindKeyedFor } from '../structural/for'
 import { createStateScope } from '../state-scope'
 import { SignalStore } from '../store'
@@ -65,7 +65,11 @@ describe('bindKeyedFor destructuring', () => {
 				{
 					name: 'numbersMap',
 					derived: false,
-					init: () => new Map([[1, 'one'], [2, 'two']]),
+					init: () =>
+						new Map([
+							[1, 'one'],
+							[2, 'two'],
+						]),
 					dependencies: [],
 				},
 			],

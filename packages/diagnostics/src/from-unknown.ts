@@ -5,10 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { AeroDiagnostic, AeroDiagnosticCode, AeroDiagnosticSpan } from './types'
-import {
-	cancelledErrorToDiagnostic,
-	compileErrorToDiagnostic,
-} from './error-to-diagnostic'
+import { cancelledErrorToDiagnostic, compileErrorToDiagnostic } from './error-to-diagnostic'
 import { AeroBuildCancelledError, AeroCompileError } from './tagged-errors'
 import {
 	contentSchemaIssuePayloadsToDiagnostics,
@@ -24,9 +21,7 @@ export interface NormalizeContext {
 	code?: AeroDiagnosticCode
 }
 
-function isCompileError(
-	err: unknown
-): err is {
+function isCompileError(err: unknown): err is {
 	message: string
 	file?: string
 	line?: number

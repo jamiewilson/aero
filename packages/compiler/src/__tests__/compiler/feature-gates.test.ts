@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 import { collectFeatureGateIssuesFromSource } from '../../feature-gates'
@@ -108,9 +108,9 @@ describe('feature gates', () => {
 
 	it('rejects busy when feature flags are disabled without is:state', () => {
 		const html = '<button busy="{ isSaving }">Save</button>'
-		expect(() => compile(parse(html), { ...mockOptions, reactivity: false, hypermedia: false })).toThrow(
-			'`busy` requires both `reactivity: true` and `hypermedia: true`'
-		)
+		expect(() =>
+			compile(parse(html), { ...mockOptions, reactivity: false, hypermedia: false })
+		).toThrow('`busy` requires both `reactivity: true` and `hypermedia: true`')
 	})
 
 	it('rejects braced runtime-only data-aero attrs without is:state', () => {
@@ -155,9 +155,9 @@ describe('feature gates', () => {
 			import { GET } from '@aero-js/hypermedia'
 		</script>
 		<button on:click="{ GET('/api/x') }">Go</button>`
-		expect(() =>
-			compile(parse(html), { ...mockOptions, hypermedia: true })
-		).toThrow('cannot be imported in `<script is:build>`')
+		expect(() => compile(parse(html), { ...mockOptions, hypermedia: true })).toThrow(
+			'cannot be imported in `<script is:build>`'
+		)
 	})
 
 	it('rejects visible action state references to missing or non-boolean bindings', () => {

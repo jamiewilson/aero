@@ -9,24 +9,24 @@ Start at [`_reference/README.md`](../../_reference/README.md).
 
 ## Choose a home
 
-| Need | Path | Template |
-| --- | --- | --- |
-| Cross-cutting decision | `_reference/adr/ADR-NNN-….md` | `_reference/templates/ADR.md` |
-| Feature behaviour | `_reference/fdr/FDR-NNN-….md` | `_reference/templates/FDR.md` |
-| Current system facts | `_reference/architecture/….md` | `_reference/templates/architecture-page.md` |
-| Research | `_reference/exploration/` | `_reference/templates/exploration-entry.md` |
-| Implementation phases | `_reference/plans/` | `_reference/templates/plan.md` |
-| Surprise gap | `_reference/DISCOVERY.md` | — |
+| Need                   | Path                           | Template                                    |
+| ---------------------- | ------------------------------ | ------------------------------------------- |
+| Cross-cutting decision | `_reference/adr/ADR-NNN-….md`  | `_reference/templates/ADR.md`               |
+| Feature behaviour      | `_reference/fdr/FDR-NNN-….md`  | `_reference/templates/FDR.md`               |
+| Current system facts   | `_reference/architecture/….md` | `_reference/templates/architecture-page.md` |
+| Research               | `_reference/exploration/`      | `_reference/templates/exploration-entry.md` |
+| Implementation phases  | `_reference/plans/`            | `_reference/templates/plan.md`              |
+| Surprise gap           | `_reference/DISCOVERY.md`      | —                                           |
 
 ## Plans layout (single home)
 
 All plan files live under `_reference/plans/`:
 
-| Path | Role |
-| --- | --- |
-| `plans/` (top-level + theme folders) | `Active` tracks |
-| `plans/deferred/` | Design-locked parks (`Deferred`) |
-| `plans/archive/` | `Done` / `Superseded` history |
+| Path                                 | Role                             |
+| ------------------------------------ | -------------------------------- |
+| `plans/` (top-level + theme folders) | `Active` tracks                  |
+| `plans/deferred/`                    | Design-locked parks (`Deferred`) |
+| `plans/archive/`                     | `Done` / `Superseded` history    |
 
 Do **not** put new plans under `refactors/` or `_reference/archive/`.
 

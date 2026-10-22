@@ -57,11 +57,7 @@ function formatLoc(d: AeroDiagnostic, colors: boolean): string | undefined {
 	return paint(colors, ANSI.gray, loc)
 }
 
-function formatOne(
-	d: AeroDiagnostic,
-	colors: boolean,
-	now: Date
-): string {
+function formatOne(d: AeroDiagnostic, colors: boolean, now: Date): string {
 	const ts = paint(colors, ANSI.gray, formatTimestamp(now))
 	const severityLabel = d.severity === 'warning' ? 'Warning' : 'Error'
 	const head = paint(colors, ANSI.red, `[aero] ${severityLabel}: ${d.message}`)

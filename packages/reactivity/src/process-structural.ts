@@ -225,9 +225,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 				mountTarget: { kind: 'element', element: containerEl },
 				scope,
 				itemsExpr: '__aeroItems',
-				keyExpr: keyExprRaw.trim().startsWith('$')
-					? keyExprRaw.trim().slice(1)
-					: keyExprRaw.trim(),
+				keyExpr: keyExprRaw.trim().startsWith('$') ? keyExprRaw.trim().slice(1) : keyExprRaw.trim(),
 				binding: bindingName,
 				bindingNames: [bindingName],
 				renderRow: rowScope => {

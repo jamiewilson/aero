@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import ts from 'typescript'
 import {
 	collectTemplateInterpolationSites,
@@ -51,9 +51,7 @@ describe('collectTemplateInterpolationSites', () => {
 		const html = `<code>{ \`<header-component bind:count="{ \${count} }" />\` }</code>`
 		const sites = collectTemplateInterpolationSites(html)
 		expect(sites).toHaveLength(1)
-		expect(sites[0]?.expression.trim()).toBe(
-			'`<header-component bind:count="{ ${count} }" />`'
-		)
+		expect(sites[0]?.expression.trim()).toBe('`<header-component bind:count="{ ${count} }" />`')
 		const { virtualText } = buildTemplateInterpolationVirtualText(html, sites[0]!, '')
 		expect(virtualText).toContain('${count}')
 		expect(virtualText).not.toContain('[bind:count')
@@ -146,7 +144,13 @@ const trustedHTML = '<em>Trusted HTML</em>'
 
 		for (const site of [openSite!, activeSite!]) {
 			const { virtualText } = buildTemplateInterpolationVirtualText(html, site, '')
-			const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+			const source = ts.createSourceFile(
+				'expr.ts',
+				virtualText,
+				ts.ScriptTarget.Latest,
+				true,
+				ts.ScriptKind.TS
+			)
 			const opts: ts.CompilerOptions = {
 				target: ts.ScriptTarget.ESNext,
 				module: ts.ModuleKind.ESNext,
@@ -184,7 +188,13 @@ const trustedHTML = '<em>Trusted HTML</em>'
 		expect(virtualText).toContain('state: __aeroSignal("isSaving")')
 		expect(virtualText).toContain('declare function __aeroSignal')
 
-		const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'expr.ts',
+			virtualText,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const opts: ts.CompilerOptions = {
 			target: ts.ScriptTarget.ESNext,
 			module: ts.ModuleKind.ESNext,
@@ -227,7 +237,13 @@ const site = { demos: [{ label: 'A', href: '/a' }] }
 			'declare const Aero: { props: Record<string, unknown> }\n'
 		)
 		expect(virtualText).toContain('declare const site:')
-		const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'expr.ts',
+			virtualText,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const opts: ts.CompilerOptions = {
 			target: ts.ScriptTarget.ESNext,
 			module: ts.ModuleKind.ESNext,

@@ -1,4 +1,10 @@
-import type { ActionOptions, HttpMethod, HypermediaRequest, HypermediaResponse, RetryMode } from './types'
+import type {
+	ActionOptions,
+	HttpMethod,
+	HypermediaRequest,
+	HypermediaResponse,
+	RetryMode,
+} from './types'
 import { syncMethodOverride } from './method-override'
 import {
 	MAX_REQUEST_ATTEMPTS,
@@ -10,7 +16,13 @@ import { isEventStreamContentType } from './sse'
 
 export function normalizeMethod(method: string): HttpMethod {
 	const upper = method.toUpperCase()
-	if (upper === 'GET' || upper === 'POST' || upper === 'PUT' || upper === 'PATCH' || upper === 'DELETE') {
+	if (
+		upper === 'GET' ||
+		upper === 'POST' ||
+		upper === 'PUT' ||
+		upper === 'PATCH' ||
+		upper === 'DELETE'
+	) {
 		return upper
 	}
 	return 'GET'
@@ -41,7 +53,14 @@ export function buildRequest(options: ActionOptions, trigger?: Element): Hyperme
 			entries[key] = String(value)
 		}
 		const body = new URLSearchParams(entries)
-		return { method, url: options.url ?? form.action, headers, body, target: options.target, swap: options.swap }
+		return {
+			method,
+			url: options.url ?? form.action,
+			headers,
+			body,
+			target: options.target,
+			swap: options.swap,
+		}
 	}
 
 	if (trigger) {
@@ -121,8 +140,7 @@ export async function executeRequestWithRetry(
 	throw lastError instanceof Error ? lastError : new Error('[aero] Request failed.')
 }
 
-function urlCheck(_url: string): void {
-}
+function urlCheck(_url: string): void {}
 
 export function openHypermediaRequest(
 	request: HypermediaRequest,

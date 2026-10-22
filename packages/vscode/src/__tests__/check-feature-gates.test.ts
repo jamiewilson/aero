@@ -1,7 +1,7 @@
 /**
  * Feature gate diagnostics: is:state requires reactivity; hypermedia signal validation.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import { checkFeatureGates } from '../../../core/src/template-diagnostics/checks/check-feature-gates'
 import type { SourceDocument } from '../../../core/src/template-diagnostics/source-document'

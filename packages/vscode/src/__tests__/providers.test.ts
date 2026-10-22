@@ -5,7 +5,7 @@
  * items, hover null for non-Aero docs, and definition locations for content globals and components.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 
 const mockSet = vi.fn()
 const mockCollection = {
@@ -348,11 +348,7 @@ describe('AeroDefinitionProvider', () => {
 	})
 
 	it('should provide definition for aero:content import path', async () => {
-		const lines = [
-			'<script is:build>',
-			"import { getCollection } from 'aero:content'",
-			'</script>',
-		]
+		const lines = ['<script is:build>', "import { getCollection } from 'aero:content'", '</script>']
 		const fullText = lines.join('\n')
 		const doc = {
 			uri: { toString: () => 'file:///test.html', fsPath: '/test.html' },

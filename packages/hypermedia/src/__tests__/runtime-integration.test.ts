@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { createHypermediaRuntime } from '../runtime'
 
 function deferredResponse() {
@@ -54,8 +54,7 @@ describe('createHypermediaRuntime integration', () => {
 	})
 
 	it('writes ok JSON response bodies into an explicit target', async () => {
-		document.body.innerHTML =
-			'<button id="btn">fetch</button><pre id="json-out">placeholder</pre>'
+		document.body.innerHTML = '<button id="btn">fetch</button><pre id="json-out">placeholder</pre>'
 		const btn = document.querySelector('#btn')!
 		const output = document.querySelector('#json-out')!
 		const runtime = createHypermediaRuntime()
@@ -84,10 +83,13 @@ describe('createHypermediaRuntime integration', () => {
 			errors.push(((event as CustomEvent).detail.error as Error).message)
 		})
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-			new Response('<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>boom</body></html>', {
-				status: 500,
-				headers: { 'Content-Type': 'text/html' },
-			})
+			new Response(
+				'<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>boom</body></html>',
+				{
+					status: 500,
+					headers: { 'Content-Type': 'text/html' },
+				}
+			)
 		)
 
 		const response = await runtime.executeAction(
@@ -152,7 +154,10 @@ describe('createHypermediaRuntime integration', () => {
 			})
 		)
 
-		await runtime.executeAction({ method: 'GET', url: '/api/x', swap: 'none' }, btn as HTMLButtonElement)
+		await runtime.executeAction(
+			{ method: 'GET', url: '/api/x', swap: 'none' },
+			btn as HTMLButtonElement
+		)
 		expect(pushState).toHaveBeenCalledWith({}, '', '/new-path')
 	})
 
@@ -161,7 +166,9 @@ describe('createHypermediaRuntime integration', () => {
 		const link = document.querySelector('#link') as HTMLAnchorElement
 		const runtime = createHypermediaRuntime()
 		const pushState = vi.spyOn(history, 'pushState').mockImplementation(() => {})
-		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<span>ok</span>', { status: 200 }))
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('<span>ok</span>', { status: 200 })
+		)
 
 		await runtime.executeAction({ method: 'GET', url: '/page' }, link)
 		expect(pushState).toHaveBeenCalledWith({}, '', link.href)
@@ -199,7 +206,9 @@ describe('createHypermediaRuntime integration', () => {
 				calls.push(`trigger:${event.type}:${(event.currentTarget as Element).id}`)
 			})
 			target.addEventListener(eventName, event => {
-				calls.push(`target:${event.type}:${(event.currentTarget as Element).id}:${target.innerHTML}`)
+				calls.push(
+					`target:${event.type}:${(event.currentTarget as Element).id}:${target.innerHTML}`
+				)
 			})
 		}
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -256,8 +265,14 @@ describe('createHypermediaRuntime integration', () => {
 
 		const a = document.querySelector('#a')!
 		const b = document.querySelector('#b')!
-		const firstRequest = runtime.executeAction({ method: 'POST', url: '/a', state, swap: 'none' }, a)
-		const secondRequest = runtime.executeAction({ method: 'POST', url: '/b', state, swap: 'none' }, b)
+		const firstRequest = runtime.executeAction(
+			{ method: 'POST', url: '/a', state, swap: 'none' },
+			a
+		)
+		const secondRequest = runtime.executeAction(
+			{ method: 'POST', url: '/b', state, swap: 'none' },
+			b
+		)
 
 		expect(state.value).toBe(true)
 		first.resolve(new Response('', { status: 200 }))
@@ -316,7 +331,10 @@ describe('createHypermediaRuntime integration', () => {
 		)
 
 		await runtime.executeAction({ method: 'GET', url: '/read', swap: 'none' }, get)
-		await runtime.executeAction({ method: 'POST', url: '/write', autoDisable: false, swap: 'none' }, post)
+		await runtime.executeAction(
+			{ method: 'POST', url: '/write', autoDisable: false, swap: 'none' },
+			post
+		)
 
 		expect(get.disabled).toBe(false)
 		expect(post.disabled).toBe(false)
@@ -380,7 +398,8 @@ describe('createHypermediaRuntime integration', () => {
 	})
 
 	it('mirrors lifecycle busy state to aria-busy when requested', async () => {
-		document.body.innerHTML = '<button id="btn">go</button><div id="result" aria-busy="false">old</div>'
+		document.body.innerHTML =
+			'<button id="btn">go</button><div id="result" aria-busy="false">old</div>'
 		const btn = document.querySelector('#btn')!
 		const target = document.querySelector('#result')!
 		const runtime = createHypermediaRuntime()
@@ -476,10 +495,7 @@ describe('createHypermediaRuntime integration', () => {
 			})
 		)
 
-		await runtime.executeAction(
-			{ method: 'GET', url: '/api/boom', target: '#result' },
-			btn
-		)
+		await runtime.executeAction({ method: 'GET', url: '/api/boom', target: '#result' }, btn)
 
 		expect(onInfrastructureError).toHaveBeenCalledOnce()
 		expect(onInfrastructureError.mock.calls[0][0].error.message).toBe('boom')

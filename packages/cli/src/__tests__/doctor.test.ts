@@ -2,7 +2,7 @@ import { runAeroDoctor, AERO_DOCTOR_MIN_NODE_MAJOR, nodeMeetsAeroMinimum } from 
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 
 describe('nodeMeetsAeroMinimum', () => {
 	it('accepts current major and rejects below minimum', () => {

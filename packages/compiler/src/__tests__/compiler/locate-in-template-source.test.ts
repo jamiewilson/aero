@@ -1,9 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import {
-	locateInEmbeddedScript,
-	locateInTemplateSource,
-	lineColumnAtOffset,
-} from '../../helpers'
+import { describe, expect, it } from 'vite-plus/test'
+import { locateInEmbeddedScript, locateInTemplateSource, lineColumnAtOffset } from '../../helpers'
 
 describe('locateInTemplateSource', () => {
 	it('resolves offset to 1-based line / 0-based column', () => {

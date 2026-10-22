@@ -68,7 +68,10 @@ function recordBindingPatternNames(
 	}
 }
 
-function recordImportBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+function recordImportBindings(
+	sourceFile: ts.SourceFile,
+	record: (id: ts.Identifier) => void
+): void {
 	for (const stmt of sourceFile.statements) {
 		if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue
 		const cl = stmt.importClause
@@ -84,7 +87,10 @@ function recordImportBindings(sourceFile: ts.SourceFile, record: (id: ts.Identif
 	}
 }
 
-function recordDeclarationBindings(sourceFile: ts.SourceFile, record: (id: ts.Identifier) => void): void {
+function recordDeclarationBindings(
+	sourceFile: ts.SourceFile,
+	record: (id: ts.Identifier) => void
+): void {
 	function visit(node: ts.Node) {
 		if (ts.isVariableDeclaration(node)) {
 			recordBindingPatternNames(node.name, record)

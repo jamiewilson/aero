@@ -6,7 +6,7 @@
  * `data-` prefixed forms are always explicit directives and keep failing loud on misuse.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
 
@@ -63,9 +63,9 @@ describe('native HTML attribute collisions (bare directive passthrough)', () => 
 		})
 
 		it('still fails loud on explicit aero-switch without braces', () => {
-			expect(() =>
-				compileBody('<div aero-switch="status"><span default>d</span></div>')
-			).toThrow('must use a braced expression')
+			expect(() => compileBody('<div aero-switch="status"><span default>d</span></div>')).toThrow(
+				'must use a braced expression'
+			)
 		})
 
 		it('still fails loud on a bare boolean switch on a non-native element', () => {

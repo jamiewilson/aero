@@ -12,10 +12,7 @@ import {
 	normalizeAttributeValue,
 } from '@aero-js/compiler/build-directive-attributes'
 import type { BuildDirectivePrefixMode } from '@aero-js/compiler/build-directive-attributes'
-import {
-	isSelfClosingComponentTag,
-	quoteAttributeValue,
-} from './directives.js'
+import { isSelfClosingComponentTag, quoteAttributeValue } from './directives.js'
 import type { AeroPluginOptions } from './options.js'
 
 type TextEdit = { start: number; end: number; text: string }
@@ -47,7 +44,12 @@ function collectAttributeEdits(
 			const desired = formatAuthorAttributeName(canonical, prefixMode)
 			if (name === desired) continue
 
-			const nameStart = findAttributeNameStart(source, tagStart, name, node.startTagEnd ?? undefined)
+			const nameStart = findAttributeNameStart(
+				source,
+				tagStart,
+				name,
+				node.startTagEnd ?? undefined
+			)
 			if (nameStart == null) continue
 			edits.push({ start: nameStart, end: nameStart + name.length, text: desired })
 		}
@@ -152,10 +154,7 @@ async function formatExpressionContents(
 	}
 
 	const stripFormatted = (value: string): string =>
-		value
-			.trim()
-			.replace(/^;\s*/, '')
-			.replace(/;\s*$/, '')
+		value.trim().replace(/^;\s*/, '').replace(/;\s*$/, '')
 
 	const tryFormat = async (code: string): Promise<string | null> => {
 		try {
@@ -166,7 +165,10 @@ async function formatExpressionContents(
 	}
 
 	const extractAssignmentRhs = (formatted: string): string =>
-		formatted.replace(/^x\s*=\s*/, '').replace(/;$/, '').trim()
+		formatted
+			.replace(/^x\s*=\s*/, '')
+			.replace(/;$/, '')
+			.trim()
 
 	// Brace-wrapped values: format as RHS so `{ foo: 1 }` is an object, not a labeled block.
 	if (isBraceWrapped) {
@@ -328,11 +330,7 @@ function findAttributeValueContentStart(
 	return valueStart
 }
 
-function collectSelfClosingEdits(
-	source: string,
-	nodes: Node[],
-	selfClosing: boolean
-): TextEdit[] {
+function collectSelfClosingEdits(source: string, nodes: Node[], selfClosing: boolean): TextEdit[] {
 	const edits: TextEdit[] = []
 	for (const node of walkHtmlNodes(nodes)) {
 		if (!node.tag || !isSelfClosingComponentTag(node.tag)) continue
@@ -490,7 +488,11 @@ export async function applyAeroTransforms(
 	result = applyEdits(result, selfClosingEdits)
 	currentNodes = parseRoots(result)
 
-	const embeddedScriptEdits = await collectEmbeddedScriptEdits(result, currentNodes, prettierOptions)
+	const embeddedScriptEdits = await collectEmbeddedScriptEdits(
+		result,
+		currentNodes,
+		prettierOptions
+	)
 	result = applyEdits(result, embeddedScriptEdits)
 
 	return result

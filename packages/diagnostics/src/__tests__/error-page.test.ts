@@ -2,7 +2,7 @@
  * Error page: build and extract round-trip.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	AERO_OVERLAY_BOOTSTRAP_ATTR,
 	buildDevSsrErrorHtml,

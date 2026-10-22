@@ -18,11 +18,17 @@ import { stripBraces } from '@aero-js/interpolation'
 
 export interface BindingHandler {
 	readonly name: string
-	setup(el: Element, params: { expression: string | null; store: SignalStore; scope: StateScope }): Cleanup | void
+	setup(
+		el: Element,
+		params: { expression: string | null; store: SignalStore; scope: StateScope }
+	): Cleanup | void
 }
 
 /** @internal Eval-based handler for unsafeProcessFragment only. */
-function compileUnsafeRuntimeHandler(expr: string, store: SignalStore): (this: Element, event: Event) => void {
+function compileUnsafeRuntimeHandler(
+	expr: string,
+	store: SignalStore
+): (this: Element, event: Event) => void {
 	const code = expr.replace(/\$(\w+(?:\.\w+)*)/g, (_, path: string) => {
 		return `store.get(${JSON.stringify(path)}).value`
 	})
@@ -52,7 +58,9 @@ function compileRestrictedRuntimeHandler(expr: string): (this: Element, event: E
 }
 
 function getEventName(attrName: string): string {
-	const bare = attrName.startsWith('data-aero-on-') ? attrName.slice('data-aero-on-'.length) : attrName
+	const bare = attrName.startsWith('data-aero-on-')
+		? attrName.slice('data-aero-on-'.length)
+		: attrName
 	return bare.split('-')[0] ?? 'click'
 }
 
@@ -67,7 +75,12 @@ function inferFormModelKind(el: Element, attrName: string): FormModelKind | null
 	const bare = attrName.replace(/^data-aero-/, '').replace(/^aero-/, '')
 	if (bare === 'value' || bare.startsWith('value-')) return 'value'
 	if (bare === 'checked' || bare.startsWith('checked-')) return 'checked'
-	if (attrName === 'value' && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+	if (
+		attrName === 'value' &&
+		(el instanceof HTMLInputElement ||
+			el instanceof HTMLTextAreaElement ||
+			el instanceof HTMLSelectElement)
+	) {
 		return 'value'
 	}
 	if (attrName === 'checked' && el instanceof HTMLInputElement) return 'checked'
@@ -80,7 +93,10 @@ function isReadonlyFormAttr(attrName: string): boolean {
 
 export function createDefaultHandlers(options?: {
 	readonly compileRead?: RuntimeReadCompiler
-	readonly compileHandler?: (expr: string, store: SignalStore) => (this: Element, event: Event) => void
+	readonly compileHandler?: (
+		expr: string,
+		store: SignalStore
+	) => (this: Element, event: Event) => void
 }): BindingHandler[] {
 	const compileRead = options?.compileRead ?? compileRestrictedRuntimeRead
 	const compileHandler =
@@ -191,14 +207,19 @@ function isInsideStructuralProcessedSubtree(el: Element, element: ParentNode): b
 
 function runProcessFragment(
 	options: ProcessOptions,
-	runtime: { compileRead: RuntimeReadCompiler; compileHandler: (expr: string, store: SignalStore) => (this: Element, event: Event) => void }
+	runtime: {
+		compileRead: RuntimeReadCompiler
+		compileHandler: (expr: string, store: SignalStore) => (this: Element, event: Event) => void
+	}
 ): Cleanup {
 	const store = options.store ?? new SignalStore()
 	const scope = createStateScope({ store, bindings: [], functionSources: [] })
-	const handlers = options.handlers ?? createDefaultHandlers({
-		compileRead: runtime.compileRead,
-		compileHandler: runtime.compileHandler,
-	})
+	const handlers =
+		options.handlers ??
+		createDefaultHandlers({
+			compileRead: runtime.compileRead,
+			compileHandler: runtime.compileHandler,
+		})
 	const cleanups: Cleanup[] = []
 
 	const processNested = (nested: ParentNode): Cleanup =>
@@ -227,32 +248,38 @@ function runProcessFragment(
 			if (name === 'data-aero-text' && attr.value) {
 				if (isCompiledBindMarker(attr.value) && !el.hasAttribute('data-aero-text-expr')) continue
 				const expr = el.getAttribute('data-aero-text-expr') ?? attr.value
-				const cleanup = handlers.find(h => h.name === 'text')?.setup(el, {
-					expression: expr.startsWith('$') ? expr : `$${expr}`,
-					store,
-					scope,
-				})
+				const cleanup = handlers
+					.find(h => h.name === 'text')
+					?.setup(el, {
+						expression: expr.startsWith('$') ? expr : `$${expr}`,
+						store,
+						scope,
+					})
 				if (cleanup) cleanups.push(cleanup)
 				processed = true
 			}
 
 			if (name === 'data-aero-html' && attr.value) {
 				const expr = el.getAttribute('data-aero-html-expr') ?? attr.value
-				const cleanup = handlers.find(h => h.name === 'html')?.setup(el, {
-					expression: expr,
-					store,
-					scope,
-				})
+				const cleanup = handlers
+					.find(h => h.name === 'html')
+					?.setup(el, {
+						expression: expr,
+						store,
+						scope,
+					})
 				if (cleanup) cleanups.push(cleanup)
 				processed = true
 			}
 
 			if (name === 'data-aero-show' && attr.value) {
-				const cleanup = handlers.find(h => h.name === 'show')?.setup(el, {
-					expression: attr.value,
-					store,
-					scope,
-				})
+				const cleanup = handlers
+					.find(h => h.name === 'show')
+					?.setup(el, {
+						expression: attr.value,
+						store,
+						scope,
+					})
 				if (cleanup) cleanups.push(cleanup)
 				processed = true
 			}
@@ -260,34 +287,34 @@ function runProcessFragment(
 			if (name.startsWith('data-aero-class-')) {
 				const className = name.slice('data-aero-class-'.length)
 				const expr = attr.value
-				const cleanup = bindClassToggle(
-					el,
-					className,
-					runtime.compileRead(expr || '$true', store)
-				)
+				const cleanup = bindClassToggle(el, className, runtime.compileRead(expr || '$true', store))
 				cleanups.push(cleanup)
 				processed = true
 			}
 
 			if (name.startsWith('data-aero-on-') && attr.value) {
-				const cleanup = handlers.find(h => h.name === 'on')?.setup(el, {
-					expression: attr.value,
-					store,
-					scope,
-					attrName: name,
-				} as never)
+				const cleanup = handlers
+					.find(h => h.name === 'on')
+					?.setup(el, {
+						expression: attr.value,
+						store,
+						scope,
+						attrName: name,
+					} as never)
 				if (cleanup) cleanups.push(cleanup)
 				processed = true
 			}
 
 			const modelKind = inferFormModelKind(el, name)
 			if (modelKind && attr.value && attr.value.includes('$')) {
-				const cleanup = handlers.find(h => h.name === 'model')?.setup(el, {
-					expression: stripBraces(attr.value),
-					store,
-					scope,
-					attrName: name,
-				} as never)
+				const cleanup = handlers
+					.find(h => h.name === 'model')
+					?.setup(el, {
+						expression: stripBraces(attr.value),
+						store,
+						scope,
+						attrName: name,
+					} as never)
 				if (cleanup) cleanups.push(cleanup)
 				processed = true
 			}

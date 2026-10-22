@@ -6,13 +6,17 @@
  * a focused handleHotUpdate path so script changes refresh without restarting dev server.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { Aero } from '../../runtime'
 import { aero } from '../../vite'
-import { AERO_HTML_VIRTUAL_PREFIX, AERO_SNIPPET_VIRTUAL_PREFIX, toSnippetVirtualModuleId } from '../../vite/defaults'
+import {
+	AERO_HTML_VIRTUAL_PREFIX,
+	AERO_SNIPPET_VIRTUAL_PREFIX,
+	toSnippetVirtualModuleId,
+} from '../../vite/defaults'
 
 function loadSource(result: unknown): string {
 	if (typeof result === 'string') return result
@@ -464,7 +468,11 @@ describe('Vite Plugin Integration', () => {
 			'utf-8'
 		)
 		try {
-			const result = transformPlugin.transform.call(pluginCtx, fs.readFileSync(snippetPath, 'utf-8'), snippetPath)
+			const result = transformPlugin.transform.call(
+				pluginCtx,
+				fs.readFileSync(snippetPath, 'utf-8'),
+				snippetPath
+			)
 			expect(result).toBeNull()
 		} finally {
 			fs.rmSync(tmpDir, { recursive: true, force: true })
@@ -483,7 +491,9 @@ describe('Vite Plugin Integration', () => {
 			'utf-8'
 		)
 		try {
-			const loaded = loadSource(virtualsPlugin.load.call(pluginCtx, toSnippetVirtualModuleId(snippetPath)))
+			const loaded = loadSource(
+				virtualsPlugin.load.call(pluginCtx, toSnippetVirtualModuleId(snippetPath))
+			)
 			expect(loaded).toContain('export const propsString = { code:')
 			expect(loaded).toContain('lang: "html"')
 		} finally {

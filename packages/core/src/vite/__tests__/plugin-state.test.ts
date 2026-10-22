@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { ResolvedConfig } from 'vite'
 import type { AliasResult } from '../../types'
 import { requireAliasResult, requireResolvedConfig } from '../plugin-state'

@@ -6,11 +6,11 @@ icon: 'code'
 
 Every `.html` file in Aero is a template. The same syntax — `{ }` expressions, directives, `<script is:build>` — works in all of them. The difference is where the file lives and what role it plays:
 
-| Role | Directory | Purpose |
-| --- | --- | --- |
-| **Page** | `client/pages/` | Becomes a URL via file-based routing |
+| Role          | Directory            | Purpose                                          |
+| ------------- | -------------------- | ------------------------------------------------ |
+| **Page**      | `client/pages/`      | Becomes a URL via file-based routing             |
 | **Component** | `client/components/` | Reusable markup, imported into pages and layouts |
-| **Layout** | `client/layouts/` | Shared page shell with `<slot />` for content |
+| **Layout**    | `client/layouts/`    | Shared page shell with `<slot />` for content    |
 
 ## Pages
 
@@ -48,8 +48,8 @@ Components are `.html` files in `client/components/`. Import one in a `<script i
 ```
 
 <Note>
-	Include the `.html` extension in import specifiers: `import greeting from '@components/greeting.html'`
-	resolves to `client/components/greeting.html`.
+	Include the `.html` extension in import specifiers: `import greeting from
+	'@components/greeting.html'` resolves to `client/components/greeting.html`.
 </Note>
 
 ### Props
@@ -222,6 +222,6 @@ Put a directive on `<template>` to emit only the children without a wrapper elem
 This works with `if`, `for`, and `switch`. It is especially useful inside `<table>` or `<select>` where an extra `<div>` would be invalid.
 
 <Note>
-	All directive attributes also accept a `data-` prefix for strict HTML spec compliance:
-	`for`, `if`, `else`, etc.
+	All directive attributes also accept a `data-` prefix for strict HTML spec compliance: `for`,
+	`if`, `else`, etc.
 </Note>

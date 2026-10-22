@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { CodeBuilder } from '../../code-builder'
 import { escapeTemplateLiteralContent } from '../../escapes'
 import * as Helper from '../../helpers'

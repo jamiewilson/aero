@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createHypermediaRuntime } from '../index'
 
 describe('@aero-js/hypermedia scaffold', () => {

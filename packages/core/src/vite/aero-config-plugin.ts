@@ -2,21 +2,13 @@
  * Aero Vite config plugin: aliases, SSR env, build inputs, generated .aero artifacts.
  */
 
-import type {
-	DevEnvironment,
-	Plugin,
-	ResolvedConfig,
-	WebSocketServer,
-} from 'vite'
+import type { DevEnvironment, Plugin, ResolvedConfig, WebSocketServer } from 'vite'
 import { createLogger, createRunnableDevEnvironment } from 'vite'
 import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'path'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
-import {
-	TemplateDiscovery,
-	createBuildConfig,
-} from './rollup-input-discovery'
+import { TemplateDiscovery, createBuildConfig } from './rollup-input-discovery'
 import { discoverReactivePagePaths } from './runtime-template-discovery'
 import { getRuntimeInstanceModuleSource } from './runtime-instance-module'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'

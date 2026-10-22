@@ -32,7 +32,7 @@ const stripped = stripComments(raw)
 const htmlModuleStart = "declare module '*.html'"
 const idx = stripped.indexOf(htmlModuleStart)
 if (idx === -1) {
-	throw new Error("env.d.ts: expected \"declare module '*.html'\" not found")
+	throw new Error('env.d.ts: expected "declare module \'*.html\'" not found')
 }
 
 const preamble = stripped.slice(0, idx).trim()

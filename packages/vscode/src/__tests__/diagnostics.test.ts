@@ -5,7 +5,7 @@
  * reference checks. Uses mocked vscode APIs and calls updateDiagnostics(doc) to assert reported diagnostics.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -85,11 +85,7 @@ function positionAtOffset(text: string, offset: number): { line: number; charact
 	}
 }
 
-function expectDiagnosticRange(
-	text: string,
-	diagnostic: any,
-	expectedSubstring: string
-): void {
+function expectDiagnosticRange(text: string, diagnostic: any, expectedSubstring: string): void {
 	const startOffset = text.indexOf(expectedSubstring)
 	expect(startOffset).toBeGreaterThanOrEqual(0)
 	const endOffset = startOffset + expectedSubstring.length
@@ -1582,9 +1578,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 		}) as any
 
 	const findBraceDiag = () =>
-		mockSet.mock.calls[0][1].find((d: any) =>
-			d.message.includes('must use a braced expression')
-		)
+		mockSet.mock.calls[0][1].find((d: any) => d.message.includes('must use a braced expression'))
 
 	it('should NOT flag bare for on <label> (native HTML attribute)', () => {
 		runDiagnostics(makeDoc(`\n<label for="email">Email</label>\n`))
@@ -1614,9 +1608,7 @@ describe('AeroDiagnostics Directive Expression Braces', () => {
 	it('should flag malformed event directive modifier chain', () => {
 		runDiagnostics(makeDoc(`\n<button on:click..prevent="{ submit() }">Save</button>\n`))
 		const reportedDiagnostics = mockSet.mock.calls[0][1]
-		const invalidDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes('is invalid:')
-		)
+		const invalidDiag = reportedDiagnostics.find((d: any) => d.message.includes('is invalid:'))
 		expect(invalidDiag).toBeDefined()
 		expect(invalidDiag.code.value).toBe('AERO_COMPILE')
 	})
@@ -1755,8 +1747,8 @@ describe('AeroDiagnostics Duplicate Declarations', () => {
 		runDiagnostics(doc)
 
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const dupDiag = reportedDiagnostics.find((d: any) =>
-			d.message.includes("'doc'") && d.message.includes('declared multiple times')
+		const dupDiag = reportedDiagnostics.find(
+			(d: any) => d.message.includes("'doc'") && d.message.includes('declared multiple times')
 		)
 		expect(dupDiag).toBeUndefined()
 	})
@@ -2171,9 +2163,8 @@ let count = 1
 			runDiagnostics(doc)
 
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-			const readonly = reportedDiagnostics.find(
-				(d: any) =>
-					d.message.includes('Component reactive prop `count:readonly` is obsolete')
+			const readonly = reportedDiagnostics.find((d: any) =>
+				d.message.includes('Component reactive prop `count:readonly` is obsolete')
 			)
 			expect(readonly).toBeDefined()
 			expect(readonly.code.value).toBe('AERO_COMPILE')
@@ -2346,9 +2337,10 @@ let count = 1
 			runDiagnostics(doc)
 
 			const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-			const bind = reportedDiagnostics.find((d: any) =>
-				d.message.includes('must be declared with `Aero.bindable()`') &&
-				d.message.includes('`count`')
+			const bind = reportedDiagnostics.find(
+				(d: any) =>
+					d.message.includes('must be declared with `Aero.bindable()`') &&
+					d.message.includes('`count`')
 			)
 			expect(bind).toBeDefined()
 			expect(bind.code.value).toBe('AERO_COMPILE')
@@ -2916,7 +2908,9 @@ describe('AeroDiagnostics Script props variables', () => {
 		mockSet.mockClear()
 		runDiagnostics(docWithout)
 		const withoutDiags = mockSet.mock.calls[0]?.[1] ?? []
-		expect(withoutDiags.find((d: any) => d.message.includes("'token' is not defined"))).toBeDefined()
+		expect(
+			withoutDiags.find((d: any) => d.message.includes("'token' is not defined"))
+		).toBeDefined()
 	})
 
 	it('does not flag arrow params or for-of bindings in client scripts', () => {

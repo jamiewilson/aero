@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { PARITY_SCENARIOS } from '../fixtures/parity/scenarios'
 
 interface MatrixRule {
@@ -32,9 +32,7 @@ describe('parity matrix sync', () => {
 	it('every scenario ruleId exists in the matrix', () => {
 		const matrixIds = new Set(matrix.rules.map(r => r.ruleId))
 		for (const ruleId of scenarioRuleIds) {
-			expect(matrixIds.has(ruleId), `missing matrix row for scenario ruleId ${ruleId}`).toBe(
-				true
-			)
+			expect(matrixIds.has(ruleId), `missing matrix row for scenario ruleId ${ruleId}`).toBe(true)
 		}
 	})
 

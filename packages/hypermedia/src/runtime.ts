@@ -7,7 +7,12 @@ import type {
 	HypermediaSwapLifecycleAdapter,
 	SwapStyle,
 } from './types'
-import { buildRequest, executeRequestWithRetry, normalizeMethod, openHypermediaRequest } from './request'
+import {
+	buildRequest,
+	executeRequestWithRetry,
+	normalizeMethod,
+	openHypermediaRequest,
+} from './request'
 import { resolveTarget, performSwap, parseSwapStyle, resolveSwapProcessContainer } from './swap'
 import { dispatchLifecycleEvent, type LifecycleEventName, type LifecycleDetail } from './events'
 import { process as processFragment } from './process'
@@ -54,7 +59,11 @@ export interface HypermediaRuntime {
 	executeAction(options: ActionOptions, trigger?: Element): Promise<HypermediaResponse>
 	swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void
 	process(element: ParentNode, store?: HypermediaSignalStore): void
-	registerBusyBinding(element: Element, signalName: string, signal: HypermediaBooleanSignal): () => void
+	registerBusyBinding(
+		element: Element,
+		signalName: string,
+		signal: HypermediaBooleanSignal
+	): () => void
 	setSwapLifecycleAdapter(adapter: HypermediaSwapLifecycleAdapter | null): void
 }
 
@@ -122,7 +131,10 @@ function syncNativeFallback(trigger: Element | undefined, url: string, method: s
 	}
 }
 
-function resolveExplicitTarget(targetSelector: string | undefined, context: ParentNode): Element | undefined {
+function resolveExplicitTarget(
+	targetSelector: string | undefined,
+	context: ParentNode
+): Element | undefined {
 	if (!targetSelector) return undefined
 	return resolveTarget(targetSelector, context) ?? undefined
 }
@@ -249,8 +261,7 @@ function registerPopstateReload(): void {
 function createFocusFallback(target: Element): () => void {
 	const doc = target.ownerDocument
 	const activeBeforeSwap = doc.activeElement
-	const shouldFallback =
-		activeBeforeSwap instanceof Element && target.contains(activeBeforeSwap)
+	const shouldFallback = activeBeforeSwap instanceof Element && target.contains(activeBeforeSwap)
 
 	return () => {
 		if (!shouldFallback || activeBeforeSwap?.isConnected || !target.isConnected) return
@@ -315,7 +326,10 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		signal.value = next > 0
 	}
 
-	function resolveBusySignal(opts: ActionOptions, trigger: Element | undefined): HypermediaBooleanSignal | undefined {
+	function resolveBusySignal(
+		opts: ActionOptions,
+		trigger: Element | undefined
+	): HypermediaBooleanSignal | undefined {
 		if (opts.state) {
 			if (typeof opts.state.value !== 'boolean') {
 				throw new Error('[aero] Hypermedia state signal must be boolean.')
@@ -356,7 +370,11 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 			},
 			performSwap() {
 				const applyFocusFallback = createFocusFallback(options.target)
-				insertedRoots = performSwap({ target: options.target, html: options.html, style: options.style })
+				insertedRoots = performSwap({
+					target: options.target,
+					html: options.html,
+					style: options.style,
+				})
 				applyFocusFallback()
 			},
 			processRuntime(element: ParentNode) {
@@ -453,7 +471,10 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		})
 	}
 
-	async function executeAction(actionOptions: ActionOptions, trigger?: Element): Promise<HypermediaResponse> {
+	async function executeAction(
+		actionOptions: ActionOptions,
+		trigger?: Element
+	): Promise<HypermediaResponse> {
 		const opts: ActionOptions = {
 			swap: actionOptions.swap ?? defaultSwap,
 			target: actionOptions.target ?? defaultTarget,
@@ -463,7 +484,10 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		const request = buildRequest(opts, trigger)
 		const busySignal = resolveBusySignal(opts, trigger)
 		const autoDisable = shouldAutoDisable(request.method, opts)
-		const previousDisabled = trigger && 'disabled' in trigger ? Boolean((trigger as { disabled: boolean }).disabled) : undefined
+		const previousDisabled =
+			trigger && 'disabled' in trigger
+				? Boolean((trigger as { disabled: boolean }).disabled)
+				: undefined
 		syncNativeFallback(trigger, request.url, request.method)
 		const context = trigger?.ownerDocument ?? document
 		const requestTargetSelector = opts.target ?? defaultTarget
@@ -673,7 +697,12 @@ export function createHypermediaRuntime(options: HypermediaRuntimeOptions = {}):
 		}
 	}
 
-	function swapElement(targetSelector: string, html: string, style: SwapStyle, context?: ParentNode): void {
+	function swapElement(
+		targetSelector: string,
+		html: string,
+		style: SwapStyle,
+		context?: ParentNode
+	): void {
 		const ctx = context ?? document
 		const targetEl = resolveTarget(targetSelector, ctx)
 		if (!targetEl) {

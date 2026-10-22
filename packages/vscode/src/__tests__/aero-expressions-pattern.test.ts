@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -86,10 +86,7 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-expressions tokenization', (
 		return result.tokens as Array<{ startIndex: number; endIndex: number; scopes: string[] }>
 	}
 
-	function expectOuterAeroBraces(
-		line: string,
-		tokens: Awaited<ReturnType<typeof tokenize>>
-	) {
+	function expectOuterAeroBraces(line: string, tokens: Awaited<ReturnType<typeof tokenize>>) {
 		const openIdx = line.indexOf('{')
 		const closeIdx = line.lastIndexOf('}')
 		expect(
@@ -121,14 +118,10 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-expressions tokenization', (
 			const innerOpen = line.indexOf('{', line.indexOf('{') + 1)
 			const innerClose = line.lastIndexOf('}', line.lastIndexOf('}') - 1)
 			expect(
-				scopesAt(line, innerOpen, tokens).some(s =>
-					s.includes('punctuation.definition.block.ts')
-				)
+				scopesAt(line, innerOpen, tokens).some(s => s.includes('punctuation.definition.block.ts'))
 			).toBe(true)
 			expect(
-				scopesAt(line, innerClose, tokens).some(s =>
-					s.includes('punctuation.definition.block.ts')
-				)
+				scopesAt(line, innerClose, tokens).some(s => s.includes('punctuation.definition.block.ts'))
 			).toBe(true)
 			expect(
 				scopesAt(line, innerOpen, tokens).some(s =>
@@ -142,9 +135,7 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-expressions tokenization', (
 				)
 			).toBe(true)
 			expect(
-				scopesAt(line, outerOpen, tokens).some(s =>
-					s.includes('punctuation.definition.block.ts')
-				)
+				scopesAt(line, outerOpen, tokens).some(s => s.includes('punctuation.definition.block.ts'))
 			).toBe(false)
 		}
 	})
@@ -155,9 +146,7 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-expressions tokenization', (
 		expectOuterAeroBraces(line, tokens)
 		const innerOpen = line.indexOf('{', line.indexOf('{') + 1)
 		expect(
-			scopesAt(line, innerOpen, tokens).some(s =>
-				s.includes('punctuation.definition.block.ts')
-			)
+			scopesAt(line, innerOpen, tokens).some(s => s.includes('punctuation.definition.block.ts'))
 		).toBe(true)
 		expect(
 			scopesAt(line, innerOpen, tokens).some(s =>

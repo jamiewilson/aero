@@ -110,11 +110,11 @@ Hypermedia swaps and manual `innerHTML` need [process](/guide/reactivity/process
 
 ## Choosing Aero reactivity vs Alpine vs HTMX
 
-| Need | Good fit |
-| --- | --- |
-| Same-file state + bindings | Aero reactivity |
-| Server HTML partials | [Hypermedia](/guide/hypermedia) or HTMX |
-| Rich client-only widgets, ecosystem plugins | Alpine.js |
-| No client JS | Build-time directives only; no `is:state` |
+| Need                                        | Good fit                                  |
+| ------------------------------------------- | ----------------------------------------- |
+| Same-file state + bindings                  | Aero reactivity                           |
+| Server HTML partials                        | [Hypermedia](/guide/hypermedia) or HTMX   |
+| Rich client-only widgets, ecosystem plugins | Alpine.js                                 |
+| No client JS                                | Build-time directives only; no `is:state` |
 
 All three can coexist in one project. Aero passes `x-*` and `hx-*` through unchanged.

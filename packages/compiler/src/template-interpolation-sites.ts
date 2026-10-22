@@ -329,10 +329,9 @@ export function formatInterpolationBinderPrelude(
 			? new Set([...options.writableNames].filter(name => allBindings.has(name)))
 			: undefined
 	const inferenceBodies = [...buildScriptBodies, ...stateScriptBodies]
-	const bindingTypes =
-		inferenceBodies.some(body => body.trim().length > 0)
-			? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
-			: undefined
+	const bindingTypes = inferenceBodies.some(body => body.trim().length > 0)
+		? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+		: undefined
 	return formatBuildScopeAmbientPrelude(
 		allBindings,
 		buildTypeDeclTexts,
@@ -368,10 +367,9 @@ export function formatInterpolationBinderPreludeFromTemplate(
 function formatBuildScopeAmbientPreludeFromTemplate(sourceText: string): string {
 	const ambient = buildTemplateEditorAmbient(sourceText)
 	const inferenceBodies = [...ambient.buildScriptBodies, ...ambient.stateScriptBodies]
-	const bindingTypes =
-		inferenceBodies.some(body => body.trim().length > 0)
-			? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
-			: undefined
+	const bindingTypes = inferenceBodies.some(body => body.trim().length > 0)
+		? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+		: undefined
 	return formatBuildScopeAmbientPrelude(
 		ambient.bindingNames,
 		ambient.typeDeclarationTexts,
@@ -393,10 +391,7 @@ export function buildTemplateInterpolationVirtualText(
 			? formatBuildScopeAmbientPreludeFromTemplate(sourceText)
 			: formatInterpolationBinderPreludeFromTemplate(sourceText, site.braceOffset, {
 					writableNames: site.isEventHandler
-						? new Set([
-								...ambient.writableStateBindingNames,
-								...ambient.readonlyReactivePropNames,
-							])
+						? new Set([...ambient.writableStateBindingNames, ...ambient.readonlyReactivePropNames])
 						: undefined,
 				})
 	const head = preamble + binderDecl

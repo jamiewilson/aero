@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import {
 	HYPERMEDIA_EVENT_HANDLER_ACTIONS,
 	HYPERMEDIA_HTTP_METHODS,

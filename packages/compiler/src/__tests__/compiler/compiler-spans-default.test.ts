@@ -1,14 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { writeFileSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { compileTemplate } from '../../codegen'
 import { CompileError } from '../../types'
-import {
-	enrichDiagnostics,
-	normalizeToDiagnostics,
-	renderDiagnostics,
-} from '@aero-js/diagnostics'
+import { enrichDiagnostics, normalizeToDiagnostics, renderDiagnostics } from '@aero-js/diagnostics'
 
 const mockOptions = {
 	root: '/',

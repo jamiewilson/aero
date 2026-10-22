@@ -64,13 +64,13 @@ Do not import these actions in `<script is:build>` — that is a compile error.
 
 Each function takes a URL and an optional options object (see [action options](#action-options) and [swap modes](#swap)).
 
-| Method | Typical use | Request body |
-| --- | --- | --- |
-| `GET` | Load or refresh a fragment (panels, lists, detail views) | None |
-| `POST` | Create or submit data (forms, actions that change state) | Form fields when triggered from a `<form>`; otherwise empty unless you add a body via headers |
-| `PUT` | Replace a resource | Same as `POST` when triggered from a form |
-| `PATCH` | Partial update | Same as `POST` when triggered from a form |
-| `DELETE` | Remove a resource | Usually none |
+| Method   | Typical use                                              | Request body                                                                                  |
+| -------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `GET`    | Load or refresh a fragment (panels, lists, detail views) | None                                                                                          |
+| `POST`   | Create or submit data (forms, actions that change state) | Form fields when triggered from a `<form>`; otherwise empty unless you add a body via headers |
+| `PUT`    | Replace a resource                                       | Same as `POST` when triggered from a form                                                     |
+| `PATCH`  | Partial update                                           | Same as `POST` when triggered from a form                                                     |
+| `DELETE` | Remove a resource                                        | Usually none                                                                                  |
 
 **Load a panel** (`GET`):
 
@@ -99,36 +99,34 @@ When the trigger is a `<form>`, field `name` values are serialized into the requ
 	<button type="submit">Save</button>
 </form>
 
-<button on:click="{ DELETE('/api/items/1', { target: '#item', swap: 'remove' }) }">
-	Delete
-</button>
+<button on:click="{ DELETE('/api/items/1', { target: '#item', swap: 'remove' }) }">Delete</button>
 ```
 
 On `<form>` triggers, `PUT`, `PATCH`, and `DELETE` are sent as `POST` with a hidden `_method` field so servers that expect method override (common in Rails-style APIs) work without JavaScript.
 
 ### Progressive enhancement by method
 
-| Method | Element | No-JS fallback |
-| --- | --- | --- |
-| `GET` | `<a>` | Native `href` to the action URL |
-| `POST` | `<form>` | Native `action` + `method="post"` |
-| `PUT`, `PATCH`, `DELETE` | `<form>` | `POST` + hidden `_method` input |
-| `GET` | `<button>` | None — use `<a>` when fallback matters |
-| `DELETE` | `<button>` | None — use a `<form>` when fallback matters |
+| Method                   | Element    | No-JS fallback                              |
+| ------------------------ | ---------- | ------------------------------------------- |
+| `GET`                    | `<a>`      | Native `href` to the action URL             |
+| `POST`                   | `<form>`   | Native `action` + `method="post"`           |
+| `PUT`, `PATCH`, `DELETE` | `<form>`   | `POST` + hidden `_method` input             |
+| `GET`                    | `<button>` | None — use `<a>` when fallback matters      |
+| `DELETE`                 | `<button>` | None — use a `<form>` when fallback matters |
 
 ## Action options
 
 Second argument to every action function: `GET('/api/url', { … })`.
 
-| Option | Type | Default | Effect |
-| --- | --- | --- | --- |
-| `target` | `string` | trigger element | CSS selector for swap target — [details below](#target) |
-| `swap` | `string` | `innerHTML` | How response HTML is inserted — [swap modes](#swap) |
-| `headers` | `object` | — | Extra fetch headers (for example `Accept: text/html`) |
-| `pushUrl` | `boolean \| string` | — | Update the address bar after success. `true` uses the link's `href` on `<a>` triggers; a string sets an explicit path. Set `false` to skip. Server can also send an `aero-push-url` response header. |
-| `state` | boolean signal | — | Toggle a `let` binding `true` while the request is in flight (requires reactivity). Same signal used by `busy`. |
-| `autoDisable` | `boolean` | `true` for `POST`/`PUT`/`PATCH`/`DELETE` | Disable the trigger element during the request. Set `false` to keep it clickable. |
-| `ariaBusy` | `boolean` | `false` | Set `aria-busy="true"` on trigger and target during the lifecycle |
+| Option        | Type                | Default                                  | Effect                                                                                                                                                                                               |
+| ------------- | ------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`      | `string`            | trigger element                          | CSS selector for swap target — [details below](#target)                                                                                                                                              |
+| `swap`        | `string`            | `innerHTML`                              | How response HTML is inserted — [swap modes](#swap)                                                                                                                                                  |
+| `headers`     | `object`            | —                                        | Extra fetch headers (for example `Accept: text/html`)                                                                                                                                                |
+| `pushUrl`     | `boolean \| string` | —                                        | Update the address bar after success. `true` uses the link's `href` on `<a>` triggers; a string sets an explicit path. Set `false` to skip. Server can also send an `aero-push-url` response header. |
+| `state`       | boolean signal      | —                                        | Toggle a `let` binding `true` while the request is in flight (requires reactivity). Same signal used by `busy`.                                                                                      |
+| `autoDisable` | `boolean`           | `true` for `POST`/`PUT`/`PATCH`/`DELETE` | Disable the trigger element during the request. Set `false` to keep it clickable.                                                                                                                    |
+| `ariaBusy`    | `boolean`           | `false`                                  | Set `aria-busy="true"` on trigger and target during the lifecycle                                                                                                                                    |
 
 ```html
 <script is:state>
@@ -157,17 +155,17 @@ CSS selector for the element that receives the response. Defaults to the element
 
 How response HTML is inserted relative to the target. Names match [HTMX swap modes](https://htmx.org/attributes/hx-swap/) and map to `insertAdjacentHTML` / `innerHTML` behavior.
 
-| Mode | Effect |
-| --- | --- |
-| `innerHTML` | Replace **inside** the target (default). Children are discarded; response becomes the new contents. |
-| `outerHTML` | Replace the **target element itself** with the response. The target node is removed from the document. |
-| `beforebegin` | Insert the response **immediately before** the target, as a sibling. |
-| `afterbegin` | Insert the response **inside** the target, before its first child. |
-| `beforeend` | Insert the response **inside** the target, after its last child (append). |
-| `afterend` | Insert the response **immediately after** the target, as a sibling. |
-| `replace` | Same as `outerHTML` — replace the target element with the response. |
-| `remove` | Remove the target from the document. Response HTML is ignored. |
-| `none` | Do not change the DOM. Lifecycle events still run; use when the response is handled elsewhere (for example a client script reading headers). |
+| Mode          | Effect                                                                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `innerHTML`   | Replace **inside** the target (default). Children are discarded; response becomes the new contents.                                          |
+| `outerHTML`   | Replace the **target element itself** with the response. The target node is removed from the document.                                       |
+| `beforebegin` | Insert the response **immediately before** the target, as a sibling.                                                                         |
+| `afterbegin`  | Insert the response **inside** the target, before its first child.                                                                           |
+| `beforeend`   | Insert the response **inside** the target, after its last child (append).                                                                    |
+| `afterend`    | Insert the response **immediately after** the target, as a sibling.                                                                          |
+| `replace`     | Same as `outerHTML` — replace the target element with the response.                                                                          |
+| `remove`      | Remove the target from the document. Response HTML is ignored.                                                                               |
+| `none`        | Do not change the DOM. Lifecycle events still run; use when the response is handled elsewhere (for example a client script reading headers). |
 
 **Replace panel contents** (`innerHTML` — default):
 
@@ -197,9 +195,7 @@ How response HTML is inserted relative to the target. Names match [HTMX swap mod
 **Dismiss a toast** (`remove`):
 
 ```html
-<button on:click="{ POST('/api/dismiss', { target: '#toast', swap: 'remove' }) }">
-	Dismiss
-</button>
+<button on:click="{ POST('/api/dismiss', { target: '#toast', swap: 'remove' }) }">Dismiss</button>
 <div id="toast">Saved.</div>
 ```
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -12,10 +12,7 @@ describe('aero-scripts grammar', () => {
 	const grammar = JSON.parse(readFileSync(grammarPath, 'utf8')) as {
 		injectionSelector: string
 		patterns: Array<{ include?: string }>
-		repository: Record<
-			string,
-			{ begin?: string; patterns?: Array<{ contentName?: string }> }
-		>
+		repository: Record<string, { begin?: string; patterns?: Array<{ contentName?: string }> }>
 	}
 
 	it('registers L-priority injection into native HTML scopes', () => {
@@ -44,7 +41,9 @@ describe('aero-scripts grammar', () => {
 				}>
 			}
 		}
-		const scripts = manifest.contributes.grammars.find(g => g.scopeName === 'aero.scripts.injection')
+		const scripts = manifest.contributes.grammars.find(
+			g => g.scopeName === 'aero.scripts.injection'
+		)
 		expect(scripts?.embeddedLanguages?.['meta.embedded.block.ts.aero']).toBe('typescript')
 		expect(scripts?.embeddedLanguages?.['source.ts']).toBe('typescript')
 		expect(scripts?.embeddedLanguages?.['meta.embedded.block.importmap.aero']).toBe('json')
@@ -112,7 +111,9 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-scripts tokenization', () =>
 		const result = g!.tokenizeLine(line, INITIAL)
 		return {
 			tokens: result.tokens,
-			scopes: [...new Set(result.tokens.flatMap((t: { scopes: string[] }) => t.scopes))] as string[],
+			scopes: [
+				...new Set(result.tokens.flatMap((t: { scopes: string[] }) => t.scopes)),
+			] as string[],
 		}
 	}
 
@@ -180,9 +181,10 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-scripts tokenization', () =>
 		expect(
 			scopes.some(s => s.includes('source.json') || s.includes('meta.embedded.block.importmap'))
 		).toBe(true)
-		expect(bodyHasScope(line, tokens, 'source.json') || scopes.some(s => s.includes('meta.embedded.block.importmap'))).toBe(
-			true
-		)
+		expect(
+			bodyHasScope(line, tokens, 'source.json') ||
+				scopes.some(s => s.includes('meta.embedded.block.importmap'))
+		).toBe(true)
 		expect(bodyHasScope(line, tokens, 'source.js')).toBe(false)
 	})
 })

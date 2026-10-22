@@ -2,19 +2,19 @@
 
 Aero is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity. Links: [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
-| Feature                    | Description                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`         |
-| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`         |
-| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component |
-| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                  |
-| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes      |
-| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
-| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
-| 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags |
-| ⚡ Optional reactivity      | `<script is:state>`, bindings, reactive props — opt in with `reactivity: true`   |
-| 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                          |
-| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
+| Feature                    | Description                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`           |
+| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`           |
+| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component   |
+| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                         |
+| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes        |
+| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`     |
+| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server             |
+| 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags   |
+| ⚡ Optional reactivity     | `<script is:state>`, bindings, reactive props — opt in with `reactivity: true` |
+| 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                            |
+| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback   |
 
 ## Try it out
 
@@ -369,7 +369,7 @@ Aero is configured by passing options to the `aero()` Vite plugin. You can do th
 | **`dirs`**       | `object`                       | Override `client`, `server`, `dist` directories. Default `{ client, server, dist }`.                                                                         |
 | **`apiPrefix`**  | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                                                 |
 | **`reactivity`** | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.                                                                                           |
-| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware processing.                                     |
+| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware processing.                                   |
 
 ### Configuring via the Vite plugin
 

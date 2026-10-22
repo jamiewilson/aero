@@ -3,7 +3,7 @@
  * slot/conditional/loop emitters, and related utilities.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { escapeScriptJson } from '../../escapes'
 import {
 	compileInterpolation,

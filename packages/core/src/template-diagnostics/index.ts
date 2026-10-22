@@ -36,7 +36,9 @@ export interface CollectTemplateDiagnosticsInput {
 	readTextFile?: (absolutePath: string) => string | undefined
 }
 
-export function collectTemplateDiagnostics(input: CollectTemplateDiagnosticsInput): AeroDiagnostic[] {
+export function collectTemplateDiagnostics(
+	input: CollectTemplateDiagnosticsInput
+): AeroDiagnostic[] {
 	const { document, workspaceRoot } = input
 	if (isSnippetModulePath(document.uri.fsPath)) {
 		return []

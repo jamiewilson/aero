@@ -47,12 +47,7 @@ export type PrefixableScriptIsKind = (typeof PREFIXABLE_SCRIPT_IS_KINDS)[number]
 const PREFIXABLE_SIMPLE_SET = new Set<string>(PREFIXABLE_SIMPLE_RUNTIME_DIRECTIVES)
 
 /** Emit-only marker bodies (after strip + hyphenize) that are not author directives. */
-const EMIT_ONLY_BODIES = new Set([
-	'event',
-	'bind',
-	'component',
-	'processed',
-])
+const EMIT_ONLY_BODIES = new Set(['event', 'bind', 'component', 'processed'])
 
 export type AuthorAttributeCanonical =
 	| { family: 'build'; name: BuildDirective }

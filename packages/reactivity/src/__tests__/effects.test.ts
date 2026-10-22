@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { Effect } from '../effect'
 import { mountStateBindings } from '../mount'
 import { createStateScope } from '../state-scope'

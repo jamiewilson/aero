@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	compileSnippetModule,
 	isSnippetModulePath,
@@ -122,7 +122,9 @@ describe('compileSnippetModule', () => {
 <greeting-component name="Aero" />
 `
 		const code = compileSnippetModule(source, '/app/content/snippets/markup.html')
-		expect(code).toContain('export const propsString = { code: "<greeting-component name=\\"Aero\\" />", lang: "html" }')
+		expect(code).toContain(
+			'export const propsString = { code: "<greeting-component name=\\"Aero\\" />", lang: "html" }'
+		)
 		expect(code).not.toContain('as const')
 	})
 })

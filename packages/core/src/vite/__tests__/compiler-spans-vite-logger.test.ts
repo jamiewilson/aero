@@ -3,7 +3,7 @@
  * through the same normalize → enrich → Vite-logger render path used in dev.
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { writeFileSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'

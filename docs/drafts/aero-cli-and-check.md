@@ -110,7 +110,7 @@ Relationship to the default check: **`aero check` without `--types`** still vali
 
 - Node.js version, failing with exit `1` if below the minimum supported version, currently `18`
 - `vite` presence from `package.json`
-- ``@aero-js/core` presence from `package.json`
+- ``@aero-js/core`presence from`package.json`
 - `@aero-js/cli` version
 - A reminder about the Aero VS Code extension
 
@@ -148,20 +148,20 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 
 ### `@aero-js/core/config`
 
-| Export                                                  | Description                                                                                           |
+| Export | Description |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| `loadAeroConfig(root)`                                  | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroOptions | AeroOptionsFn | null`. |
-| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling.        |
+| `loadAeroConfig(root)` | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroOptions | AeroOptionsFn | null`. |
+| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling. |
 
 ### `@aero-js/content`
 
-| Export                                                   | Description                                                                                      |
+| Export | Description |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------- |
-| `loadContentConfigFileSync(root, configFile)`            | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
-| `loadAllCollections(config, root)`                       | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode.  |
-| `loadAllCollectionsEffect(config, root)`                 | Effect-based counterpart for callers that want failure-channel composition.                      |
-| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`.                                                        |
-| `LoadContentConfigResult`                                | Type for `loadContentConfigFileSync` results.                                                    |
+| `loadContentConfigFileSync(root, configFile)` | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
+| `loadAllCollections(config, root)` | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode. |
+| `loadAllCollectionsEffect(config, root)` | Effect-based counterpart for callers that want failure-channel composition. |
+| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`. |
+| `LoadContentConfigResult` | Type for `loadContentConfigFileSync` results. |
 
 See [content-api.md](content-api.md) for the broader content API.
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { AeroBuildCancelledError, AERO_EXIT_BUILD_CANCELLED } from '@aero-js/diagnostics'
 import { resolveAeroBuildExitCode } from '../build'
 

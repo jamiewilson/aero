@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	COMPILED_HYPERMEDIA_STATE_SIGNAL_CALLEE,
 	rewriteHypermediaActionStateRefs,
@@ -28,8 +28,8 @@ describe('rewriteHypermediaActionStateRefs', () => {
 
 	it('leaves unknown identifiers unchanged', () => {
 		const names = new Set(['isSaving'])
-		expect(
-			rewriteHypermediaActionStateRefs("POST('/api/save', { state: other })", names)
-		).toBe("POST('/api/save', { state: other })")
+		expect(rewriteHypermediaActionStateRefs("POST('/api/save', { state: other })", names)).toBe(
+			"POST('/api/save', { state: other })"
+		)
 	})
 })

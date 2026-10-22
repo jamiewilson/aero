@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { aeroLanguagePlugin } from '../languagePlugin'
 import { AeroVirtualCode } from '../virtualCode'
 import { URI } from 'vscode-uri'
@@ -16,12 +16,14 @@ function createSnapshot(text: string): IScriptSnapshot {
 
 const dummyCtx = { getAssociatedScript: () => undefined }
 const repoRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
-const aeroTemplateUri = URI.file(path.join(repoRoot, 'examples/kitchen-sink/client/pages/index.html'))
+const aeroTemplateUri = URI.file(
+	path.join(repoRoot, 'examples/kitchen-sink/client/pages/index.html')
+)
 
 describe('aeroLanguagePlugin', () => {
 	describe('getLanguageId', () => {
-	it('returns "html" for Aero project .html files', () => {
-		expect(aeroLanguagePlugin.getLanguageId(aeroTemplateUri)).toBe('html')
+		it('returns "html" for Aero project .html files', () => {
+			expect(aeroLanguagePlugin.getLanguageId(aeroTemplateUri)).toBe('html')
 		})
 
 		it('returns undefined for non-HTML files', () => {
@@ -33,13 +35,23 @@ describe('aeroLanguagePlugin', () => {
 	describe('createVirtualCode', () => {
 		it('creates AeroVirtualCode for html language ID on .html', () => {
 			const snapshot = createSnapshot('<div>test</div>')
-		const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'html', snapshot, dummyCtx)
+			const result = aeroLanguagePlugin.createVirtualCode!(
+				aeroTemplateUri,
+				'html',
+				snapshot,
+				dummyCtx
+			)
 			expect(result).toBeInstanceOf(AeroVirtualCode)
 		})
 
 		it('returns undefined for non-html language IDs', () => {
 			const snapshot = createSnapshot('<div>test</div>')
-			const result = aeroLanguagePlugin.createVirtualCode!(aeroTemplateUri, 'typescript', snapshot, dummyCtx)
+			const result = aeroLanguagePlugin.createVirtualCode!(
+				aeroTemplateUri,
+				'typescript',
+				snapshot,
+				dummyCtx
+			)
 			expect(result).toBeUndefined()
 		})
 

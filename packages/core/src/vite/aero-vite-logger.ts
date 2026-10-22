@@ -56,8 +56,7 @@ function attachedAeroDiagnostics(rawError: unknown): AeroDiagnostic[] | undefine
 function diagnosticsFromViteError(err: ViteErrorLike, rawError?: unknown) {
 	const attached = attachedAeroDiagnostics(rawError)
 	if (attached) return enrichDiagnostics(attached)
-	const source =
-		rawError instanceof Error ? rawError : Object.assign(new Error(err.message), err)
+	const source = rawError instanceof Error ? rawError : Object.assign(new Error(err.message), err)
 	return enrichDiagnostics(normalizeToDiagnostics(source))
 }
 
@@ -114,13 +113,9 @@ export function wrapAeroViteLogger(
 				stampViteOverlayFields(rawError, diagnostics)
 				if (!gate.shouldLog(diagnostics)) return
 				// Dev console format includes its own timestamp; avoid `time [vite] time [aero]`.
-				const colors = viteLoggerHasColors(base)
+				const colors = viteLoggerHasColors(base as { hasColors?: unknown })
 				base.error(
-					renderDiagnostics(
-						diagnostics,
-						'dev-console',
-						colors === undefined ? {} : { colors }
-					),
+					renderDiagnostics(diagnostics, 'dev-console', colors === undefined ? {} : { colors }),
 					{
 						...options,
 						timestamp: false,

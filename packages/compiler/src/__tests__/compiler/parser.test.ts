@@ -6,7 +6,7 @@
  * head vs body behavior; and removal by index (including when HTML comments appear inside script).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -571,7 +571,7 @@ const x = 1;
 		expect(result.clientScripts).toHaveLength(1)
 		expect(result.clientScripts[0].injectInHead).toBe(true)
 		expect(result.clientScripts[0].passDataExpr).toBe('{ storageKey, attribute, defaultTheme }')
-		expect(result.clientScripts[0].content).toContain("import { initThemePersistence }")
+		expect(result.clientScripts[0].content).toContain('import { initThemePersistence }')
 		expect(result.template).not.toContain('initThemePersistence')
 	})
 })

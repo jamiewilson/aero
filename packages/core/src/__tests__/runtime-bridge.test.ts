@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createReactivityRuntime } from '@aero-js/reactivity'
 import { DELETE, GET, PATCH, POST, PUT, createHypermediaRuntime } from '@aero-js/hypermedia'
 

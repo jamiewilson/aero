@@ -74,8 +74,7 @@ function mapDiagnosticToHtmlInterpolation(
 	if (start < exprStartInVirtual) return null
 
 	const posInExpr = start - exprStartInVirtual
-	const anchorOffset =
-		expressionOffset ?? expressionAnchorInHtml(htmlSource, braceOffset)
+	const anchorOffset = expressionOffset ?? expressionAnchorInHtml(htmlSource, braceOffset)
 	const base = offsetToOneBasedLineColumn(htmlSource, anchorOffset)
 	const exprLine1 = offsetToOneBasedLineColumn(
 		exprText,
@@ -193,7 +192,8 @@ export function checkTemplateTypes(
 		extraRoots.push(path.resolve(options.snippetsDtsPath))
 	}
 
-	const virtualBase = options.templateFilePath ?? path.join(root, '.aero', 'cache', '__aero_typecheck')
+	const virtualBase =
+		options.templateFilePath ?? path.join(root, '.aero', 'cache', '__aero_typecheck')
 	const virtualExprDir = path.dirname(virtualBase)
 
 	const out: TemplateTypeIssue[] = []
@@ -202,10 +202,13 @@ export function checkTemplateTypes(
 	for (const block of collectTemplateScriptBlocks(htmlSource)) {
 		if (block.kind === 'external' || !block.content.trim()) continue
 		const usesTypeScript = scriptUsesTypeScript(block)
-		const prelude = block.kind === 'build' || block.kind === 'state' ? BUILD_SCRIPT_PREAMBLE + '\n' : ''
+		const prelude =
+			block.kind === 'build' || block.kind === 'state' ? BUILD_SCRIPT_PREAMBLE + '\n' : ''
 		const virtualPath = `${virtualBase}.${block.kind}_${scriptIdx++}.${usesTypeScript ? 'ts' : 'js'}`
 		const content =
-			prelude + block.content + (block.kind === 'build' ? buildTemplateUseFooter(htmlSource, block.content) : '')
+			prelude +
+			block.content +
+			(block.kind === 'build' ? buildTemplateUseFooter(htmlSource, block.content) : '')
 		const diags = createVirtualProgramDiagnostics(
 			root,
 			virtualPath,
@@ -223,7 +226,10 @@ export function checkTemplateTypes(
 			let lineEnd: number | undefined
 			let columnEnd: number | undefined
 			if (d.length !== undefined && d.length > 0) {
-				const endLc = offsetToOneBasedLineColumn(htmlSource, block.contentStart + posInScript + d.length)
+				const endLc = offsetToOneBasedLineColumn(
+					htmlSource,
+					block.contentStart + posInScript + d.length
+				)
 				lineEnd = endLc.line
 				columnEnd = endLc.column
 			}
@@ -244,12 +250,11 @@ export function checkTemplateTypes(
 		let exprIdx = 0
 		for (const site of sites) {
 			const { virtualText, expressionOffsetInVirtual: exprStartInVirtual } =
-				buildTemplateInterpolationVirtualText(
-					htmlSource,
-					site,
-					BUILD_SCRIPT_PREAMBLE + '\n'
-				)
-			const virtualPath = path.join(virtualExprDir, `${path.basename(virtualBase)}.expr_${exprIdx++}.ts`)
+				buildTemplateInterpolationVirtualText(htmlSource, site, BUILD_SCRIPT_PREAMBLE + '\n')
+			const virtualPath = path.join(
+				virtualExprDir,
+				`${path.basename(virtualBase)}.expr_${exprIdx++}.ts`
+			)
 
 			const diags = createVirtualProgramDiagnostics(
 				root,

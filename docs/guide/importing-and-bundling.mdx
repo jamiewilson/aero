@@ -46,11 +46,11 @@ aero.mount({
 
 **Result:** One (or a few) hashed asset files. All of Aero runtime, htmx, Alpine, and your app code in one download.
 
-| Pros | Cons |
-| ---- | ---- |
-| Single request, simple deployment | Larger initial JS; no CDN caching for third-party libs |
-| Tree-shaking possible for libs that support it | |
-| No ordering or global-variable concerns | |
+| Pros                                           | Cons                                                   |
+| ---------------------------------------------- | ------------------------------------------------------ |
+| Single request, simple deployment              | Larger initial JS; no CDN caching for third-party libs |
+| Tree-shaking possible for libs that support it |                                                        |
+| No ordering or global-variable concerns        |                                                        |
 
 **When to use:** When you prefer simplicity and are fine with the total bundle size.
 
@@ -190,13 +190,13 @@ aero.mount({
 
 ## Comparison
 
-| Approach | Bundled? | Loaded how? | Best when |
-| -------- | -------- | ----------- | --------- |
-| **1. Single bundle** | Yes, everything | One (or few) entry chunks | Simplicity, one request |
-| **2. CDN + globals** | No (htmx/Alpine) | Script tags then entry | Smaller app bundle, CDN cache |
-| **3. ESM from CDN** | No (that lib) | Import map or external URL | CDN + no bundle + keep `import` syntax |
-| **4. Externals** | No (marked external) | Script tags then entry | Same as 2, with import-style typing |
-| **5. Dynamic import** | Yes, in separate chunks | Entry then lazy chunks | Smaller initial chunk, no HTML changes |
+| Approach              | Bundled?                | Loaded how?                | Best when                              |
+| --------------------- | ----------------------- | -------------------------- | -------------------------------------- |
+| **1. Single bundle**  | Yes, everything         | One (or few) entry chunks  | Simplicity, one request                |
+| **2. CDN + globals**  | No (htmx/Alpine)        | Script tags then entry     | Smaller app bundle, CDN cache          |
+| **3. ESM from CDN**   | No (that lib)           | Import map or external URL | CDN + no bundle + keep `import` syntax |
+| **4. Externals**      | No (marked external)    | Script tags then entry     | Same as 2, with import-style typing    |
+| **5. Dynamic import** | Yes, in separate chunks | Entry then lazy chunks     | Smaller initial chunk, no HTML changes |
 
 In all cases, your **Aero runtime** and app code stay in the client entry (or its chunks). The only difference is whether htmx and Alpine are bundled with it, loaded from the page, or split into lazy-loaded bundles.
 

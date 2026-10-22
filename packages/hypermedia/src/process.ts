@@ -1,4 +1,10 @@
-import type { ActionOptions, HttpMethod, HypermediaBooleanSignal, HypermediaSignalStore, SwapStyle } from './types'
+import type {
+	ActionOptions,
+	HttpMethod,
+	HypermediaBooleanSignal,
+	HypermediaSignalStore,
+	SwapStyle,
+} from './types'
 import type { HypermediaRuntime } from './runtime'
 import { stripBraces } from '@aero-js/interpolation'
 
@@ -11,9 +17,14 @@ interface ParsedAction {
 	options: ActionOptions
 }
 
-function resolveSignalRef(ref: string, store: HypermediaSignalStore | undefined): HypermediaBooleanSignal {
+function resolveSignalRef(
+	ref: string,
+	store: HypermediaSignalStore | undefined
+): HypermediaBooleanSignal {
 	if (!store) {
-		throw new Error(`[aero] Hypermedia signal reference ${JSON.stringify(ref)} requires a SignalStore.`)
+		throw new Error(
+			`[aero] Hypermedia signal reference ${JSON.stringify(ref)} requires a SignalStore.`
+		)
 	}
 	const path = ref.trim().replace(/^\$/, '')
 	if (!path) {
@@ -69,7 +80,11 @@ function shouldPreventDefault(eventName: string): boolean {
 	return eventName.includes('prevent')
 }
 
-export function process(element: ParentNode, runtime: HypermediaRuntime, store?: HypermediaSignalStore): void {
+export function process(
+	element: ParentNode,
+	runtime: HypermediaRuntime,
+	store?: HypermediaSignalStore
+): void {
 	const all = element.querySelectorAll<Element>('*')
 	for (const el of all) {
 		if (el.hasAttribute('data-aero-processed')) continue
@@ -97,11 +112,14 @@ export function process(element: ParentNode, runtime: HypermediaRuntime, store?:
 
 			el.addEventListener(nativeEvent, (e: Event) => {
 				if (prevent) e.preventDefault()
-				runtime.executeAction({
-					method: parsed.method,
-					url: parsed.url,
-					...parsed.options,
-				}, el)
+				runtime.executeAction(
+					{
+						method: parsed.method,
+						url: parsed.url,
+						...parsed.options,
+					},
+					el
+				)
 			})
 
 			didProcess = true

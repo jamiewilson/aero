@@ -6,7 +6,7 @@ import {
 	AeroBuildCancelledError,
 	AeroCompileError,
 } from '@aero-js/diagnostics'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createStaticBuildReportingService } from '../static-build-reporting'
 
 function createLoggerSpies() {
@@ -62,13 +62,16 @@ describe('createStaticBuildReportingService', () => {
 	it('normalizes Vite-shaped Aero prerender errors without dumping pluginCode', () => {
 		const service = createStaticBuildReportingService()
 		const logger = createLoggerSpies()
-		const err = Object.assign(new Error('[AERO_COMPILE] /app/client/pages/index.html:3:4: bad state'), {
-			id: '/app/client/pages/index.html',
-			loc: { file: '/app/client/pages/index.html', line: 3, column: 4 },
-			frame: '> 3 | bad state\n    |    ^',
-			plugin: 'vite-plugin-aero-transform',
-			pluginCode: '<html>noisy transformed template</html>',
-		})
+		const err = Object.assign(
+			new Error('[AERO_COMPILE] /app/client/pages/index.html:3:4: bad state'),
+			{
+				id: '/app/client/pages/index.html',
+				loc: { file: '/app/client/pages/index.html', line: 3, column: 4 },
+				frame: '> 3 | bad state\n    |    ^',
+				plugin: 'vite-plugin-aero-transform',
+				pluginCode: '<html>noisy transformed template</html>',
+			}
+		)
 
 		expectRethrowsSame(() => service.reportPrerenderFailure(err, logger), err)
 

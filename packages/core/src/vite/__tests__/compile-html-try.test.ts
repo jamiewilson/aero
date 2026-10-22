@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { AeroCompileError, thrownToAeroDiagnostics } from '@aero-js/diagnostics'
 import { htmlCompileTry } from '../compile-html-try'
 
 describe('htmlCompileTry', () => {
 	it('returns success value from sync thunk', () => {
-		expect(htmlCompileTry('/proj/pages/a.html', () => 'export default {}')).toBe('export default {}')
+		expect(htmlCompileTry('/proj/pages/a.html', () => 'export default {}')).toBe(
+			'export default {}'
+		)
 	})
 
 	it('maps thrown Error to AeroCompileError with importer file', () => {

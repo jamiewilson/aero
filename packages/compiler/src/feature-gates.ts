@@ -29,8 +29,7 @@ export interface FeatureGateIssue {
 }
 
 /** Opening-tag match for bare / aero- / data-aero- `is:state` spellings (location only). */
-const IS_STATE_SCRIPT_RE =
-	/<script\b[^>]*\b(?:data-aero-is-state|aero-is[:\-]state|is:state)\b/i
+const IS_STATE_SCRIPT_RE = /<script\b[^>]*\b(?:data-aero-is-state|aero-is[:\-]state|is:state)\b/i
 const EFFECT_CALL_RE = /(?:\$effect|Aero\.effect)\s*\(/
 const RUNTIME_BRACED_ATTR_RE =
 	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
@@ -131,9 +130,7 @@ function collectStateBindings(source: string): Map<string, string> {
 	const bindings = new Map<string, string>()
 	const block = findStateScriptBlock(source)
 	if (!block) return bindings
-	for (const declaration of block.content.matchAll(
-		/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g
-	)) {
+	for (const declaration of block.content.matchAll(/\blet\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)/g)) {
 		bindings.set(declaration[1], declaration[2])
 	}
 	return bindings
@@ -195,39 +192,19 @@ export function collectFeatureGateIssuesFromSource(
 	const hasStateScript = sourceHasStateScript(source)
 
 	if (!flags.reactivity && hasStateScript) {
-		pushSourceIssue(
-			out,
-			source,
-			IS_STATE_SCRIPT_RE,
-			STATE_REACTIVITY_MESSAGE
-		)
+		pushSourceIssue(out, source, IS_STATE_SCRIPT_RE, STATE_REACTIVITY_MESSAGE)
 	}
 
 	if (!hasStateScript && RUNTIME_BRACED_ATTR_RE.test(source)) {
-		pushSourceIssue(
-			out,
-			source,
-			RUNTIME_BRACED_ATTR_RE,
-			RUNTIME_BRACED_ATTR_MESSAGE
-		)
+		pushSourceIssue(out, source, RUNTIME_BRACED_ATTR_RE, RUNTIME_BRACED_ATTR_MESSAGE)
 	}
 
 	if (!hasStateScript && EFFECT_CALL_RE.test(source)) {
-		pushSourceIssue(
-			out,
-			source,
-			EFFECT_CALL_RE,
-			EFFECT_STATE_MESSAGE
-		)
+		pushSourceIssue(out, source, EFFECT_CALL_RE, EFFECT_STATE_MESSAGE)
 	}
 
 	if (!flags.hypermedia && /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/.test(source)) {
-		pushSourceIssue(
-			out,
-			source,
-			/\b(POST|GET|PUT|PATCH|DELETE)\s*\(/i,
-			HYPERMEDIA_DISABLED_MESSAGE
-		)
+		pushSourceIssue(out, source, /\b(POST|GET|PUT|PATCH|DELETE)\s*\(/i, HYPERMEDIA_DISABLED_MESSAGE)
 	}
 
 	const busyRegex = /\b(?:data-aero-|aero-)?busy\b\s*=\s*(['"])(.*?)\1/is
@@ -237,12 +214,7 @@ export function collectFeatureGateIssuesFromSource(
 
 	if (busyMatch) {
 		if (!flags.reactivity || !flags.hypermedia) {
-			pushSourceIssue(
-				out,
-				source,
-				busyRegex,
-				busyFlagsMessage(flags)
-			)
+			pushSourceIssue(out, source, busyRegex, busyFlagsMessage(flags))
 		} else if (!hasStateScript) {
 			pushSourceIssue(
 				out,
@@ -321,7 +293,9 @@ export function collectFeatureGateIssues(
 
 	const bindingNames = parsed.stateScript
 		? new Set(
-				(parsed.stateScript.content.match(/\blet\s+(\w+)/g) ?? []).map(m => m.replace(/\blet\s+/, ''))
+				(parsed.stateScript.content.match(/\blet\s+(\w+)/g) ?? []).map(m =>
+					m.replace(/\blet\s+/, '')
+				)
 			)
 		: new Set<string>()
 
@@ -374,7 +348,10 @@ export function collectFeatureGateIssues(
 		}
 	}
 
-	if (reactiveBinds.busyBinds.length > 0 && (options.reactivity === false || options.hypermedia === false)) {
+	if (
+		reactiveBinds.busyBinds.length > 0 &&
+		(options.reactivity === false || options.hypermedia === false)
+	) {
 		out.push({
 			code: 'AERO_CONFIG',
 			message: busyFlagsMessage({
@@ -471,7 +448,11 @@ export function collectFeatureGateIssues(
 
 function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<string>): boolean {
 	for (const node of nodes) {
-		if (node.kind === 'ReactiveTextBind' || node.kind === 'ReactiveEventBind' || node.kind === 'ReactiveBusyBind') {
+		if (
+			node.kind === 'ReactiveTextBind' ||
+			node.kind === 'ReactiveEventBind' ||
+			node.kind === 'ReactiveBusyBind'
+		) {
 			return true
 		}
 		if (node.kind === 'For' || node.kind === 'If') {
@@ -558,10 +539,9 @@ export function validateFeatureGates(
 		const issues = detectHypermediaIssues(eventBinds, parsed.template, parsed.stateScript !== null)
 		for (const issue of issues) {
 			if (issue.severity === 'error') {
-				const needles =
-					issue.message.includes('busy')
-						? ['busy=', 'busy="', 'aero-busy', 'data-aero-busy']
-						: ['POST(', 'GET(', 'PUT(', 'PATCH(', 'DELETE(', 'on:']
+				const needles = issue.message.includes('busy')
+					? ['busy=', 'busy="', 'aero-busy', 'data-aero-busy']
+					: ['POST(', 'GET(', 'PUT(', 'PATCH(', 'DELETE(', 'on:']
 				const loc = locateInTemplateSource(options.diagnosticTemplateSource, {
 					needles,
 					maskEmbedded: true,
@@ -574,15 +554,9 @@ export function validateFeatureGates(
 
 	if (parsed.stateScript && stateAnalysis) {
 		const stateImports = analyzeBuildScript(parsed.stateScript.content).imports
-		validateReactiveScopeRefs(
-			bodyIR,
-			stateAnalysis,
-			parsed.stateScript.content,
-			stateImports,
-			{
-				file,
-				diagnosticSource: options.diagnosticTemplateSource,
-			}
-		)
+		validateReactiveScopeRefs(bodyIR, stateAnalysis, parsed.stateScript.content, stateImports, {
+			file,
+			diagnosticSource: options.diagnosticTemplateSource,
+		})
 	}
 }

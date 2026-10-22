@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -9,7 +9,12 @@ describe('aero-slot-void grammar', () => {
 	const grammarPath = path.join(import.meta.dirname, '..', '..', 'syntaxes', 'aero-slot-void.json')
 	const grammar = JSON.parse(readFileSync(grammarPath, 'utf8')) as {
 		injectionSelector: string
-		patterns: Array<{ name?: string; begin?: string; end?: string; endCaptures?: Record<string, unknown> }>
+		patterns: Array<{
+			name?: string
+			begin?: string
+			end?: string
+			endCaptures?: Record<string, unknown>
+		}>
 	}
 
 	it('registers void slot scoping with L-priority injection before html structure tags', () => {
@@ -30,7 +35,13 @@ const htmlGrammarPath =
 
 describe.skipIf(!existsSync(htmlGrammarPath))('aero-slot-void tokenization', () => {
 	it('scopes /> as a single tag-end token like br void tags', async () => {
-		const slotGrammarPath = path.join(import.meta.dirname, '..', '..', 'syntaxes', 'aero-slot-void.json')
+		const slotGrammarPath = path.join(
+			import.meta.dirname,
+			'..',
+			'..',
+			'syntaxes',
+			'aero-slot-void.json'
+		)
 		const { Registry, parseRawGrammar, INITIAL } = require('vscode-textmate')
 		const { loadWASM, createOnigScanner, createOnigString } = require('vscode-oniguruma')
 
@@ -39,7 +50,7 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-slot-void tokenization', () 
 			'..',
 			'..',
 			'node_modules',
-			'vscode-oniguruma/release/onig.wasm',
+			'vscode-oniguruma/release/onig.wasm'
 		)
 		await loadWASM(readFileSync(wasmPath).buffer)
 
@@ -73,8 +84,14 @@ describe.skipIf(!existsSync(htmlGrammarPath))('aero-slot-void tokenization', () 
 		const brTokens = g!.tokenizeLine(brLine, INITIAL).tokens
 		const slotTokens = g!.tokenizeLine(line, INITIAL).tokens
 
-		const brClose = brTokens.find((t: { startIndex: number; endIndex: number; scopes: string[] }) => brLine.slice(t.startIndex, t.endIndex) === '/>')
-		const slotClose = slotTokens.find((t: { startIndex: number; endIndex: number; scopes: string[] }) => line.slice(t.startIndex, t.endIndex) === '/>')
+		const brClose = brTokens.find(
+			(t: { startIndex: number; endIndex: number; scopes: string[] }) =>
+				brLine.slice(t.startIndex, t.endIndex) === '/>'
+		)
+		const slotClose = slotTokens.find(
+			(t: { startIndex: number; endIndex: number; scopes: string[] }) =>
+				line.slice(t.startIndex, t.endIndex) === '/>'
+		)
 
 		expect(brClose).toBeDefined()
 		expect(brClose!.scopes).toContain('punctuation.definition.tag.end.html')

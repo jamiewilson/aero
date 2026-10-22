@@ -2,12 +2,14 @@
  * Characterization tests for static prerender helpers (redirect filter, dynamic expansion).
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { expandDynamicPages } from '../static-dynamic-expansion'
 import { filterPagesAgainstRedirects } from '../static-incremental-gate'
 import type { StaticPage } from '../static-page-discovery'
 
-function page(partial: Partial<StaticPage> & Pick<StaticPage, 'pageName' | 'routePath'>): StaticPage {
+function page(
+	partial: Partial<StaticPage> & Pick<StaticPage, 'pageName' | 'routePath'>
+): StaticPage {
 	return {
 		sourceFile: `/proj/client/pages/${partial.pageName}.html`,
 		outputFile: partial.routePath === '' ? 'index.html' : `${partial.routePath}/index.html`,

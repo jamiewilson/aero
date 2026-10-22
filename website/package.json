@@ -4,9 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite build && vite preview"
+		"dev": "vp dev",
+		"build": "vp build",
+		"preview": "vp build && vp preview"
 	},
 	"dependencies": {
 		"@aero-js/content": "workspace:*",
@@ -25,6 +25,7 @@
 		"autoprefixer": "^10.5.2",
 		"shiki": "^4.3.0",
 		"vite": "catalog:",
-		"zod": "^4.4.3"
+		"zod": "^4.4.3",
+		"vite-plus": "catalog:"
 	}
 }

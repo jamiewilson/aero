@@ -15,7 +15,11 @@ export interface LifecycleDetail {
 	trigger?: Element
 }
 
-export function dispatchLifecycleEvent(name: LifecycleEventName, detail: LifecycleDetail, element?: Element): void {
+export function dispatchLifecycleEvent(
+	name: LifecycleEventName,
+	detail: LifecycleDetail,
+	element?: Element
+): void {
 	const event = new CustomEvent(name, {
 		bubbles: true,
 		cancelable: true,

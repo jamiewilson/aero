@@ -3,10 +3,7 @@
  */
 
 import type { Plugin } from 'vite'
-import {
-	TemplateDiscovery,
-	discoverClientScriptContentMap,
-} from './rollup-input-discovery'
+import { TemplateDiscovery, discoverClientScriptContentMap } from './rollup-input-discovery'
 import type { AeroPluginState } from './plugin-state'
 import { createAeroVirtualsResolveId } from './aero-virtuals-resolve'
 import { createAeroVirtualsLoad } from './aero-virtuals-load'

@@ -1,14 +1,9 @@
 import { resolvePageName } from '../utils/routing'
 import type { Aero } from './index'
 
-export type StateBindingsMountFn = (
-	root: HTMLElement,
-	runtime: Aero
-) => void | (() => void)
+export type StateBindingsMountFn = (root: HTMLElement, runtime: Aero) => void | (() => void)
 
-export type ResolveStateBindingsModule = (
-	pathname: string
-) => Promise<StateBindingsMountFn | null>
+export type ResolveStateBindingsModule = (pathname: string) => Promise<StateBindingsMountFn | null>
 
 export interface MountStateBindingsResult {
 	cleanup: () => void

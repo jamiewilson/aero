@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	AERO_JSON_ROLE_PROPS,
 	AERO_JSON_ROLE_STATE,

@@ -414,9 +414,11 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 					snippetsDtsPath: snippetsPath,
 				})) {
 					const code =
-						issue.kind === 'interpolation' ? 'AERO_COMPILE'
-						: issue.kind === 'build' ? 'AERO_BUILD_SCRIPT'
-						: 'AERO_SCRIPT'
+						issue.kind === 'interpolation'
+							? 'AERO_COMPILE'
+							: issue.kind === 'build'
+								? 'AERO_BUILD_SCRIPT'
+								: 'AERO_SCRIPT'
 					diagnostics.push({
 						severity: 'error',
 						code,
@@ -437,12 +439,8 @@ export async function runAeroCheck(root: string, options: AeroCheckOptions = {})
 		}
 	}
 
-	const errors = enrichDiagnostics(
-		diagnostics.filter(d => d.severity === 'error')
-	)
-	const warnings = enrichDiagnostics(
-		diagnostics.filter(d => d.severity === 'warning')
-	)
+	const errors = enrichDiagnostics(diagnostics.filter(d => d.severity === 'error'))
+	const warnings = enrichDiagnostics(diagnostics.filter(d => d.severity === 'warning'))
 	if (warnings.length > 0) {
 		const warningText = renderDiagnostics(warnings, 'terminal', { plain: true })
 		process.stderr.write(warningText + (warningText.endsWith('\n') ? '' : '\n'))

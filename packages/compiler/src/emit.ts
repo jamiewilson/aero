@@ -176,8 +176,7 @@ function emitReactiveSwitchNode(
 	const bindId = node.bindId!
 	const caseBodies = node.cases.map(branch => branch.body)
 	const defaultBody = node.defaultBody
-	const branchBodies =
-		defaultBody !== undefined ? [...caseBodies, defaultBody] : caseBodies
+	const branchBodies = defaultBody !== undefined ? [...caseBodies, defaultBody] : caseBodies
 
 	b.raw(`{\n`)
 	b.raw(`let __aeroSwitchActive_${bindId} = -1;\n`)

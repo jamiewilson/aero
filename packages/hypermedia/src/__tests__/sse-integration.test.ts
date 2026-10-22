@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { createHypermediaRuntime } from '../runtime'
 import { formatSseEvent, AERO_SSE_PATCH_ELEMENTS, AERO_SSE_PATCH_SIGNALS } from '../sse'
 

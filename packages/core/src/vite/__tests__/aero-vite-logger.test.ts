@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createDiagnosticLogGate } from '@aero-js/diagnostics'
 import { createAeroSsrHmrLogger, wrapAeroViteLogger } from '../aero-vite-logger'
 
@@ -72,10 +72,7 @@ describe('wrapAeroViteLogger', () => {
 	it('prints Aero diagnostics with the shared dev console format', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger(
-			{ error: baseError, hasColors: false } as any,
-			gate
-		)
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const err = {
 			message: 'Hypermedia actions must be imported',
 			id: '/tmp/hypermedia.html',
@@ -141,10 +138,7 @@ describe('wrapAeroViteLogger', () => {
 	it('dedupes Aero error blocks by diagnostic fingerprint', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger(
-			{ error: baseError, hasColors: false } as any,
-			gate
-		)
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const err = {
 			message: 'Hypermedia actions must be imported',
 			id: '/tmp/hypermedia.html',
@@ -162,10 +156,7 @@ describe('wrapAeroViteLogger', () => {
 	it('owns CssSyntaxError and suppresses Vite Internal server error dumps', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger(
-			{ error: baseError, hasColors: false } as any,
-			gate
-		)
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const err = Object.assign(new Error('/tmp/global.css:6:1: Missing closing } at @theme'), {
 			name: 'CssSyntaxError',
 			plugin: '@tailwindcss/vite:generate:serve',
@@ -188,10 +179,7 @@ describe('wrapAeroViteLogger', () => {
 	it('stamps frame/id/loc onto CssSyntaxError for Vite ErrorOverlay prepareError', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger(
-			{ error: baseError, hasColors: false } as any,
-			gate
-		)
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const source = 'a {\n  color: red\n}\n'
 		const err = Object.assign(new Error('Missed semicolon'), {
 			name: 'CssSyntaxError',
@@ -214,10 +202,7 @@ describe('wrapAeroViteLogger', () => {
 	it('does not own unrelated Vite plugin errors', () => {
 		const gate = createDiagnosticLogGate()
 		const baseError = vi.fn()
-		const wrapped = wrapAeroViteLogger(
-			{ error: baseError, hasColors: false } as any,
-			gate
-		)
+		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const err = Object.assign(new Error('Unexpected token'), {
 			plugin: 'vite:oxc',
 			id: '/tmp/foo.ts',

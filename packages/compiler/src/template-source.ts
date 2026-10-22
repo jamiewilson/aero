@@ -10,13 +10,7 @@
 export type TemplateSourceRange = { readonly start: number; readonly end: number }
 
 /** The executable role of an HTML script tag. */
-export type TemplateScriptKind =
-	| 'build'
-	| 'state'
-	| 'inline'
-	| 'blocking'
-	| 'bundled'
-	| 'external'
+export type TemplateScriptKind = 'build' | 'state' | 'inline' | 'blocking' | 'bundled' | 'external'
 
 /** A live script tag and its original source offsets. */
 export interface TemplateScriptBlock {
@@ -80,8 +74,10 @@ export function collectHtmlCommentRanges(text: string): TemplateSourceRange[] {
 		const styleStart = lowerText.indexOf('<style', cursor)
 		const rawStart = [scriptStart, styleStart]
 			.filter(start => start >= 0)
-			.reduce<number | undefined>((nearest, start) =>
-				nearest === undefined || start < nearest ? start : nearest, undefined)
+			.reduce<number | undefined>(
+				(nearest, start) => (nearest === undefined || start < nearest ? start : nearest),
+				undefined
+			)
 
 		if (commentStart === -1 && rawStart === undefined) break
 		if (commentStart !== -1 && (rawStart === undefined || commentStart < rawStart)) {
@@ -112,7 +108,8 @@ export function collectHtmlCommentRanges(text: string): TemplateSourceRange[] {
 export function maskHtmlComments(text: string, ranges = collectHtmlCommentRanges(text)): string {
 	let masked = text
 	for (const range of ranges) {
-		masked = masked.slice(0, range.start) + ' '.repeat(range.end - range.start) + masked.slice(range.end)
+		masked =
+			masked.slice(0, range.start) + ' '.repeat(range.end - range.start) + masked.slice(range.end)
 	}
 	return masked
 }
@@ -131,7 +128,9 @@ export function classifyTemplateScriptTag(attrs: string): TemplateScriptKind {
 	if (/(?:^|\s)(?:data-aero-is-inline|aero-is[:\-]inline|is:inline)(?=[\s=>/]|$)/.test(lower)) {
 		return 'inline'
 	}
-	if (/(?:^|\s)(?:data-aero-is-blocking|aero-is[:\-]blocking|is:blocking)(?=[\s=>/]|$)/.test(lower)) {
+	if (
+		/(?:^|\s)(?:data-aero-is-blocking|aero-is[:\-]blocking|is:blocking)(?=[\s=>/]|$)/.test(lower)
+	) {
 		return 'blocking'
 	}
 	return 'bundled'

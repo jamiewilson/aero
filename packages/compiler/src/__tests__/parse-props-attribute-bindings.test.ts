@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { parsePropsAttributeBindings } from '../parse-props-attribute-bindings'
 
 const buildProps = new Map<string, ReadonlySet<string>>([

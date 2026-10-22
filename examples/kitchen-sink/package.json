@@ -4,13 +4,13 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev --open",
-		"build": "AERO_INCREMENTAL=1 AERO_LOG=debug vite build",
-		"preview": "AERO_SERVER=false vite build && vite preview",
-		"preview:api": "vite build && node .output/server/index.mjs",
+		"dev": "vp dev --open",
+		"build": "AERO_INCREMENTAL=1 AERO_LOG=debug vp build",
+		"preview": "AERO_SERVER=false vp build && vp preview",
+		"preview:api": "vp build && node .output/server/index.mjs",
 		"clean": "rm -rf dist .output .aero",
-		"fmt": "prettier --write .",
-		"fmt:check": "prettier --check ."
+		"fmt": "vp fmt .",
+		"fmt:check": "vp fmt --check ."
 	},
 	"dependencies": {
 		"@aero-js/cli": "workspace:*",
@@ -36,10 +36,10 @@
 		"@types/alpinejs__persist": "^3.13.4",
 		"autoprefixer": "^10.5.2",
 		"nitro": "catalog:",
-		"prettier": "^3.9.3",
 		"shiki": "^4.3.0",
 		"shiki-transformer-copy-button": "^0.0.6",
 		"vite": "catalog:",
-		"zod": "^4.4.3"
+		"zod": "^4.4.3",
+		"vite-plus": "catalog:"
 	}
 }

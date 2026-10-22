@@ -27,7 +27,10 @@ export class ContentSchemaAggregateError extends Error {
 	readonly _tag = 'ContentSchemaAggregateError' as const
 	readonly issues: readonly ContentSchemaIssue[]
 
-	constructor(fields: { readonly issues: readonly ContentSchemaIssue[]; readonly message: string }) {
+	constructor(fields: {
+		readonly issues: readonly ContentSchemaIssue[]
+		readonly message: string
+	}) {
 		super(fields.message)
 		this.name = 'ContentSchemaAggregateError'
 		this.issues = fields.issues

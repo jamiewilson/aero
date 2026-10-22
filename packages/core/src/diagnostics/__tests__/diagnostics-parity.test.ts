@@ -1,7 +1,7 @@
 import { PARITY_SCENARIOS } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { compile, parse } from '@aero-js/compiler'
 import { normalizeToDiagnostics } from '@aero-js/diagnostics'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 const mockOptions = {
 	root: '/',

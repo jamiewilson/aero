@@ -1,17 +1,31 @@
 import { Computed } from './computed'
 import { Effect } from './effect'
-import { readAeroJsonPayload, readHydrationState, reviveStateValue, type HydrationRoot } from './hydration'
+import {
+	readAeroJsonPayload,
+	readHydrationState,
+	reviveStateValue,
+	type HydrationRoot,
+} from './hydration'
 import { mountStateBindings, bindEvent, bindText } from './mount'
 import { Signal } from './signal'
 import { createStateScope, type StateBindingSpec } from './state-scope'
 import { SignalStore } from './store'
-import { AeroReactivity, processFragment, unsafeProcessFragment, createDefaultHandlers } from './process'
+import {
+	AeroReactivity,
+	processFragment,
+	unsafeProcessFragment,
+	createDefaultHandlers,
+} from './process'
 import { bindShow } from './bindings/show'
 import { bindHtml } from './bindings/html'
 import { bindClassToggle } from './bindings/class'
 import { bindAttribute } from './bindings/attribute'
 import { bindProperty } from './bindings/property'
-import { coerceAttributeValue, applyAttributeCoercion, formatAttributeBind } from './bindings/coerce-attribute-value'
+import {
+	coerceAttributeValue,
+	applyAttributeCoercion,
+	formatAttributeBind,
+} from './bindings/coerce-attribute-value'
 import { bindFormModel } from './bindings/model'
 import {
 	isBooleanIdlPropertyForMirror,

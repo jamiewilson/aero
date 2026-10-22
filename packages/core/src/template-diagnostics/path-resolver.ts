@@ -4,10 +4,7 @@
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { createRequire } from 'node:module'
-import {
-	loadTsconfigAliases,
-	mergeWithDefaultAliases,
-} from '../utils/aliases'
+import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
 import { loadResolvedAeroConfig } from '../config/loadResolvedAeroConfig'
 import { isExistingFile, resolveImportToFile } from './importResolution'
@@ -89,9 +86,9 @@ export function getResolver(filePath: string, workspaceRoot?: string): PathResol
 			const rawResolved = resolveFn(specifier, importer)
 			const resolved = resolveImportToFile(specifier, rawResolved)
 
-			return resolved && (resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier)) ?
-					resolved
-				:	undefined
+			return resolved && (resolved !== specifier || /^(\.{1,2}\/|\/|@|~)/.test(specifier))
+				? resolved
+				: undefined
 		},
 	}
 

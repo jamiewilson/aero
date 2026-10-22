@@ -17,17 +17,16 @@
 	"main": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "vp test run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"happy-dom": "^20.10.6",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",

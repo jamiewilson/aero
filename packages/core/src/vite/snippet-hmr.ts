@@ -4,10 +4,7 @@
 
 import type { ModuleNode, ViteDevServer } from 'vite'
 import path from 'path'
-import {
-	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
-	toSnippetVirtualModuleId,
-} from './defaults'
+import { RESOLVED_RUNTIME_INSTANCE_MODULE_ID, toSnippetVirtualModuleId } from './defaults'
 import { isSnippetModulePath } from '../snippets'
 
 interface SnippetGraphModule {

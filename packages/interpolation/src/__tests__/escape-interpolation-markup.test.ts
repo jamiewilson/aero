@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	escapeEntityEncodedElementMarkup,
 	escapeInterpolationBodyMarkup,
@@ -8,7 +8,8 @@ import {
 
 describe('escapeInterpolationBodyMarkup', () => {
 	it('escapes < only inside Aero expression bodies', () => {
-		const text = '<code>{ `<header-component />` }</code><a for="{ const x of xs }" href="{ path }">'
+		const text =
+			'<code>{ `<header-component />` }</code><a for="{ const x of xs }" href="{ path }">'
 		const { text: escaped, restore } = escapeInterpolationBodyMarkup(text)
 		expect(escaped).not.toContain('<header-component')
 		expect(escaped).toContain('\uE000header-component')

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	attributeSectionBase,
 	findAttributeRange,
@@ -42,10 +42,7 @@ describe('attribute range helpers', () => {
 		const range = findAttributeRange(attrs, attrBase, 'count:readonly')
 		expect(range).toEqual({
 			start: tagStart + fullTag.indexOf('count:readonly'),
-			end:
-				tagStart +
-				fullTag.indexOf('count:readonly') +
-				'count:readonly="{ count }"'.length,
+			end: tagStart + fullTag.indexOf('count:readonly') + 'count:readonly="{ count }"'.length,
 		})
 	})
 

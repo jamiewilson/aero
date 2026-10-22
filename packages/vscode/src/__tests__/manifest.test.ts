@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -15,7 +15,9 @@ describe('vscode manifest', () => {
 		expect(manifest?.contributes?.configurationDefaults?.['[aero]']).toBeUndefined()
 		const grammars = manifest?.contributes?.grammars ?? []
 		expect(grammars.some((g: { language?: string }) => g.language === 'aero')).toBe(false)
-		expect(grammars.some((g: { scopeName?: string }) => g.scopeName === 'text.html.aero')).toBe(false)
+		expect(grammars.some((g: { scopeName?: string }) => g.scopeName === 'text.html.aero')).toBe(
+			false
+		)
 	})
 
 	it('disables built-in HTML script validation so TypeScript in is:build/is:state is not flagged as JS', () => {

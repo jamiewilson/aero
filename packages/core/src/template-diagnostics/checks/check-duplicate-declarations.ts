@@ -9,6 +9,13 @@ export function checkDuplicateDeclarations(
 	diagnostics: AeroDiagnostic[]
 ): void {
 	for (const dup of parsed.duplicateDeclarations) {
-		pushSpanDiagnostic(diagnostics, document, dup.range, `'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`, 'AERO_BUILD_SCRIPT', 'error')
+		pushSpanDiagnostic(
+			diagnostics,
+			document,
+			dup.range,
+			`'${dup.name}' is declared multiple times (as '${dup.kind1}' and '${dup.kind2}').`,
+			'AERO_BUILD_SCRIPT',
+			'error'
+		)
 	}
 }

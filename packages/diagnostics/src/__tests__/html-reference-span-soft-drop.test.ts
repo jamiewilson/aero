@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
 import { unknownToAeroDiagnostics } from '../from-unknown'
 
 describe('HTML ReferenceError span soft-drop', () => {
@@ -58,8 +58,7 @@ describe('HTML ReferenceError span soft-drop', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-span-'))
 		dirs.push(dir)
 		const file = path.join(dir, 'keyed.html')
-		const line =
-			'\tlet items = Array.from({ length: 5 }, () => ({ id: createID() }))\n'
+		const line = '\tlet items = Array.from({ length: 5 }, () => ({ id: createID() }))\n'
 		fs.writeFileSync(file, `<script is:state>\n${line}</script>\n`)
 		const idCol = line.indexOf('createID')
 		const err = new Error('createID is not defined')

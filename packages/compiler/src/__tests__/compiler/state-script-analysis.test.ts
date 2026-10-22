@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { analyzeStateScript, stripStateEffectStatements } from '../../state-script-analysis'
 import { collectStateReferenceNames, lowerStateScript } from '../../lower-state-script'
 
@@ -162,7 +162,11 @@ describe('analyzeStateScript', () => {
 			function add() { items = [...items, { id: createID() }] }
 		`
 		const result = analyzeStateScript(script)
-		expect([...collectStateReferenceNames(script, result)].sort()).toEqual(['add', 'createID', 'items'])
+		expect([...collectStateReferenceNames(script, result)].sort()).toEqual([
+			'add',
+			'createID',
+			'items',
+		])
 	})
 
 	it('collects top-level $effect bindings', () => {

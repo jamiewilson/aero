@@ -37,8 +37,7 @@ export function traceLayoutToSinkProps(
 		const spec = imports.get(childImport)
 		if (!spec) break
 		const childResolved = resolver.resolve(spec, currentPath)
-		const childPath =
-			childResolved && fs.existsSync(childResolved) ? childResolved : null
+		const childPath = childResolved && fs.existsSync(childResolved) ? childResolved : null
 		if (!childPath) break
 		if (childTag.endsWith('-component')) {
 			const compContent = fs.readFileSync(childPath, 'utf-8')

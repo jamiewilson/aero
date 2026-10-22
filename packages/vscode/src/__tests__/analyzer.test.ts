@@ -4,7 +4,7 @@
  * (e.g. props/aero-props in client/bundled scope). Mocks vscode Range/Position for offset→position conversion.
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vite-plus/test'
 import {
 	collectTemplateReferences,
 	collectDefinedVariables,

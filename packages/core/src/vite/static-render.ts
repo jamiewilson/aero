@@ -7,11 +7,7 @@ import type { Plugin, ResolvedConfig } from 'vite'
 import { isRunnableDevEnvironment } from 'vite'
 import path from 'node:path'
 import { createServer } from 'vite'
-import {
-	DEFAULT_API_PREFIX,
-	RUNTIME_INSTANCE_MODULE_ID,
-	resolveDirs,
-} from './defaults'
+import { DEFAULT_API_PREFIX, RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
 import { readManifest } from './rewrite'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
 import { writeRouteTypesGenerated } from '../routing/route-typegen'

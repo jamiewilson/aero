@@ -29,10 +29,7 @@ import {
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
-import {
-	AERO_JSON_ROLE_STATE,
-	emitAeroJsonScriptTagTemplate,
-} from './json-script-payload'
+import { AERO_JSON_ROLE_STATE, emitAeroJsonScriptTagTemplate } from './json-script-payload'
 import { buildTemplateSourceMap } from './template-source-map'
 
 function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {

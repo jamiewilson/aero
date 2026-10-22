@@ -2,10 +2,7 @@ import { Effect } from '../effect'
 import type { Cleanup, RowMountResult } from '../mount'
 import { compileScopeRead } from '../scope-eval'
 import type { StateScope } from '../state-scope'
-import {
-	type MountTarget,
-	replaceMountTargetChildren,
-} from './anchor'
+import { type MountTarget, replaceMountTargetChildren } from './anchor'
 
 export interface KeyedForRowSpec {
 	readonly key: string | number

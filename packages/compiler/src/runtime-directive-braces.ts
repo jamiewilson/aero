@@ -56,10 +56,7 @@ function isRuntimeClassBinding(canonicalBareName: string): boolean {
  * - `show` / `html` / `busy` — always (when present)
  * - `class:*` — only when the attribute has an explicit value (`=`), not bare shorthand
  */
-export function runtimeDirectiveRequiresBracedValue(
-	attrName: string,
-	hasValue: boolean
-): boolean {
+export function runtimeDirectiveRequiresBracedValue(attrName: string, hasValue: boolean): boolean {
 	const normalized = normalizeRuntimeDirectiveName(attrName)
 	if (!normalized || normalized.family !== 'binding') return false
 	const bare = normalized.canonicalBareName
@@ -74,9 +71,7 @@ export function runtimeDirectiveRequiresBracedValue(
  * Message shape matches IDE event braces (`Directive \`name\` must use a braced expression…`)
  * so parity can use a shared `messageIncludes`.
  */
-export function getRuntimeDirectiveBraceIssue(
-	input: RuntimeDirectiveBraceInput
-): string | null {
+export function getRuntimeDirectiveBraceIssue(input: RuntimeDirectiveBraceInput): string | null {
 	if (!runtimeDirectiveRequiresBracedValue(input.attrName, input.hasValue)) return null
 	if (looksBracedDirectiveValue(input.rawValue)) return null
 	const example = `${input.attrName}="{ expression }"`

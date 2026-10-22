@@ -11,7 +11,11 @@ import type { CompileOptions, ParseResult } from './types'
 
 import { parseHTML } from 'linkedom'
 import { CompileError } from './types'
-import { analyzeBuildScript, stripBuildScriptTypes, type BuildScriptImport } from './build-script-analysis'
+import {
+	analyzeBuildScript,
+	stripBuildScriptTypes,
+	type BuildScriptImport,
+} from './build-script-analysis'
 import { collectBuildScopeBindingNames } from './build-scope-bindings'
 import { emitBodyAndStyle, emitStyleBlock } from './emit'
 import { CodeBuilder } from './code-builder'
@@ -26,7 +30,11 @@ import {
 import { Resolver } from './resolver'
 import { getTemplateEditorAmbientFromParsed } from './template-editor-context'
 import { locateInEmbeddedScript, validateSingleBracedExpression } from './helpers'
-import { analyzeStateScript, stripStateEffectStatements, type StateScriptAnalysisResult } from './state-script-analysis'
+import {
+	analyzeStateScript,
+	stripStateEffectStatements,
+	type StateScriptAnalysisResult,
+} from './state-script-analysis'
 import { collectStateReferenceNames } from './lower-state-script'
 import { AERO_ATTR_PREFIX, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
 
@@ -65,8 +73,7 @@ function getStylePassDataExpr(el: Element): string | undefined {
 	const aeroProps = el.getAttribute(`${AERO_ATTR_PREFIX}${ATTR_PROPS}`)
 	const dataAeroProps = el.getAttribute(`${DATA_AERO_ATTR_PREFIX}${ATTR_PROPS}`)
 	let passData = el.getAttribute(ATTR_PROPS) ?? aeroProps ?? dataAeroProps ?? undefined
-	const hasProps =
-		el.hasAttribute(ATTR_PROPS) || aeroProps != null || dataAeroProps != null
+	const hasProps = el.hasAttribute(ATTR_PROPS) || aeroProps != null || dataAeroProps != null
 	if (passData === '' && hasProps) passData = '{ ...props }'
 	return passData
 }

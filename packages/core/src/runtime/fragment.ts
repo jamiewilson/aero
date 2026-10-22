@@ -24,9 +24,7 @@ export async function renderAeroFragment(
 	if (!root) throw new Error('[aero] renderAeroFragment requires `root`.')
 	if (!templatePath) throw new Error('[aero] renderAeroFragment requires `templatePath`.')
 
-	const importer = path.isAbsolute(templatePath)
-		? templatePath
-		: path.resolve(root, templatePath)
+	const importer = path.isAbsolute(templatePath) ? templatePath : path.resolve(root, templatePath)
 	const templateSource = await fs.readFile(importer, 'utf8')
 	const html = await renderTemplate({
 		templateSource,

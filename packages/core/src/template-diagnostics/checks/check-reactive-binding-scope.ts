@@ -54,6 +54,14 @@ export function checkReactiveBindingScope(
 			pushSpanDiagnostic(diagnostics, document, range, issue.message, 'AERO_COMPILE', 'error')
 			continue
 		}
-		pushOffsetDiagnostic(diagnostics, document, 0, Math.min(1, text.length), issue.message, 'AERO_COMPILE', 'error')
+		pushOffsetDiagnostic(
+			diagnostics,
+			document,
+			0,
+			Math.min(1, text.length),
+			issue.message,
+			'AERO_COMPILE',
+			'error'
+		)
 	}
 }

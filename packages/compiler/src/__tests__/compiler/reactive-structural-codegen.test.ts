@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 
@@ -167,13 +167,14 @@ describe('reactive structural codegen', () => {
 		const code = compile(parse(html), mockOptions)
 		const fnBody = code.match(/function __aeroForRow_0\(scope, Aero\) \{([\s\S]*?)\n\}/)?.[1]
 		expect(fnBody).toBeTruthy()
-		const renderRow = new Function(
-			'scope',
-			'Aero',
-			`${fnBody}\nreturn __out;`
-		) as (scope: { id: string }, Aero: { escapeHtml: (v: unknown) => string }) => string
+		const renderRow = new Function('scope', 'Aero', `${fnBody}\nreturn __out;`) as (
+			scope: { id: string },
+			Aero: { escapeHtml: (v: unknown) => string }
+		) => string
 		const htmlOut = renderRow({ id: 'a' }, { escapeHtml: v => String(v) }).trim()
-		expect(htmlOut).toMatch(/^<li class="list-item"><!-- aero:text:0 -->a<!-- \/aero:text:0 --><\/li>$/)
+		expect(htmlOut).toMatch(
+			/^<li class="list-item"><!-- aero:text:0 -->a<!-- \/aero:text:0 --><\/li>$/
+		)
 	})
 
 	it('emits setItems helper with typed params in state scope functions', () => {

@@ -222,11 +222,10 @@ export interface MountBindingSubset {
 	}[]
 }
 
-export type ReactivePropExpression =
-	{
-		readonly expr: string
-		readonly mutable: boolean
-	}
+export type ReactivePropExpression = {
+	readonly expr: string
+	readonly mutable: boolean
+}
 
 interface HypermediaTriggerRef {
 	current: Element | undefined
@@ -287,7 +286,11 @@ function wireEventHandler(
 	throw new Error('[aero] Compiled mounts must provide handler functions (CSP-safe path).')
 }
 
-function getBooleanSignal(store: SignalStore, bindings: readonly StateBindingSpec[], name: string): { value: boolean } {
+function getBooleanSignal(
+	store: SignalStore,
+	bindings: readonly StateBindingSpec[],
+	name: string
+): { value: boolean } {
 	const binding = bindings.find(item => item.name === name)
 	if (!binding) {
 		throw new Error(`[aero] Hypermedia state signal not found in state scope: ${name}`)
@@ -377,7 +380,10 @@ function isStrictDomDescendantOf(element: Element, ancestor: Element): boolean {
 	return false
 }
 
-function isOwnedByChildComponentMount(element: Element, childComponentRoots: readonly Element[]): boolean {
+function isOwnedByChildComponentMount(
+	element: Element,
+	childComponentRoots: readonly Element[]
+): boolean {
 	for (const componentRoot of childComponentRoots) {
 		if (isStrictDomDescendantOf(element, componentRoot)) return true
 	}
@@ -448,12 +454,17 @@ function queryBindTarget(
 	return target
 }
 
-function getComponentMount(component: unknown): ((root: Element, Aero: unknown, opts?: unknown) => unknown) | null {
+function getComponentMount(
+	component: unknown
+): ((root: Element, Aero: unknown, opts?: unknown) => unknown) | null {
 	if (component && typeof component === 'object') {
 		const direct = (component as { mountStateBindings?: unknown }).mountStateBindings
-		if (typeof direct === 'function') return direct as (root: Element, Aero: unknown, opts?: unknown) => unknown
-		const nested = (component as { default?: { mountStateBindings?: unknown } }).default?.mountStateBindings
-		if (typeof nested === 'function') return nested as (root: Element, Aero: unknown, opts?: unknown) => unknown
+		if (typeof direct === 'function')
+			return direct as (root: Element, Aero: unknown, opts?: unknown) => unknown
+		const nested = (component as { default?: { mountStateBindings?: unknown } }).default
+			?.mountStateBindings
+		if (typeof nested === 'function')
+			return nested as (root: Element, Aero: unknown, opts?: unknown) => unknown
 	}
 	return null
 }
@@ -481,10 +492,7 @@ function resolveReactivePropSignals(
 			throw new Error(`[aero] Reactive prop ${propName} must reference a state signal name.`)
 		}
 		const signal = store.get(signalName)
-		reactiveProps[propName] =
-			reactivePropExpr.mutable
-				? signal
-				: readonlySignal(propName, signal)
+		reactiveProps[propName] = reactivePropExpr.mutable ? signal : readonlySignal(propName, signal)
 	}
 	return reactiveProps
 }
@@ -547,9 +555,7 @@ function mountShowHtmlClassPropertyModel(
 		}
 		const originalDisplay = target.style.display
 		const read = wireScopeReader(bind, scope, undefined, allowLegacy)
-		cleanups.push(
-			bindShow(target, read, originalDisplay)
-		)
+		cleanups.push(bindShow(target, read, originalDisplay))
 	}
 
 	for (const bind of options.htmlBinds ?? []) {
@@ -580,11 +586,7 @@ function mountShowHtmlClassPropertyModel(
 		}
 		for (const attr of bind.attributes) {
 			cleanups.push(
-				bindAttribute(
-					target,
-					attr.name,
-					wireScopeReader(attr, scope, undefined, allowLegacy)
-				)
+				bindAttribute(target, attr.name, wireScopeReader(attr, scope, undefined, allowLegacy))
 			)
 		}
 	}
@@ -622,7 +624,9 @@ function mountShowHtmlClassPropertyModel(
 						)
 					}
 				: () => {
-						throw new Error('[aero] Compiled mounts must provide model write functions (CSP-safe path).')
+						throw new Error(
+							'[aero] Compiled mounts must provide model write functions (CSP-safe path).'
+						)
 					}
 		cleanups.push(
 			bindFormModel({
@@ -724,7 +728,13 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 				throw new Error(`[aero] Missing busy target: ${bind.selector}`)
 			}
 			cleanups.push(
-				registerBusyBinding(target, bind.readExpr, options.store, options.bindings, options.hypermediaRuntime)
+				registerBusyBinding(
+					target,
+					bind.readExpr,
+					options.store,
+					options.bindings,
+					options.hypermediaRuntime
+				)
 			)
 		}
 	}
@@ -769,7 +779,9 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			options.componentBinds
 		)
 		if (!mountTarget) {
-			throw new Error(`[aero] Missing reactive for container: ${structuralAnchorLabel(bind.anchor)}`)
+			throw new Error(
+				`[aero] Missing reactive for container: ${structuralAnchorLabel(bind.anchor)}`
+			)
 		}
 		cleanups.push(
 			bindKeyedFor({
@@ -823,7 +835,9 @@ export function mountStateBindings(options: MountStateBindingsOptions): Cleanup 
 			options.componentBinds
 		)
 		if (!mountTarget) {
-			throw new Error(`[aero] Missing reactive switch anchor: ${structuralAnchorLabel(bind.anchor)}`)
+			throw new Error(
+				`[aero] Missing reactive switch anchor: ${structuralAnchorLabel(bind.anchor)}`
+			)
 		}
 		const defaultBranch = bind.default
 		cleanups.push(

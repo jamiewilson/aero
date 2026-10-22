@@ -117,7 +117,14 @@ export function checkUndefinedVariables(
 				if (!def.properties.has(firstProp)) {
 					const range =
 						ref.propertyRanges && ref.propertyRanges.length > 0 ? ref.propertyRanges[0] : ref.range
-					pushSpanDiagnostic(diagnostics, document, range, `Property '${firstProp}' does not exist on type '${ref.content}'`, 'AERO_COMPILE', 'error')
+					pushSpanDiagnostic(
+						diagnostics,
+						document,
+						range,
+						`Property '${firstProp}' does not exist on type '${ref.content}'`,
+						'AERO_COMPILE',
+						'error'
+					)
 				}
 			}
 			continue

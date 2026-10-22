@@ -68,7 +68,12 @@ function collectIdentifiersFromInit(initNode: unknown): Set<string> {
 function topLevelVariableDeclarators(
 	program: any
 ): Array<{ id: any; init: any; range?: [number, number]; kind: 'const' | 'let' | 'var' }> {
-	const out: Array<{ id: any; init: any; range?: [number, number]; kind: 'const' | 'let' | 'var' }> = []
+	const out: Array<{
+		id: any
+		init: any
+		range?: [number, number]
+		kind: 'const' | 'let' | 'var'
+	}> = []
 	for (const stmt of program?.body ?? []) {
 		let declaration = stmt
 		if (stmt?.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration
@@ -144,10 +149,7 @@ function propertyKeyName(property: any): string | null {
 	return null
 }
 
-function reactivePropBindingFromProperty(
-	script: string,
-	property: any
-): StateBinding | null {
+function reactivePropBindingFromProperty(script: string, property: any): StateBinding | null {
 	if (property?.type !== 'Property') return null
 	if (property.computed) return null
 	const propName = propertyKeyName(property)
@@ -185,7 +187,10 @@ function reactivePropBindingFromProperty(
 	return null
 }
 
-function reactivePropBindingsFromDeclarator(script: string, declarator: { id: any; init: any }): StateBinding[] {
+function reactivePropBindingsFromDeclarator(
+	script: string,
+	declarator: { id: any; init: any }
+): StateBinding[] {
 	if (declarator.id?.type !== 'ObjectPattern') return []
 	if (!isAeroPropsExpression(declarator.init)) return []
 	const out: StateBinding[] = []
@@ -235,10 +240,7 @@ function effectBindingFromCall(
 		}
 	}
 	const callback = unwrapExpression(args[0])
-	if (
-		callback?.type !== 'ArrowFunctionExpression' &&
-		callback?.type !== 'FunctionExpression'
-	) {
+	if (callback?.type !== 'ArrowFunctionExpression' && callback?.type !== 'FunctionExpression') {
 		return {
 			binding: null,
 			diagnostic: {
@@ -372,7 +374,9 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	}
 
 	const declarators = topLevelVariableDeclarators(parsed.program)
-	const reactivePropBindings = declarators.flatMap(d => reactivePropBindingsFromDeclarator(script, d))
+	const reactivePropBindings = declarators.flatMap(d =>
+		reactivePropBindingsFromDeclarator(script, d)
+	)
 	const writableStateNames = new Set<string>()
 	for (const d of declarators) {
 		if (d.id?.type === 'Identifier' && typeof d.id.name === 'string') {
@@ -403,7 +407,9 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 	const bindableReactivePropNames = new Set(
 		reactivePropBindings.filter(binding => binding.bindable).map(binding => binding.name)
 	)
-	const ownedNames = new Set(bindings.filter(binding => !binding.reactiveProp).map(binding => binding.name))
+	const ownedNames = new Set(
+		bindings.filter(binding => !binding.reactiveProp).map(binding => binding.name)
+	)
 	const writtenReactiveProps = new Set<string>()
 	for (const name of reactivePropNames) {
 		if (ownedNames.has(name)) {
@@ -414,7 +420,10 @@ export function analyzeStateScript(script: string): StateScriptAnalysisResult {
 		}
 	}
 
-	for (const write of collectReadonlyReactivePropWrites(parsed.program, new Set([...reactivePropNames].filter(name => !bindableReactivePropNames.has(name))))) {
+	for (const write of collectReadonlyReactivePropWrites(
+		parsed.program,
+		new Set([...reactivePropNames].filter(name => !bindableReactivePropNames.has(name)))
+	)) {
 		const propName = reactivePropNameToPropName.get(write.name) ?? write.name
 		diagnostics.push({
 			name: write.name,

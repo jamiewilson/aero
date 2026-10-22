@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { performSwap, performSwaps, resolveTarget, parseSwapStyle, resolveSwapProcessContainer } from '../swap'
+import { describe, expect, it } from 'vite-plus/test'
+import {
+	performSwap,
+	performSwaps,
+	resolveTarget,
+	parseSwapStyle,
+	resolveSwapProcessContainer,
+} from '../swap'
 import type { SwapOperation } from '../types'
 
 function createContainer(): { container: HTMLElement; target: HTMLElement } {
@@ -68,7 +74,13 @@ describe('resolveSwapProcessContainer', () => {
 			html: '<div id="target"><button>next</button></div>',
 			style: 'outerHTML',
 		})
-		const processTarget = resolveSwapProcessContainer(target, 'outerHTML', '#target', container, inserted)
+		const processTarget = resolveSwapProcessContainer(
+			target,
+			'outerHTML',
+			'#target',
+			container,
+			inserted
+		)
 		expect(target.isConnected).toBe(false)
 		expect(processTarget).toBe(container.querySelector('#target'))
 		expect(processTarget).not.toBe(target)

@@ -34,8 +34,7 @@ Insert HTML with `data-aero-*` attributes, then process:
 
 	document.getElementById('insert')?.addEventListener('click', () => {
 		const host = document.getElementById('host')
-		host.innerHTML =
-			'<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
+		host.innerHTML = '<p data-aero-show="$showNote"><span data-aero-text="$note"></span></p>'
 		aero.getReactivityRuntime?.()?.process(host)
 	})
 </script>
@@ -72,7 +71,11 @@ Call `process(host)` after inserting the markup.
 Lower-level helpers live in `@aero-js/reactivity`:
 
 ```ts
-import { processFragment, unsafeProcessFragment, createReactivityRuntime } from '@aero-js/reactivity'
+import {
+	processFragment,
+	unsafeProcessFragment,
+	createReactivityRuntime,
+} from '@aero-js/reactivity'
 
 const runtime = createReactivityRuntime({ initialState: { count: 0 } })
 processFragment({ element: host, store: runtime.store })

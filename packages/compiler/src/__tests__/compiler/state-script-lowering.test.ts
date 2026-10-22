@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 
@@ -34,7 +34,9 @@ function remove() { items = items.slice(1) }
 			const code = compile(parse(html), mockOptions)
 			const install = installScopeBlock(code)
 
-			expect(install).toMatch(/scope\.remove = function\(\) \{ scope\.items = scope\.items\.slice\(1\) \}/)
+			expect(install).toMatch(
+				/scope\.remove = function\(\) \{ scope\.items = scope\.items\.slice\(1\) \}/
+			)
 			expect(code).not.toMatch(/function remove\(\) \{ items/)
 		})
 
@@ -221,7 +223,9 @@ let label = 'Items'
 <button on:click="{ GET('/api/items') }">{ label }</button>`
 
 			const code = compile(parse(html), hypermediaOptions)
-			expect(code).toMatch(/function __aeroEvent_0\(scope, actions[\s\S]*actions\.GET\('\/api\/items'\)/)
+			expect(code).toMatch(
+				/function __aeroEvent_0\(scope, actions[\s\S]*actions\.GET\('\/api\/items'\)/
+			)
 		})
 
 		it('routes hypermedia state signal refs through actions in event handlers', () => {
@@ -249,7 +253,9 @@ const add = () => { items = [...items, { id: 'b' }] }
 
 			const install = installScopeBlock(compile(parse(html), mockOptions))
 
-			expect(install).toMatch(/scope\.remove = function\(\) \{ scope\.items = scope\.items\.slice\(1\) \}/)
+			expect(install).toMatch(
+				/scope\.remove = function\(\) \{ scope\.items = scope\.items\.slice\(1\) \}/
+			)
 			expect(install).toMatch(
 				/scope\.add = \(\) => \{ scope\.items = \[\.\.\.scope\.items, \{ id: 'b' \}\] \}/
 			)
@@ -281,7 +287,9 @@ const remove = () => (items.length === 0 ? null : setItems(items.slice(1)))
 			)
 			expect(preamble).toMatch(/scope\.add = \(\) => scope\.setItems\(\[\.\.\.scope\.items/)
 			expect(preamble).toMatch(/scope\.remove = \(\) => \(scope\.items\.length === 0/)
-			expect(preamble).toContain('scope.getRandomIndex = () => Math.floor(Math.random() * scope.items.length)')
+			expect(preamble).toContain(
+				'scope.getRandomIndex = () => Math.floor(Math.random() * scope.items.length)'
+			)
 		})
 	})
 })

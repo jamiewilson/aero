@@ -1,7 +1,7 @@
 /**
  * Core uses @aero-js/diagnostics for condensed SSR HTML parse errors; detailed tests live there.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	formatCondensedHtmlSsrParseError,
 	isCondensableHtmlSsrParseError,

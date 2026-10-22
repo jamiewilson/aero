@@ -4,20 +4,21 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"fmt": "prettier --write .",
-		"fmt:check": "prettier --check .",
-		"lint": "oxlint",
-		"lint:fix": "oxlint --fix",
+		"check": "pnpm typecheck && vp check && prettier --check \"**/*.html\"",
+		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
+		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\"",
+		"lint": "vp lint",
+		"lint:fix": "vp lint --fix",
 		"dev": "pnpm --dir examples/kitchen-sink dev",
 		"preview": "pnpm --dir examples/kitchen-sink preview",
-		"test": "vitest run",
+		"test": "vp test run",
 		"test:ui": "pnpm vitest --ui",
 		"test:e2e:install": "playwright install chromium",
 		"test:e2e:ci": "playwright test",
 		"test:e2e": "node scripts/run-playwright-local.js test",
 		"test:e2e:headed": "node scripts/run-playwright-local.js test --headed",
 		"test:e2e:debug": "node scripts/run-playwright-local.js test --debug",
-		"test:all": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e:ci",
+		"test:all": "pnpm check && pnpm test && pnpm test:e2e:ci",
 		"typecheck": "pnpm -r typecheck",
 		"build": "pnpm -r --filter @aero-js/interpolation --filter @aero-js/html-parser --filter @aero-js/highlight --filter @aero-js/diagnostics --filter @aero-js/compiler --filter @aero-js/prettier-plugin-aero --filter @aero-js/reactivity --filter @aero-js/hypermedia --filter @aero-js/core --filter @aero-js/content --filter @aero-js/cli --filter @aero-js/create run build",
 		"vscode:build": "pnpm --dir packages/vscode build",
@@ -26,21 +27,17 @@
 		"clean:all": "rm -rf node_modules && find packages examples -type d \\( -name node_modules -o -name dist -o -name build -o -name .output -o -name .aero \\) -prune -exec rm -rf {} +",
 		"version:bump": "node scripts/bump-versions.js",
 		"release:prep": "pnpm test && pnpm clean:all && pnpm install && pnpm build",
-		"release:publish": "pnpm -r publish"
+		"release:publish": "pnpm -r publish",
+		"prepare": "vp config"
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@playwright/test": "^1.61.1",
 		"@types/node": "catalog:",
 		"@vitest/ui": "catalog:",
-		"oxlint": "^1.71.0",
 		"prettier": "^3.9.3",
-		"vitest": "catalog:"
+		"vitest": "catalog:",
+		"vite-plus": "catalog:"
 	},
-	"packageManager": "pnpm@10.33.0",
-	"pnpm": {
-		"overrides": {
-			"js-yaml": "^3.15.0"
-		}
-	}
+	"packageManager": "pnpm@10.33.0"
 }

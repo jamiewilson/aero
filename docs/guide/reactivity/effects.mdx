@@ -32,15 +32,15 @@ Reads of top-level `let` bindings and reactive props inside the callback subscri
 declare function $effect(fn: () => void | (() => void)): void
 ```
 
-| Rule | Detail |
-| --- | --- |
-| Placement | Top-level only in `<script is:state>` — not inside handlers or nested functions |
-| Tracking | Reads of `let` bindings and reactive props inside `fn` subscribe the effect |
-| Re-run | On tracked change: previous cleanup, then `fn` again |
-| Cleanup | Return `() => void` from `fn` — runs before re-run and on mount teardown |
+| Rule       | Detail                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------- |
+| Placement  | Top-level only in `<script is:state>` — not inside handlers or nested functions                   |
+| Tracking   | Reads of `let` bindings and reactive props inside `fn` subscribe the effect                       |
+| Re-run     | On tracked change: previous cleanup, then `fn` again                                              |
+| Cleanup    | Return `() => void` from `fn` — runs before re-run and on mount teardown                          |
 | Plain vars | `let isMounted = false` mutated inside the effect is **not** tracked (same as Svelte plain `let`) |
-| Config | Requires `reactivity: true`; `$effect` outside `is:state` is a compile error |
-| Alias | `Aero.effect(() => …)` is accepted with the same semantics |
+| Config     | Requires `reactivity: true`; `$effect` outside `is:state` is a compile error                      |
+| Alias      | `Aero.effect(() => …)` is accepted with the same semantics                                        |
 
 ### Invalid usage
 
@@ -55,10 +55,10 @@ declare function $effect(fn: () => void | (() => void)): void
 
 ## When to use `$effect` vs bindings
 
-| Use | When |
-| --- | --- |
-| `{ count }`, `on:click`, `bind:value` | DOM maps cleanly to declarative binds |
-| `$effect` | Third-party APIs, web component `.update()` / `.setOptions()`, imperative DOM, subscriptions |
+| Use                                   | When                                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `{ count }`, `on:click`, `bind:value` | DOM maps cleanly to declarative binds                                                        |
+| `$effect`                             | Third-party APIs, web component `.update()` / `.setOptions()`, imperative DOM, subscriptions |
 
 Keep markup declarative; keep imperative sync in state scripts alongside handlers.
 
@@ -70,7 +70,9 @@ Keep markup declarative; keep imperative sync in state scripts alongside handler
 
 	$effect(() => {
 		const source = new EventSource(`/api/${topic}`)
-		source.onmessage = e => { /* … */ }
+		source.onmessage = e => {
+			/* … */
+		}
 		return () => source.close()
 	})
 </script>
@@ -102,7 +104,10 @@ Web components that animate via `.update(value, animated)` need a side effect �
 
 See the [kitchen-sink numeric-text demo](/demos/numeric-text) for a full page.
 
-<Note>Use `$root.querySelector(...)` to scope DOM lookups to the current page or component instance. `bind:this` for direct element refs is a planned follow-up.</Note>
+<Note>
+	Use `$root.querySelector(...)` to scope DOM lookups to the current page or component instance.
+	`bind:this` for direct element refs is a planned follow-up.
+</Note>
 
 ## Related
 

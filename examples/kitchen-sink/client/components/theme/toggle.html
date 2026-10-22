@@ -71,6 +71,6 @@
 </style>
 
 <script is:blocking props="{ storageKey, attribute }">
-	const key = localStorage.getItem(storageKey)
+	const key = JSON.parse(localStorage.getItem(storageKey))
 	document.documentElement.setAttribute(attribute, key)
 </script>

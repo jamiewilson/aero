@@ -2,11 +2,7 @@
  * Build Aero template context for page and component renders.
  */
 
-import type {
-	AeroRenderInput,
-	AeroRouteParams,
-	AeroTemplateContext,
-} from '../types'
+import type { AeroRenderInput, AeroRouteParams, AeroTemplateContext } from '../types'
 import { escapeScriptJson } from '@aero-js/compiler/helpers'
 import { formatAttributeBind } from '@aero-js/reactivity'
 import { normalizeRoutePath } from '../utils/routing'

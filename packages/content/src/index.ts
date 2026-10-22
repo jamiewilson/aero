@@ -20,10 +20,7 @@ export {
 	formatContentSchemaIssuesReport,
 } from './content-issues'
 export { contentSchemaIssuesToAeroDiagnostics } from './diagnostics-bridge'
-export {
-	loadAllCollections,
-	type LoadAllCollectionsOptions,
-} from './loader'
+export { loadAllCollections, type LoadAllCollectionsOptions } from './loader'
 export {
 	isContentDiskCacheEnabled,
 	CONTENT_CACHE_REL_PATH,

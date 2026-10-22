@@ -3,7 +3,7 @@ import {
 	DIRECTIVE_PARITY_SCENARIOS,
 } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
 import { compile, parse } from '@aero-js/compiler'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 const mockOptions = {
 	root: '/',
@@ -42,14 +42,12 @@ describe('directive parity — compiler surface', () => {
 
 describe('directive parity — compiler snapshot', () => {
 	it('matches committed compiler directive parity baseline', () => {
-		const snapshot = DIRECTIVE_PARITY_SCENARIOS.filter(s => s.surfaces.compiler).map(
-			scenario => ({
-				id: scenario.id,
-				outcome: scenario.surfaces.compiler!.outcome,
-				messageIncludes: scenario.surfaces.compiler!.messageIncludes,
-				ok: compileDirectiveScenario(scenario.html).ok,
-			})
-		)
+		const snapshot = DIRECTIVE_PARITY_SCENARIOS.filter(s => s.surfaces.compiler).map(scenario => ({
+			id: scenario.id,
+			outcome: scenario.surfaces.compiler!.outcome,
+			messageIncludes: scenario.surfaces.compiler!.messageIncludes,
+			ok: compileDirectiveScenario(scenario.html).ok,
+		}))
 		expect(snapshot).toMatchInlineSnapshot(`
 			[
 			  {

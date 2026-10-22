@@ -102,7 +102,14 @@ function pushUndefinedDiagnostic(
 	range: SourceRange,
 	name: string
 ): void {
-	pushSpanDiagnostic(diagnostics, document, range, `Variable '${name}' is not defined`, 'AERO_COMPILE', 'error')
+	pushSpanDiagnostic(
+		diagnostics,
+		document,
+		range,
+		`Variable '${name}' is not defined`,
+		'AERO_COMPILE',
+		'error'
+	)
 }
 
 function checkPropsExpressionRefs(

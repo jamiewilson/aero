@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	AeroBuildCancelledError,
 	AeroCompileError,
@@ -289,7 +289,9 @@ describe('diagnostics', () => {
 
 	it('unknownToAeroDiagnostics keeps Vite frame when loc is missing', () => {
 		const err = Object.assign(
-			new Error('Reactive class binding `class:is-active` must reference a declared state variable.'),
+			new Error(
+				'Reactive class binding `class:is-active` must reference a declared state variable.'
+			),
 			{
 				id: '/proj/client/pages/demos/bindings.html',
 				frame:

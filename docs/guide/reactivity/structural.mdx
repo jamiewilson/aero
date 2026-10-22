@@ -68,10 +68,7 @@ Reactive lists need a stable `key` so Aero can move or reuse DOM nodes instead o
 </script>
 
 <ul>
-	<li
-		for="{ const item of items }"
-		key="{ item.id }"
-		text="{ item.id }"></li>
+	<li for="{ const item of items }" key="{ item.id }" text="{ item.id }"></li>
 </ul>
 
 <button on:click="{ addItem() }">Add</button>
@@ -85,7 +82,10 @@ Keyed `for` also reconciles when you mutate the same array, `Set`, or `Map` in p
 <script is:state>
 	let numbersArray = [1, 2, 3]
 	let numbersSet = new Set([1, 2, 3])
-	let numbersMap = new Map([[1, 'one'], [2, 'two']])
+	let numbersMap = new Map([
+		[1, 'one'],
+		[2, 'two'],
+	])
 </script>
 
 <button on:click="{ numbersArray.push(11) }">Add to array</button>
@@ -115,7 +115,9 @@ The loop binding supports destructuring patterns:
 - `Map` rows iterate as `[key, value]` entry pairs — use destructuring in the loop binding.
 
 <Note>
-	Keyed reconciliation preserves focus and element state inside rows when items reorder. Pair with [view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in client scripts for animated list updates.
+	Keyed reconciliation preserves focus and element state inside rows when items reorder. Pair with
+	[view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) in
+	client scripts for animated list updates.
 </Note>
 
 ## Output fidelity

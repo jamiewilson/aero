@@ -2,7 +2,7 @@
  * Terminal formatter: plain vs structured (banner) modes.
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { DIAGNOSTIC_BANNER_CHAR } from '../diagnostic-display'
 import { formatDiagnosticsTerminal } from '../render/terminal'
 

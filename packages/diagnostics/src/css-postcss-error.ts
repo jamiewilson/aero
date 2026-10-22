@@ -169,8 +169,7 @@ function tryRemapToSiblingStylesheet(resolved: ResolvedCssLocation): ResolvedCss
 
 	const diskLine = diskLines[line - 1]
 	const lineOutOfRange = line > diskLines.length
-	const lineMismatch =
-		diskLine !== undefined && diskLine.trim() !== compiledLine.trim()
+	const lineMismatch = diskLine !== undefined && diskLine.trim() !== compiledLine.trim()
 	if (!lineOutOfRange && !lineMismatch) return resolved
 
 	const compiledHead = compiledLine.split(/\s+/)[0] ?? compiledLine

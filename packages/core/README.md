@@ -13,9 +13,9 @@ The core package of the Aero static site generator. It provides the compiler, ru
 | Export                           | Description                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `@aero-js/core`                  | Default: shared `aero` instance with `mount()` for the client entry.                             |
-| `@aero-js/core/config`       | `defineConfig`, `loadAeroConfig`, and Aero config types.                                         |
-| `@aero-js/core/vite-config`  | `createViteConfig`, `getDefaultOptions` for `vite.config.ts`.                                    |
-| `@aero-js/core/vite`         | `aero()` Vite plugin for build and dev.                                                          |
+| `@aero-js/core/config`           | `defineConfig`, `loadAeroConfig`, and Aero config types.                                         |
+| `@aero-js/core/vite-config`      | `createViteConfig`, `getDefaultOptions` for `vite.config.ts`.                                    |
+| `@aero-js/core/vite`             | `aero()` Vite plugin for build and dev.                                                          |
 | `@aero-js/core/runtime`          | `Aero` class for programmatic rendering.                                                         |
 | `@aero-js/core/runtime/instance` | Shared `aero` instance and `onUpdate` for HMR.                                                   |
 | `@aero-js/core/types`            | Shared TypeScript types.                                                                         |
@@ -31,7 +31,7 @@ Script blocks are classified by attributes (see [Scripts](https://github.com/jam
 | Script type | Attribute              | When it runs      | Notes                                                                                     |
 | ----------- | ---------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
 | Build       | `<script is:build>`    | Build time (Node) | One per template; compiles into the render module. Access `aero.props`, globals, imports. |
-| State       | `<script is:state>`    | Browser           | Requires `reactivity: true`. Declares signals and reactive bindings.                       |
+| State       | `<script is:state>`    | Browser           | Requires `reactivity: true`. Declares signals and reactive bindings.                      |
 | Client      | Plain `<script>`       | Browser           | Bundled as a Vite virtual module; HMR. Use `props` to inject build-time data.             |
 | Inline      | `<script is:inline>`   | Browser           | Left in place; not bundled. For critical inline scripts (e.g. theme FOUC prevention).     |
 | Blocking    | `<script is:blocking>` | Browser           | Extracted and emitted in `<head>`.                                                        |

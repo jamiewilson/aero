@@ -16,14 +16,13 @@
 	"main": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run"
+		"test": "vp test run"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	}
 }

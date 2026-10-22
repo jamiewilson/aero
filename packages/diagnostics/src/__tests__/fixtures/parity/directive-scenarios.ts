@@ -37,7 +37,7 @@ export interface DirectiveParityScenario {
 
 /** Minimal build script so compile tests can lower markup. */
 export const DIRECTIVE_PARITY_BUILD_PREAMBLE =
-	'<script is:build>const xs = [1], email = \'\', id = \'\'</script>'
+	"<script is:build>const xs = [1], email = '', id = ''</script>"
 
 export const DIRECTIVE_PARITY_SCENARIOS: readonly DirectiveParityScenario[] = [
 	{

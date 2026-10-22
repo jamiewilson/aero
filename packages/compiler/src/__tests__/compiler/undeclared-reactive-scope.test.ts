@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 import { CompileError } from '../../types'
@@ -18,9 +18,9 @@ describe('undeclared reactive scope names', () => {
 <button on:click="{ add() }">Add</button>
 <button on:click="{ remove() }">Remove</button>`
 
-		expect(() =>
-			compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })
-		).toThrow(/Unknown name `add`/)
+		expect(() => compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })).toThrow(
+			/Unknown name `add`/
+		)
 	})
 
 	it('reports CompileError location for the missing name', () => {
@@ -83,9 +83,9 @@ describe('undeclared reactive scope names', () => {
 </script>
 <p>{ missing }</p>`
 
-		expect(() =>
-			compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })
-		).toThrow(/Unknown name `missing`/)
+		expect(() => compile(parse(html), { ...mockOptions, diagnosticTemplateSource: html })).toThrow(
+			/Unknown name `missing`/
+		)
 	})
 
 	it('points at { status } not cycleStatus when status is undeclared', () => {

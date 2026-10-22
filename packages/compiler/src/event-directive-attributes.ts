@@ -29,7 +29,10 @@ export function parseEventDirectiveName(attrName: string): EventDirectiveParseRe
 	if (stripped.startsWith('on:')) {
 		const body = stripped.slice(3)
 		if (!body) {
-			return { kind: 'invalid', message: 'Event directive must include an event name (e.g. on:click).' }
+			return {
+				kind: 'invalid',
+				message: 'Event directive must include an event name (e.g. on:click).',
+			}
 		}
 		if (body.startsWith('.') || body.endsWith('.') || body.includes('..')) {
 			return {

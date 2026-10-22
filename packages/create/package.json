@@ -22,10 +22,10 @@
 	"scripts": {
 		"create": "node .",
 		"create-aero-js": "node index.js",
-		"test": "vitest run",
+		"test": "vp test run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	}
 }

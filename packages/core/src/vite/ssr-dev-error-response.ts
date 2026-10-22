@@ -75,23 +75,22 @@ export async function renderDevSsrErrorResponse(args: {
 			: undefined
 	const entryId =
 		err && typeof err === 'object' && 'id' in err ? (err as { id?: unknown }).id : undefined
-	const enrichedErr =
-		root
-			? await enrichCssSyntaxError(err, {
-					root,
-					...(typeof pluginCode === 'string' ? { entryCode: pluginCode } : {}),
-					...(typeof entryId === 'string' ? { entryId } : {}),
-					candidateFiles: collectClientStyleCssFiles(root, clientDir),
-					resolveCss: async (spec, importerBase) => {
-						const importer = path.join(importerBase, '__aero_css_resolve.css')
-						const resolved = await server.pluginContainer.resolveId(spec, importer)
-						if (!resolved?.id) return false
-						const cleaned = resolved.id.replace(/^\0+/, '').split('?')[0]!
-						if (cleaned.includes('/node_modules/.vite/deps/')) return false
-						return cleaned
-					},
-				})
-			: err
+	const enrichedErr = root
+		? await enrichCssSyntaxError(err, {
+				root,
+				...(typeof pluginCode === 'string' ? { entryCode: pluginCode } : {}),
+				...(typeof entryId === 'string' ? { entryId } : {}),
+				candidateFiles: collectClientStyleCssFiles(root, clientDir),
+				resolveCss: async (spec, importerBase) => {
+					const importer = path.join(importerBase, '__aero_css_resolve.css')
+					const resolved = await server.pluginContainer.resolveId(spec, importer)
+					if (!resolved?.id) return false
+					const cleaned = resolved.id.replace(/^\0+/, '').split('?')[0]!
+					if (cleaned.includes('/node_modules/.vite/deps/')) return false
+					return cleaned
+				},
+			})
+		: err
 	const diagnostics = enrichDiagnostics(
 		normalizeToDiagnostics(enrichedErr, pageTemplateHint ? { file: pageTemplateHint } : {})
 	)
@@ -112,9 +111,7 @@ export async function renderDevSsrErrorResponse(args: {
 		if (shouldLog) {
 			// Runtime SSR failures never hit Vite's transform error path, so dump
 			// Aero terminal diagnostics (frame + File/Error) instead of a raw stack.
-			const colors = viteLoggerHasColors(
-				server.config.logger as { hasColors?: unknown }
-			)
+			const colors = viteLoggerHasColors(server.config.logger as { hasColors?: unknown })
 			server.config.logger.error(
 				renderDiagnostics(diagnostics, 'dev-console', colors === undefined ? {} : { colors })
 			)

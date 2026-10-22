@@ -3,7 +3,9 @@ export function isFullPageRegionTarget(targetSelector: string): boolean {
 	return normalized === 'body' || normalized === 'html' || normalized === '#app'
 }
 
-function metaIdentity(meta: HTMLMetaElement): { kind: 'name' | 'property' | 'http-equiv'; key: string } | null {
+function metaIdentity(
+	meta: HTMLMetaElement
+): { kind: 'name' | 'property' | 'http-equiv'; key: string } | null {
 	if (meta.name) return { kind: 'name', key: meta.name }
 	const property = meta.getAttribute('property')
 	if (property) return { kind: 'property', key: property }
@@ -11,7 +13,10 @@ function metaIdentity(meta: HTMLMetaElement): { kind: 'name' | 'property' | 'htt
 	return null
 }
 
-function findExistingMeta(identity: { kind: 'name' | 'property' | 'http-equiv'; key: string }): HTMLMetaElement | null {
+function findExistingMeta(identity: {
+	kind: 'name' | 'property' | 'http-equiv'
+	key: string
+}): HTMLMetaElement | null {
 	if (identity.kind === 'name') {
 		const found = document.querySelector(`meta[name="${identity.key}"]`)
 		return found instanceof HTMLMetaElement ? found : null

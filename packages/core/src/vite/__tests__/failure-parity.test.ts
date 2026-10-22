@@ -5,7 +5,7 @@ import {
 	thrownToAeroDiagnostics,
 	unknownToAeroDiagnostics,
 } from '@aero-js/diagnostics'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { htmlCompileTry } from '../compile-html-try'
 import { createStaticBuildReportingService } from '../static-build-reporting'
 
@@ -33,10 +33,7 @@ describe('failure parity across entry points', () => {
 		const logger = { warn: () => {}, error: () => {} }
 		process.exitCode = undefined
 		try {
-			reporting.reportPrerenderFailure(
-				new AeroCompileError({ message: 'compile failed' }),
-				logger
-			)
+			reporting.reportPrerenderFailure(new AeroCompileError({ message: 'compile failed' }), logger)
 		} catch {
 			// expected rethrow
 		}

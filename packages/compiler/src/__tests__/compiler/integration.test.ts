@@ -4,7 +4,7 @@
  * braces in strings/comments inside the function.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 

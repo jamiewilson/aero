@@ -15,7 +15,8 @@ import { requireAliasResult, requireResolvedConfig, type AeroPluginState } from 
 
 function resolvedHasTailwind(resolved: ResolvedConfig): boolean {
 	return resolved.plugins.some(
-		p => p && typeof p === 'object' && 'name' in p && /tailwindcss/i.test(String((p as Plugin).name))
+		p =>
+			p && typeof p === 'object' && 'name' in p && /tailwindcss/i.test(String((p as Plugin).name))
 	)
 }
 

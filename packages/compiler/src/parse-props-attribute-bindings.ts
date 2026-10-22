@@ -8,8 +8,7 @@
  * - Keyed object `{ title: site.home.title }` injects global `title`; expression refs include `site`.
  */
 
-const PROPS_VALUE_REGEX =
-	/(?:^|\s)(?:(?:aero-|data-aero-)?props)\s*=\s*["']([^"']*)["']/i
+const PROPS_VALUE_REGEX = /(?:^|\s)(?:(?:aero-|data-aero-)?props)\s*=\s*["']([^"']*)["']/i
 const BARE_PROPS_REGEX = /(?:^|\s)(?:(?:aero-|data-aero-)?props)(?!\s*=)(?:\s|\/|$)/i
 const SPREAD_VAR_REGEX = /\{\s*\.\.\.\s*([A-Za-z_$][\w$]*)\s*\}/
 const JS_KEYWORD =
@@ -41,7 +40,9 @@ function parseShorthandObjectKeys(inner: string): string[] {
 }
 
 function extractExpressionIdentifiers(expression: string): string[] {
-	const masked = expression.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match => ' '.repeat(match.length))
+	const masked = expression.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, match =>
+		' '.repeat(match.length)
+	)
 	const out: string[] = []
 	const idRegex = /\b([A-Za-z_$][\w$]*)\b/g
 	let match: RegExpExecArray | null

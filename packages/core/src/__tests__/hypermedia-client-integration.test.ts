@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { mountStateBindings } from '@aero-js/reactivity'
 import { createHypermediaRuntime } from '@aero-js/hypermedia'
 import { SignalStore } from '@aero-js/reactivity'

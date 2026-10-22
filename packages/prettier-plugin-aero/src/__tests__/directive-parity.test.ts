@@ -1,5 +1,5 @@
 import { DIRECTIVE_PARITY_SCENARIOS } from '../../../diagnostics/src/__tests__/fixtures/parity/index.js'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import prettier from 'prettier'
 import plugin from '../index.js'
 

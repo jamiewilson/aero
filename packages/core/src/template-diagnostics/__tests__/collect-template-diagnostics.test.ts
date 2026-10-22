@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { collectTemplateDiagnostics } from '../index'
 import type { SourceDocument } from '../source-document'
 
@@ -84,7 +84,9 @@ const title = 'Hello'
 			flags: { reactivity: false, hypermedia: false },
 		})
 
-		expect(diagnostics.some(d => d.message.includes("Variable 'missingVar' is not defined"))).toBe(false)
+		expect(diagnostics.some(d => d.message.includes("Variable 'missingVar' is not defined"))).toBe(
+			false
+		)
 	})
 })
 
@@ -103,7 +105,9 @@ import code from '@client/components/code.html'
 			workspaceRoot: repoRoot,
 		})
 
-		const notImported = diagnostics.filter(d => d.message.includes("Component 'code' is not imported"))
+		const notImported = diagnostics.filter(d =>
+			d.message.includes("Component 'code' is not imported")
+		)
 		expect(notImported).toHaveLength(0)
 	})
 
@@ -119,7 +123,9 @@ import code from '@shared/ui/code.html'
 			workspaceRoot: repoRoot,
 		})
 
-		const notImported = diagnostics.filter(d => d.message.includes("Component 'code' is not imported"))
+		const notImported = diagnostics.filter(d =>
+			d.message.includes("Component 'code' is not imported")
+		)
 		expect(notImported).toHaveLength(0)
 	})
 })
@@ -141,8 +147,7 @@ import card from '@components/card.html'
 
 		const missing = diagnostics.find(
 			d =>
-				d.message.includes("Missing required prop 'title'") &&
-				d.message.includes('card-component')
+				d.message.includes("Missing required prop 'title'") && d.message.includes('card-component')
 		)
 		expect(missing).toBeDefined()
 		expect(missing!.code).toBe('AERO_COMPILE')
@@ -171,8 +176,7 @@ import card from '@components/card.html'
 
 		const missing = diagnostics.find(
 			d =>
-				d.message.includes("Missing required prop 'title'") &&
-				d.message.includes('card-component')
+				d.message.includes("Missing required prop 'title'") && d.message.includes('card-component')
 		)
 		expect(missing).toBeDefined()
 	})
@@ -208,9 +212,7 @@ import note from './note.html'
 					d.message.includes('note-component')
 			)
 			expect(missing).toBeDefined()
-			expect(
-				diagnostics.some(d => d.message.includes("Missing required prop 'body'"))
-			).toBe(false)
+			expect(diagnostics.some(d => d.message.includes("Missing required prop 'body'"))).toBe(false)
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true })
 		}
@@ -319,10 +321,7 @@ const { count = Aero.bindable() } = Aero.props
 				],
 			])
 			try {
-				overlays.set(
-					fs.realpathSync(compPath),
-					overlays.get(compPath)!
-				)
+				overlays.set(fs.realpathSync(compPath), overlays.get(compPath)!)
 			} catch {
 				/* ignore */
 			}

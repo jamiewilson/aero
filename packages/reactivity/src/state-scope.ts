@@ -84,7 +84,11 @@ function topoSortDerived(bindings: readonly StateBindingSpec[]): StateBindingSpe
 	return sorted
 }
 
-function evalInit(binding: StateBindingSpec, scope: StateScope, allowLegacyRuntimeCompile: boolean): unknown {
+function evalInit(
+	binding: StateBindingSpec,
+	scope: StateScope,
+	allowLegacyRuntimeCompile: boolean
+): unknown {
 	if (binding.init) return binding.init(scope)
 	if (allowLegacyRuntimeCompile && binding.initExpr) {
 		// eslint-disable-next-line @typescript-eslint/no-implied-eval
@@ -118,7 +122,6 @@ function defineScopeAccessor(
 		...(write ? { set: write } : {}),
 	})
 }
-
 
 /**
  * Build a plain object scope backed by store signals/computeds for compiled state handlers.
@@ -155,7 +158,9 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		} else if (!store.has(binding.name)) {
 			const initial = evalInit(binding, scope, allowLegacyRuntimeCompile)
 			const signal = store.signal(binding.name)
-			signal.value = makeReactive(initial, () => (store.get(binding.name) as Signal<unknown>).notify())
+			signal.value = makeReactive(initial, () =>
+				(store.get(binding.name) as Signal<unknown>).notify()
+			)
 		} else {
 			const signal = store.get(binding.name) as Signal<unknown>
 			if (!(signal instanceof Computed)) {
@@ -169,19 +174,15 @@ export function createStateScope(options: StateScopeOptions): StateScope {
 		const notifyBinding = (): void => {
 			;(store.get(binding.name) as Signal<unknown>).notify()
 		}
-		const write = binding.reactiveProp && !binding.bindable
-			? () => {
-					throw new Error(`[aero] Readonly reactive prop cannot be assigned: ${binding.name}`)
-				}
-			: (value: unknown) => {
-					;(store.get(binding.name) as Signal<unknown>).value = makeReactive(value, notifyBinding)
-				}
-		defineScopeAccessor(
-			scope,
-			binding.name,
-			() => store.get(binding.name).value,
-			write
-		)
+		const write =
+			binding.reactiveProp && !binding.bindable
+				? () => {
+						throw new Error(`[aero] Readonly reactive prop cannot be assigned: ${binding.name}`)
+					}
+				: (value: unknown) => {
+						;(store.get(binding.name) as Signal<unknown>).value = makeReactive(value, notifyBinding)
+					}
+		defineScopeAccessor(scope, binding.name, () => store.get(binding.name).value, write)
 	}
 
 	for (const binding of topoSortDerived(bindings)) {

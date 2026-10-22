@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { checkTemplateBuildScriptTypes } from '../template-type-check'
 
 const TYPECHECK_TIMEOUT_MS = 15_000

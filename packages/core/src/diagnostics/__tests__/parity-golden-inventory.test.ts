@@ -9,7 +9,7 @@ import { compile, parse } from '@aero-js/compiler'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { PARITY_SCENARIOS } from '../../../../diagnostics/src/__tests__/fixtures/parity/scenarios'
 
 interface MatrixRule {

@@ -2,7 +2,7 @@
  * Unit tests for utils/parse.ts: extractObjectKeys.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { extractObjectKeys } from '../parse'
 
 /** extractObjectKeys: parses object literal/shorthand to keys; used for props preamble in client scripts. */

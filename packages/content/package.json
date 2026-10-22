@@ -45,9 +45,9 @@
 		}
 	},
 	"scripts": {
-		"build": "tsdown src/index.ts src/types.ts src/vite.ts src/markdown.ts src/render.ts src/processor.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack src/index.ts src/types.ts src/vite.ts src/markdown.ts src/render.ts src/processor.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "vp test run",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -67,11 +67,10 @@
 		"@types/hast": "^3.0.4",
 		"@types/node": "catalog:",
 		"arktype": "^2.2.1",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",
-		"vitest": "catalog:",
-		"zod": "^4.4.3"
+		"zod": "^4.4.3",
+		"vite-plus": "catalog:"
 	},
 	"peerDependencies": {
 		"arktype": "^2.0.0",

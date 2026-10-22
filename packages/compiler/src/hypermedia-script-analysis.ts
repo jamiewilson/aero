@@ -80,7 +80,9 @@ export function detectHypermediaIssues(
 	return issues
 }
 
-export function extractStaticActionUrl(handlerExpr: string): { method: string; url: string } | null {
+export function extractStaticActionUrl(
+	handlerExpr: string
+): { method: string; url: string } | null {
 	const inner = stripHandlerBraces(handlerExpr)
 	const match = inner.match(/^(POST|GET|PUT|PATCH|DELETE)\s*\(\s*(['"])([^'"]*)\2/)
 	if (!match) return null

@@ -168,7 +168,8 @@ function isTypeOnlyStatement(stmt: EstNode): boolean {
 function isImportOrSkippedBinding(stmt: EstNode): boolean {
 	if (stmt.type === 'ImportDeclaration') return true
 	let declaration = stmt
-	if (stmt.type === 'ExportNamedDeclaration' && stmt.declaration) declaration = stmt.declaration as EstNode
+	if (stmt.type === 'ExportNamedDeclaration' && stmt.declaration)
+		declaration = stmt.declaration as EstNode
 	if (declaration.type === 'VariableDeclaration') {
 		for (const d of declaration.declarations ?? []) {
 			if (d.id?.type === 'ObjectPattern' && isAeroPropsExpression(d.init as EstNode)) return true
@@ -318,7 +319,8 @@ export function lowerStateScript(
 				continue
 			}
 
-			if (typeof declarator.init.start !== 'number' || typeof declarator.init.end !== 'number') continue
+			if (typeof declarator.init.start !== 'number' || typeof declarator.init.end !== 'number')
+				continue
 			const initSource = script.slice(declarator.init.start, declarator.init.end)
 			moduleConstants.push(stripModuleConstantSource(`const ${name} = ${initSource}`))
 		}

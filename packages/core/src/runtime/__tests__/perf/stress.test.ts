@@ -4,15 +4,12 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { mountStateBindings, processFragment } from '@aero-js/reactivity'
 import { SignalStore } from '@aero-js/reactivity'
 
 const baseline = JSON.parse(
-	readFileSync(
-		resolve(dirname(fileURLToPath(import.meta.url)), 'perf-baseline.json'),
-		'utf8'
-	)
+	readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'perf-baseline.json'), 'utf8')
 ) as {
 	processFragment100CyclesMs: number
 	mountDestroy100CyclesMs: number

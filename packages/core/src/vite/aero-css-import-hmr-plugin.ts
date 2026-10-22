@@ -7,9 +7,7 @@
 import type { ModuleNode, Plugin } from 'vite'
 
 function isAssetOnlyCssHotUpdate(modules: ModuleNode[]): boolean {
-	return (
-		modules.length > 0 && modules.every(mod => mod.type === 'asset' || mod.id == null)
-	)
+	return modules.length > 0 && modules.every(mod => mod.type === 'asset' || mod.id == null)
 }
 
 /** Walk importers from asset CSS deps to find self-accepting CSS HMR boundaries. */
@@ -45,11 +43,12 @@ export function aeroCssImportHmrPlugin(): Plugin {
 		enforce: 'pre',
 		hotUpdate(ctx) {
 			if (!ctx.file.endsWith('.css')) return
-			if (!isAssetOnlyCssHotUpdate(ctx.modules)) return
+			const modules = ctx.modules as unknown as ModuleNode[]
+			if (!isAssetOnlyCssHotUpdate(modules)) return
 
-			const boundaries = collectSelfAcceptingCssImporters(ctx.modules)
+			const boundaries = collectSelfAcceptingCssImporters(modules)
 			if (boundaries.length === 0) return
-			return boundaries
+			return boundaries as unknown as typeof ctx.modules
 		},
 	}
 }

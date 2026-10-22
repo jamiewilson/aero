@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import {
 	AERO_DIAGNOSTICS_ERROR_PROP,
 	createDiagnosticLogGate,
@@ -12,7 +12,9 @@ describe('aero vite logger code frames', () => {
 		const baseError = vi.fn()
 		const wrapped = wrapAeroViteLogger({ error: baseError, hasColors: false } as any, gate)
 		const err = Object.assign(
-			new Error('Reactive class binding `class:is-active` must reference a declared state variable.'),
+			new Error(
+				'Reactive class binding `class:is-active` must reference a declared state variable.'
+			),
 			{
 				id: '/proj/client/pages/demos/bindings.html',
 				plugin: 'vite-plugin-aero-transform',

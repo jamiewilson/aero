@@ -63,7 +63,9 @@ function parseForDirectiveWrapped(wrapped: string) {
 	return parseSync(FOR_DIRECTIVE_FILE, wrapped, FOR_DIRECTIVE_PARSE_OPTIONS)
 }
 
-function getFirstForOfStatement(result: ReturnType<typeof parseForDirectiveWrapped>): EstNode | undefined {
+function getFirstForOfStatement(
+	result: ReturnType<typeof parseForDirectiveWrapped>
+): EstNode | undefined {
 	const program = result.program as unknown as { body?: EstNode[] }
 	const stmt = program.body?.[0]
 	return stmt?.type === 'ForOfStatement' ? stmt : undefined

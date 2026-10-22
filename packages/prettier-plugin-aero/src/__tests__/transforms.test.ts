@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { parseMinimalHtmlFromText } from '@aero-js/html-parser'
 import { applyAeroTransforms } from '../transforms.js'
 import { defaultAeroOptions } from '../options.js'
@@ -8,9 +8,14 @@ async function formatAero(
 	options: Partial<typeof defaultAeroOptions> = {}
 ): Promise<string> {
 	const doc = parseMinimalHtmlFromText(source)
-	return applyAeroTransforms(source, doc.roots, { ...defaultAeroOptions, ...options }, {
-		semi: false,
-	})
+	return applyAeroTransforms(
+		source,
+		doc.roots,
+		{ ...defaultAeroOptions, ...options },
+		{
+			semi: false,
+		}
+	)
 }
 
 describe('applyAeroTransforms', () => {
@@ -85,10 +90,9 @@ describe('applyAeroTransforms', () => {
 	})
 
 	it('does not parenthesize comma-separated props binding lists', async () => {
-		const component = await formatAero(
-			'<meta-component props="{ storageKey, attribute }" />',
-			{ aeroBracketSpacing: true }
-		)
+		const component = await formatAero('<meta-component props="{ storageKey, attribute }" />', {
+			aeroBracketSpacing: true,
+		})
 		expect(component).toContain('props="{ storageKey, attribute }"')
 		expect(component).not.toContain('(storageKey')
 
@@ -172,10 +176,9 @@ let active = false</script>
 		expect(compact).toContain('{site.home.subtitle}')
 		expect(compact).not.toContain('{ site.home.subtitle }')
 
-		const spaced = await formatAero(
-			'<p>{site.home.subtitle} <a href="/docs">Go</a>.</p>',
-			{ aeroBracketSpacing: true }
-		)
+		const spaced = await formatAero('<p>{site.home.subtitle} <a href="/docs">Go</a>.</p>', {
+			aeroBracketSpacing: true,
+		})
 		expect(spaced).toContain('{ site.home.subtitle }')
 	})
 

@@ -2,7 +2,7 @@
  * Unit tests for build-script-analysis: AST-based import and getStaticPaths extraction.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import {
 	analyzeBuildScript,
 	analyzeBuildScriptForEditor,

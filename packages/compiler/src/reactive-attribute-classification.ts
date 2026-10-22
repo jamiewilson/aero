@@ -86,8 +86,7 @@ function referencesStateBindings(
 	stateBindingNames: Iterable<string> | undefined
 ): boolean {
 	if (!stateBindingNames) return false
-	const names =
-		stateBindingNames instanceof Set ? stateBindingNames : new Set(stateBindingNames)
+	const names = stateBindingNames instanceof Set ? stateBindingNames : new Set(stateBindingNames)
 	return referencesStateBindingExpression(expr, names)
 }
 

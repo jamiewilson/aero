@@ -22,12 +22,12 @@ The core client entry bootstraps the runtime and exposes `aero.getReactivityRunt
 
 ## Public API
 
-| Export | Description |
-| --- | --- |
-| `createReactivityRuntime(options?)` | Create a standalone runtime with optional `initialState` and `hydrationRoot` |
-| `Signal`, `Computed`, `Effect`, `SignalStore` | Primitives for advanced or programmatic use |
-| `mountStateBindings`, `bindEvent`, `bindText`, … | Low-level binding helpers (used by compiler output) |
-| `AeroReactivity`, `processFragment` | Fragment processing API |
+| Export                                           | Description                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `createReactivityRuntime(options?)`              | Create a standalone runtime with optional `initialState` and `hydrationRoot` |
+| `Signal`, `Computed`, `Effect`, `SignalStore`    | Primitives for advanced or programmatic use                                  |
+| `mountStateBindings`, `bindEvent`, `bindText`, … | Low-level binding helpers (used by compiler output)                          |
+| `AeroReactivity`, `processFragment`              | Fragment processing API                                                      |
 
 Import directly when building tooling or tests against the package:
 

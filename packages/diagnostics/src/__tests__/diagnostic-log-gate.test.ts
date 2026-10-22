@@ -2,7 +2,7 @@
  * Diagnostic fingerprint / log-gate unit tests.
  */
 
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vite-plus/test'
 import {
 	createDiagnosticLogGate,
 	diagnosticFingerprint,

@@ -26,9 +26,16 @@ const DATA_PROPS_ATTRS = [
 	`${DATA_AERO_ATTR_PREFIX}${CONST.ATTR_PROPS}`,
 ]
 
-const SCRIPT_IS_KINDS = ['build', 'state', 'inline', 'blocking'] as const satisfies readonly PrefixableScriptIsKind[]
+const SCRIPT_IS_KINDS = [
+	'build',
+	'state',
+	'inline',
+	'blocking',
+] as const satisfies readonly PrefixableScriptIsKind[]
 
-const SCRIPT_TAXONOMY_ATTRS = new Set(SCRIPT_IS_KINDS.flatMap(kind => [...scriptIsAttributeNames(kind)]))
+const SCRIPT_TAXONOMY_ATTRS = new Set(
+	SCRIPT_IS_KINDS.flatMap(kind => [...scriptIsAttributeNames(kind)])
+)
 
 const CLIENT_SCRIPT_EXCLUDED_ATTRS = new Set([
 	...SCRIPT_TAXONOMY_ATTRS,
@@ -246,7 +253,9 @@ function serializeTemplate(doc: Document, isFullDocument: boolean): string {
 	return doc.body?.innerHTML ?? ''
 }
 
-function getPrefixedPropsAttribute(scriptEl: Element): { name: string; value: string | null } | null {
+function getPrefixedPropsAttribute(
+	scriptEl: Element
+): { name: string; value: string | null } | null {
 	for (const name of DATA_PROPS_ATTRS) {
 		if (scriptEl.hasAttribute(name)) {
 			return { name, value: scriptEl.getAttribute(name) }
@@ -257,8 +266,7 @@ function getPrefixedPropsAttribute(scriptEl: Element): { name: string; value: st
 
 function getPassData(scriptEl: Element): string | undefined {
 	const prefixed = getPrefixedPropsAttribute(scriptEl)
-	let passData =
-		scriptEl.getAttribute(CONST.ATTR_PROPS) ?? prefixed?.value ?? undefined
+	let passData = scriptEl.getAttribute(CONST.ATTR_PROPS) ?? prefixed?.value ?? undefined
 	const hasProps = scriptEl.hasAttribute(CONST.ATTR_PROPS) || prefixed != null
 	// Bare props shorthand: no value → spread local props
 	if (passData === '' && hasProps) {

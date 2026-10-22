@@ -82,11 +82,7 @@ export function checkDirectiveExpressionBraces(
 			const attrRange = findAttributeRange(rawAttrs, attrBase, attrName)
 			if (!attrRange) continue
 
-			const hasValue = resolveRuntimeDirectiveHasValue(
-				attrName,
-				rawParserValue,
-				rawAttrs
-			)
+			const hasValue = resolveRuntimeDirectiveHasValue(attrName, rawParserValue, rawAttrs)
 			const attrValue = normalizeAttributeValue(rawParserValue)
 
 			const buildIssue = getBuildDirectiveValidationIssue({
@@ -96,13 +92,7 @@ export function checkDirectiveExpressionBraces(
 				parentHasSwitch,
 			})
 			if (buildIssue) {
-				pushDirectiveDiagnostic(
-					document,
-					diagnostics,
-					attrRange.start,
-					attrRange.end,
-					buildIssue
-				)
+				pushDirectiveDiagnostic(document, diagnostics, attrRange.start, attrRange.end, buildIssue)
 				continue
 			}
 

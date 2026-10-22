@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -15,8 +15,8 @@ function packagePathsFromBumpScript(): string[] {
 	const block = script.slice(from + 1, to)
 	return block
 		.split('\n')
-		.map((line) => line.trim().replace(/^'|',?$/g, ''))
-		.filter((line) => line.length > 0 && line.endsWith('package.json'))
+		.map(line => line.trim().replace(/^'|',?$/g, ''))
+		.filter(line => line.length > 0 && line.endsWith('package.json'))
 }
 
 describe('bump-versions.js packagePaths', () => {
@@ -30,6 +30,6 @@ describe('bump-versions.js packagePaths', () => {
 		const paths = packagePathsFromBumpScript()
 		expect(paths).toContain('packages/compiler/package.json')
 		expect(paths).toContain('packages/create/package.json')
-		expect(paths.some((p) => p.includes('starters/'))).toBe(false)
+		expect(paths.some(p => p.includes('starters/'))).toBe(false)
 	})
 })

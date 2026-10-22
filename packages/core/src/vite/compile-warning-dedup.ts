@@ -97,8 +97,6 @@ export function compileOrReport(
 	try {
 		return compileFn()
 	} catch (err) {
-		ctx.error(
-			reportAeroFailure(err, { defaultFile: filePath, plugin: pluginName }, 'vite-overlay')
-		)
+		ctx.error(reportAeroFailure(err, { defaultFile: filePath, plugin: pluginName }, 'vite-overlay'))
 	}
 }

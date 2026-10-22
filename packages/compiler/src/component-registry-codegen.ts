@@ -82,7 +82,9 @@ export function collectComponentRegistryEntries(componentsDir: string): Componen
 	return out.sort((a, b) => a.tag.localeCompare(b.tag))
 }
 
-function collectReactivePropsFromTemplate(fullPath: string): readonly ComponentReactivePropMetadata[] {
+function collectReactivePropsFromTemplate(
+	fullPath: string
+): readonly ComponentReactivePropMetadata[] {
 	const source = fs.readFileSync(fullPath, 'utf-8')
 	const parsed = parse(source)
 	const stateScript = parsed.stateScript?.content ?? ''
@@ -189,7 +191,8 @@ export function writeComponentRegistryDts(
 	outPath = path.join(root, DEFAULT_COMPONENT_REGISTRY_REL)
 ): { path: string; entryCount: number } {
 	const entries = collectComponentRegistryEntries(componentsDir)
-	const text = entries.length === 0 ? EMPTY_COMPONENT_REGISTRY_DTS : renderComponentRegistryDts(entries)
+	const text =
+		entries.length === 0 ? EMPTY_COMPONENT_REGISTRY_DTS : renderComponentRegistryDts(entries)
 	const withProps = entries.filter(e => e.propsTypeName)
 	fs.mkdirSync(path.dirname(outPath), { recursive: true })
 	fs.writeFileSync(outPath, text, 'utf-8')

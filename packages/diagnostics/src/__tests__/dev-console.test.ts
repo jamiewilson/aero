@@ -2,7 +2,7 @@
  * Dev console formatter: timestamp + [aero] Error + loc + frame (no banners / Hint).
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { formatDiagnosticsDevConsole } from '../render/dev-console'
 
 const fixed = new Date(2026, 6, 16, 14, 36, 27)

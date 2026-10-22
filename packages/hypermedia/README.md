@@ -26,13 +26,13 @@ Action functions are injected into `on:*` handlers when hypermedia is enabled â€
 
 ## Public API
 
-| Export | Description |
-| --- | --- |
-| `createHypermediaRuntime(options?)` | Runtime with `executeAction`, `swapElement`, `process` |
-| `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | Action functions (import in `is:state`; intrinsic in `on:*` handlers) |
-| `performSwap`, `resolveTarget`, `parseSwapStyle` | Swap helpers |
-| `dispatchLifecycleEvent` | Lifecycle event dispatch |
-| `process` | Hypermedia-specific fragment wiring |
+| Export                                           | Description                                                           |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| `createHypermediaRuntime(options?)`              | Runtime with `executeAction`, `swapElement`, `process`                |
+| `GET`, `POST`, `PUT`, `PATCH`, `DELETE`          | Action functions (import in `is:state`; intrinsic in `on:*` handlers) |
+| `performSwap`, `resolveTarget`, `parseSwapStyle` | Swap helpers                                                          |
+| `dispatchLifecycleEvent`                         | Lifecycle event dispatch                                              |
+| `process`                                        | Hypermedia-specific fragment wiring                                   |
 
 Re-exported from `@aero-js/core`:
 

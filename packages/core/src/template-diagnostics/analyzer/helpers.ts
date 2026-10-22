@@ -60,5 +60,7 @@ export function maskTemplateLiteralStatic(text: string): string {
 }
 
 export function isInsideHtmlComment(text: string, position: number): boolean {
-	return collectHtmlCommentRanges(text).some(range => position >= range.start && position < range.end)
+	return collectHtmlCommentRanges(text).some(
+		range => position >= range.start && position < range.end
+	)
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { coerceAttributeValue, formatAttributeBind } from '../bindings/coerce-attribute-value'
 import { bindAttribute } from '../bindings/attribute'
 import { bindProperty } from '../bindings/property'

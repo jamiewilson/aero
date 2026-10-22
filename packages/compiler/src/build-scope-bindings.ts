@@ -195,7 +195,10 @@ function recordPatternBindings(
 	})
 }
 
-function walkNestedScriptBindings(node: EstNode, yieldBinding: (binding: BuildScriptBinding) => void): void {
+function walkNestedScriptBindings(
+	node: EstNode,
+	yieldBinding: (binding: BuildScriptBinding) => void
+): void {
 	switch (node.type) {
 		case 'ArrowFunctionExpression':
 		case 'FunctionExpression':
@@ -221,7 +224,8 @@ function walkNestedScriptBindings(node: EstNode, yieldBinding: (binding: BuildSc
 	}
 
 	for (const key of Object.keys(node)) {
-		if (key === 'type' || key === 'start' || key === 'end' || key === 'name' || key === 'kind') continue
+		if (key === 'type' || key === 'start' || key === 'end' || key === 'name' || key === 'kind')
+			continue
 		const value = node[key]
 		if (Array.isArray(value)) {
 			for (const item of value) {
@@ -359,11 +363,7 @@ export function formatBuildScopeAmbientPrelude(
 		.map(s => s.trim())
 		.filter(Boolean)
 		.join('\n\n')
-	const bindingBlock = formatBuildBindingAmbientBlock(
-		names,
-		precomputedBindingTypes,
-		writableNames
-	)
+	const bindingBlock = formatBuildBindingAmbientBlock(names, precomputedBindingTypes, writableNames)
 	if (typeBlock && bindingBlock) return typeBlock + '\n\n' + bindingBlock
 	if (typeBlock) return typeBlock.endsWith('\n') ? typeBlock : typeBlock + '\n'
 	return bindingBlock

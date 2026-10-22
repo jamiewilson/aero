@@ -17,7 +17,10 @@ import {
 	validateIndividualAttrs,
 	validateSpreadProps,
 } from './component-required-props'
-import { validateComponentReactiveProps, validateComponentBindRequiresState } from './component-reactive-props'
+import {
+	validateComponentReactiveProps,
+	validateComponentBindRequiresState,
+} from './component-reactive-props'
 import { traceLayoutToSinkProps } from './layout-props-chain'
 
 export { resolvePropsSpreadVariable } from './component-required-props'
@@ -57,8 +60,7 @@ export function checkComponentProps(
 		if (!importedSpecifier || !isValidTemplateImportSpecifier(importedSpecifier)) continue
 
 		const rawResolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
-		const resolvedPath =
-			rawResolved && fs.existsSync(rawResolved) ? rawResolved : null
+		const resolvedPath = rawResolved && fs.existsSync(rawResolved) ? rawResolved : null
 		if (!resolvedPath) continue
 
 		const suffix = suffixMatch[1] as string
@@ -131,11 +133,7 @@ export function checkComponentProps(
 				}
 			})() ??
 			fs.readFileSync(resolvedPath, 'utf-8')
-		const requiredProps = getRequiredPropsFromComponent(
-			componentContent,
-			resolvedPath,
-			resolver
-		)
+		const requiredProps = getRequiredPropsFromComponent(componentContent, resolvedPath, resolver)
 		if (!requiredProps || requiredProps.length === 0) continue
 
 		const spreadVar = resolvePropsSpreadVariable(attrs)

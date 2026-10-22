@@ -15,7 +15,11 @@ import {
 	type Node,
 } from '@aero-js/html-parser'
 import { collectBindingTypeStringsFromBuildScripts } from '@aero-js/compiler'
-import { formatBuildScopeAmbientPrelude, iterateBuildScriptBindings, collectBuildScopeBindingNames } from '@aero-js/compiler/build-scope-bindings'
+import {
+	formatBuildScopeAmbientPrelude,
+	iterateBuildScriptBindings,
+	collectBuildScopeBindingNames,
+} from '@aero-js/compiler/build-scope-bindings'
 import {
 	buildTemplateEditorAmbient,
 	collectForDirectiveBindingNames,
@@ -119,7 +123,11 @@ function buildScriptTemplateUseFooter(
 	return formatSyntheticUses(names)
 }
 
-function stateScriptTemplateUseFooter(sourceText: string, scriptContent: string, filePath = ''): string {
+function stateScriptTemplateUseFooter(
+	sourceText: string,
+	scriptContent: string,
+	filePath = ''
+): string {
 	const usedInTemplate = collectTemplateUsedNames(sourceText, filePath)
 	const names = new Set<string>()
 	for (const binding of iterateBuildScriptBindings(scriptContent, {
@@ -130,10 +138,10 @@ function stateScriptTemplateUseFooter(sourceText: string, scriptContent: string,
 	return formatSyntheticUses(names)
 }
 
-
 function tryResolveToTs(candidateBasePath: string): string | null {
 	if (!candidateBasePath) return null
-	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.ts')) return candidateBasePath
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.ts'))
+		return candidateBasePath
 	return null
 }
 
@@ -178,8 +186,7 @@ function tryResolveToExistingFile(candidateBasePath: string): string | null {
 
 function hasExportModifier(node: ts.Node): boolean {
 	return (
-		ts.canHaveModifiers(node) &&
-		!!node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
+		ts.canHaveModifiers(node) && !!node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
 	)
 }
 
@@ -305,7 +312,10 @@ function buildNonCodeImportAmbientSupplement(
 		}
 	}
 	return [...specifiers]
-		.map(specifier => `declare module '${specifier.replace(/'/g, "\\'")}' {\n  const value: any\n  export default value\n}`)
+		.map(
+			specifier =>
+				`declare module '${specifier.replace(/'/g, "\\'")}' {\n  const value: any\n  export default value\n}`
+		)
 		.join('\n\n')
 }
 
@@ -339,7 +349,9 @@ function getScriptType(
 
 const PROPS_ATTR_KEYS = ['props', 'aero-props', 'data-aero-props'] as const
 
-function getPropsAttributeValue(attrs: Record<string, string | null | undefined>): string | undefined {
+function getPropsAttributeValue(
+	attrs: Record<string, string | null | undefined>
+): string | undefined {
 	for (const key of PROPS_ATTR_KEYS) {
 		if (key in attrs) return attrs[key] ?? undefined
 	}
@@ -507,7 +519,9 @@ function slotBindingNameForSlot(slotName: string): string | null {
 	return candidate
 }
 
-function collectBuildBindingProperties(buildScriptBodies: readonly string[]): BuildBindingProperties {
+function collectBuildBindingProperties(
+	buildScriptBodies: readonly string[]
+): BuildBindingProperties {
 	const out = new Map<string, ReadonlySet<string>>()
 	for (const body of buildScriptBodies) {
 		for (const binding of iterateBuildScriptBindings(body)) {
@@ -602,7 +616,8 @@ function loadPathAliasesForImporter(importerFile: string): PathAlias[] {
 
 function tryResolveToHtml(candidateBasePath: string): string | null {
 	if (!candidateBasePath) return null
-	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html')) return candidateBasePath
+	if (fs.existsSync(candidateBasePath) && candidateBasePath.endsWith('.html'))
+		return candidateBasePath
 	return null
 }
 
@@ -673,10 +688,7 @@ function collectSlotTypeInfoByName(
 		const slotNameRaw = attrs.name ?? 'default'
 		const slotName = String(slotNameRaw).replace(/^['"]|['"]$/g, '')
 		const normalized = slotName || 'default'
-		slotNamesWithBindings.set(
-			normalized,
-			parseSlotPropsBindings(getPropsAttributeValue(attrs))
-		)
+		slotNamesWithBindings.set(normalized, parseSlotPropsBindings(getPropsAttributeValue(attrs)))
 	}
 	const out = new Map<
 		string,
@@ -836,10 +848,9 @@ export class AeroVirtualCode implements VirtualCode {
 		this.buildOnlyBindingNames = collectBuildScopeBindingNames(buildScriptBodies)
 
 		const inferenceBodies = [...buildScriptBodies, ...stateScriptBodies]
-		const cachedBindingTypes =
-			inferenceBodies.some(body => body.trim().length > 0)
-				? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
-				: undefined
+		const cachedBindingTypes = inferenceBodies.some(body => body.trim().length > 0)
+			? collectBindingTypeStringsFromBuildScripts(inferenceBodies)
+			: undefined
 
 		const allScriptBodies = collectTemplateScriptBlocks(sourceText)
 			.filter(block => block.kind !== 'external')
@@ -984,9 +995,7 @@ export class AeroVirtualCode implements VirtualCode {
 			if (options?.isForDirectiveHead === true) {
 				const forBindings = getForBindingsAtOffset(sourceOffset, forScopes)
 				const voidUses = [...forBindings].map(name => `void ${name};`).join(' ')
-				const stmt = voidUses
-					? `for (${expression}) { ${voidUses} }`
-					: `for (${expression}) {}`
+				const stmt = voidUses ? `for (${expression}) { ${voidUses} }` : `for (${expression}) {}`
 				const exprOffsetInVirtual = head.length + 'for ('.length
 				const virtualText = head + stmt
 				return {
@@ -1088,7 +1097,12 @@ export class AeroVirtualCode implements VirtualCode {
 					const scriptForVirtual =
 						scriptType === 'state'
 							? annotateStateScriptForEditorTypecheck(scriptContent)
-							: { text: scriptContent, segments: [{ sourceStart: 0, sourceLength: scriptContent.length, generatedStart: 0 }] }
+							: {
+									text: scriptContent,
+									segments: [
+										{ sourceStart: 0, sourceLength: scriptContent.length, generatedStart: 0 },
+									],
+								}
 					const buildPrelude =
 						scriptType === 'state' && this.buildOnlyBindingNames.size > 0
 							? formatBuildScopeAmbientPrelude(
@@ -1103,16 +1117,8 @@ export class AeroVirtualCode implements VirtualCode {
 							: ''
 					const templateUseFooter =
 						scriptType === 'build'
-							? buildScriptTemplateUseFooter(
-									sourceText,
-									scriptContent,
-									this.htmlFilePath ?? ''
-								)
-							: stateScriptTemplateUseFooter(
-									sourceText,
-									scriptContent,
-									this.htmlFilePath ?? ''
-								)
+							? buildScriptTemplateUseFooter(sourceText, scriptContent, this.htmlFilePath ?? '')
+							: stateScriptTemplateUseFooter(sourceText, scriptContent, this.htmlFilePath ?? '')
 					const virtualText =
 						BUILD_SCRIPT_PREAMBLE + buildPrelude + scriptForVirtual.text + templateUseFooter
 					const generatedPreludeLength = BUILD_SCRIPT_PREAMBLE.length + buildPrelude.length

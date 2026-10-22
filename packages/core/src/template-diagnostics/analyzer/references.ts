@@ -202,9 +202,7 @@ function extractIdentifiers(
 			const nameStartInMatch = propMatch[0].lastIndexOf(propName)
 			const propAbsStart = startOffset + currentOffsetRel + matchStartInAfter + nameStartInMatch
 
-			propertyRanges!.push(
-				rangeFromOffsets(document, propAbsStart, propAbsStart + propName.length)
-			)
+			propertyRanges!.push(rangeFromOffsets(document, propAbsStart, propAbsStart + propName.length))
 
 			const matchLen = propMatch[0].length
 			currentAfter = currentAfter.slice(matchLen)

@@ -318,14 +318,14 @@ Client `<script>` blocks (plain, `is:inline`, `is:blocking`) only receive build-
 
 ## Summary
 
-| Area                         | Approach                                                                                                                                                             |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Area                         | Approach                                                                                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Component props**          | Define `interface Props { ... }` and use `Aero.props as Props` when destructuring; cross-file validation for `props` spread, bare `props`, and layout attributes (with limitations) |
-| **Script props**             | Pass build data with `props="{ ... }"` on client scripts; extension validates script-body refs; language server injects `declare const` for IntelliSense |
-| **Slot props (named slots)** | Optional `{Name}SlotProps` interface in the child; convention for future slot-body typing (see [Slot prop types](#slot-prop-types-convention))                       |
-| **Content globals**          | Export typed objects from `content/*.ts`; use `satisfies` for validation                                                                                             |
-| **Content collections**      | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data`                                                                             |
-| **Ambient globals**          | Use `@aero-js/core/env`; extend via project `env.d.ts`                                                                                                               |
-| **Path aliases**             | Configure in `tsconfig.json` and keep in sync with Aero `dirs`                                                                                                       |
+| **Script props**             | Pass build data with `props="{ ... }"` on client scripts; extension validates script-body refs; language server injects `declare const` for IntelliSense                            |
+| **Slot props (named slots)** | Optional `{Name}SlotProps` interface in the child; convention for future slot-body typing (see [Slot prop types](#slot-prop-types-convention))                                      |
+| **Content globals**          | Export typed objects from `content/*.ts`; use `satisfies` for validation                                                                                                            |
+| **Content collections**      | Use Zod schema in `content.config.ts`; optionally add `DocData` interface for `doc.data`                                                                                            |
+| **Ambient globals**          | Use `@aero-js/core/env`; extend via project `env.d.ts`                                                                                                                              |
+| **Path aliases**             | Configure in `tsconfig.json` and keep in sync with Aero `dirs`                                                                                                                      |
 
 The language server provides IntelliSense, diagnostics, and navigation for build scripts. Typing props and content data gives you better autocomplete and catches mistakes at edit time.

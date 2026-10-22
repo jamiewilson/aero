@@ -36,7 +36,10 @@ export function escapeHtml(s: unknown): string {
 }
 
 /** Escape JSON for safe embedding inside inline `<script>` tags. */
-export function escapeScriptJson(value: unknown, replacer?: (key: string, value: unknown) => unknown): string {
+export function escapeScriptJson(
+	value: unknown,
+	replacer?: (key: string, value: unknown) => unknown
+): string {
 	const jsonReplacer =
 		replacer ??
 		((_key: string, val: unknown) => {
