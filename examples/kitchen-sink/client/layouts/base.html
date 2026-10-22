@@ -1,8 +1,6 @@
 <script is:build>
 	import meta from '@components/meta.html'
 	import nav from '@components/nav.html'
-	import site from '@content/site.ts'
-	const { storageKey, attribute } = site.theme
 	const props = Aero.props
 </script>
 
@@ -11,11 +9,6 @@
 		<meta-component props />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
-
-		<script props="{ storageKey, attribute }">
-			const theme = JSON.parse(localStorage.getItem(storageKey))
-			document.documentElement.setAttribute(attribute, theme)
-		</script>
 
 		<script>
 			import { allCaps } from '@scripts/utils'
