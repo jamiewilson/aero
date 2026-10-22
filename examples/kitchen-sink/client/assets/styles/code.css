@@ -92,7 +92,7 @@
 		right: var(--code-label-inset);
 		font-family: var(--font-sans);
 		font-size: small;
-		text-box: trim-both cap alphabetic;
+		text-box: trim-both;
 		color: var(--color-slate-400);
 		transition: var(--code-action-transition);
 	}
