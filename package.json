@@ -12,7 +12,7 @@
 		"dev": "pnpm --dir examples/kitchen-sink dev",
 		"preview": "pnpm --dir examples/kitchen-sink preview",
 		"test": "vp test run",
-		"test:ui": "pnpm vitest --ui",
+		"test:ui": "vp test --ui",
 		"test:e2e:install": "playwright install chromium",
 		"test:e2e:ci": "playwright test",
 		"test:e2e": "node scripts/run-playwright-local.js test",

@@ -1,13 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vite-plus/test'
+import { collectComponentReactivePropMetadata } from '../../component-registry-codegen'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 
+const kitchenSink = resolve(import.meta.dirname, '../../../../../examples/kitchen-sink')
 const mockOptions = {
-	root: resolve('/Users/jamie/dev/aero/examples/kitchen-sink'),
+	root: kitchenSink,
 	resolvePath: (v: string, _importer: string) => v,
-	importer: '/Users/jamie/dev/aero/examples/kitchen-sink/client/pages/demos/numeric-text.html',
+	importer: resolve(kitchenSink, 'client/pages/demos/numeric-text.html'),
+	componentReactiveProps: collectComponentReactivePropMetadata([
+		resolve(kitchenSink, 'client/components'),
+		resolve(kitchenSink, 'client/layouts'),
+	]),
 }
 
 describe('code snippet interpolation repro', () => {
@@ -30,10 +36,7 @@ describe('code snippet interpolation repro', () => {
 	}
 
 	it('preserves numeric-text snippet in full demo page', () => {
-		const html = readFileSync(
-			resolve('/Users/jamie/dev/aero/examples/kitchen-sink/client/pages/demos/numeric-text.html'),
-			'utf8'
-		)
+		const html = readFileSync(resolve(kitchenSink, 'client/pages/demos/numeric-text.html'), 'utf8')
 		const parsed = parse(html)
 		const codeEls = [...parsed.template.matchAll(/<code>([\s\S]*?)<\/code>/g)].map(m => m[0])
 		const snippet = codeEls.find(e => e.includes('numeric-text') && e.includes('{'))
@@ -46,10 +49,7 @@ describe('code snippet interpolation repro', () => {
 	})
 
 	it('emits static snippet without reactive text bind on numeric-text demo', () => {
-		const html = readFileSync(
-			resolve('/Users/jamie/dev/aero/examples/kitchen-sink/client/pages/demos/numeric-text.html'),
-			'utf8'
-		)
+		const html = readFileSync(resolve(kitchenSink, 'client/pages/demos/numeric-text.html'), 'utf8')
 		const code = compile(parse(html), mockOptions)
 		expect(code).toContain('${escapeHtml( `<numeric-text />` )}')
 		expect(code).not.toContain('data-aero-text="0"')

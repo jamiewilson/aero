@@ -35,7 +35,7 @@
 		"embed-templates": "pnpm gen-templates && pnpm compile",
 		"build": "pnpm embed-templates",
 		"typecheck": "pnpm gen-templates && tsc --noEmit",
-		"test": "pnpm gen-templates && vp test run",
+		"test": "pnpm gen-templates && pnpm -C ../.. exec vp test run --project @aero-js/diagnostics",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {

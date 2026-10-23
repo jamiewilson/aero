@@ -22,7 +22,7 @@
 	"scripts": {
 		"create": "node .",
 		"create-aero-js": "node index.js",
-		"test": "vp test run",
+		"test": "pnpm -C ../.. exec vp test run --project @aero-js/create",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {

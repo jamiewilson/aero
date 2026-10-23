@@ -18,7 +18,7 @@
 	"scripts": {
 		"build": "vp pack src/index.ts --format esm --dts --clean --out-dir dist",
 		"typecheck": "tsc --noEmit",
-		"test": "vp test run"
+		"test": "pnpm -C ../.. exec vp test run --project @aero-js/interpolation"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",

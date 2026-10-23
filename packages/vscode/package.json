@@ -34,7 +34,7 @@
 		"dev": "vp pack --watch",
 		"build": "pnpm --dir ../compiler exec npm run prebuild && cp ../prettier-plugin-aero/schema.json ./schemas/prettierrc-aero.json && vp pack --minify",
 		"typecheck": "tsc --noEmit",
-		"test": "vp test run",
+		"test": "pnpm -C ../.. exec vp test run --project aero-vscode",
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
