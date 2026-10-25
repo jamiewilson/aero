@@ -22,7 +22,7 @@
 		}
 	},
 	"scripts": {
-		"build": "vp pack src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack",
 		"typecheck": "tsc --noEmit",
 		"test": "pnpm -C ../.. exec vp test run --project @aero-js/html-parser --passWithNoTests"
 	},

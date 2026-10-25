@@ -31,7 +31,7 @@
 	},
 	"scripts": {
 		"gen-templates": "node scripts/embed-templates.mjs",
-		"compile": "vp pack src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
+		"compile": "vp pack",
 		"embed-templates": "pnpm gen-templates && pnpm compile",
 		"build": "pnpm embed-templates",
 		"typecheck": "pnpm gen-templates && tsc --noEmit",

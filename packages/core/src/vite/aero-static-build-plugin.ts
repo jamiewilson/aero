@@ -40,9 +40,23 @@ async function loadProjectTailwindPlugins(root: string): Promise<Plugin[]> {
 	}
 }
 
+/** Resolve the Nitro CLI from the app project (devDependency), not PATH. */
+export function resolveNitroCliPath(projectRoot: string): string {
+	const require = createRequire(path.join(projectRoot, 'package.json'))
+	try {
+		const pkgJsonPath = require.resolve('nitro/package.json')
+		const pkg = require('nitro/package.json') as { bin?: string | Record<string, string> }
+		const binEntry = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.nitro
+		if (!binEntry) throw new Error('missing nitro bin')
+		return path.join(path.dirname(pkgJsonPath), binEntry)
+	} catch {
+		return process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+	}
+}
+
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
-async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
-	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+async function runNitroBuild(projectRoot: string, configCwd: string): Promise<void> {
+	const nitroBin = resolveNitroCliPath(projectRoot)
 	await new Promise<void>((resolve, reject) => {
 		const child = spawn(nitroBin, ['build'], {
 			cwd: configCwd,

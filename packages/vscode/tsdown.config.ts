@@ -8,10 +8,6 @@ export default defineConfig({
 	format: ['cjs'],
 	outDir: 'dist',
 	deps: {
-		// tsdown <0.23 compatibility: resolve external dependency subpaths.
-		// Remove to preserve subpath imports as written (the new default).
-		// https://tsdown.dev/options/dependencies#deps-resolvedepsubpath
-		resolveDepSubpath: true,
 		neverBundle: ['vscode'],
 		onlyBundle: false,
 	},

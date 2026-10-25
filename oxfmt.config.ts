@@ -1,5 +1,7 @@
+import type { UserConfig } from 'vite-plus'
+
 /** Oxfmt settings (imported into vite.config.ts — no top-level fmt block comments). */
-export default {
+const config = {
 	arrowParens: 'avoid',
 	bracketSameLine: true,
 	bracketSpacing: true,
@@ -29,4 +31,6 @@ export default {
 		'**/*.htm',
 		'**/generated-assets.ts',
 	],
-}
+} satisfies NonNullable<UserConfig['fmt']>
+
+export default config

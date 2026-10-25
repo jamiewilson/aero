@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-// @snippet:drafts
+// @snippet:typescript
 const docs = defineCollection({
 	// collection options...
 	schema: z.object({

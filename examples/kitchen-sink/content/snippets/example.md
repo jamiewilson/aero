@@ -1,11 +1,10 @@
 <!-- @snippet:markdown -->
 
----
+# Example Document
 
-published: true
-title: My Document
-subtitle: This is a published document. You can see it in dev mode and in the build.
----
+> This is a published document. You can see it in dev mode and in the build.
+
+![Example Image](https://placehold.co/600x400)
 
 <!-- @snippet:markdownCodeFence -->
 

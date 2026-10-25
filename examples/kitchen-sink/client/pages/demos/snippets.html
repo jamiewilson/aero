@@ -1,9 +1,9 @@
 <script is:build>
 	import base from '@layouts/base.html'
 	import code from '@components/code.html'
-	import { propsString } from '@content/snippets/props.html'
-	import { prose } from '@content/snippets/example.css'
-	import { drafts } from '@content/snippets/example.ts'
+	import { html } from '@content/snippets/props.html'
+	import { css } from '@content/snippets/example.css'
+	import { typescript } from '@content/snippets/example.ts'
 	import { shell } from '@content/snippets/example.sh'
 	import { markdown } from '@content/snippets/example.md'
 </script>
@@ -16,12 +16,12 @@
 
 		<section class="grid gap-4">
 			<h2>Example Code Snippets</h2>
-			<code-component code="{ propsString.code }" lang="{ propsString.lang }" />
-			<code-component code="{ prose.code }" lang="{ prose.lang }" />
-			<code-component code="{ drafts.code }" lang="{ drafts.lang }" />
+			<code-component code="{ html.code }" />
+			<code-component code="{ css.code }" lang="{ css.lang }" />
+			<code-component code="{ typescript.code }" lang="{ typescript.lang }" />
 			<code-component code="{ shell.code }" lang="{ shell.lang }" />
 			<code-component code="{ markdown.code }" lang="{ markdown.lang }" />
-			<code-component code="{ drafts.code }" lang="{ '' }" />
+			<code-component code="{ typescript.code }" lang="" />
 		</section>
 	</article>
 </base-layout>
