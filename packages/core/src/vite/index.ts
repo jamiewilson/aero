@@ -24,6 +24,7 @@ import { resolveAeroNitroPluginsForVite } from './nitro-config'
 import { normalizeAeroOptions, resolveContentOptions } from './resolve-aero-options'
 import { loadAeroContentPlugin } from './load-aero-content'
 import type { AeroPluginState } from './plugin-state'
+import { isAeroNitroEnabled } from './aero-env'
 
 export type { CompileWarningPayload } from './compile-warning-dedup'
 export { flushCompileWarnings } from './compile-warning-dedup'
@@ -53,8 +54,6 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	}
 	const dirs = resolveDirs(pluginOptions.dirs)
 	const apiPrefix = pluginOptions.apiPrefix || DEFAULT_API_PREFIX
-	const enableNitro = pluginOptions.server === true && process.env.AERO_SERVER !== 'false'
-
 	const runtimeInstanceMjsPath = fileURLToPath(new URL('../runtime/instance.mjs', import.meta.url))
 	const runtimeInstanceJsPath = fileURLToPath(new URL('../runtime/instance.js', import.meta.url))
 	const runtimeInstanceTsPath = fileURLToPath(new URL('../runtime/instance.ts', import.meta.url))
@@ -91,7 +90,6 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		pluginOptions,
 		apiPrefix,
 		dirs,
-		enableNitro,
 		aeroCorePlugins,
 	})
 
@@ -137,7 +135,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 		}),
 	]
 
-	if (enableNitro) {
+	if (pluginOptions.server === true) {
 		const root = process.cwd()
 		const aeroNitroPlugins = resolveAeroNitroPluginsForVite(root)
 		const rawNitroPlugins = nitro({
@@ -151,6 +149,7 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 			plugins.push({
 				...nitroPlugin,
 				apply(pluginConfig, env) {
+					if (!isAeroNitroEnabled(pluginOptions.server)) return false
 					if (env.command !== 'serve') return false
 					if ((env as { isPreview?: boolean }).isPreview) return false
 					if (typeof originalApply === 'function') {

@@ -55,4 +55,4 @@ This directory contains the main documentation for the [Aero](https://github.com
 
 ## Testing and contribution
 
-- **Tests** — From the repo root, `pnpm test` runs Vitest for compiler and related packages; see [monorepo.md](monorepo.md) for layout and package paths.
+- **Tests** — From the repo root, `vp test run` runs Vitest for compiler and related packages; see [monorepo.md](monorepo.md) for layout and package paths.

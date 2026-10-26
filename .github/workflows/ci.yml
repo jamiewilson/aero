@@ -41,14 +41,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Check
         run: pnpm check
 
       - name: Build packages
-        run: pnpm build
+        run: vp run build:all
 
       - name: Test
-        run: pnpm test
+        run: vp test run
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   app-smoke:
     if: github.event_name != 'schedule'
@@ -80,11 +96,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm build
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Build kitchen-sink
-        run: pnpm --dir examples/kitchen-sink run build:ci
+      - name: Build kitchen-sink (CI profile)
+        run: vp run build:kitchen-sink:ci
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   e2e-chromium:
     if: github.event_name != 'schedule'
@@ -117,14 +146,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Build packages
-        run: pnpm build
+        run: vp run build:all
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright
         run: pnpm test:e2e:ci
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
       - name: Upload Playwright report
         if: always()
@@ -172,7 +217,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm build
+        run: vp run build:all
 
       - name: Install browser
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}

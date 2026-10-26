@@ -129,4 +129,4 @@ src/
 
 ## Tests
 
-Vitest: `src/runtime/__tests__/`, `src/utils/__tests__/`, `src/vite/__tests__/`. Run from repo root: `pnpm test` (see workspace scripts for package-scoped runs).
+Vitest: `src/runtime/__tests__/`, `src/utils/__tests__/`, `src/vite/__tests__/`. Run from repo root: `vp test run` (see root `vite.config.ts` test projects).

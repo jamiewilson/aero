@@ -12,6 +12,7 @@ import { renderStaticPages } from './static-render'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { createStaticBuildReportingService } from './static-build-reporting'
 import { requireAliasResult, requireResolvedConfig, type AeroPluginState } from './plugin-state'
+import { isAeroNitroEnabled } from './aero-env'
 
 function resolvedHasTailwind(resolved: ResolvedConfig): boolean {
 	return resolved.plugins.some(
@@ -81,11 +82,10 @@ export function createAeroStaticBuildPlugin(
 		pluginOptions: Omit<AeroOptions, 'content'>
 		apiPrefix: string
 		dirs: AeroPluginState['dirs']
-		enableNitro: boolean
 		aeroCorePlugins: Plugin[]
 	}
 ): Plugin {
-	const { pluginOptions, apiPrefix, dirs, enableNitro, aeroCorePlugins } = opts
+	const { pluginOptions, apiPrefix, dirs, aeroCorePlugins } = opts
 
 	return {
 		name: 'vite-plugin-aero-static',
@@ -131,7 +131,7 @@ export function createAeroStaticBuildPlugin(
 			} catch (err) {
 				reporting.reportPrerenderFailure(err, resolvedConfig.logger)
 			}
-			if (enableNitro) {
+			if (isAeroNitroEnabled(pluginOptions.server)) {
 				const { aeroDir } = writeGeneratedNitroConfig({
 					root,
 					serverDir: dirs.server,

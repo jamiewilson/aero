@@ -7,24 +7,33 @@ Incremental builds let Aero reuse the output from a previous build instead of re
 
 ## Enabling incremental builds
 
-There are two ways to opt in — pick whichever fits your workflow:
-
 <Tabs>
-  <Tab title="aero build --incremental">
-    Pass the `--incremental` flag to the Aero CLI build command:
+  <Tab title=".env profile (recommended)">
+    Use a Vite **mode** and a committed or local env file. In `vite.config.ts`, call `applyAeroViteEnv` from `@aero-js/core/vite-config` inside `defineConfig` (starters and kitchen-sink already do).
 
+    ```bash
+    vp build --mode debug
+    ```
+
+    Example [`.env.debug`](https://github.com/jamiewilson/aero/blob/main/examples/kitchen-sink/.env.debug):
+
+    ```env
+    AERO_INCREMENTAL=1
+    AERO_LOG=debug
+    ```
+
+    Personal overrides: `.env.local` or `.env.<mode>.local` (gitignored).
+
+  </Tab>
+  <Tab title="aero build --incremental">
     ```bash
     pnpm exec aero build --incremental
     ```
-
   </Tab>
-	<Tab title="Environment variable">
-    Set `AERO_INCREMENTAL=1` before your build command. Aero also accepts `true` or `yes` (case-insensitive).
-
+  <Tab title="Shell env">
     ```bash
-    AERO_INCREMENTAL=1 pnpm build
+    AERO_INCREMENTAL=1 vp build
     ```
-
   </Tab>
 </Tabs>
 
@@ -67,9 +76,9 @@ If any page is a dynamic route (`[slug].html` style), `getStaticPaths()` must ru
 Set `AERO_LOG=debug` to print prerender decisions and timings to the console:
 
 ```bash
-AERO_INCREMENTAL=1 AERO_LOG=debug pnpm build
+vp build --mode debug
 ```
 
 ## When to disable incremental builds
 
-Turn incremental builds off when you need a completely clean `dist/` every time — for example, during reproducibility checks or when debugging stale output. Omit `AERO_INCREMENTAL`, or remove `dist/` manually before running a standard `pnpm build`.
+Turn incremental builds off when you need a completely clean `dist/` every time — for example, during reproducibility checks or when debugging stale output. Use plain `vp build` (no `AERO_INCREMENTAL` in env), or remove `dist/` manually first.

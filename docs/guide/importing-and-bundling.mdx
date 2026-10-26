@@ -23,7 +23,7 @@ That single-bundle behavior is normal for many apps. Whether you change it depen
 
 ## Option 1: Single bundle (default)
 
-**Demo:** [examples/import-bundling/single-bundle](https://github.com/jamiewilson/aero/tree/main/examples/import-bundling/single-bundle) — `pnpm --dir examples/import-bundling/single-bundle dev`
+**Demo:** [examples/import-bundling/single-bundle](https://github.com/jamiewilson/aero/tree/main/examples/import-bundling/single-bundle) — `pnpm --dir examples/import-bundling/single-bundle exec vp dev`
 
 **What you do:** Import everything in your client entry (for example `client/assets/scripts/index.ts`):
 
@@ -204,10 +204,10 @@ In all cases, your **Aero runtime** and app code stay in the client entry (or it
 
 Runnable demos live under `examples/import-bundling/`. From the repo root, `pnpm install`, then:
 
-- **Option 1:** `pnpm --dir examples/import-bundling/single-bundle dev`
-- **Option 2:** `pnpm --dir examples/import-bundling/cdn-globals dev`
-- **Option 3:** `pnpm --dir examples/import-bundling/esm-import-map dev`
-- **Option 4:** `pnpm --dir examples/import-bundling/cdn-externals dev`
-- **Option 5:** `pnpm --dir examples/import-bundling/dynamic-import dev`
+- **Option 1:** `pnpm --dir examples/import-bundling/single-bundle exec vp dev`
+- **Option 2:** `pnpm --dir examples/import-bundling/cdn-globals exec vp dev`
+- **Option 3:** `pnpm --dir examples/import-bundling/esm-import-map exec vp dev`
+- **Option 4:** `pnpm --dir examples/import-bundling/cdn-externals exec vp dev`
+- **Option 5:** `pnpm --dir examples/import-bundling/dynamic-import exec vp dev`
 
 See [examples/import-bundling README](https://github.com/jamiewilson/aero/blob/main/examples/import-bundling/README.md) for more.

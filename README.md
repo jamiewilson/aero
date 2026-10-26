@@ -426,23 +426,26 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## Commands
 
-Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
+**Aero app** (e.g. after `vp create @aero-js:minimal`): run from the project directory — `vp dev`, `vp build`, `vp preview` (starters may still expose `pnpm dev` / `pnpm build` wrappers).
 
-- `pnpm dev` — Build and run dev server
-- `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
-- `pnpm preview` — Static preview.
-- `pnpm preview:api` — Preview with Nitro (static + API from one origin).
-- `pnpm test` — Run Vitest (packages/core).
+**This monorepo** (repo root):
 
-Repo testing commands:
+| Command | What it runs |
+| --- | --- |
+| `pnpm check` | Workspace typecheck + `vp check` + Prettier on `**/*.html` |
+| `vp test run` | Vitest 5 (all package projects in root `vite.config.ts`) |
+| `vp run build:all` | Cached `@aero-js/*` `vp pack` graph |
+| `vp run build:website` | `build:all` + site production build |
+| `vp run build:kitchen-sink:ci` | `build:all` + kitchen-sink `vp build --mode ci` |
+| `vp run pack:vscode` | `build:vscode` + `.vsix` |
+| `vp run check:all` | `pnpm check` + `vp test run` + Playwright CI |
+| `vp lint` / `vp fmt` | Oxlint / Oxfmt (HTML still via `pnpm fmt` at root) |
 
-- `pnpm test:ui` — Vitest UI (browser).
-- `pnpm test:e2e` — Install the local Playwright Chromium bundle if needed, then run the E2E suite.
-- `pnpm test:e2e:headed` — Same local bootstrap, with headed Playwright.
-- `pnpm test:e2e:debug` — Same local bootstrap, with Playwright debug mode.
-- `pnpm test:e2e:install` — Install Chromium for Playwright only (no test run).
-- `pnpm test:e2e:ci` — Run Playwright without installing browsers first; intended for CI environments that pre-provision the cache.
-- `pnpm test:all` — Typecheck, Vitest, then Playwright (`test:e2e:ci`).
+Playwright (root): `pnpm test:e2e` (local; pass `-- --headed` / `--debug`), `pnpm test:e2e:ci` (CI).
+
+**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static && vp preview` or full `vp build` for Nitro preview.
+
+**Import-bundling demos**: `cd examples/import-bundling/<demo> && pnpm exec vp dev` (or `vp build` / `vp preview`).
 
 ## Build output
 

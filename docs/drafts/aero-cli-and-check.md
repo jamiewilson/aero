@@ -32,7 +32,7 @@ pnpm exec aero build --incremental
 pnpm exec aero --help
 ```
 
-For local monorepo development after `pnpm build`, invoke the built CLI directly:
+For local monorepo development after `vp run build:all`, invoke the built CLI directly:
 
 ```bash
 node packages/cli/dist/index.mjs check --root examples/kitchen-sink

@@ -3,11 +3,6 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
-	"scripts": {
-		"dev": "vp dev",
-		"build": "vp build",
-		"preview": "vp build && vp preview"
-	},
 	"dependencies": {
 		"@aero-js/content": "workspace:*",
 		"@aero-js/core": "workspace:*",

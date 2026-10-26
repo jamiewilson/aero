@@ -11,8 +11,8 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/cli** - `@aero-js/cli`: `aero check` (no server — config, content, template compile; bucketed exit codes), `aero doctor` (env checklist). Depends on `@aero-js/core` and `@aero-js/content`.
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create** - `@aero-js/create` Vite+ template manifest (`createConfig.templates`). Starters under `packages/create/templates/` (`minimal`, `fullstack`). Scaffold with `vp create @aero-js:minimal --directory <path>` after publish; local smoke: `node scripts/smoke-template-build.mjs`.
-- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
-- **Root** - Workspace root. Toolchain: **Vite+** (`vite-plus`, `vp`). Scripts: `pnpm check` (typecheck + `vp check` + Prettier HTML), `pnpm test` → `vp test run`, `pnpm build` → `vp run build:packages`.
+- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Build profiles via **`vp build --mode ci|static|debug`** and [`.env.*` files](../examples/kitchen-sink/.env.example); see [_reference/guides/aero-build-env-profiles.md](../_reference/guides/aero-build-env-profiles.md).
+- **Root** - Workspace root. Toolchain: **Vite+** (`vite-plus`, `vp`). Prefer **`vp run build:all`**, **`vp test run`**, **`vp lint`**; keep **`pnpm check`** / **`pnpm fmt`** for composites (workspace typecheck + Aero HTML Prettier). Task graph: root [`vite.config.ts`](../../vite.config.ts) `run.tasks`.
 
 ### Compilation pipeline (packages/core)
 
@@ -85,11 +85,11 @@ The framework provides default aliases when tsconfig is missing; tsconfig is opt
 **Monorepo (root):**
 
 ```bash
-pnpm check            # typecheck + vp check + Prettier HTML
-pnpm test             # vp test run (all Vitest projects in root vite.config.ts)
-pnpm build            # vp run build:packages
-pnpm --dir examples/kitchen-sink dev      # vp dev
-pnpm --dir examples/kitchen-sink build    # vp build
+pnpm check                  # typecheck + vp check + Prettier HTML (composite)
+vp test run                 # all Vitest projects in root vite.config.ts
+vp run build:all            # cached @aero-js/* pack graph
+vp run check:all            # pre-merge: pnpm check + unit + e2e CI
+vp lint                     # Oxlint (also part of vp check)
 ```
 
 **Scaffold (published `@aero-js/create` manifest):**
@@ -99,19 +99,21 @@ pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
 cd my-app && pnpm install && pnpm dev   # vp dev
 ```
 
-**Kitchen-sink app:**
+**Kitchen-sink** (`examples/kitchen-sink/`):
 
 ```bash
-pnpm dev              # vp dev --open
-pnpm build            # vp build
-pnpm preview          # static preview
-pnpm preview:api      # Nitro server preview
-pnpm fmt              # vp fmt + Prettier HTML
+vp dev --open
+vp build --mode ci
+vp build --mode static && vp preview
+vp build && node .output/server/index.mjs
+pnpm fmt              # vp fmt + Prettier HTML (from app dir)
 ```
+
+**Other examples:** `vp dev` / `vp build` / `vp preview` from the example directory.
 
 ## Testing
 
-Tests use **Vitest 5** via root `vite.config.ts` (`vite-plus/test`). Package suites live under each package’s `src/**` and `__tests__/`. Run with `pnpm test` from repo root.
+Tests use **Vitest 5** via root `vite.config.ts` (`vite-plus/test`). Package suites live under each package’s `src/**` and `__tests__/`. Run with **`vp test run`** from repo root.
 
 ## TDD (Test-Driven Development)
 

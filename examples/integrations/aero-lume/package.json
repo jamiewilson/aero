@@ -4,9 +4,6 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vp dev",
-		"build": "vp build",
-		"preview": "vp build && vp preview",
 		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
 		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
 	},

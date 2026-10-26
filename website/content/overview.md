@@ -420,13 +420,9 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## [Commands](#commands)
 
-Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
+**Aero app** (after `vp create @aero-js:minimal`): `vp dev`, `vp build`, `vp preview` from the project directory.
 
-- `pnpm dev` — Build and run dev server
-- `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
-- `pnpm preview` — Static preview.
-- `pnpm preview:api` — Preview with Nitro (static + API from one origin).
-- `pnpm test` — Run Vitest (packages/core).
+**Framework monorepo** (this repo): `pnpm check`, `vp test run`, `vp run build:all` from the root; see [README](https://github.com/jamiewilson/aero/blob/main/README.md#commands).
 
 ## [Build output](#build-output)
 

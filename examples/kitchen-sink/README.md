@@ -23,15 +23,18 @@ Full demo template for the Aero static site generator. Used for development and 
 
 ## Commands
 
-From repo root (or from `examples/kitchen-sink` if core is built):
+From `examples/kitchen-sink` (run `vp run build:all` once from repo root if workspace packages are stale):
 
-- **pnpm dev** — Vite dev server with HMR and Nitro loaded from `nitro.config.ts`.
-- **pnpm build** — Static build to `dist/`; with Nitro also produces `.output/`.
-- **pnpm preview** — Static preview only (`AERO_SERVER=false` build + `vite preview`).
-- **pnpm preview:api** — Full server preview (static + Nitro API).
-- **Fallow / static analysis** — This example includes [`.fallowrc.json`](./.fallowrc.json). Regenerate the `entry` list with `aero graph --format fallow-entry` (see [\_reference/fallow-aero.md](../../_reference/guides/fallow-aero.md)).
+| Command | Notes |
+| --- | --- |
+| `vp dev --open` | Dev server with HMR and Nitro from `nitro.config.ts` |
+| `vp build` | Production build (Nitro + `dist/` when `server: true`) |
+| `vp build --mode ci` | CI profile — [`.env.ci`](./.env.ci): incremental, static-only |
+| `vp build --mode debug` | [`.env.debug`](./.env.debug): incremental + debug logs |
+| `vp build --mode static && vp preview` | Static preview (no Nitro APIs) — [`.env.static`](./.env.static) |
+| `vp build && node .output/server/index.mjs` | Full Nitro server preview |
 
-Ensure `packages/core` is built before dev/build (`pnpm run dev` at root runs core build first).
+**Fallow / static analysis** — [`.fallowrc.json`](./.fallowrc.json); regenerate entries with `aero graph --format fallow-entry` ([fallow-aero.md](../../_reference/guides/fallow-aero.md)).
 
 ## Dependencies
 

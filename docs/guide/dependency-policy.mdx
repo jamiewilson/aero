@@ -37,7 +37,7 @@ When bumping dependencies across the monorepo:
 2. **Bump in tiers** — low-risk utilities, then catalog toolchain (vite, nitro, typescript, vitest, tsdown), then one ecosystem per PR (oxc, shiki, volar, etc.).
 3. **Sync starter templates** — `packages/create/templates/*/package.json` vite/nitro/`vite-plus` pins must match catalog policy.
 4. **Regenerate lockfile** — `pnpm install` after every manifest edit.
-5. **Validate locally** — run `pnpm test:all` (typecheck + lint + vitest + e2e), not `release:prep` alone. Also run `pnpm website:build` before merging large toolchain bumps.
+5. **Validate locally** — run `vp run check:all`, not `vp run release:prep` alone. Before merging large toolchain bumps, run `vp run build:website`.
 
 ## CI and guardrails
 

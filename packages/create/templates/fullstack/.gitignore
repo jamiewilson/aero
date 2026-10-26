@@ -13,8 +13,11 @@ dist/
 
 # environment
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
+!.env.ci
+!.env.static
 
 # os
 .DS_Store

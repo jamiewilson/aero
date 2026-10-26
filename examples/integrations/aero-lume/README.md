@@ -6,9 +6,9 @@ Bare-bones Aero + [Lume](https://github.com/sathvikc/lume-js) example for client
 
 | Command        | Description            |
 | -------------- | ---------------------- |
-| `pnpm dev`     | Start the dev server   |
-| `pnpm build`   | Build for production   |
-| `pnpm preview` | Preview the built site |
+| `vp dev`     | Start the dev server   |
+| `vp build`   | Build for production   |
+| `vp preview` | Preview the built site |
 
 ## What this example shows
 

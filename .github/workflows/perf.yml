@@ -39,7 +39,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm build
+        run: vp run build:all
 
       - name: Run perf stress suite
         run: pnpm --filter @aero-js/core test -- perf/stress

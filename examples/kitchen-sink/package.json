@@ -4,11 +4,6 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vp dev --open",
-		"build": "AERO_INCREMENTAL=1 AERO_LOG=debug vp build",
-		"build:ci": "AERO_INCREMENTAL=1 AERO_SERVER=false vp build",
-		"preview": "AERO_SERVER=false vp build && vp preview",
-		"preview:api": "vp build && node .output/server/index.mjs",
 		"clean": "rm -rf dist .output .aero",
 		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
 		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""

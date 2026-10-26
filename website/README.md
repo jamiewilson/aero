@@ -6,9 +6,11 @@ Built with [Aero](https://github.com/jamiewilson/aero) — an HTML-first static 
 
 | Command        | Description            |
 | -------------- | ---------------------- |
-| `pnpm dev`     | Start the dev server   |
-| `pnpm build`   | Build for production   |
-| `pnpm preview` | Preview the built site |
+| `vp dev`     | Start the dev server (from `website/`)   |
+| `vp build`   | Build for production                     |
+| `vp preview` | Preview the built site                   |
+
+From repo root: `vp run build:website` (depends on `build:all`).
 
 ## Project Structure
 

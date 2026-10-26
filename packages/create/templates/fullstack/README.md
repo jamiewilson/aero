@@ -14,8 +14,8 @@ cd my-app && pnpm install
 | Command            | Description                            |
 | ------------------ | -------------------------------------- |
 | `pnpm dev`         | Dev server with Nitro                  |
-| `pnpm build`       | Static HTML + Nitro output             |
-| `pnpm preview`     | Static preview (`AERO_SERVER=false`)   |
+| `vp build`         | Static HTML + Nitro output             |
+| `vp build --mode static && vp preview` | Static preview (see `.env.static`) |
 | `pnpm preview:api` | Run built Nitro server from `.output/` |
 
 ## Structure

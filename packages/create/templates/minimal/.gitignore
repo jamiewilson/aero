@@ -12,7 +12,8 @@ dist/
 
 # environment
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
 
 # os

@@ -94,7 +94,7 @@ export default defineConfig({
 	},
 	run: {
 		tasks: {
-			'build:packages': {
+			'build:all': {
 				command: BUILD_PACKAGES.map(name => `pnpm --filter ${name} run build`),
 				cache: {
 					input: [
@@ -104,6 +104,59 @@ export default defineConfig({
 					],
 					output: [{ pattern: 'packages/*/dist/**', base: 'workspace' }],
 				},
+			},
+			'build:vscode': {
+				command: 'pnpm --dir packages/vscode run build',
+				dependsOn: ['build:all'],
+				cache: {
+					input: [
+						{ pattern: 'packages/vscode/**', base: 'workspace' },
+						{ pattern: 'packages/compiler/dist/**', base: 'workspace' },
+					],
+					output: [{ pattern: 'packages/vscode/dist/**', base: 'workspace' }],
+				},
+			},
+			'build:website': {
+				command: 'pnpm --dir website exec vp build',
+				dependsOn: ['build:all'],
+				cache: {
+					input: [
+						{ pattern: 'website/**', base: 'workspace' },
+						{ pattern: 'packages/*/dist/**', base: 'workspace' },
+					],
+					output: [{ pattern: 'website/dist/**', base: 'workspace' }],
+				},
+			},
+			'build:kitchen-sink:ci': {
+				command: 'pnpm --dir examples/kitchen-sink exec vp build --mode ci',
+				dependsOn: ['build:all'],
+				cache: {
+					input: [
+						{ pattern: 'examples/kitchen-sink/**', base: 'workspace' },
+						{ pattern: 'packages/*/dist/**', base: 'workspace' },
+					],
+					output: [
+						{ pattern: 'examples/kitchen-sink/dist/**', base: 'workspace' },
+						{ pattern: 'examples/kitchen-sink/.aero/**', base: 'workspace' },
+					],
+				},
+			},
+			'pack:vscode': {
+				command: 'pnpm --dir packages/vscode exec vsce package --no-dependencies',
+				dependsOn: ['build:vscode'],
+				cache: {
+					output: [{ pattern: 'packages/vscode/*.vsix', base: 'workspace' }],
+				},
+			},
+			'build:workspace': {
+				command: 'node -e "console.log(\'build:workspace ok\')"',
+				dependsOn: ['build:all', 'build:website', 'build:kitchen-sink:ci'],
+			},
+			'check:all': {
+				command: ['pnpm check', 'vp test run', 'pnpm test:e2e:ci'],
+			},
+			'release:prep': {
+				command: ['vp test run', 'pnpm clean:all', 'pnpm install', 'vp run build:all'],
 			},
 		},
 	},

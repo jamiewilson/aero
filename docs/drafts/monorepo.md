@@ -90,7 +90,7 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## examples/kitchen-sink (demo app)
 
-- **Purpose:** Full demo app. Run dev/build/preview from **examples/kitchen-sink** (e.g. `pnpm --dir examples/kitchen-sink dev`). Root has no app dev script.
+- **Purpose:** Full demo app. Run from **examples/kitchen-sink** (`vp dev --open`, `vp build --mode ci`, etc.).
 - **Source directory:** Configurable via aero.config; kitchen-sink uses `frontend/`, `backend/`, `build/` for output. Default layout would be `client/`, `content/`, `server/`. Global data at `content/` (e.g. `site.ts`, content collections).
 - **Path aliases:** Defined in `examples/kitchen-sink/tsconfig.json`; the Aero resolver merges these with framework defaults when resolving component/layout imports in HTML.
 - **Server:** When `server: true`, Aero generates `.aero/nitro.config.mjs` and extends the app's root `nitro.config.ts` when present. API stays in backend/ (or server/), routes in backend/routes.
@@ -108,10 +108,10 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 ## Build and test flow
 
 1. **Install:** `pnpm install` (pnpm workspace installs root + packages).
-2. **Build framework:** Root `pnpm build` builds published packages (interpolation, compiler, core, content, cli, create, etc.).
-3. **Dev:** Run from **examples/kitchen-sink** (e.g. `pnpm --dir examples/kitchen-sink dev` or `cd examples/kitchen-sink && pnpm dev`). Root has no dev script.
-4. **Build app:** Run from the app directory (e.g. `pnpm --dir examples/kitchen-sink build`). Output to that app's dist/ (or custom build dir) and `.output/` when server is enabled.
-5. **Tests:** `pnpm test` from repo root runs Vitest (packages/core compiler and vite tests).
+2. **Build framework:** From root, `vp run build:all` builds published packages (interpolation, compiler, core, content, cli, create, etc.).
+3. **Dev:** Run from **examples/kitchen-sink** (`cd examples/kitchen-sink && vp dev --open`).
+4. **Build app:** Kitchen-sink uses `vp build --mode ci|static|debug` and `.env.[mode]` profiles; other examples use `vp build` from the example directory.
+5. **Tests:** `vp test run` from repo root runs Vitest (all package projects in root `vite.config.ts`).
 
 ## Build output and asset layout
 
