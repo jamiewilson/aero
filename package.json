@@ -35,6 +35,7 @@
 		"prepare": "vp config"
 	},
 	"devDependencies": {
+		"@aero-js/create": "workspace:*",
 		"@aero-js/prettier-plugin-aero": "workspace:*",
 		"@playwright/test": "^1.61.1",
 		"@types/node": "catalog:",

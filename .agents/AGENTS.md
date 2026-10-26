@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create** is the @aero-js/create project initializer (scaffolds from templates). Repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create** is the @aero-js/create Vite+ template manifest (starters under `templates/`). Repo root is the workspace root.
 
 ### Monorepo
 
@@ -10,7 +10,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/core** - Runtime, Vite plugin, config helpers, and compile-check. Built with tsdown; consumed as `@aero-js/core` with subpaths such as `@aero-js/core/vite`, `@aero-js/core/config`, and `@aero-js/core/vite-config`.
 - **packages/cli** - `@aero-js/cli`: `aero check` (no server — config, content, template compile; bucketed exit codes), `aero doctor` (env checklist). Depends on `@aero-js/core` and `@aero-js/content`.
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/create** - Project initializer (@aero-js/create). Bundled templates under `packages/create/templates/` (`minimal`, `fullstack`). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
+- **packages/create** - `@aero-js/create` Vite+ template manifest (`createConfig.templates`). Starters under `packages/create/templates/` (`minimal`, `fullstack`). Scaffold with `vp create @aero-js:minimal --directory <path>` after publish; local smoke: `node scripts/smoke-template-build.mjs`.
 - **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
 - **Root** - Workspace root. Scripts: `pnpm test` runs workspace Vitest; `pnpm build` builds packages only.
 
@@ -126,7 +126,7 @@ Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be se
 ## File Structure
 
 - **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
-- **packages/create/** - @aero-js/create initializer; bundled templates in `packages/create/templates/`
+- **packages/create/** - `@aero-js/create` manifest; bundled templates in `packages/create/templates/`
 - **packages/core/** - Framework (runtime, Vite plugin, config helpers; `@aero-js/core` and subpaths)
 - **packages/vscode/** - VS Code extension
 

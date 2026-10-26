@@ -27,7 +27,7 @@ Previously removed overrides (`vite`, `nitro`, `brace-expansion`) were redundant
 
 ## Peer dependency ranges
 
-Published packages use semver ranges for optional peers (for example `"vite": "^8.1.0"`), not exact pins. Starter `package-template.json` files use the same pattern so scaffolded apps can pick up patch releases.
+Published packages use semver ranges for optional peers (for example `"vite": "^8.1.0"`), not exact pins. Starter template `package.json` files under `packages/create/templates/*` use semver for `@aero-js/core` and pin Vite+ via `pnpm.overrides` for standalone clones.
 
 ## Manual refresh checklist
 
@@ -35,7 +35,7 @@ When bumping dependencies across the monorepo:
 
 1. **Consolidate pins first** — prefer `catalog:` over hardcoded versions; remove redundant `pnpm.overrides`.
 2. **Bump in tiers** — low-risk utilities, then catalog toolchain (vite, nitro, typescript, vitest, tsdown), then one ecosystem per PR (oxc, shiki, volar, etc.).
-3. **Sync starter templates** — `packages/create/templates/*/package-template.json` vite/nitro ranges must match catalog policy.
+3. **Sync starter templates** — `packages/create/templates/*/package.json` vite/nitro/`vite-plus` pins must match catalog policy.
 4. **Regenerate lockfile** — `pnpm install` after every manifest edit.
 5. **Validate locally** — run `pnpm test:all` (typecheck + lint + vitest + e2e), not `release:prep` alone. Also run `pnpm website:build` before merging large toolchain bumps.
 

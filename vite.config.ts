@@ -15,7 +15,6 @@ const PACKAGE_PROJECTS: PackageTestProject[] = [
 	{ name: '@aero-js/compiler', dir: 'packages/compiler' },
 	{ name: '@aero-js/content', dir: 'packages/content' },
 	{ name: '@aero-js/core', dir: 'packages/core' },
-	{ name: '@aero-js/create', dir: 'packages/create' },
 	{ name: '@aero-js/diagnostics', dir: 'packages/diagnostics' },
 	{ name: '@aero-js/highlight', dir: 'packages/highlight' },
 	{ name: '@aero-js/html-parser', dir: 'packages/html-parser' },

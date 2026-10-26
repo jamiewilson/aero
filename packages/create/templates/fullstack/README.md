@@ -1,24 +1,23 @@
-# Aero fullstack starter template
+# Aero fullstack starter
 
-Full-stack Aero template with Nitro enabled from day one. Includes `nitro.config.ts`, API routes, Nitro cache/storage/database examples, a task, a plugin, and a `preview:api` command.
+Aero with Nitro: `server/` API routes, KV/cache/database demos, and static HTML from `client/`.
 
-## Structure
+## Create a project
 
-- `client/` — Pages, layouts, components, assets
-- `content/site.ts` — Global site data
-- `server/` — Nitro API/routes plus server plugins, tasks, and server entry
-- `server/plugins/` — Nitro runtime hooks
-- `server/tasks/` — Nitro task handlers
-- `server/entry.ts` — Nitro server entry (wired via `serverEntry`)
-- `nitro.config.ts` — Canonical Nitro config for the project
+```bash
+vp create @aero-js:fullstack --directory my-app --no-interactive
+cd my-app && pnpm install
+```
 
 ## Commands
 
-- `pnpm dev` — Vite dev server with Nitro
-- `pnpm build` — Build static HTML and Nitro output
-- `pnpm preview` — Preview the static build only
-- `pnpm preview:api` — Preview the full Nitro server from `.output/`
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Dev server with Nitro |
+| `pnpm build` | Static HTML + Nitro output |
+| `pnpm preview` | Static preview (`AERO_SERVER=false`) |
+| `pnpm preview:api` | Run built Nitro server from `.output/` |
 
-## Learn More
+## Structure
 
-- [Server](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/server.mdx) · [Deployment](https://github.com/jamiewilson/aero/blob/main/docs/getting-started/deployment.mdx)
+See template `server/`, `nitro.config.ts`, and [Aero server docs](https://github.com/jamiewilson/aero/tree/main/docs/getting-started).

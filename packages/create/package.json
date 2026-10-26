@@ -9,23 +9,26 @@
 		"url": "https://github.com/jamiewilson/aero.git",
 		"directory": "packages/create"
 	},
-	"bin": {
-		"create": "index.js"
-	},
 	"files": [
-		"index.js",
-		"lib.js",
 		"README.md",
 		"templates"
 	],
 	"type": "module",
 	"scripts": {
-		"create": "node .",
-		"create-aero-js": "node index.js",
-		"test": "pnpm -C ../.. exec vp test run --project @aero-js/create",
 		"prepack": "cp ../../LICENSE ."
 	},
-	"devDependencies": {
-		"vite-plus": "catalog:"
+	"createConfig": {
+		"templates": [
+			{
+				"name": "minimal",
+				"description": "Static Aero site (layouts, pages, site.ts)",
+				"template": "./templates/minimal"
+			},
+			{
+				"name": "fullstack",
+				"description": "Aero + Nitro (server/, API routes)",
+				"template": "./templates/fullstack"
+			}
+		]
 	}
 }
