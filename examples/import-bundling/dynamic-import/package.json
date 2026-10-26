@@ -7,8 +7,8 @@
 		"dev": "vp dev",
 		"build": "vp build",
 		"preview": "vp build && vp preview",
-		"fmt": "vp fmt .",
-		"fmt:check": "vp fmt --check ."
+		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
+		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*",
@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
+		"prettier": "^3.9.3",
 		"@types/alpinejs": "^3.13.11",
 		"vite": "catalog:",
 		"vite-plus": "catalog:"

@@ -10,8 +10,8 @@
 		"preview": "AERO_SERVER=false vp build && vp preview",
 		"preview:api": "vp build && node .output/server/index.mjs",
 		"clean": "rm -rf dist .output .aero",
-		"fmt": "vp fmt .",
-		"fmt:check": "vp fmt --check ."
+		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
+		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
 	},
 	"dependencies": {
 		"@aero-js/cli": "workspace:*",
@@ -31,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
+		"prettier": "^3.9.3",
 		"@shikijs/transformers": "^4.3.0",
 		"@tailwindcss/typography": "^0.5.20",
 		"@types/alpinejs": "^3.13.11",

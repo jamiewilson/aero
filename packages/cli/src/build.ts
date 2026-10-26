@@ -1,5 +1,5 @@
 /**
- * `aero build` — run `vite build` with optional incremental env (same as `AERO_INCREMENTAL`).
+ * `aero build` — run production Vite build with optional incremental env (same as `AERO_INCREMENTAL`).
  */
 import { build } from 'vite'
 import { createViteConfig, getDefaultOptions } from '@aero-js/core/vite-config'
@@ -10,7 +10,7 @@ type AeroBuildOptions = {
 	incremental?: boolean
 }
 
-/** Resolve CLI exit code after `vite build` (respects `process.exitCode` and thrown Aero errors). */
+/** Resolve CLI exit code after production build (respects `process.exitCode` and thrown Aero errors). */
 export function resolveAeroBuildExitCode(err?: unknown): number {
 	if (err !== undefined) return exitCodeForThrown(err)
 	return typeof process.exitCode === 'number' ? process.exitCode : 0
