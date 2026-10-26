@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  unit:
+  quality:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     env:
@@ -32,21 +32,63 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
+      - name: Check
+        run: pnpm check
 
       - name: Build packages
         run: pnpm build
 
-      - name: Run Vitest and typecheck
+      - name: Test
         run: pnpm test
+
+  app-smoke:
+    if: github.event_name != 'schedule'
+    needs: quality
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Build kitchen-sink
+        run: pnpm --dir examples/kitchen-sink run build:ci
 
   e2e-chromium:
     if: github.event_name != 'schedule'
-    needs: unit
+    needs: app-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -66,8 +108,17 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -111,8 +162,17 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
 
       - name: Install browser
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
