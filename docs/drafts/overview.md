@@ -74,7 +74,7 @@ For the full canonical list of product goals, web-platform stance, toolchain com
 - **Image optimization** — Optional pipeline during build. [image-optimization.md](image-optimization.md)
 - **VS Code extension** — Syntax highlighting, Volar-backed IntelliSense and diagnostics for Aero HTML, and palette commands. See the extension README: [packages/vscode/README.md](../packages/vscode/README.md).
 - **TypeScript** — Scripts and content; path aliases from tsconfig. [typescript-guide.md](typescript-guide.md); CI: [aero-cli-and-check.md](aero-cli-and-check.md) (`aero check --types`).
-- **Incremental static build** — Optional faster repeat `vite build` via `AERO_INCREMENTAL` and `.aero/cache/`. [build-performance.md](build-performance.md)
+- **Incremental static build** — Optional faster repeat `vp build` via `AERO_INCREMENTAL` and `.aero/cache/`. [build-performance.md](build-performance.md)
 - **Standalone runtime** — Compile and render Aero templates in ESM tools/services outside Vite app runtime. [standalone-runtime.md](standalone-runtime.md)
 
 ### Server and client libraries

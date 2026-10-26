@@ -4,51 +4,47 @@ description: 'Scaffold your first Aero project and have a site running in minute
 icon: 'download'
 ---
 
-The fastest way to start is with `@aero-js/create`, which scaffolds a project, installs dependencies, and prints next steps.
+The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and the **`@aero-js/create`** template manifest: copy a starter, then install dependencies and run the dev server.
 
 <Steps>
   <Step title="Scaffold a project">
-    Run the create command with your project name:
+    Install [Vite+](https://viteplus.dev/guide/create) (`vp`), then create a project directory from the **minimal** or **fullstack** template:
 
     <CodeGroup>
-      ```bash pnpm
-      pnpm create @aero-js my-app
+      ```bash minimal
+      pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
       ```
 
-      ```bash pnpm dlx
-      pnpm dlx @aero-js/create@latest my-app
+      ```bash fullstack
+      pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive
       ```
 
-      ```bash npm
-      npx @aero-js/create@latest my-app
-      ```
-
-      ```bash yarn
-      yarn create @aero-js my-app
+      ```bash list templates
+      pnpm dlx vp create @aero-js --no-interactive
       ```
     </CodeGroup>
 
-    This copies the minimal template into `my-app/`, rewrites `package.json` with your project name, and installs dependencies.
+    Then install dependencies:
+
+    ```bash
+    cd my-app
+    pnpm install
+    ```
+
+    Starters include **`vite-plus`**, **`@aero-js/core`**, Prettier + **`@aero-js/prettier-plugin-aero`** for Aero HTML, and (fullstack) Nitro under `server/`.
 
     <Tip>
-      To scaffold with Nitro pre-configured for API routes and server deployment, add `--template fullstack`:
-
-      ```bash
-      pnpm create @aero-js my-app --template fullstack
-      ```
-
-      The fullstack template adds Nitro, a root `nitro.config.ts`, and a `preview:api` command (with `aero.config.ts` using `@aero-js/core/config`).
+      **Fullstack** adds Nitro, a root `nitro.config.ts`, and `preview:api` for static + API from one origin. Use **`@aero-js:fullstack`** instead of **minimal** when you need `server/` routes out of the box.
     </Tip>
 
   </Step>
 
   <Step title="Start the dev server">
     ```bash
-    cd my-app
     pnpm dev
     ```
 
-    Open `http://localhost:5173` to see your site. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
+    (`pnpm dev` runs **`vp dev`**.) Open `http://localhost:5173`. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
 
   </Step>
 
@@ -108,12 +104,13 @@ The fastest way to start is with `@aero-js/create`, which scaffolds a project, i
 
 ## Commands reference
 
-| Command            | Description                                  |
-| ------------------ | -------------------------------------------- |
-| `pnpm dev`         | Start the dev server with HMR                |
-| `pnpm build`       | Build to `dist/` (and `.output/` with Nitro) |
-| `pnpm preview`     | Preview the static build                     |
-| `pnpm preview:api` | Preview static + API from one origin (Nitro) |
+| Command            | Description                                      |
+| ------------------ | ------------------------------------------------ |
+| `pnpm dev`         | Start the dev server with HMR (`vp dev`)         |
+| `pnpm build`       | Build to `dist/` (and `.output/` with Nitro)     |
+| `pnpm preview`     | Preview the static build                         |
+| `pnpm preview:api` | Preview static + API from one origin (Nitro)     |
+| `pnpm fmt`         | Format JS/TS (`vp fmt`) and Aero HTML (Prettier) |
 
 ## Next steps
 

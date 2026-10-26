@@ -119,17 +119,17 @@ export function classifyTemplateScriptTag(attrs: string): TemplateScriptKind {
 	const lower = attrs.toLowerCase()
 	if (/\bsrc\s*=/.test(lower)) return 'external'
 	// Bare `is:*`, `aero-is:*` / `aero-is-*`, and `data-aero-is-*`
-	if (/(?:^|\s)(?:data-aero-is-build|aero-is[:\-]build|is:build)(?=[\s=>/]|$)/.test(lower)) {
+	if (/(?:^|\s)(?:data-aero-is-build|aero-is[:-]build|is:build)(?=[\s=>/]|$)/.test(lower)) {
 		return 'build'
 	}
-	if (/(?:^|\s)(?:data-aero-is-state|aero-is[:\-]state|is:state)(?=[\s=>/]|$)/.test(lower)) {
+	if (/(?:^|\s)(?:data-aero-is-state|aero-is[:-]state|is:state)(?=[\s=>/]|$)/.test(lower)) {
 		return 'state'
 	}
-	if (/(?:^|\s)(?:data-aero-is-inline|aero-is[:\-]inline|is:inline)(?=[\s=>/]|$)/.test(lower)) {
+	if (/(?:^|\s)(?:data-aero-is-inline|aero-is[:-]inline|is:inline)(?=[\s=>/]|$)/.test(lower)) {
 		return 'inline'
 	}
 	if (
-		/(?:^|\s)(?:data-aero-is-blocking|aero-is[:\-]blocking|is:blocking)(?=[\s=>/]|$)/.test(lower)
+		/(?:^|\s)(?:data-aero-is-blocking|aero-is[:-]blocking|is:blocking)(?=[\s=>/]|$)/.test(lower)
 	) {
 		return 'blocking'
 	}

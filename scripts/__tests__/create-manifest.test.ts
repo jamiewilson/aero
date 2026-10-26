@@ -7,9 +7,10 @@ const CREATE_PKG = join(process.cwd(), 'packages/create/package.json')
 const CREATE_ROOT = join(process.cwd(), 'packages/create')
 
 function readTemplateJson(template: 'minimal' | 'fullstack', file: string) {
-	return JSON.parse(
-		readFileSync(join(CREATE_ROOT, 'templates', template, file), 'utf8')
-	) as Record<string, unknown>
+	return JSON.parse(readFileSync(join(CREATE_ROOT, 'templates', template, file), 'utf8')) as Record<
+		string,
+		unknown
+	>
 }
 
 describe('@aero-js/create manifest', () => {

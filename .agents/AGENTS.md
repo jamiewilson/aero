@@ -12,7 +12,7 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
 - **packages/create** - `@aero-js/create` Vite+ template manifest (`createConfig.templates`). Starters under `packages/create/templates/` (`minimal`, `fullstack`). Scaffold with `vp create @aero-js:minimal --directory <path>` after publish; local smoke: `node scripts/smoke-template-build.mjs`.
 - **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
-- **Root** - Workspace root. Scripts: `pnpm test` runs workspace Vitest; `pnpm build` builds packages only.
+- **Root** - Workspace root. Toolchain: **Vite+** (`vite-plus`, `vp`). Scripts: `pnpm check` (typecheck + `vp check` + Prettier HTML), `pnpm test` → `vp test run`, `pnpm build` → `vp run build:packages`.
 
 ### Compilation pipeline (packages/core)
 
@@ -82,17 +82,36 @@ The framework provides default aliases when tsconfig is missing; tsconfig is opt
 
 ## Development Commands
 
+**Monorepo (root):**
+
 ```bash
-pnpm run dev          # Vite dev server with HMR (Nitro when aero({ server: true }))
-pnpm run build        # Static build to dist/; with Nitro also .output/
-pnpm run preview      # Static preview only
-pnpm run preview:api  # Full server preview (static + API)
-pnpm test             # Run Vitest (packages/core compiler + vite tests)
+pnpm check            # typecheck + vp check + Prettier HTML
+pnpm test             # vp test run (all Vitest projects in root vite.config.ts)
+pnpm build            # vp run build:packages
+pnpm --dir examples/kitchen-sink dev      # vp dev
+pnpm --dir examples/kitchen-sink build    # vp build
+```
+
+**Scaffold (published `@aero-js/create` manifest):**
+
+```bash
+pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
+cd my-app && pnpm install && pnpm dev   # vp dev
+```
+
+**Kitchen-sink app:**
+
+```bash
+pnpm dev              # vp dev --open
+pnpm build            # vp build
+pnpm preview          # static preview
+pnpm preview:api      # Nitro server preview
+pnpm fmt              # vp fmt + Prettier HTML
 ```
 
 ## Testing
 
-Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
+Tests use **Vitest 5** via root `vite.config.ts` (`vite-plus/test`). Package suites live under each package’s `src/**` and `__tests__/`. Run with `pnpm test` from repo root.
 
 ## TDD (Test-Driven Development)
 

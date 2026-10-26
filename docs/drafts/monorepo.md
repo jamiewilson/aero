@@ -85,7 +85,7 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## packages/create (@aero-js/create)
 
-- **Purpose:** Project initializer. Run `pnpm create @aero-js <name>` to scaffold a new app into `packages/create/dist/<name>` (monorepo; dist is gitignored) or into the current directory when published.
+- **Purpose:** Vite+ template manifest (`createConfig.templates`). Users run `vp create @aero-js:minimal --directory <path>`; local smoke: `node scripts/smoke-template-build.mjs`.
 - **Templates:** Bundled under `packages/create/templates/` (`minimal`, `fullstack`); copied at scaffold time — not separate npm packages.
 
 ## examples/kitchen-sink (demo app)
@@ -97,7 +97,7 @@ This standalone path is intentionally ESM-first for now; broader execution envir
 
 ## packages/create/templates/minimal
 
-- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Used by `pnpm create @aero-js <name>` by default.
+- **Purpose:** Minimal starter template (one layout, index + about, `site.ts` only; no server, no content collections). Default **`vp create @aero-js:minimal`** template.
 - **Structure:** `client/`, `content/site.ts`, `public/`; no `server/`, no `content.config.ts`.
 
 ## packages/create/templates/fullstack

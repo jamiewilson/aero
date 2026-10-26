@@ -29,7 +29,7 @@ export interface FeatureGateIssue {
 }
 
 /** Opening-tag match for bare / aero- / data-aero- `is:state` spellings (location only). */
-const IS_STATE_SCRIPT_RE = /<script\b[^>]*\b(?:data-aero-is-state|aero-is[:\-]state|is:state)\b/i
+const IS_STATE_SCRIPT_RE = /<script\b[^>]*\b(?:data-aero-is-state|aero-is[:-]state|is:state)\b/i
 const EFFECT_CALL_RE = /(?:\$effect|Aero\.effect)\s*\(/
 const RUNTIME_BRACED_ATTR_RE =
 	/\bdata-aero-(?:text|html|show|class|property|model|value|checked)(?:-[\w-]+)?\s*=\s*(['"])\s*\{[^'"]+\}\s*\1/i
@@ -114,7 +114,7 @@ function isDefinitelyNonBooleanInit(initExpr: string): boolean {
 		trimmed === 'null' ||
 		/^(['"]).*\1$/.test(trimmed) ||
 		/^-?\d+(?:\.\d+)?$/.test(trimmed) ||
-		/^[\[{]/.test(trimmed)
+		/^[[{]/.test(trimmed)
 	)
 }
 

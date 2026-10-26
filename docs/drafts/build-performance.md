@@ -1,6 +1,6 @@
 # Incremental static build
 
-For production `vite build`, Aero can **skip or narrow** the static HTML prerender phase when a previous run left a compatible cache. This speeds up repeated builds when only some templates or assets change.
+For production `vp build`, Aero can **skip or narrow** the static HTML prerender phase when a previous run left a compatible cache. This speeds up repeated builds when only some templates or assets change.
 
 Opt in in any of these ways (all tie into the same behavior):
 

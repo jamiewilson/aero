@@ -183,7 +183,7 @@ const props = Aero.props as HeaderProps
 		const ambient = getEmbeddedText(code, 'ambient')!
 		expect(ambient).toContain("declare module '@client/types/props.ts'")
 		expect(ambient).toContain(
-			"export type { MetaProps, HeaderProps, CardProps } from '../types/props'"
+			"export type { MetaProps, HeaderProps, GreetingProps, CardProps } from '../types/props'"
 		)
 		expect(ambient).not.toContain("export * from '../types/props.ts'")
 		expect(ambient).not.toMatch(/@client\/types\/props\.ts'[\s\S]*export \{ default \}/)

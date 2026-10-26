@@ -34,11 +34,11 @@ export async function renderAeroFragment(
 		input: {
 			...input,
 			props: {
-				...(input?.props ?? {}),
+				...input?.props,
 				...props,
 			},
 			params: {
-				...(input?.params ?? {}),
+				...input?.params,
 			},
 		},
 	})

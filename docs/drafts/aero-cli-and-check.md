@@ -41,7 +41,7 @@ node packages/cli/dist/index.mjs doctor --root examples/kitchen-sink
 
 ## `aero build`
 
-Runs **`vite build`** using `createViteConfig` from the project root (same as your usual production build when `vite.config` delegates to it). Use **`--incremental`** to set `AERO_INCREMENTAL=1` when that variable is unset, enabling [incremental static build](build-performance.md) and content disk cache.
+Runs a production Vite build using `createViteConfig` from the project root (same as **`vp build`** when `vite.config` delegates to it). Use **`--incremental`** to set `AERO_INCREMENTAL=1` when that variable is unset, enabling [incremental static build](build-performance.md) and content disk cache.
 
 ## `aero check`
 
@@ -54,7 +54,7 @@ Runs **`vite build`** using `createViteConfig` from the project root (same as yo
 - If the config export is a function, it is called with `{ command: 'build', mode: 'production' }`.
 
 Current limitation:
-`runAeroCheck` uses `loadAeroConfig`, not the stricter Effect-based config loaders. If a config file exists but fails to load, `aero check` can still fall back to default `dirs` and potentially skip templates under a custom client directory such as `frontend/`. In that case, use `DEBUG=aero` or `vite build` for more detail.
+`runAeroCheck` uses `loadAeroConfig`, not the stricter Effect-based config loaders. If a config file exists but fails to load, `aero check` can still fall back to default `dirs` and potentially skip templates under a custom client directory such as `frontend/`. In that case, use `DEBUG=aero` or `vp build` for more detail.
 
 Important:
 `vite.config.ts` should import `createViteConfig` from `@aero-js/core/vite-config`, not the main `@aero-js/core/config` entry, so `aero.config.ts` can load via jiti without pulling Vite into the config entrypoint.

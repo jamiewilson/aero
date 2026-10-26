@@ -3,41 +3,23 @@ title: 'Quick Start'
 description: 'Scaffold your first Aero project and have a site running in minutes.'
 ---
 
-The fastest way to start is with `@aero-js/create`, which scaffolds a project, installs dependencies, and prints next steps.
+<Note>
+	Superseded by [Installation](/getting-started/installation). Use **`pnpm dlx vp create
+	@aero-js:minimal --directory my-app --no-interactive`**, then **`pnpm install`**.
+</Note>
+
+The fastest way to start is with **`vp create`** and the **`@aero-js/create`** template manifest.
 
 <Steps>
   <Step title="Scaffold a project">
     Run the create command with your project name:
 
-    <CodeGroup>
-      ```bash pnpm
-      pnpm create @aero-js my-app
-      ```
+    ```bash
+    pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
+    cd my-app && pnpm install
+    ```
 
-      ```bash pnpm dlx
-      pnpm dlx @aero-js/create@latest my-app
-      ```
-
-      ```bash npm
-      npx @aero-js/create@latest my-app
-      ```
-
-      ```bash yarn
-      yarn create @aero-js my-app
-      ```
-    </CodeGroup>
-
-    This copies the minimal template into `my-app/`, rewrites `package.json` with your project name, and installs dependencies.
-
-    <Tip>
-      To scaffold with Nitro pre-configured for API routes and server deployment, add `--template fullstack`:
-
-      ```bash
-      pnpm create @aero-js my-app --template fullstack
-      ```
-
-      The fullstack template adds Nitro, a root `nitro.config.ts`, and a `preview:api` command (with `aero.config.ts` using `@aero-js/core/config`).
-    </Tip>
+    Use **`@aero-js:fullstack`** instead of **`:minimal`** for Nitro and `server/` routes.
 
   </Step>
 

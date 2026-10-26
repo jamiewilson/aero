@@ -53,7 +53,7 @@ So in build scripts you can use `import.meta.env.SITE` without defining it in `.
 
 ## Aero build-time (Node) variables
 
-These are read by the Aero Vite plugin during `vite build` / `vite dev` (they are **not** `import.meta.env` unless you wire them yourself). See **[Incremental static build](build-performance.md)** for full detail.
+These are read by the Aero Vite plugin during `vp build` / `vp dev` (they are **not** `import.meta.env` unless you wire them yourself). See **[Incremental static build](build-performance.md)** for full detail.
 
 | Variable                            | Purpose                                                                                                                                                                                 |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

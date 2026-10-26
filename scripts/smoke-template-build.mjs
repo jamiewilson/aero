@@ -20,11 +20,15 @@ const dir = mkdtempSync(join(tmpdir(), `aero-template-${template}-`))
 
 try {
 	cpSync(src, dir, { recursive: true })
-	const env =
-		template === 'fullstack' ? { ...process.env, AERO_SERVER: 'false' } : process.env
+	const env = template === 'fullstack' ? { ...process.env, AERO_SERVER: 'false' } : process.env
 	const install = spawnSync('pnpm', ['install'], { cwd: dir, stdio: 'inherit', shell: true })
 	if (install.status !== 0) process.exit(install.status ?? 1)
-	const build = spawnSync('pnpm', ['exec', 'vp', 'build'], { cwd: dir, stdio: 'inherit', shell: true, env })
+	const build = spawnSync('pnpm', ['exec', 'vp', 'build'], {
+		cwd: dir,
+		stdio: 'inherit',
+		shell: true,
+		env,
+	})
 	process.exit(build.status ?? 1)
 } finally {
 	rmSync(dir, { recursive: true, force: true })

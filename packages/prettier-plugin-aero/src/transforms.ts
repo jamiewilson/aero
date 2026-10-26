@@ -195,7 +195,7 @@ async function formatExpressionContents(
 			wrapped
 				.trim()
 				.replace(/^\(/, '')
-				.replace(/\)\;?\s*$/, '')
+				.replace(/\);?\s*$/, '')
 		)
 	} catch {
 		return trimmed
@@ -351,7 +351,7 @@ function collectSelfClosingEdits(source: string, nodes: Node[], selfClosing: boo
 			continue
 		}
 
-		const selfMatch = original.match(/^<([^\s/>]+)([^>]*)\/\>\s*$/s)
+		const selfMatch = original.match(/^<([^\s/>]+)([^>]*)\/>\s*$/s)
 		if (!selfMatch) continue
 		const [, tag, attrs = ''] = selfMatch
 		const trimmedAttrs = attrs.replace(/\s+$/, '')

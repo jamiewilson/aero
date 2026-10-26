@@ -87,13 +87,20 @@ Example with Aero options:
 
 ## CLI
 
-Format templates from the project root:
+Starters from **`vp create @aero-js:*`** ship **`pnpm fmt`** / **`pnpm fmt:check`**: **`vp fmt`** for JS/TS (Oxfmt) plus Prettier on Aero HTML:
+
+```bash
+pnpm fmt
+pnpm fmt:check
+```
+
+Format only templates:
 
 ```bash
 pnpm exec prettier --write "**/*.html"
 ```
 
-Projects scaffolded with `@aero-js/create` include `.prettierrc.json` and recommended VS Code extensions.
+Scaffolded projects include `.prettierrc.json`, optional `.oxfmtrc.json` (ignore Aero HTML for Oxfmt), and recommended VS Code extensions.
 
 <Tip>
 	Prettier config is the single source of truth for Aero format options. You do not need separate
