@@ -1,4 +1,8 @@
-import { formatResolveTemplateTagError, resolveTemplateTag, type TemplateTagKind } from '@aero-js/compiler'
+import {
+	formatResolveTemplateTagError,
+	resolveTemplateTag,
+	type TemplateTagKind,
+} from '@aero-js/compiler'
 import type { PathResolver } from './path-resolver'
 import { getTemplateTagIndex } from './path-resolver'
 import { isValidTemplateImportSpecifier } from './importResolution'
@@ -6,7 +10,11 @@ import { isValidTemplateImportSpecifier } from './importResolution'
 export type ComponentTagResolveResult =
 	| { readonly status: 'ok'; readonly specifier: string }
 	| { readonly status: 'not-imported' }
-	| { readonly status: 'diagnostic'; readonly message: string; readonly severity: 'error' | 'warning' }
+	| {
+			readonly status: 'diagnostic'
+			readonly message: string
+			readonly severity: 'error' | 'warning'
+	  }
 
 /**
  * Resolve a component/layout tag to an import specifier for diagnostics and IDE tooling.

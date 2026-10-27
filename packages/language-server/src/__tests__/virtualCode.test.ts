@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vite-plus/test'
 import ts from 'typescript'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { AeroVirtualCode } from '../virtualCode'
 import type { IScriptSnapshot } from '@volar/language-core'
+
+const slotsFixtureDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/slots')
 
 function createSnapshot(text: string): IScriptSnapshot {
 	return {
@@ -939,8 +943,7 @@ const o = { a: 1 }
 	})
 
 	it('injects slot binding names for parent slot markup from child SlotProps convention', () => {
-		const fixtureDir = '/Users/jamie/dev/aero/packages/language-server/src/__tests__/fixtures/slots'
-		const parentPath = fixtureDir + '/parent.html'
+		const parentPath = path.join(slotsFixtureDir, 'parent.html')
 		const html = `<script is:build>
 import card from './card.html'
 </script>
@@ -958,8 +961,7 @@ import card from './card.html'
 	})
 
 	it('resolves slot typing from alias import paths', () => {
-		const fixtureDir = '/Users/jamie/dev/aero/packages/language-server/src/__tests__/fixtures/slots'
-		const parentPath = fixtureDir + '/parent-alias.html'
+		const parentPath = path.join(slotsFixtureDir, 'parent-alias.html')
 		const html = `<script is:build>
 import card from '@components/card.html'
 </script>

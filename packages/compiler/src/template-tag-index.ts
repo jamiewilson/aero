@@ -37,11 +37,7 @@ function toPosixRelative(fromDir: string, absPath: string): string {
 	return path.relative(fromDir, absPath).split(path.sep).join('/')
 }
 
-function entryFromPath(
-	absPath: string,
-	rootDir: string,
-	aliasPrefix: string
-): TemplateTagEntry {
+function entryFromPath(absPath: string, rootDir: string, aliasPrefix: string): TemplateTagEntry {
 	const resolved = path.resolve(absPath)
 	const tagBase = path.basename(resolved, '.html')
 	const rel = toPosixRelative(path.resolve(rootDir), resolved)
@@ -72,7 +68,9 @@ function indexPaths(
 	return map
 }
 
-function freezeIndexMap(map: Map<string, TemplateTagEntry[]>): ReadonlyMap<string, readonly TemplateTagEntry[]> {
+function freezeIndexMap(
+	map: Map<string, TemplateTagEntry[]>
+): ReadonlyMap<string, readonly TemplateTagEntry[]> {
 	const out = new Map<string, readonly TemplateTagEntry[]>()
 	for (const [key, entries] of map) {
 		out.set(key, entries)
@@ -99,9 +97,7 @@ export function buildTemplateTagIndexFromPaths(
 	const layoutsAlias = options.layoutsAlias ?? DEFAULT_LAYOUTS_ALIAS
 
 	return {
-		components: freezeIndexMap(
-			indexPaths(options.componentPaths, componentsDir, componentsAlias)
-		),
+		components: freezeIndexMap(indexPaths(options.componentPaths, componentsDir, componentsAlias)),
 		layouts: freezeIndexMap(indexPaths(options.layoutPaths, layoutsDir, layoutsAlias)),
 	}
 }

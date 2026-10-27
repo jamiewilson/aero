@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
 import { walkHtmlFiles, walkHtmlFilesDirectOnly } from '../../fs-walk'
 import {
 	buildTemplateTagIndex,
@@ -78,10 +78,7 @@ describe('template-tag-index', () => {
 		if (result.status !== 'ambiguous') return
 		expect(result.candidates).toHaveLength(2)
 		const specifiers = result.candidates.map(c => c.specifier).sort()
-		expect(specifiers).toEqual([
-			'@components/other/toggle.html',
-			'@components/theme/toggle.html',
-		])
+		expect(specifiers).toEqual(['@components/other/toggle.html', '@components/theme/toggle.html'])
 		expect(formatResolveTemplateTagError(result)).toContain('toggle')
 		expect(formatResolveTemplateTagError(result)).toContain('ambiguous')
 	})
@@ -129,10 +126,11 @@ describe('template-tag-index', () => {
 
 		expect([...index.components.keys()].sort()).toEqual(['a', 'b'])
 		expect([...index.layouts.keys()]).toEqual(['base'])
-		expect(walkHtmlFiles(componentsDir).map(p => path.basename(p)).sort()).toEqual([
-			'a.html',
-			'b.html',
-		])
+		expect(
+			walkHtmlFiles(componentsDir)
+				.map(p => path.basename(p))
+				.sort()
+		).toEqual(['a.html', 'b.html'])
 		expect(walkHtmlFilesDirectOnly(layoutsDir).map(p => path.basename(p))).toEqual(['base.html'])
 	})
 

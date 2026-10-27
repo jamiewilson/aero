@@ -74,9 +74,7 @@ import site from '@content/site.ts'
 			templateAutoImport: true,
 		})
 
-		expect(diagnostics.some(d => d.message.includes("Component 'base' is not defined"))).toBe(
-			false
-		)
+		expect(diagnostics.some(d => d.message.includes("Component 'base' is not defined"))).toBe(false)
 		expect(diagnostics.some(d => d.message.includes("Component 'footer' is not defined"))).toBe(
 			false
 		)
@@ -158,9 +156,9 @@ import site from '@content/site.ts'
 			templateAutoImport: false,
 		})
 
-		expect(
-			diagnostics.some(d => d.message.includes("Component 'footer' is not imported"))
-		).toBe(true)
+		expect(diagnostics.some(d => d.message.includes("Component 'footer' is not imported"))).toBe(
+			true
+		)
 	})
 
 	it('validates explicit import specifiers before auto-import', () => {

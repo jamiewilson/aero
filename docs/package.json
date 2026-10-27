@@ -11,6 +11,10 @@
 		"mint": "^4.2.1152"
 	},
 	"pnpm": {
-		"onlyBuiltDependencies": ["esbuild", "keytar", "sharp"]
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"keytar",
+			"sharp"
+		]
 	}
 }

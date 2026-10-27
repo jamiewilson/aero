@@ -109,25 +109,25 @@ vi.mock('../pathResolver', () => ({
 		const componentsDir = '/workspace/client/components'
 		const layoutsDir = '/workspace/client/layouts'
 		return {
-		root: '/workspace',
-		componentsDir,
-		layoutsDir,
-		pagesDir: '/workspace/client/pages',
-		resolve: vi.fn((specifier: string) => {
-			if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
-				return '/workspace/node_modules/@aero-js/core/env.d.ts'
-			}
-			if (specifier.startsWith('@components/')) {
-				return '/workspace/client/components/' + specifier.replace('@components/', '')
-			}
-			if (specifier.startsWith('@layouts/')) {
-				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '')
-			}
-			if (specifier.startsWith('@content/')) {
-				return '/workspace/content/' + specifier.replace('@content/', '')
-			}
-			return '/workspace/' + specifier
-		}),
+			root: '/workspace',
+			componentsDir,
+			layoutsDir,
+			pagesDir: '/workspace/client/pages',
+			resolve: vi.fn((specifier: string) => {
+				if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
+					return '/workspace/node_modules/@aero-js/core/env.d.ts'
+				}
+				if (specifier.startsWith('@components/')) {
+					return '/workspace/client/components/' + specifier.replace('@components/', '')
+				}
+				if (specifier.startsWith('@layouts/')) {
+					return '/workspace/client/layouts/' + specifier.replace('@layouts/', '')
+				}
+				if (specifier.startsWith('@content/')) {
+					return '/workspace/content/' + specifier.replace('@content/', '')
+				}
+				return '/workspace/' + specifier
+			}),
 		}
 	}),
 	clearResolverCache: vi.fn(),

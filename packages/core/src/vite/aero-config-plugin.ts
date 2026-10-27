@@ -36,8 +36,11 @@ export function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
-			const envDir = userConfig.envDir ?? root
-			loadAeroEnv({ command: env.command, mode: env.mode, envDir })
+			const envDirSetting = userConfig.envDir
+			const envDir = envDirSetting === false ? root : (envDirSetting ?? root)
+			const command = env?.command ?? 'serve'
+			const mode = env?.mode ?? 'development'
+			loadAeroEnv(mode, envDir)
 			state.templateDiscovery = new TemplateDiscovery(root, state.dirs.client)
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)
@@ -45,7 +48,7 @@ export function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 
 			// Production build: use minimal client entry (no instance/template chunks) so dist/assets stays small.
 			const alias =
-				env?.command === 'build'
+				command === 'build'
 					? [
 							...state.aliasResult.aliases,
 							{

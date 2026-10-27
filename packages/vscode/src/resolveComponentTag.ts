@@ -1,7 +1,4 @@
-import {
-	resolveComponentTagSpecifier,
-	type PathResolver,
-} from '@aero-js/core/template-diagnostics'
+import { resolveComponentTagSpecifier, type PathResolver } from '@aero-js/core/template-diagnostics'
 import { collectImportedSpecifiersFromDocument, kebabToCamelCase } from './utils'
 
 export function resolveComponentTagAlias(

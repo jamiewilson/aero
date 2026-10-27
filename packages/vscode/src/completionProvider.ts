@@ -159,9 +159,7 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 			const file = path.basename(entries[0]!.absPath)
 			const item = new vscode.CompletionItem(
 				tagName,
-				suffix === 'component'
-					? vscode.CompletionItemKind.Class
-					: vscode.CompletionItemKind.Struct
+				suffix === 'component' ? vscode.CompletionItemKind.Class : vscode.CompletionItemKind.Struct
 			)
 			item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
 			item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)

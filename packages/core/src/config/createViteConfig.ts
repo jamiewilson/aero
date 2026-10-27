@@ -11,7 +11,12 @@ import type { AeroOptions, AeroOptionsFn } from '../types'
 
 import { aero } from '../vite/index'
 import { defaultViteConfig } from './defaults'
-import { isAeroViteConfigEnv, loadAeroEnv, toAeroConfigEnv, type AeroViteConfigEnv } from './loadAeroEnv'
+import {
+	isAeroViteConfigEnv,
+	loadAeroEnv,
+	toAeroConfigEnv,
+	type AeroViteConfigEnv,
+} from './loadAeroEnv'
 import { loadAeroConfig } from './loadAeroConfig'
 
 /** Environment passed to createViteConfig (command and mode). */

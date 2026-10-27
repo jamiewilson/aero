@@ -7,7 +7,14 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"types": ["node"],
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"@aero-js/interpolation": ["../interpolation/src/index.ts"],
+			"@aero-js/html-parser": ["../html-parser/src/index.ts"],
+			"@aero-js/diagnostics": ["../diagnostics/src/index.ts"],
+			"@aero-js/compiler": ["./src/index.ts"],
+			"@aero-js/compiler/*": ["./src/*"]
+		}
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["src/**/*.ts", "../html-parser/src/ambient-vscode-html-languageservice.d.ts"]
 }

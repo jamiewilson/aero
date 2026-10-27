@@ -50,11 +50,11 @@ jobs:
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-
 
+      - name: Build packages
+        run: pnpm build:packages
+
       - name: Check
         run: pnpm check
-
-      - name: Build packages
-        run: vp run build:all
 
       - name: Test
         run: vp test run
@@ -104,6 +104,9 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Build packages
+        run: pnpm build:packages
 
       - name: Build kitchen-sink (CI profile)
         run: vp run build:kitchen-sink:ci
@@ -156,7 +159,7 @@ jobs:
             vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages
-        run: vp run build:all
+        run: pnpm build:packages
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -217,7 +220,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: vp run build:all
+        run: pnpm build:packages
 
       - name: Install browser
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}

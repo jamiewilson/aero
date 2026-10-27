@@ -5,7 +5,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | Feature                    | Description                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------ |
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`           |
-| 🧩 Components & layouts    | Use `<name-component>` and `<name-layout>`; templates auto-resolve by default   |
+| 🧩 Components & layouts    | Use `<name-component>` and `<name-layout>`; templates auto-resolve by default  |
 | 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component   |
 | 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                         |
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes        |
