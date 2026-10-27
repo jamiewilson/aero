@@ -4,8 +4,8 @@ Bare-bones Aero + [Lume](https://github.com/sathvikc/lume-js) example for client
 
 ## Commands
 
-| Command        | Description            |
-| -------------- | ---------------------- |
+| Command      | Description            |
+| ------------ | ---------------------- |
 | `vp dev`     | Start the dev server   |
 | `vp build`   | Build for production   |
 | `vp preview` | Preview the built site |

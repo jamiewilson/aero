@@ -102,16 +102,16 @@ Use `--root` when your CI job's working directory is not the app root:
 
 The framework repo uses [Vite+](https://viteplus.dev/guide/) at the root. Prefer **`vp`** built-ins; keep **`pnpm check`** and **`pnpm fmt`** for composites that add workspace **`typecheck`** and Prettier on Aero **`.html`**.
 
-| Task | Command (repo root) |
-| --- | --- |
-| Quality gate | `pnpm check` |
-| Unit tests | `vp test run` |
-| Package builds | `vp run build:all` |
-| Website | `vp run build:website` |
-| Kitchen-sink CI smoke | `vp run build:kitchen-sink:ci` |
-| VS Code `.vsix` | `vp run pack:vscode` |
-| Pre-merge (full) | `vp run check:all` (`pnpm check` + tests + e2e) |
-| Lint / format (TS) | `vp lint`, `vp fmt` |
+| Task                  | Command (repo root)                             |
+| --------------------- | ----------------------------------------------- |
+| Quality gate          | `pnpm check`                                    |
+| Unit tests            | `vp test run`                                   |
+| Package builds        | `vp run build:all`                              |
+| Website               | `vp run build:website`                          |
+| Kitchen-sink CI smoke | `vp run build:kitchen-sink:ci`                  |
+| VS Code `.vsix`       | `vp run pack:vscode`                            |
+| Pre-merge (full)      | `vp run check:all` (`pnpm check` + tests + e2e) |
+| Lint / format (TS)    | `vp lint`, `vp fmt`                             |
 
 Examples use **`vp dev`** / **`vp build`** / **`vp preview`**. Kitchen-sink sets **`AERO_*`** via **`vp build --mode ci|static|debug`** and [`.env` profiles](https://github.com/jamiewilson/aero/blob/main/_reference/guides/aero-build-env-profiles.md) — not `package.json` env prefixes.
 

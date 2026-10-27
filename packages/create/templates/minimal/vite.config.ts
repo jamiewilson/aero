@@ -1,8 +1,8 @@
 import { aero } from '@aero-js/core/vite'
-import { applyAeroViteEnv } from '@aero-js/core/vite-config'
+import { applyAeroViteEnvFromVite } from '@aero-js/core/vite-config'
 import { defineConfig } from 'vite-plus'
 
 export default defineConfig(viteEnv => {
-	applyAeroViteEnv(viteEnv.mode, viteEnv.envDir)
+	applyAeroViteEnvFromVite(viteEnv)
 	return { plugins: aero() }
 })

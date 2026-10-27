@@ -1,9 +1,9 @@
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
 
-import { applyAeroViteEnv } from '../applyAeroViteEnv'
+import { applyAeroViteEnv, applyAeroViteEnvFromVite } from '../applyAeroViteEnv'
 
 describe('applyAeroViteEnv', () => {
 	const prev: Record<string, string | undefined> = {}
@@ -32,5 +32,17 @@ describe('applyAeroViteEnv', () => {
 		process.env.AERO_SERVER = 'true'
 		applyAeroViteEnv('ci', dir)
 		expect(process.env.AERO_SERVER).toBe('true')
+	})
+
+	it('applyAeroViteEnvFromVite uses envDir when provided', () => {
+		const dir = mkdtempSync(join(tmpdir(), 'aero-env-'))
+		writeFileSync(join(dir, '.env.production'), 'AERO_FROM_VITE=1\n')
+
+		prev.AERO_FROM_VITE = process.env.AERO_FROM_VITE
+		delete process.env.AERO_FROM_VITE
+
+		applyAeroViteEnvFromVite({ command: 'build', mode: 'production', envDir: dir })
+
+		expect(process.env.AERO_FROM_VITE).toBe('1')
 	})
 })

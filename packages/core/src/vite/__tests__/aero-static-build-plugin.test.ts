@@ -5,7 +5,7 @@ import { resolveNitroCliPath } from '../aero-static-build-plugin'
 
 describe('resolveNitroCliPath', () => {
 	it('resolves nitro CLI from a project with nitro installed', () => {
-		const root = path.resolve(import.meta.dirname, '../../../../examples/kitchen-sink')
+		const root = path.resolve(import.meta.dirname, '../../../../../examples/kitchen-sink')
 		const cli = resolveNitroCliPath(root)
 		expect(fs.existsSync(cli)).toBe(true)
 		expect(cli).toMatch(/[/\\]nitro[/\\]dist[/\\]cli[/\\]index\.mjs$/)

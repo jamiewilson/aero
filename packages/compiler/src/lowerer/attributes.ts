@@ -6,7 +6,6 @@ import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import {
 	classifyBuildAttribute,
-	getBuildDirectiveAttribute,
 	hasBuildDirectiveAttribute,
 	resolveBuildDirectiveName,
 	type BuildDirective,

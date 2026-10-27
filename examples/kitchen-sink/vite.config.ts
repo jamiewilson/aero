@@ -1,5 +1,5 @@
 import {
-	applyAeroViteEnv,
+	applyAeroViteEnvFromVite,
 	createViteConfig,
 	viteEnvToCreateViteConfigOptions,
 } from '@aero-js/core/vite-config'
@@ -8,7 +8,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, mergeConfig } from 'vite-plus'
 
 export default defineConfig(viteEnv => {
-	applyAeroViteEnv(viteEnv.mode, viteEnv.envDir)
+	applyAeroViteEnvFromVite(viteEnv)
 	return mergeConfig(createViteConfig(aeroConfig, viteEnvToCreateViteConfigOptions(viteEnv)), {
 		plugins: [tailwindcss()],
 		build: { minify: false },

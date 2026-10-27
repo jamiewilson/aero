@@ -486,11 +486,6 @@ describe('reactive if', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
-		const root = {
-			querySelector(selector: string) {
-				return selector === '[data-aero-if="0"]' ? anchor : null
-			},
-		} as unknown as ParentNode
 		const cleanup = bindReactiveIf({
 			mountTarget: { kind: 'element', element: anchor },
 			scope,
@@ -539,11 +534,6 @@ describe('reactive switch', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
-		const root = {
-			querySelector(selector: string) {
-				return selector === '[data-aero-switch="0"]' ? anchor : null
-			},
-		} as unknown as ParentNode
 		const cleanup = bindReactiveSwitch({
 			mountTarget: { kind: 'element', element: anchor },
 			scope,

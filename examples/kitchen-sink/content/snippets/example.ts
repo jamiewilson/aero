@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 // @snippet:typescript
-const docs = defineCollection({
+const _docs = defineCollection({
 	// collection options...
 	schema: z.object({
 		// [!code highlight]

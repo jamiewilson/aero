@@ -43,14 +43,18 @@ if (!fs.existsSync(outDir)) {
 	fs.mkdirSync(outDir, { recursive: true })
 }
 
+function escapeForTemplateLiteral(text) {
+	return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+}
+
 const content = `/**
  * Generated from packages/compiler/env.d.ts - do not edit manually.
  * Run: node scripts/generate-ambient-preamble.mjs
  */
 
-export const BUILD_SCRIPT_PREAMBLE = \`${(preamble + '\n').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`
+export const BUILD_SCRIPT_PREAMBLE = \`${escapeForTemplateLiteral(preamble + '\n')}\`
 
-export const AMBIENT_DECLARATIONS = \`${(ambient + '\n').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`
+export const AMBIENT_DECLARATIONS = \`${escapeForTemplateLiteral(ambient + '\n')}\`
 `
 
 fs.writeFileSync(outPath, content, 'utf-8')

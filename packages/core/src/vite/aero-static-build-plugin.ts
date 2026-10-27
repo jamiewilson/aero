@@ -41,18 +41,25 @@ async function loadProjectTailwindPlugins(root: string): Promise<Plugin[]> {
 	}
 }
 
+function resolveNitroCliFromRequire(nodeRequire: NodeRequire): string {
+	const pkgJsonPath = nodeRequire.resolve('nitro/package.json')
+	const pkg = nodeRequire('nitro/package.json') as { bin?: string | Record<string, string> }
+	const binEntry = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.nitro
+	if (!binEntry) throw new Error('missing nitro bin')
+	return path.join(path.dirname(pkgJsonPath), binEntry)
+}
+
 /** Resolve the Nitro CLI from the app project (devDependency), not PATH. */
 export function resolveNitroCliPath(projectRoot: string): string {
-	const require = createRequire(path.join(projectRoot, 'package.json'))
-	try {
-		const pkgJsonPath = require.resolve('nitro/package.json')
-		const pkg = require('nitro/package.json') as { bin?: string | Record<string, string> }
-		const binEntry = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.nitro
-		if (!binEntry) throw new Error('missing nitro bin')
-		return path.join(path.dirname(pkgJsonPath), binEntry)
-	} catch {
-		return process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+	const pkgJson = path.join(projectRoot, 'package.json')
+	for (const entry of [pkgJson, import.meta.url] as const) {
+		try {
+			return resolveNitroCliFromRequire(createRequire(entry))
+		} catch {
+			// try next resolver context
+		}
 	}
+	return process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
 }
 
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */

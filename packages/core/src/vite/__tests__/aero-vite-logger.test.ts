@@ -104,7 +104,7 @@ describe('wrapAeroViteLogger', () => {
 		wrapped.error('Internal server error: Missing opening {', { error: err })
 
 		const printed = String(baseError.mock.calls[0]![0])
-		expect(printed).toMatch(/\x1b\[31m/)
+		expect(printed).toContain('\u001B[31m')
 		expect(printed).toContain('[aero] Error: Missing opening {')
 	})
 
@@ -126,7 +126,7 @@ describe('wrapAeroViteLogger', () => {
 		try {
 			wrapped.error('Internal server error: Missing opening {', { error: err })
 			const printed = String(baseError.mock.calls[0]![0])
-			expect(printed).toMatch(/\x1b\[31m/)
+			expect(printed).toContain('\u001B[31m')
 		} finally {
 			if (prevForce === undefined) delete process.env.FORCE_COLOR
 			else process.env.FORCE_COLOR = prevForce

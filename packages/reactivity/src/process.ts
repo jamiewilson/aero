@@ -127,7 +127,7 @@ export function createDefaultHandlers(options?: {
 		},
 		{
 			name: 'class',
-			setup(el, { expression, store }) {
+			setup(el, { expression }) {
 				if (!expression) return
 				const className = expression
 				return bindClassToggle(el, className, () => true)

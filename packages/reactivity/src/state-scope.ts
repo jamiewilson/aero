@@ -69,7 +69,7 @@ function topoSortDerived(bindings: readonly StateBindingSpec[]): StateBindingSpe
 
 	while (pending.size > 0) {
 		let progressed = false
-		for (const name of [...pending]) {
+		for (const name of Array.from(pending)) {
 			const binding = byName.get(name)!
 			if (binding.dependencies.every(dep => !pending.has(dep))) {
 				sorted.push(binding)

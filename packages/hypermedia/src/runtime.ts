@@ -19,7 +19,7 @@ import { process as processFragment } from './process'
 import { parseOobSwaps } from './oob'
 import { isFullPageRegionTarget, mergeHeadFromHtml } from './head-merge'
 import { syncMethodOverride } from './method-override'
-import { applySelectFilter, isAbortError } from './request-policy'
+import { applySelectFilter } from './request-policy'
 import { applySignalPatch, isJsonContentType, parseSignalPatch } from './signal-patch'
 import { isSwappableFragmentHtml } from './fragment-html'
 import {

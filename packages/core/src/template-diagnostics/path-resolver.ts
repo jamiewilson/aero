@@ -35,20 +35,17 @@ export interface PathResolver {
 
 const resolverCache = new Map<string, PathResolver>()
 
-function resolveAeroContentTypes(projectRoot: string): string | undefined {
-	const requireFromProject = createRequire(path.join(projectRoot, 'package.json'))
-	try {
-		const corePkg = requireFromProject.resolve('@aero-js/core/package.json')
-		const resolved = createRequire(corePkg).resolve('@aero-js/compiler/env')
-		return isExistingFile(resolved) ? resolved : undefined
-	} catch {
+function resolveAeroContentTypes(): string | undefined {
+	const requireFromCore = createRequire(import.meta.url)
+	for (const specifier of ['@aero-js/compiler/env', '@aero-js/core/env'] as const) {
 		try {
-			const resolved = requireFromProject.resolve('@aero-js/compiler/env')
-			return isExistingFile(resolved) ? resolved : undefined
+			const resolved = requireFromCore.resolve(specifier)
+			if (isExistingFile(resolved)) return resolved
 		} catch {
-			return undefined
+			// try next
 		}
 	}
+	return undefined
 }
 
 export function getResolver(filePath: string, workspaceRoot?: string): PathResolver {
@@ -79,7 +76,7 @@ export function getResolver(filePath: string, workspaceRoot?: string): PathResol
 			if (/^(https?:|data:|#|\/\/)/.test(specifier)) return undefined
 
 			if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
-				return resolveAeroContentTypes(projectRoot)
+				return resolveAeroContentTypes()
 			}
 
 			const importer = fromFile ?? filePath

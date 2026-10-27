@@ -430,16 +430,16 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 **This monorepo** (repo root):
 
-| Command | What it runs |
-| --- | --- |
-| `pnpm check` | Workspace typecheck + `vp check` + Prettier on `**/*.html` |
-| `vp test run` | Vitest 5 (all package projects in root `vite.config.ts`) |
-| `vp run build:all` | Cached `@aero-js/*` `vp pack` graph |
-| `vp run build:website` | `build:all` + site production build |
-| `vp run build:kitchen-sink:ci` | `build:all` + kitchen-sink `vp build --mode ci` |
-| `vp run pack:vscode` | `build:vscode` + `.vsix` |
-| `vp run check:all` | `pnpm check` + `vp test run` + Playwright CI |
-| `vp lint` / `vp fmt` | Oxlint / Oxfmt (HTML still via `pnpm fmt` at root) |
+| Command                        | What it runs                                               |
+| ------------------------------ | ---------------------------------------------------------- |
+| `pnpm check`                   | Workspace typecheck + `vp check` + Prettier on `**/*.html` |
+| `vp test run`                  | Vitest 5 (all package projects in root `vite.config.ts`)   |
+| `vp run build:all`             | Cached `@aero-js/*` `vp pack` graph                        |
+| `vp run build:website`         | `build:all` + site production build                        |
+| `vp run build:kitchen-sink:ci` | `build:all` + kitchen-sink `vp build --mode ci`            |
+| `vp run pack:vscode`           | `build:vscode` + `.vsix`                                   |
+| `vp run check:all`             | `pnpm check` + `vp test run` + Playwright CI               |
+| `vp lint` / `vp fmt`           | Oxlint / Oxfmt (HTML still via `pnpm fmt` at root)         |
 
 Playwright (root): `pnpm test:e2e` (local; pass `-- --headed` / `--debug`), `pnpm test:e2e:ci` (CI).
 

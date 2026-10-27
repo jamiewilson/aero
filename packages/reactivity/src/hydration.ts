@@ -80,10 +80,7 @@ export function readAeroJsonPayload(
 	role: typeof AERO_JSON_ROLE_STATE,
 	root?: HydrationRoot
 ): Record<string, unknown> {
-	const fallbackRoot =
-		root ??
-		((globalThis as unknown as { document?: HydrationRoot }).document &&
-			(globalThis as unknown as { document?: HydrationRoot }).document)
+	const fallbackRoot = root ?? (globalThis as unknown as { document?: HydrationRoot }).document
 	if (!fallbackRoot) return {}
 	const el = fallbackRoot.querySelector(aeroJsonScriptRoleSelector(role))
 	if (!el) return {}

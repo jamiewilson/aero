@@ -225,23 +225,6 @@ export function collectReactiveBinds(bodyIR: IRNode[]): CollectedReactiveBinds {
 	}
 }
 
-function serializeBindings(analysis: StateScriptAnalysisResult): string {
-	return JSON.stringify(
-		analysis.bindings.map(binding => ({
-			name: binding.name,
-			derived: binding.derived,
-			initExpr: binding.initExpr,
-			dependencies: binding.dependencies,
-			...(binding.reactiveProp ? { reactiveProp: true } : {}),
-			...(binding.propName && binding.propName !== binding.name
-				? { propName: binding.propName }
-				: {}),
-			...(binding.reactiveProp ? { required: binding.required === true } : {}),
-			...(binding.bindable ? { bindable: true } : {}),
-		}))
-	)
-}
-
 export function emitReactivePropsMetadata(analysis: StateScriptAnalysisResult): string {
 	const reactiveProps = analysis.bindings
 		.filter(binding => binding.reactiveProp)

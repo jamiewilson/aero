@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {

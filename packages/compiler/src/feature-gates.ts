@@ -291,15 +291,7 @@ export function collectFeatureGateIssues(
 		})
 	}
 
-	const bindingNames = parsed.stateScript
-		? new Set(
-				(parsed.stateScript.content.match(/\blet\s+(\w+)/g) ?? []).map(m =>
-					m.replace(/\blet\s+/, '')
-				)
-			)
-		: new Set<string>()
-
-	if (options.reactivity === false && walkIRForLiveDirectives(bodyIR, bindingNames)) {
+	if (options.reactivity === false && walkIRForLiveDirectives(bodyIR)) {
 		out.push({
 			code: 'AERO_CONFIG',
 			message:
@@ -446,7 +438,7 @@ export function collectFeatureGateIssues(
 	return out
 }
 
-function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<string>): boolean {
+function walkIRForLiveDirectives(nodes: IRNode[]): boolean {
 	for (const node of nodes) {
 		if (
 			node.kind === 'ReactiveTextBind' ||
@@ -456,23 +448,23 @@ function walkIRForLiveDirectives(nodes: IRNode[], bindingNames: ReadonlySet<stri
 			return true
 		}
 		if (node.kind === 'For' || node.kind === 'If') {
-			if (walkIRForLiveDirectives(node.body, bindingNames)) return true
+			if (walkIRForLiveDirectives(node.body)) return true
 			if (node.kind === 'If') {
 				for (const branch of node.elseIf ?? []) {
-					if (walkIRForLiveDirectives(branch.body, bindingNames)) return true
+					if (walkIRForLiveDirectives(branch.body)) return true
 				}
-				if (node.else && walkIRForLiveDirectives(node.else, bindingNames)) return true
+				if (node.else && walkIRForLiveDirectives(node.else)) return true
 			}
 		}
 		if (node.kind === 'Switch') {
 			for (const branch of node.cases) {
-				if (walkIRForLiveDirectives(branch.body, bindingNames)) return true
+				if (walkIRForLiveDirectives(branch.body)) return true
 			}
-			if (node.defaultBody && walkIRForLiveDirectives(node.defaultBody, bindingNames)) return true
+			if (node.defaultBody && walkIRForLiveDirectives(node.defaultBody)) return true
 		}
 		if (node.kind === 'Component') {
 			for (const slotIR of Object.values(node.slots)) {
-				if (walkIRForLiveDirectives(slotIR, bindingNames)) return true
+				if (walkIRForLiveDirectives(slotIR)) return true
 			}
 		}
 	}

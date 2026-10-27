@@ -4,11 +4,11 @@ Built with [Aero](https://github.com/jamiewilson/aero) — an HTML-first static 
 
 ## Commands
 
-| Command        | Description            |
-| -------------- | ---------------------- |
-| `vp dev`     | Start the dev server (from `website/`)   |
-| `vp build`   | Build for production                     |
-| `vp preview` | Preview the built site                   |
+| Command      | Description                            |
+| ------------ | -------------------------------------- |
+| `vp dev`     | Start the dev server (from `website/`) |
+| `vp build`   | Build for production                   |
+| `vp preview` | Preview the built site                 |
 
 From repo root: `vp run build:website` (depends on `build:all`).
 

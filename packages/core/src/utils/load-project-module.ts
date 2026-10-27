@@ -3,6 +3,20 @@ import { jitiAliasRecordFromProject } from './aliases'
 
 const require = createRequire(import.meta.url)
 
+/** Resolve optional framework deps for jiti when the project root has no node_modules (e.g. temp dirs in tests). */
+function frameworkModuleAliasesForJiti(): Record<string, string> {
+	const requireFromCore = createRequire(import.meta.url)
+	const aliases: Record<string, string> = {}
+	for (const specifier of ['nitro/config', 'nitro'] as const) {
+		try {
+			aliases[specifier] = requireFromCore.resolve(specifier)
+		} catch {
+			// nitro optional outside server projects
+		}
+	}
+	return aliases
+}
+
 export interface LoadProjectModuleOptions {
 	/** When true (default), merge tsconfig path aliases into jiti resolution. */
 	useAliases?: boolean
@@ -20,10 +34,11 @@ export function loadProjectModule<T = unknown>(
 	options: LoadProjectModuleOptions = {}
 ): T {
 	const useAliases = options.useAliases !== false
-	const alias = useAliases ? jitiAliasRecordFromProject(root) : undefined
+	const projectAlias = useAliases ? jitiAliasRecordFromProject(root) : undefined
+	const alias = { ...frameworkModuleAliasesForJiti(), ...projectAlias }
 	const jiti = require('jiti')(root, {
 		esmResolve: true,
-		...(alias ? { alias } : {}),
+		...(Object.keys(alias).length > 0 ? { alias } : {}),
 	})
 	const normalized = relativePath.startsWith('./') ? relativePath : `./${relativePath}`
 	const mod = jiti(normalized)

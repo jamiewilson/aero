@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vite-plus/test'
+import { describe, expect, it } from 'vite-plus/test'
 import { Effect } from '../effect'
 import { mountStateBindings } from '../mount'
 import { createStateScope } from '../state-scope'
@@ -88,7 +88,7 @@ describe('$effect mount integration', () => {
 			effectRuns: [
 				s => {
 					const effect = new Effect(() => {
-						s.count
+						void s.count
 						return () => {
 							cleanups.push(1)
 						}

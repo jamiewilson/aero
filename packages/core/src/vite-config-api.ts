@@ -5,4 +5,9 @@
  */
 export { createViteConfig, getDefaultOptions } from './config/createViteConfig'
 export type { CreateViteConfigOptions } from './config/createViteConfig'
-export { applyAeroViteEnv, viteEnvToCreateViteConfigOptions } from './config/applyAeroViteEnv'
+export {
+	applyAeroViteEnv,
+	applyAeroViteEnvFromVite,
+	viteEnvToCreateViteConfigOptions,
+} from './config/applyAeroViteEnv'
+export type { AeroViteConfigEnv } from './config/applyAeroViteEnv'

@@ -11,7 +11,7 @@ describe('Signal.notify', () => {
 		const signal = new Signal({ count: 0 })
 		let runs = 0
 		new Effect(() => {
-			signal.value
+			void signal.value
 			runs++
 		})
 		expect(runs).toBe(1)

@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushSpanDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import { maskHtmlComments } from '@aero-js/compiler'
 import { maskJsComments } from '../analyzer'

@@ -34,7 +34,7 @@ describe('bindKeyedFor destructuring', () => {
 			ownerDocument: doc,
 			matches: (selector: string) => selector === '[data-aero-for="0"]',
 			querySelector: () => null,
-			replaceChildren(fragment: DocumentFragment) {
+			replaceChildren(_fragment: DocumentFragment) {
 				rowCount = fragmentNodes.length
 			},
 		} as unknown as Element

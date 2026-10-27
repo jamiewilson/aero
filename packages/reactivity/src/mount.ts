@@ -11,12 +11,7 @@ import { bindReactiveIf } from './structural/if'
 import { bindKeyedFor } from './structural/for'
 import { bindReactiveSwitch } from './structural/switch'
 import type { StructuralAnchor } from './structural/anchor'
-import {
-	type MountTarget,
-	resolveMountTarget,
-	setMountTargetText,
-	findCommentRange,
-} from './structural/anchor'
+import { type MountTarget, setMountTargetText, findCommentRange } from './structural/anchor'
 import { compileScopeRead } from './scope-eval'
 import {
 	type CompiledEventHandler,

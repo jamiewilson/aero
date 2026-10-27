@@ -12,11 +12,7 @@ import path from 'node:path'
 import os from 'node:os'
 import { Aero } from '../../runtime'
 import { aero } from '../../vite'
-import {
-	AERO_HTML_VIRTUAL_PREFIX,
-	AERO_SNIPPET_VIRTUAL_PREFIX,
-	toSnippetVirtualModuleId,
-} from '../../vite/defaults'
+import { AERO_HTML_VIRTUAL_PREFIX, toSnippetVirtualModuleId } from '../../vite/defaults'
 
 function loadSource(result: unknown): string {
 	if (typeof result === 'string') return result

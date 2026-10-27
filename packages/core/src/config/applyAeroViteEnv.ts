@@ -13,11 +13,20 @@ export function applyAeroViteEnv(mode: string, envDir: string = process.cwd()): 
 	}
 }
 
-/** Map Vite's config env to {@link createViteConfig} options (custom modes → production for Aero config fn). */
-export function viteEnvToCreateViteConfigOptions(env: {
+/** `defineConfig` callback env; `envDir` is set at runtime but omitted from some vite-plus typings. */
+export type AeroViteConfigEnv = {
 	command: 'build' | 'serve'
 	mode: string
-}): CreateViteConfigOptions {
+	envDir?: string
+}
+
+/** Load mode env files before Aero plugins read `process.env` (use inside `defineConfig`). */
+export function applyAeroViteEnvFromVite(env: AeroViteConfigEnv): void {
+	applyAeroViteEnv(env.mode, env.envDir ?? process.cwd())
+}
+
+/** Map Vite's config env to {@link createViteConfig} options (custom modes → production for Aero config fn). */
+export function viteEnvToCreateViteConfigOptions(env: AeroViteConfigEnv): CreateViteConfigOptions {
 	return {
 		command: env.command === 'serve' ? 'dev' : 'build',
 		mode: env.mode === 'development' ? 'development' : 'production',

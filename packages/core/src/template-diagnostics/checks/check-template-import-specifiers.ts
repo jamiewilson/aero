@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushOffsetDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument } from '../source-document'
 /**
  * Diagnostic check: template imports must include an explicit `.html` extension.
  */
