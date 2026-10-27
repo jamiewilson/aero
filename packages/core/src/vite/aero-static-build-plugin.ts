@@ -5,6 +5,7 @@
 import type { AeroOptions } from '../types'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -51,6 +52,10 @@ function resolveNitroCliFromRequire(nodeRequire: NodeRequire): string {
 
 /** Resolve the Nitro CLI from the app project (devDependency), not PATH. */
 export function resolveNitroCliPath(projectRoot: string): string {
+	const binName = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+	const localBin = path.join(projectRoot, 'node_modules', '.bin', binName)
+	if (existsSync(localBin)) return localBin
+
 	const pkgJson = path.join(projectRoot, 'package.json')
 	for (const entry of [pkgJson, import.meta.url] as const) {
 		try {
@@ -59,14 +64,25 @@ export function resolveNitroCliPath(projectRoot: string): string {
 			// try next resolver context
 		}
 	}
-	return process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+
+	throw new Error(
+		'[aero] Could not resolve the Nitro CLI. Add `nitro` as a devDependency in the project and run install.'
+	)
+}
+
+function nitroSpawnArgs(cliPath: string): { command: string; args: string[] } {
+	if (/\.[cm]?js$/i.test(cliPath)) {
+		return { command: process.execPath, args: [cliPath, 'build'] }
+	}
+	return { command: cliPath, args: ['build'] }
 }
 
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
 async function runNitroBuild(projectRoot: string, configCwd: string): Promise<void> {
 	const nitroBin = resolveNitroCliPath(projectRoot)
+	const { command, args } = nitroSpawnArgs(nitroBin)
 	await new Promise<void>((resolve, reject) => {
-		const child = spawn(nitroBin, ['build'], {
+		const child = spawn(command, args, {
 			cwd: configCwd,
 			stdio: 'inherit',
 			env: process.env,
