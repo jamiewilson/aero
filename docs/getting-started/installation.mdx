@@ -34,17 +34,17 @@ The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and th
     Starters include **`vite-plus`**, **`@aero-js/core`**, Prettier + **`@aero-js/prettier-plugin-aero`** for Aero HTML, and (fullstack) Nitro under `server/`.
 
     <Tip>
-      **Fullstack** adds Nitro, a root `nitro.config.ts`, and `preview:api` for static + API from one origin. Use **`@aero-js:fullstack`** instead of **minimal** when you need `server/` routes out of the box.
+      **Fullstack** adds Nitro and a root `nitro.config.ts` so you can run a full server from `.output/` after `vp build`. Use **`@aero-js:fullstack`** instead of **minimal** when you need `server/` routes out of the box.
     </Tip>
 
   </Step>
 
   <Step title="Start the dev server">
     ```bash
-    pnpm dev
+    vp dev
     ```
 
-    (`pnpm dev` runs **`vp dev`**.) Open `http://localhost:5173`. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
+    Open `http://localhost:5173`. Vite's HMR keeps HTML, CSS, content, and client scripts in sync as you edit.
 
   </Step>
 
@@ -77,25 +77,33 @@ The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and th
 
   <Step title="Build for production">
     ```bash
-    pnpm build
+    vp build
     ```
 
     This produces a static `dist/` folder. Deploy it to any static host.
 
-    To preview the build locally:
+    Use **`vp preview`** to serve the production build locally after **`vp build`**.
 
     <Tabs>
       <Tab title="Static preview">
         ```bash
-        pnpm preview
+        vp preview
         ```
       </Tab>
       <Tab title="Fullstack preview (Nitro)">
+        After **`vp build`** with Nitro enabled:
+
         ```bash
-        pnpm preview:api
+        pnpx nitro preview
         ```
 
-        Serves both the static files and API routes from one origin. Available in the fullstack template or when `server: true` is set.
+        **Default:** Nitro serves static assets and API routes from `.output/` using your project's build info (same flow Nitro suggests after build).
+
+        ```bash
+        node .output/server/index.mjs
+        ```
+
+        **Production parity:** Runs the Node server bundle exactly as in a Node deployment — useful for debugging the deploy artifact or CI-style checks.
       </Tab>
     </Tabs>
 
@@ -104,13 +112,14 @@ The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and th
 
 ## Commands reference
 
-| Command            | Description                                      |
-| ------------------ | ------------------------------------------------ |
-| `pnpm dev`         | Start the dev server with HMR (`vp dev`)         |
-| `pnpm build`       | Build to `dist/` (and `.output/` with Nitro)     |
-| `pnpm preview`     | Preview the static build                         |
-| `pnpm preview:api` | Preview static + API from one origin (Nitro)     |
-| `pnpm fmt`         | Format JS/TS (`vp fmt`) and Aero HTML (Prettier) |
+| Command | Description |
+| --- | --- |
+| `vp dev` | Start the dev server with HMR |
+| `vp build` | Build to `dist/` (and `.output/` with Nitro) |
+| `vp preview` | Serve the production build locally after `vp build` (static / no Nitro APIs) |
+| `pnpx nitro preview` | Preview static + API from one origin after `vp build` (Nitro; recommended locally) |
+| `node .output/server/index.mjs` | Same Nitro app via the production Node entry (after `vp build`; deploy parity) |
+| `pnpm fmt` | Format JS/TS (`vp fmt`) and Aero HTML (Prettier) |
 
 ## Next steps
 

@@ -11,13 +11,30 @@ cd my-app && pnpm install
 
 ## Structure
 
-- `client/` — Pages, layouts, components, assets
-- `content/site.ts` — Global site data
-- `public/` — Static assets
-- No `server/` — static-only
+| Path | Description |
+| --- | --- |
+| `client/` | Pages, layouts, components, assets |
+| `content/site.ts` | Global site data |
+| `public/` | Static assets copied as-is |
+| `vite.config.ts` | Vite+ entry with `aero()` plugin |
+
+No `server/` — static-only. No root `aero.config.ts`; options live on the `aero()` plugin in `vite.config.ts`.
+
+## Path aliases (tsconfig)
+
+- `@pages/*` → `client/pages/*`
+- `@layouts/*` → `client/layouts/*`
+- `@components/*` → `client/components/*`
+- `@styles/*` → `client/assets/styles/*`
+- `@scripts/*` → `client/assets/scripts/*`
+- `@images/*` → `client/assets/images/*`
+- `@content/*` → `content/*`
 
 ## Commands
 
-- `pnpm dev` — Vite+ dev server (`vp dev`)
-- `pnpm build` — Static build to `dist/`
-- `pnpm preview` — Preview the built site
+Install [Vite+](https://viteplus.dev/guide/) (`vp`) once, then from the project directory after `pnpm install`:
+
+- `vp dev` — Dev server with HMR
+- `vp build` — Production build to `dist/`
+- `vp preview` — Serve the production build locally (after `vp build`)
+- `pnpm fmt` — Format JS/TS and Aero HTML

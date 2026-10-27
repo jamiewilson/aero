@@ -4,17 +4,18 @@ Full demo template for the Aero static site generator. Used for development and 
 
 ## Structure
 
-| Path                   | Description                                                                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frontend/`            | Front-end source: pages, components, layouts, assets.                                                                                                              |
-| `frontend/pages/`      | Route pages (e.g. `home.html` → `/`, `demos/images.html` → `/demos/images`, `docs/[slug].html` → `/docs/:slug`).                                                   |
-| `frontend/components/` | Reusable components (`-component` suffix in markup).                                                                                                               |
-| `frontend/layouts/`    | Layout wrappers with `<slot>`.                                                                                                                                     |
-| `frontend/assets/`     | Styles, scripts, images.                                                                                                                                           |
-| `content/`             | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, `theme.ts`) exposed as globals.                                                   |
-| `backend/`             | Nitro: `api/`, `routes/`, `backend/plugins/`, `backend/tasks/`, and `backend/entry.ts` (wired via `nitro.config.ts`).                                              |
+| Path                 | Description                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client/`            | Client source: pages, components, layouts, assets, and client-only types.                                                                                       |
+| `client/pages/`      | Route pages (e.g. `home.html` → `/`, `demos/images.html` → `/demos/images`, `docs/[slug].html` → `/docs/:slug`).                                                 |
+| `client/components/` | Reusable components (`-component` suffix in markup).                                                                                                             |
+| `client/layouts/`    | Layout wrappers with `<slot>`.                                                                                                                                   |
+| `client/assets/`     | Styles, scripts, images.                                                                                                                                         |
+| `content/`           | Content collections: Markdown + frontmatter, and global data modules (`site.ts`, etc.) exposed as globals.                                                       |
+| `server/`            | Nitro: `server/api/`, `server/routes/`, `server/tasks/`, and `server/entry.ts` (wired via `nitro.config.ts`).                                                  |
+| `shared/`            | Code shared by client and server (types, Shiki theme helpers, small utilities).                                                                                  |
 | `public/`              | Static assets copied as-is.                                                                                                                                        |
-| `aero.config.ts`       | Aero config (content, server, dirs).                                                                                                                               |
+| `aero.config.ts`       | Aero config (`content`, `server`, reactivity, hypermedia, site URL, redirects).                                                                                    |
 | `nitro.config.ts`      | Canonical Nitro config for storage, cache, database, tasks, plugins, and route rules.                                                                              |
 | `content.config.ts`    | Content collections (used when `content: true`).                                                                                                                   |
 | `vite.config.ts`       | Build entry: `createViteConfig(aeroConfig, { command, mode })`.                                                                                                    |
@@ -31,8 +32,10 @@ From `examples/kitchen-sink` (run `vp run build:all` once from repo root if work
 | `vp build`                                  | Production build (Nitro + `dist/` when `server: true`)          |
 | `vp build --mode ci`                        | CI profile — [`.env.ci`](./.env.ci): incremental, static-only   |
 | `vp build --mode debug`                     | [`.env.debug`](./.env.debug): incremental + debug logs          |
-| `vp build --mode static && vp preview`      | Static preview (no Nitro APIs) — [`.env.static`](./.env.static) |
-| `vp build && node .output/server/index.mjs` | Full Nitro server preview                                       |
+| `vp build --mode static`                    | Static-only build — [`.env.static`](./.env.static)              |
+| `vp preview`                                | Serve the production build locally (after static or `--mode static` build) |
+| `pnpx nitro preview`                        | Full app preview — static + API from `.output/` (after `vp build`) |
+| `node .output/server/index.mjs`             | Production Node server entry (after `vp build`; deploy parity)  |
 
 **Fallow / static analysis** — [`.fallowrc.json`](./.fallowrc.json); regenerate entries with `aero graph --format fallow-entry` ([fallow-aero.md](../../_reference/guides/fallow-aero.md)).
 
@@ -43,13 +46,12 @@ From `examples/kitchen-sink` (run `vp run build:all` once from repo root if work
 
 ## Path aliases (tsconfig)
 
-- `@components/*` → client/components/\*
-- `@layouts/*` → client/layouts/\*
+- `@client/*` → client/\*
 - `@pages/*` → client/pages/\*
-- `@content/*` → content/\*
+- `@layouts/*` → client/layouts/\*
+- `@components/*` → client/components/\*
 - `@styles/*` → client/assets/styles/\*
 - `@scripts/*` → client/assets/scripts/\*
 - `@images/*` → client/assets/images/\*
-- `@client/*` → client/\*
-- `@server/*` → server/\*
-- `~/*` → project root
+- `@content/*` → content/\*
+- `@shared/*` → shared/\*

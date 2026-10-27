@@ -8,7 +8,7 @@ Install [Vite+](https://viteplus.dev/guide/) (`vp`), then:
 
 ```bash
 vp create @aero-js:minimal --directory my-app --no-interactive
-cd my-app && pnpm install && pnpm dev
+cd my-app && pnpm install && vp dev
 ```
 
 Fullstack (Nitro + `server/`):
@@ -34,7 +34,7 @@ node scripts/smoke-template-build.mjs minimal
 | Name          | Description                                                  |
 | ------------- | ------------------------------------------------------------ |
 | **minimal**   | Static site — `client/`, `content/site.ts`, no `server/`     |
-| **fullstack** | Static + Nitro — `server/`, `nitro.config.ts`, `preview:api` |
+| **fullstack** | Static + Nitro — `server/`, `nitro.config.ts`, `vp build` + `.output/` server |
 
 ## Links
 

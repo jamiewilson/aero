@@ -68,9 +68,9 @@ Aero is a good fit if you:
 
 **HTML-first authoring.** Pages, layouts, and components are `.html` files. The only additions are `{ }` expressions for interpolation and a handful of directives (`if`, `for`, `slot`). The source looks like HTML; the output is HTML.
 
-**Static by default.** `pnpm build` produces a plain `dist/` folder. No framework runtime ships to the browser. Deploy to any static host, or open via `file://`.
+**Static by default.** `vp build` produces a plain `dist/` folder. No framework runtime ships to the browser. Deploy to any static host, or open via `file://`.
 
-**Optional full-stack with Nitro.** Set `server: true` in your config to enable [Nitro](https://nitro.build/) — file-based API routes under `server/api/`, universal deployment presets, and a `preview:api` command. You get API routes from the same project without changing how you write pages.
+**Optional full-stack with Nitro.** Set `server: true` in your config to enable [Nitro](https://nitro.build/) — file-based API routes under `server/api/`, universal deployment presets, and a local server from `.output/` after build. You get API routes from the same project without changing how you write pages.
 
 **Zero runtime.** Build-time code lives in `<script is:build>` and is completely stripped from output. Client scripts are plain `<script>` tags, bundled by Vite. No hydration orchestrator, no Virtual DOM.
 

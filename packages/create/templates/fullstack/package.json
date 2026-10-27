@@ -4,9 +4,6 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vp dev",
-		"build": "vp build",
-		"preview:api": "vp build && node .output/server/index.mjs",
 		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
 		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
 	},

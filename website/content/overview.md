@@ -19,7 +19,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 ```bash
 # scaffold a new project (Vite+)
 pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
-cd my-app && pnpm install && pnpm dev
+cd my-app && pnpm install && vp dev
 # fullstack (Nitro + server/)
 pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive
 # add to an existing project

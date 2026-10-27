@@ -96,7 +96,7 @@ vp lint                     # Oxlint (also part of vp check)
 
 ```bash
 pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
-cd my-app && pnpm install && pnpm dev   # vp dev
+cd my-app && pnpm install && vp dev
 ```
 
 **Kitchen-sink** (`examples/kitchen-sink/`):
@@ -104,8 +104,9 @@ cd my-app && pnpm install && pnpm dev   # vp dev
 ```bash
 vp dev --open
 vp build --mode ci
-vp build --mode static && vp preview
-vp build && node .output/server/index.mjs
+vp build --mode static   # then vp preview
+pnpx nitro preview       # after vp build (Nitro; local default)
+node .output/server/index.mjs   # after vp build (production Node entry)
 pnpm fmt              # vp fmt + Prettier HTML (from app dir)
 ```
 

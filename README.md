@@ -21,7 +21,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 ```bash
 # scaffold a new project (Vite+)
 pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
-cd my-app && pnpm install && pnpm dev
+cd my-app && pnpm install && vp dev
 # fullstack (Nitro + server/)
 pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive
 # add to an existing project
@@ -426,7 +426,7 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## Commands
 
-**Aero app** (e.g. after `vp create @aero-js:minimal`): run from the project directory — `vp dev`, `vp build`, `vp preview` (starters may still expose `pnpm dev` / `pnpm build` wrappers).
+**Aero app** (e.g. after `vp create @aero-js:minimal`): from the project directory — `vp dev`, `vp build`, `vp preview` (requires [Vite+](https://viteplus.dev/guide/) on your PATH).
 
 **This monorepo** (repo root):
 
@@ -443,9 +443,9 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 Playwright (root): `pnpm test:e2e` (local; pass `-- --headed` / `--debug`), `pnpm test:e2e:ci` (CI).
 
-**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static && vp preview` or full `vp build` for Nitro preview.
+**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static` then `vp preview`; full `vp build` then `pnpx nitro preview` (or `node .output/server/index.mjs` for production Node entry).
 
-**Import-bundling demos**: `cd examples/import-bundling/<demo> && pnpm exec vp dev` (or `vp build` / `vp preview`).
+**Import-bundling demos**: `cd examples/import-bundling/<demo> && vp dev` (or `vp build` / `vp preview`).
 
 ## Build output
 

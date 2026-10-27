@@ -1,7 +1,7 @@
-import fmt from './oxfmt.config'
+import fmtConfig from './.oxfmtrc.json' with { type: 'json' }
+import { defineConfig, type UserConfig } from 'vite-plus'
 
-import { defineConfig } from 'vite-plus'
-
+const fmt = fmtConfig as NonNullable<UserConfig['fmt']>
 const TEST_INCLUDE = ['src/**/*.{test,spec}.{ts,js}', '__tests__/**/*.{test,spec}.{ts,js}'] as const
 
 type PackageTestProject = {
