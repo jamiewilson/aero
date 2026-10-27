@@ -10,11 +10,8 @@ import {
 	type SourceRange,
 	type VariableDefinition,
 } from './analyzer'
-import {
-	kebabToCamelCase,
-	collectImportedSpecifiersFromDocument,
-	findInnermostScope,
-} from './utils'
+import { findInnermostScope } from './utils'
+import { resolveComponentTagAlias } from './resolveComponentTag'
 
 /**
  * Go to Definition for Aero template references in HTML files.
@@ -63,14 +60,13 @@ export class AeroDefinitionProvider implements vscode.DefinitionProvider {
 			}
 
 			case 'component-tag': {
-				const imports = collectImportedSpecifiersFromDocument(document.getText())
-				const importName = kebabToCamelCase(classification.baseName)
-				const importedSpecifier = imports.get(importName)
-				const alias =
-					importedSpecifier ||
-					(classification.suffix === 'component'
-						? `@components/${classification.baseName}.html`
-						: `@layouts/${classification.baseName}.html`)
+				const alias = resolveComponentTagAlias(
+					resolver,
+					document.getText(),
+					document.uri.fsPath,
+					classification
+				)
+				if (!alias) return null
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 				return [makeLink(classification.range, resolved)]

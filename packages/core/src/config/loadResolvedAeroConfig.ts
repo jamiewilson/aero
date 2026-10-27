@@ -10,6 +10,7 @@ export interface ResolvedAeroConfig {
 	options: AeroOptions | null
 	dirs: ResolvedAeroDirs
 	flags: { reactivity: boolean; hypermedia: boolean }
+	templateAutoImport: boolean
 }
 
 /**
@@ -23,6 +24,7 @@ export function loadResolvedAeroConfig(root: string): ResolvedAeroConfig {
 			options: null,
 			dirs: resolveDirs(),
 			flags: { reactivity: false, hypermedia: false },
+			templateAutoImport: true,
 		}
 	}
 	const options =
@@ -32,6 +34,7 @@ export function loadResolvedAeroConfig(root: string): ResolvedAeroConfig {
 			options: null,
 			dirs: resolveDirs(),
 			flags: { reactivity: false, hypermedia: false },
+			templateAutoImport: true,
 		}
 	}
 	return {
@@ -41,5 +44,6 @@ export function loadResolvedAeroConfig(root: string): ResolvedAeroConfig {
 			reactivity: options.reactivity === true,
 			hypermedia: options.hypermedia === true,
 		},
+		templateAutoImport: options.templateAutoImport !== false,
 	}
 }

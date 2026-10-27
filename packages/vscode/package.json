@@ -33,6 +33,7 @@
 	"scripts": {
 		"dev": "vp pack --watch",
 		"build": "pnpm --filter @aero-js/compiler run prebuild && cp ../prettier-plugin-aero/schema.json ./schemas/prettierrc-aero.json && vp pack --minify",
+		"pack": "vsce package --no-dependencies",
 		"typecheck": "tsc --noEmit",
 		"test": "pnpm -C ../.. exec vp test run --project aero-vscode",
 		"vscode:prepublish": "cp ../../LICENSE ."
@@ -46,6 +47,7 @@
 		"@volar/vscode": "~2.4.28"
 	},
 	"devDependencies": {
+		"@vscode/vsce": "^3.7.1",
 		"@types/node": "catalog:",
 		"@types/vscode": "^1.125.0",
 		"typescript": "catalog:",
@@ -185,7 +187,7 @@
 	],
 	"icon": "images/logo.png",
 	"engines": {
-		"vscode": "^1.105.0"
+		"vscode": "^1.125.0"
 	},
 	"extensionRecommendations": [
 		"esbenp.prettier-vscode"

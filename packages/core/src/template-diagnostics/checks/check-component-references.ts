@@ -7,7 +7,7 @@ import type { SourceDocument } from '../source-document'
 import { COMPONENT_SUFFIX_REGEX } from '../constants'
 import type { PathResolver } from '../path-resolver'
 import { kebabToCamelCase, collectImportedSpecifiersFromDocument } from '../utils'
-import { isValidTemplateImportSpecifier } from '../importResolution'
+import { resolveComponentTagSpecifier } from '../template-tag-resolver'
 import { getIgnoredRanges, isInRanges, findTagNameRange } from './helpers'
 
 /** Matches opening tags with component/layout suffix */
@@ -18,7 +18,8 @@ export function checkComponentReferences(
 	document: SourceDocument,
 	text: string,
 	diagnostics: AeroDiagnostic[],
-	resolver: PathResolver
+	resolver: PathResolver,
+	templateAutoImport: boolean
 ): void {
 	const imports = collectImportedSpecifiersFromDocument(text)
 	const ignoredRanges = getIgnoredRanges(text)
@@ -38,9 +39,17 @@ export function checkComponentReferences(
 		const baseName = tagName.replace(COMPONENT_SUFFIX_REGEX, '')
 		const importName = kebabToCamelCase(baseName)
 		const importedSpecifier = imports.get(importName)
+		const nameRange = findTagNameRange(match.index, tagName)
 
-		if (!importedSpecifier || !isValidTemplateImportSpecifier(importedSpecifier)) {
-			const nameRange = findTagNameRange(match.index, tagName)
+		const outcome = resolveComponentTagSpecifier(resolver, {
+			tagBase: baseName,
+			kind: suffix,
+			importedSpecifier,
+			templateAutoImport,
+			fromFile: document.uri.fsPath,
+		})
+
+		if (outcome.status === 'not-imported') {
 			pushOffsetDiagnostic(
 				diagnostics,
 				document,
@@ -53,17 +62,15 @@ export function checkComponentReferences(
 			continue
 		}
 
-		const resolved = resolver.resolve(importedSpecifier, document.uri.fsPath)
-		if (!resolved) {
-			const nameRange = findTagNameRange(match.index, tagName)
+		if (outcome.status === 'diagnostic') {
 			pushOffsetDiagnostic(
 				diagnostics,
 				document,
 				nameRange.start,
 				nameRange.end,
-				`${suffix === 'component' ? 'Component' : 'Layout'} file not found: ${baseName}.html`,
+				outcome.message,
 				'AERO_RESOLVE',
-				'warning'
+				outcome.severity
 			)
 		}
 	}

@@ -142,7 +142,7 @@ export default defineConfig({
 				},
 			},
 			'pack:vscode': {
-				command: 'pnpm --dir packages/vscode exec vsce package --no-dependencies',
+				command: 'pnpm --dir packages/vscode run pack',
 				dependsOn: ['build:vscode'],
 				cache: {
 					output: [{ pattern: 'packages/vscode/*.vsix', base: 'workspace' }],

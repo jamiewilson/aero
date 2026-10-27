@@ -7,6 +7,7 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { getTemplateTagIndex } from '@aero-js/core/template-diagnostics'
 import { getResolver } from './pathResolver'
 import { CONTENT_GLOBALS } from './constants'
 import { isAeroDocument } from './scope'
@@ -132,46 +133,39 @@ export class AeroCompletionProvider implements vscode.CompletionItemProvider {
 		const resolver = getResolver(document)
 		if (!resolver) return []
 
+		const index = getTemplateTagIndex(resolver)
 		const items: vscode.CompletionItem[] = []
 
-		items.push(...this.scanDirForTags(resolver.componentsDir, 'component', prefix))
-		items.push(...this.scanDirForTags(resolver.layoutsDir, 'layout', prefix))
+		items.push(...this.tagIndexCompletions(index.components, 'component', prefix))
+		items.push(...this.tagIndexCompletions(index.layouts, 'layout', prefix))
 
 		return items
 	}
 
-	private scanDirForTags(
-		dir: string,
+	private tagIndexCompletions(
+		map: ReadonlyMap<string, readonly { readonly absPath: string }[]>,
 		suffix: 'component' | 'layout',
 		prefix: string
 	): vscode.CompletionItem[] {
 		const items: vscode.CompletionItem[] = []
+		const seen = new Set<string>()
 
-		if (!fs.existsSync(dir)) return items
+		for (const [tagBase, entries] of map) {
+			if (entries.length === 0) continue
+			const tagName = `${tagBase}-${suffix}`
+			if (!tagName.startsWith(prefix) || seen.has(tagName)) continue
+			seen.add(tagName)
 
-		try {
-			const files = fs.readdirSync(dir)
-			for (const file of files) {
-				if (!file.endsWith('.html')) continue
-				const baseName = file.replace(/\.html$/, '')
-				// Convert camelCase to kebab-case for tag name
-				const kebab = baseName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
-				const tagName = `${kebab}-${suffix}`
-
-				if (!tagName.startsWith(prefix)) continue
-
-				const item = new vscode.CompletionItem(
-					tagName,
-					suffix === 'component'
-						? vscode.CompletionItemKind.Class
-						: vscode.CompletionItemKind.Struct
-				)
-				item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
-				item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
-				items.push(item)
-			}
-		} catch {
-			// Directory read error
+			const file = path.basename(entries[0]!.absPath)
+			const item = new vscode.CompletionItem(
+				tagName,
+				suffix === 'component'
+					? vscode.CompletionItemKind.Class
+					: vscode.CompletionItemKind.Struct
+			)
+			item.detail = `${suffix === 'component' ? 'Component' : 'Layout'}: ${file}`
+			item.insertText = new vscode.SnippetString(`${tagName} $1/>\n`)
+			items.push(item)
 		}
 
 		return items

@@ -146,18 +146,8 @@ export function checkUndefinedVariables(
 		}
 		if (foundInScope) continue
 
-		// Template free-identifier errors are covered by virtual TS (TS2304). Keep Aero-only
-		// component-missing diagnostics here; skip `Variable 'x' is not defined` duplicates.
-		if (!ref.isComponent) continue
-
-		pushSpanDiagnostic(
-			diagnostics,
-			document,
-			ref.range,
-			`Component '${ref.content}' is not defined`,
-			'AERO_COMPILE',
-			'error'
-		)
+		// Component/layout tags are validated by checkComponentReferences (imports + auto-import).
+		// Template free-identifier errors are covered by virtual TS (TS2304).
 	}
 }
 

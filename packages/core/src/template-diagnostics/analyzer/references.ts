@@ -10,6 +10,7 @@ import {
 	maskTemplateLiteralStatic,
 } from './helpers'
 import { isJsReservedIdentifier } from './js-keywords'
+import { kebabToCamelCase } from '../utils'
 import type { TemplateReference } from './types'
 
 const STANDALONE_ATTR_VARIABLE_REFS = new Set(['props', 'aero-props', 'data-aero-props'])
@@ -68,7 +69,7 @@ export function collectTemplateReferences(
 			const absPrefixStart = node.start + nameStartInOpen
 
 			refs.push({
-				content: prefix.replace(/-([a-z])/g, g => g[1].toUpperCase()),
+				content: kebabToCamelCase(prefix),
 				range: rangeFromOffsets(document, absPrefixStart, absPrefixStart + prefix.length),
 				offset: absPrefixStart,
 				isAttribute: false,
