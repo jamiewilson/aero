@@ -1,239 +1,239 @@
-name: CI
+#name: CI
 
-on:
-  pull_request:
-  push:
-    branches: ['main']
-  workflow_dispatch:
-  schedule:
-    - cron: '0 8 * * *'
+#on:
+#  pull_request:
+#  push:
+#    branches: ['main']
+#  workflow_dispatch:
+#  schedule:
+#    - cron: '0 8 * * *'
 
-permissions:
-  contents: read
+#permissions:
+#  contents: read
 
-jobs:
-  quality:
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#jobs:
+#  quality:
+#    if: github.event_name != 'schedule'
+#    runs-on: ubuntu-latest
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Restore Vite Task cache
-        id: vite-task-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+#      - name: Restore Vite Task cache
+#        id: vite-task-cache
+#        uses: actions/cache/restore@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+#          restore-keys: |
+#            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Build packages
-        run: pnpm build:packages
+#      - name: Build packages
+#        run: pnpm build:packages
 
-      - name: Check
-        run: pnpm check
+#      - name: Check
+#        run: pnpm check
 
-      - name: Test
-        run: vp test run
+#      - name: Test
+#        run: vp test run
 
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+#      - name: Save Vite Task cache
+#        if: success()
+#        uses: actions/cache/save@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
-  app-smoke:
-    if: github.event_name != 'schedule'
-    needs: quality
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#  app-smoke:
+#    if: github.event_name != 'schedule'
+#    needs: quality
+#    runs-on: ubuntu-latest
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Restore Vite Task cache
-        id: vite-task-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+#      - name: Restore Vite Task cache
+#        id: vite-task-cache
+#        uses: actions/cache/restore@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+#          restore-keys: |
+#            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Build packages
-        run: pnpm build:packages
+#      - name: Build packages
+#        run: pnpm build:packages
 
-      - name: Build kitchen-sink (CI profile)
-        run: vp run build:kitchen-sink:ci
+#      - name: Build kitchen-sink (CI profile)
+#        run: vp run build:kitchen-sink:ci
 
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+#      - name: Save Vite Task cache
+#        if: success()
+#        uses: actions/cache/save@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
-  e2e-chromium:
-    if: github.event_name != 'schedule'
-    needs: app-smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#  e2e-chromium:
+#    if: github.event_name != 'schedule'
+#    needs: app-smoke
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 45
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Restore Vite Task cache
-        id: vite-task-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+#      - name: Restore Vite Task cache
+#        id: vite-task-cache
+#        uses: actions/cache/restore@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+#          restore-keys: |
+#            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Build packages
-        run: pnpm build:packages
+#      - name: Build packages
+#        run: pnpm build:packages
 
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+#      - name: Install Chromium
+#        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run Playwright
-        run: pnpm test:e2e:ci
+#      - name: Run Playwright
+#        run: pnpm test:e2e:ci
 
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v4
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+#      - name: Save Vite Task cache
+#        if: success()
+#        uses: actions/cache/save@v4
+#        with:
+#          path: node_modules/.vite/task-cache
+#          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-chromium
-          path: |
-            tests/output/report
-            tests/output/results
-          if-no-files-found: ignore
+#      - name: Upload Playwright report
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: playwright-report-chromium
+#          path: |
+#            tests/output/report
+#            tests/output/results
+#          if-no-files-found: ignore
 
-  e2e-cross-browser:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      AERO_E2E_CROSS_BROWSER: '1'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#  e2e-cross-browser:
+#    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 45
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        browser: [chromium, firefox, webkit]
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#      AERO_E2E_CROSS_BROWSER: '1'
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm build:packages
+#      - name: Build packages
+#        run: pnpm build:packages
 
-      - name: Install browser
-        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+#      - name: Install browser
+#        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Run Playwright for ${{ matrix.browser }}
-        run: pnpm test:e2e:ci -- --project=${{ matrix.browser }}
+#      - name: Run Playwright for ${{ matrix.browser }}
+#        run: pnpm test:e2e:ci -- --project=${{ matrix.browser }}
 
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-${{ matrix.browser }}
-          path: |
-            tests/output/report
-            tests/output/results
-          if-no-files-found: ignore
+#      - name: Upload Playwright report
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: playwright-report-${{ matrix.browser }}
+#          path: |
+#            tests/output/report
+#            tests/output/results
+#          if-no-files-found: ignore

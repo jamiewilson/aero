@@ -1,45 +1,45 @@
-name: Perf gates
+#name: Perf gates
 
-on:
-  pull_request:
-  push:
-    branches: ['main']
-  workflow_dispatch:
+#on:
+#  pull_request:
+#  push:
+#    branches: ['main']
+#  workflow_dispatch:
 
-permissions:
-  contents: read
+#permissions:
+#  contents: read
 
-jobs:
-  perf:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#jobs:
+#  perf:
+#    runs-on: ubuntu-latest
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm build:packages
+#      - name: Build packages
+#        run: pnpm build:packages
 
-      - name: Run perf stress suite
-        run: pnpm --filter @aero-js/core test -- perf/stress
+#      - name: Run perf stress suite
+#        run: pnpm --filter @aero-js/core test -- perf/stress

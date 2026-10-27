@@ -1,66 +1,66 @@
-name: Deploy website to GitHub Pages
+#name: Deploy website to GitHub Pages
 
-on:
-  push:
-    branches: ['main']
-    paths:
-      - 'website/**'
-      - '.github/workflows/static.yml'
-  workflow_dispatch:
+#on:
+#  push:
+#    branches: ['main']
+#    paths:
+#      - 'website/**'
+#      - '.github/workflows/static.yml'
+#  workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+#permissions:
+#  contents: read
+#  pages: write
+#  id-token: write
 
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
+#concurrency:
+#  group: 'pages'
+#  cancel-in-progress: false
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#    env:
+#      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+#      - name: Setup pnpm
+#        uses: pnpm/action-setup@v4
+#        with:
+#          version: 10.33.0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'pnpm'
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version: '22'
-          cache: true
+#      - name: Setup Vite+
+#        uses: voidzero-dev/setup-vp@v1
+#        with:
+#          node-version: '22'
+#          cache: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#      - name: Install dependencies
+#        run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: vp run build:website
+#      - name: Build
+#        run: vp run build:website
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: './website/dist'
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v4
+#        with:
+#          path: './website/dist'
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+#  deploy:
+#    environment:
+#      name: github-pages
+#      url: ${{ steps.deployment.outputs.page_url }}
+#    runs-on: ubuntu-latest
+#    needs: build
+#    steps:
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
