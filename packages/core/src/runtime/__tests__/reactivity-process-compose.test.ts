@@ -1,11 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { composeHypermediaReactivityProcess } from '../client-mount'
 
 describe('composeHypermediaReactivityProcess', () => {
 	it('chains hypermedia and reactivity process on runtime fragments', () => {
 		const hypermediaProcess = vi.fn()
 		const reactivityProcess = vi.fn(() => () => {})
-		;(globalThis as Record<string, unknown>).__AERO_HYPERMEDIA_RUNTIME__ = { process: hypermediaProcess }
+		;(globalThis as Record<string, unknown>).__AERO_HYPERMEDIA_RUNTIME__ = {
+			process: hypermediaProcess,
+		}
 		;(globalThis as Record<string, unknown>).__AERO_REACTIVITY_RUNTIME__ = {
 			store: {},
 			process: reactivityProcess,

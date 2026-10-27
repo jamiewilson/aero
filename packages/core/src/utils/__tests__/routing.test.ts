@@ -2,8 +2,15 @@
  * Unit tests for utils/routing.ts: resolvePageName, pagePathToKey, resolveDynamicPage, resolvePageTarget.
  */
 
-import { describe, it, expect } from 'vitest'
-import { pagePathToKey, resolveDynamicPage, resolvePageName, resolvePageTarget, pageNameToRoutePath, normalizeRoutePath } from '../routing'
+import { describe, it, expect } from 'vite-plus/test'
+import {
+	pagePathToKey,
+	resolveDynamicPage,
+	resolvePageName,
+	resolvePageTarget,
+	pageNameToRoutePath,
+	normalizeRoutePath,
+} from '../routing'
 
 describe('pagePathToKey', () => {
 	it('should use segment after pages/ for page paths', () => {

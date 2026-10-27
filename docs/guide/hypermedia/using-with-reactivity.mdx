@@ -15,11 +15,11 @@ export default defineConfig({
 
 ## How they connect
 
-| Layer | Role |
-| --- | --- |
-| Reactivity | `let` signals, `on:*` handlers, form bindings, structural UI |
-| Hypermedia | `GET` / `POST` / … fetch HTML, swap into targets, lifecycle events |
-| Together | Actions run from reactive handlers; swapped HTML is **processed** into the page signal store |
+| Layer      | Role                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| Reactivity | `let` signals, `on:*` handlers, form bindings, structural UI                                 |
+| Hypermedia | `GET` / `POST` / … fetch HTML, swap into targets, lifecycle events                           |
+| Together   | Actions run from reactive handlers; swapped HTML is **processed** into the page signal store |
 
 `on:*` handlers can call `GET` / `POST` without an import. Calls from `<script is:state>` need `import { GET } from '@aero-js/hypermedia'` (do not import these in `is:build`).
 
@@ -36,7 +36,8 @@ Keep editable fields reactive; post current values; show server result in a targ
 	let isSaving = false
 </script>
 
-<form on:submit.prevent="{ POST('/api/posts', { target: '#result', values: { title, body }, state: isSaving }) }">
+<form
+	on:submit.prevent="{ POST('/api/posts', { target: '#result', values: { title, body }, state: isSaving }) }">
 	<input value="{ title }" placeholder="Title" />
 	<textarea value="{ body }" placeholder="Body"></textarea>
 	<button type="submit" busy="{ isSaving }">Publish</button>

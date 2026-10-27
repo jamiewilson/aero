@@ -24,9 +24,9 @@
 		"./schema.json": "./schema.json"
 	},
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run"
+		"test": "pnpm -C ../.. exec vp test run --project @aero-js/prettier-plugin-aero"
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",
@@ -36,10 +36,8 @@
 	"devDependencies": {
 		"@aero-js/diagnostics": "workspace:*",
 		"@types/node": "catalog:",
-		"prettier": "^3.9.3",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	},
 	"peerDependencies": {
 		"prettier": "^3.0.0"

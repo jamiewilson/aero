@@ -21,11 +21,11 @@ That pattern is convenient for dynamic HTML but incompatible with `script-src 's
 
 Aero splits CSP posture by path:
 
-| Path | Eval? | Typical CSP |
-| --- | --- | --- |
-| **Compiled** `<script is:state>` mounts | No — compiler emits real functions | `script-src 'self'` |
-| **Restricted** `process()` on swapped fragments | No — `$store` refs + hypermedia action grammar only | `script-src 'self'` |
-| **`unsafeProcessFragment()`** (opt-in) | Yes — arbitrary expressions | Requires `unsafe-eval` |
+| Path                                            | Eval?                                               | Typical CSP            |
+| ----------------------------------------------- | --------------------------------------------------- | ---------------------- |
+| **Compiled** `<script is:state>` mounts         | No — compiler emits real functions                  | `script-src 'self'`    |
+| **Restricted** `process()` on swapped fragments | No — `$store` refs + hypermedia action grammar only | `script-src 'self'`    |
+| **`unsafeProcessFragment()`** (opt-in)          | Yes — arbitrary expressions                         | Requires `unsafe-eval` |
 
 There is **no** `strictCsp` config flag. Eval-free is the only shipped mode for compiled templates and default `process()`.
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { bannerTitleForCode, DIAGNOSTIC_BANNER_CHAR, makeBanner } from '../diagnostic-display'
 
 describe('diagnostic-display', () => {

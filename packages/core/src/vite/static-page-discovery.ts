@@ -5,7 +5,7 @@
 import path from 'node:path'
 import { pagePathToKey, pageNameToRelativeRoutePath } from '../utils/routing'
 import { isDynamicRoutePattern, expandRoutePattern } from '../utils/route-pattern'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import { toOutputFile } from './rewrite'
 import { walkHtmlFiles } from '../utils/fs-walk'
 

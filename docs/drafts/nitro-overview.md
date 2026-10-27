@@ -42,10 +42,10 @@ export default defineNitroConfig({
 
 After a production build, choose how you preview:
 
-| Command                                                                      | What runs                                                                            |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `pnpm preview` (typically `AERO_SERVER=false vite build && vite preview`)    | Static files only — no Nitro APIs                                                    |
-| `pnpm preview:api` (typically `vite build && node .output/server/index.mjs`) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, etc. |
+| Command                                                                    | What runs                                                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm preview` (typically `AERO_SERVER=false vp build && vp preview`)      | Static files only — no Nitro APIs                                                    |
+| `pnpm preview:api` (typically `vp build && node .output/server/index.mjs`) | Full Nitro server from `.output/`, including `server/api`, middleware, storage, etc. |
 
 The **fullstack template** bundled with `@aero-js/create` (`packages/create/templates/fullstack` in the Aero repo) ships both scripts and a working `server/` tree you can copy from.
 
@@ -61,7 +61,7 @@ This page is the **Nitro-in-Aero cookbook**: short, copy-paste patterns for comm
 - [Route rules and runtime config](#route-rules-and-runtime-config)
 - [Deployment presets](#deployment-presets)
 
-For a **full runnable project** that exercises these patterns together, run `pnpm create @aero-js my-app --template fullstack` or use the monorepo’s `packages/create/templates/fullstack` tree as reference.
+For a **full runnable project** that exercises these patterns together, run `pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive` or use the monorepo’s `packages/create/templates/fullstack` tree as reference.
 
 ### Starter parity map (current)
 

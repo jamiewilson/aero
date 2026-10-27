@@ -5,7 +5,7 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 | 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`                                                                                |
 | 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`                                                                                |
 | 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component                                                                        |
-| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                                                                                         |
+| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                                                                                              |
 | 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes                                                                             |
 | 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`                                                                          |
 | 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server                                                                                  |
@@ -17,10 +17,11 @@ Aero is a static site generator and full-stack framework with an HTML-first temp
 ## [Try it out](#try-it-out)
 
 ```bash
-# scaffold a new project
-pnpm create @aero-js my-app
-# or use dlx (or npx)
-pnpm dlx @aero-js/create@latest my-app
+# scaffold a new project (Vite+)
+pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
+cd my-app && pnpm install && vp dev
+# fullstack (Nitro + server/)
+pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive
 # add to an existing project
 pnpm add @aero-js/core @aero-js/core/vite
 ```
@@ -419,13 +420,9 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## [Commands](#commands)
 
-Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
+**Aero app** (after `vp create @aero-js:minimal`): `vp dev`, `vp build`, `vp preview` from the project directory.
 
-- `pnpm dev` — Build and run dev server
-- `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
-- `pnpm preview` — Static preview.
-- `pnpm preview:api` — Preview with Nitro (static + API from one origin).
-- `pnpm test` — Run Vitest (packages/core).
+**Framework monorepo** (this repo): `pnpm check`, `vp test run`, `vp run build:all` from the root; see [README](https://github.com/jamiewilson/aero/blob/main/README.md#commands).
 
 ## [Build output](#build-output)
 

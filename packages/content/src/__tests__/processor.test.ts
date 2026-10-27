@@ -3,7 +3,7 @@
  */
 import type { Root } from 'hast'
 import type { Plugin } from 'unified'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vite-plus/test'
 import { initProcessor, getProcessor, resetProcessor } from '../processor'
 
 beforeEach(() => {

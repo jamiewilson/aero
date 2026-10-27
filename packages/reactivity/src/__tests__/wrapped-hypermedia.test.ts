@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { mountStateBindings } from '../mount'
 import { createHypermediaRuntime, GET } from '../../../hypermedia/src/index'
 import { SignalStore } from '../store'
@@ -33,7 +33,8 @@ describe('wrapped GET hypermedia', () => {
 				{
 					name: 'loadFragment',
 					derived: false,
-					initExpr: "async () => { await GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }",
+					initExpr:
+						"async () => { await GET('/api/hypermedia-demo', { target: '#hypermedia-result' }) }",
 					dependencies: [],
 				},
 			],

@@ -9,14 +9,15 @@ You want users to download HTML, CSS, and JS from a fast global edge or a simple
 
 ## What you get from Aero
 
-`pnpm build` (or `vite build` with the Aero plugin) writes a static site to `dist/` by default. That folder is plain files: HTML, hashed assets, and anything from `public/` copied through. There is no Aero runtime in the browser.
+`pnpm build` (or `vp build` with the Aero plugin) writes a static site to `dist/` by default. That folder is plain files: HTML, hashed assets, and anything from `public/` copied through. There is no Aero runtime in the browser.
 
 ## Local preview
 
 Use `pnpm preview` (typically static preview only) to verify the build before upload. See your project's `package.json` scripts for the exact command.
 
 <Tip>
-	With Nitro disabled (`server: false` or omitted), you do not need Node in production — only static file hosting.
+	With Nitro disabled (`server: false` or omitted), you do not need Node in production — only static
+	file hosting.
 </Tip>
 
 ## Deploying `dist/`

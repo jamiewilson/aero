@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import ts from 'typescript'
 import { annotateStateScriptForEditorTypecheck } from '../../state-script-editor-typecheck'
 
@@ -20,9 +20,7 @@ function toggleAuth() {
 }`
 
 		const mapped = annotateStateScriptForEditorTypecheck(script)
-		expect(mapped.text).toContain(
-			'let authState: AuthState = AuthState.SignedOut as AuthState'
-		)
+		expect(mapped.text).toContain('let authState: AuthState = AuthState.SignedOut as AuthState')
 		expect(mapped.text).toContain(
 			"let authHref: string = authState === AuthState.SignedIn ? '/logout' : '/login'"
 		)

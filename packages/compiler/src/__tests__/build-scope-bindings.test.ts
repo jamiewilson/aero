@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import {
 	collectBuildScriptTypeDeclarationTexts,
 	formatBuildScopeAmbientPrelude,
@@ -46,13 +46,7 @@ const {
 const { svg: favicon } = meta.icon
 `
 		const bindings = [...iterateBuildScriptBindings(script)]
-		expect(bindings.map(b => b.name)).toEqual([
-			'meta',
-			'title',
-			'description',
-			'image',
-			'favicon',
-		])
+		expect(bindings.map(b => b.name)).toEqual(['meta', 'title', 'description', 'image', 'favicon'])
 	})
 
 	it('records object literal keys on simple declarations', () => {
@@ -96,9 +90,9 @@ const doc = Aero.props
 		const defaultNames = [...iterateBuildScriptBindings(script)].map(b => b.name)
 		expect(defaultNames.filter(n => n === 'doc')).toEqual(['doc'])
 
-		const nestedNames = [...iterateBuildScriptBindings(script, { includeNestedBindings: true })].map(
-			b => b.name
-		)
+		const nestedNames = [
+			...iterateBuildScriptBindings(script, { includeNestedBindings: true }),
+		].map(b => b.name)
 		expect(nestedNames.filter(n => n === 'doc').length).toBeGreaterThan(1)
 	})
 })

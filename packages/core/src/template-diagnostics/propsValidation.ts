@@ -119,12 +119,7 @@ export function getRequiredPropsFromComponent(
 
 	const propsType = getPropsTypeFromBuildScript(buildScript)
 	if (propsType) {
-		return getRequiredPropsFromType(
-			propsType.typeName,
-			componentContent,
-			componentPath,
-			resolver
-		)
+		return getRequiredPropsFromType(propsType.typeName, componentContent, componentPath, resolver)
 	}
 
 	const fromDestructure = getRequiredPropsFromAeroPropsDestructure(buildScript)

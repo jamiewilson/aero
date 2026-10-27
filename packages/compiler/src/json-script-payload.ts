@@ -6,9 +6,7 @@ export const AERO_JSON_SCRIPT_TYPE = 'application/json'
 export const AERO_JSON_ROLE_PROPS = 'props'
 export const AERO_JSON_ROLE_STATE = 'state'
 
-export type AeroJsonScriptRole =
-	| typeof AERO_JSON_ROLE_PROPS
-	| typeof AERO_JSON_ROLE_STATE
+export type AeroJsonScriptRole = typeof AERO_JSON_ROLE_PROPS | typeof AERO_JSON_ROLE_STATE
 
 /** CSS selector for a role-specific Aero JSON script payload. */
 export function aeroJsonScriptRoleSelector(role: AeroJsonScriptRole): string {

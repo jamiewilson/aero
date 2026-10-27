@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { performSwap, performSwaps, resolveTarget, parseSwapStyle, resolveSwapProcessContainer } from '../swap'
+import { describe, expect, it } from 'vite-plus/test'
+import {
+	performSwap,
+	performSwaps,
+	resolveTarget,
+	parseSwapStyle,
+	resolveSwapProcessContainer,
+} from '../swap'
 import type { SwapOperation } from '../types'
 
 function createContainer(): { container: HTMLElement; target: HTMLElement } {
@@ -68,7 +74,13 @@ describe('resolveSwapProcessContainer', () => {
 			html: '<div id="target"><button>next</button></div>',
 			style: 'outerHTML',
 		})
-		const processTarget = resolveSwapProcessContainer(target, 'outerHTML', '#target', container, inserted)
+		const processTarget = resolveSwapProcessContainer(
+			target,
+			'outerHTML',
+			'#target',
+			container,
+			inserted
+		)
 		expect(target.isConnected).toBe(false)
 		expect(processTarget).toBe(container.querySelector('#target'))
 		expect(processTarget).not.toBe(target)
@@ -97,13 +109,13 @@ describe('resolveSwapProcessContainer', () => {
 
 describe('performSwap', () => {
 	it('replaces innerHTML', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<span>replaced</span>', style: 'innerHTML' })
 		expect(target.innerHTML).toBe('<span>replaced</span>')
 	})
 
 	it('replaces outerHTML', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		const parent = target.parentElement!
 		performSwap({ target, html: '<div id="new">new</div>', style: 'outerHTML' })
 		expect(parent.querySelector('#target')).toBeNull()
@@ -111,26 +123,26 @@ describe('performSwap', () => {
 	})
 
 	it('inserts beforebegin', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<div id="before">before</div>', style: 'beforebegin' })
 		const prev = target.previousElementSibling
 		expect(prev?.id).toBe('before')
 	})
 
 	it('inserts afterbegin', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<span>first</span>', style: 'afterbegin' })
 		expect(target.firstElementChild?.textContent).toBe('first')
 	})
 
 	it('inserts beforeend', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<span>last</span>', style: 'beforeend' })
 		expect(target.lastElementChild?.textContent).toBe('last')
 	})
 
 	it('inserts afterend', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<div id="after">after</div>', style: 'afterend' })
 		const next = target.nextElementSibling
 		expect(next?.id).toBe('after')
@@ -176,7 +188,7 @@ describe('performSwap', () => {
 	})
 
 	it('none does nothing', () => {
-		const { container, target } = createContainer()
+		const { target } = createContainer()
 		performSwap({ target, html: '<span>ignored</span>', style: 'none' })
 		expect(target.textContent).toBe('original')
 	})

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
 import { checkConditionalChains } from '../checks/check-conditional-chains'
 import type { SourceDocument } from '../source-document'

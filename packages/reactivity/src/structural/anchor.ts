@@ -15,19 +15,31 @@ export type StructuralAnchorCommentRange = {
 
 export type StructuralAnchor = StructuralAnchorElement | StructuralAnchorCommentRange
 
-export function commentStartMarker(directive: 'if' | 'for' | 'text' | 'switch', bindId: number): string {
+export function commentStartMarker(
+	directive: 'if' | 'for' | 'text' | 'switch',
+	bindId: number
+): string {
 	return ` aero:${directive}:${bindId} `
 }
 
-export function commentEndMarker(directive: 'if' | 'for' | 'text' | 'switch', bindId: number): string {
+export function commentEndMarker(
+	directive: 'if' | 'for' | 'text' | 'switch',
+	bindId: number
+): string {
 	return ` /aero:${directive}:${bindId} `
 }
 
-export function emitCommentStart(directive: 'if' | 'for' | 'text' | 'switch', bindId: number): string {
+export function emitCommentStart(
+	directive: 'if' | 'for' | 'text' | 'switch',
+	bindId: number
+): string {
 	return `<!--${commentStartMarker(directive, bindId)}-->`
 }
 
-export function emitCommentEnd(directive: 'if' | 'for' | 'text' | 'switch', bindId: number): string {
+export function emitCommentEnd(
+	directive: 'if' | 'for' | 'text' | 'switch',
+	bindId: number
+): string {
 	return `<!--${commentEndMarker(directive, bindId)}-->`
 }
 
@@ -136,10 +148,7 @@ export function resolveElementAnchor(root: ParentNode, selector: string): Elemen
 	return el.querySelector?.(selector) ?? null
 }
 
-export function resolveMountTarget(
-	root: ParentNode,
-	anchor: StructuralAnchor
-): MountTarget | null {
+export function resolveMountTarget(root: ParentNode, anchor: StructuralAnchor): MountTarget | null {
 	if (anchor.kind === 'element') {
 		const element = resolveElementAnchor(root, anchor.selector)
 		return element ? { kind: 'element', element } : null
@@ -156,10 +165,7 @@ export function setMountTargetHtml(target: MountTarget, html: string): ParentNod
 	return setCommentRangeHtml(target.range, html)
 }
 
-export function replaceMountTargetChildren(
-	target: MountTarget,
-	fragment: DocumentFragment
-): void {
+export function replaceMountTargetChildren(target: MountTarget, fragment: DocumentFragment): void {
 	if (target.kind === 'element') {
 		target.element.replaceChildren(fragment)
 		return

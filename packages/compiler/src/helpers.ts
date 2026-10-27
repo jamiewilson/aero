@@ -2,10 +2,7 @@
  * Helpers for the template codegen: interpolation, attributes, slots, and render-function emission.
  */
 
-import {
-	restoreLiteralBraces,
-	tokenizeCurlyInterpolation,
-} from '@aero-js/interpolation'
+import { restoreLiteralBraces, tokenizeCurlyInterpolation } from '@aero-js/interpolation'
 import { CompileError } from './types'
 import { CodeBuilder } from './code-builder'
 import { escapeHtml, escapeHtmlAttributeLiteral, escapeTemplateLiteralContent } from './escapes'
@@ -52,9 +49,8 @@ export interface LocateInTemplateSourceOptions {
 }
 
 function maskScriptAndStyleBodies(source: string): string {
-	return source.replace(
-		/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
-		match => ' '.repeat(match.length)
+	return source.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, match =>
+		' '.repeat(match.length)
 	)
 }
 
@@ -73,9 +69,7 @@ export function locateInTemplateSource(
 	}
 	const needles = options.needles
 	if (!needles || needles.length === 0) return undefined
-	const haystacks = options.maskEmbedded
-		? [maskScriptAndStyleBodies(source), source]
-		: [source]
+	const haystacks = options.maskEmbedded ? [maskScriptAndStyleBodies(source), source] : [source]
 	for (const haystack of haystacks) {
 		for (const needle of needles) {
 			if (!needle) continue
@@ -202,7 +196,9 @@ export function compileAttributeInterpolation(text: string): string {
 	return segments
 		.map(seg => {
 			if (seg.kind === 'literal') {
-				return escapeTemplateLiteralContent(escapeHtmlAttributeLiteral(restoreLiteralBraces(seg.value)))
+				return escapeTemplateLiteralContent(
+					escapeHtmlAttributeLiteral(restoreLiteralBraces(seg.value))
+				)
 			}
 			return `\${${seg.expression}}`
 		})

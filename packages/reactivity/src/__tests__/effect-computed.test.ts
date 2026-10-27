@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { Computed } from '../computed'
 import { Effect } from '../effect'
 import { Signal } from '../signal'

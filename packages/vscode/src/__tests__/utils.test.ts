@@ -2,7 +2,7 @@
  * Unit tests for scope.ts and pathResolver.ts.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 
 const mockFiles: Record<string, string> = {}
 
@@ -24,7 +24,9 @@ vi.mock('vscode', () => {
 })
 
 vi.mock('node:fs', () => ({
-	existsSync: vi.fn((filePath: string) => Object.prototype.hasOwnProperty.call(mockFiles, filePath)),
+	existsSync: vi.fn((filePath: string) =>
+		Object.prototype.hasOwnProperty.call(mockFiles, filePath)
+	),
 	readFileSync: vi.fn((filePath: string) => mockFiles[filePath] ?? ''),
 }))
 
@@ -44,13 +46,22 @@ describe('scope', () => {
 			setFile('/workspace/package.json', '{"dependencies":{"@aero-js/core":"1.0.0"}}')
 
 			expect(
-				isAeroDocument({ languageId: 'html', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
+				isAeroDocument({
+					languageId: 'html',
+					uri: { scheme: 'file', fsPath: '/workspace/x.html' },
+				} as any)
 			).toBe(true)
 			expect(
-				isAeroDocument({ languageId: 'aero', uri: { scheme: 'file', fsPath: '/workspace/x.html' } } as any)
+				isAeroDocument({
+					languageId: 'aero',
+					uri: { scheme: 'file', fsPath: '/workspace/x.html' },
+				} as any)
 			).toBe(false)
 			expect(
-				isAeroDocument({ languageId: 'html', uri: { scheme: 'untitled', fsPath: '/x.html' } } as any)
+				isAeroDocument({
+					languageId: 'html',
+					uri: { scheme: 'untitled', fsPath: '/x.html' },
+				} as any)
 			).toBe(false)
 		})
 
@@ -109,8 +120,7 @@ describe('scope', () => {
 		})
 
 		it('does not log for non-html documents when debug logger is set', async () => {
-			const { isAeroDocument, setScopeDebugLogger, clearScopeCache } =
-				await import('../scope')
+			const { isAeroDocument, setScopeDebugLogger, clearScopeCache } = await import('../scope')
 			clearScopeCache()
 			const log = vi.fn()
 			setScopeDebugLogger(log)

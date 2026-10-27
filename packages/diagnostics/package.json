@@ -31,19 +31,18 @@
 	},
 	"scripts": {
 		"gen-templates": "node scripts/embed-templates.mjs",
-		"compile": "tsdown src/index.ts src/browser.ts src/ide-catalog.ts --format esm --dts --clean --out-dir dist",
+		"compile": "vp pack",
 		"embed-templates": "pnpm gen-templates && pnpm compile",
 		"build": "pnpm embed-templates",
 		"typecheck": "pnpm gen-templates && tsc --noEmit",
-		"test": "pnpm gen-templates && vitest run",
+		"test": "pnpm gen-templates && pnpm -C ../.. exec vp test run --project @aero-js/diagnostics",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	},
 	"peerDependencies": {
 		"vite": "^8.1.0"

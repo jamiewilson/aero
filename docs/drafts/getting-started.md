@@ -5,7 +5,7 @@ This guide walks you through creating your first Aero project — from installat
 ## Create a Project
 
 ```bash
-pnpm create @aero-js my-app
+pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive && cd my-app && pnpm install
 cd my-app
 pnpm dev
 ```

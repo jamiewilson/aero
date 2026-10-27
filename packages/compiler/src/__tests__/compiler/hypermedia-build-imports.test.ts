@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	HYPERMEDIA_BUILD_IMPORT_MESSAGE,
 	HYPERMEDIA_STATE_IMPORT_MESSAGE,

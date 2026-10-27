@@ -1,0 +1,19 @@
+{
+	"name": "@aero-js/starter-minimal",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
+		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
+	},
+	"dependencies": {
+		"@aero-js/core": "^0.4.0"
+	},
+	"devDependencies": {
+		"@aero-js/prettier-plugin-aero": "^0.4.0",
+		"prettier": "^3.9.3",
+		"vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+		"vite-plus": "1.3.0"
+	}
+}

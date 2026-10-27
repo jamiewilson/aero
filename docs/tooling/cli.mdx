@@ -62,7 +62,7 @@ pnpm exec aero doctor
 
 ### aero build
 
-`aero build` runs `vite build` using your project's Aero Vite config. Use `--incremental` to enable [incremental builds](/tooling/incremental-builds) for that run:
+`aero build` runs a production Vite build (`vp build` / your project's Aero Vite config). Use `--incremental` to enable [incremental builds](/tooling/incremental-builds) for that run:
 
 ```bash
 pnpm exec aero build
@@ -95,8 +95,25 @@ Use `--root` when your CI job's working directory is not the app root:
 
 <Note>
 	`aero check` validates config, content, and template compilation. It does not execute SSR, Nitro,
-	or a full Vite build, so it runs faster than `vite build` in CI.
+	or a full production build, so it runs faster than `vp build` in CI.
 </Note>
+
+## Monorepo contributors (aero-mono)
+
+The framework repo uses [Vite+](https://viteplus.dev/guide/) at the root. Prefer **`vp`** built-ins; keep **`pnpm check`** and **`pnpm fmt`** for composites that add workspace **`typecheck`** and Prettier on Aero **`.html`**.
+
+| Task                  | Command (repo root)                             |
+| --------------------- | ----------------------------------------------- |
+| Quality gate          | `pnpm check`                                    |
+| Unit tests            | `vp test run`                                   |
+| Package builds        | `vp run build:all`                              |
+| Website               | `vp run build:website`                          |
+| Kitchen-sink CI smoke | `vp run build:kitchen-sink:ci`                  |
+| VS Code `.vsix`       | `vp run pack:vscode`                            |
+| Pre-merge (full)      | `vp run check:all` (`pnpm check` + tests + e2e) |
+| Lint / format (TS)    | `vp lint`, `vp fmt`                             |
+
+Examples use **`vp dev`** / **`vp build`** / **`vp preview`**. Kitchen-sink sets **`AERO_*`** via **`vp build --mode ci|static|debug`** and [`.env` profiles](https://github.com/jamiewilson/aero/blob/main/_reference/guides/aero-build-env-profiles.md) — not `package.json` env prefixes.
 
 ## Why the CLI is a separate package
 
@@ -104,7 +121,7 @@ The CLI lives in `packages/cli`, depends on `@aero-js/core` (including `@aero-js
 
 ## How `aero check` works (summary)
 
-- **Config** — `loadAeroConfig(root)` from `@aero-js/core/config` loads `aero.config.ts`, `.js`, or `.mjs` with the same behavior as Vite. If the config is missing or fails to load in some edge cases, behavior may fall back to default `dirs`; use `vite build` or `DEBUG=aero` if templates under a custom client directory seem skipped.
+- **Config** — `loadAeroConfig(root)` from `@aero-js/core/config` loads `aero.config.ts`, `.js`, or `.mjs` with the same behavior as Vite. If the config is missing or fails to load in some edge cases, behavior may fall back to default `dirs`; use `vp build` or `DEBUG=aero` if templates under a custom client directory seem skipped.
 - **Content** — When `aero.content` is enabled or a `content.config.ts` exists, collections are loaded and validated. See [Content](/getting-started/content).
 - **Templates** — Every `.html` under `client/pages`, `client/components`, and `client/layouts` (per `dirs`) is passed through `compileTemplate` for parse and codegen checks, **without** a full Vite build.
 
@@ -116,17 +133,18 @@ The CLI lives in `packages/cli`, depends on `@aero-js/core` (including `@aero-js
 		implement `aero check` and `aero doctor`; they are not necessarily exported as stable
 		programmatic APIs for apps — prefer invoking the CLI in CI.
 
-		**`@aero-js/core/config`** — `loadAeroConfig(root)` loads project config. Effect-based loaders exist for
-		stricter failure handling where you need them.
+    	**`@aero-js/core/config`** — `loadAeroConfig(root)` loads project config. Effect-based loaders exist for
+    	stricter failure handling where you need them.
 
-		**`@aero-js/content`** — `loadContentConfigFileSync`, `loadAllCollections`, and
-		`contentSchemaIssuesToAeroDiagnostics` support the same content pipeline as the CLI.
+    	**`@aero-js/content`** — `loadContentConfigFileSync`, `loadAllCollections`, and
+    	`contentSchemaIssuesToAeroDiagnostics` support the same content pipeline as the CLI.
 
-		**`@aero-js/core/compile-check`** — `compileTemplate` for Node-only tooling that needs compile
-		checks without browser-oriented entrypoints.
+    	**`@aero-js/core/compile-check`** — `compileTemplate` for Node-only tooling that needs compile
+    	checks without browser-oriented entrypoints.
 
-		**`@aero-js/diagnostics`** — `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`,
-		`AeroDiagnostic`, and related helpers; `aero check` uses the same diagnostics contract as other
-		tooling surfaces.
-	</Accordion>
+    	**`@aero-js/diagnostics`** — `formatDiagnosticsTerminal`, `unknownToAeroDiagnostics`,
+    	`AeroDiagnostic`, and related helpers; `aero check` uses the same diagnostics contract as other
+    	tooling surfaces.
+    </Accordion>
+
 </AccordionGroup>

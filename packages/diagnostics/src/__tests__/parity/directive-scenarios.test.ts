@@ -3,7 +3,7 @@ import {
 	PARITY_SCENARIOS,
 	ROUTE_PARITY_SCENARIOS,
 } from '../fixtures/parity'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 describe('parity scenarios contract', () => {
 	it('defines in-scope compiler/cli/vscode scenarios', () => {
@@ -24,9 +24,7 @@ describe('parity scenarios contract', () => {
 			expect(scenario.id).toBeTruthy()
 			expect(scenario.html).toBeTruthy()
 			expect(
-				scenario.surfaces.compiler ??
-					scenario.surfaces.vscode ??
-					scenario.prettier
+				scenario.surfaces.compiler ?? scenario.surfaces.vscode ?? scenario.prettier
 			).toBeDefined()
 		}
 	})

@@ -50,9 +50,8 @@ function buildAllowedNames(ctx: ScopeRewriteContext): Set<string> {
 }
 
 function maskScriptAndStyleForLocation(source: string): string {
-	return source.replace(
-		/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
-		match => ' '.repeat(match.length)
+	return source.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, match =>
+		' '.repeat(match.length)
 	)
 }
 

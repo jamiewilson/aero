@@ -56,11 +56,12 @@ Aero generates a small `.aero/nitro.config.mjs` during build that extends your `
 
 ## Preview
 
-After a production build:
+After **`vp build`**:
 
-| Command            | What runs                         |
-| ------------------ | --------------------------------- |
-| `pnpm preview`     | Static files only — no Nitro APIs |
-| `pnpm preview:api` | Full Nitro server from `.output/` |
+| Command | When to use |
+| --- | --- |
+| `vp preview` | Static `dist/` only — no Nitro APIs (`server: false` or static-only build) |
+| `vpx nitro preview` | Full app locally: Nitro serves `.output` public assets + server (recommended after a Nitro build) |
+| `node .output/server/index.mjs` | Production Node server entry — same process as many Node deployments |
 
-<Tip>Use `pnpm preview:api` to test API routes locally before deploying.</Tip>
+<Tip>Prefer **`vpx nitro preview`** for day-to-day API smoke tests; use **`node .output/server/index.mjs`** when you need to match production startup exactly.</Tip>

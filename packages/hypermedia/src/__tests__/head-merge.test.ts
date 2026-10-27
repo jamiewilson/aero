@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vite-plus/test'
 import { isFullPageRegionTarget, mergeHeadFromHtml } from '../head-merge'
 
 describe('isFullPageRegionTarget', () => {
@@ -34,6 +34,8 @@ describe('mergeHeadFromHtml', () => {
 	it('merges meta by property attribute', () => {
 		document.head.innerHTML = '<meta property="og:title" content="old">'
 		mergeHeadFromHtml(`<head><meta property="og:title" content="fresh"></head>`)
-		expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('fresh')
+		expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(
+			'fresh'
+		)
 	})
 })

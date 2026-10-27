@@ -7,14 +7,9 @@ import {
 	shouldMirrorContentAttribute,
 } from './mirror-content-attribute'
 
-export function bindProperty(
-	target: Element,
-	propertyName: string,
-	read: () => unknown
-): Cleanup {
+export function bindProperty(target: Element, propertyName: string, read: () => unknown): Cleanup {
 	const contentAttribute = shouldMirrorContentAttribute(propertyName)
-	const mirrorAsBoolean =
-		contentAttribute != null && isBooleanIdlPropertyForMirror(propertyName)
+	const mirrorAsBoolean = contentAttribute != null && isBooleanIdlPropertyForMirror(propertyName)
 
 	const effect = new Effect(() => {
 		const value = read()

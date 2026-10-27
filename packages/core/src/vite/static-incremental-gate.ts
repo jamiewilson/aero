@@ -61,14 +61,7 @@ export interface IncrementalGateContext {
 
 /** Compute incremental hashes and whether the whole prerender phase can be skipped. */
 export function evaluateIncrementalGate(input: IncrementalGateInput): IncrementalGateContext {
-	const {
-		root,
-		clientDir,
-		distDir,
-		site,
-		redirectsJson,
-		discoveredPages,
-	} = input
+	const { root, clientDir, distDir, site, redirectsJson, discoveredPages } = input
 
 	const prevBuildManifest = readBuildManifest(root)
 	const viteManifestHashForIncremental = hashViteOutputManifest(distDir)
@@ -132,12 +125,7 @@ export function selectPagesToPrerender(
 	const resolve = getResolvePathForProject(root, resolvePath)
 	const dirty: StaticPage[] = []
 	for (const page of pagesToRender) {
-		const closure = collectTransitiveTemplateImports(
-			root,
-			clientDir,
-			resolve,
-			page.sourceFile
-		)
+		const closure = collectTransitiveTemplateImports(root, clientDir, resolve, page.sourceFile)
 		let needs = false
 		for (const c of changed) {
 			if (closure.has(c)) {
@@ -189,8 +177,6 @@ export function finalizeIncrementalManifest(
 		clientHtmlFingerprint: computeClientHtmlFingerprint(root, clientDir),
 		staticBuildOptionsHash: gate.staticBuildOptionsHash,
 		templateFileHashes: gate.templateFileHashesCurrent,
-		pages: Object.fromEntries(
-			pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])
-		),
+		pages: Object.fromEntries(pagesToRender.map(p => [p.routePath, { outputFile: p.outputFile }])),
 	})
 }

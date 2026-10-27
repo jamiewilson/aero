@@ -68,9 +68,9 @@ Aero is a good fit if you:
 
 **HTML-first authoring.** Pages, layouts, and components are `.html` files. The only additions are `{ }` expressions for interpolation and a handful of directives (`if`, `for`, `slot`). The source looks like HTML; the output is HTML.
 
-**Static by default.** `pnpm build` produces a plain `dist/` folder. No framework runtime ships to the browser. Deploy to any static host, or open via `file://`.
+**Static by default.** `vp build` produces a plain `dist/` folder. No framework runtime ships to the browser. Deploy to any static host, or open via `file://`.
 
-**Optional full-stack with Nitro.** Set `server: true` in your config to enable [Nitro](https://nitro.build/) — file-based API routes under `server/api/`, universal deployment presets, and a `preview:api` command. You get API routes from the same project without changing how you write pages.
+**Optional full-stack with Nitro.** Set `server: true` in your config to enable [Nitro](https://nitro.build/) — file-based API routes under `server/api/`, universal deployment presets, and a local server from `.output/` after build. You get API routes from the same project without changing how you write pages.
 
 **Zero runtime.** Build-time code lives in `<script is:build>` and is completely stripped from output. Client scripts are plain `<script>` tags, bundled by Vite. No hydration orchestrator, no Virtual DOM.
 
@@ -89,28 +89,28 @@ External references: [Vite](https://vitejs.dev/), [Nitro](https://nitro.build/),
 
 Aero is published as a set of focused packages:
 
-| Package                 | Description                                                                 |
-| ----------------------- | --------------------------------------------------------------------------- |
-| `@aero-js/core`         | Runtime, Vite plugin, config helpers, and compile-check (see subpaths below) |
-| `@aero-js/create`       | Scaffold new projects from bundled minimal or fullstack templates           |
-| `@aero-js/content`      | Content collections — `getCollection()`, `render()`, schema validation      |
-| `@aero-js/cli`          | `aero check` and `aero doctor` for type-checking and diagnostics            |
-| `@aero-js/reactivity`   | Signal store, bindings, and process API (used via core when enabled)        |
-| `@aero-js/hypermedia`   | Action functions, swap engine, and lifecycle events                         |
-| `@aero-js/diagnostics`  | Shared diagnostic types and formatters for CLI, core, and the VS Code extension |
+| Package                | Description                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `@aero-js/core`        | Runtime, Vite plugin, config helpers, and compile-check (see subpaths below)    |
+| `@aero-js/create`      | Scaffold new projects from bundled minimal or fullstack templates               |
+| `@aero-js/content`     | Content collections — `getCollection()`, `render()`, schema validation          |
+| `@aero-js/cli`         | `aero check` and `aero doctor` for type-checking and diagnostics                |
+| `@aero-js/reactivity`  | Signal store, bindings, and process API (used via core when enabled)            |
+| `@aero-js/hypermedia`  | Action functions, swap engine, and lifecycle events                             |
+| `@aero-js/diagnostics` | Shared diagnostic types and formatters for CLI, core, and the VS Code extension |
 
 ### `@aero-js/core` subpath exports
 
-| Subpath                    | Description                                              |
-| -------------------------- | -------------------------------------------------------- |
-| `@aero-js/core/vite`       | The Aero Vite plugin                                     |
-| `@aero-js/core/config`     | `defineConfig`, `loadAeroConfig`, and config types       |
-| `@aero-js/core/vite-config`| `createViteConfig` and `getDefaultOptions` for Vite      |
-| `@aero-js/core/compile-check` | Node-only template compile checks for tooling         |
+| Subpath                       | Description                                         |
+| ----------------------------- | --------------------------------------------------- |
+| `@aero-js/core/vite`          | The Aero Vite plugin                                |
+| `@aero-js/core/config`        | `defineConfig`, `loadAeroConfig`, and config types  |
+| `@aero-js/core/vite-config`   | `createViteConfig` and `getDefaultOptions` for Vite |
+| `@aero-js/core/compile-check` | Node-only template compile checks for tooling       |
 
 <Note>
-	Most projects only need `@aero-js/core` (import subpaths as needed) or `@aero-js/create` to scaffold.
-	The other packages are opt-in.
+	Most projects only need `@aero-js/core` (import subpaths as needed) or `@aero-js/create` to
+	scaffold. The other packages are opt-in.
 </Note>
 
 ## Next steps

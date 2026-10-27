@@ -1,11 +1,13 @@
 <!-- @snippet:markdown -->
----
-published: true
-title: My Document
-subtitle: This is a published document. You can see it in dev mode and in the build.
----
+
+# Example Document
+
+> This is a published document. You can see it in dev mode and in the build.
+
+![Example Image](https://placehold.co/600x400)
 
 <!-- @snippet:markdownCodeFence -->
+
 ```rust
 // Define a structure to represent a User
 struct User {

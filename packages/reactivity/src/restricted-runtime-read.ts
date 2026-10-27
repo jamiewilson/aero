@@ -61,7 +61,10 @@ export function compileRestrictedIterable(expr: string, store: SignalStore): () 
 }
 
 /** Row key in restricted for loops: bare identifier path segment on row scope. */
-export function compileRestrictedRowKey(expr: string, rowScope: Record<string, unknown>): () => unknown {
+export function compileRestrictedRowKey(
+	expr: string,
+	rowScope: Record<string, unknown>
+): () => unknown {
 	const trimmed = expr.trim()
 	const path = parseRestrictedStoreRef(trimmed)
 	if (path) {

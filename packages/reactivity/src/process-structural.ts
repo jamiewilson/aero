@@ -106,7 +106,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 			  }
 			| undefined
 
-		for (const child of [...anchor.children]) {
+		for (const child of Array.from(anchor.children)) {
 			if (!isTemplateLike(child)) continue
 			if (child.hasAttribute('data-aero-case')) {
 				const caseValue = child.getAttribute('data-aero-case') ?? ''
@@ -160,7 +160,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 		if (marker != null && marker !== '' && isCompiledBindMarker(marker)) continue
 
 		const branches: ReactiveIfBranchSpec[] = []
-		for (const child of [...anchor.children]) {
+		for (const child of Array.from(anchor.children)) {
 			if (!isTemplateLike(child)) continue
 			if (child.hasAttribute('data-aero-when')) {
 				const when = child.getAttribute('data-aero-when') ?? ''
@@ -225,9 +225,7 @@ export function wireProcessStructuralBindings(options: WireProcessStructuralOpti
 				mountTarget: { kind: 'element', element: containerEl },
 				scope,
 				itemsExpr: '__aeroItems',
-				keyExpr: keyExprRaw.trim().startsWith('$')
-					? keyExprRaw.trim().slice(1)
-					: keyExprRaw.trim(),
+				keyExpr: keyExprRaw.trim().startsWith('$') ? keyExprRaw.trim().slice(1) : keyExprRaw.trim(),
 				binding: bindingName,
 				bindingNames: [bindingName],
 				renderRow: rowScope => {

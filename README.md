@@ -2,29 +2,28 @@
 
 Aero is a static site generator and full-stack framework with an HTML-first template engine. You write `.html` files with optional `<script>` and `<style>`; Aero compiles them at build time, outputs static HTML (and optionally a Nitro server), and plays nicely with [HTMX](https://htmx.org) and [Alpine.js](https://alpinejs.dev) for interactivity. Links: [@aero-js/core](https://www.npmjs.com/package/@aero-js/core) — [@aero-js/create](https://www.npmjs.com/package/@aero-js/create) — [aero-vscode](https://marketplace.visualstudio.com/items?itemName=aero-js.aero-vscode)
 
-| Feature                    | Description                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`         |
-| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`         |
-| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component |
-| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                  |
-| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes      |
-| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`   |
-| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server           |
-| 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags |
-| ⚡ Optional reactivity      | `<script is:state>`, bindings, reactive props — opt in with `reactivity: true`   |
-| 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                          |
-| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback |
+| Feature                    | Description                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| 🧭 File-based routing      | `/pages/about.html` → `/about`; dynamic routes with `getStaticPaths`           |
+| 🧩 Components & layouts    | Import `.html` templates; use `<name-component>` and `<name-layout>`           |
+| 📤 Props                   | Pass data via attributes or `props`; read with `Aero.props` in the component   |
+| 🔁 Loops & conditionals    | `for`/`for` and `if/else-if/else` right in your markup                         |
+| 🎰 Slots                   | Layouts expose `<slot>`; pass content with `slot` and `name` attributes        |
+| 📂 Content collections     | Put data in `content/`; use `getCollection()` and markdown with `render()`     |
+| 💾 Server if needed        | Default is static; easily enable Nitro for API routes and a server             |
+| 🚢 Plain HTML output       | No hydration by default; optional reactivity/hypermedia behind feature flags   |
+| ⚡ Optional reactivity     | `<script is:state>`, bindings, reactive props — opt in with `reactivity: true` |
+| 📡 Hypermedia actions      | `GET`/`POST` fragment swaps with `hypermedia: true`                            |
+| 🔥 HMR (almost) everywhere | CSS, html, content, and client scripts hot-reload, with page reload fallback   |
 
 ## Try it out
 
 ```bash
-# scaffold a new project
-pnpm create @aero-js my-app
-# or start with Nitro configured
-pnpm create @aero-js my-app --template fullstack
-# or use dlx (or npx)
-pnpm dlx @aero-js/create@latest my-app
+# scaffold a new project (Vite+)
+pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
+cd my-app && pnpm install && vp dev
+# fullstack (Nitro + server/)
+pnpm dlx vp create @aero-js:fullstack --directory my-app --no-interactive
 # add to an existing project
 pnpm add @aero-js/core @aero-js/core/vite
 ```
@@ -369,7 +368,7 @@ Aero is configured by passing options to the `aero()` Vite plugin. You can do th
 | **`dirs`**       | `object`                       | Override `client`, `server`, `dist` directories. Default `{ client, server, dist }`.                                                                         |
 | **`apiPrefix`**  | `string`                       | URL prefix for API routes. Default `'/api'`.                                                                                                                 |
 | **`reactivity`** | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.                                                                                           |
-| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware processing.                                     |
+| **`hypermedia`** | `boolean`                      | Enable hypermedia actions and fragment swaps. Default `false`. Requires reactivity for `busy` and signal-aware processing.                                   |
 
 ### Configuring via the Vite plugin
 
@@ -427,23 +426,26 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 ## Commands
 
-Commands in an Aero project (e.g. scaffolded with `@aero-js/create`):
+**Aero app** (e.g. after `vp create @aero-js:minimal`): from the project directory — `vp dev`, `vp build`, `vp preview` (requires [Vite+](https://viteplus.dev/guide/) on your PATH).
 
-- `pnpm dev` — Build and run dev server
-- `pnpm build` — Static build to `dist/`; with Nitro enabled, also `.output/`.
-- `pnpm preview` — Static preview.
-- `pnpm preview:api` — Preview with Nitro (static + API from one origin).
-- `pnpm test` — Run Vitest (packages/core).
+**This monorepo** (repo root):
 
-Repo testing commands:
+| Command                        | What it runs                                               |
+| ------------------------------ | ---------------------------------------------------------- |
+| `pnpm check`                   | Workspace typecheck + `vp check` + Prettier on `**/*.html` |
+| `vp test run`                  | Vitest 5 (all package projects in root `vite.config.ts`)   |
+| `vp run build:all`             | Cached `@aero-js/*` `vp pack` graph                        |
+| `vp run build:website`         | `build:all` + site production build                        |
+| `vp run build:kitchen-sink:ci` | `build:all` + kitchen-sink `vp build --mode ci`            |
+| `vp run pack:vscode`           | `build:vscode` + `.vsix`                                   |
+| `vp run check:all`             | `pnpm check` + `vp test run` + Playwright CI               |
+| `vp lint` / `vp fmt`           | Oxlint / Oxfmt (HTML still via `pnpm fmt` at root)         |
 
-- `pnpm test:ui` — Vitest UI (browser).
-- `pnpm test:e2e` — Install the local Playwright Chromium bundle if needed, then run the E2E suite.
-- `pnpm test:e2e:headed` — Same local bootstrap, with headed Playwright.
-- `pnpm test:e2e:debug` — Same local bootstrap, with Playwright debug mode.
-- `pnpm test:e2e:install` — Install Chromium for Playwright only (no test run).
-- `pnpm test:e2e:ci` — Run Playwright without installing browsers first; intended for CI environments that pre-provision the cache.
-- `pnpm test:all` — Typecheck, Vitest, then Playwright (`test:e2e:ci`).
+Playwright (root): `pnpm test:e2e` (local; pass `-- --headed` / `--debug`), `pnpm test:e2e:ci` (CI).
+
+**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static` then `vp preview`; full `vp build` then `vpx nitro preview` (or `node .output/server/index.mjs` for production Node entry).
+
+**Import-bundling demos**: `cd examples/import-bundling/<demo> && vp dev` (or `vp build` / `vp preview`).
 
 ## Build output
 

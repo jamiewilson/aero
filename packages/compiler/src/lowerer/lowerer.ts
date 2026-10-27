@@ -16,7 +16,10 @@ import { getBuildDirectiveAttribute } from '../build-directive-attributes'
 import { parseBindAttributePropName } from '../author-attribute-format'
 import * as Helper from '../helpers'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
-import { textReferencesStateBindings, referencesStateBindingExpression } from '../state-mount-codegen'
+import {
+	textReferencesStateBindings,
+	referencesStateBindingExpression,
+} from '../state-mount-codegen'
 import {
 	findUndeclaredReactiveIdentifiers,
 	REACTIVE_EXPR_AMBIENT_GLOBALS,
@@ -38,7 +41,12 @@ import {
 	compileSlotDefaultContent,
 	type SlotDefaultContentDeps,
 } from './slots'
-import { compileSwitchContainer, hasCaseAttr, parentIsSwitchContainer, isReactiveSwitch } from './switch'
+import {
+	compileSwitchContainer,
+	hasCaseAttr,
+	parentIsSwitchContainer,
+	isReactiveSwitch,
+} from './switch'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 import {
 	findOnlyElementSibling,
@@ -122,7 +130,12 @@ export class Lowerer {
 		)
 	}
 
-	compileNode(node: any, skipInterpolation = false, outVar = '__out', parentHoist?: ChildHoistContext): IRNode[] {
+	compileNode(
+		node: any,
+		skipInterpolation = false,
+		outVar = '__out',
+		parentHoist?: ChildHoistContext
+	): IRNode[] {
 		switch (node.nodeType) {
 			case 3:
 				return this.compileText(node, skipInterpolation, outVar, parentHoist)
@@ -307,8 +320,7 @@ export class Lowerer {
 			this.reactiveState ?? undefined,
 			this.hypermedia
 		)
-		const childSkip =
-			skipInterpolation || tagName === 'style' || tagName === 'script'
+		const childSkip = skipInterpolation || tagName === 'style' || tagName === 'script'
 
 		if (loopData && switchExpr) {
 			throw new CompileError({
@@ -328,8 +340,7 @@ export class Lowerer {
 		// `default` is native only on `<track>`, so a bare one there passes through untouched.
 		const defaultAttr = getBuildDirectiveAttribute(node, CONST.ATTR_DEFAULT)
 		const explicitDefault = defaultAttr != null && defaultAttr.name !== CONST.ATTR_DEFAULT
-		const bareDefaultOnNonTrack =
-			defaultAttr?.name === CONST.ATTR_DEFAULT && tagName !== 'track'
+		const bareDefaultOnNonTrack = defaultAttr?.name === CONST.ATTR_DEFAULT && tagName !== 'track'
 		const misplacedDefault = explicitDefault || bareDefaultOnNonTrack
 		if ((hasCaseAttr(node) || misplacedDefault) && !parentIsSwitchContainer(node)) {
 			throw new CompileError({
@@ -344,17 +355,23 @@ export class Lowerer {
 			const inner = this.compileWrapperlessNode(node, childSkip, outVar, {
 				forBodyScopeNames: buildForLoopBodyScopeNames(loopData.binding),
 			})
-			return this.wrapForLoop(loopData, inner, [
-				...eventBinds,
-				...textBinds,
-				...busyBinds,
-				...showBinds,
-				...htmlBinds,
-				...classBinds,
-				...attributeBinds,
-				...propertyBinds,
-				...modelBinds,
-			], undefined, 'comment-range')
+			return this.wrapForLoop(
+				loopData,
+				inner,
+				[
+					...eventBinds,
+					...textBinds,
+					...busyBinds,
+					...showBinds,
+					...htmlBinds,
+					...classBinds,
+					...attributeBinds,
+					...propertyBinds,
+					...modelBinds,
+				],
+				undefined,
+				'comment-range'
+			)
 		}
 
 		if (switchExpr && isTemplateElement(node)) {
@@ -425,7 +442,11 @@ export class Lowerer {
 				outVar
 			)
 			if (
-				isReactiveSwitch(previewSwitch.expression, previewSwitch.cases, this.reactiveState.bindingNames)
+				isReactiveSwitch(
+					previewSwitch.expression,
+					previewSwitch.cases,
+					this.reactiveState.bindingNames
+				)
 			) {
 				reactiveSwitchBindId = this.reactiveState.nextSwitchBindId()
 			}
@@ -491,8 +512,10 @@ export class Lowerer {
 				}
 				if (
 					soleText?.textContent &&
-					textReferencesStateBindings(soleText.textContent, this.reactiveState.bindingNames, value =>
-						tokenizeCurlyInterpolation(value)
+					textReferencesStateBindings(
+						soleText.textContent,
+						this.reactiveState.bindingNames,
+						value => tokenizeCurlyInterpolation(value)
 					)
 				) {
 					childHoist.textHoistBindId = this.reactiveState.nextTextBindId()
@@ -556,7 +579,12 @@ export class Lowerer {
 					this.reactiveState != null &&
 					isReactiveSwitch(switchIR.expression, switchIR.cases, this.reactiveState.bindingNames)
 				if (reactive && this.reactiveState && reactiveSwitchBindId != null) {
-					inner.push({ ...switchIR, bindId: reactiveSwitchBindId, reactive: true, anchorMode: 'element' })
+					inner.push({
+						...switchIR,
+						bindId: reactiveSwitchBindId,
+						reactive: true,
+						anchorMode: 'element',
+					})
 					switchBind = {
 						kind: 'ReactiveSwitchBind',
 						bindId: reactiveSwitchBindId,
@@ -603,19 +631,19 @@ export class Lowerer {
 				forHoist
 			)
 		}
-	return [
-		...inner,
-		...eventBinds,
-		...textBinds,
-		...busyBinds,
-		...showBinds,
-		...htmlBinds,
-		...classBinds,
-		...attributeBinds,
-		...propertyBinds,
-		...modelBinds,
-		...(switchBind ? [switchBind] : []),
-	]
+		return [
+			...inner,
+			...eventBinds,
+			...textBinds,
+			...busyBinds,
+			...showBinds,
+			...htmlBinds,
+			...classBinds,
+			...attributeBinds,
+			...propertyBinds,
+			...modelBinds,
+			...(switchBind ? [switchBind] : []),
+		]
 	}
 
 	private emitScriptPassDataIR(
@@ -762,7 +790,9 @@ export class Lowerer {
 		]
 	}
 
-	private collectComponentReactivePropExprs(node: any): Record<string, IRComponentReactivePropExpr> {
+	private collectComponentReactivePropExprs(
+		node: any
+	): Record<string, IRComponentReactivePropExpr> {
 		const out: Record<string, IRComponentReactivePropExpr> = {}
 		if (!this.reactiveState || !node.attributes) return out
 		for (let i = 0; i < node.attributes.length; i++) {
@@ -900,9 +930,8 @@ export class Lowerer {
 			if (undeclared.length === 0) continue
 			const name = undeclared[0]!
 			const haystack = this.diag?.source
-				? this.diag.source.replace(
-						/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
-						match => ' '.repeat(match.length)
+				? this.diag.source.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, match =>
+						' '.repeat(match.length)
 					)
 				: undefined
 			const bracedIdx = haystack ? findBracedIdentifierOffsets(haystack, name)[0] : undefined
@@ -910,9 +939,9 @@ export class Lowerer {
 				bracedIdx ??
 				(haystack
 					? (() => {
-							const m = new RegExp(
-								`\\b${name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`
-							).exec(haystack)
+							const m = new RegExp(`\\b${name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}\\b`).exec(
+								haystack
+							)
 							return m ? m.index : -1
 						})()
 					: -1)
@@ -964,9 +993,7 @@ export class Lowerer {
 				bindId,
 				anchorMode,
 				binding: loopData.binding,
-				bindingNames: collectForDirectiveBindingNames(
-					`const ${loopData.binding} of __aeroItems`
-				),
+				bindingNames: collectForDirectiveBindingNames(`const ${loopData.binding} of __aeroItems`),
 				itemsExpr: loopData.items,
 				keyExpr: loopData.keyExpr,
 				body: loopBody,

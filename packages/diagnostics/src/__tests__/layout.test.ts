@@ -2,7 +2,7 @@
  * Layout builder: section ordering, conditional sections, compact mode.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { layoutDiagnostic, layoutDiagnosticCompact } from '../render/layout'
 import type { AeroDiagnostic } from '../types'
 

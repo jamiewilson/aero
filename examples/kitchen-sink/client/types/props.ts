@@ -10,6 +10,11 @@ export interface HeaderProps {
 	subtitle?: string
 }
 
+export interface GreetingProps {
+	name?: string
+	title?: string
+}
+
 export interface CardProps {
 	title: string
 	body?: string

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
 import {
 	collectSnippetModuleEntries,
 	renderSnippetsDts,
@@ -39,7 +39,10 @@ describe('snippet-typegen', () => {
 
 	it('renders declare module blocks using Snippet', () => {
 		const dts = renderSnippetsDts([
-			{ moduleSpecifier: '@content/snippets/markup.html', exportNames: ['propsString', 'typedProps'] },
+			{
+				moduleSpecifier: '@content/snippets/markup.html',
+				exportNames: ['propsString', 'typedProps'],
+			},
 		])
 		expect(dts).toContain("declare module '@content/snippets/markup.html' {")
 		expect(dts).toContain('export const propsString: Snippet')

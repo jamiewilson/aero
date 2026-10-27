@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushSpanDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument, SourceRange } from '../source-document'
 /**
  * Diagnostic check: undefined variables in client script bodies unless injected via
  * that block's `props` attribute or declared locally.
@@ -102,7 +102,14 @@ function pushUndefinedDiagnostic(
 	range: SourceRange,
 	name: string
 ): void {
-	pushSpanDiagnostic(diagnostics, document, range, `Variable '${name}' is not defined`, 'AERO_COMPILE', 'error')
+	pushSpanDiagnostic(
+		diagnostics,
+		document,
+		range,
+		`Variable '${name}' is not defined`,
+		'AERO_COMPILE',
+		'error'
+	)
 }
 
 function checkPropsExpressionRefs(

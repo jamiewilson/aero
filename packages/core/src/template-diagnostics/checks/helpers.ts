@@ -1,11 +1,7 @@
 /**
  * Shared diagnostic helpers: HTML comment/script masking, position checks.
  */
-export {
-	getIgnoredRanges,
-	isInRanges,
-	type IgnoredRange,
-} from '../utils'
+export { getIgnoredRanges, isInRanges, type IgnoredRange } from '../utils'
 
 export interface ByteRange {
 	readonly start: number
@@ -34,9 +30,7 @@ export function findAttributeRange(
 	attrBase: number,
 	attrName: string
 ): ByteRange | null {
-	const valuedRe = new RegExp(
-		`(?:^|\\s)(${escapeRegExp(attrName)})\\s*=\\s*(["'])([\\s\\S]*?)\\2`
-	)
+	const valuedRe = new RegExp(`(?:^|\\s)(${escapeRegExp(attrName)})\\s*=\\s*(["'])([\\s\\S]*?)\\2`)
 	const valuedMatch = valuedRe.exec(attrs)
 	if (valuedMatch && valuedMatch.index !== undefined) {
 		const leading = valuedMatch[0].length - valuedMatch[0].trimStart().length

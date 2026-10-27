@@ -2,7 +2,7 @@
  * Tests for render(): lazy markdown-to-HTML used in pages (import from aero:content).
  * Uses shared processor from processor.ts; reset before each test for clean state.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import { render } from '../render'
 import { resetProcessor, initProcessor } from '../processor'
 

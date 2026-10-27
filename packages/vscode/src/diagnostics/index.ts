@@ -11,7 +11,10 @@ function openFileTextOverlays(): Map<string, string> {
 		const text = doc.getText()
 		overlays.set(doc.uri.fsPath, text)
 		try {
-			overlays.set(fs.realpathSync.native?.(doc.uri.fsPath) ?? fs.realpathSync(doc.uri.fsPath), text)
+			overlays.set(
+				fs.realpathSync.native?.(doc.uri.fsPath) ?? fs.realpathSync(doc.uri.fsPath),
+				text
+			)
 		} catch {
 			/* unsaved or missing on disk */
 		}

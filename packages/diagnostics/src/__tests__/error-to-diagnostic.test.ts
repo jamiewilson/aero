@@ -2,7 +2,7 @@
  * Shared error-to-diagnostic mapping functions.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
 	cancelledErrorToDiagnostic,
 	compileErrorToDiagnostic,

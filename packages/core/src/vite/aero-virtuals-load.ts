@@ -17,10 +17,7 @@ import {
 } from './defaults'
 import { htmlCompileTry } from './compile-html-try'
 import { getRuntimeInstanceModuleSource } from './runtime-instance-module'
-import {
-	compileHtmlWithDedupedWarnings,
-	compileOrReport,
-} from './compile-warning-dedup'
+import { compileHtmlWithDedupedWarnings, compileOrReport } from './compile-warning-dedup'
 import type { AeroPluginState } from './plugin-state'
 import { compileSnippetModule } from '../snippets'
 import { extractTopLevelStyleBodies } from './template-style-bodies'

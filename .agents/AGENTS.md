@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create** is the @aero-js/create project initializer (scaffolds from templates). Repo root is the workspace root.
+Aero is a static site generator with a custom HTML-first template engine. The **framework** lives in **packages/core**; the **example app** used for dev/build is **examples/kitchen-sink**; **packages/create** is the @aero-js/create Vite+ template manifest (starters under `templates/`). Repo root is the workspace root.
 
 ### Monorepo
 
@@ -10,9 +10,9 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 - **packages/core** - Runtime, Vite plugin, config helpers, and compile-check. Built with tsdown; consumed as `@aero-js/core` with subpaths such as `@aero-js/core/vite`, `@aero-js/core/config`, and `@aero-js/core/vite-config`.
 - **packages/cli** - `@aero-js/cli`: `aero check` (no server — config, content, template compile; bucketed exit codes), `aero doctor` (env checklist). Depends on `@aero-js/core` and `@aero-js/content`.
 - **packages/vscode** - VS Code extension (syntaxes for Aero templates).
-- **packages/create** - Project initializer (@aero-js/create). Bundled templates under `packages/create/templates/` (`minimal`, `fullstack`). Run from `packages/create`: `pnpm create @aero-js <name>`; scaffolds into `packages/create/dist/<name>` (gitignored).
-- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Run dev/build/preview from this directory (or `pnpm --dir examples/kitchen-sink dev`); root has no app dev script.
-- **Root** - Workspace root. Scripts: `pnpm test` runs workspace Vitest; `pnpm build` builds packages only.
+- **packages/create** - `@aero-js/create` Vite+ template manifest (`createConfig.templates`). Starters under `packages/create/templates/` (`minimal`, `fullstack`). Scaffold with `vp create @aero-js:minimal --directory <path>` after publish; local smoke: `node scripts/smoke-template-build.mjs`.
+- **examples/kitchen-sink** - Full demo app: content collections, Nitro API, Alpine.js, HTMX. Build profiles via **`vp build --mode ci|static|debug`** and [`.env.*` files](../examples/kitchen-sink/.env.example); see [_reference/guides/aero-build-env-profiles.md](../_reference/guides/aero-build-env-profiles.md).
+- **Root** - Workspace root. Toolchain: **Vite+** (`vite-plus`, `vp`). Prefer **`vp run build:all`**, **`vp test run`**, **`vp lint`**; keep **`pnpm check`** / **`pnpm fmt`** for composites (workspace typecheck + Aero HTML Prettier). Task graph: root [`vite.config.ts`](../../vite.config.ts) `run.tasks`.
 
 ### Compilation pipeline (packages/core)
 
@@ -82,17 +82,39 @@ The framework provides default aliases when tsconfig is missing; tsconfig is opt
 
 ## Development Commands
 
+**Monorepo (root):**
+
 ```bash
-pnpm run dev          # Vite dev server with HMR (Nitro when aero({ server: true }))
-pnpm run build        # Static build to dist/; with Nitro also .output/
-pnpm run preview      # Static preview only
-pnpm run preview:api  # Full server preview (static + API)
-pnpm test             # Run Vitest (packages/core compiler + vite tests)
+pnpm check                  # typecheck + vp check + Prettier HTML (composite)
+vp test run                 # all Vitest projects in root vite.config.ts
+vp run build:all            # cached @aero-js/* pack graph
+vp run check:all            # pre-merge: pnpm check + unit + e2e CI
+vp lint                     # Oxlint (also part of vp check)
 ```
+
+**Scaffold (published `@aero-js/create` manifest):**
+
+```bash
+pnpm dlx vp create @aero-js:minimal --directory my-app --no-interactive
+cd my-app && pnpm install && vp dev
+```
+
+**Kitchen-sink** (`examples/kitchen-sink/`):
+
+```bash
+vp dev --open
+vp build --mode ci
+vp build --mode static   # then vp preview
+vpx nitro preview       # after vp build (Nitro; local default)
+node .output/server/index.mjs   # after vp build (production Node entry)
+pnpm fmt              # vp fmt + Prettier HTML (from app dir)
+```
+
+**Other examples:** `vp dev` / `vp build` / `vp preview` from the example directory.
 
 ## Testing
 
-Tests use Vitest and live in **packages/core**: `compiler/__tests__/` (parser, codegen, vite-plugin), `vite/__tests__/` (build). Run with `pnpm test` from repo root.
+Tests use **Vitest 5** via root `vite.config.ts` (`vite-plus/test`). Package suites live under each package’s `src/**` and `__tests__/`. Run with **`vp test run`** from repo root.
 
 ## TDD (Test-Driven Development)
 
@@ -126,7 +148,7 @@ Optional `site` (canonical URL, e.g. `{ url: 'https://example.com' }`) can be se
 ## File Structure
 
 - **examples/kitchen-sink:** Uses custom dirs when configured (e.g. frontend/, backend/, build/); otherwise client/, content/, server/. Run dev/build from this directory.
-- **packages/create/** - @aero-js/create initializer; bundled templates in `packages/create/templates/`
+- **packages/create/** - `@aero-js/create` manifest; bundled templates in `packages/create/templates/`
 - **packages/core/** - Framework (runtime, Vite plugin, config helpers; `@aero-js/core` and subpaths)
 - **packages/vscode/** - VS Code extension
 

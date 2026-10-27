@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { emitClientScriptTag, VIRTUAL_PREFIX } from '../../emit-client-script-tag'
 import type { ScriptEntry } from '../../types'
 

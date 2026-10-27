@@ -229,7 +229,9 @@ export function getBuildDirectiveAttribute(
 /**
  * Classify a build-time attribute: native HTML passthrough, switch branch marker, or Aero directive.
  */
-export function classifyBuildAttribute(input: ClassifyBuildAttributeInput): BuildAttributeClassification {
+export function classifyBuildAttribute(
+	input: ClassifyBuildAttributeInput
+): BuildAttributeClassification {
 	const tagName = input.tagName.toLowerCase()
 	const { attrName, rawValue } = input
 	const canonical = resolveBuildDirectiveName(attrName)
@@ -259,8 +261,7 @@ export function classifyBuildAttribute(input: ClassifyBuildAttributeInput): Buil
 	}
 
 	// Bare `props` / `aero-props` / `data-aero-props` (no value) spreads local `props` — not a brace error.
-	const isBarePropsShorthand =
-		canonical === ATTR_PROPS && !normalizeAttributeValue(rawValue).trim()
+	const isBarePropsShorthand = canonical === ATTR_PROPS && !normalizeAttributeValue(rawValue).trim()
 
 	const requiresBracedValue =
 		BRACED_VALUE_DIRECTIVES.has(canonical) &&
@@ -276,7 +277,9 @@ export function classifyBuildAttribute(input: ClassifyBuildAttributeInput): Buil
 }
 
 /** Validation message for VS Code / compile-time brace checks, or null when valid. */
-export function getBuildDirectiveValidationIssue(input: ClassifyBuildAttributeInput): string | null {
+export function getBuildDirectiveValidationIssue(
+	input: ClassifyBuildAttributeInput
+): string | null {
 	const classification = classifyBuildAttribute(input)
 	switch (classification.kind) {
 		case 'build-directive':

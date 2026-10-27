@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import ts from 'typescript'
 import { AeroVirtualCode } from '../virtualCode'
 import type { IScriptSnapshot } from '@volar/language-core'
@@ -41,13 +41,7 @@ function semanticDiagnosticCodes(
 	const orig = host.getSourceFile.bind(host)
 	host.getSourceFile = (fileName, languageVersion, ...rest) => {
 		if (fileName === virtualFile) {
-			return ts.createSourceFile(
-				fileName,
-				virtualScript,
-				languageVersion,
-				true,
-				ts.ScriptKind.TS
-			)
+			return ts.createSourceFile(fileName, virtualScript, languageVersion, true, ts.ScriptKind.TS)
 		}
 		if (fileName === ambientFile) {
 			return ts.createSourceFile(fileName, ambient, languageVersion, true, ts.ScriptKind.TS)
@@ -91,8 +85,20 @@ describe('AeroVirtualCode', () => {
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const fBuild = ts.createSourceFile('x.build.ts', build, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-		const fExpr = ts.createSourceFile('x.expr.ts', expr0, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const fBuild = ts.createSourceFile(
+			'x.build.ts',
+			build,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
+		const fExpr = ts.createSourceFile(
+			'x.expr.ts',
+			expr0,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const orig = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -199,7 +205,13 @@ let items = initialItems
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'state.ts',
+			text,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -245,7 +257,13 @@ function inc() { value++ }
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'state.ts',
+			text,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -276,7 +294,13 @@ $effect(() => { count })
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'state.ts',
+			text,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -305,7 +329,13 @@ const { count } = Aero.props
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('expr.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'expr.ts',
+			text,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -336,7 +366,13 @@ let status = 'Ready'
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('expr.ts', expr0, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'expr.ts',
+			expr0,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -364,7 +400,13 @@ const load = () => GET('/api/x')
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('state.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'state.ts',
+			text,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -390,7 +432,13 @@ const load = () => GET('/api/x')
 			skipLibCheck: true,
 			noEmit: true,
 		}
-		const source = ts.createSourceFile('expr.ts', expr0, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+		const source = ts.createSourceFile(
+			'expr.ts',
+			expr0,
+			ts.ScriptTarget.Latest,
+			true,
+			ts.ScriptKind.TS
+		)
 		const host = ts.createCompilerHost(opts)
 		const originalGetSourceFile = host.getSourceFile.bind(host)
 		host.getSourceFile = (fileName, languageVersion, ...rest) => {
@@ -830,7 +878,13 @@ const o = { a: 1 }
 
 		for (const fragment of [openFragment!, activeFragment!]) {
 			const virtualText = getEmbeddedText(code, fragment.id)!
-			const source = ts.createSourceFile('expr.ts', virtualText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+			const source = ts.createSourceFile(
+				'expr.ts',
+				virtualText,
+				ts.ScriptTarget.Latest,
+				true,
+				ts.ScriptKind.TS
+			)
 			const opts: ts.CompilerOptions = {
 				target: ts.ScriptTarget.ESNext,
 				module: ts.ModuleKind.ESNext,
@@ -993,8 +1047,9 @@ import { getCollection } from 'aero:content'
 			const ambient = getEmbeddedText(code, 'ambient')!
 			expect(ambient).toContain("declare module 'aero:content'")
 			expect(ambient).not.toContain("declare module '*.html'")
-			expect(semanticDiagnosticCodes(getEmbeddedText(code, 'build_0')!, ambient)).not.toContain(2307)
+			expect(semanticDiagnosticCodes(getEmbeddedText(code, 'build_0')!, ambient)).not.toContain(
+				2307
+			)
 		})
 	})
-
 })

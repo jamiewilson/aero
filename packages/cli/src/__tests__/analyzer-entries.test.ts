@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { getAeroAnalyzerEntryGlobs, listAeroTemplatePaths } from '../analyzer-entries'
 import type { AeroOptions } from '@aero-js/core/config'
 

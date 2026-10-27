@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { parseHTML } from 'linkedom'
 import { Lowerer } from '../lowerer'
 import { Resolver } from '../../resolver'

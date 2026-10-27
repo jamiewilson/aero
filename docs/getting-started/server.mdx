@@ -69,12 +69,18 @@ export default defineHandler(event => {
 })
 ```
 
-## Preview commands
+## Preview after build
 
-| Command            | What runs                         |
-| ------------------ | --------------------------------- |
-| `pnpm preview`     | Static files only — no Nitro APIs |
-| `pnpm preview:api` | Full Nitro server from `.output/` |
+Use **`vp preview`** to serve the production build locally after **`vp build`** when Nitro is off or you used a static-only build (`server: false`, or `vp build --mode static`). That serves `dist/` through Vite+ — no API routes.
+
+When **`server: true`**, **`vp build`** also writes **`.output/`**. Preview the full app (static + API from one origin) after build:
+
+| Command | When to use |
+| --- | --- |
+| `vpx nitro preview` | **Usual local check.** Nitro reads build metadata from the project root, serves public assets from `.output` together with the server handler, and loads preview env files (`.env.preview`, `.env.production`, `.env`). Matches the command Nitro prints after build. |
+| `node .output/server/index.mjs` | **Production Node entry.** Runs the bundled server exactly as on a Node deployment. Use for deploy-parity debugging, automation, or when you need the same startup as production without Nitro's preview wrapper. |
+
+Run both from the project root (where `nitro.config.ts` lives). The fullstack starter lists `nitro` as a devDependency so **`vpx nitro preview`** uses your pinned local version.
 
 ## HTMX and Alpine.js
 

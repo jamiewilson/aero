@@ -12,9 +12,15 @@ import type {
 	AeroRenderFn,
 	AeroRenderInput,
 	AeroRouteParams,
+	AeroTemplateContext,
 	MountOptions,
 } from '../types'
-import { pagePathToKey, pageNameToRoutePath, resolvePageName, resolvePageTarget } from '../utils/routing'
+import {
+	pagePathToKey,
+	pageNameToRoutePath,
+	resolvePageName,
+	resolvePageTarget,
+} from '../utils/routing'
 import { aeroDevLog } from './dev-log'
 import { createTemplateContext } from './template-context'
 import { applyRootRenderInjections } from './root-render-injection'
@@ -93,7 +99,7 @@ export class Aero {
 		return true
 	}
 
-	private buildContext(input: Parameters<typeof createTemplateContext>[1]) {
+	private buildContext(input: Parameters<typeof createTemplateContext>[1]): AeroTemplateContext {
 		return createTemplateContext(
 			{
 				globals: this.globals,
@@ -214,7 +220,7 @@ export class Aero {
 		props: Record<string, unknown> = {},
 		slots: Record<string, string> = {},
 		input: AeroRenderInput = {}
-	) {
+	): Promise<string> {
 		const context = this.buildContext({
 			props,
 			slots,

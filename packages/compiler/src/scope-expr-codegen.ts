@@ -256,11 +256,7 @@ function collectRewrites(
 
 		if (node.type === 'Property' && node.shorthand === true && node.key?.type === 'Identifier') {
 			const name = node.key.name
-			if (
-				typeof name === 'string' &&
-				!activeShadows().has(name) &&
-				!moduleScopeNames?.has(name)
-			) {
+			if (typeof name === 'string' && !activeShadows().has(name) && !moduleScopeNames?.has(name)) {
 				const range = nodeRange(node)
 				if (range) {
 					if (actionsNames?.has(name)) {
@@ -459,13 +455,21 @@ export function findUndeclaredReactiveIdentifiers(
 		const asStmt = parseWrappedStatements(trimmed)
 		if (!asStmt) return []
 		const undeclared: string[] = []
-		for (const name of collectFreeIdentifiers(asStmt.program, asStmt.offset, options?.initialShadows)) {
+		for (const name of collectFreeIdentifiers(
+			asStmt.program,
+			asStmt.offset,
+			options?.initialShadows
+		)) {
 			if (!allowed.has(name)) undeclared.push(name)
 		}
 		return undeclared
 	}
 	const undeclared: string[] = []
-	for (const name of collectFreeIdentifiers(wrapped.program, wrapped.offset, options?.initialShadows)) {
+	for (const name of collectFreeIdentifiers(
+		wrapped.program,
+		wrapped.offset,
+		options?.initialShadows
+	)) {
 		if (!allowed.has(name)) undeclared.push(name)
 	}
 	return undeclared

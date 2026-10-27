@@ -14,14 +14,14 @@ You either duplicate markup across files and hope nothing drifts:
 ```html
 <!-- page-one.html -->
 <div class="card">
-  <h2>Title One</h2>
-  <p>Description one</p>
+	<h2>Title One</h2>
+	<p>Description one</p>
 </div>
 
 <!-- page-two.html -->
 <div class="card">
-  <h2>Title Two</h2>
-  <p>Description two</p>
+	<h2>Title Two</h2>
+	<p>Description two</p>
 </div>
 ```
 
@@ -61,8 +61,8 @@ Import the component in your page's `<script is:build>` block, then use `<greeti
 ```
 
 <Note>
-	Import the file without its extension: `import greeting from '@components/greeting.html'` resolves to
-	`client/components/greeting.html`.
+	Import the file without its extension: `import greeting from '@components/greeting.html'` resolves
+	to `client/components/greeting.html`.
 </Note>
 
 ## Passing props
@@ -171,6 +171,6 @@ See [Layouts & Slots](/concepts/layouts-slots) for a full explanation of how slo
 
 <Tip>
 	All custom attributes — `props`, `for`, `if`, `else`, etc. — also accept a `data-` prefix (e.g.
-	`aero-props`, `for`) for strict HTML spec compliance. Both forms are equivalent; the
-	shorthand is preferred for readability.
+	`aero-props`, `for`) for strict HTML spec compliance. Both forms are equivalent; the shorthand is
+	preferred for readability.
 </Tip>

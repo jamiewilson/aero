@@ -17,8 +17,7 @@ export const HYPERMEDIA_HTTP_METHOD_SET = new Set<string>(HYPERMEDIA_HTTP_METHOD
 export const HYPERMEDIA_EVENT_HANDLER_ACTION_SET = new Set<string>(HYPERMEDIA_EVENT_HANDLER_ACTIONS)
 
 /** Qualified callee for CSP-safe compiled mount handlers (`actions` param, no `with`). */
-export const HYPERMEDIA_COMPILED_SIGNAL_CALLEE =
-	`actions.${HYPERMEDIA_SIGNAL_RESOLVER}` as const
+export const HYPERMEDIA_COMPILED_SIGNAL_CALLEE = `actions.${HYPERMEDIA_SIGNAL_RESOLVER}` as const
 
 const HTTP_METHOD_UNION = HYPERMEDIA_HTTP_METHODS.map(method => `'${method}'`).join(' | ')
 

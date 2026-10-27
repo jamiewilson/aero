@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } from '../../helpers'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
@@ -125,7 +125,7 @@ describe('reactive attribute bindings', () => {
 		<input type="checkbox" checked="{ agree }" />`
 
 		const code = compile(parse(html), mockOptions)
-		expect(code).toContain('agree ? \' checked=""\' : \'\'')
+		expect(code).toContain("agree ? ' checked=\"\"' : ''")
 		expect(code).toContain('data-aero-model-checked="0"')
 	})
 

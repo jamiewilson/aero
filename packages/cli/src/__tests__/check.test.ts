@@ -3,7 +3,7 @@ import { AERO_EXIT_COMPILE, AERO_EXIT_CONFIG, AERO_EXIT_ROUTE } from '@aero-js/d
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 
 describe('runAeroCheck', () => {
 	it('reports type errors from non-build template scripts with AERO_SCRIPT', async () => {
@@ -197,9 +197,7 @@ describe('runAeroCheck', () => {
 			expect(code).toBe(AERO_EXIT_CONFIG)
 			const out = spy.mock.calls.map(args => String(args[0])).join('')
 			expect(out).toContain('[AERO_CONFIG]')
-			expect(out).toContain(
-				'`busy` requires both `reactivity: true` and `hypermedia: true`'
-			)
+			expect(out).toContain('`busy` requires both `reactivity: true` and `hypermedia: true`')
 		} finally {
 			spy.mockRestore()
 		}

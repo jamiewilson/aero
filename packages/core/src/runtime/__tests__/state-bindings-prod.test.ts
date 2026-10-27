@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { Aero } from '../index'
 import { mountStateBindingsForRoute } from '../state-bindings-prod'
 

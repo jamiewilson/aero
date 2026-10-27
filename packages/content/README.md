@@ -101,4 +101,4 @@ Each document has:
 
 ## Tests
 
-Vitest in `packages/content`: loader, markdown, render, Vite plugin. Run from repo root: `pnpm test`.
+Vitest in `packages/content`: loader, markdown, render, Vite plugin. Run from repo root: `vp test run`.

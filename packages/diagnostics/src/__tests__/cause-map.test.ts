@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { AeroCompileError } from '../tagged-errors'
 import { failureToAeroDiagnostics, thrownToAeroDiagnostics } from '../cause-map'
 
@@ -39,9 +39,7 @@ describe('failureToAeroDiagnostics', () => {
 
 describe('thrownToAeroDiagnostics', () => {
 	it('maps thrown AeroCompileError', () => {
-		const d = thrownToAeroDiagnostics(
-			new AeroCompileError({ message: 'oops', file: 'f.html' })
-		)
+		const d = thrownToAeroDiagnostics(new AeroCompileError({ message: 'oops', file: 'f.html' }))
 		expect(d).toHaveLength(1)
 		expect(d[0]!.message).toBe('oops')
 	})

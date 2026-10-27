@@ -3,7 +3,7 @@
  * and custom config (Alpine/HTMX/Vue-style prefixes).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { isDirectiveAttr, DEFAULT_DIRECTIVE_PREFIXES } from '../../directive-attributes'
 
 describe('isDirectiveAttr with default config', () => {

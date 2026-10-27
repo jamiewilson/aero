@@ -1,9 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import {
-	aeroIdeDocHref,
-	aeroIdeDocsUrlForCode,
-	aeroIdeDocsUrlForDiagnostic,
-} from '../ide-catalog'
+import { describe, it, expect } from 'vite-plus/test'
+import { aeroIdeDocHref, aeroIdeDocsUrlForCode, aeroIdeDocsUrlForDiagnostic } from '../ide-catalog'
 
 describe('ide-catalog', () => {
 	it('aeroIdeDocHref joins repo docs path', () => {

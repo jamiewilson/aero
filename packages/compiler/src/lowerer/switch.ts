@@ -14,13 +14,7 @@ import { CompileError } from '../types'
 import type { LowererDiag } from './types'
 import { getEffectiveChildNodes, isTemplateElement } from './template'
 
-const SWITCH_NEEDLES = [
-	'switch="',
-	"switch='",
-	'aero-switch=',
-	'data-switch=',
-	'switch={',
-] as const
+const SWITCH_NEEDLES = ['switch="', "switch='", 'aero-switch=', 'data-switch=', 'switch={'] as const
 
 function throwSwitchError(diag: LowererDiag, message: string, needles: readonly string[]): never {
 	const loc = Helper.locateInTemplateSource(diag?.source, {
@@ -199,11 +193,11 @@ export function compileSwitchContainer(
 		const hasCase = hasCaseAttr(n)
 		const hasDef = hasDefaultAttr(n)
 		if (hasCase && hasDef) {
-			throwSwitchError(
-				diag,
-				'A branch cannot have both `case` and `default`.',
-				['case=', 'default', ...SWITCH_NEEDLES]
-			)
+			throwSwitchError(diag, 'A branch cannot have both `case` and `default`.', [
+				'case=',
+				'default',
+				...SWITCH_NEEDLES,
+			])
 		}
 
 		if (hasDef) {
@@ -239,11 +233,9 @@ export function compileSwitchContainer(
 	}
 
 	if (cases.length === 0 && !seenDefault) {
-		throwSwitchError(
-			diag,
-			'`switch` requires at least one `case` or `default` branch.',
-			[...SWITCH_NEEDLES]
-		)
+		throwSwitchError(diag, '`switch` requires at least one `case` or `default` branch.', [
+			...SWITCH_NEEDLES,
+		])
 	}
 
 	if (!seenDefault) {

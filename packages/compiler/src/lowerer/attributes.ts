@@ -6,7 +6,6 @@ import * as CONST from '../constants'
 import * as Helper from '../helpers'
 import {
 	classifyBuildAttribute,
-	getBuildDirectiveAttribute,
 	hasBuildDirectiveAttribute,
 	resolveBuildDirectiveName,
 	type BuildDirective,
@@ -17,7 +16,11 @@ import { parentIsSwitchContainer } from './switch'
 import { Resolver } from '../resolver'
 import { CompileError } from '../types'
 import { tokenizeCurlyInterpolation } from '../tokenizer'
-import { parseForDirective, findForLoopImplicitNameShadows, type ParsedForDirective } from '../for-directive'
+import {
+	parseForDirective,
+	findForLoopImplicitNameShadows,
+	type ParsedForDirective,
+} from '../for-directive'
 import { parseEventDirectiveName } from '../event-directive-attributes'
 import { normalizeRuntimeDirectiveName } from '../runtime-directive-attributes'
 import { resolveRuntimeDirectiveHasValue } from '../runtime-directive-braces'
@@ -26,12 +29,25 @@ import {
 	renderFallbackAttributeString,
 	renderMethodOverrideInput,
 } from '../hypermedia-fallback'
-import type { IRReactiveBusyBind, IRReactiveEventBind, IRReactiveTextBind, IRReactiveShowBind, IRReactiveHtmlBind, IRReactiveClassBind, IRReactiveAttributeBind, IRReactivePropertyBind, IRReactiveModelBind } from '../ir'
-import {
-	isBooleanIdlProperty,
-} from '../reactive-idl-properties'
+import type {
+	IRReactiveBusyBind,
+	IRReactiveEventBind,
+	IRReactiveTextBind,
+	IRReactiveShowBind,
+	IRReactiveHtmlBind,
+	IRReactiveClassBind,
+	IRReactiveAttributeBind,
+	IRReactivePropertyBind,
+	IRReactiveModelBind,
+} from '../ir'
+import { isBooleanIdlProperty } from '../reactive-idl-properties'
 import { classifyReactiveAttribute } from '../reactive-attribute-classification'
-import type { LowererDiag, LowererReactiveState, ParsedComponentAttrs, ParsedElementAttrs } from './types'
+import type {
+	LowererDiag,
+	LowererReactiveState,
+	ParsedComponentAttrs,
+	ParsedElementAttrs,
+} from './types'
 import { referencesStateBindingExpression } from '../state-mount-codegen'
 
 type AttrLike = { name: string; value?: string | null }
@@ -92,11 +108,7 @@ function validateBracedDirectiveValue(
 	})
 }
 
-function warnForLoopImplicitNameShadow(
-	diag: LowererDiag,
-	attr: AttrLike,
-	inner: string
-): void {
+function warnForLoopImplicitNameShadow(diag: LowererDiag, attr: AttrLike, inner: string): void {
 	if (!diag?.onWarning) return
 	const shadowed = findForLoopImplicitNameShadows(inner)
 	if (shadowed.length === 0) return
@@ -480,9 +492,7 @@ export function parseElementAttributes(
 					: undefined)
 			const hasValue = resolveRuntimeDirectiveHasValue(attr.name, attr.value, sourceSlice)
 			const readExpr = hasValue
-				? Helper.stripBraces(
-						validateBracedDirectiveValue(node, diag, attr.name, attr.value ?? '')
-					)
+				? Helper.stripBraces(validateBracedDirectiveValue(node, diag, attr.name, attr.value ?? ''))
 				: className
 			if (!referencesStateBindingExpression(readExpr, reactiveState.bindingNames)) {
 				throwDirectiveError(
@@ -570,7 +580,9 @@ function isKeyAttribute(name: string): boolean {
 }
 
 function getInputType(node: NodeLike): string | null | undefined {
-	return (node as { getAttribute?: (n: string) => string | null }).getAttribute?.('type') ?? undefined
+	return (
+		(node as { getAttribute?: (n: string) => string | null }).getAttribute?.('type') ?? undefined
+	)
 }
 
 function classifyAttrForReactiveBind(

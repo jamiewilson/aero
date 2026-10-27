@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { flushCompileWarnings } from '../compile-warning-dedup'
 
 describe('flushCompileWarnings', () => {
@@ -19,8 +19,20 @@ describe('flushCompileWarnings', () => {
 		const log = vi.fn()
 		const warning = { code: 'AERO_SWITCH', message: 'no default branch' }
 
-		flushCompileWarnings(hashes, '/pages/about.html', '<template switch="{ x }"></template>', [warning], log)
-		flushCompileWarnings(hashes, '/pages/about.html', '<template switch="{ y }"></template>', [warning], log)
+		flushCompileWarnings(
+			hashes,
+			'/pages/about.html',
+			'<template switch="{ x }"></template>',
+			[warning],
+			log
+		)
+		flushCompileWarnings(
+			hashes,
+			'/pages/about.html',
+			'<template switch="{ y }"></template>',
+			[warning],
+			log
+		)
 
 		expect(log).toHaveBeenCalledTimes(2)
 	})

@@ -2,7 +2,7 @@
  * Unit tests for the IR emitter (emit.ts): hand-built IR → JS string.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import type { IRNode } from '../../ir'
 import { emitToJS, emitBodyAndStyle, emitStyleBlock } from '../../emit'
 import * as Helper from '../../helpers'

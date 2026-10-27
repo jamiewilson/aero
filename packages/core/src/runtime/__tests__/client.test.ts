@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { ViteOverlayErrorPayload } from '@aero-js/diagnostics/browser'
 
 const showAeroViteErrorOverlay = vi.fn(async (_err: ViteOverlayErrorPayload) => {})

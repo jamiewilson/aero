@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import aero from '../entry-prod'
 import { REACTIVITY_RUNTIME_GLOBAL_KEY } from '../runtime/reactivity-bootstrap'
 
@@ -13,7 +13,9 @@ describe('entry-prod reactivity bootstrap', () => {
 		delete globalObj[REACTIVITY_RUNTIME_GLOBAL_KEY]
 		globalObj.document = {
 			querySelector: (selector: string) =>
-				selector === 'script[type="application/json"][data-aero="state"]' ? { textContent: '{"count":5}' } : null,
+				selector === 'script[type="application/json"][data-aero="state"]'
+					? { textContent: '{"count":5}' }
+					: null,
 		}
 		const target = {} as HTMLElement
 		try {

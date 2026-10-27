@@ -24,10 +24,7 @@ import { registerAeroCodeActions } from './aero-code-actions'
 import { registerAeroTasks } from './aero-tasks'
 import { registerRunAeroCheck } from './runCheck'
 import { clearResolverCache } from './pathResolver'
-import {
-	clearScopeCache,
-	setScopeDebugLogger,
-} from './scope'
+import { clearScopeCache, setScopeDebugLogger } from './scope'
 import { HTML_SELECTOR } from './constants'
 
 let languageClient: LanguageClient | undefined

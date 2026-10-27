@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { Effect } from '../effect'
 import { reviveStateValue } from '../hydration'
 import { isReactive, makeReactive, toRaw } from '../reactive'
@@ -11,7 +11,7 @@ describe('Signal.notify', () => {
 		const signal = new Signal({ count: 0 })
 		let runs = 0
 		new Effect(() => {
-			signal.value
+			void signal.value
 			runs++
 		})
 		expect(runs).toBe(1)
@@ -103,7 +103,13 @@ describe('makeReactive', () => {
 	it('reads Set and Map size through reactive proxy', () => {
 		const set = makeReactive(new Set([1, 2, 3]), () => {})
 		expect(set.size).toBe(3)
-		const map = makeReactive(new Map([[1, 'one'], [2, 'two']]), () => {})
+		const map = makeReactive(
+			new Map([
+				[1, 'one'],
+				[2, 'two'],
+			]),
+			() => {}
+		)
 		expect(map.size).toBe(2)
 	})
 })
@@ -133,7 +139,9 @@ describe('createStateScope reactive wiring', () => {
 		const store = new SignalStore()
 		const scope = createStateScope({
 			store,
-			bindings: [{ name: 'formModel', derived: false, init: () => ({ email: '' }), dependencies: [] }],
+			bindings: [
+				{ name: 'formModel', derived: false, init: () => ({ email: '' }), dependencies: [] },
+			],
 			functionSources: [],
 		})
 		let email = ''
@@ -149,7 +157,9 @@ describe('createStateScope reactive wiring', () => {
 		store.mergeBindings({ formModel: { email: '' } })
 		const scope = createStateScope({
 			store,
-			bindings: [{ name: 'formModel', derived: false, init: () => ({ email: '' }), dependencies: [] }],
+			bindings: [
+				{ name: 'formModel', derived: false, init: () => ({ email: '' }), dependencies: [] },
+			],
 			functionSources: [],
 		})
 		let email = ''

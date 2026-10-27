@@ -1,7 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import {
-	BUILD_DIRECTIVES,
-} from '../build-directive-attributes'
+import { describe, expect, it } from 'vite-plus/test'
+import { BUILD_DIRECTIVES } from '../build-directive-attributes'
 import {
 	PREFIXABLE_SCRIPT_IS_KINDS,
 	PREFIXABLE_SIMPLE_RUNTIME_DIRECTIVES,

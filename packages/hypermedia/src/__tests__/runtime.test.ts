@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { createHypermediaRuntime } from '../runtime'
 
 beforeEach(() => {
@@ -52,7 +52,8 @@ describe('createHypermediaRuntime', () => {
 	})
 
 	it('process wires hypermedia attributes in element', () => {
-		document.body.innerHTML = '<div id="container"><a data-aero-on-click="{ GET(\'/api\') }" href="/api">link</a></div>'
+		document.body.innerHTML =
+			'<div id="container"><a data-aero-on-click="{ GET(\'/api\') }" href="/api">link</a></div>'
 		const runtime = createHypermediaRuntime()
 		const element = document.querySelector('#container')!
 		runtime.process(element)
@@ -79,9 +80,9 @@ describe('createHypermediaRuntime', () => {
 		const btn = document.querySelector('#btn')!
 		const runtime = createHypermediaRuntime()
 
-		expect(() =>
-			runtime.registerBusyBinding(btn, 'isSaving', { value: 'no' } as never)
-		).toThrow('must be boolean')
+		expect(() => runtime.registerBusyBinding(btn, 'isSaving', { value: 'no' } as never)).toThrow(
+			'must be boolean'
+		)
 
 		await expect(
 			runtime.executeAction({ method: 'POST', url: '/save', state: { value: 'no' } as never }, btn)

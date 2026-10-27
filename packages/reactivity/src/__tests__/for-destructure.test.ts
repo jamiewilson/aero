@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { bindKeyedFor } from '../structural/for'
 import { createStateScope } from '../state-scope'
 import { SignalStore } from '../store'
@@ -34,7 +34,7 @@ describe('bindKeyedFor destructuring', () => {
 			ownerDocument: doc,
 			matches: (selector: string) => selector === '[data-aero-for="0"]',
 			querySelector: () => null,
-			replaceChildren(fragment: DocumentFragment) {
+			replaceChildren(_fragment: DocumentFragment) {
 				rowCount = fragmentNodes.length
 			},
 		} as unknown as Element
@@ -65,7 +65,11 @@ describe('bindKeyedFor destructuring', () => {
 				{
 					name: 'numbersMap',
 					derived: false,
-					init: () => new Map([[1, 'one'], [2, 'two']]),
+					init: () =>
+						new Map([
+							[1, 'one'],
+							[2, 'two'],
+						]),
 					dependencies: [],
 				},
 			],

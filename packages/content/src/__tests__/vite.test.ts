@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import { aeroContent } from '../vite'
 
 describe('aeroContent', () => {

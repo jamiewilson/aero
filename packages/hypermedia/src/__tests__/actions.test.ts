@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { normalizeMethod, buildRequest } from '../request'
 import { parseSwapStyle } from '../swap'
 import type { ActionOptions } from '../types'

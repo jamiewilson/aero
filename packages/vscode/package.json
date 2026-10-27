@@ -31,10 +31,10 @@
 	"type": "module",
 	"main": "./dist/extension.cjs",
 	"scripts": {
-		"dev": "tsdown --watch",
-		"build": "pnpm --dir ../compiler exec npm run prebuild && cp ../prettier-plugin-aero/schema.json ./schemas/prettierrc-aero.json && tsdown --minify",
+		"dev": "vp pack --watch",
+		"build": "pnpm --filter @aero-js/compiler run prebuild && cp ../prettier-plugin-aero/schema.json ./schemas/prettierrc-aero.json && vp pack --minify",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "pnpm -C ../.. exec vp test run --project aero-vscode",
 		"vscode:prepublish": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -48,11 +48,10 @@
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"@types/vscode": "^1.125.0",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:",
 		"vscode-oniguruma": "^2.0.1",
-		"vscode-textmate": "^9.3.2"
+		"vscode-textmate": "^9.3.2",
+		"vite-plus": "catalog:"
 	},
 	"contributes": {
 		"jsonValidation": [

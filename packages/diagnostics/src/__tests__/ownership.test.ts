@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { AeroCompileError } from '../tagged-errors'
 import { isAeroOwnedFailure, viteLoggerHasColors } from '../ownership'
 
@@ -9,9 +9,7 @@ describe('isAeroOwnedFailure', () => {
 		css.name = 'CssSyntaxError'
 		expect(isAeroOwnedFailure(css)).toBe(true)
 		expect(
-			isAeroOwnedFailure(
-				Object.assign(new Error('boom'), { plugin: 'vite-plugin-aero-transform' })
-			)
+			isAeroOwnedFailure(Object.assign(new Error('boom'), { plugin: 'vite-plugin-aero-transform' }))
 		).toBe(true)
 		expect(isAeroOwnedFailure(new Error('[AERO_COMPILE] boom'))).toBe(true)
 		expect(

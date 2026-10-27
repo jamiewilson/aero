@@ -2,21 +2,13 @@
  * Aero Vite config plugin: aliases, SSR env, build inputs, generated .aero artifacts.
  */
 
-import type {
-	DevEnvironment,
-	Plugin,
-	ResolvedConfig,
-	WebSocketServer,
-} from 'vite'
+import type { DevEnvironment, Plugin, ResolvedConfig, WebSocketServer } from 'vite'
 import { createLogger, createRunnableDevEnvironment } from 'vite'
 import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'path'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
-import {
-	TemplateDiscovery,
-	createBuildConfig,
-} from './rollup-input-discovery'
+import { TemplateDiscovery, createBuildConfig } from './rollup-input-discovery'
 import { discoverReactivePagePaths } from './runtime-template-discovery'
 import { getRuntimeInstanceModuleSource } from './runtime-instance-module'
 import { writeRouteManifestGenerated } from '../routing/route-manifest'
@@ -28,6 +20,7 @@ import {
 	wrapAeroViteLogger,
 } from './aero-vite-logger'
 import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
+import { loadAeroEnv } from '../config/loadAeroEnv'
 import { STATE_BINDINGS_REGISTRY_FILENAME } from './defaults'
 import type { AeroPluginState } from './plugin-state'
 
@@ -43,6 +36,8 @@ export function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
+			const envDir = userConfig.envDir ?? root
+			loadAeroEnv({ command: env.command, mode: env.mode, envDir })
 			state.templateDiscovery = new TemplateDiscovery(root, state.dirs.client)
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)

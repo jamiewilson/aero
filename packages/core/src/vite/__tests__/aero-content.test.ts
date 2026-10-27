@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import type { Plugin } from 'vite'
 
 const aeroContentMock = vi.fn((options?: unknown) => ({

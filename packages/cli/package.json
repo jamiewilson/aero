@@ -18,9 +18,9 @@
 	],
 	"type": "module",
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "pnpm -C ../.. exec vp test run --project @aero-js/cli",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"dependencies": {
@@ -31,8 +31,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	}
 }

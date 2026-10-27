@@ -14,9 +14,7 @@ Load detail into a sidebar without a full navigation:
 	let selected = ''
 </script>
 
-<button on:click="{ selected = 'a'; GET('/api/detail/a', { target: '#detail' }) }">
-	Item A
-</button>
+<button on:click="{ selected = 'a'; GET('/api/detail/a', { target: '#detail' }) }">Item A</button>
 <div id="detail" class="card">Select an item…</div>
 ```
 
@@ -55,22 +53,18 @@ The handler can return a success or error fragment for `#status`.
 
 **The server owns application outcomes. The client owns transport and infrastructure failures.**
 
-| Outcome | Who owns UI | What happens |
-| --- | --- | --- |
-| Validation / not-found **HTML fragment** (any status) | Server | Swapped into the target like a 200 |
-| Uncaught throw, mistyped `/api` route, full Nitro/Vite error **document** | Client | **No swap**; lifecycle `error` fires; Vite overlay in `vite dev` |
-| Network / abort | Client | Lifecycle `error`; no response body to swap |
+| Outcome                                                                   | Who owns UI | What happens                                                         |
+| ------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------- |
+| Validation / not-found **HTML fragment** (any status)                     | Server      | Swapped into the target like a 200                                   |
+| Uncaught throw, mistyped `/api` route, full Nitro/Vite error **document** | Client      | **No swap**; lifecycle `error` fires; Vite overlay in dev (`vp dev`) |
+| Network / abort                                                           | Client      | Lifecycle `error`; no response body to swap                          |
 
 Return a small HTML fragment for expected failures (for example `422` with field errors). Do not rely on Nitro’s full error page inside a fragment target — Aero refuses to inject full documents (`<!DOCTYPE` / `<html>`) or overlay-bootstrap shells.
 
 Listen for transport and infrastructure failures:
 
 ```html
-<div
-	id="panel"
-	on:error="{ /* offline or unexpected server failure — panel unchanged */ }">
-	…
-</div>
+<div id="panel" on:error="{ /* offline or unexpected server failure — panel unchanged */ }">…</div>
 ```
 
 ## Save with loading feedback
@@ -113,13 +107,13 @@ Listen for swap completion (analytics, focus management):
 </script>
 ```
 
-| Event | When |
-| --- | --- |
-| `request` | Before fetch |
-| `response` | After headers/body received (swappable HTML path) |
-| `swap` | Before DOM mutation |
-| `settle` | After swap and process |
-| `error` | Network/abort, or infrastructure response (full error document / `!ok` JSON) |
+| Event      | When                                                                         |
+| ---------- | ---------------------------------------------------------------------------- |
+| `request`  | Before fetch                                                                 |
+| `response` | After headers/body received (swappable HTML path)                            |
+| `swap`     | Before DOM mutation                                                          |
+| `settle`   | After swap and process                                                       |
+| `error`    | Network/abort, or infrastructure response (full error document / `!ok` JSON) |
 
 ## Server-driven URL
 
@@ -127,10 +121,10 @@ Return an `aero-push-url` response header to update the address bar without a cl
 
 ## When to use HTMX instead
 
-| Situation | Consider |
-| --- | --- |
-| Existing HTMX attributes and docs | Keep `hx-*` — Aero passes them through |
-| Third-party HTMX extensions | HTMX ecosystem |
-| Same-template `GET()` / `POST()` actions | Aero hypermedia |
+| Situation                                | Consider                               |
+| ---------------------------------------- | -------------------------------------- |
+| Existing HTMX attributes and docs        | Keep `hx-*` — Aero passes them through |
+| Third-party HTMX extensions              | HTMX ecosystem                         |
+| Same-template `GET()` / `POST()` actions | Aero hypermedia                        |
 
 See [Hypermedia](/getting-started/hypermedia) for enabling Aero hypermedia alongside HTMX.

@@ -2,7 +2,7 @@
  * Tests for compileMarkdown (remark pipeline): document body → HTML.
  * Uses shared processor from processor.ts; reset before each test for clean state.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vite-plus/test'
 import { compileMarkdown } from '../markdown'
 import { resetProcessor, initProcessor } from '../processor'
 import type { ContentDocument } from '../types'

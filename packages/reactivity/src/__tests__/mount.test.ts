@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { bindEvent, bindText, mountStateBindings } from '../mount'
 import { createStateScope } from '../state-scope'
 import { SignalStore } from '../store'
@@ -84,7 +84,9 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"Alpha"' }],
+			textBinds: [
+				{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"Alpha"' },
+			],
 			eventBinds: [],
 			Aero: {},
 		})
@@ -129,7 +131,12 @@ describe('mountStateBindings', () => {
 			scope: rowScope,
 			bindings: [{ name: 'items', derived: false, initExpr: '[]', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String( item.label )' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String( item.label )',
+				},
+			],
 			eventBinds: [],
 			Aero: {},
 		})
@@ -168,7 +175,12 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [],
 		})
 
@@ -391,10 +403,14 @@ describe('mountStateBindings', () => {
 			Aero: {},
 		})
 
-		expect(childMount).toHaveBeenCalledWith(childRoot, {}, {
-			store: expect.any(SignalStore),
-			reactiveProps: {},
-		})
+		expect(childMount).toHaveBeenCalledWith(
+			childRoot,
+			{},
+			{
+				store: expect.any(SignalStore),
+				reactiveProps: {},
+			}
+		)
 		cleanup()
 		expect(childCleanup).toHaveBeenCalledTimes(1)
 	})
@@ -491,7 +507,12 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [],
 			componentBinds: [
 				{
@@ -557,7 +578,12 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [],
 			componentBinds: [
 				{
@@ -685,7 +711,12 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [],
 		})
 
@@ -725,9 +756,11 @@ describe('mountStateBindings', () => {
 				store: new SignalStore(),
 				bindings: [],
 				functionSources: [],
-				textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"missing"' }],
+				textBinds: [
+					{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: '"missing"' },
+				],
 				eventBinds: [],
-			}),
+			})
 		).not.toThrow()
 	})
 
@@ -771,7 +804,7 @@ describe('mountStateBindings', () => {
 					},
 				],
 				Aero: {},
-			}),
+			})
 		).not.toThrow()
 	})
 
@@ -801,7 +834,9 @@ describe('mountStateBindings', () => {
 				},
 			],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'label' }],
+			textBinds: [
+				{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'label' },
+			],
 			eventBinds: [],
 		})
 
@@ -909,7 +944,12 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '1', dependencies: [] }],
 			functionSources: ['function inc() { count++ }'],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="1"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="1"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [{ selector: '[data-aero-event="0"]', event: 'click', handlerExpr: 'inc()' }],
 		})
 
@@ -958,7 +998,12 @@ describe('mountStateBindings', () => {
 			store,
 			bindings: [{ name: 'count', derived: false, initExpr: '0', dependencies: [] }],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="1"]' }, readExpr: 'String(count)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="1"]' },
+					readExpr: 'String(count)',
+				},
+			],
 			eventBinds: [
 				{ selector: '[data-aero-event="0"]', event: 'click', handlerExpr: 'count--' },
 				{ selector: '[data-aero-event="2"]', event: 'click', handlerExpr: 'count++' },
@@ -994,7 +1039,12 @@ describe('mountStateBindings', () => {
 				{ name: 'doubled', derived: true, initExpr: 'count * 2', dependencies: ['count'] },
 			],
 			functionSources: [],
-			textBinds: [{ anchor: { kind: 'element', selector: '[data-aero-text="0"]' }, readExpr: 'String(doubled)' }],
+			textBinds: [
+				{
+					anchor: { kind: 'element', selector: '[data-aero-text="0"]' },
+					readExpr: 'String(doubled)',
+				},
+			],
 			eventBinds: [],
 		})
 
@@ -1050,7 +1100,10 @@ describe('mountStateBindings', () => {
 					listeners.set(type, [...(listeners.get(type) ?? []), handler])
 				},
 				removeEventListener(type: string, handler: (this: Element, event: Event) => void) {
-					listeners.set(type, (listeners.get(type) ?? []).filter(item => item !== handler))
+					listeners.set(
+						type,
+						(listeners.get(type) ?? []).filter(item => item !== handler)
+					)
 				},
 				dispatch(type: string) {
 					for (const handler of listeners.get(type) ?? []) {

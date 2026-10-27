@@ -182,7 +182,13 @@ export async function enrichCssSyntaxError(
 		} catch {
 			continue
 		}
-		const located = await compileForLocation(compile, css, file, path.dirname(file), options.resolveCss)
+		const located = await compileForLocation(
+			compile,
+			css,
+			file,
+			path.dirname(file),
+			options.resolveCss
+		)
 		if (
 			located &&
 			!isViteDependencyLocation(located) &&

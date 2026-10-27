@@ -3,15 +3,9 @@
  */
 
 import type { Plugin } from 'vite'
-import {
-	AERO_HTML_VIRTUAL_PREFIX,
-	AERO_SNIPPET_VIRTUAL_PREFIX,
-} from './defaults'
+import { AERO_HTML_VIRTUAL_PREFIX, AERO_SNIPPET_VIRTUAL_PREFIX } from './defaults'
 import { htmlCompileTry } from './compile-html-try'
-import {
-	compileHtmlWithDedupedWarnings,
-	compileOrReport,
-} from './compile-warning-dedup'
+import { compileHtmlWithDedupedWarnings, compileOrReport } from './compile-warning-dedup'
 import type { AeroPluginState } from './plugin-state'
 import { isSnippetModulePath } from '../snippets'
 

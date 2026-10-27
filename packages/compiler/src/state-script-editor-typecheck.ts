@@ -126,7 +126,9 @@ function isAeroPropsExpression(node: unknown): boolean {
 	)
 }
 
-function topLevelAeroPropsConstDeclarations(program: unknown): Array<{ start: number; length: number }> {
+function topLevelAeroPropsConstDeclarations(
+	program: unknown
+): Array<{ start: number; length: number }> {
 	const out: Array<{ start: number; length: number }> = []
 	for (const stmt of (program as { body?: unknown[] })?.body ?? []) {
 		let declaration = stmt as {

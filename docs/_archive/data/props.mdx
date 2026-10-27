@@ -14,8 +14,8 @@ You either duplicate the markup with different hard-coded values in each file, o
 ```html
 <!-- Repeated in every page that needs a card -->
 <div class="card">
-  <h2>Hard-coded Title</h2>
-  <p>Hard-coded description for this page.</p>
+	<h2>Hard-coded Title</h2>
+	<p>Hard-coded description for this page.</p>
 </div>
 ```
 
@@ -138,7 +138,9 @@ Each key in the object you pass becomes an available variable inside the script.
 For bundled client modules (plain `<script>` without `is:inline`), Aero emits a non-executable JSON payload immediately before the module:
 
 ```html
-<script type="application/json" data-aero="props">{"envStatus":"production"}</script>
+<script type="application/json" data-aero="props">
+	{ "envStatus": "production" }
+</script>
 ```
 
 A tiny inline bridge script reads that sibling payload and Vite prepends a destructuring preamble to the bundled module so props feel like local variables:

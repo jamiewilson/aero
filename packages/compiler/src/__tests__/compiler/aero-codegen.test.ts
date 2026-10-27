@@ -2,7 +2,7 @@
  * Unit tests for Aero codegen features (clientScripts, blockingScripts, props on script elements).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { escapeScriptJson } from '../../helpers'
 import { escapeHtml } from '../../escapes'
 import { parse } from '../../parser'

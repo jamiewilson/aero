@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { bindShow } from '../bindings/show'
 import { bindHtml } from '../bindings/html'
 import { bindClassToggle } from '../bindings/class'
@@ -356,7 +356,12 @@ describe('reactive collections', () => {
 				mountRow: () => () => {},
 			}),
 		})
-		return { cleanup, get rowCount() { return rowCount } }
+		return {
+			cleanup,
+			get rowCount() {
+				return rowCount
+			},
+		}
 	}
 
 	it('updates keyed for when array mutates in place', () => {
@@ -415,7 +420,9 @@ describe('reactive collections', () => {
 		const store = new SignalStore()
 		const scope = createStateScope({
 			store,
-			bindings: [{ name: 'numbersSet', derived: false, init: () => new Set([1, 2]), dependencies: [] }],
+			bindings: [
+				{ name: 'numbersSet', derived: false, init: () => new Set([1, 2]), dependencies: [] },
+			],
 			functionSources: [],
 		})
 		const harness = createForHarness(scope, 'numbersSet', 'number', ['number'], 'number')
@@ -433,7 +440,11 @@ describe('reactive collections', () => {
 				{
 					name: 'numbersMap',
 					derived: false,
-					init: () => new Map([[1, 'one'], [2, 'two']]),
+					init: () =>
+						new Map([
+							[1, 'one'],
+							[2, 'two'],
+						]),
 					dependencies: [],
 				},
 			],
@@ -475,11 +486,6 @@ describe('reactive if', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
-		const root = {
-			querySelector(selector: string) {
-				return selector === '[data-aero-if="0"]' ? anchor : null
-			},
-		} as unknown as ParentNode
 		const cleanup = bindReactiveIf({
 			mountTarget: { kind: 'element', element: anchor },
 			scope,
@@ -528,11 +534,6 @@ describe('reactive switch', () => {
 			functionSources: [],
 		})
 		const anchor = { innerHTML: '' } as unknown as Element
-		const root = {
-			querySelector(selector: string) {
-				return selector === '[data-aero-switch="0"]' ? anchor : null
-			},
-		} as unknown as ParentNode
 		const cleanup = bindReactiveSwitch({
 			mountTarget: { kind: 'element', element: anchor },
 			scope,
@@ -599,7 +600,8 @@ describe('AeroReactivity.process', () => {
 				},
 			},
 		})
-		text.hasAttribute = (name: string) => name === 'data-aero-processed' ? false : name === 'data-aero-text'
+		text.hasAttribute = (name: string) =>
+			name === 'data-aero-processed' ? false : name === 'data-aero-text'
 		text.getAttribute = (name: string) => (name === 'data-aero-text' ? '$count' : null)
 		text.setAttribute = vi.fn()
 

@@ -4,7 +4,7 @@
 
 import type { Plugin, ViteDevServer } from 'vite'
 import { parse } from '@aero-js/compiler'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import path from 'path'
 import {
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,
@@ -23,11 +23,7 @@ import { extractTopLevelStyleBodies } from './template-style-bodies'
 type HandleHotUpdateFn = NonNullable<Plugin['handleHotUpdate']>
 type ConfigureServerFn = NonNullable<Plugin['configureServer']>
 
-function invalidateId(
-	server: ViteDevServer,
-	id: string,
-	invalidated: Set<unknown>
-): void {
+function invalidateId(server: ViteDevServer, id: string, invalidated: Set<unknown>): void {
 	const mod = server.moduleGraph.getModuleById(id)
 	if (!mod || invalidated.has(mod)) return
 	server.moduleGraph.invalidateModule(mod)

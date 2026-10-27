@@ -30,7 +30,11 @@ export function hasElseAttr(node: any): boolean {
 }
 
 /** Gets the condition value from if/else-if attribute */
-export function getCondition(node: any, directive: BuildDirective, diag: LowererDiag): string | null {
+export function getCondition(
+	node: any,
+	directive: BuildDirective,
+	diag: LowererDiag
+): string | null {
 	const tagName = node?.tagName?.toLowerCase?.() || 'element'
 	const attr = getBuildDirectiveAttribute(node, directive)
 	if (!attr) return null

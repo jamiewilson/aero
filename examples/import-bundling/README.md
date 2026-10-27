@@ -8,17 +8,15 @@ From the **repo root**:
 
 ```bash
 pnpm install
-pnpm run build:core
+vp run build:all
 ```
-
-(Or run `pnpm run build` once to build core and config.)
 
 ## Running a demo
 
 From the repo root:
 
 ```bash
-pnpm --dir examples/import-bundling/single-bundle dev
+pnpm --dir examples/import-bundling/single-bundle exec vp dev
 ```
 
 Replace `single-bundle` with:
@@ -34,8 +32,8 @@ Then open the URL (e.g. http://localhost:5173). Each demo has a page with an **A
 ## Build and preview
 
 ```bash
-pnpm --dir examples/import-bundling/single-bundle build
-pnpm --dir examples/import-bundling/single-bundle preview
+pnpm --dir examples/import-bundling/single-bundle exec vp build
+pnpm --dir examples/import-bundling/single-bundle exec vp preview
 ```
 
 ## What each demo tests

@@ -29,11 +29,17 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: '22'
+          cache: true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm build
+        run: vp run build:all
 
       - name: Run perf stress suite
         run: pnpm --filter @aero-js/core test -- perf/stress

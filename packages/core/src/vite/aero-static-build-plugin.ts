@@ -5,6 +5,7 @@
 import type { AeroOptions } from '../types'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -12,10 +13,12 @@ import { renderStaticPages } from './static-render'
 import { writeGeneratedNitroConfig } from './nitro-config'
 import { createStaticBuildReportingService } from './static-build-reporting'
 import { requireAliasResult, requireResolvedConfig, type AeroPluginState } from './plugin-state'
+import { isAeroNitroEnabled } from './aero-env'
 
 function resolvedHasTailwind(resolved: ResolvedConfig): boolean {
 	return resolved.plugins.some(
-		p => p && typeof p === 'object' && 'name' in p && /tailwindcss/i.test(String((p as Plugin).name))
+		p =>
+			p && typeof p === 'object' && 'name' in p && /tailwindcss/i.test(String((p as Plugin).name))
 	)
 }
 
@@ -39,11 +42,47 @@ async function loadProjectTailwindPlugins(root: string): Promise<Plugin[]> {
 	}
 }
 
+function resolveNitroCliFromRequire(nodeRequire: NodeRequire): string {
+	const pkgJsonPath = nodeRequire.resolve('nitro/package.json')
+	const pkg = nodeRequire('nitro/package.json') as { bin?: string | Record<string, string> }
+	const binEntry = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.nitro
+	if (!binEntry) throw new Error('missing nitro bin')
+	return path.join(path.dirname(pkgJsonPath), binEntry)
+}
+
+/** Resolve the Nitro CLI from the app project (devDependency), not PATH. */
+export function resolveNitroCliPath(projectRoot: string): string {
+	const binName = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+	const localBin = path.join(projectRoot, 'node_modules', '.bin', binName)
+	if (existsSync(localBin)) return localBin
+
+	const pkgJson = path.join(projectRoot, 'package.json')
+	for (const entry of [pkgJson, import.meta.url] as const) {
+		try {
+			return resolveNitroCliFromRequire(createRequire(entry))
+		} catch {
+			// try next resolver context
+		}
+	}
+
+	throw new Error(
+		'[aero] Could not resolve the Nitro CLI. Add `nitro` as a devDependency in the project and run install.'
+	)
+}
+
+function nitroSpawnArgs(cliPath: string): { command: string; args: string[] } {
+	if (/\.[cm]?js$/i.test(cliPath)) {
+		return { command: process.execPath, args: [cliPath, 'build'] }
+	}
+	return { command: cliPath, args: ['build'] }
+}
+
 /** Run `nitro build` with generated config; used after static pages are written when options.server is true. */
-async function runNitroBuild(_root: string, configCwd: string): Promise<void> {
-	const nitroBin = process.platform === 'win32' ? 'nitro.cmd' : 'nitro'
+async function runNitroBuild(projectRoot: string, configCwd: string): Promise<void> {
+	const nitroBin = resolveNitroCliPath(projectRoot)
+	const { command, args } = nitroSpawnArgs(nitroBin)
 	await new Promise<void>((resolve, reject) => {
-		const child = spawn(nitroBin, ['build'], {
+		const child = spawn(command, args, {
 			cwd: configCwd,
 			stdio: 'inherit',
 			env: process.env,
@@ -66,11 +105,10 @@ export function createAeroStaticBuildPlugin(
 		pluginOptions: Omit<AeroOptions, 'content'>
 		apiPrefix: string
 		dirs: AeroPluginState['dirs']
-		enableNitro: boolean
 		aeroCorePlugins: Plugin[]
 	}
 ): Plugin {
-	const { pluginOptions, apiPrefix, dirs, enableNitro, aeroCorePlugins } = opts
+	const { pluginOptions, apiPrefix, dirs, aeroCorePlugins } = opts
 
 	return {
 		name: 'vite-plugin-aero-static',
@@ -116,7 +154,7 @@ export function createAeroStaticBuildPlugin(
 			} catch (err) {
 				reporting.reportPrerenderFailure(err, resolvedConfig.logger)
 			}
-			if (enableNitro) {
+			if (isAeroNitroEnabled(pluginOptions.server)) {
 				const { aeroDir } = writeGeneratedNitroConfig({
 					root,
 					serverDir: dirs.server,

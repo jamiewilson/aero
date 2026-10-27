@@ -1,7 +1,7 @@
 /**
  * Content schema issues → AeroDiagnostic mapping.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { formatDiagnosticsTerminal } from '@aero-js/diagnostics'
 import { contentSchemaIssuesToAeroDiagnostics } from '../diagnostics-bridge'
 import type { ContentSchemaIssue } from '../types'

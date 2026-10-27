@@ -7,7 +7,7 @@ import type { ScriptEntry } from '../types'
 import type { ComponentReactivePropMetadata, CompiledTemplateModule } from '@aero-js/compiler'
 import { compileTemplateModule, parse } from '@aero-js/compiler'
 import { getClientScriptVirtualUrl, toAeroStyleInlineImportId } from './defaults'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import { syncClientScriptsForTemplate } from './client-script-sync'
 import { extractTopLevelStyleBodies } from './template-style-bodies'
 

@@ -5,7 +5,7 @@
  * state where the public API does not expose it.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vite-plus/test'
 import { resolveDynamicPage } from '../../utils/routing'
 import { Aero } from '../index'
 
@@ -196,14 +196,19 @@ describe('Aero class', () => {
 				return ''
 			}
 
-			await aero.renderComponent(child, {}, {}, {
-				page: {
-					url: new URL('http://localhost/demos/counter'),
-					request: new Request('http://localhost/demos/counter'),
-					params: {},
-					routePath: '/demos/counter',
-				},
-			})
+			await aero.renderComponent(
+				child,
+				{},
+				{},
+				{
+					page: {
+						url: new URL('http://localhost/demos/counter'),
+						request: new Request('http://localhost/demos/counter'),
+						params: {},
+						routePath: '/demos/counter',
+					},
+				}
+			)
 
 			expect(capturedCtx.page.routePath).toBe('/demos/counter')
 		})
@@ -275,13 +280,18 @@ describe('Aero class', () => {
 			aero.registerPages({
 				'pages/nested-layout.html': {
 					default: async (ctx: any) =>
-						ctx.renderComponent(baseMod, {}, {}, {
-							page: ctx.page,
-							site: ctx.site,
-							styles: ctx.styles,
-							scripts: ctx.scripts,
-							headScripts: ctx.headScripts,
-						}),
+						ctx.renderComponent(
+							baseMod,
+							{},
+							{},
+							{
+								page: ctx.page,
+								site: ctx.site,
+								styles: ctx.styles,
+								scripts: ctx.scripts,
+								headScripts: ctx.headScripts,
+							}
+						),
 				},
 			})
 
@@ -300,13 +310,18 @@ describe('Aero class', () => {
 				'pages/404.html': {
 					default: async (ctx: any) => {
 						ctx.styles?.add('<style>header { background: yellow; }</style>')
-						return ctx.renderComponent(baseMod, {}, {}, {
-							page: ctx.page,
-							site: ctx.site,
-							styles: ctx.styles,
-							scripts: ctx.scripts,
-							headScripts: ctx.headScripts,
-						})
+						return ctx.renderComponent(
+							baseMod,
+							{},
+							{},
+							{
+								page: ctx.page,
+								site: ctx.site,
+								styles: ctx.styles,
+								scripts: ctx.scripts,
+								headScripts: ctx.headScripts,
+							}
+						)
 					},
 				},
 			})

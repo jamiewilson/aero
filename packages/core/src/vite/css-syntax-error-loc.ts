@@ -30,10 +30,7 @@ export function hasPostcssLoc(err: Error): boolean {
 	return Boolean(e.file && e.line !== undefined && e.column !== undefined)
 }
 
-export function resolveEntryFrom(options: {
-	root: string
-	entryId?: string
-}): string {
+export function resolveEntryFrom(options: { root: string; entryId?: string }): string {
 	if (typeof options.entryId === 'string' && options.entryId.length > 0) {
 		const cleaned = options.entryId.replace(/^\0+/, '').split('?')[0]
 		if (cleaned) {

@@ -24,7 +24,4 @@ export {
 	parseDiagnosticsJson,
 } from './wire-format'
 export { extractDiagnosticsFromDevErrorHtml } from './error-page-parse'
-export {
-	diagnosticToViteOverlayError,
-	type ViteOverlayErrorPayload,
-} from './vite-overlay-error'
+export { diagnosticToViteOverlayError, type ViteOverlayErrorPayload } from './vite-overlay-error'

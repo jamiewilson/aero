@@ -4,7 +4,7 @@
  * don't match any path; skips getStaticPaths when props are already provided (e.g. static build).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import { Aero } from '../index'
 
 function mockDynamicDocsPageModule(

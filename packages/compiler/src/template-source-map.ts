@@ -78,11 +78,17 @@ export function findBracedIdentifierOffsets(html: string, id: string): number[] 
 		const abs = (m.index ?? 0) + rel
 		const lineStart = html.lastIndexOf('\n', abs - 1) + 1
 		const beforeOnLine = html.slice(lineStart, abs)
-		if (/(?:^|[^:A-Za-z0-9_])\/\//.test(beforeOnLine) || beforeOnLine.trimStart().startsWith('//')) {
+		if (
+			/(?:^|[^:A-Za-z0-9_])\/\//.test(beforeOnLine) ||
+			beforeOnLine.trimStart().startsWith('//')
+		) {
 			continue
 		}
 		// Also treat full-line `//…` comments (trim-aware).
-		const line = html.slice(lineStart, html.indexOf('\n', abs) === -1 ? html.length : html.indexOf('\n', abs))
+		const line = html.slice(
+			lineStart,
+			html.indexOf('\n', abs) === -1 ? html.length : html.indexOf('\n', abs)
+		)
 		if (/^\s*\/\//.test(line)) continue
 		out.push(abs)
 	}
@@ -101,7 +107,10 @@ export function collectTemplateSourceMapSites(
 
 	const pushSite = (genStart: number, htmlStart: number, length: number) => {
 		if (length <= 0 || usedGen.has(genStart)) return
-		if (generated.slice(genStart, genStart + length) !== htmlSource.slice(htmlStart, htmlStart + length)) {
+		if (
+			generated.slice(genStart, genStart + length) !==
+			htmlSource.slice(htmlStart, htmlStart + length)
+		) {
 			return
 		}
 		usedGen.add(genStart)

@@ -1,6 +1,6 @@
 import type { AeroDiagnostic } from '@aero-js/diagnostics'
-import { pushOffsetDiagnostic, pushSpanDiagnostic } from '../aero-diagnostic-build'
-import { rangeFromOffsets, type SourceDocument, type SourceRange } from '../source-document'
+import { pushSpanDiagnostic } from '../aero-diagnostic-build'
+import type { SourceDocument } from '../source-document'
 import { iterateBuildScriptBindings } from '@aero-js/compiler/build-scope-bindings'
 import { maskHtmlComments } from '@aero-js/compiler'
 import { maskJsComments } from '../analyzer'
@@ -74,9 +74,7 @@ function countIdentifierUsages(content: string, name: string): number {
 		const charBefore = match.index > 0 ? content[match.index - 1] : ''
 		if (charBefore === '.') {
 			const isSpread =
-				match.index >= 3 &&
-				content[match.index - 2] === '.' &&
-				content[match.index - 3] === '.'
+				match.index >= 3 && content[match.index - 2] === '.' && content[match.index - 3] === '.'
 			if (!isSpread) continue
 		}
 		count++
@@ -107,7 +105,12 @@ function checkUnusedInScope(
 			if (isUsedInStateScript(parsed, name)) continue
 
 			if (countIdentifierUsages(maskedContent, name) > 1) continue
-		} else if (scope === 'state' || scope === 'bundled' || scope === 'blocking' || scope === 'inline') {
+		} else if (
+			scope === 'state' ||
+			scope === 'bundled' ||
+			scope === 'blocking' ||
+			scope === 'inline'
+		) {
 			if (scope === 'state' && usedInTemplate.has(name)) {
 				continue
 			}
@@ -124,6 +127,13 @@ function checkUnusedInScope(
 			}
 		}
 
-		pushSpanDiagnostic(diagnostics, document, def.range, `'${name}' is declared but its value is never read.`, 'AERO_COMPILE', 'info')
+		pushSpanDiagnostic(
+			diagnostics,
+			document,
+			def.range,
+			`'${name}' is declared but its value is never read.`,
+			'AERO_COMPILE',
+			'info'
+		)
 	}
 }

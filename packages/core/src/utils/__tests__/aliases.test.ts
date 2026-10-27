@@ -4,7 +4,7 @@
  */
 
 import * as path from 'node:path'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import {
 	getDefaultAliases,
 	jitiAliasRecordFromProject,

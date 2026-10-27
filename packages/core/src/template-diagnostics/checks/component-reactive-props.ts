@@ -25,8 +25,7 @@ function getPassedReactivePropNames(
 		string,
 		{ bound: boolean; obsoleteReadonly: boolean; rawAttrName: string }
 	>()
-	const attrRegex =
-		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+	const attrRegex = /(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 	let m: RegExpExecArray | null
 	attrRegex.lastIndex = 0
 	while ((m = attrRegex.exec(attrs)) !== null) {
@@ -65,9 +64,7 @@ function collectBindableReactivePropNames(componentContent: string): Set<string>
 		for (const rawPart of match[1].split(',')) {
 			const part = rawPart.trim()
 			if (!part || !/\bAero\.bindable\s*\(/.test(part)) continue
-			const local = (part.includes(':') ? part.split(':').pop() : part)
-				?.split('=')[0]
-				?.trim()
+			const local = (part.includes(':') ? part.split(':').pop() : part)?.split('=')[0]?.trim()
 			if (local && /^[A-Za-z_$][\w$]*$/.test(local)) bindable.add(local)
 		}
 	}
@@ -99,7 +96,15 @@ function pushReactivePropDiagnostic(
 	message: string
 ): void {
 	const range = reactivePropDiagnosticRange(tagStart, tagName, rawAttrs, attrBase, rawAttrName)
-	pushOffsetDiagnostic(diagnostics, document, range.start, range.end, message, 'AERO_COMPILE', 'error')
+	pushOffsetDiagnostic(
+		diagnostics,
+		document,
+		range.start,
+		range.end,
+		message,
+		'AERO_COMPILE',
+		'error'
+	)
 }
 
 /**
@@ -116,8 +121,7 @@ export function validateComponentBindRequiresState(
 ): void {
 	const rawAttrs = sliceRawAttrs(tagName, fullTag)
 	const attrBase = attributeSectionBase(tagStart, tagName)
-	const attrRegex =
-		/(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+	const attrRegex = /(?:^|\s)([A-Za-z_:][A-Za-z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 	let m: RegExpExecArray | null
 	attrRegex.lastIndex = 0
 	while ((m = attrRegex.exec(rawAttrs)) !== null) {

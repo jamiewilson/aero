@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vite-plus/test'
 import {
 	HYPERMEDIA_RUNTIME_GLOBAL_KEY,
 	bootstrapHypermediaRuntime,

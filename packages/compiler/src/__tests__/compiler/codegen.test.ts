@@ -7,10 +7,18 @@
  * helper that evals the generated module body with a mock Aero context.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { parse } from '../../parser'
 import { compile } from '../../codegen'
-import { getRenderComponentContextArg, escapeHtml, escapeScriptJson, raw, trim, trimStart, trimEnd } from '../../helpers'
+import {
+	getRenderComponentContextArg,
+	escapeHtml,
+	escapeScriptJson,
+	raw,
+	trim,
+	trimStart,
+	trimEnd,
+} from '../../helpers'
 import { analyzeBuildScript } from '../../build-script-analysis'
 
 /** Runs the generated render function: finds export default async function(Aero) body and executes it with the given context. */

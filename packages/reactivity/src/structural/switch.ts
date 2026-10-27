@@ -2,11 +2,7 @@ import { Effect } from '../effect'
 import type { Cleanup } from '../mount'
 import { compileScopeRead } from '../scope-eval'
 import type { StateScope } from '../state-scope'
-import {
-	type MountTarget,
-	setMountTargetHtml,
-	clearMountTarget,
-} from './anchor'
+import { type MountTarget, setMountTargetHtml, clearMountTarget } from './anchor'
 
 export interface ReactiveSwitchCaseSpec {
 	readonly comparandExprs?: readonly string[]

@@ -50,12 +50,12 @@ Reactive props are **readonly by default**. Only props declared with `Aero.binda
 
 Destructuring defaults drive the contract:
 
-| Declaration | Required? | Bindable? |
-| --- | --- | --- |
-| `count` | yes | no (readonly) |
-| `label = 'Counter'` | no | no (readonly) |
-| `count = Aero.bindable(0)` | no | yes |
-| `count = Aero.bindable()` | yes | yes |
+| Declaration                | Required? | Bindable?     |
+| -------------------------- | --------- | ------------- |
+| `count`                    | yes       | no (readonly) |
+| `label = 'Counter'`        | no        | no (readonly) |
+| `count = Aero.bindable(0)` | no        | yes           |
+| `count = Aero.bindable()`  | yes       | yes           |
 
 Required bindable props must be passed with `bind:<name>`. `aero check` and the VS Code extension report missing or one-way bindings.
 
@@ -75,9 +75,9 @@ Pass readonly reactive props with `label="{ label }"`. To allow the child to mut
 
 ## Build-time props vs reactive props
 
-| Mechanism | When | Example |
-| --- | --- | --- |
-| Build props | Static data at render time | `title="{ site.title }"` |
+| Mechanism      | When                        | Example                  |
+| -------------- | --------------------------- | ------------------------ |
+| Build props    | Static data at render time  | `title="{ site.title }"` |
 | Reactive props | Shared mutable client state | `bind:count="{ count }"` |
 
 Build scripts still use `Aero.props` for static attributes. State scripts use `Aero.props` with `bindable()` for reactive data.

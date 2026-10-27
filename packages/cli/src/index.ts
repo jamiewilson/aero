@@ -22,7 +22,7 @@ Usage:
   check   Validate config (when present), content collections (when configured), and compile all page/component/layout templates.
           --types   After compile, TypeScript-check build scripts and { } interpolations (workspace tsconfig); writes .aero/cache/types/components.d.ts.
   doctor  Print environment checklist (Node, Vite, Aero deps); exits 1 only if Node is below the minimum.
-  build   Run vite build (same as pnpm exec vite build). --incremental sets AERO_INCREMENTAL when unset.
+  build   Run production build (vp build / Vite via vite-plus). --incremental sets AERO_INCREMENTAL when unset.
   graph   Print entry globs for Fallow/knip-style analyzers (from aero.config dirs). Default: one glob per line.
           --format json           JSON with entryGlobs + discovered template paths.
           --format fallow-entry   JSON object { "entry": [...] } for .fallowrc.json.

@@ -4,8 +4,11 @@
 
 import { compile, parse } from '@aero-js/compiler'
 import { normalizeToDiagnostics, type AeroDiagnostic } from '@aero-js/diagnostics'
-import { PARITY_SCENARIOS, type ParityExpectation } from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
-import { describe, expect, it } from 'vitest'
+import {
+	PARITY_SCENARIOS,
+	type ParityExpectation,
+} from '../../../../diagnostics/src/__tests__/fixtures/parity/index.js'
+import { describe, expect, it } from 'vite-plus/test'
 import { collectTemplateDiagnostics } from '../../template-diagnostics'
 import type { SourceDocument } from '../../template-diagnostics/source-document'
 

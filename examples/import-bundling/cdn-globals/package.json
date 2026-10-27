@@ -4,19 +4,17 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite build && vite preview",
-		"fmt": "prettier --write .",
-		"fmt:check": "prettier --check ."
+		"fmt": "vp fmt . && prettier --write \"**/*.html\"",
+		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\""
 	},
 	"dependencies": {
 		"@aero-js/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@aero-js/prettier-plugin-aero": "workspace:*",
-		"@types/alpinejs": "^3.13.11",
 		"prettier": "^3.9.3",
-		"vite": "catalog:"
+		"@types/alpinejs": "^3.13.11",
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

@@ -2,7 +2,7 @@
  * Characterization tests for component-props check helpers.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { resolvePropsSpreadVariable } from '../checks/check-component-props'
 
 describe('resolvePropsSpreadVariable', () => {

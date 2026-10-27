@@ -4,7 +4,7 @@
  */
 
 import { PARITY_SCENARIOS } from '../../../diagnostics/src/__tests__/fixtures/parity/index.js'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { collectTemplateDiagnostics } from '@aero-js/core/template-diagnostics'
 import type { SourceDocument } from '../../../core/src/template-diagnostics/source-document'
 

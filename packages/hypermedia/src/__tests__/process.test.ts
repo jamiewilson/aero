@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { process } from '../process'
 import type { HypermediaRuntime } from '../runtime'
 
@@ -30,7 +30,8 @@ describe('process', () => {
 
 	it('wires data-aero-on-submit with POST action', () => {
 		const element = document.createElement('div')
-		element.innerHTML = '<form data-aero-on-submit="{ POST(\'/submit\') }" action="/submit"><input name="x"></form>'
+		element.innerHTML =
+			'<form data-aero-on-submit="{ POST(\'/submit\') }" action="/submit"><input name="x"></form>'
 		const runtime = createMockRuntime()
 		process(element, runtime)
 
@@ -44,7 +45,8 @@ describe('process', () => {
 
 	it('skips already-processed elements', () => {
 		const element = document.createElement('div')
-		element.innerHTML = '<a data-aero-on-click="{ GET(\'/api\') }" data-aero-processed href="/api">link</a>'
+		element.innerHTML =
+			'<a data-aero-on-click="{ GET(\'/api\') }" data-aero-processed href="/api">link</a>'
 		const runtime = createMockRuntime()
 		process(element, runtime)
 
@@ -55,7 +57,8 @@ describe('process', () => {
 
 	it('handles target and swap options', () => {
 		const element = document.createElement('div')
-		element.innerHTML = '<button data-aero-on-click="{ GET(\'/api\', { target: \'#result\', swap: \'outerHTML\' }) }">go</button>'
+		element.innerHTML =
+			"<button data-aero-on-click=\"{ GET('/api', { target: '#result', swap: 'outerHTML' }) }\">go</button>"
 		const runtime = createMockRuntime()
 		process(element, runtime)
 
@@ -69,7 +72,8 @@ describe('process', () => {
 
 	it('prevents default when event name includes prevent', () => {
 		const element = document.createElement('div')
-		element.innerHTML = '<form data-aero-on-submit-prevent="{ POST(\'/submit\') }" action="/submit"><input name="x"></form>'
+		element.innerHTML =
+			'<form data-aero-on-submit-prevent="{ POST(\'/submit\') }" action="/submit"><input name="x"></form>'
 		const runtime = createMockRuntime()
 		process(element, runtime)
 
@@ -94,7 +98,8 @@ describe('process', () => {
 
 	it('parses runtime action state option with $ signal refs', () => {
 		const element = document.createElement('div')
-		element.innerHTML = '<button data-aero-on-click="{ POST(\'/save\', { state: $isSaving }) }">Save</button>'
+		element.innerHTML =
+			'<button data-aero-on-click="{ POST(\'/save\', { state: $isSaving }) }">Save</button>'
 		const runtime = createMockRuntime()
 		const signal = { value: false }
 		const store = { has: () => true, get: () => signal }
@@ -112,14 +117,19 @@ describe('process', () => {
 	it('parses autoDisable option from runtime action expressions', () => {
 		const element = document.createElement('div')
 		element.innerHTML =
-			'<button data-aero-on-click="{ GET(\'/api/demo\', { target: \'#result\', autoDisable: true }) }">go</button>'
+			"<button data-aero-on-click=\"{ GET('/api/demo', { target: '#result', autoDisable: true }) }\">go</button>"
 		const runtime = createMockRuntime()
 		process(element, runtime)
 
 		const btn = element.querySelector('button')!
 		btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 		expect(runtime.executeAction).toHaveBeenCalledWith(
-			expect.objectContaining({ method: 'GET', url: '/api/demo', target: '#result', autoDisable: true }),
+			expect.objectContaining({
+				method: 'GET',
+				url: '/api/demo',
+				target: '#result',
+				autoDisable: true,
+			}),
 			btn
 		)
 	})

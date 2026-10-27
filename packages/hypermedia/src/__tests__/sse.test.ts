@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vite-plus/test'
 import {
 	AERO_SSE_PATCH_ELEMENTS,
 	AERO_SSE_PATCH_SIGNALS,
@@ -37,13 +37,11 @@ describe('shouldHandleSseEvent', () => {
 
 describe('parseElementsPatchData', () => {
 	it('parses single and batched element patches', () => {
+		expect(parseElementsPatchData('{"target":"#a","html":"<p>a</p>","swap":"innerHTML"}')).toEqual([
+			{ target: '#a', html: '<p>a</p>', swap: 'innerHTML' },
+		])
 		expect(
-			parseElementsPatchData('{"target":"#a","html":"<p>a</p>","swap":"innerHTML"}')
-		).toEqual([{ target: '#a', html: '<p>a</p>', swap: 'innerHTML' }])
-		expect(
-			parseElementsPatchData(
-				'{"patches":[{"target":"#a","html":"a"},{"target":"#b","html":"b"}]}'
-			)
+			parseElementsPatchData('{"patches":[{"target":"#a","html":"a"},{"target":"#b","html":"b"}]}')
 		).toHaveLength(2)
 	})
 })

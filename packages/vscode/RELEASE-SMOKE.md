@@ -10,7 +10,7 @@ Use this checklist before publishing a new `aero-vscode` version.
 
 ## 2) Install local extension package
 
-- [ ] Produce `.vsix` from repo root (`pnpm run vscode:package`) or package locally with `vsce package --no-dependencies`
+- [ ] Produce `.vsix` from repo root (`vp run pack:vscode`) or package locally with `vsce package --no-dependencies`
 - [ ] Install `.vsix` into a clean VS Code profile/workspace
 
 ## 3) Core editor behavior

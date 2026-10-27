@@ -24,13 +24,9 @@ export function validateReactiveScopeRefs(
 	stateImports: readonly BuildScriptImport[],
 	options: { file?: string; diagnosticSource?: string }
 ): void {
-	const issues = collectReactiveScopeIssues(
-		bodyIR,
-		stateAnalysis,
-		stateScript,
-		stateImports,
-		{ diagnosticSource: options.diagnosticSource }
-	)
+	const issues = collectReactiveScopeIssues(bodyIR, stateAnalysis, stateScript, stateImports, {
+		diagnosticSource: options.diagnosticSource,
+	})
 	const first = issues[0]
 	if (!first) return
 	throw new CompileError({

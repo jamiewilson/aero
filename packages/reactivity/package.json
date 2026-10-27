@@ -17,16 +17,15 @@
 	"main": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm --dts --clean --out-dir dist",
+		"build": "vp pack",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
+		"test": "pnpm -C ../.. exec vp test run --project @aero-js/reactivity",
 		"prepack": "cp ../../LICENSE ."
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
-		"tsdown": "catalog:",
 		"typescript": "catalog:",
-		"vitest": "catalog:"
+		"vite-plus": "catalog:"
 	},
 	"dependencies": {
 		"@aero-js/compiler": "workspace:*",

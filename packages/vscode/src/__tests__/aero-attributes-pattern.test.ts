@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
@@ -22,7 +22,13 @@ describe('aero-attributes grammar', () => {
 	})
 
 	it('uses full TypeScript highlighting inside for-directive braced values', () => {
-		const grammarPath = path.join(import.meta.dirname, '..', '..', 'syntaxes', 'aero-attributes.json')
+		const grammarPath = path.join(
+			import.meta.dirname,
+			'..',
+			'..',
+			'syntaxes',
+			'aero-attributes.json'
+		)
 		const full = JSON.parse(readFileSync(grammarPath, 'utf8')) as {
 			repository: {
 				'aero-for-braced-value': {

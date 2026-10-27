@@ -2,7 +2,7 @@
  * Golden snapshots for compile output — catch unintended codegen drift (Phase A regression suite).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { compileTemplate } from '../../codegen'
 
 const opts = {

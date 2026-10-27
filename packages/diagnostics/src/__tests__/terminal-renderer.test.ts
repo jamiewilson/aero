@@ -2,7 +2,7 @@
  * Terminal renderer: structured and compact modes via the new render pipeline.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { DIAGNOSTIC_BANNER_CHAR } from '../diagnostic-display'
 import { terminalRenderer, formatDiagnosticsTerminal } from '../render/terminal'
 import type { AeroDiagnostic } from '../types'

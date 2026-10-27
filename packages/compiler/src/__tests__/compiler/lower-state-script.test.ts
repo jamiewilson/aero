@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { lowerStateScript } from '../../lower-state-script'
 import { analyzeStateScript } from '../../state-script-analysis'
 
@@ -114,9 +114,7 @@ const setItems = (next: typeof items) =>
 const nextNumber = (values: number[]) => Math.max(0, ...values) + 1`
 		const { moduleConstants } = lower(script)
 
-		expect(moduleConstants).toEqual([
-			'const nextNumber = (values) => Math.max(0, ...values) + 1',
-		])
+		expect(moduleConstants).toEqual(['const nextNumber = (values) => Math.max(0, ...values) + 1'])
 	})
 
 	it('rewrites state refs in async arrow block bodies for hypermedia handlers', () => {

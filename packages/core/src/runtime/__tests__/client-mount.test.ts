@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { performSwap as hypermediaPerformSwap } from '@aero-js/hypermedia'
 import { installHypermediaSwapLifecycle, mountClientBindings } from '../client-mount'
 import { shouldRemountCompiledSwap } from '../swap-remount'

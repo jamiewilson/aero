@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { parseSync } from 'oxc-parser'
 import {
 	createScopeRewriteContext,
@@ -69,7 +69,10 @@ describe('rewriteStmtForScope', () => {
 
 	it('rewrites object shorthand only for known scope names', () => {
 		expect(
-			rewriteStmtForScope('items = [...items, { id }]', scopeRewriteContext(new Set(['items', 'id'])))
+			rewriteStmtForScope(
+				'items = [...items, { id }]',
+				scopeRewriteContext(new Set(['items', 'id']))
+			)
 		).toBe('scope.items = [...scope.items, { id: scope.id }]')
 	})
 

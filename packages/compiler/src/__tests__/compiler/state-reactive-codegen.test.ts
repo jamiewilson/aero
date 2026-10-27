@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { compile } from '../../codegen'
 import { parse } from '../../parser'
 
@@ -82,7 +82,9 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('required: true')
 		expect(code).toContain('"name":"label"')
 		expect(code).toContain('init: __aeroInit_label')
-		expect(code).not.toContain('name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true')
+		expect(code).not.toContain(
+			'name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true'
+		)
 		expect(code).toContain('reactiveProps: opts.reactiveProps ?? {}')
 		expect(code).toContain('store: opts.store ?? runtime.store')
 		expect(code).not.toContain('"count": count')
@@ -104,7 +106,9 @@ describe('state reactive codegen (PR-2d)', () => {
 		expect(code).toContain('"name":"heading"')
 		expect(code).toContain('"propName":"title"')
 		expect(code).toContain('"name":"label"')
-		expect(code).not.toContain('name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true')
+		expect(code).not.toContain(
+			'name: "label", derived: false, init: __aeroInit_label, dependencies: [], reactiveProp: true, required: true'
+		)
 		expect(code).toContain('"name":"value"')
 		expect(code).toContain('"bindable":true')
 	})

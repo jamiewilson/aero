@@ -11,7 +11,7 @@ import path from 'node:path'
 import os from 'node:os'
 import type { Manifest } from 'vite'
 import { AeroBuildCancelledError } from '@aero-js/diagnostics'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { collectTransitiveTemplateImports } from '../template-import-closure'
 import { createBuildConfig } from '../rollup-input-discovery'
 import { discoverRuntimeTemplatePaths } from '../runtime-template-discovery'
@@ -66,9 +66,7 @@ describe('vite build helpers', () => {
 	it('normalizeRelativeLink produces relative path to file in same dir or child', () => {
 		expect(normalizeRelativeLink('about', 'about/index.html')).toBe('./index.html')
 		expect(normalizeRelativeLink('', 'assets/foo.js')).toBe('./assets/foo.js')
-		expect(normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe(
-			'./intro/index.html'
-		)
+		expect(normalizeRelativeLink('docs', 'docs/intro/index.html')).toBe('./intro/index.html')
 	})
 
 	/** normalizeRelativeRouteLink: fromDir → routePath; appends trailing slash except for root and 404 (file). */
@@ -100,12 +98,7 @@ describe('vite build helpers', () => {
 			'../assets/client/index-123.js'
 		)
 		expect(
-			rewriteAbsoluteUrl(
-				'/client/assets/styles/global.css',
-				'docs/name',
-				manifest,
-				routeSet
-			)
+			rewriteAbsoluteUrl('/client/assets/styles/global.css', 'docs/name', manifest, routeSet)
 		).toBe('../../assets/global-123.css')
 	})
 
@@ -120,14 +113,9 @@ describe('vite build helpers', () => {
 			},
 		}
 
-		expect(
-			rewriteAbsoluteUrl(
-				'/client/assets/styles/global.css',
-				'',
-				manifest,
-				routeSet
-			)
-		).toBe('./assets/global.css-BjVN107n.css')
+		expect(rewriteAbsoluteUrl('/client/assets/styles/global.css', '', manifest, routeSet)).toBe(
+			'./assets/global.css-BjVN107n.css'
+		)
 	})
 
 	/** Root-relative script src is resolved via manifest (build discovers and bundles template refs). */
@@ -199,9 +187,9 @@ describe('vite build helpers', () => {
 	it('preserves query and hash suffix when rewriting absolute URLs', () => {
 		const routeSet = new Set(['', 'about'])
 		const manifest: Manifest = {}
-		expect(
-			rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet)
-		).toBe('./about/?q=1&sort=asc#section')
+		expect(rewriteAbsoluteUrl('/about?q=1&sort=asc#section', '', manifest, routeSet)).toBe(
+			'./about/?q=1&sort=asc#section'
+		)
 	})
 
 	it('rewrites /assets/ path to relative when not in manifest', () => {
@@ -215,12 +203,8 @@ describe('vite build helpers', () => {
 	it('rewrites dist-root files (e.g. favicon) to relative path', () => {
 		const routeSet = new Set<string>()
 		const manifest: Manifest = {}
-		expect(rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe(
-			'./favicon.ico'
-		)
-		expect(rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe(
-			'../favicon.ico'
-		)
+		expect(rewriteAbsoluteUrl('/favicon.ico', '', manifest, routeSet)).toBe('./favicon.ico')
+		expect(rewriteAbsoluteUrl('/favicon.ico', 'about', manifest, routeSet)).toBe('../favicon.ico')
 	})
 
 	it('resolves directory overrides; pages always derived from client', () => {
@@ -290,9 +274,7 @@ describe('vite build helpers', () => {
 
 	it('throws when a required param is missing from expandPattern', () => {
 		expect(() => expandPattern('[id]', {})).toThrow('missing param "id"')
-		expect(() => expandPattern('docs/[slug]', { id: 'x' })).toThrow(
-			'missing param "slug"'
-		)
+		expect(() => expandPattern('docs/[slug]', { id: 'x' })).toThrow('missing param "slug"')
 	})
 
 	it('trims leading and trailing slashes without regex backtracking', () => {

@@ -103,9 +103,7 @@ async function showDevErrorOverlay(diagnostics: AeroDiagnostic[]): Promise<boole
 	const primary = diagnostics[0]
 	if (!primary) return false
 	try {
-		await showAeroViteErrorOverlay(
-			diagnosticToViteOverlayError(primary, 'vite-plugin-aero-ssr')
-		)
+		await showAeroViteErrorOverlay(diagnosticToViteOverlayError(primary, 'vite-plugin-aero-ssr'))
 		return true
 	} catch {
 		return false

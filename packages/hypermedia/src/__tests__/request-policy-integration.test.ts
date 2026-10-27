@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { createHypermediaRuntime } from '../runtime'
 
 function deferredResponse() {
@@ -37,9 +37,9 @@ describe('request policy integration', () => {
 		document.body.innerHTML = '<button id="btn">go</button><div id="result">old</div>'
 		const btn = document.querySelector('#btn')!
 		const runtime = createHypermediaRuntime()
-		const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-			new Response('<span>not found</span>', { status: 404 })
-		)
+		const fetchMock = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValue(new Response('<span>not found</span>', { status: 404 }))
 
 		await runtime.executeAction(
 			{ method: 'GET', url: '/api/x', target: '#result', swap: 'innerHTML', retry: 'error' },
@@ -177,9 +177,7 @@ describe('request policy integration', () => {
 			btn
 		)
 
-		expect(document.querySelector('#result')?.innerHTML).toBe(
-			'<section id="part">picked</section>'
-		)
+		expect(document.querySelector('#result')?.innerHTML).toBe('<section id="part">picked</section>')
 	})
 
 	it('skips primary swap when select finds no match', async () => {

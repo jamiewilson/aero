@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { isSwappableFragmentHtml } from '../fragment-html'
 
 describe('isSwappableFragmentHtml', () => {
@@ -17,11 +17,7 @@ describe('isSwappableFragmentHtml', () => {
 	})
 
 	it('rejects Aero overlay-bootstrap shells', () => {
-		expect(
-			isSwappableFragmentHtml('<div data-aero-overlay-bootstrap>overlay</div>')
-		).toBe(false)
-		expect(
-			isSwappableFragmentHtml('<html lang="en" data-aero-overlay-bootstrap>')
-		).toBe(false)
+		expect(isSwappableFragmentHtml('<div data-aero-overlay-bootstrap>overlay</div>')).toBe(false)
+		expect(isSwappableFragmentHtml('<html lang="en" data-aero-overlay-bootstrap>')).toBe(false)
 	})
 })

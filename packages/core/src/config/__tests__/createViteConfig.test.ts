@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 
 const aeroSpy = vi.fn((_options?: unknown) => [{ name: 'aero-plugin' }])
 
@@ -43,5 +43,12 @@ describe('createViteConfig feature flags', () => {
 			content: true,
 			apiPrefix: '/internal-api',
 		})
+	})
+
+	it('accepts Vite defineConfig env as second argument', () => {
+		const fn = vi.fn(() => ({ server: true }))
+		createViteConfig(fn, { command: 'build', mode: 'ci' })
+
+		expect(fn).toHaveBeenCalledWith({ command: 'build', mode: 'production' })
 	})
 })

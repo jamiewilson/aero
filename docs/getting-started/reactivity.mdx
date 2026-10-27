@@ -6,7 +6,9 @@ icon: 'sparkles'
 
 Aero is static-first: build-time `{ }` interpolation renders once. When a page needs counters, toggles, form state, or UI that updates after load, enable reactivity. You keep writing `.html` with a fifth script type — no separate client framework required.
 
-<Note>Reactivity defaults to `false`. Static sites ship no client binding runtime until you opt in.</Note>
+<Note>
+	Reactivity defaults to `false`. Static sites ship no client binding runtime until you opt in.
+</Note>
 
 ## Enable reactivity
 
@@ -36,14 +38,14 @@ State scripts run in the browser after mount. Top-level `let` declarations becom
 </section>
 ```
 
-| Rule | Detail |
-| --- | --- |
-| One per file | Only one `<script is:state>` per template |
-| Signals | Top-level `let` bindings are reactive |
-| Helpers | Top-level `function` declarations and `const` arrows are equivalent — use either style for handlers and shared logic that reads or updates state |
-| Effects | Top-level `$effect(() => { … })` runs imperative side effects when tracked signals change; return a function for cleanup |
-| Imports | Hoisted into mount scope, same as client scripts |
-| With `is:build` | Separate script blocks — state can **read** build-scope values to seed initial data (see below) |
+| Rule            | Detail                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One per file    | Only one `<script is:state>` per template                                                                                                        |
+| Signals         | Top-level `let` bindings are reactive                                                                                                            |
+| Helpers         | Top-level `function` declarations and `const` arrows are equivalent — use either style for handlers and shared logic that reads or updates state |
+| Effects         | Top-level `$effect(() => { … })` runs imperative side effects when tracked signals change; return a function for cleanup                         |
+| Imports         | Hoisted into mount scope, same as client scripts                                                                                                 |
+| With `is:build` | Separate script blocks — state can **read** build-scope values to seed initial data (see below)                                                  |
 
 See [Scripts](/getting-started/scripts) for how state scripts fit the script taxonomy.
 
@@ -71,11 +73,11 @@ Build script runs once at compile (or request) time. Owned `let` values are seri
 
 Common sources for seed data:
 
-| Source | Example |
-| --- | --- |
+| Source              | Example                                                           |
+| ------------------- | ----------------------------------------------------------------- |
 | Content collections | `const posts = await getCollection('blog')` → `let items = posts` |
-| Page props | In components: `const { count = Aero.bindable(0) } = Aero.props` |
-| Build constants | `const limit = 10` → `let pageSize = limit` |
+| Page props          | In components: `const { count = Aero.bindable(0) } = Aero.props`  |
+| Build constants     | `const limit = 10` → `let pageSize = limit`                       |
 
 Build-time `{ expression }` in markup still renders static HTML. Use `is:state` when that data should stay reactive after load.
 
@@ -92,12 +94,12 @@ Top-level `let` bindings can hold collection values. Aero wraps them in a coarse
 </script>
 ```
 
-| Pattern | Updates UI? |
-| --- | --- |
-| `formModel.email = 'x'` | Yes — in-place object field |
-| `items.push(4)` | Yes — array mutation |
-| `tags.add('c')` | Yes — Set method |
-| `scores.set(2, 'two')` | Yes — Map method |
+| Pattern                 | Updates UI?                     |
+| ----------------------- | ------------------------------- |
+| `formModel.email = 'x'` | Yes — in-place object field     |
+| `items.push(4)`         | Yes — array mutation            |
+| `tags.add('c')`         | Yes — Set method                |
+| `scores.set(2, 'two')`  | Yes — Map method                |
 | `items = [...items, 4]` | Yes — whole binding replacement |
 
 Replacing the whole binding (`items = next`) still works and is a good fit when you want immutable list updates (for example with view transitions). In-place mutation is supported for ergonomics; both paths notify the same top-level signal.
@@ -139,15 +141,15 @@ Declare helpers at the top level of `<script is:state>` with normal JavaScript �
 
 With reactivity enabled, markup can update at runtime:
 
-| Pattern | Example |
-| --- | --- |
-| Text | `{ count }` or `text="{ label }"` |
-| Events | `on:click="{ count++ }"`, `on:submit.prevent="{ save() }"` |
-| Visibility | `show="{ open }"` |
-| Classes | `class:is-active="{ active }"` |
-| Properties | `disabled="{ saving }"` |
-| Forms | `value="{ email }"`, `checked="{ agree }"` |
-| Structure | Reactive `if` / `else`, keyed `for`, `switch` / `case` |
+| Pattern    | Example                                                      |
+| ---------- | ------------------------------------------------------------ |
+| Text       | `{ count }` or `text="{ label }"`                            |
+| Events     | `on:click="{ count++ }"`, `on:submit.prevent="{ save() }"`   |
+| Visibility | `show="{ open }"`                                            |
+| Classes    | `class:is-active="{ active }"`                               |
+| Properties | `disabled="{ saving }"`                                      |
+| Forms      | `value="{ email }"`, `checked="{ agree }"`                   |
+| Structure  | Reactive `if` / `else`, keyed `for`, `switch` / `case`       |
 | Components | `bind:count="{ count }"` with `Aero.bindable()` in the child |
 
 Attribute names also accept `aero-*` and `data-aero-*` prefixes.

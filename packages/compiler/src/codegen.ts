@@ -29,10 +29,7 @@ import {
 	emitMountStateBindingsFunction,
 } from './state-mount-codegen'
 import { validateFeatureGates } from './feature-gates'
-import {
-	AERO_JSON_ROLE_STATE,
-	emitAeroJsonScriptTagTemplate,
-} from './json-script-payload'
+import { AERO_JSON_ROLE_STATE, emitAeroJsonScriptTagTemplate } from './json-script-payload'
 import { buildTemplateSourceMap } from './template-source-map'
 
 function addVirtualClientScriptHelper(script: string, clientScripts?: ScriptEntry[]): string {
@@ -205,21 +202,6 @@ export function compile(parsed: ParseResult, options: CompileOptions): string {
 				forBinds: [],
 				switchBinds: [],
 			}
-	const hasReactiveBinds =
-		(ta.stateAnalysis?.effects.length ?? 0) > 0 ||
-		reactiveBinds.textBinds.length > 0 ||
-		reactiveBinds.eventBinds.length > 0 ||
-		reactiveBinds.busyBinds.length > 0 ||
-		reactiveBinds.componentBinds.length > 0 ||
-		reactiveBinds.showBinds.length > 0 ||
-		reactiveBinds.htmlBinds.length > 0 ||
-		reactiveBinds.classBinds.length > 0 ||
-		reactiveBinds.attributeBinds.length > 0 ||
-		reactiveBinds.propertyBinds.length > 0 ||
-		reactiveBinds.modelBinds.length > 0 ||
-		reactiveBinds.ifBinds.length > 0 ||
-		reactiveBinds.forBinds.length > 0 ||
-		reactiveBinds.switchBinds.length > 0
 	const mountActionFns = options.hypermedia ? 'POST, GET, PUT, PATCH, DELETE' : undefined
 	const mountEmit =
 		ta.stateAnalysis !== null

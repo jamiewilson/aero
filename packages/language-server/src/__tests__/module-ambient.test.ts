@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { AMBIENT_DECLARATIONS } from '@aero-js/compiler/ambient-preamble'
@@ -48,13 +48,7 @@ function semanticDiagnosticCodes(
 			)
 		}
 		if (fileName === ambientFile) {
-			return ts.createSourceFile(
-				fileName,
-				fullAmbient,
-				languageVersion,
-				true,
-				ts.ScriptKind.TS
-			)
+			return ts.createSourceFile(fileName, fullAmbient, languageVersion, true, ts.ScriptKind.TS)
 		}
 		return orig(fileName, languageVersion, ...rest)
 	}
@@ -88,13 +82,7 @@ function diagnostics2307(script: string, fullAmbient: string): string[] {
 			)
 		}
 		if (fileName === ambientFile) {
-			return ts.createSourceFile(
-				fileName,
-				fullAmbient,
-				languageVersion,
-				true,
-				ts.ScriptKind.TS
-			)
+			return ts.createSourceFile(fileName, fullAmbient, languageVersion, true, ts.ScriptKind.TS)
 		}
 		return orig(fileName, languageVersion, ...rest)
 	}
@@ -194,7 +182,9 @@ const props = Aero.props as HeaderProps
 		const code = new AeroVirtualCode(createSnapshot(html), pagePath)
 		const ambient = getEmbeddedText(code, 'ambient')!
 		expect(ambient).toContain("declare module '@client/types/props.ts'")
-		expect(ambient).toContain("export type { MetaProps, HeaderProps, GreetingProps, CardProps } from '../types/props'")
+		expect(ambient).toContain(
+			"export type { MetaProps, HeaderProps, GreetingProps, CardProps } from '../types/props'"
+		)
 		expect(ambient).not.toContain("export * from '../types/props.ts'")
 		expect(ambient).not.toMatch(/@client\/types\/props\.ts'[\s\S]*export \{ default \}/)
 

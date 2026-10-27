@@ -141,28 +141,28 @@ See [Image optimization](/tooling/image-optimization) and [Incremental builds](/
 
 ## Native vs Aero cheat sheet
 
-| What you see                            | Native web or Aero? | What handles it                                      |
-| --------------------------------------- | --------------------- | ---------------------------------------------------- |
-| `<div>`, `<p>`, `<a>`                   | Native web            | Browser                                              |
-| `<style>` with normal CSS               | Native web            | Browser                                              |
-| Plain `<script>`                        | Native web            | Browser (Vite bundles local modules)                 |
-| `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax       | HTMX or Alpine in the browser                        |
-| `{ title }`                             | Aero                  | Aero template engine                                 |
-| `if`, `else-if`, `else`                 | Aero                  | Aero template engine                                 |
-| `for`, `for`                       | Aero                  | Aero template engine                                 |
-| `switch`, `case`, `default`             | Aero                  | Aero template engine                                 |
-| `props`, `aero-props`                   | Aero                  | Aero template engine                                 |
-| `<script is:build>`                     | Aero                  | Build or SSR runtime                                 |
-| `<script is:inline>` / `is:blocking`    | Aero on native element| Aero compiler                                        |
-| `<header-component>` from `header.html` | Aero                  | Aero component system                                |
-| `<slot>` in an Aero layout              | Mixed                 | Native element used by Aero composition              |
-| `<template for>`                   | Mixed                 | Native element with Aero directive behavior          |
-| `client/pages/about.html` → `/about`    | Aero                  | Aero routing                                         |
-| `[slug].html` + `getStaticPaths()`      | Aero                  | Aero routing and build                               |
-| `getCollection()` and `render()`        | Aero                  | Aero content layer                                   |
-| `server/api/*` with `server: true`      | Aero app capability   | Nitro                                                |
-| `@components/header`                    | Aero                  | Toolchain path alias                                 |
-| HMR, build output, asset hashing        | Aero app capability   | Vite                                                 |
+| What you see                            | Native web or Aero?    | What handles it                             |
+| --------------------------------------- | ---------------------- | ------------------------------------------- |
+| `<div>`, `<p>`, `<a>`                   | Native web             | Browser                                     |
+| `<style>` with normal CSS               | Native web             | Browser                                     |
+| Plain `<script>`                        | Native web             | Browser (Vite bundles local modules)        |
+| `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax        | HTMX or Alpine in the browser               |
+| `{ title }`                             | Aero                   | Aero template engine                        |
+| `if`, `else-if`, `else`                 | Aero                   | Aero template engine                        |
+| `for`, `for`                            | Aero                   | Aero template engine                        |
+| `switch`, `case`, `default`             | Aero                   | Aero template engine                        |
+| `props`, `aero-props`                   | Aero                   | Aero template engine                        |
+| `<script is:build>`                     | Aero                   | Build or SSR runtime                        |
+| `<script is:inline>` / `is:blocking`    | Aero on native element | Aero compiler                               |
+| `<header-component>` from `header.html` | Aero                   | Aero component system                       |
+| `<slot>` in an Aero layout              | Mixed                  | Native element used by Aero composition     |
+| `<template for>`                        | Mixed                  | Native element with Aero directive behavior |
+| `client/pages/about.html` → `/about`    | Aero                   | Aero routing                                |
+| `[slug].html` + `getStaticPaths()`      | Aero                   | Aero routing and build                      |
+| `getCollection()` and `render()`        | Aero                   | Aero content layer                          |
+| `server/api/*` with `server: true`      | Aero app capability    | Nitro                                       |
+| `@components/header`                    | Aero                   | Toolchain path alias                        |
+| HMR, build output, asset hashing        | Aero app capability    | Vite                                        |
 
 ## Mental model
 

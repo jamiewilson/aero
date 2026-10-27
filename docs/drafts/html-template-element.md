@@ -2,10 +2,10 @@
 
 Aero treats **`<template>`** in two different ways, depending on whether you use **structural directives** on the tag (`if`, `else-if`, `else`, `for`, `for`, `switch`):
 
-| Usage                                        | What appears in the generated HTML                                                                                                                                                                  |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Structural directive on `<template>`**     | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li for>`, but without an extra element in the tree. |
-| **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** (contents are not normal page content) until script moves or clones them — standard HTML behavior.   |
+| Usage                                        | What appears in the generated HTML                                                                                                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Structural directive on `<template>`**     | **Only the inner markup** — the `<template>` wrapper is **not** emitted. This is the **wrapperless** pattern: same logic as `<div if>` / `<li for>`, but without an extra element in the tree.    |
+| **Plain `<template>`** (no those directives) | A real **`<template>...</template>`** in the output. In the browser, that node stays **inert** (contents are not normal page content) until script moves or clones them — standard HTML behavior. |
 
 Use this page when you choose between a **wrapperless group** (no extra tag), a **literal inert** template (for JS), or a **restricted HTML context** where only certain tags are allowed.
 

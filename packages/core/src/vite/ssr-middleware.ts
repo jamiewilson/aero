@@ -11,6 +11,7 @@ import { addDoctype } from './rewrite'
 import { RUNTIME_INSTANCE_MODULE_ID, resolveDirs } from './defaults'
 import { runAeroMiddlewareChain } from './ssr-middleware-chain'
 import { renderDevSsrErrorResponse } from './ssr-dev-error-response'
+import { appendDirectQueryToDevStylesheetLinks } from './dev-linked-stylesheets'
 
 /** Subset of Aero plugin state needed for SSR (avoids circular import from `index.ts`). */
 interface AeroSsrMiddlewareState {
@@ -128,7 +129,8 @@ export async function handleSsrRequest(
 
 		rendered = addDoctype(rendered)
 
-		const transformed = await server.transformIndexHtml(req.url, rendered)
+		let transformed = await server.transformIndexHtml(req.url, rendered)
+		transformed = appendDirectQueryToDevStylesheetLinks(transformed)
 		res.setHeader('Content-Type', 'text/html; charset=utf-8')
 		res.end(transformed)
 	} catch (err) {

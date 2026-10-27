@@ -88,7 +88,8 @@ export function mergeAeroNitroPlugins(userPlugins: unknown): string[] {
 	const aeroPlugin = resolveAeroNitroRuntimePluginPath()
 	const rest = Array.isArray(userPlugins)
 		? userPlugins.filter(
-				(entry): entry is string => typeof entry === 'string' && !isAeroNitroRuntimePluginEntry(entry)
+				(entry): entry is string =>
+					typeof entry === 'string' && !isAeroNitroRuntimePluginEntry(entry)
 			)
 		: []
 	return [aeroPlugin, ...rest]

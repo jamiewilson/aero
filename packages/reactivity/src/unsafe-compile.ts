@@ -5,10 +5,7 @@ import type { HypermediaRuntimeLike } from './mount'
 import { createEventHandlerActionScope } from '@aero-js/compiler/create-event-handler-action-scope'
 import { rewriteHypermediaActionStateRefs } from '@aero-js/compiler/hypermedia-action-state-refs'
 
-export type ScopeReader = (
-	scope: StateScope,
-	escapeHtml?: (value: unknown) => string
-) => unknown
+export type ScopeReader = (scope: StateScope, escapeHtml?: (value: unknown) => string) => unknown
 
 export type ScopeWriter = (scope: StateScope, value: unknown) => void
 
@@ -43,9 +40,13 @@ export function unsafeCompileHandler(
 		hypermediaTriggerRef?: { current: Element | undefined }
 	}
 ): (this: Element, event: Event) => void {
-	const signalNames = new Set(options.bindings.filter(binding => !binding.derived).map(binding => binding.name))
+	const signalNames = new Set(
+		options.bindings.filter(binding => !binding.derived).map(binding => binding.name)
+	)
 	const rewrittenExpr = rewriteHypermediaActionStateRefs(handlerExpr, signalNames)
-	const body = rewrittenExpr.trim().endsWith(';') ? rewrittenExpr.trim() : `${rewrittenExpr.trim()};`
+	const body = rewrittenExpr.trim().endsWith(';')
+		? rewrittenExpr.trim()
+		: `${rewrittenExpr.trim()};`
 	return function (this: Element, event: Event) {
 		const triggerRef = options.hypermediaTriggerRef
 		if (triggerRef) triggerRef.current = this

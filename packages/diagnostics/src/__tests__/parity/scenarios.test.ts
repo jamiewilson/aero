@@ -1,5 +1,5 @@
 import { PARITY_SCENARIOS, ROUTE_PARITY_SCENARIOS } from '../fixtures/parity/scenarios'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 describe('parity scenarios contract', () => {
 	it('defines in-scope compiler/cli/vscode scenarios', () => {

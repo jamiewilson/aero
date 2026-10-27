@@ -202,7 +202,8 @@ export const PARITY_SCENARIOS: readonly ParityScenario[] = [
 		surfaces: surfaces(
 			{
 				code: 'AERO_COMPILE',
-				messageIncludes: 'Reactive class binding `class:is-active` must reference a declared state variable',
+				messageIncludes:
+					'Reactive class binding `class:is-active` must reference a declared state variable',
 			},
 			['compiler', 'ide']
 		),

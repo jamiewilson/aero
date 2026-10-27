@@ -372,7 +372,7 @@ function getAeroExpressionAttributeValueRangeAt(
 	offset: number
 ): { start: number; end: number } | null {
 	const attrValueRegex =
-		/\b(?:data-aero-|aero-)?(?:if|else-if|for|on[:\-][a-z0-9_.:-]+)\s*=\s*(['"])(.*?)\1/gi
+		/\b(?:data-aero-|aero-)?(?:if|else-if|for|on[:-][a-z0-9_.:-]+)\s*=\s*(['"])(.*?)\1/gi
 
 	let match: RegExpExecArray | null
 	while ((match = attrValueRegex.exec(lineText)) !== null) {

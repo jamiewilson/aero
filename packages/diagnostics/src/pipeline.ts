@@ -106,9 +106,10 @@ export function renderDiagnostics(
 				...(options.pretty !== undefined ? { pretty: options.pretty } : {}),
 			})
 		case 'browser-html':
-			return formatDiagnosticsBrowserHtml(diagnostics, {
-				...(options.banners !== undefined ? { banners: options.banners } : {}),
-			})
+			return formatDiagnosticsBrowserHtml(
+				diagnostics,
+				options.banners !== undefined ? { banners: options.banners } : {}
+			)
 		case 'vite-overlay': {
 			if (diagnostics.length === 0) {
 				return {
@@ -155,9 +156,10 @@ export function reportAeroFailure(
 		...(file !== undefined ? { file } : {}),
 		...(code !== undefined ? { code } : {}),
 	}
-	const enriched = enrichDiagnostics(normalizeToDiagnostics(err, normalizeCtx), {
-		...(defaultFile !== undefined ? { defaultFile } : {}),
-	})
+	const enriched = enrichDiagnostics(
+		normalizeToDiagnostics(err, normalizeCtx),
+		defaultFile !== undefined ? { defaultFile } : {}
+	)
 	if (surface === 'vite-overlay') {
 		return renderDiagnostics(enriched, 'vite-overlay', renderOptions)
 	}

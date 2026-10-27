@@ -378,7 +378,7 @@ Aero adds optional framework-level build features such as image optimization and
 | `hx-*`, `x-*`, `:class`, `@click`       | Not Aero syntax               | HTMX or Alpine in the browser                                 |
 | `{ title }`                             | Aero                          | Aero template engine                                          |
 | `if`, `else-if`, `else`                 | Aero                          | Aero template engine                                          |
-| `for`, `for`                       | Aero                          | Aero template engine                                          |
+| `for`, `for`                            | Aero                          | Aero template engine                                          |
 | `switch`, `case`, `default`             | Aero                          | Aero template engine                                          |
 | `props`, `aero-props`                   | Aero                          | Aero template engine                                          |
 | `<script is:build>`                     | Aero                          | Aero build or server-side render runtime                      |
@@ -387,7 +387,7 @@ Aero adds optional framework-level build features such as image optimization and
 | `<header-component>` from `header.html` | Aero                          | Aero component system                                         |
 | `<base-layout>` from `base.html`        | Aero                          | Aero layout system                                            |
 | `<slot>` inside an Aero layout          | Mixed                         | Native element used by Aero composition                       |
-| `<template for>`                   | Mixed                         | Native element with Aero directive behavior                   |
+| `<template for>`                        | Mixed                         | Native element with Aero directive behavior                   |
 | `client/pages/about.html` -> `/about`   | Aero                          | Aero routing                                                  |
 | `[slug].html` + `getStaticPaths()`      | Aero                          | Aero routing and build system                                 |
 | `getCollection()` and `render()`        | Aero                          | Aero content layer                                            |

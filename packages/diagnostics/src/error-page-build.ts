@@ -2,10 +2,7 @@
  * Build dev SSR error HTML (Node). Returns a minimal Vite overlay bootstrap shell.
  */
 
-import {
-	diagnosticToViteOverlayError,
-	type ViteOverlayErrorPayload,
-} from './vite-overlay-error'
+import { diagnosticToViteOverlayError, type ViteOverlayErrorPayload } from './vite-overlay-error'
 import {
 	AERO_DIAGNOSTICS_SCRIPT_ID,
 	AERO_OVERLAY_BOOTSTRAP_ATTR,
@@ -184,10 +181,7 @@ export function buildDevSsrErrorHtml(
 	const b64 = Buffer.from(JSON.stringify(wire), 'utf-8').toString('base64')
 	const primary = wire[0]
 	const overlayError = primary
-		? diagnosticToViteOverlayError(
-				primary,
-				options.plugin ?? 'vite-plugin-aero-transform'
-			)
+		? diagnosticToViteOverlayError(primary, options.plugin ?? 'vite-plugin-aero-transform')
 		: {
 				message: '[AERO_COMPILE] Unknown Aero compile error',
 				stack: '',

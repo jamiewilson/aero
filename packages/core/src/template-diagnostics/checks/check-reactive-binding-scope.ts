@@ -22,7 +22,7 @@ function offsetForLineColumn(text: string, line: number, column: number): number
 function endOffsetForIssue(text: string, start: number, name: string): number {
 	if (name) return Math.min(text.length, start + name.length)
 	const slice = text.slice(start)
-	const attr = /^[^\s=>\/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]*))?/.exec(slice)
+	const attr = /^[^\s=>/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]*))?/.exec(slice)
 	if (attr) return start + attr[0].length
 	return Math.min(text.length, start + 1)
 }
@@ -54,6 +54,14 @@ export function checkReactiveBindingScope(
 			pushSpanDiagnostic(diagnostics, document, range, issue.message, 'AERO_COMPILE', 'error')
 			continue
 		}
-		pushOffsetDiagnostic(diagnostics, document, 0, Math.min(1, text.length), issue.message, 'AERO_COMPILE', 'error')
+		pushOffsetDiagnostic(
+			diagnostics,
+			document,
+			0,
+			Math.min(1, text.length),
+			issue.message,
+			'AERO_COMPILE',
+			'error'
+		)
 	}
 }

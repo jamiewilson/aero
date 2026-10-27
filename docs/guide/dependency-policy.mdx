@@ -19,15 +19,16 @@ When a package needs a version **different** from the catalog (for example a sin
 
 The root [`package.json`](https://github.com/jamiewilson/aero/blob/main/package.json) may define `pnpm.overrides` for security fixes or to align a transitive dependency with a known-good version. Treat overrides as **explicit exceptions** — document why in the commit or a short comment when non-obvious.
 
-After the 2025-06 refresh, only one override remains:
+Current root overrides in [`pnpm-workspace.yaml`](https://github.com/jamiewilson/aero/blob/main/pnpm-workspace.yaml):
 
 - **`js-yaml: ^3.15.0`** — patches a moderate CVE in `gray-matter`'s transitive `js-yaml` 3.x without jumping to js-yaml 4 (which breaks gray-matter's CommonJS require path).
+- **`nf3: 0.4.2`** — Nitro 3 pulls `nf3` for production dependency tracing; 0.3.x ESM-imports `@vercel/nft` in a way that fails on Node 22 until 0.4.x bundles NFT. Required for full-stack kitchen-sink / `server: true` Nitro builds.
 
 Previously removed overrides (`vite`, `nitro`, `brace-expansion`) were redundant with catalog + lockfile once duplicate exact pins were consolidated.
 
 ## Peer dependency ranges
 
-Published packages use semver ranges for optional peers (for example `"vite": "^8.1.0"`), not exact pins. Starter `package-template.json` files use the same pattern so scaffolded apps can pick up patch releases.
+Published packages use semver ranges for optional peers (for example `"vite": "^8.1.0"`), not exact pins. Starter template `package.json` files under `packages/create/templates/*` use semver for `@aero-js/core` and pin Vite+ via `pnpm.overrides` for standalone clones.
 
 ## Manual refresh checklist
 
@@ -35,9 +36,9 @@ When bumping dependencies across the monorepo:
 
 1. **Consolidate pins first** — prefer `catalog:` over hardcoded versions; remove redundant `pnpm.overrides`.
 2. **Bump in tiers** — low-risk utilities, then catalog toolchain (vite, nitro, typescript, vitest, tsdown), then one ecosystem per PR (oxc, shiki, volar, etc.).
-3. **Sync starter templates** — `packages/create/templates/*/package-template.json` vite/nitro ranges must match catalog policy.
+3. **Sync starter templates** — `packages/create/templates/*/package.json` vite/nitro/`vite-plus` pins must match catalog policy.
 4. **Regenerate lockfile** — `pnpm install` after every manifest edit.
-5. **Validate locally** — run `pnpm test:all` (typecheck + lint + vitest + e2e), not `release:prep` alone. Also run `pnpm website:build` before merging large toolchain bumps.
+5. **Validate locally** — run `vp run check:all`, not `vp run release:prep` alone. Before merging large toolchain bumps, run `vp run build:website`.
 
 ## CI and guardrails
 

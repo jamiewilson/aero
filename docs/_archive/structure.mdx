@@ -3,7 +3,7 @@ title: 'Structure'
 description: 'How a scaffolded Aero project is laid out: client, content, public, optional server, and config files.'
 ---
 
-When you run `pnpm create @aero-js my-app`, Aero scaffolds a **minimal** tree. The **fullstack** template adds Nitro under `server/` and a root `nitro.config.ts`.
+When you scaffold with **`vp create @aero-js:minimal`**, Aero copies a **minimal** tree. **`@aero-js:fullstack`** adds Nitro under `server/` and a root `nitro.config.ts`. See [Installation](/getting-started/installation).
 
 Use the pages below like a directory map: each one describes **what belongs in that folder** and how it maps to URLs or aliases. For how routing, layouts, and templates behave in depth, follow the links into the Guide.
 
@@ -37,8 +37,8 @@ my-app/
 ```
 
 <Note>
-	If you rename top-level folders (for example `frontend/` instead of `client/`), set `dirs` in config
-	and read [Path aliases](/configuration/path-aliases).
+	If you rename top-level folders (for example `frontend/` instead of `client/`), set `dirs` in
+	config and read [Path aliases](/configuration/path-aliases).
 </Note>
 
 ## Directory reference

@@ -6,9 +6,7 @@ import { AeroCompileError } from '@aero-js/diagnostics'
 import { CompileError } from '@aero-js/compiler'
 
 /** Duck-type — `instanceof` fails across duplicate package copies. */
-function isCompileErrorLike(
-	value: unknown
-): value is {
+function isCompileErrorLike(value: unknown): value is {
 	message: string
 	file?: string
 	line?: number

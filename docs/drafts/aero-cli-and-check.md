@@ -32,7 +32,7 @@ pnpm exec aero build --incremental
 pnpm exec aero --help
 ```
 
-For local monorepo development after `pnpm build`, invoke the built CLI directly:
+For local monorepo development after `vp run build:all`, invoke the built CLI directly:
 
 ```bash
 node packages/cli/dist/index.mjs check --root examples/kitchen-sink
@@ -41,7 +41,7 @@ node packages/cli/dist/index.mjs doctor --root examples/kitchen-sink
 
 ## `aero build`
 
-Runs **`vite build`** using `createViteConfig` from the project root (same as your usual production build when `vite.config` delegates to it). Use **`--incremental`** to set `AERO_INCREMENTAL=1` when that variable is unset, enabling [incremental static build](build-performance.md) and content disk cache.
+Runs a production Vite build using `createViteConfig` from the project root (same as **`vp build`** when `vite.config` delegates to it). Use **`--incremental`** to set `AERO_INCREMENTAL=1` when that variable is unset, enabling [incremental static build](build-performance.md) and content disk cache.
 
 ## `aero check`
 
@@ -54,7 +54,7 @@ Runs **`vite build`** using `createViteConfig` from the project root (same as yo
 - If the config export is a function, it is called with `{ command: 'build', mode: 'production' }`.
 
 Current limitation:
-`runAeroCheck` uses `loadAeroConfig`, not the stricter Effect-based config loaders. If a config file exists but fails to load, `aero check` can still fall back to default `dirs` and potentially skip templates under a custom client directory such as `frontend/`. In that case, use `DEBUG=aero` or `vite build` for more detail.
+`runAeroCheck` uses `loadAeroConfig`, not the stricter Effect-based config loaders. If a config file exists but fails to load, `aero check` can still fall back to default `dirs` and potentially skip templates under a custom client directory such as `frontend/`. In that case, use `DEBUG=aero` or `vp build` for more detail.
 
 Important:
 `vite.config.ts` should import `createViteConfig` from `@aero-js/core/vite-config`, not the main `@aero-js/core/config` entry, so `aero.config.ts` can load via jiti without pulling Vite into the config entrypoint.
@@ -110,7 +110,7 @@ Relationship to the default check: **`aero check` without `--types`** still vali
 
 - Node.js version, failing with exit `1` if below the minimum supported version, currently `18`
 - `vite` presence from `package.json`
-- ``@aero-js/core` presence from `package.json`
+- ``@aero-js/core`presence from`package.json`
 - `@aero-js/cli` version
 - A reminder about the Aero VS Code extension
 
@@ -148,20 +148,20 @@ See `packages/diagnostics/src/exit-codes.ts` for the current mapping. `0` means 
 
 ### `@aero-js/core/config`
 
-| Export                                                  | Description                                                                                           |
+| Export | Description |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| `loadAeroConfig(root)`                                  | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroOptions | AeroOptionsFn | null`. |
-| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling.        |
+| `loadAeroConfig(root)` | Loads `aero.config.{ts,js,mjs}` with jiti and `jitiAliasRecordFromProject(root)`. Returns `AeroOptions | AeroOptionsFn | null`. |
+| `loadAeroConfigEffect` and `loadAeroConfigStrictEffect` | Stricter Effect-based config loading surfaces for callers that want explicit failure handling. |
 
 ### `@aero-js/content`
 
-| Export                                                   | Description                                                                                      |
+| Export | Description |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------- |
-| `loadContentConfigFileSync(root, configFile)`            | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
-| `loadAllCollections(config, root)`                       | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode.  |
-| `loadAllCollectionsEffect(config, root)`                 | Effect-based counterpart for callers that want failure-channel composition.                      |
-| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`.                                                        |
-| `LoadContentConfigResult`                                | Type for `loadContentConfigFileSync` results.                                                    |
+| `loadContentConfigFileSync(root, configFile)` | Sync load of `content.config`. Returns `{ ok: true, config }` or `{ ok: false, reason: 'missing' | 'error', error? }`. |
+| `loadAllCollections(config, root)` | Loads every collection; returns `{ loaded, schemaIssues }` and may throw in strict schema mode. |
+| `loadAllCollectionsEffect(config, root)` | Effect-based counterpart for callers that want failure-channel composition. |
+| `contentSchemaIssuesToAeroDiagnostics(issues, severity)` | Maps schema issues to `AeroDiagnostic[]`. |
+| `LoadContentConfigResult` | Type for `loadContentConfigFileSync` results. |
 
 See [content-api.md](content-api.md) for the broader content API.
 
