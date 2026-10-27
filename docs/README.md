@@ -26,17 +26,14 @@ See the [AI tools guides](/ai-tools) for tool-specific setup.
 
 ## Development
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+Install dependencies and run the dev server from this directory:
 
-```
-npm i -g mint
+```bash
+pnpm install --ignore-workspace
+pnpm dev
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
-mint dev
-```
+The Mintlify CLI pulls in `@mintlify/scraping`, which imports `@mintlify/validation` without listing it as a dependency. **pnpm** (including `pnpm add -g mint`) will not install that package, so a global `mint` command can fail with `ERR_MODULE_NOT_FOUND`. This folder pins `mint` and `@mintlify/validation` locally. Alternatively, use `npx mint dev` or install globally with **npm**: `npm i -g mint`.
 
 View your local preview at `http://localhost:3000`.
 

@@ -38,15 +38,13 @@ The build script defines the server-side render body of your component or page. 
 
 Use it to:
 
-- Import components and layouts
+- Import content, assets, and TS/JS modules (layout/component tags auto-resolve by default)
 - Fetch data or read content collections
 - Prepare variables for `{ }` expressions
 - Export `getStaticPaths()` for dynamic routes
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 
 	const title = site.meta.title

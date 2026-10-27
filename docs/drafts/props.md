@@ -210,8 +210,6 @@ Usage:
 ```html
 <!-- client/pages/index.html -->
 <script is:build>
-	import header from '@components/header.html'
-
 	const headerProps = {
 		title: site.home.title,
 		subtitle: site.home.subtitle.toUpperCase(),

@@ -3,7 +3,7 @@ title: 'Components'
 description: 'Build reusable UI pieces as plain HTML files and compose them anywhere in your pages and layouts.'
 ---
 
-Components in Aero are plain `.html` files in `client/components/`. Import one, use it as a custom element in markup, and pass data through attributes. Components render at build time — no runtime JavaScript, no shadow DOM.
+Components in Aero are plain `.html` files in `client/components/`. Use them as custom elements in markup and pass data through attributes. Components render at build time — no runtime JavaScript, no shadow DOM.
 
 ## Creating a component
 
@@ -19,22 +19,16 @@ Create a `.html` file in `client/components/`. The component reads data from `Ae
 
 ## Using a component
 
-Import the component in a `<script is:build>` block, then use `<name-component>` in markup:
+Use `<name-component>` in markup (no import required unless you override or disambiguate):
 
 ```html client/pages/index.html
-<script is:build>
-	import base from '@layouts/base.html'
-	import greeting from '@components/greeting.html'
-</script>
-
 <base-layout>
 	<greeting-component name="World" />
 </base-layout>
 ```
 
 <Note>
-	Include the `.html` extension: `import greeting from '@components/greeting.html'` resolves to
-	`client/components/greeting.html`.
+	Explicit imports use the `.html` extension and override auto-import. See [Templates](/getting-started/templates#template-auto-import).
 </Note>
 
 ## Passing props
@@ -65,7 +59,6 @@ Use `props="{ ...obj }"` to pass every key in an object as a separate prop:
 
 ```html
 <script is:build>
-	import card from '@components/card.html'
 	const cardProps = { title: 'Hello', subtitle: 'World' }
 </script>
 
@@ -78,7 +71,6 @@ If you have a variable named `props` in scope, the bare `props` attribute spread
 
 ```html
 <script is:build>
-	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 

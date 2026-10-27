@@ -18,12 +18,10 @@ Aero gives each `<script>` tag a clear execution context via attributes. You alw
 
 ## `<script is:build>`
 
-The build script runs in Node.js at build time and is never sent to the browser. Use it to import components, fetch data, and prepare variables for `{ }` expressions:
+The build script runs in Node.js at build time and is never sent to the browser. Use it to import content and modules, fetch data, and prepare variables for `{ }` expressions:
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 
 	const title: string = site.meta.title

@@ -26,10 +26,6 @@ This allows a component to receive a named slot from its parent and forward it t
 **Parent Component (parent.html)**
 
 ```html
-<script is:build>
-	import child from '@layouts/child.html'
-</script>
-
 <child-component>
 	<!-- Receive 'nav' slot from grandparent and pass it to child -->
 	<slot name="nav" slot="nav" />

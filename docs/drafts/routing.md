@@ -53,8 +53,6 @@ For static builds (`pnpm build`), dynamic pages **must** export a `getStaticPath
 ```html
 <!-- client/pages/[id].html -->
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export function getStaticPaths() {
 		return [
 			{ params: { id: 'alpha' } }, 
@@ -85,8 +83,6 @@ Dynamic segments work inside subdirectories:
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export function getStaticPaths() {
 		return [
 			{ params: { slug: 'intro' } }, 
@@ -113,8 +109,6 @@ dist/docs/name/index.html
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export async function getStaticPaths() {
 		const res = await fetch('https://api.example.com/posts')
 		const posts = await res.json()

@@ -32,8 +32,6 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 </script>
 
@@ -50,7 +48,7 @@ A page is just HTML with a build script, a layout, and components. Data comes fr
 
 ### Mostly just html, css and js/ts, with few things on top
 
-Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, component imports with `-component`/`-layout`, and props (`Aero.props`, `props` on components and script/style). The source looks like HTML, the output is HTML.
+Aero tries to stay as close to the web platform as possible: you write HTML files (not JSX), plain CSS, and plain client JS (Alpine, HTMX, vanilla, or none). Output is static HTML with no hydration or framework runtime. The thin layer Aero adds is just `{ }` expressions, `<script is:build>` (and `is:inline`, `is:blocking`), `for`/`if`/`else` directives, `-component`/`-layout` tags (auto-resolved by default)/`-layout`, and props (`Aero.props`, `props` on components and script/style). The source looks like HTML, the output is HTML.
 
 > Also check out: [Philosophy](https://github.com/jamiewilson/aero/blob/main/docs/get-started/philosophy.mdx) (what makes Aero different and how it relates to Web Components).
 
@@ -88,11 +86,6 @@ File paths under `client/pages/` become routes. A minimal project scaffold:
 Import `.html` templates with the file extension; use `<name-component>` or `<name-layout>` in markup:
 
 ```html
-<script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
-</script>
-
 <base-layout>
 	<header-component title="Hello" subtitle="World" />
 	<p>Page content here.</p>
@@ -112,8 +105,6 @@ If you have a variable named `props` in the build script, use the bare `props` a
 ```html
 <!-- Page -->
 <script is:build>
-	import base from '@layouts/base.html'
-	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 
@@ -209,10 +200,6 @@ Content between `<base-layout>` and `</base-layout>` goes into the default slot:
 
 ```html
 <!-- pages/about.html -->
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<h1>About</h1>
 	<p>This paragraph and the heading above fill the default slot.</p>
@@ -227,10 +214,6 @@ Your page content goes into the `<sub-layout>` slot:
 
 ```html
 <!-- pages/docs.html -->
-<script is:build>
-	import sub from '@layouts/sub.html'
-</script>
-
 <sub-layout>
 	<h1>Docs</h1>
 	<p>This page uses a nested layout: sub → base.</p>
@@ -241,10 +224,6 @@ The sub-layout uses the base layout and exposes its own default slot:
 
 ```html
 <!-- layouts/sub.html -->
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<slot />
 </base-layout>

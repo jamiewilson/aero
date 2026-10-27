@@ -11,14 +11,13 @@ The previous `on:build` and `on:client` attributes have been deprecated in favor
 The `is:build` attribute defines the "server-side render body" of your component or page.
 
 - **Execution Context:** Runs entirely at build-time (or request-time for SSR). It runs in Node.js/V8 environment.
-- **Purpose:** Used to fetch data, import components, read configuration, and process properties before the template is converted into HTML.
+- **Purpose:** Used to fetch data, import content and modules, read configuration, and process properties before the template is converted into HTML.
 - **Syntax Limitation:** You can only have one `<script is:build>` tag per template file.
 - **Output:** This code **never** reaches the browser. It gets compiled into the hidden `export default async function(Aero) { ... }` module that powers the static site generator.
 - **TypeScript / IntelliSense:** Add to `lang="js"` (or `lang="javascript"`) to eject out of typescript by default.
 
 ```html
 <script is:build>
-	import Header from '@components/header.html'
 	const title = 'Welcome to Aero'
 </script>
 

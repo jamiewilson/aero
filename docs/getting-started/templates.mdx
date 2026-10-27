@@ -12,15 +12,25 @@ Every `.html` file in Aero is a template. The same syntax — `{ }` expressions,
 | **Component** | `client/components/` | Reusable markup, imported into pages and layouts |
 | **Layout**    | `client/layouts/`    | Shared page shell with `<slot />` for content    |
 
+## Template auto-import
+
+By default (`templateAutoImport: true`), Aero resolves `-layout` and `-component` tags from your project tree. You **do not** need a matching `import` in `<script is:build>` for each tag. The build, `aero check`, and the VS Code extension use the same rules: tag base name → `client/layouts/*.html` or `client/components/**/*.html`.
+
+**Still import explicitly:** `@content/*`, npm packages, `.ts` / `.js` modules, and assets (`@images/*`, etc.).
+
+**When to add an explicit template import:**
+
+- **Override** — pin a non-default file for the same binding (e.g. `import footer from '@components/theme/footer.html'` for `<footer-component />`).
+- **Disambiguation** — two files share a basename (e.g. `components/toggle.html` and `components/theme/toggle.html`); Aero errors until you import one path explicitly.
+- **Opt-out** — set `templateAutoImport: false` in `aero.config.ts` to require imports for every layout/component (legacy behaviour).
+
+Tag `demo-list-component` maps to binding `demoList` and file `**/demo-list.html` under components. Layout tags only search `client/layouts/` (non-recursive); component tags search `client/components/` recursively.
+
 ## Pages
 
 Every `.html` file in `client/pages/` becomes a route. `index.html` maps to `/`, `about.html` maps to `/about`. See [Routing](/getting-started/routing) for dynamic routes and `getStaticPaths`.
 
 ```html client/pages/about.html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<h1>About</h1>
 	<p>This is a page.</p>
@@ -29,7 +39,7 @@ Every `.html` file in `client/pages/` becomes a route. `index.html` maps to `/`,
 
 ## Components
 
-Components are `.html` files in `client/components/`. Import one in a `<script is:build>` block and use it as a custom element:
+Components are `.html` files in `client/components/`. Use them as custom elements with the `-component` suffix; no import is required unless you are overriding or disambiguating (see [Template auto-import](#template-auto-import)):
 
 ```html client/components/greeting.html
 <script is:build>
@@ -40,16 +50,12 @@ Components are `.html` files in `client/components/`. Import one in a `<script i
 ```
 
 ```html client/pages/index.html
-<script is:build>
-	import greeting from '@components/greeting.html'
-</script>
-
 <greeting-component name="World" />
 ```
 
 <Note>
-	Include the `.html` extension in import specifiers: `import greeting from
-	'@components/greeting.html'` resolves to `client/components/greeting.html`.
+	Explicit imports use the `.html` extension: `import greeting from
+	'@components/greeting.html'`. When you add one, it overrides auto-import for that binding.
 </Note>
 
 ### Props
@@ -105,10 +111,6 @@ Layouts are `.html` files in `client/layouts/` that wrap page content. Use `<slo
 ```
 
 ```html client/pages/about.html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<h1>About</h1>
 	<p>This fills the default slot.</p>
@@ -120,10 +122,6 @@ Layouts are `.html` files in `client/layouts/` that wrap page content. Use `<slo
 A layout can use another layout. Content flows from page to inner layout to outer layout:
 
 ```html client/layouts/docs.html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<nav>Docs sidebar</nav>
 	<main>
@@ -146,10 +144,6 @@ Define named slots with the `name` attribute. Pages target them with `slot`:
 ```
 
 ```html client/pages/home.html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<a href="/docs" slot="nav">Docs</a>
 	<h1>Welcome</h1>

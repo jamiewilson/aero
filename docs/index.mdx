@@ -10,8 +10,6 @@ Aero is a static site generator (and optional full-stack framework) built around
 
 ```html pages/index.html
 <script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 </script>
 
@@ -33,7 +31,7 @@ Aero is a static site generator (and optional full-stack framework) built around
     `client/pages/about.html` becomes `/about`. Dynamic routes use `[param].html` and `getStaticPaths()`.
   </Card>
   <Card title="Components & layouts" icon="puzzle">
-    Import `.html` templates and use them as `<name-component>` or `<name-layout>` in your markup.
+    Use `.html` templates as `<name-component>` or `<name-layout>` in your markup (auto-imported by default).
   </Card>
   <Card title="Loops & conditionals" icon="repeat">
     Use `for`, `if`, `else-if`, `else`, and `switch` directives with `{ }` expressions directly in markup.

@@ -43,13 +43,9 @@ The fastest way to start is with **`vp create`** and the **`@aero-js/create`** t
 
     Visit `http://localhost:5173/about` — no routing config needed.
 
-    To add a layout, import it in a `<script is:build>` block and wrap your content:
+    To add a layout, wrap your content in a layout tag:
 
     ```html pages/about.html
-    <script is:build>
-      import base from '@layouts/base.html'
-    </script>
-
     <base-layout>
       <h1>About</h1>
       <p>This is a new page.</p>

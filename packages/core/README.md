@@ -48,7 +48,6 @@ Script blocks are classified by attributes (see [Scripts](https://github.com/jam
 
 ```html
 <script is:build>
-	import header from '@components/header.html'
 	const { title } = aero.props
 </script>
 <header-component title="{ title }" />
@@ -103,7 +102,7 @@ aero.mount({
 
 ### Components and layouts
 
-- Components: use `-component` suffix in markup; import without suffix (e.g. `@components/header` → `header.html`).
+- Components: use `-component` suffix in markup; templates auto-resolve by default (`templateAutoImport: true`).
 - Layouts: use `-layout` and `<slot>` (with `name` and optional `slot` attribute).
 - Props: attributes or `props` / `props="{ ... }"`. In build script, read via `aero.props`.
 

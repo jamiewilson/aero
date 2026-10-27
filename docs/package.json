@@ -1,0 +1,16 @@
+{
+	"name": "aero-docs",
+	"private": true,
+	"scripts": {
+		"dev": "mint dev",
+		"validate": "mint validate",
+		"broken-links": "mint broken-links"
+	},
+	"devDependencies": {
+		"@mintlify/validation": "^0.1.945",
+		"mint": "^4.2.1152"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": ["esbuild", "keytar", "sharp"]
+	}
+}

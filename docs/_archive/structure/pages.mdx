@@ -13,12 +13,10 @@ Every `.html` file under `client/pages/` becomes a route. The file path maps dir
 | `client/pages/docs/index.html`  | `/docs`       |
 | `client/pages/blog/[slug].html` | `/blog/:slug` |
 
-A page can be plain HTML, or include a `<script is:build>` block to import layouts, components, and data:
+A page can be plain HTML, or include a `<script is:build>` block to import data and modules while using layout/component tags in markup:
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 </script>
 
