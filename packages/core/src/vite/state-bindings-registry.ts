@@ -1,5 +1,5 @@
 import { pagePathToKey } from '../utils/routing'
-import { toPosixRelative, toRootRelativeImportUrl } from '../utils/path'
+import { toPosixRelative, toRootRelativeImportUrl } from '../utils/path-node'
 import { emitResolvePageNameFnSource } from '../utils/resolve-page-name'
 
 function toPosixPageKey(root: string, absolutePath: string): string {

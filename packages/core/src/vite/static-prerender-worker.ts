@@ -6,7 +6,7 @@ import type { Manifest } from 'vite'
 import { minify } from 'html-minifier-next'
 import fs from 'node:fs'
 import path from 'node:path'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import { addDoctype, rewriteRenderedHtml } from './rewrite'
 import { isDynamicPage, type StaticPage } from './static-page-discovery'
 

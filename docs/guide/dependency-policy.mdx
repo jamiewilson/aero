@@ -19,9 +19,10 @@ When a package needs a version **different** from the catalog (for example a sin
 
 The root [`package.json`](https://github.com/jamiewilson/aero/blob/main/package.json) may define `pnpm.overrides` for security fixes or to align a transitive dependency with a known-good version. Treat overrides as **explicit exceptions** — document why in the commit or a short comment when non-obvious.
 
-After the 2025-06 refresh, only one override remains:
+Current root overrides in [`pnpm-workspace.yaml`](https://github.com/jamiewilson/aero/blob/main/pnpm-workspace.yaml):
 
 - **`js-yaml: ^3.15.0`** — patches a moderate CVE in `gray-matter`'s transitive `js-yaml` 3.x without jumping to js-yaml 4 (which breaks gray-matter's CommonJS require path).
+- **`nf3: 0.4.2`** — Nitro 3 pulls `nf3` for production dependency tracing; 0.3.x ESM-imports `@vercel/nft` in a way that fails on Node 22 until 0.4.x bundles NFT. Required for full-stack kitchen-sink / `server: true` Nitro builds.
 
 Previously removed overrides (`vite`, `nitro`, `brace-expansion`) were redundant with catalog + lockfile once duplicate exact pins were consolidated.
 

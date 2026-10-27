@@ -10,7 +10,7 @@ import { defineConfig, mergeConfig } from 'vite-plus'
 export default defineConfig(viteEnv => {
 	applyAeroViteEnvFromVite(viteEnv)
 	return mergeConfig(createViteConfig(aeroConfig, viteEnvToCreateViteConfigOptions(viteEnv)), {
-		plugins: [tailwindcss()],
+		plugins: [tailwindcss({ optimize: false })],
 		build: { minify: false },
 	})
 })

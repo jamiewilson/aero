@@ -2,7 +2,7 @@
  * Dev/build runtime instance module source: explicit imports per discovered template.
  */
 
-import { toRootRelativeImportUrl } from '../utils/path'
+import { toRootRelativeImportUrl } from '../utils/path-node'
 import { discoverRuntimeTemplatePaths } from './runtime-template-discovery'
 
 function appendLines(lines: string[], ...entries: string[]): void {

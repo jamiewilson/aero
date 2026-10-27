@@ -4,7 +4,7 @@
 
 import type { Plugin, ViteDevServer } from 'vite'
 import { parse } from '@aero-js/compiler'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import path from 'path'
 import {
 	RESOLVED_RUNTIME_INSTANCE_MODULE_ID,

@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { analyzeBuildScript, parse } from '@aero-js/compiler'
-import { toPosixRelative } from '../utils/path'
+import { toPosixRelative } from '../utils/path-node'
 import { hashFileSha256 } from './build-manifest'
 import { loadTsconfigAliases } from '../utils/aliases'
 import { walkHtmlFiles } from '../utils/fs-walk'
