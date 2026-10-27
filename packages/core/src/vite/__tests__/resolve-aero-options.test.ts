@@ -24,6 +24,7 @@ describe('normalizeAeroOptions', () => {
 			server: false,
 			reactivity: false,
 			hypermedia: false,
+			templateAutoImport: true,
 		})
 	})
 
@@ -39,6 +40,7 @@ describe('normalizeAeroOptions', () => {
 			server: true,
 			reactivity: true,
 			hypermedia: false,
+			templateAutoImport: true,
 			apiPrefix: '/internal-api',
 		})
 	})

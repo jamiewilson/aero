@@ -1,12 +1,14 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import fs from 'node:fs'
+import type { CompileOptions } from '@aero-js/compiler'
 import { compileTemplate } from '@aero-js/compiler/codegen'
 import { Aero } from './index'
 import type {
 	AeroPageModule,
 	StandaloneLoadCompiledModuleOptions,
 	StandaloneRenderTemplateOptions,
+	StandaloneTemplateCompileOptions,
 } from '../types'
 
 function toDataUrl(moduleSource: string): string {
@@ -14,8 +16,15 @@ function toDataUrl(moduleSource: string): string {
 }
 
 function normalizeResolvedPath(resolved: string, root: string, importer: string): string {
+	const rootAbs = path.resolve(root)
+	// Compiler resolver emits project-root-relative paths (`/client/...`); not filesystem-root paths on Unix.
+	if (resolved.startsWith('/') && !resolved.startsWith('//')) {
+		const fromRoot = path.resolve(rootAbs, `.${resolved}`)
+		if (fromRoot === rootAbs || fromRoot.startsWith(rootAbs + path.sep)) {
+			return fromRoot
+		}
+	}
 	if (path.isAbsolute(resolved)) return resolved
-	if (resolved.startsWith('/')) return path.resolve(root, '.' + resolved)
 	if (resolved.startsWith('.')) return path.resolve(path.dirname(importer), resolved)
 	return resolved
 }
@@ -61,14 +70,29 @@ function replaceDynamicImportSpecifiers(
 	})
 }
 
+function standaloneTemplateCompileOptions(
+	options: StandaloneTemplateCompileOptions
+): CompileOptions {
+	const { root, importer, resolvePath, templateAutoImport, componentsDir, layoutsDir } = options
+	return {
+		root,
+		importer,
+		resolvePath,
+		templateAutoImport,
+		componentsDir: componentsDir ?? path.join(root, 'client', 'components'),
+		layoutsDir: layoutsDir ?? path.join(root, 'client', 'layouts'),
+	}
+}
+
 async function rewriteCompiledImportsForStandalone(options: {
 	compiledSource: string
 	root: string
 	importer: string
 	resolvePath?: (specifier: string, importer: string) => string
 	cache: Map<string, string>
+	compileOptions: CompileOptions
 }): Promise<string> {
-	const { compiledSource, root, importer, resolvePath, cache } = options
+	const { compiledSource, root, importer, resolvePath, cache, compileOptions } = options
 	const rewritten = replaceDynamicImportSpecifiers(compiledSource, specifier => {
 		const abs = resolveStandaloneSpecifier(specifier, root, importer, resolvePath)
 		if (abs.endsWith('.html')) {
@@ -90,6 +114,7 @@ async function rewriteCompiledImportsForStandalone(options: {
 			)
 		}
 		const compiledChild = compileTemplate(htmlSource, {
+			...compileOptions,
 			root,
 			importer: absHtmlPath,
 			resolvePath,
@@ -100,6 +125,7 @@ async function rewriteCompiledImportsForStandalone(options: {
 			importer: absHtmlPath,
 			resolvePath,
 			cache,
+			compileOptions,
 		})
 		out = out.replaceAll(placeholder, toDataUrl(rewrittenChild))
 	}
@@ -119,12 +145,14 @@ export async function loadCompiledTemplateModule(
 	const resolveBridgeName = `__aeroStandaloneImportResolve_${Math.random().toString(36).slice(2)}`
 	const resolveFn = createStandaloneResolveImportMeta(root, importer, resolvePath)
 	;(globalThis as Record<string, unknown>)[resolveBridgeName] = resolveFn
+	const compileOptions = standaloneTemplateCompileOptions(options)
 	const rewrittenForStandalone = await rewriteCompiledImportsForStandalone({
 		compiledSource,
 		root,
 		importer,
 		resolvePath,
 		cache: new Map(),
+		compileOptions,
 	})
 	const bridgedSource = injectImportMetaResolveBridge(
 		rewrittenForStandalone,
@@ -159,16 +187,16 @@ export async function renderTemplate(
 	const { templateSource, root, importer, resolvePath, globals, input } = options
 	if (!root) throw new Error('[aero] renderTemplate requires `root`.')
 	if (!importer) throw new Error('[aero] renderTemplate requires `importer`.')
-	const compiledSource = compileTemplate(templateSource, {
-		root,
-		importer,
-		resolvePath,
-	})
+	const compileOptions = standaloneTemplateCompileOptions(options)
+	const compiledSource = compileTemplate(templateSource, compileOptions)
 	const pageModule = await loadCompiledTemplateModule({
 		compiledSource,
 		root,
 		importer,
 		resolvePath,
+		templateAutoImport: options.templateAutoImport,
+		componentsDir: options.componentsDir,
+		layoutsDir: options.layoutsDir,
 	})
 	const aero = new Aero()
 	for (const [name, value] of Object.entries(globals ?? {})) {

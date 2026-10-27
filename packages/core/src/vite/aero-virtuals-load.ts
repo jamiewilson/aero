@@ -88,6 +88,7 @@ export function createAeroVirtualsLoad(state: AeroPluginState): LoadFn {
 								resolvePath: resolvedAlias.resolve,
 								reactivity: state.options.reactivity,
 								hypermedia: state.options.hypermedia,
+								templateAutoImport: state.options.templateAutoImport,
 								dirs: state.dirs,
 							},
 							state.clientScripts,

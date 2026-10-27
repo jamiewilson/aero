@@ -107,6 +107,34 @@ const { title } = Aero.props as { title: string }
 		).rejects.toThrow('requires `importer`')
 	})
 
+	it('auto-imports component templates when markup omits build-script import', async () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-standalone-auto-'))
+		const componentsDir = path.join(dir, 'client', 'components')
+		fs.mkdirSync(componentsDir, { recursive: true })
+		fs.writeFileSync(
+			path.join(componentsDir, 'child.html'),
+			`<script is:build>const { title } = Aero.props</script><p>{ title }</p>`,
+			'utf8'
+		)
+		const importer = path.join(dir, 'client', 'pages', 'home.html')
+		fs.mkdirSync(path.dirname(importer), { recursive: true })
+		const source = `<child-component props="{ title: 'Auto' }" />`
+		const html = await renderTemplate({
+			templateSource: source,
+			root: dir,
+			importer,
+			resolvePath: (specifier, from) => {
+				if (specifier.startsWith('@components/')) {
+					return path.join(componentsDir, specifier.slice('@components/'.length))
+				}
+				return path.resolve(path.dirname(from), specifier)
+			},
+			componentsDir,
+			layoutsDir: path.join(dir, 'client', 'layouts'),
+		})
+		expect(html).toContain('<p>Auto</p>')
+	})
+
 	it('throws when component import cannot resolve in standalone mode', async () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-standalone-'))
 		const importer = path.join(dir, 'page.html')

@@ -225,6 +225,11 @@ export function kebabToCamelCase(s: string): string {
 	return s.replace(/-([a-z])/g, (_, char) => char.toUpperCase())
 }
 
+/** Convert camelCase to kebab-case (e.g. `demoList` → `demo-list`). */
+export function camelToKebabCase(s: string): string {
+	return s.replace(/[A-Z]/g, ch => `-${ch.toLowerCase()}`)
+}
+
 /** Build a props object code string from key-value entries and optional spread (e.g. `{ ...base, title }`). */
 export function buildPropsString(entries: string[], spreadExpr: string | null): string {
 	if (spreadExpr) {

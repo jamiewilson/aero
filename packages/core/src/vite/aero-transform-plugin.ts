@@ -34,6 +34,7 @@ export function createAeroTransformPlugin(state: AeroPluginState): Plugin {
 								resolvePath: resolvedAlias.resolve,
 								reactivity: state.options.reactivity,
 								hypermedia: state.options.hypermedia,
+								templateAutoImport: state.options.templateAutoImport,
 								dirs: state.dirs,
 							},
 							state.clientScripts,

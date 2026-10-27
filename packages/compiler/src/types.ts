@@ -2,6 +2,8 @@
  * Shared type definitions for the @aero-js/compiler.
  */
 
+import type { TemplateTagIndex } from './template-tag-index'
+
 /**
  * Single script entry: attrs (optional), content (body or virtual URL), optional props expression.
  */
@@ -56,6 +58,18 @@ export interface CompileOptions {
 	 * module id (typically `?inline&index=N.css`) instead of embedding raw CSS source.
 	 */
 	styleCssModuleIds?: readonly string[]
+	/** When not `false`, emit imports for `-component` / `-layout` tags missing from the build script (default: true when an index or dirs are available). */
+	templateAutoImport?: boolean
+	/** Pre-built tag index; otherwise {@link componentsDir} + {@link layoutsDir} build one per compile. */
+	templateTagIndex?: TemplateTagIndex
+	/** Discover components for auto-import (recursive `*.html`). */
+	componentsDir?: string
+	/** Discover layouts for auto-import (non-recursive `*.html`). */
+	layoutsDir?: string
+	/** Alias prefix for component specifiers (default `@components`). */
+	componentsAlias?: string
+	/** Alias prefix for layout specifiers (default `@layouts`). */
+	layoutsAlias?: string
 }
 
 export interface CompileWarning {
