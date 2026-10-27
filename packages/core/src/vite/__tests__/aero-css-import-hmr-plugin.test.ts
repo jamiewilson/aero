@@ -80,6 +80,36 @@ describe('aeroCssImportHmrPlugin', () => {
 		expect(result).toEqual([direct])
 	})
 
+	it('remaps mixed css and asset modules to self-accepting css only', () => {
+		const plugin = aeroCssImportHmrPlugin()
+		const handler =
+			typeof plugin.hotUpdate === 'function' ? plugin.hotUpdate : plugin.hotUpdate?.handler
+
+		const direct = mod({
+			id: '/styles/global.css?direct',
+			type: 'css',
+			isSelfAccepting: true,
+		})
+		const asset = mod({
+			id: null,
+			type: 'asset',
+			importers: new Set([direct]),
+		})
+
+		expect(
+			(handler as Function).call(
+				{ environment: { name: 'client' } },
+				{
+					file: '/styles/global.css',
+					modules: [direct, asset],
+					timestamp: Date.now(),
+					read: async () => '',
+					server: {},
+				}
+			)
+		).toEqual([direct])
+	})
+
 	it('ignores non-css files and mixed module graphs', () => {
 		const plugin = aeroCssImportHmrPlugin()
 		const handler =

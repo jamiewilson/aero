@@ -10,8 +10,6 @@
 import type { UserConfig } from 'vite'
 
 export const defaultViteConfig: UserConfig = {
-	// Tailwind's Vite plugin only passes compile `from` (and thus nested @import
-	// file/line on CssSyntaxError) when CSS sourcemaps are enabled in serve.
 	css: {
 		devSourcemap: true,
 	},

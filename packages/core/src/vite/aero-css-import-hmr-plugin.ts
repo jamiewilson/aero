@@ -10,6 +10,14 @@ function isAssetOnlyCssHotUpdate(modules: ModuleNode[]): boolean {
 	return modules.length > 0 && modules.every(mod => mod.type === 'asset' || mod.id == null)
 }
 
+function selfAcceptingCssModules(modules: ModuleNode[]): ModuleNode[] {
+	return modules.filter(mod => mod.type === 'css' && mod.isSelfAccepting)
+}
+
+function hasOrphanTailwindCssAssets(modules: ModuleNode[]): boolean {
+	return modules.some(mod => mod.type === 'asset' || (mod.id == null && mod.type !== 'css'))
+}
+
 /** Walk importers from asset CSS deps to find self-accepting CSS HMR boundaries. */
 export function collectSelfAcceptingCssImporters(modules: ModuleNode[]): ModuleNode[] {
 	const boundaries = new Set<ModuleNode>()
@@ -44,11 +52,16 @@ export function aeroCssImportHmrPlugin(): Plugin {
 		hotUpdate(ctx) {
 			if (!ctx.file.endsWith('.css')) return
 			const modules = ctx.modules as unknown as ModuleNode[]
-			if (!isAssetOnlyCssHotUpdate(modules)) return
+			if (isAssetOnlyCssHotUpdate(modules)) {
+				const boundaries = collectSelfAcceptingCssImporters(modules)
+				if (boundaries.length === 0) return
+				return boundaries as unknown as typeof ctx.modules
+			}
 
-			const boundaries = collectSelfAcceptingCssImporters(modules)
-			if (boundaries.length === 0) return
-			return boundaries as unknown as typeof ctx.modules
+			const cssBoundaries = selfAcceptingCssModules(modules)
+			if (cssBoundaries.length > 0 && hasOrphanTailwindCssAssets(modules)) {
+				return cssBoundaries as unknown as typeof ctx.modules
+			}
 		},
 	}
 }
