@@ -71,10 +71,6 @@ Manage `<head>` content in your base layout. Use props to let pages customize th
 Pages pass metadata as props through the layout:
 
 ```html client/pages/about.html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout title="About" description="Learn more about us.">
 	<h1>About</h1>
 </base-layout>

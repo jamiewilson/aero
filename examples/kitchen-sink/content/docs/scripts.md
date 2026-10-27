@@ -18,7 +18,6 @@ Example:
 
 ```html
 <script is:build>
-	import header from '@components/header.html'
 	const title = 'Welcome to Aero'
 </script>
 

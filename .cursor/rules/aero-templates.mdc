@@ -10,16 +10,18 @@ Document discoveries from code exploration in [_reference/DISCOVERY.md](_referen
 
 Full script taxonomy: [Scripts](docs/_archive/concepts/scripts.mdx). Legacy `on:build` / `on:client` were replaced by `is:build` and plain `<script>` (client).
 
-## Component Naming
+## Component naming and auto-import
 
-Use `-component` or `-layout` suffix in markup; import without suffix (resolves to .html):
+Use `-component` or `-layout` suffix in markup. By default (`templateAutoImport: true`), matching templates under `client/components/` and `client/layouts/` resolve **without** a build-script import. Still import `@content/*`, TS/JS modules, and assets explicitly.
 
 ```html
-<script is:build>
-	import header from '@components/header'
-</script>
 <header-component title="Hello" />
+<base-layout>
+	<p>Page content</p>
+</base-layout>
 ```
+
+Add `import header from '@components/header.html'` only to override auto-resolution or disambiguate basename collisions. Set `templateAutoImport: false` in `aero.config.ts` to require explicit imports for every tag.
 
 ## Script Types
 

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { chromiumOnly, repoPath, startStaticPreview, type ServerHandle } from './support/harness'
 
-const starterRoot = repoPath('packages', 'starters', 'minimal')
+const starterRoot = repoPath('packages', 'create', 'templates', 'minimal')
 
 test.describe('starter minimal preview', () => {
 	test.describe.configure({ mode: 'serial' })

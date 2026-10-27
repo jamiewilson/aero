@@ -44,10 +44,6 @@ You can put fallback content between the tags if you like.
 **Parent (e.g. client/layouts/parent.html):**
 
 ```html
-<script is:build>
-	import child from '@layouts/child.html'
-</script>
-
 <child-component>
 	<slot name="nav" slot="nav" />
 	<slot />

@@ -11,12 +11,12 @@ cd my-app && pnpm install
 
 ## Structure
 
-| Path | Description |
-| --- | --- |
-| `client/` | Pages, layouts, components, assets |
-| `content/site.ts` | Global site data |
-| `public/` | Static assets copied as-is |
-| `vite.config.ts` | Vite+ entry with `aero()` plugin |
+| Path              | Description                        |
+| ----------------- | ---------------------------------- |
+| `client/`         | Pages, layouts, components, assets |
+| `content/site.ts` | Global site data                   |
+| `public/`         | Static assets copied as-is         |
+| `vite.config.ts`  | Vite+ entry with `aero()` plugin   |
 
 No `server/` — static-only. No root `aero.config.ts`; options live on the `aero()` plugin in `vite.config.ts`.
 

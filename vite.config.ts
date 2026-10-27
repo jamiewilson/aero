@@ -26,20 +26,6 @@ const PACKAGE_PROJECTS: PackageTestProject[] = [
 	{ name: 'aero-vscode', dir: 'packages/vscode' },
 ]
 
-const BUILD_PACKAGES = [
-	'@aero-js/interpolation',
-	'@aero-js/html-parser',
-	'@aero-js/highlight',
-	'@aero-js/diagnostics',
-	'@aero-js/compiler',
-	'@aero-js/prettier-plugin-aero',
-	'@aero-js/reactivity',
-	'@aero-js/hypermedia',
-	'@aero-js/core',
-	'@aero-js/content',
-	'@aero-js/cli',
-] as const
-
 export default defineConfig({
 	staged: {
 		'*': 'vp check --fix',
@@ -95,7 +81,7 @@ export default defineConfig({
 	run: {
 		tasks: {
 			'build:all': {
-				command: BUILD_PACKAGES.map(name => `pnpm --filter ${name} run build`),
+				command: 'node scripts/build-packages.mjs',
 				cache: {
 					input: [
 						{ auto: true },
@@ -142,7 +128,7 @@ export default defineConfig({
 				},
 			},
 			'pack:vscode': {
-				command: 'pnpm --dir packages/vscode exec vsce package --no-dependencies',
+				command: 'pnpm --dir packages/vscode run pack',
 				dependsOn: ['build:vscode'],
 				cache: {
 					output: [{ pattern: 'packages/vscode/*.vsix', base: 'workspace' }],
@@ -156,7 +142,7 @@ export default defineConfig({
 				command: ['pnpm check', 'vp test run', 'pnpm test:e2e:ci'],
 			},
 			'release:prep': {
-				command: ['vp test run', 'pnpm clean:all', 'pnpm install', 'vp run build:all'],
+				command: ['vp test run', 'pnpm clean:all', 'pnpm install', 'pnpm build:packages'],
 			},
 		},
 	},

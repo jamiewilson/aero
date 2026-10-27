@@ -20,5 +20,6 @@ function run(args) {
 	if (result.signal) process.kill(process.pid, result.signal)
 }
 
+run(['build:packages'])
 run(['exec', 'playwright', 'install', 'chromium'])
 run(['exec', 'playwright', ...playwrightArgs])

@@ -57,6 +57,7 @@ export function compileHtmlWithDedupedWarnings(
 		resolvePath: (specifier: string, importer: string) => string
 		reactivity?: boolean
 		hypermedia?: boolean
+		templateAutoImport?: boolean
 		dirs: AeroPluginState['dirs']
 	},
 	clientScripts: Map<string, ScriptEntry>,
@@ -67,12 +68,16 @@ export function compileHtmlWithDedupedWarnings(
 		path.join(params.resolvedConfig.root, params.dirs.client, 'components'),
 		path.join(params.resolvedConfig.root, params.dirs.client, 'layouts'),
 	])
+	const clientRoot = path.join(params.resolvedConfig.root, params.dirs.client)
 	const generated = compileHtmlSourceForVite(
 		code,
 		filePath,
 		{
 			...params,
 			componentReactiveProps,
+			templateAutoImport: params.templateAutoImport,
+			componentsDir: path.join(clientRoot, 'components'),
+			layoutsDir: path.join(clientRoot, 'layouts'),
 			onWarning: warning => {
 				warnings.push(warning)
 			},

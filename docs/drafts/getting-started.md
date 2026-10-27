@@ -62,11 +62,6 @@ Layouts wrap pages with shared structure (HTML head, navigation, footer). They u
 Here's the layout from the minimal template (`client/layouts/base.html`):
 
 ```html
-<script is:build>
-	import meta from '@components/meta.html'
-	import footer from '@components/footer.html'
-</script>
-
 <html lang="en">
 	<head>
 		<meta-component props="{...Aero.props}" />
@@ -84,13 +79,9 @@ Here's the layout from the minimal template (`client/layouts/base.html`):
 </html>
 ```
 
-To use a layout, import it in your page's `<script is:build>` and wrap your content with it:
+To use a layout, wrap your content in a layout tag:
 
 ```html
-<script is:build>
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<h1>Contact</h1>
 	<p>Get in touch at hello@example.com</p>
@@ -105,7 +96,7 @@ The layout's `<slot />` is replaced with your page content.
 
 ## Components
 
-Components are reusable `.html` files in `client/components/`. Import them in `<script is:build>` and use them with a `-component` suffix in markup:
+Components are reusable `.html` files in `client/components/`. Use them with a `-component` suffix in markup (auto-imported by default):
 
 ```html
 <!-- client/components/greeting.html -->
@@ -119,11 +110,6 @@ Components are reusable `.html` files in `client/components/`. Import them in `<
 Use it in a page:
 
 ```html
-<script is:build>
-	import base from '@layouts/base.html'
-	import greeting from '@components/greeting.html'
-</script>
-
 <base-layout>
 	<greeting-component name="World" />
 </base-layout>
@@ -199,11 +185,10 @@ Aero has two main script types — build scripts and client scripts:
 
 ### `<script is:build>` — Build time
 
-Runs at build time in Node.js. Use it to import components, fetch data, and prepare variables. This code **never** reaches the browser:
+Runs at build time in Node.js. Use it to import content and modules, fetch data, and prepare variables. This code **never** reaches the browser:
 
 ```html
 <script is:build>
-	import header from '@components/header.html'
 	import site from '@content/site.ts'
 
 	const title = site.meta.title

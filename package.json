@@ -13,6 +13,7 @@
 		"fmt:check": "vp fmt --check . && prettier --check \"**/*.html\"",
 		"test:e2e": "node scripts/run-playwright-local.js test",
 		"test:e2e:ci": "playwright test",
+		"build:packages": "node scripts/build-packages.mjs",
 		"typecheck": "pnpm -r typecheck",
 		"clean:all": "rm -rf node_modules && find packages examples -type d \\( -name node_modules -o -name dist -o -name build -o -name .output -o -name .aero \\) -prune -exec rm -rf {} +",
 		"version:bump": "node scripts/bump-versions.js",

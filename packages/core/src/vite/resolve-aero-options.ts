@@ -17,5 +17,6 @@ export function normalizeAeroOptions(options: AeroOptions = {}): Omit<AeroOption
 		server: rest.server ?? false,
 		reactivity: rest.reactivity ?? false,
 		hypermedia: rest.hypermedia ?? false,
+		templateAutoImport: rest.templateAutoImport ?? true,
 	}
 }

@@ -29,6 +29,8 @@ export interface CollectTemplateDiagnosticsInput {
 	root: string
 	workspaceRoot?: string
 	flags?: FeatureGateFlags
+	/** When omitted, read from loaded aero.config (`templateAutoImport` defaults to true). */
+	templateAutoImport?: boolean
 	/**
 	 * Optional overlay for cross-file reads (e.g. open unsaved editor buffers).
 	 * Return `undefined` to fall back to reading from disk.
@@ -47,14 +49,16 @@ export function collectTemplateDiagnostics(
 	const diagnostics: AeroDiagnostic[] = []
 	const resolver = getResolver(document.uri.fsPath, workspaceRoot ?? input.root)
 	const { text } = parsed
-	const flags = input.flags ?? loadResolvedAeroConfig(resolver.root).flags
+	const resolvedConfig = loadResolvedAeroConfig(resolver.root)
+	const flags = input.flags ?? resolvedConfig.flags
+	const templateAutoImport = input.templateAutoImport ?? resolvedConfig.templateAutoImport
 
 	checkScriptTags(document, text, diagnostics, parsed)
 	checkConditionalChains(document, text, diagnostics)
 	checkDirectiveExpressionBraces(document, text, diagnostics)
 	checkTemplateImportSpecifiers(document, text, diagnostics)
 	checkHypermediaBuildImports(document, text, diagnostics)
-	checkComponentReferences(document, text, diagnostics, resolver)
+	checkComponentReferences(document, text, diagnostics, resolver, templateAutoImport)
 	checkComponentProps(
 		document,
 		text,
@@ -82,6 +86,12 @@ export function collectTemplateDiagnostics(
 
 export { parseDocument } from './document-analysis'
 export type { ParsedDocument } from './document-analysis'
-export { getResolver, clearResolverCache, type PathResolver } from './path-resolver'
+export {
+	getResolver,
+	clearResolverCache,
+	getTemplateTagIndex,
+	type PathResolver,
+} from './path-resolver'
+export { resolveComponentTagSpecifier } from './template-tag-resolver'
 export type { SourceDocument, SourceRange, SourcePosition } from './source-document'
 export { findAeroProjectRoot, isAeroProjectPath } from './project-scope'

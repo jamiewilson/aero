@@ -3,8 +3,7 @@ import { appendDirectQueryToDevStylesheetLinks } from '../dev-linked-stylesheets
 
 describe('appendDirectQueryToDevStylesheetLinks', () => {
 	it('appends ?direct to local stylesheet links', () => {
-		const html =
-			'<head><link rel="stylesheet" href="/client/assets/styles/global.css"></head>'
+		const html = '<head><link rel="stylesheet" href="/client/assets/styles/global.css"></head>'
 		expect(appendDirectQueryToDevStylesheetLinks(html)).toBe(
 			'<head><link rel="stylesheet" href="/client/assets/styles/global.css?direct"></head>'
 		)

@@ -28,6 +28,9 @@ interface CompileHtmlForViteParams {
 	reactivity?: boolean
 	/** Enable Aero hypermedia pipeline. */
 	hypermedia?: boolean
+	templateAutoImport?: boolean
+	componentsDir?: string
+	layoutsDir?: string
 	componentReactiveProps?: Record<string, readonly ComponentReactivePropMetadata[]>
 }
 
@@ -73,6 +76,9 @@ export function compileHtmlSourceForVite(
 			hypermedia: params.hypermedia,
 			componentReactiveProps: params.componentReactiveProps,
 			styleCssModuleIds,
+			templateAutoImport: params.templateAutoImport,
+			componentsDir: params.componentsDir,
+			layoutsDir: params.layoutsDir,
 		},
 		parsed
 	)

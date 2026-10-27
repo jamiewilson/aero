@@ -105,26 +105,67 @@ vi.mock('vscode', () => {
 })
 
 vi.mock('../pathResolver', () => ({
-	getResolver: vi.fn(() => ({
-		root: '/workspace',
-		resolve: vi.fn((specifier: string) => {
-			if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
-				return '/workspace/node_modules/@aero-js/core/env.d.ts'
-			}
-			if (specifier.startsWith('@components/')) {
-				return '/workspace/client/components/' + specifier.replace('@components/', '')
-			}
-			if (specifier.startsWith('@layouts/')) {
-				return '/workspace/client/layouts/' + specifier.replace('@layouts/', '')
-			}
-			if (specifier.startsWith('@content/')) {
-				return '/workspace/content/' + specifier.replace('@content/', '')
-			}
-			return '/workspace/' + specifier
-		}),
-	})),
+	getResolver: vi.fn(() => {
+		const componentsDir = '/workspace/client/components'
+		const layoutsDir = '/workspace/client/layouts'
+		return {
+			root: '/workspace',
+			componentsDir,
+			layoutsDir,
+			pagesDir: '/workspace/client/pages',
+			resolve: vi.fn((specifier: string) => {
+				if (specifier === 'aero:content' || specifier.startsWith('aero:content/')) {
+					return '/workspace/node_modules/@aero-js/core/env.d.ts'
+				}
+				if (specifier.startsWith('@components/')) {
+					return '/workspace/client/components/' + specifier.replace('@components/', '')
+				}
+				if (specifier.startsWith('@layouts/')) {
+					return '/workspace/client/layouts/' + specifier.replace('@layouts/', '')
+				}
+				if (specifier.startsWith('@content/')) {
+					return '/workspace/content/' + specifier.replace('@content/', '')
+				}
+				return '/workspace/' + specifier
+			}),
+		}
+	}),
 	clearResolverCache: vi.fn(),
 }))
+
+vi.mock('@aero-js/core/template-diagnostics', async importOriginal => {
+	const actual = await importOriginal<typeof import('@aero-js/core/template-diagnostics')>()
+	const { buildTemplateTagIndexFromPaths } = await import('@aero-js/compiler')
+	const componentsDir = '/workspace/client/components'
+	const layoutsDir = '/workspace/client/layouts'
+	const stubIndex = buildTemplateTagIndexFromPaths({
+		componentPaths: [`${componentsDir}/header.html`],
+		layoutPaths: [],
+		componentsDir,
+		layoutsDir,
+	})
+	return {
+		...actual,
+		getTemplateTagIndex: vi.fn(() => stubIndex),
+		resolveComponentTagSpecifier: vi.fn((_resolver, options) => {
+			if (options.importedSpecifier) {
+				return actual.resolveComponentTagSpecifier(
+					_resolver as Parameters<typeof actual.resolveComponentTagSpecifier>[0],
+					options
+				)
+			}
+			const resolved = stubIndex.components.get(options.tagBase)
+			if (!resolved?.length) {
+				return {
+					status: 'diagnostic',
+					message: `Component '${options.tagBase}' was not found under @components.`,
+					severity: 'error',
+				} as const
+			}
+			return { status: 'ok', specifier: resolved[0]!.specifier }
+		}),
+	}
+})
 
 vi.mock('../scope', () => ({
 	isAeroDocument: vi.fn(() => true),

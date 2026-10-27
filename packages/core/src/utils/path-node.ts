@@ -4,8 +4,6 @@
 
 import path from 'node:path'
 
-import { toPosix } from './path'
-
 /**
  * Normalize a path to be relative to root and POSIX format.
  */

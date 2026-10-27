@@ -24,15 +24,15 @@ Aero is a static site generator with a custom HTML-first template engine. The **
 
 ## Key Conventions
 
-### Component Naming
+### Component naming and auto-import
 
-Components use `-component` or `-layout` suffix in markup and are imported without suffix:
+Components use `-component` or `-layout` suffix in markup. By default, templates auto-resolve from `client/components/` and `client/layouts/` without a build-script import. Import `@content/*`, TS/JS, and assets explicitly; add `@components/…` or `@layouts/…` imports only to override or disambiguate.
 
 ```html
-<script is:build>
-	import header from '@components/header.html' <!-- resolves header.html -->
-</script>
 <header-component title="Hello" />
+<base-layout>
+	<p>Page content</p>
+</base-layout>
 ```
 
 ### Script Types

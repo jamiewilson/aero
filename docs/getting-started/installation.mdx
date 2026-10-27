@@ -58,13 +58,9 @@ The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and th
 
     Visit `http://localhost:5173/about` — no routing config needed.
 
-    To add a layout, import it in a `<script is:build>` block and wrap your content:
+    To add a layout, wrap your content in the layout tag (no import required by default):
 
     ```html pages/about.html
-    <script is:build>
-      import base from '@layouts/base.html'
-    </script>
-
     <base-layout>
       <h1>About</h1>
       <p>This is a new page.</p>
@@ -112,14 +108,14 @@ The fastest way to start is with **[Vite+](https://viteplus.dev/guide/)** and th
 
 ## Commands reference
 
-| Command | Description |
-| --- | --- |
-| `vp dev` | Start the dev server with HMR |
-| `vp build` | Build to `dist/` (and `.output/` with Nitro) |
-| `vp preview` | Serve the production build locally after `vp build` (static / no Nitro APIs) |
-| `vpx nitro preview` | Preview static + API from one origin after `vp build` (Nitro; recommended locally) |
-| `node .output/server/index.mjs` | Same Nitro app via the production Node entry (after `vp build`; deploy parity) |
-| `pnpm fmt` | Format JS/TS (`vp fmt`) and Aero HTML (Prettier) |
+| Command                         | Description                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| `vp dev`                        | Start the dev server with HMR                                                      |
+| `vp build`                      | Build to `dist/` (and `.output/` with Nitro)                                       |
+| `vp preview`                    | Serve the production build locally after `vp build` (static / no Nitro APIs)       |
+| `vpx nitro preview`             | Preview static + API from one origin after `vp build` (Nitro; recommended locally) |
+| `node .output/server/index.mjs` | Same Nitro app via the production Node entry (after `vp build`; deploy parity)     |
+| `pnpm fmt`                      | Format JS/TS (`vp fmt`) and Aero HTML (Prettier)                                   |
 
 ## Next steps
 

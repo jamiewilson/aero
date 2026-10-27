@@ -46,23 +46,18 @@ Create a `.html` file in `client/components/`. The component reads its data from
 
 ## Using a component
 
-Import the component in your page's `<script is:build>` block, then use `<greeting-component>` in markup:
+Use `<greeting-component>` in markup (no import required unless you override or disambiguate):
 
 ```html
 <!-- client/pages/index.html -->
-<script is:build>
-	import base from '@layouts/base.html'
-	import greeting from '@components/greeting.html'
-</script>
-
 <base-layout>
 	<greeting-component name="World" />
 </base-layout>
 ```
 
 <Note>
-	Import the file without its extension: `import greeting from '@components/greeting.html'` resolves
-	to `client/components/greeting.html`.
+	Explicit imports use the `.html` extension and override auto-import. See
+	[Templates](/getting-started/templates#template-auto-import).
 </Note>
 
 ## Passing props
@@ -97,7 +92,6 @@ If you have a variable called `props` in the build script, the bare `props` attr
 ```html
 <!-- Page -->
 <script is:build>
-	import card from '@components/card.html'
 	const props = { title: 'Hello', subtitle: 'World', accent: 'blue' }
 </script>
 
@@ -141,11 +135,6 @@ Here is a card component that uses props for content and passes theme data into 
 Use it on a page:
 
 ```html
-<script is:build>
-	import base from '@layouts/base.html'
-	import card from '@components/card.html'
-</script>
-
 <base-layout>
 	<card-component title="Getting started" subtitle="Learn the basics." accent="blue" />
 </base-layout>

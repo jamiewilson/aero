@@ -89,8 +89,6 @@ Return an array of `{ params }` objects — one per URL you want to generate:
 ```html
 <!-- client/pages/[id].html -->
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export function getStaticPaths() {
 		return [{ params: { id: 'alpha' } }, { params: { id: 'beta' } }, { params: { id: 'gamma' } }]
 	}
@@ -115,8 +113,6 @@ dist/gamma/index.html
 
 ```html
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export async function getStaticPaths() {
 		const res = await fetch('https://api.example.com/posts')
 		const posts = await res.json()
@@ -132,8 +128,6 @@ Dynamic segments work inside subdirectories too:
 ```html
 <!-- client/pages/docs/[slug].html -->
 <script is:build>
-	import base from '@layouts/base.html'
-
 	export function getStaticPaths() {
 		return [{ params: { slug: 'intro' } }, { params: { slug: 'name' } }]
 	}

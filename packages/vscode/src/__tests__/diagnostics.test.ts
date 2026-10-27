@@ -1794,7 +1794,7 @@ describe('AeroDiagnostics Component References', () => {
 		expect(notImported).toHaveLength(0)
 	})
 
-	it('should flag extensionless template imports and treat layout usage as not imported', () => {
+	it('should flag extensionless template imports and report unresolved layout tags', () => {
 		const text = `<script is:build>
 	import base from '@layouts/base'
 </script>
@@ -1820,14 +1820,16 @@ describe('AeroDiagnostics Component References', () => {
 		const missingExtension = reportedDiagnostics.find((d: any) =>
 			d.message.includes('Template imports must include the .html extension')
 		)
-		const notImported = reportedDiagnostics.find((d: any) =>
-			d.message.includes("Component 'base' is not imported")
+		const layoutResolve = reportedDiagnostics.find(
+			(d: any) =>
+				d.message.includes('base') &&
+				(d.message.includes('not imported') || d.message.includes('was not found'))
 		)
 		expect(missingExtension).toBeDefined()
-		expect(notImported).toBeDefined()
+		expect(layoutResolve).toBeDefined()
 	})
 
-	it('should underline only the tag name when a component is not imported', () => {
+	it('should underline only the tag name when a component cannot be resolved', () => {
 		const text = `<missing-component />`
 		const doc = {
 			uri: {
@@ -1845,11 +1847,13 @@ describe('AeroDiagnostics Component References', () => {
 		runDiagnostics(doc)
 
 		const reportedDiagnostics = mockSet.mock.calls[0]?.[1] ?? []
-		const notImported = reportedDiagnostics.find((d: any) =>
-			d.message.includes("Component 'missing' is not imported")
+		const unresolved = reportedDiagnostics.find(
+			(d: any) =>
+				d.message.includes('missing') &&
+				(d.message.includes('not imported') || d.message.includes('was not found'))
 		)
-		expect(notImported).toBeDefined()
-		expectDiagnosticRange(text, notImported, '<missing-component')
+		expect(unresolved).toBeDefined()
+		expectDiagnosticRange(text, unresolved, '<missing-component')
 	})
 
 	it('should ignore components inside client scripts', () => {

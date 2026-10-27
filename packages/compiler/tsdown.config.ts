@@ -30,6 +30,7 @@ const entry = [
 	'src/parse-props-attribute-bindings.ts',
 	'src/types.ts',
 	'src/path.ts',
+	'src/fs-walk.ts',
 	'src/directive-attributes.ts',
 	'src/tokenizer.ts',
 	'src/lowerer/index.ts',

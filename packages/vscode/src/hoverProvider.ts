@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as fs from 'node:fs'
 import { classifyPosition } from './positionAt'
 import { getResolver } from './pathResolver'
+import { resolveComponentTagAlias } from './resolveComponentTag'
 import { isAeroDocument } from './scope'
 
 /**
@@ -60,10 +61,13 @@ export class AeroHoverProvider implements vscode.HoverProvider {
 			}
 
 			case 'component-tag': {
-				const alias =
-					classification.suffix === 'component'
-						? `@components/${classification.baseName}.html`
-						: `@layouts/${classification.baseName}.html`
+				const alias = resolveComponentTagAlias(
+					resolver,
+					document.getText(),
+					document.uri.fsPath,
+					classification
+				)
+				if (!alias) return null
 				const resolved = resolver.resolve(alias, document.uri.fsPath)
 				if (!resolved) return null
 

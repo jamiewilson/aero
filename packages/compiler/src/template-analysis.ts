@@ -37,6 +37,10 @@ import {
 } from './state-script-analysis'
 import { collectStateReferenceNames } from './lower-state-script'
 import { AERO_ATTR_PREFIX, ATTR_PROPS, DATA_AERO_ATTR_PREFIX } from './constants'
+import {
+	mergeSyntheticTemplateImports,
+	resolveTemplateTagIndexForCompile,
+} from './merge-synthetic-template-imports'
 
 function buildImportsCode(
 	imports: ReturnType<typeof analyzeBuildScript>['imports'],
@@ -260,15 +264,6 @@ export function buildTemplateAnalysis(
 			)
 		: ''
 	const getStaticPathsFn = analysis.getStaticPathsFn
-	const importsCode = buildImportsCode(
-		[...analysis.imports, ...(stateImportAnalysis?.imports ?? [])],
-		resolver
-	)
-	const defaultImportBindings = new Set(
-		[...analysis.imports, ...(stateImportAnalysis?.imports ?? [])]
-			.map(imp => imp.defaultBinding)
-			.filter((name): name is string => name !== null)
-	)
 	const { text: expandedTemplate, restore } = escapeInterpolationBodyMarkup(
 		escapeEntityEncodedElementMarkup(expandSelfClosingTags(parsed.template))
 	)
@@ -281,6 +276,22 @@ export function buildTemplateAnalysis(
 	const { styleCode, styleImportsCode } = extractTopLevelStyleCode(document.body, lowerer, options)
 	const bodyIR = document.body ? lowerer.compileFragment(document.body.childNodes) : []
 	const { bodyCode } = emitBodyAndStyle({ body: bodyIR, style: [] })
+
+	const tagIndex = resolveTemplateTagIndexForCompile(options)
+	const buildImports =
+		tagIndex != null
+			? mergeSyntheticTemplateImports(analysis.imports, bodyIR, options, tagIndex)
+			: analysis.imports
+	const importsCode = buildImportsCode(
+		[...buildImports, ...(stateImportAnalysis?.imports ?? [])],
+		resolver
+	)
+	const defaultImportBindings = new Set(
+		[...buildImports, ...(stateImportAnalysis?.imports ?? [])]
+			.map(imp => imp.defaultBinding)
+			.filter((name): name is string => name !== null)
+	)
+
 	const editorAmbient = getTemplateEditorAmbientFromParsed(parsed)
 	const importsWithStyles = [styleImportsCode, importsCode].filter(Boolean).join('\n')
 

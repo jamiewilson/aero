@@ -7,6 +7,7 @@ import { createRequire } from 'node:module'
 import { loadTsconfigAliases, mergeWithDefaultAliases } from '../utils/aliases'
 import { AERO_CONFIG_NAMES } from '../utils/aero-config'
 import { loadResolvedAeroConfig } from '../config/loadResolvedAeroConfig'
+import { buildTemplateTagIndex, type TemplateTagIndex } from '@aero-js/compiler'
 import { isExistingFile, resolveImportToFile } from './importResolution'
 
 function findAeroAppRoot(startDir: string, workspaceRoot?: string): string | undefined {
@@ -34,6 +35,18 @@ export interface PathResolver {
 }
 
 const resolverCache = new Map<string, PathResolver>()
+const tagIndexByRoot = new Map<string, TemplateTagIndex>()
+
+export function getTemplateTagIndex(resolver: PathResolver): TemplateTagIndex {
+	const cached = tagIndexByRoot.get(resolver.root)
+	if (cached) return cached
+	const index = buildTemplateTagIndex({
+		componentsDir: resolver.componentsDir,
+		layoutsDir: resolver.layoutsDir,
+	})
+	tagIndexByRoot.set(resolver.root, index)
+	return index
+}
 
 function resolveAeroContentTypes(): string | undefined {
 	const requireFromCore = createRequire(import.meta.url)
@@ -95,4 +108,5 @@ export function getResolver(filePath: string, workspaceRoot?: string): PathResol
 
 export function clearResolverCache(): void {
 	resolverCache.clear()
+	tagIndexByRoot.clear()
 }

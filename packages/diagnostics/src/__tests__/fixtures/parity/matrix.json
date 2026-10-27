@@ -155,6 +155,19 @@
 			"owner": "core"
 		},
 		{
+			"ruleId": "component.auto-import-resolution",
+			"category": "component",
+			"surfaces": ["compile", "ide", "cli"],
+			"code": "AERO_RESOLVE",
+			"severity": "error",
+			"sharedModule": "packages/core/src/template-diagnostics/checks/check-component-references.ts",
+			"intentionalAsymmetry": true,
+			"intentionalNote": "Requires discovered template paths on disk; see packages/core/src/template-diagnostics/__tests__/component-auto-import-diagnostics.test.ts and compiler template-synthetic-imports tests.",
+			"scenarioIds": [],
+			"owner": "core",
+			"notes": "Tag-only markup resolves via template tag index when templateAutoImport is enabled; explicit imports override."
+		},
+		{
 			"ruleId": "ide.undefined-script-variables",
 			"category": "warnings",
 			"surfaces": ["ide"],

@@ -21,17 +21,18 @@ export default defineConfig({
 
 ### Plugin options
 
-| Option       | Type                           | Description                                                            |
-| ------------ | ------------------------------ | ---------------------------------------------------------------------- |
-| `content`    | `boolean \| object`            | Enable content collections. Default `false`.                           |
-| `server`     | `boolean`                      | Enable Nitro for API routes. Default `false`.                          |
-| `site`       | `string \| object`             | Canonical site URL. Exposed as `import.meta.env.SITE` and `Aero.site`. |
-| `redirects`  | `Array<{ from, to, status? }>` | Path redirects for dev and production.                                 |
-| `middleware` | `Array`                        | Dev-only request handlers.                                             |
-| `dirs`       | `object`                       | Override `client`, `server`, and `dist` directory names.               |
-| `apiPrefix`  | `string`                       | URL prefix for API routes. Default `'/api'`.                           |
-| `reactivity` | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.     |
-| `hypermedia` | `boolean`                      | Enable `GET`/`POST`/… actions and fragment swaps. Default `false`.     |
+| Option               | Type                           | Description                                                                         |
+| -------------------- | ------------------------------ | ----------------------------------------------------------------------------------- |
+| `content`            | `boolean \| object`            | Enable content collections. Default `false`.                                        |
+| `server`             | `boolean`                      | Enable Nitro for API routes. Default `false`.                                       |
+| `site`               | `string \| object`             | Canonical site URL. Exposed as `import.meta.env.SITE` and `Aero.site`.              |
+| `redirects`          | `Array<{ from, to, status? }>` | Path redirects for dev and production.                                              |
+| `middleware`         | `Array`                        | Dev-only request handlers.                                                          |
+| `dirs`               | `object`                       | Override `client`, `server`, and `dist` directory names.                            |
+| `apiPrefix`          | `string`                       | URL prefix for API routes. Default `'/api'`.                                        |
+| `reactivity`         | `boolean`                      | Enable `<script is:state>` and reactive bindings. Default `false`.                  |
+| `hypermedia`         | `boolean`                      | Enable `GET`/`POST`/… actions and fragment swaps. Default `false`.                  |
+| `templateAutoImport` | `boolean`                      | Resolve `-layout` / `-component` tags without build-script imports. Default `true`. |
 
 ```ts vite.config.ts
 import { defineConfig } from 'vite'
@@ -99,10 +100,9 @@ Aero injects default path aliases so imports work without `tsconfig.json` config
 | `@images/*`     | `client/assets/images/*`  |
 
 ```html
-<script is:build>
-	import base from '@layouts/base.html'
-	import header from '@components/header.html'
-</script>
+<base-layout>
+	<header-component title="Hello" />
+</base-layout>
 
 <link rel="stylesheet" href="@styles/global.css" />
 ```

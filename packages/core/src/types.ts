@@ -36,6 +36,8 @@ export interface AeroOptions {
 	reactivity?: boolean
 	/** Enable Aero hypermedia pipeline (default: `false`). */
 	hypermedia?: boolean
+	/** Auto-import layouts/components used in markup (default: `true`). */
+	templateAutoImport?: boolean
 	/** API route prefix (default: `'/api'`). */
 	apiPrefix?: string
 	/** Directory overrides. */
@@ -299,6 +301,12 @@ export interface StandaloneTemplateCompileOptions {
 	importer: string
 	/** Optional alias/path resolver compatible with compiler `resolvePath`. */
 	resolvePath?: (specifier: string, importer: string) => string
+	/** Auto-import layout/component tags (default: `true` when dirs are set). */
+	templateAutoImport?: boolean
+	/** Component root for auto-import (default: `{root}/client/components`). */
+	componentsDir?: string
+	/** Layout root for auto-import (default: `{root}/client/layouts`). */
+	layoutsDir?: string
 }
 
 /** Input for loading precompiled module source into a renderable Aero page module. */

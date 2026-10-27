@@ -31,9 +31,9 @@ node scripts/smoke-template-build.mjs minimal
 
 ## Templates
 
-| Name          | Description                                                  |
-| ------------- | ------------------------------------------------------------ |
-| **minimal**   | Static site — `client/`, `content/site.ts`, no `server/`     |
+| Name          | Description                                                                   |
+| ------------- | ----------------------------------------------------------------------------- |
+| **minimal**   | Static site — `client/`, `content/site.ts`, no `server/`                      |
 | **fullstack** | Static + Nitro — `server/`, `nitro.config.ts`, `vp build` + `.output/` server |
 
 ## Links

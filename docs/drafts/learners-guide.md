@@ -8,7 +8,6 @@ For example, all of these can appear in one file:
 
 ```html
 <script is:build>
-	import card from '@components/card.html'
 	const title = 'Hello'
 </script>
 
@@ -202,24 +201,19 @@ Aero adds:
 
 ---
 
-## Imported `.html` components and layouts — **Aero-only**
+## `.html` components and layouts — **Aero-only**
 
-Problem: HTML does not have a native file-import-based component system for static templates.
+Problem: HTML does not have a native file-based component or layout system for static templates.
 
-In Aero, you can import an `.html` template and use it as a component or layout:
+In Aero, you use `-layout` and `-component` tags; the build resolves them to `.html` files under `client/layouts/` and `client/components/` (no import required by default):
 
 ```html
-<script is:build>
-	import header from '@components/header.html'
-	import base from '@layouts/base.html'
-</script>
-
 <base-layout>
 	<header-component title="Hello" />
 </base-layout>
 ```
 
-The browser does not natively know that `header.html` becomes `<header-component>`.
+The browser does not natively know that `<header-component>` came from `client/components/header.html`.
 
 ---
 
