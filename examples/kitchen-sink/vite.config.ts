@@ -6,5 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(viteEnv =>
 	mergeConfig(createViteConfig(aeroConfig, viteEnv), {
 		plugins: [tailwindcss({ optimize: false })],
+		build: { minify: false },
 	})
 )

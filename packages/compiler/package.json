@@ -66,6 +66,10 @@
 			"types": "./dist/path.d.mts",
 			"default": "./dist/path.mjs"
 		},
+		"./fs-walk": {
+			"types": "./dist/fs-walk.d.mts",
+			"default": "./dist/fs-walk.mjs"
+		},
 		"./directive-attributes": {
 			"types": "./dist/directive-attributes.d.mts",
 			"default": "./dist/directive-attributes.mjs"

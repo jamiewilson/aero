@@ -21,6 +21,19 @@ export {
 export { buildTemplateAnalysis, type TemplateAnalysis } from './template-analysis'
 
 export {
+	buildTemplateTagIndex,
+	buildTemplateTagIndexFromPaths,
+	resolveTemplateTag,
+	formatResolveTemplateTagError,
+	type TemplateTagKind,
+	type TemplateTagEntry,
+	type TemplateTagIndex,
+	type ResolveTemplateTagResult,
+	type BuildTemplateTagIndexOptions,
+	type BuildTemplateTagIndexFromPathsOptions,
+} from './template-tag-index'
+
+export {
 	buildTemplateEditorAmbient,
 	getTemplateEditorAmbientFromParsed,
 	type TemplateEditorAmbient,
