@@ -34,7 +34,7 @@ From `examples/kitchen-sink` (run `vp run build:all` once from repo root if work
 | `vp build --mode debug`                     | [`.env.debug`](./.env.debug): incremental + debug logs          |
 | `vp build --mode static`                    | Static-only build — [`.env.static`](./.env.static)              |
 | `vp preview`                                | Serve the production build locally (after static or `--mode static` build) |
-| `pnpx nitro preview`                        | Full app preview — static + API from `.output/` (after `vp build`) |
+| `vpx nitro preview`                        | Full app preview — static + API from `.output/` (after `vp build`) |
 | `node .output/server/index.mjs`             | Production Node server entry (after `vp build`; deploy parity)  |
 
 **Fallow / static analysis** — [`.fallowrc.json`](./.fallowrc.json); regenerate entries with `aero graph --format fallow-entry` ([fallow-aero.md](../../_reference/guides/fallow-aero.md)).

@@ -443,7 +443,7 @@ To auto-load `aero.config.ts` without importing it, use `createViteConfig()` wit
 
 Playwright (root): `pnpm test:e2e` (local; pass `-- --headed` / `--debug`), `pnpm test:e2e:ci` (CI).
 
-**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static` then `vp preview`; full `vp build` then `pnpx nitro preview` (or `node .output/server/index.mjs` for production Node entry).
+**Kitchen-sink** (`examples/kitchen-sink/`): `vp dev --open`; `vp build --mode ci` (CI); `vp build --mode static` then `vp preview`; full `vp build` then `vpx nitro preview` (or `node .output/server/index.mjs` for production Node entry).
 
 **Import-bundling demos**: `cd examples/import-bundling/<demo> && vp dev` (or `vp build` / `vp preview`).
 

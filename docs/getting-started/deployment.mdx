@@ -61,7 +61,7 @@ After **`vp build`**:
 | Command | When to use |
 | --- | --- |
 | `vp preview` | Static `dist/` only — no Nitro APIs (`server: false` or static-only build) |
-| `pnpx nitro preview` | Full app locally: Nitro serves `.output` public assets + server (recommended after a Nitro build) |
+| `vpx nitro preview` | Full app locally: Nitro serves `.output` public assets + server (recommended after a Nitro build) |
 | `node .output/server/index.mjs` | Production Node server entry — same process as many Node deployments |
 
-<Tip>Prefer **`pnpx nitro preview`** for day-to-day API smoke tests; use **`node .output/server/index.mjs`** when you need to match production startup exactly.</Tip>
+<Tip>Prefer **`vpx nitro preview`** for day-to-day API smoke tests; use **`node .output/server/index.mjs`** when you need to match production startup exactly.</Tip>

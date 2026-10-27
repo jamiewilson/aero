@@ -105,7 +105,7 @@ cd my-app && pnpm install && vp dev
 vp dev --open
 vp build --mode ci
 vp build --mode static   # then vp preview
-pnpx nitro preview       # after vp build (Nitro; local default)
+vpx nitro preview       # after vp build (Nitro; local default)
 node .output/server/index.mjs   # after vp build (production Node entry)
 pnpm fmt              # vp fmt + Prettier HTML (from app dir)
 ```

@@ -18,11 +18,11 @@ Install [Vite+](https://viteplus.dev/guide/) (`vp`) once, then from the project 
 | `vp dev` | Dev server with Nitro |
 | `vp build` | Static HTML + Nitro output (`vp build --mode static` for static-only; see `.env.static`) |
 | `vp preview` | Serve the production build locally after `vp build` (static-only; use with `vp build --mode static`) |
-| `pnpx nitro preview` | Preview static + API from `.output/` after a full `vp build` (recommended) |
+| `vpx nitro preview` | Preview static + API from `.output/` after a full `vp build` (recommended) |
 | `node .output/server/index.mjs` | Same app via the production Node entry (deploy parity; after `vp build`) |
 | `pnpm fmt` | Format JS/TS and Aero HTML |
 
-**Nitro preview:** **`pnpx nitro preview`** is the usual local check — Nitro loads build info, serves public assets and the server together, and applies preview env files. **`node .output/server/index.mjs`** runs the bundled server exactly as on a Node host; use it when debugging production startup or in scripts/CI.
+**Nitro preview:** **`vpx nitro preview`** is the usual local check — Nitro loads build info, serves public assets and the server together, and applies preview env files. **`node .output/server/index.mjs`** runs the bundled server exactly as on a Node host; use it when debugging production startup or in scripts/CI.
 
 ## Structure
 
