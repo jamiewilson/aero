@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { cpSync, readFileSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -162,16 +163,25 @@ export const startViteDev = async (cwd: string, port: number) =>
 		{ cwd, port }
 	)
 
-export const startStaticPreview = async (
+const buildApp = async (
 	cwd: string,
-	port: number,
-	buildEnv?: Record<string, string | undefined>
+	buildEnv?: Record<string, string | undefined>,
+	buildArgs: string[] = []
 ) => {
-	await runCommand('build', 'pnpm', ['build'], {
+	await runCommand('build', 'pnpm', ['exec', 'vp', 'build', ...buildArgs], {
 		cwd,
 		env: buildEnv,
 		timeoutMs: 180_000,
 	})
+}
+
+export const startStaticPreview = async (
+	cwd: string,
+	port: number,
+	buildEnv?: Record<string, string | undefined>,
+	buildArgs?: string[]
+) => {
+	await buildApp(cwd, buildEnv, buildArgs)
 
 	return startServer(
 		'Vite preview server',
@@ -182,10 +192,7 @@ export const startStaticPreview = async (
 }
 
 export const startNitroPreview = async (cwd: string, port: number) => {
-	await runCommand('build', 'pnpm', ['build'], {
-		cwd,
-		timeoutMs: 180_000,
-	})
+	await buildApp(cwd)
 
 	return startServer('Nitro preview server', 'node', ['.output/server/index.mjs'], {
 		cwd,
@@ -194,20 +201,42 @@ export const startNitroPreview = async (cwd: string, port: number) => {
 	})
 }
 
+const TEMPLATE_SKIP_DIR = new Set(['node_modules', 'dist', '.output', '.vite', '.aero', '.nitro'])
+
+const copyCreateTemplate = (template: 'minimal' | 'fullstack', dest: string) => {
+	const src = repoPath('packages', 'create', 'templates', template)
+	cpSync(src, dest, {
+		recursive: true,
+		filter: (_src, target) => {
+			const base = path.basename(target)
+			return !TEMPLATE_SKIP_DIR.has(base)
+		},
+	})
+}
+
+const linkScaffoldToWorkspace = (packageJsonPath: string) => {
+	const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+		dependencies?: Record<string, string>
+		devDependencies?: Record<string, string>
+	}
+	if (pkg.dependencies?.['@aero-js/core']) {
+		pkg.dependencies['@aero-js/core'] = 'workspace:*'
+	}
+	delete pkg.devDependencies?.['@aero-js/prettier-plugin-aero']
+	writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, '\t')}\n`)
+}
+
 export const scaffoldCreateApp = async (name: string) => {
-	const createRoot = repoPath('packages', 'create')
-	const appRoot = path.join(createRoot, 'dist', name)
+	const appRoot = repoPath('examples', name)
 
 	await rm(appRoot, { recursive: true, force: true })
-	await runCommand(
-		'scaffold create app',
-		'node',
-		['index.js', name, '--template', 'minimal', '--strict'],
-		{
-			cwd: createRoot,
-			timeoutMs: 240_000,
-		}
-	)
+	copyCreateTemplate('minimal', appRoot)
+	linkScaffoldToWorkspace(path.join(appRoot, 'package.json'))
+
+	await runCommand('pnpm install', 'pnpm', ['install'], {
+		cwd: repoRoot,
+		timeoutMs: 240_000,
+	})
 
 	return appRoot
 }

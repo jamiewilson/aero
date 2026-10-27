@@ -58,20 +58,18 @@ test.describe('kitchen-sink preview:api', () => {
 		await page.goto(`${server.url}/demos/hypermedia`)
 
 		await expect(page.getByRole('heading', { name: 'Hypermedia' })).toBeVisible()
-		await expect(page.locator('#hypermedia-result')).toContainText('Waiting')
+		await expect(page.locator('#fragment-result')).toContainText('Waiting')
 
 		await Promise.all([
 			page.waitForResponse(
 				response =>
-					response.url().endsWith('/api/hypermedia-demo') &&
+					response.url().includes('/api/hypermedia/fragment') &&
 					response.request().method() === 'GET' &&
 					response.status() === 200
 			),
 			page.getByRole('button', { name: 'Load fragment' }).click(),
 		])
 
-		await expect(page.locator('#hypermedia-result')).toContainText(
-			'Hypermedia fragment loaded from'
-		)
+		await expect(page.locator('#fragment-result')).toContainText('Fragment loaded from')
 	})
 })

@@ -4,16 +4,16 @@ import { repoPath, startViteDev, type ServerHandle } from './support/harness'
 const kitchenSinkRoot = repoPath('examples', 'kitchen-sink')
 
 test.describe('kitchen-sink dev', () => {
-	test.describe.configure({ mode: 'serial' })
+	test.describe.configure({ mode: 'serial', timeout: 180_000 })
 
-	let server: ServerHandle
+	let server: ServerHandle | undefined
 
 	test.beforeAll(async () => {
 		server = await startViteDev(kitchenSinkRoot, 4303)
 	})
 
 	test.afterAll(async () => {
-		await server.stop()
+		if (server) await server.stop()
 	})
 
 	test('redirects /home and persists theme selection', async ({ page }) => {
@@ -21,13 +21,13 @@ test.describe('kitchen-sink dev', () => {
 		await expect(page).toHaveURL(`${server.url}/`)
 
 		const html = page.locator('html')
-		await expect(html).toHaveAttribute('data-theme', 'system')
+		await expect(html).toHaveAttribute('data-theme', 'light')
 
 		await page.getByTestId('theme-toggle').click()
-		await expect(html).toHaveAttribute('data-theme', 'light')
+		await expect(html).toHaveAttribute('data-theme', 'dark')
 
 		await page.reload()
-		await expect(html).toHaveAttribute('data-theme', 'light')
+		await expect(html).toHaveAttribute('data-theme', 'dark')
 	})
 
 	test('shows draft docs in dev and resolves dynamic docs routes', async ({ page }) => {

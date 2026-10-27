@@ -13,12 +13,16 @@ test.describe('kitchen-sink preview', () => {
 	})
 
 	test.afterAll(async () => {
-		await server.stop()
+		if (server) await server.stop()
 	})
 
 	test('renders the built home page', async ({ page }) => {
 		await page.goto(server.url)
-		await expect(page.getByText('mostly-vanilla HTML projects.')).toBeVisible()
+		await expect(
+			page.getByText(
+				'A static site generator with optional reactivity and full-stack hypermedia-based'
+			)
+		).toBeVisible()
 		await expect(page.getByTestId('theme-toggle')).toBeVisible()
 	})
 

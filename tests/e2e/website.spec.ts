@@ -13,7 +13,7 @@ test.describe('website preview', () => {
 	})
 
 	test.afterAll(async () => {
-		await server.stop()
+		if (server) await server.stop()
 	})
 
 	test('renders built content and initializes theme from localStorage', async ({ page }) => {

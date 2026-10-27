@@ -3,7 +3,6 @@ import site from '@content/site'
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
 
-Alpine.start()
 Alpine.plugin(persist)
 
 Alpine.store(site.theme.storageKey, {
@@ -24,5 +23,7 @@ Alpine.store(site.theme.storageKey, {
 		})
 	},
 })
+
+Alpine.start()
 
 export default Alpine
