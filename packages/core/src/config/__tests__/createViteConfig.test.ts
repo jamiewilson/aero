@@ -44,4 +44,11 @@ describe('createViteConfig feature flags', () => {
 			apiPrefix: '/internal-api',
 		})
 	})
+
+	it('accepts Vite defineConfig env as second argument', () => {
+		const fn = vi.fn(() => ({ server: true }))
+		createViteConfig(fn, { command: 'build', mode: 'ci' })
+
+		expect(fn).toHaveBeenCalledWith({ command: 'build', mode: 'production' })
+	})
 })

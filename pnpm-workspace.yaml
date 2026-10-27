@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'packages/create/templates/*'
   - 'examples/*'
   - 'examples/import-bundling/*'
   - 'examples/integrations/*'
@@ -16,6 +17,7 @@ catalog:
 overrides:
   js-yaml: ^3.15.0
   nf3: 0.4.2
+  '@aero-js/prettier-plugin-aero': 'workspace:*'
   vite@*: 'catalog:'
   vitest@*: 'catalog:'
 peerDependencyRules:

@@ -169,6 +169,8 @@ export function aero(rawOptions: AeroOptions = {}): PluginOption[] {
 	return plugins
 }
 
+export { loadAeroEnv, toAeroConfigEnv } from '../config/loadAeroEnv'
+export type { AeroViteConfigEnv } from '../config/loadAeroEnv'
 export { DEFAULT_DIRS, resolveDirs } from './defaults'
 export {
 	discoverReactivePagePaths,

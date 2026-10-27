@@ -1,5 +1,5 @@
 {
-	"name": "my-aero-app",
+	"name": "@aero-js/starter-minimal",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",

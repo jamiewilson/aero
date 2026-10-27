@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vite-plus/test'
 
-import { applyAeroViteEnv, applyAeroViteEnvFromVite } from '../applyAeroViteEnv'
+import { isAeroViteConfigEnv, loadAeroEnv, toAeroConfigEnv } from '../loadAeroEnv'
 
-describe('applyAeroViteEnv', () => {
+describe('loadAeroEnv', () => {
 	const prev: Record<string, string | undefined> = {}
 
 	afterEach(() => {
@@ -24,25 +24,47 @@ describe('applyAeroViteEnv', () => {
 		delete process.env.AERO_SERVER
 		delete process.env.AERO_INCREMENTAL
 
-		applyAeroViteEnv('ci', dir)
+		loadAeroEnv('ci', dir)
 
 		expect(process.env.AERO_SERVER).toBe('false')
 		expect(process.env.AERO_INCREMENTAL).toBe('1')
 
 		process.env.AERO_SERVER = 'true'
-		applyAeroViteEnv('ci', dir)
+		loadAeroEnv('ci', dir)
 		expect(process.env.AERO_SERVER).toBe('true')
 	})
 
-	it('applyAeroViteEnvFromVite uses envDir when provided', () => {
+	it('loads env from Vite defineConfig env object', () => {
 		const dir = mkdtempSync(join(tmpdir(), 'aero-env-'))
 		writeFileSync(join(dir, '.env.production'), 'AERO_FROM_VITE=1\n')
 
 		prev.AERO_FROM_VITE = process.env.AERO_FROM_VITE
 		delete process.env.AERO_FROM_VITE
 
-		applyAeroViteEnvFromVite({ command: 'build', mode: 'production', envDir: dir })
+		loadAeroEnv({ command: 'build', mode: 'production', envDir: dir })
 
 		expect(process.env.AERO_FROM_VITE).toBe('1')
+	})
+})
+
+describe('toAeroConfigEnv', () => {
+	it('maps serve/build and custom Vite modes', () => {
+		expect(toAeroConfigEnv({ command: 'serve', mode: 'development' })).toEqual({
+			command: 'dev',
+			mode: 'development',
+		})
+		expect(toAeroConfigEnv({ command: 'build', mode: 'ci' })).toEqual({
+			command: 'build',
+			mode: 'production',
+		})
+	})
+})
+
+describe('isAeroViteConfigEnv', () => {
+	it('detects Vite env vs Aero create options', () => {
+		expect(isAeroViteConfigEnv({ command: 'serve', mode: 'development' })).toBe(true)
+		expect(isAeroViteConfigEnv({ command: 'build', mode: 'ci' })).toBe(true)
+		expect(isAeroViteConfigEnv({ command: 'build', mode: 'production' })).toBe(false)
+		expect(isAeroViteConfigEnv({ command: 'dev', mode: 'development' })).toBe(false)
 	})
 })

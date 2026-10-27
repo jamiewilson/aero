@@ -20,6 +20,7 @@ import {
 	wrapAeroViteLogger,
 } from './aero-vite-logger'
 import { getStateBindingsRegistryModuleSource } from './state-bindings-registry'
+import { loadAeroEnv } from '../config/loadAeroEnv'
 import { STATE_BINDINGS_REGISTRY_FILENAME } from './defaults'
 import type { AeroPluginState } from './plugin-state'
 
@@ -35,6 +36,8 @@ export function createAeroConfigPlugin(state: AeroPluginState): Plugin {
 		enforce: 'pre',
 		config(userConfig, env) {
 			const root = userConfig.root || process.cwd()
+			const envDir = userConfig.envDir ?? root
+			loadAeroEnv({ command: env.command, mode: env.mode, envDir })
 			state.templateDiscovery = new TemplateDiscovery(root, state.dirs.client)
 			const rawAliases = loadTsconfigAliases(root)
 			state.aliasResult = mergeWithDefaultAliases(rawAliases, root, state.dirs)

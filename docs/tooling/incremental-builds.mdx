@@ -9,7 +9,7 @@ Incremental builds let Aero reuse the output from a previous build instead of re
 
 <Tabs>
   <Tab title=".env profile (recommended)">
-    Use a Vite **mode** and a committed or local env file. In `vite.config.ts`, call `applyAeroViteEnv` from `@aero-js/core/vite-config` inside `defineConfig` (starters and kitchen-sink already do).
+    Use a Vite **mode** and a committed or local env file. The Aero Vite plugin loads `.env.[mode]` into `process.env` automatically; with `createViteConfig`, pass the Vite `defineConfig` env as the second argument so env loads before `aero.config.ts` is resolved.
 
     ```bash
     vp build --mode debug

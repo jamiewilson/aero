@@ -11,6 +11,7 @@ import type { AeroOptions, AeroOptionsFn } from '../types'
 
 import { aero } from '../vite/index'
 import { defaultViteConfig } from './defaults'
+import { isAeroViteConfigEnv, loadAeroEnv, toAeroConfigEnv, type AeroViteConfigEnv } from './loadAeroEnv'
 import { loadAeroConfig } from './loadAeroConfig'
 
 /** Environment passed to createViteConfig (command and mode). */
@@ -39,7 +40,7 @@ export function getDefaultOptions(): CreateViteConfigOptions {
  */
 export function createViteConfig(
 	aeroConfigOrOptions?: AeroOptions | AeroOptionsFn | CreateViteConfigOptions,
-	options?: CreateViteConfigOptions
+	options?: CreateViteConfigOptions | AeroViteConfigEnv
 ): UserConfig {
 	let aeroConfig: AeroOptions | AeroOptionsFn
 	let opts: CreateViteConfigOptions
@@ -54,15 +55,29 @@ export function createViteConfig(
 
 	if (hasExplicitConfig) {
 		aeroConfig = aeroConfigOrOptions as AeroOptions | AeroOptionsFn
-		opts = options ?? getDefaultOptions()
+		opts = resolveCreateViteConfigOptions(options)
 	} else {
-		opts = isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : getDefaultOptions()
+		opts = resolveCreateViteConfigOptions(
+			isOptionsObject(aeroConfigOrOptions) ? aeroConfigOrOptions : options
+		)
 		// Same as historical behavior: one sync load; null → empty config (no second load / Effect on hot path).
 		const loaded = loadAeroConfig(process.cwd())
 		aeroConfig = loaded ?? {}
 	}
 
 	return createViteConfigFromAero(aeroConfig, opts)
+}
+
+function resolveCreateViteConfigOptions(
+	options?: CreateViteConfigOptions | AeroViteConfigEnv
+): CreateViteConfigOptions {
+	if (!options) return getDefaultOptions()
+	if (isAeroViteConfigEnv(options)) {
+		loadAeroEnv(options)
+		return toAeroConfigEnv(options)
+	}
+	loadAeroEnv(options.mode === 'development' ? 'development' : 'production')
+	return options
 }
 
 function createViteConfigFromAero(
