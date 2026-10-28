@@ -1,3 +1,8 @@
+<script is:build>
+	import site from '@content/site.ts'
+	const { storageKey, attribute } = site.theme
+</script>
+
 <button
 	class="theme-toggle"
 	data-testid="theme-toggle"
@@ -66,3 +71,8 @@
 		}
 	}
 </style>
+
+<script is:blocking props="{ storageKey, attribute }">
+	const key = JSON.parse(localStorage.getItem(storageKey))
+	document.documentElement.setAttribute(attribute, key)
+</script>
