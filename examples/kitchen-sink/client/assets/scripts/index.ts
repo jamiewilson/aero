@@ -1,8 +1,7 @@
 import aero from '@aero-js/core'
 import '@numeric-text/core'
-
-const htmx = (await import('htmx.org')).default
-const Alpine = (await import('./alpine')).default
+import htmx from 'htmx.org'
+import Alpine from './alpine'
 
 htmx.config.globalViewTransitions = true
 htmx.onLoad(node => Alpine.initTree(node as HTMLElement))

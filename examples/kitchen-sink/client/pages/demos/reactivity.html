@@ -1,5 +1,9 @@
 <script is:state>
 	let count = 0
+
+	$effect(() => {
+		console.log('count:', count)
+	})
 </script>
 
 <base-layout title="Reactivity Demo">

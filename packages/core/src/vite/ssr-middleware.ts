@@ -123,6 +123,7 @@ export async function handleSsrRequest(
 		if (rendered === null) {
 			res.statusCode = 404
 			res.setHeader('Content-Type', 'text/html; charset=utf-8')
+			res.setHeader('Cache-Control', 'no-store')
 			res.end('<h1>404 — Not Found</h1>')
 			return
 		}
@@ -132,6 +133,8 @@ export async function handleSsrRequest(
 		let transformed = await server.transformIndexHtml(req.url, rendered)
 		transformed = appendDirectQueryToDevStylesheetLinks(transformed)
 		res.setHeader('Content-Type', 'text/html; charset=utf-8')
+		// MPA dev: avoid bfcache so Vite module graph and Aero mount stay in sync (no unload listeners).
+		res.setHeader('Cache-Control', 'no-store')
 		res.end(transformed)
 	} catch (err) {
 		const root = state.config?.root
