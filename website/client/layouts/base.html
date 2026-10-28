@@ -1,18 +1,8 @@
-<script is:build>
-	import site from '@content/site.ts'
-	const { storageKey, attribute, defaultTheme } = site.theme
-</script>
-
 <html lang="en">
 	<head>
 		<meta-component props="{ ...Aero.props }" />
 		<link rel="stylesheet" href="@styles/global.css" />
 		<script src="@scripts/index.ts"></script>
-
-		<script props="{ storageKey, attribute, defaultTheme }">
-			const theme = JSON.parse(localStorage.getItem(storageKey)) || defaultTheme
-			document.documentElement.setAttribute(attribute, theme)
-		</script>
 	</head>
 
 	<body id="app">

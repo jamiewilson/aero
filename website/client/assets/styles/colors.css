@@ -1,5 +1,5 @@
 @layer root {
-	@theme {
+	:root {
 		--color-light: #fafafa;
 		--color-dark: #0d101c;
 		--color-accent: salmon;
