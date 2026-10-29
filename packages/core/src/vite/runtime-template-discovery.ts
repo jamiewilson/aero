@@ -7,6 +7,40 @@ import path from 'node:path'
 import { walkHtmlFiles, walkHtmlFilesDirectOnly } from '../utils/fs-walk'
 
 const IS_STATE_SCRIPT_RE = /<script\b[^>]*\bis:state\b/i
+const PAGE_COMPONENT_TAG_RE = /<([a-z][\w-]*-component)\b/gi
+
+function readUtf8(filePath: string): string {
+	try {
+		return fs.readFileSync(filePath, 'utf-8')
+	} catch {
+		return ''
+	}
+}
+
+/** Auto-import component tag for `client/components/foo-bar.html`. */
+function componentTagFromPath(componentPath: string): string {
+	const base = path.basename(componentPath, '.html')
+	return `${base}-component`
+}
+
+function reactiveComponentTags(components: string[]): Set<string> {
+	const tags = new Set<string>()
+	for (const file of components) {
+		if (IS_STATE_SCRIPT_RE.test(readUtf8(file))) {
+			tags.add(componentTagFromPath(file))
+		}
+	}
+	return tags
+}
+
+function pageReferencesReactiveComponent(pageSource: string, tags: Set<string>): boolean {
+	if (tags.size === 0) return false
+	for (const match of pageSource.matchAll(PAGE_COMPONENT_TAG_RE)) {
+		const tag = match[1]!.toLowerCase()
+		if (tags.has(tag)) return true
+	}
+	return false
+}
 
 /**
  * Discovered template paths (absolute), matching dev/runtime glob rules: components recursive,
@@ -28,14 +62,17 @@ export function discoverRuntimeTemplatePaths(
 	}
 }
 
-/** Page files under `client/pages` that contain `<script is:state>`. */
+/**
+ * Page files that need a client `mountStateBindings` entry: own `<script is:state>` or a
+ * reactive child component (so nested bindings mount in production).
+ */
 export function discoverReactivePagePaths(root: string, clientDir: string): string[] {
-	const { pages } = discoverRuntimeTemplatePaths(root, clientDir)
+	const { pages, components } = discoverRuntimeTemplatePaths(root, clientDir)
+	const reactiveTags = reactiveComponentTags(components)
 	return pages.filter(file => {
-		try {
-			return IS_STATE_SCRIPT_RE.test(fs.readFileSync(file, 'utf-8'))
-		} catch {
-			return false
-		}
+		const source = readUtf8(file)
+		if (!source) return false
+		if (IS_STATE_SCRIPT_RE.test(source)) return true
+		return pageReferencesReactiveComponent(source, reactiveTags)
 	})
 }

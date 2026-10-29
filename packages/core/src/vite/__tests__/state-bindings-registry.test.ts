@@ -25,6 +25,26 @@ describe('state bindings registry', () => {
 		}
 	})
 
+	it('discovers pages that use reactive child components', () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-reactive-nested-'))
+		try {
+			const componentPath = path.join(tmp, 'client', 'components', 'tabs.html')
+			const pagePath = path.join(tmp, 'client', 'pages', 'index.html')
+			fs.mkdirSync(path.dirname(componentPath), { recursive: true })
+			fs.mkdirSync(path.dirname(pagePath), { recursive: true })
+			fs.writeFileSync(
+				componentPath,
+				`<script is:state>let tab = 'a'</script><button on:click="{ tab = 'b' }">{ tab }</button>`,
+				'utf-8'
+			)
+			fs.writeFileSync(pagePath, '<tabs-component />', 'utf-8')
+
+			expect(discoverReactivePagePaths(tmp, 'client')).toEqual([pagePath])
+		} finally {
+			fs.rmSync(tmp, { recursive: true, force: true })
+		}
+	})
+
 	it('generates lazy import loaders keyed by page name', () => {
 		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aero-registry-src-'))
 		try {
